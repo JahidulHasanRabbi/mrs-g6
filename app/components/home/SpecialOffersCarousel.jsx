@@ -48,7 +48,7 @@ export default function SpecialOffersCarousel() {
     <div className="w-full px-4 py-6">
       {/* Section Title */}
       <h3
-        className="text-lg font-bold mb-4"
+        className="text-3xl font-bold mb-4"
         style={{
           fontFamily: '"Times New Roman", serif',
           color: "#e9af41",

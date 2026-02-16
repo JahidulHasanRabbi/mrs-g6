@@ -1,8 +1,8 @@
 "use client";
 
-import Image from 'next/image';
-import { motion } from 'framer-motion';
-import { memo } from 'react';
+import Image from "next/image";
+import { motion } from "framer-motion";
+import { memo } from "react";
 
 /**
  * Header Component
@@ -16,7 +16,6 @@ function Header({ onMenuClick }) {
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      
     >
       <div className="relative flex items-center justify-between h-full px-4">
         {/* Hamburger Menu Button */}
@@ -40,8 +39,8 @@ function Header({ onMenuClick }) {
               className="text-[14px] font-bold -mt-1"
               style={{
                 fontFamily: '"Times New Roman", serif',
-                color: '#e9af41',
-                lineHeight: 'normal',
+                color: "#e9af41",
+                lineHeight: "normal",
               }}
             >
               Menu
@@ -51,11 +50,11 @@ function Header({ onMenuClick }) {
 
         {/* Logo */}
         <motion.div
-          className="absolute right-4 top-0 w-[52px] h-[52px]"
+          className="absolute right-4 top-0 w-[60px] h-[60px]"
           whileHover={{ scale: 1.05, rotate: 5 }}
           transition={{ type: "spring", stiffness: 400, damping: 10 }}
         >
-          <div className="relative w-[71px] h-[52px] -right-[9px]">
+          <div className="relative w-[100px] h-auto right-[5px] top-[5px] ">
             <Image
               src="/assets/images/header-logo.png"
               alt="Logo"

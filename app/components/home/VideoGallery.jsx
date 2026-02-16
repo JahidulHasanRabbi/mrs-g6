@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 
@@ -8,6 +9,11 @@ import Image from "next/image";
  * Grid of video thumbnails with play buttons
  */
 export default function VideoGallery() {
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const containerRef = useRef(null);
+
   const videos = [
     {
       id: 1,
@@ -31,11 +37,33 @@ export default function VideoGallery() {
     },
   ];
 
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    setStartX(e.pageX - containerRef.current.offsetLeft);
+    setScrollLeft(containerRef.current.scrollLeft);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    const x = e.pageX - containerRef.current.offsetLeft;
+    const walk = (x - startX) * 2; // Scroll speed
+    containerRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
+
   return (
     <div className="w-full px-4 py-6">
       {/* Section Title */}
       <h3
-        className="text-lg font-bold mb-4"
+        className="text-3xl font-bold mb-4"
         style={{
           fontFamily: '"Times New Roman", serif',
           color: "#e9af41",
@@ -46,20 +74,28 @@ export default function VideoGallery() {
 
       {/* Horizontal Scrolling Video Container */}
       <div
-        className="flex gap-4 overflow-x-auto scrollbar-hide"
+        ref={containerRef}
+        className={`flex gap-4 overflow-x-auto scrollbar-hide transition-all ${
+          isDragging ? "cursor-grabbing" : "cursor-grab"
+        }`}
         style={{
           scrollbarWidth: "none",
           msOverflowStyle: "none",
           WebkitScrollbar: { display: "none" },
+          userSelect: isDragging ? "none" : "auto",
         }}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
       >
         {videos.map((video, index) => (
           <motion.div
             key={video.id}
             className="flex-shrink-0 relative rounded-xl overflow-hidden cursor-pointer"
             style={{
-              width: "160px",
-              height: "120px",
+              width: "255px",
+              height: "176px",
               border: "3px solid #e9af41",
               boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.3)",
             }}
