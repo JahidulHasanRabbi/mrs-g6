@@ -1,9 +1,9 @@
 "use client";
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { memo } from 'react';
-import { motion } from 'framer-motion';
+import Image from "next/image";
+import Link from "next/link";
+import { memo } from "react";
+import { motion } from "framer-motion";
 
 /**
  * MenuItem Component
@@ -17,38 +17,49 @@ import { motion } from 'framer-motion';
  * @param {boolean} [props.isNested] - Whether this is a nested item
  * @param {boolean} [props.disabled] - Whether item is disabled
  */
-function MenuItem({ icon, label, link, onClose, isNested = false, disabled = false }) {
+function MenuItem({
+  icon,
+  label,
+  link,
+  onClose,
+  isNested = false,
+  disabled = false,
+}) {
   const iconSize = isNested ? 20 : 28;
   const textSize = "text-[10px]";
-  const padding = isNested ? "px-2 py-2" : "px-0 py-2";
-  
+  const padding = isNested ? "px-2 py-1" : "px-2 py-1";
+
   const content = (
-    <motion.div 
-      className={`flex items-center gap-3 ${padding} rounded-md ${
-        disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+    <motion.div
+      className={`w-full flex items-center gap-3 ${padding} ${
+        disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
       }`}
       role="menuitem"
-      whileHover={!disabled ? { 
-        backgroundColor: 'rgba(192, 143, 50, 0.2)',
-        x: 4,
-        transition: { duration: 0.2 }
-      } : {}}
+      whileHover={
+        !disabled
+          ? {
+              backgroundColor: "rgba(255, 255, 255, 0.06)",
+              x: 4,
+              transition: { duration: 0.2 },
+            }
+          : {}
+      }
       whileTap={!disabled ? { scale: 0.98 } : {}}
     >
       <motion.div
         whileHover={!disabled ? { scale: 1.1, rotate: 5 } : {}}
         transition={{ type: "spring", stiffness: 400, damping: 10 }}
       >
-        <Image 
-          src={icon} 
-          alt="" 
-          width={iconSize} 
+        <Image
+          src={icon}
+          alt=""
+          width={iconSize}
           height={iconSize}
           aria-hidden="true"
           className="object-contain"
         />
       </motion.div>
-      <span 
+      <span
         className={`${textSize} font-['Times_New_Roman'] text-white leading-[1.5] tracking-[-0.11px]`}
         style={{ fontFamily: '"Times New Roman", serif' }}
       >
@@ -62,12 +73,7 @@ function MenuItem({ icon, label, link, onClose, isNested = false, disabled = fal
   }
 
   return (
-    <Link 
-      href={link} 
-      onClick={onClose}
-      className="block"
-      aria-label={label}
-    >
+    <Link href={link} onClick={onClose} className="block" aria-label={label}>
       {content}
     </Link>
   );

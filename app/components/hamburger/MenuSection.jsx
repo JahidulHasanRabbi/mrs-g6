@@ -1,9 +1,9 @@
 "use client";
 
-import Image from 'next/image';
-import { useState, memo, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ANIMATION_CONFIG } from './menuConfig';
+import Image from "next/image";
+import { useState, memo, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ANIMATION_CONFIG } from "./menuConfig";
 
 /**
  * MenuSection Component
@@ -20,7 +20,7 @@ function MenuSection({ title, icon, children, defaultOpen = true }) {
 
   const toggleSection = useCallback((e) => {
     e.stopPropagation();
-    setIsOpen(prev => !prev);
+    setIsOpen((prev) => !prev);
   }, []);
 
   return (
@@ -28,29 +28,29 @@ function MenuSection({ title, icon, children, defaultOpen = true }) {
       <motion.button
         type="button"
         onClick={toggleSection}
-        className="flex items-center justify-between w-full px-2 py-2 rounded-[5px] bg-[#c08f32] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.15)] cursor-pointer"
+        className="flex items-center justify-between w-full px-2 py-[6px] rounded-[5px] bg-[#c08f32] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.15)] cursor-pointer"
         aria-expanded={isOpen}
         aria-controls={`section-content-${title}`}
         id={`section-${title}`}
-        whileHover={{ 
-          backgroundColor: '#d4a03d',
+        whileHover={{
+          backgroundColor: "#d4a03d",
           scale: 1.02,
-          boxShadow: '0px 6px 8px 0px rgba(0,0,0,0.2)',
-          transition: { duration: 0.2 }
+          boxShadow: "0px 6px 8px 0px rgba(0,0,0,0.2)",
+          transition: { duration: 0.2 },
         }}
         whileTap={{ scale: 0.98 }}
       >
-        <div className="flex items-center gap-3">
-          <Image 
-            src={icon} 
-            alt="" 
-            width={30} 
+        <div className="flex items-center gap-2 min-w-0">
+          <Image
+            src={icon}
+            alt=""
+            width={30}
             height={30}
             aria-hidden="true"
             className="object-contain"
           />
-          <span 
-            className="font-bold text-[12px] text-white leading-[1.5] tracking-[-0.132px]"
+          <span
+            className="font-bold text-[12px] text-white leading-[1.5] tracking-[-0.132px] whitespace-nowrap"
             style={{ fontFamily: '"Times New Roman", serif' }}
           >
             {title}
@@ -63,9 +63,9 @@ function MenuSection({ title, icon, children, defaultOpen = true }) {
           className="w-[15px] h-[15px]"
           aria-hidden="true"
         >
-          <img 
-            src="/assets/images/expand-arrow.png" 
-            alt="" 
+          <img
+            src="/assets/images/expand-arrow.png"
+            alt=""
             className="w-full h-full object-contain"
           />
         </motion.div>
@@ -76,7 +76,7 @@ function MenuSection({ title, icon, children, defaultOpen = true }) {
           <motion.div
             id={`section-content-${title}`}
             {...ANIMATION_CONFIG.section}
-            className="mt-2 space-y-1 overflow-hidden pl-3"
+            className="mt-1 space-y-1 overflow-hidden pl-2"
             role="menu"
           >
             {children}
