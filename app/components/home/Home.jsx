@@ -1,31 +1,39 @@
 "use client";
-import { useState } from 'react';
-import { HamburgerMenu } from '../hamburger';
-import { FooterNav } from '../footer';
-import ExampleFullWidth from '../ExampleFullWidth';
+import { useState } from "react";
+import { HamburgerMenu } from "../hamburger";
+import { FooterNav } from "../footer";
+import { Header } from "../header";
+import HomeHero from "./HomeHero";
+import CheckInBoard from "./CheckInBoard";
+import SpecialOffersCarousel from "./SpecialOffersCarousel";
+import VideoGallery from "./VideoGallery";
+import { HOME_ASSETS } from "./homeAssets";
 
 function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen w-full bg-[#FFEBEB] pb-56 relative">
-      {/* Hamburger Menu */}
+    <div
+      className="min-h-screen w-full pt-[52px] pb-[100px] relative"
+      style={{
+        backgroundImage: `url(${HOME_ASSETS.backgroundPattern})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
+      <Header onMenuClick={() => setIsMenuOpen(true)} />
+
       <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
-      
-      {/* Menu Toggle Button */}
-      <button
-        onClick={() => setIsMenuOpen(true)}
-        className="absolute top-4 left-4 z-30 p-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
-        aria-label="Open menu"
-      >
-        <div className="w-6 h-0.5 bg-black mb-1.5"></div>
-        <div className="w-6 h-0.5 bg-black mb-1.5"></div>
-        <div className="w-6 h-0.5 bg-black"></div>
-      </button>
 
-      <h1 className="text-2xl font-bold p-4">Home</h1>
+      <main className="w-full">
+        <HomeHero />
+        <CheckInBoard />
+        <SpecialOffersCarousel />
 
-      {/* Footer Navigation */}
+        {/* Video Gallery */}
+        <VideoGallery />
+      </main>
       <FooterNav />
     </div>
   );
