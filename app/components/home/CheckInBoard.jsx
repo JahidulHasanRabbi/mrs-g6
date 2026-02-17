@@ -54,9 +54,14 @@ export default function CheckInBoard() {
     <section className="relative w-full px-4">
       <motion.div
         className="relative w-full mx-auto"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
+        initial={{ opacity: 0, y: 34, scale: 0.98, filter: "blur(10px)" }}
+        animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+        transition={{
+          type: "spring",
+          stiffness: 120,
+          damping: 20,
+          delay: 0.08,
+        }}
         style={{
           maxWidth: 475,
         }}

@@ -33,9 +33,9 @@ export default function HomeHero() {
   return (
     <motion.section
       className="relative w-full"
-      initial={{ opacity: 0, y: -6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
+      initial={{ opacity: 0, y: 28, scale: 0.96, filter: "blur(10px)" }}
+      animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+      transition={{ type: "spring", stiffness: 140, damping: 18, mass: 0.6 }}
     >
       <div className="relative w-full px-4 pt-3">
         <h1

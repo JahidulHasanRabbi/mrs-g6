@@ -28,6 +28,25 @@ import SocialLinks from "./SocialLinks";
 function HamburgerMenu({ isOpen, onClose }) {
   useHamburgerMenu(isOpen, onClose);
 
+  const panelVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.045, delayChildren: 0.08 },
+    },
+  };
+
+  const rowVariants = {
+    hidden: { opacity: 0, x: -14, y: 10, rotate: -0.6 },
+    show: {
+      opacity: 1,
+      x: 0,
+      y: 0,
+      rotate: 0,
+      transition: { type: "spring", stiffness: 260, damping: 22, mass: 0.7 },
+    },
+  };
+
   return (
     <AnimatePresence mode="wait">
       {isOpen && (
@@ -54,18 +73,28 @@ function HamburgerMenu({ isOpen, onClose }) {
             aria-label="Navigation menu"
           >
             {/* Header */}
-            <MenuHeader onClose={onClose} />
+            <motion.div variants={rowVariants} initial="hidden" animate="show">
+              <MenuHeader onClose={onClose} />
+            </motion.div>
 
             {/* Banner */}
-            <MenuBanner />
+            <motion.div variants={rowVariants} initial="hidden" animate="show">
+              <MenuBanner />
+            </motion.div>
 
             {/* Menu Items */}
             <nav className="px-3 pb-20" role="navigation">
-              <div className="rounded-[10px] bg-[#265134] px-2 py-2">
+              <motion.div
+                className="rounded-[10px] bg-[#265134] px-2 py-2"
+                variants={panelVariants}
+                initial="hidden"
+                animate="show"
+              >
                 {/* Mini Games Section */}
                 <MenuSection
                   title={MENU_CONFIG.miniGames.title}
                   icon={MENU_CONFIG.miniGames.icon}
+                  variants={rowVariants}
                 >
                   {MENU_CONFIG.miniGames.items.map((item, index) => (
                     <MenuItem
@@ -73,6 +102,7 @@ function HamburgerMenu({ isOpen, onClose }) {
                       {...item}
                       onClose={onClose}
                       isNested={true}
+                      variants={rowVariants}
                     />
                   ))}
                 </MenuSection>
@@ -80,7 +110,12 @@ function HamburgerMenu({ isOpen, onClose }) {
                 {/* Main Menu Items */}
                 <div className="space-y-1 mb-3">
                   {MENU_CONFIG.mainItems.map((item, index) => (
-                    <MenuItem key={index} {...item} onClose={onClose} />
+                    <MenuItem
+                      key={index}
+                      {...item}
+                      onClose={onClose}
+                      variants={rowVariants}
+                    />
                   ))}
                 </div>
 
@@ -88,17 +123,26 @@ function HamburgerMenu({ isOpen, onClose }) {
                 <MenuSection
                   title={MENU_CONFIG.social.title}
                   icon={MENU_CONFIG.social.icon}
+                  variants={rowVariants}
                 >
-                  <SocialLinks links={MENU_CONFIG.social.links} />
+                  <SocialLinks
+                    links={MENU_CONFIG.social.links}
+                    variants={rowVariants}
+                  />
                 </MenuSection>
 
                 {/* Bottom Items */}
                 <div className="space-y-1 mt-3">
                   {MENU_CONFIG.bottomItems.map((item, index) => (
-                    <MenuItem key={index} {...item} onClose={onClose} />
+                    <MenuItem
+                      key={index}
+                      {...item}
+                      onClose={onClose}
+                      variants={rowVariants}
+                    />
                   ))}
                 </div>
-              </div>
+              </motion.div>
             </nav>
           </motion.aside>
         </>

@@ -14,6 +14,34 @@ export default function VideoGallery() {
   const [scrollLeft, setScrollLeft] = useState(0);
   const containerRef = useRef(null);
 
+  const containerVariants = {
+    hidden: { opacity: 0, y: 32, scale: 0.98, filter: "blur(10px)" },
+    show: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      filter: "blur(0px)",
+      transition: { type: "spring", stiffness: 120, damping: 20, delay: 0.24 },
+    },
+  };
+
+  const listVariants = {
+    hidden: {},
+    show: {
+      transition: { staggerChildren: 0.06, delayChildren: 0.05 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 18, scale: 0.98 },
+    show: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: { type: "spring", stiffness: 220, damping: 18 },
+    },
+  };
+
   const videos = [
     {
       id: 1,
@@ -60,7 +88,12 @@ export default function VideoGallery() {
   };
 
   return (
-    <div className="w-full px-4 py-6">
+    <motion.section
+      className="w-full px-4 py-6"
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+    >
       {/* Section Title */}
       <h3
         className="text-3xl font-bold mb-4"
@@ -73,11 +106,12 @@ export default function VideoGallery() {
       </h3>
 
       {/* Horizontal Scrolling Video Container */}
-      <div
+      <motion.div
         ref={containerRef}
         className={`flex gap-4 overflow-x-auto scrollbar-hide transition-all ${
           isDragging ? "cursor-grabbing" : "cursor-grab"
         }`}
+        variants={listVariants}
         style={{
           scrollbarWidth: "none",
           msOverflowStyle: "none",
@@ -93,6 +127,7 @@ export default function VideoGallery() {
           <motion.div
             key={video.id}
             className="flex-shrink-0 relative rounded-xl overflow-hidden cursor-pointer"
+            variants={itemVariants}
             style={{
               width: "255px",
               height: "176px",
@@ -101,9 +136,7 @@ export default function VideoGallery() {
             }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
+            transition={{ delay: index * 0.02 }}
           >
             {/* Video Thumbnail */}
             <Image
@@ -131,7 +164,7 @@ export default function VideoGallery() {
             </motion.div>
           </motion.div>
         ))}
-      </div>
-    </div>
+      </motion.div>
+    </motion.section>
   );
 }

@@ -24,6 +24,7 @@ function MenuItem({
   onClose,
   isNested = false,
   disabled = false,
+  variants,
 }) {
   const iconSize = isNested ? 20 : 28;
   const textSize = "text-[10px]";
@@ -35,6 +36,7 @@ function MenuItem({
         disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
       }`}
       role="menuitem"
+      variants={variants}
       whileHover={
         !disabled
           ? {

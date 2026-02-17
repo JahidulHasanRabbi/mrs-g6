@@ -15,7 +15,7 @@ import { ANIMATION_CONFIG } from "./menuConfig";
  * @param {React.ReactNode} props.children - Section content
  * @param {boolean} [props.defaultOpen] - Initial open state
  */
-function MenuSection({ title, icon, children, defaultOpen = true }) {
+function MenuSection({ title, icon, children, defaultOpen = true, variants }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   const toggleSection = useCallback((e) => {
@@ -24,7 +24,12 @@ function MenuSection({ title, icon, children, defaultOpen = true }) {
   }, []);
 
   return (
-    <div className="mb-3" role="group" aria-labelledby={`section-${title}`}>
+    <motion.div
+      className="mb-3"
+      role="group"
+      aria-labelledby={`section-${title}`}
+      variants={variants}
+    >
       <motion.button
         type="button"
         onClick={toggleSection}
@@ -83,7 +88,7 @@ function MenuSection({ title, icon, children, defaultOpen = true }) {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }
 

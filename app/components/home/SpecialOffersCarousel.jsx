@@ -45,7 +45,12 @@ export default function SpecialOffersCarousel() {
   }, [nextSlide]);
 
   return (
-    <div className="w-full px-4 py-6">
+    <motion.section
+      className="w-full px-4 py-6"
+      initial={{ opacity: 0, y: 32, scale: 0.98, filter: "blur(10px)" }}
+      animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+      transition={{ type: "spring", stiffness: 120, damping: 20, delay: 0.16 }}
+    >
       {/* Section Title */}
       <h3
         className="text-3xl font-bold mb-4"
@@ -103,6 +108,6 @@ export default function SpecialOffersCarousel() {
           ))}
         </div>
       </div>
-    </div>
+    </motion.section>
   );
 }
