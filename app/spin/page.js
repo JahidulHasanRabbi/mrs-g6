@@ -6,6 +6,7 @@ import { FooterNav } from "../components/footer";
 import { Header } from "../components/header";
 import { HOME_ASSETS } from "../components/home/homeAssets";
 import AnimatedSection from "../components/ui/AnimatedSection";
+import AnimatedSectionWrapper from "../components/ui/AnimatedSectionWrapper";
 import LuckySPin from "../../public/assets/lucky-spin/lucky-spin.png";
 import LuckySpinGrid from "../components/spin/LuckySpinGrid";
 import SpinButtonsContainer from "../components/spin/SpinButtonsContainer";
@@ -41,46 +42,61 @@ export default function SpinPage() {
       <main className="w-full">
         <AnimatedSection title="" imageSrc={LuckySPin} imageAlt="lucky spin" />
 
-        <div className="flex justify-center items-center py-8">
-          <LuckySpinGrid />
-        </div>
+        <AnimatedSectionWrapper animation="fadeInUp" delay={0.1} viewportAmount={0.3}>
+          <div className="flex justify-center items-center py-8">
+            <LuckySpinGrid />
+          </div>
+        </AnimatedSectionWrapper>
 
-        <div className="flex justify-center px-8 py-4">
-          <SpinButtonsContainer
-            buttons={[
-              { spins: "10", tokens: "100" },
-              { spins: "50", tokens: "500" },
-            ]}
-            onButtonClick={handleButtonClick}
-          />
-        </div>
+        <AnimatedSectionWrapper animation="fadeInUp" delay={0.15} viewportAmount={0.3}>
+          <div className="flex justify-center px-8 py-4">
+            <SpinButtonsContainer
+              buttons={[
+                { spins: "10 Spins", tokens: "100" },
+                { spins: "50 Spins", tokens: "500" },
+              ]}
+              onButtonClick={handleButtonClick}
+            />
+          </div>
+        </AnimatedSectionWrapper>
 
-        <div className="flex justify-center py-8">
-          <RewardsList />
-        </div>
-        <div className="flex justify-center px-8 py-4">
-          <SpinButtonsContainer
-            buttons={[
-              {
-                spins: "Winning Record",
-                image: "/assets/lucky-spin/buttons/winning.png",
-                className: "w-[200px] h-[80px]",
-              },
-              {
-                spins: "Winning List",
-                image: "/assets/lucky-spin/buttons/winning.png",
-                className: "w-[200px] h-[80px]",
-              },
-            ]}
-            onButtonClick={handleButtonClick}
-          />
-        </div>
-         <div className="flex justify-center py-8">
-          <WinningList />
-        </div>
-        <div className="flex justify-center py-8">
-          <TermsConditions />
-        </div>
+        <AnimatedSectionWrapper animation="fadeInUp" delay={0.2} viewportAmount={0.3}>
+          <div className="flex justify-center py-8">
+            <RewardsList />
+          </div>
+        </AnimatedSectionWrapper>
+
+        <AnimatedSectionWrapper animation="fadeInUp" delay={0.25} viewportAmount={0.3}>
+          <div className="flex justify-center px-8 py-4">
+            <SpinButtonsContainer
+              buttons={[
+                {
+                  spins: "Winning Record",
+                  image: "/assets/lucky-spin/buttons/winning.png",
+                  className: "w-[200px] h-[80px]",
+                },
+                {
+                  spins: "Winning List",
+                  image: "/assets/lucky-spin/buttons/winning.png",
+                  className: "w-[200px] h-[80px]",
+                },
+              ]}
+              onButtonClick={handleButtonClick}
+            />
+          </div>
+        </AnimatedSectionWrapper>
+
+        <AnimatedSectionWrapper animation="fadeInUp" delay={0.3} viewportAmount={0.3}>
+          <div className="flex justify-center py-8">
+            <WinningList />
+          </div>
+        </AnimatedSectionWrapper>
+
+        <AnimatedSectionWrapper animation="fadeInUp" delay={0.35} viewportAmount={0.3}>
+          <div className="flex justify-center py-8">
+            <TermsConditions />
+          </div>
+        </AnimatedSectionWrapper>
       </main>
 
       <FooterNav />

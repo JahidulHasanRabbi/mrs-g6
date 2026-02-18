@@ -1,10 +1,21 @@
 "use client";
 
 import Image from "next/image";
+import { motion } from "framer-motion";
 import { SPIN_ASSETS } from "./spinAssets";
 
-const SpinItem = ({ background, prize, position, size = "w-[114px] h-[112px]" }) => (
-  <div className={`absolute ${position}`}>
+const SpinItem = ({ background, prize, position, size = "w-[114px] h-[112px]", index }) => (
+  <motion.div 
+    className={`absolute ${position}`}
+    initial={{ opacity: 0, scale: 0, rotate: -180 }}
+    animate={{ opacity: 1, scale: 1, rotate: 0 }}
+    transition={{ 
+      duration: 0.6, 
+      delay: index * 0.1,
+      ease: "easeOut"
+    }}
+    whileHover={{ scale: 1.05 }}
+  >
     <Image
       alt=""
       src={background}
@@ -13,15 +24,26 @@ const SpinItem = ({ background, prize, position, size = "w-[114px] h-[112px]" })
       className={`${size} object-cover pointer-events-none`}
     />
     {prize && (
-      <Image
-        alt=""
-        src={prize}
-        width={72}
-        height={69}
-        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 object-cover pointer-events-none"
-      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ 
+          duration: 0.4, 
+          delay: index * 0.1 + 0.3,
+          ease: "easeOut"
+        }}
+        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+      >
+        <Image
+          alt=""
+          src={prize}
+          width={72}
+          height={69}
+          className="object-cover pointer-events-none"
+        />
+      </motion.div>
     )}
-  </div>
+  </motion.div>
 );
 
 export default function LuckySpinGrid() {
@@ -37,7 +59,12 @@ export default function LuckySpinGrid() {
   ];
 
   return (
-    <div className="relative w-[376px] h-[348px] mx-auto">
+    <motion.div 
+      className="relative w-[376px] h-[348px] mx-auto"
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+    >
       <Image
         alt="Spin Grid Background"
         src={SPIN_ASSETS.background}
@@ -47,10 +74,21 @@ export default function LuckySpinGrid() {
 
       <div className="absolute left-[41px] top-[21px] w-[290px] h-[298px]">
         {gridItems.map((item, index) => (
-          <SpinItem key={index} {...item} />
+          <SpinItem key={index} index={index} {...item} />
         ))}
 
-        <div className="absolute left-[77px] top-[73px] w-[143px] h-[143px] cursor-pointer hover:scale-105 transition-transform">
+        <motion.div 
+          className="absolute left-[77px] top-[73px] w-[143px] h-[143px] cursor-pointer"
+          initial={{ opacity: 0, scale: 0, rotate: 360 }}
+          animate={{ opacity: 1, scale: 1, rotate: 0 }}
+          transition={{ 
+            duration: 0.8, 
+            delay: 1.0,
+            ease: "easeOut"
+          }}
+          whileHover={{ scale: 1.1, rotate: 5 }}
+          whileTap={{ scale: 0.95 }}
+        >
           <Image
             alt="Spin Now Button"
             src={SPIN_ASSETS.centerButton}
@@ -58,8 +96,8 @@ export default function LuckySpinGrid() {
             height={143}
             className="object-cover"
           />
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }
