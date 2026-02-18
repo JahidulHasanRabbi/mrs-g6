@@ -103,22 +103,32 @@ export default function CheckInBoard() {
                         cursor: isChecked ? "default" : "pointer",
                         outline: "none",
                         background: "transparent",
-                        transform: "translate(-50%, -50%)",
+                        x: "-50%",
+                        y: "-50%",
                       }}
                       aria-label={`Check in ${d.label}`}
+                      initial={{ opacity: 0, scale: 0.3, y: "-150%", x: "-50%" }}
+                      animate={{ opacity: 1, scale: 1, y: "-50%", x: "-50%" }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 260,
+                        damping: 20,
+                        delay: (d.day - 1) * 0.15 + 0.4,
+                      }}
                       whileHover={
                         isChecked
                           ? undefined
                           : {
-                              opacity: 0.8,
-                              transition: { duration: 0.2 },
+                              scale: 1.15,
+                              y: "-55%",
+                              transition: { type: "spring", stiffness: 400, damping: 10 },
                             }
                       }
                       whileTap={
                         isChecked
                           ? undefined
                           : {
-                              opacity: 0.6,
+                              scale: 0.95,
                               transition: { duration: 0.1 },
                             }
                       }
@@ -166,22 +176,32 @@ export default function CheckInBoard() {
                       cursor: isChecked ? "default" : "pointer",
                       outline: "none",
                       background: "transparent",
-                      transform: "translate(-50%, -50%)",
+                      x: "-50%",
+                      y: "-50%",
                     }}
                     aria-label={`Check in ${d.label}`}
+                    initial={{ opacity: 0, scale: 0.3, y: "-150%", x: "-50%" }}
+                    animate={{ opacity: 1, scale: 1, y: "-50%", x: "-50%" }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 260,
+                      damping: 20,
+                      delay: (d.day - 1) * 0.15 + 0.4,
+                    }}
                     whileHover={
                       isChecked
                         ? undefined
                         : {
-                            opacity: 0.8,
-                            transition: { duration: 0.2 },
+                            scale: 1.1,
+                            y: "-55%",
+                            transition: { type: "spring", stiffness: 400, damping: 10 },
                           }
                     }
                     whileTap={
                       isChecked
                         ? undefined
                         : {
-                            opacity: 0.6,
+                            scale: 0.95,
                             transition: { duration: 0.1 },
                           }
                     }

@@ -7,7 +7,6 @@ import { Header } from "../components/header";
 import { HOME_ASSETS } from "../components/home/homeAssets";
 import AnimatedSection from "../components/ui/AnimatedSection";
 import AnimatedSectionWrapper from "../components/ui/AnimatedSectionWrapper";
-import LuckySPin from "../../public/assets/lucky-spin/lucky-spin.png";
 import LuckySpinGrid from "../components/spin/LuckySpinGrid";
 import SpinButtonsContainer from "../components/spin/SpinButtonsContainer";
 import RewardsList from "../components/spin/RewardsList";
@@ -40,7 +39,7 @@ export default function SpinPage() {
       <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
       <main className="w-full">
-        <AnimatedSection title="" imageSrc={LuckySPin} imageAlt="lucky spin" />
+        <AnimatedSection title="" imageSrc='/assets/lucky-spin/lucky-spin.png' imageAlt="lucky spin" />
 
         <AnimatedSectionWrapper animation="fadeInUp" delay={0.1} viewportAmount={0.3}>
           <div className="flex justify-center items-center py-8">

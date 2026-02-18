@@ -1,0 +1,20 @@
+export const MART_ASSETS = {
+  background: "/assets/mart/mart-background.png",
+  menuIcon: "/assets/mart/menu-icon.png",
+  profileIcon: "/assets/mart/profile-icon.png",
+  coinBalance: "/assets/mart/coin-balance.png",
+  coinIcon: "/assets/mart/coin-icon.png",
+  titleBanner: "/assets/mart/title-banner.png",
+  sortButton: "/assets/mart/sort-button.png",
+  itemCard: "/assets/mart/item-card.png",
+  prize1: "/assets/mart/prize-iphone.png",
+  prize2: "/assets/mart/prize-sex-toy.png",
+  prize3: "/assets/mart/prize-birthday.png",
+  redeemPopup: "/assets/mart/redeem-popup.png",
+  // Footer icons
+  footerHomeBg: "/assets/mart/footer-home-bg.png",
+  footerHomeIcon: "/assets/mart/footer-home-icon.png",
+  footerHotIcon: "/assets/mart/footer-hot-icon.png",
+  footerProfileIcon: "/assets/mart/footer-profile-icon.png",
+  footerLivechatIcon: "/assets/mart/footer-livechat-icon.png",
+};
