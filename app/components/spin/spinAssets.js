@@ -8,4 +8,12 @@ export const SPIN_ASSETS = {
   prize3: "/assets/lucky-spin/lucky-spin-grid/spin-prize-3.png",
   centerButton: "/assets/lucky-spin/lucky-spin-grid/spin-center.png",
   buttonBackground: "/assets/lucky-spin/buttons/button.png",
+  scrollBackground: "/assets/lucky-spin/rewards/scroll-bg.png",
+  coinFrame: "/assets/lucky-spin/rewards/coin-frame.png",
+  coin1: "/assets/lucky-spin/rewards/coin-1.png",
+  coin2: "/assets/lucky-spin/rewards/coin-2.png",
+  rewardsListBackground: "/assets/lucky-spin/rewards/rewards-list-bg.png",
+  winningListBackground: "/assets/lucky-spin/winning-list/background.png",
+  coinIcon: "/assets/lucky-spin/winning-list/coin-icon.png",
+  bulletIcon: "/assets/lucky-spin/winning-list/bullet-icon.png",
 };

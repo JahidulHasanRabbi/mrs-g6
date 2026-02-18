@@ -2,19 +2,19 @@
 
 import SpinButton from "./SpinButton";
 
-const SpinButtonsContainer = ({ onButtonClick }) => {
+const SpinButtonsContainer = ({ buttons, onButtonClick }) => {
   return (
     <div className="flex justify-center items-center gap-4">
-      <SpinButton 
-        spins="10" 
-        tokens="100" 
-        onClick={() => onButtonClick({ spins: 10, tokens: 100 })}
-      />
-      <SpinButton 
-        spins="50" 
-        tokens="500" 
-        onClick={() => onButtonClick({ spins: 50, tokens: 500 })}
-      />
+      {buttons.map((button, index) => (
+        <SpinButton 
+          key={index}
+          spins={button.spins}
+          tokens={button.tokens}
+          image={button.image}
+          className={button.className}
+          onClick={() => onButtonClick(button)}
+        />
+      ))}
     </div>
   );
 };
