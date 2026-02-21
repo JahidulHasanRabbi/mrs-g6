@@ -1,10 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { HamburgerMenu } from "../components/hamburger";
-import { FooterNav } from "../components/footer";
-import { Header } from "../components/header";
-import { HOME_ASSETS } from "../components/home/homeAssets";
 import AnimatedSection from "../components/ui/AnimatedSection";
 import AnimatedSectionWrapper from "../components/ui/AnimatedSectionWrapper";
 import LuckySpinGrid from "../components/spin/LuckySpinGrid";
@@ -14,7 +10,6 @@ import WinningList from "../components/spin/WinningList";
 import TermsConditions from "../components/spin/TermsConditions";
 
 export default function SpinPage() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
 
   const handleButtonClick = (buttonData) => {
@@ -25,21 +20,8 @@ export default function SpinPage() {
   };
 
   return (
-    <div
-      className="min-h-screen w-full pt-[52px] pb-[100px] relative"
-      style={{
-        backgroundImage: `url(${HOME_ASSETS.backgroundPattern})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
-    >
-      <Header onMenuClick={() => setIsMenuOpen(true)} />
-
-      <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
-
-      <main className="w-full">
-        <AnimatedSection title="" imageSrc='/assets/lucky-spin/lucky-spin.png' imageAlt="lucky spin" />
+    <>
+      <AnimatedSection title="" imageSrc='/assets/lucky-spin/lucky-spin.png' imageAlt="lucky spin" />
 
         <AnimatedSectionWrapper animation="fadeInUp" delay={0.1} viewportAmount={0.3}>
           <div className="flex justify-center items-center py-8">
@@ -95,10 +77,7 @@ export default function SpinPage() {
           <div className="flex justify-center py-8">
             <TermsConditions />
           </div>
-        </AnimatedSectionWrapper>
-      </main>
-
-      <FooterNav />
-    </div>
+      </AnimatedSectionWrapper>
+    </>
   );
 }

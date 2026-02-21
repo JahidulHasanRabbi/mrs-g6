@@ -6,6 +6,7 @@ import StepIndicator from "./StepIndicator";
 import ProfileImageUpload from "./ProfileImageUpload";
 import FormField from "./FormField";
 import SubmitButton from "./SubmitButton";
+import SuccessModal from "../ui/SuccessModal";
 import { FORM_FIELDS, PERSONAL_DATA_ASSETS } from "./constants";
 
 export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
@@ -13,6 +14,7 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
     FORM_FIELDS.reduce((acc, field) => ({ ...acc, [field.id]: "" }), {})
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -30,11 +32,17 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
       if (onSubmit) {
         await onSubmit(formData);
       }
+      // Show success modal after successful submission
+      setShowSuccessModal(true);
     } catch (error) {
       console.error("Form submission error:", error);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleCloseModal = () => {
+    setShowSuccessModal(false);
   };
 
   return (
@@ -66,6 +74,15 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
         onClick={handleSubmit}
         label="Saved Change"
         disabled={isSubmitting}
+      />
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={handleCloseModal}
+        title="🎁  100% Done — Reward Unlocked"
+        message="Thanks for completing your profile. 10 Free Coins added."
+        backgroundColor="rgba(96, 128, 60, 1)"
       />
     </motion.div>
   );

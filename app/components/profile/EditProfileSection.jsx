@@ -59,7 +59,7 @@ export default function EditProfileSection({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.55, ease: "easeOut", delay: 0.1 }}
     >
-      <div className="absolute left-1/2 top-0 -translate-x-1/2 origin-top w-[359px] h-[268px] scale-[1] min-[465px]:scale-[1.1]">
+      <div className="absolute left-1/2 top-0 -translate-x-1/2 origin-top w-[366px] h-[268px] scale-[1] min-[465px]:scale-[1.1]">
         <Image alt="" src={PROFILE_ASSETS.editProfileBg} fill className="object-cover" />
 
         <motion.p

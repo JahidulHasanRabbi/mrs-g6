@@ -1,44 +1,33 @@
 "use client";
-import { useState } from "react";
-import { FooterNav } from "../components/footer";
-import { HamburgerMenu } from "../components/hamburger";
-import { Header } from "../components/header";
-import { HOME_ASSETS } from "../components/home/homeAssets";
+import { useRouter } from "next/navigation";
 import AnimatedSection from "../components/ui/AnimatedSection";
 import ProfileCard from "../components/profile/ProfileCard";
 import EditProfileSection from "../components/profile/EditProfileSection";
 
 export default function ProfilePage() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const router = useRouter();
 
   const handleVipDetailsClick = () => {
     console.log("VIP Details clicked");
     // Add navigation to VIP details page
   };
 
-  const handleDisplayPhoto = () => console.log("Display Photo clicked");
-  const handleGender = () => console.log("Gender clicked");
-  const handleBirthday = () => console.log("Birthday clicked");
-  const handlePhone = () => console.log("Phone clicked");
-  const handleEmail = () => console.log("Email clicked");
-  const handleInterest = () => console.log("Interest clicked");
+  const handleEditProfileItem = (item) => {
+    // Navigate to personal-data page for all edit profile items
+    router.push('/personal-data');
+    console.log(`${item} clicked - navigating to personal-data`);
+  };
+
+  const handleDisplayPhoto = () => handleEditProfileItem("Display Photo");
+  const handleGender = () => handleEditProfileItem("Gender");
+  const handleBirthday = () => handleEditProfileItem("Birthday");
+  const handlePhone = () => handleEditProfileItem("Phone");
+  const handleEmail = () => handleEditProfileItem("Email");
+  const handleInterest = () => handleEditProfileItem("Interest");
 
   return (
-    <div
-      className="min-h-screen w-full pt-[52px] pb-[100px] relative"
-      style={{
-        backgroundImage: `url(${HOME_ASSETS.backgroundPattern})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      }}
-    >
-      <Header onMenuClick={() => setIsMenuOpen(true)} />
-
-      <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
-
-      <main className="w-full">
-        <AnimatedSection
+    <>
+      <AnimatedSection
           title=""
           imageSrc="/assets/profile/my-profile.png"
           imageAlt="my profile"
@@ -65,10 +54,7 @@ export default function ProfilePage() {
             onEmail={handleEmail}
             onInterest={handleInterest}
           />
-        </div>
-      </main>
-
-      <FooterNav />
-    </div>
+      </div>
+    </>
   );
 }

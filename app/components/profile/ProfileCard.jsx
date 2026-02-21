@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { PROFILE_ASSETS } from "./profileAssets";
 
 export default function ProfileCard({ 
@@ -14,6 +15,17 @@ export default function ProfileCard({
   avatarSrc = PROFILE_ASSETS.profileAvatar,
   onVipDetailsClick
 }) {
+  const router = useRouter();
+
+  const handleVipDetailsClick = () => {
+    // Navigate to personal-data page
+    router.push('/vip-details');
+    
+    // Also call the original handler if provided
+    if (onVipDetailsClick) {
+      onVipDetailsClick();
+    }
+  };
   return (
     <motion.div
       className="relative mx-auto w-[336px] h-[224px] min-[465px]:w-[370px] min-[465px]:h-[246px]"
@@ -26,7 +38,7 @@ export default function ProfileCard({
         delay: 0.2,
       }}
     >
-      <div className="absolute left-1/2 top-0 -translate-x-1/2 origin-top w-[336px] h-[224px] scale-[1] min-[465px]:scale-[1.1]">
+      <div className="absolute left-1/2 top-0 -translate-x-1/2 origin-top w-[366px] h-[224px] scale-[1] min-[465px]:scale-[1.1]">
         {/* Card Background */}
         <Image
           alt="Profile Card"
@@ -67,8 +79,8 @@ export default function ProfileCard({
 
         {/* VIP Details Button */}
         <motion.button
-          onClick={onVipDetailsClick}
-          className="absolute left-[239px] top-[37px] text-[#e9af41] font-bold font-['Times_New_Roman'] whitespace-nowrap"
+          onClick={handleVipDetailsClick}
+          className="absolute left-[239px] top-[37px] text-[#e9af41] font-bold font-['Times_New_Roman'] whitespace-nowrap cursor-pointer"
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.6 }}

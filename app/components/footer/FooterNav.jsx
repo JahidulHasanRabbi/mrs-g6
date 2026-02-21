@@ -76,7 +76,7 @@ const FooterNavItem = memo(({ item, isActive }) => {
   return (
     <Link
       href={link}
-      className="flex-1 flex flex-col items-center justify-center pt-4 cursor-pointer"
+      className="flex-1 flex flex-col items-center justify-center pt-4 cursor-pointer hover:opacity-80 transition-opacity"
       aria-label={label}
     >
       {itemContent}
@@ -90,15 +90,18 @@ FooterNavItem.displayName = 'FooterNavItem';
  * FooterNav Component
  * Bottom navigation bar with curved design
  */
-function FooterNav() {
+function FooterNav({ showAnimation = false }) {
   const pathname = usePathname();
+
+  // Debug: Log to see if animation prop is working
+  console.log('FooterNav showAnimation:', showAnimation);
 
   return (
     <motion.footer
       className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[475px] h-[100px] z-40"
-      initial={{ y: 100, opacity: 0 }}
+      initial={showAnimation ? { y: 100, opacity: 0 } : { y: 0, opacity: 1 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      transition={showAnimation ? { type: "spring", stiffness: 300, damping: 30 } : { duration: 0 }}
     >
       {/* Background with curved top and center bump */}
       <svg

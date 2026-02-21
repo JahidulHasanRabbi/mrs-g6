@@ -9,13 +9,13 @@ import { memo } from "react";
  * Top navigation bar with hamburger menu and logo
  * Matches Figma design exactly
  */
-function Header({ onMenuClick }) {
+function Header({ onMenuClick, showAnimation = false }) {
   return (
     <motion.header
       className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[475px] h-[52px] z-40"
-      initial={{ y: -100, opacity: 0 }}
+      initial={showAnimation ? { y: -100, opacity: 0 } : { y: 0, opacity: 1 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      transition={showAnimation ? { type: "spring", stiffness: 300, damping: 30 } : { duration: 0 }}
     >
       <div className="relative flex items-center justify-between h-full px-4">
         {/* Hamburger Menu Button */}
