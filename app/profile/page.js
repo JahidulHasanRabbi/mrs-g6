@@ -8,8 +8,9 @@ export default function ProfilePage() {
   const router = useRouter();
 
   const handleVipDetailsClick = () => {
-    console.log("VIP Details clicked");
-    // Add navigation to VIP details page
+    // Navigate to VIP details page
+    router.push('/vip-details');
+    console.log("VIP Details clicked - navigating to vip-details");
   };
 
   const handleEditProfileItem = (item) => {

@@ -13,19 +13,23 @@ const BENEFITS = [
   { icon: VIP_DETAILS_ASSETS.checkIcon, text: "Priority\nSupport", col: 2 },
 ];
 
+
 export default function PrivilegesCard({ level = "Bronze" }) {
+  const currentBg = VIP_DETAILS_ASSETS.privilegesBg[level.toLowerCase()] || VIP_DETAILS_ASSETS.privilegesBg.bronze;
+
   return (
     <motion.div
+      key={level} // Re-animate on level change
       className="relative w-[344px] h-[396px] mx-auto"
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: 0.6 }}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4 }}
     >
       {/* Background */}
       <div className="absolute left-0 top-0 w-[344px] h-[390px]">
         <Image
-          alt="Privileges Background"
-          src={VIP_DETAILS_ASSETS.privilegesBg}
+          alt={`${level} Privileges Background`}
+          src={currentBg}
           fill
           className="object-cover"
         />
@@ -33,18 +37,18 @@ export default function PrivilegesCard({ level = "Bronze" }) {
 
       {/* Title */}
       <motion.p
-        className="absolute left-1/2 -translate-x-1/2 top-[39px] text-center text-[#e9af41] text-[32px] font-bold font-['Times_New_Roman']"
+        className="absolute left-[38px] top-[39px] text-center text-[#fcd064] text-3xl font-bold font-['Times_New_Roman']"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.8 }}
       >
-        {level}'s privileges
+        {level}’s privileges
       </motion.p>
 
       {/* Benefits Worth Section */}
-      <div className="absolute left-[36px] top-[89px]">
+      <div className="absolute left-[38px] top-[81px] flex items-center gap-2">
         <motion.p
-          className="absolute left-1/2 -translate-x-1/2 top-[2px] text-center text-[#e9af41] text-[20px] font-bold font-['Times_New_Roman']"
+          className="text-[#fcd064] text-[20px] font-bold font-['Times_New_Roman']"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.9 }}
@@ -52,7 +56,7 @@ export default function PrivilegesCard({ level = "Bronze" }) {
           6 benefits worth
         </motion.p>
         <motion.div
-          className="absolute h-[30px] left-[138px] top-0 w-[32px]"
+          className="relative h-[30px] w-[32px]"
           initial={{ opacity: 0, scale: 0 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 1, type: "spring" }}
@@ -61,36 +65,33 @@ export default function PrivilegesCard({ level = "Bronze" }) {
             alt="Star"
             src={VIP_DETAILS_ASSETS.starIcon}
             fill
-            className="object-cover"
+            className="object-contain"
           />
         </motion.div>
       </div>
 
       {/* Description */}
       <motion.div
-        className="absolute left-[35px] top-[129px] text-[#e9af41] text-[14px] font-bold font-['Times_New_Roman'] leading-normal"
+        className="absolute left-[38px] top-[122px] text-[#fcd064] text-[14px] font-bold font-['Times_New_Roman'] leading-[1.2] max-w-[270px]"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 1.1 }}
       >
-        <p className="mb-0">Lorem ipsum dolor sit amet, consectetuer</p>
-        <p className="mb-0">adipiecing alit. Sed do elusmod tempor</p>
-        <p className="mb-0">incididunt ut labore et dolore magne alique</p>
-        <p>aliquram erat volutpat.</p>
+        <p>Lorem ipsum dolor sit amet, consectetuer adipiecing alit. Sed do elusmod tempor incididunt ut labore et dolore magne alique aliquram erat volutpat.</p>
       </motion.div>
 
       {/* Benefits Grid */}
-      <div className="absolute left-[44px] top-[210px] w-[256px]">
+      <div className="absolute left-[40px] top-[200px] w-[370px] ">
         {BENEFITS.map((benefit, index) => {
           const row = Math.floor(index / 2);
           const col = index % 2;
-          const topOffset = row * 46;
-          const leftOffset = col * 128;
+          const topOffset = row * 55;
+          const leftOffset = col * 135;
 
           return (
             <motion.div
               key={index}
-              className="absolute flex items-start gap-2"
+              className="absolute flex items-center "
               style={{
                 top: `${topOffset}px`,
                 left: `${leftOffset}px`,
@@ -99,15 +100,15 @@ export default function PrivilegesCard({ level = "Bronze" }) {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.4, delay: 1.2 + index * 0.1 }}
             >
-              <div className="relative w-[35px] h-[33px] shrink-0">
+              <div className="relative w-[35px] h-[33px] shrink-0 ">
                 <Image
                   alt="Check"
                   src={benefit.icon}
                   fill
-                  className="object-cover"
+                  className="object-contain"
                 />
               </div>
-              <p className="text-[#e9af41] text-[14px] font-bold font-['Times_New_Roman'] leading-normal whitespace-pre-line">
+              <p className="text-[#fcd064] text-[14px] font-bold font-['Times_New_Roman'] leading-tight whitespace-pre-line ">
                 {benefit.text}
               </p>
             </motion.div>
