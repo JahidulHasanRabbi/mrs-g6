@@ -17,7 +17,7 @@ export const FOOTER_CONFIG = {
       id: 'hot',
       icon: '/assets/images/footer-hot.png',
       label: 'HOT',
-      link: '/hot',
+      link: '/mart',
       width: 40,
       height: 40,
     },

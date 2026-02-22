@@ -34,7 +34,7 @@ export default function MartHeader({ balance = "5,450.00", onMenuClick, onProfil
 
       {/* Balance Display */}
       <motion.div 
-        className="absolute left-1/2 -translate-x-1/2 top-[16px] w-[146px] h-[48px]"
+        className="absolute right-0 -translate-x-1/2 top-[16px] w-[146px] h-[48px]"
         initial={showAnimation ? { opacity: 0, scale: 0.8 } : { opacity: 1, scale: 1 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={showAnimation ? { duration: 0.6, delay: 0.2, ease: "easeOut" } : { duration: 0 }}

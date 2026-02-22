@@ -14,22 +14,26 @@ export default function MartPage() {
     {
       image: MART_ASSETS.prize1,
       title: "iPhone 17 Pro Max",
-      coins: "8,999,000 Pagcor Coins",
+      originalPrice: "8,999,000",
+      discountPrice: "6,999,000",
     },
     {
       image: MART_ASSETS.prize2,
       title: "Sex Toy",
-      coins: "1,223,000 Pagcor Coins",
+      originalPrice: "1,500,000",
+      discountPrice: "1,223,000",
     },
     {
       image: MART_ASSETS.prize3,
       title: "Birthday",
-      coins: "2,333,000 Pagcor Coins",
+      originalPrice: "3,000,000",
+      discountPrice: "2,333,000",
     },
     {
       image: MART_ASSETS.prize2,
       title: "Sex Toy",
-      coins: "1,223,000 Pagcor Coins",
+      originalPrice: "1,500,000",
+      discountPrice: "1,223,000",
     },
   ];
 

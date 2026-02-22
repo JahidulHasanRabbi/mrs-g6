@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import StepIndicator from "./StepIndicator";
+import ProgressBar from "./StepIndicator";
 import ProfileImageUpload from "./ProfileImageUpload";
 import FormField from "./FormField";
 import SubmitButton from "./SubmitButton";
@@ -15,6 +15,14 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  // Calculate progress based on filled fields (20% per field)
+  const calculateProgress = () => {
+    const filledFields = Object.values(formData).filter(value => value.trim() !== "").length;
+    return (filledFields / FORM_FIELDS.length) * 100;
+  };
+
+  const progress = calculateProgress();
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -52,7 +60,7 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
     >
-      <StepIndicator currentStep={currentStep} />
+      <ProgressBar progress={progress} />
 
       <ProfileImageUpload
         imageSrc="/assets/personal-data/profile-placeholder.png"

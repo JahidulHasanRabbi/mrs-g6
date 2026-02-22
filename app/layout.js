@@ -1,6 +1,7 @@
 import { Inter, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AppLayout from "./components/layout/AppLayout";
+import { UserProvider } from "./contexts/UserContext";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -32,7 +33,9 @@ export default function RootLayout({
         style={{ fontFamily: '"Times New Roman", serif' }}
       >
         <div className="min-h-screen max-w-[475px] mx-auto overflow-hidden">
-          <AppLayout>{children}</AppLayout>
+          <UserProvider>
+            <AppLayout>{children}</AppLayout>
+          </UserProvider>
         </div>
       </body>
     </html>

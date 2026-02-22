@@ -7,7 +7,7 @@ import { PROFILE_ASSETS } from "./profileAssets";
 
 export default function ProfileCard({ 
   name = "Jhon Doe", 
-  totalTokens = 100, 
+  totalTokens = "5,450.00", 
   currentLevel = "Gold",
   nextLevel = "Platinum",
   progress = 61.6, // percentage
@@ -49,7 +49,7 @@ export default function ProfileCard({
 
         {/* Avatar */}
         <motion.div
-          className="absolute left-[33px] top-[27px] w-[51px] h-[50px] rounded-full overflow-hidden"
+          className="absolute left-[38px] top-[20px] w-[52px] h-[52px] rounded-full overflow-hidden"
           initial={{ opacity: 0, scale: 0 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{
@@ -64,7 +64,7 @@ export default function ProfileCard({
 
         {/* Name and Tokens */}
         <motion.div
-          className="absolute left-[94px] top-[26px]"
+          className="absolute left-[100px] top-[25px]"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.5 }}

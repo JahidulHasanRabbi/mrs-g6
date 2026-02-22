@@ -3,9 +3,11 @@ import { useRouter } from "next/navigation";
 import AnimatedSection from "../components/ui/AnimatedSection";
 import ProfileCard from "../components/profile/ProfileCard";
 import EditProfileSection from "../components/profile/EditProfileSection";
+import { useUser } from "../contexts/UserContext";
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { userData } = useUser();
 
   const handleVipDetailsClick = () => {
     // Navigate to VIP details page
@@ -36,12 +38,12 @@ export default function ProfilePage() {
 
         <div className="mt-8">
           <ProfileCard
-            name="Jhon Doe"
-            totalTokens={100}
-            currentLevel="Gold"
-            nextLevel="Platinum"
-            progress={61.6}
-            tokensNeeded={20000}
+            name={userData.name}
+            totalTokens={userData.balance}
+            currentLevel={userData.currentLevel}
+            nextLevel={userData.nextLevel}
+            progress={userData.progress}
+            tokensNeeded={userData.tokensNeeded}
             onVipDetailsClick={handleVipDetailsClick}
           />
         </div>

@@ -7,11 +7,13 @@ import { FooterNav } from "../footer";
 import { Header } from "../header";
 import MartHeader from "../mart/MartHeader";
 import { HOME_ASSETS } from "../home/homeAssets";
+import { useUser } from "../../contexts/UserContext";
 
 export default function AppLayout({ children }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hasAnimated, setHasAnimated] = useState(false);
   const pathname = usePathname();
+  const { userData } = useUser();
 
   // Track initial mount to show animations only once
   useEffect(() => {
@@ -49,7 +51,7 @@ export default function AppLayout({ children }) {
       {/* Conditional Header */}
       {isMartPage ? (
         <MartHeader
-          balance="5,450.00"
+          balance={userData.balance}
           onMenuClick={() => setIsMenuOpen(true)}
           onProfileClick={() => console.log("Profile clicked")}
           showAnimation={!hasAnimated}
