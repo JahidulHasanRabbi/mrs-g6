@@ -1,7 +1,7 @@
 import { Inter, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import AppLayout from "./components/layout/AppLayout";
 import { UserProvider } from "./contexts/UserContext";
+import LayoutShell from "./LayoutShell";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -32,11 +32,9 @@ export default function RootLayout({
         className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} antialiased bg-black`}
         style={{ fontFamily: '"Times New Roman", serif' }}
       >
-        <div className="min-h-screen max-w-[475px] mx-auto overflow-hidden">
-          <UserProvider>
-            <AppLayout>{children}</AppLayout>
-          </UserProvider>
-        </div>
+        <UserProvider>
+          <LayoutShell>{children}</LayoutShell>
+        </UserProvider>
       </body>
     </html>
   );
