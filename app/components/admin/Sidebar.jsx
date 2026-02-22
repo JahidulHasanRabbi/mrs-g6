@@ -165,20 +165,19 @@ export default function Sidebar({ activeItem = "home" }) {
         {/* Primary Menu */}
         <div className="flex flex-col gap-4">
           {MENU_ITEMS.map((item) => {
-            const isItemActive = activeItem === item.id || (activeItem === "prize-settings" && item.id === "lucky-spin");
-            if (item.id === "lucky-spin" && (activeItem === "lucky-spin" || activeItem === "prize-settings")) {
+            // Check if this item should be highlighted
+            const shouldHighlight = 
+              (item.id === "lucky-spin" && (activeItem === "lucky-spin" || activeItem === "prize-settings" || activeItem === "user-logs" || activeItem === "daily-limits")) ||
+              (item.id === activeItem && !item.isHighlighted) ||
+              (item.id === "home" && activeItem === "home");
+            
+            if (shouldHighlight) {
               return <HighlightedMenuItem key={item.id} item={item} />;
             }
-            if (item.id === activeItem && !item.isHighlighted) {
-              return <HighlightedMenuItem key={item.id} item={item} />;
-            }
-            if (item.isHighlighted && activeItem !== item.id && activeItem !== "prize-settings") {
-              return <MenuItem key={item.id} item={item} isActive={false} />;
-            }
-            if (item.isHighlighted && (activeItem === item.id || activeItem === "prize-settings")) {
-              return <HighlightedMenuItem key={item.id} item={item} />;
-            }
-            return <MenuItem key={item.id} item={item} isActive={isItemActive} />;
+            
+            // Regular menu item with proper active state
+            const isActive = item.id === activeItem;
+            return <MenuItem key={item.id} item={item} isActive={isActive} />;
           })}
         </div>
 
