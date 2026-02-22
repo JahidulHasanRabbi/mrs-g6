@@ -72,7 +72,7 @@ const SECONDARY_MENU = [
   },
 ];
 
-const MenuItem = ({ item }) => (
+const MenuItem = ({ item, isActive }) => (
   <Link href={item.href}>
     <div className="relative h-10 overflow-hidden">
       <div className="flex items-center gap-1.5 px-2 py-1.5">
@@ -84,7 +84,7 @@ const MenuItem = ({ item }) => (
             className="object-cover"
           />
         </div>
-        <p className="text-[18px] font-bold text-white/70 tracking-[-0.396px] font-['Times_New_Roman']">
+        <p className={`text-[18px] font-bold tracking-[-0.396px] font-['Times_New_Roman'] ${isActive ? 'text-white' : 'text-white/70'}`}>
           {item.label}
         </p>
       </div>
@@ -164,19 +164,25 @@ export default function Sidebar({ activeItem = "home" }) {
       <div className="absolute left-1/2 top-[110px] flex w-[304px] -translate-x-1/2 flex-col gap-4">
         {/* Primary Menu */}
         <div className="flex flex-col gap-4">
-          {MENU_ITEMS.map((item) =>
-            item.isHighlighted ? (
-              <HighlightedMenuItem key={item.id} item={item} />
-            ) : (
-              <MenuItem key={item.id} item={item} />
-            )
-          )}
+          {MENU_ITEMS.map((item) => {
+            const isItemActive = activeItem === item.id;
+            if (item.id === activeItem && !item.isHighlighted) {
+              return <HighlightedMenuItem key={item.id} item={item} />;
+            }
+            if (item.isHighlighted && activeItem !== item.id) {
+              return <MenuItem key={item.id} item={item} isActive={false} />;
+            }
+            if (item.isHighlighted) {
+              return <HighlightedMenuItem key={item.id} item={item} />;
+            }
+            return <MenuItem key={item.id} item={item} isActive={isItemActive} />;
+          })}
         </div>
 
         {/* Secondary Menu */}
         <div className="flex flex-col gap-4">
           {SECONDARY_MENU.map((item) => (
-            <MenuItem key={item.id} item={item} />
+            <MenuItem key={item.id} item={item} isActive={activeItem === item.id} />
           ))}
         </div>
       </div>
