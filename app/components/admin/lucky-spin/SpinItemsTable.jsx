@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 
-const SPIN_ITEMS_DATA = [
+export const SPIN_ITEMS_DATA = [
   {
     id: 1,
     rewardName: "iPhone 17 Pro Max",
@@ -61,7 +61,7 @@ const SPIN_ITEMS_DATA = [
   },
 ];
 
-export default function SpinItemsTable({ onEditClick }) {
+export default function SpinItemsTable({ items = SPIN_ITEMS_DATA, onEditClick, onDeleteClick }) {
   return (
     <div className="overflow-x-auto">
         <table className="w-full">
@@ -85,7 +85,7 @@ export default function SpinItemsTable({ onEditClick }) {
             </tr>
           </thead>
           <tbody>
-            {SPIN_ITEMS_DATA.map((item) => (
+            {items.map((item) => (
               <tr
                 key={item.id}
                 className="border-b border-white/5 transition-colors hover:bg-white/[0.02]"
@@ -129,7 +129,11 @@ export default function SpinItemsTable({ onEditClick }) {
                     >
                       Edit
                     </button>
-                    <button className="rounded border border-[#f04a4a] px-4 py-2 text-sm text-[#f04a4a] transition-colors hover:bg-[#f04a4a]/10">
+                    <button
+                      type="button"
+                      onClick={() => onDeleteClick?.(item)}
+                      className="rounded border border-[#f04a4a] px-4 py-2 text-sm text-[#f04a4a] transition-colors hover:bg-[#f04a4a]/10"
+                    >
                       Delete
                     </button>
                   </div>

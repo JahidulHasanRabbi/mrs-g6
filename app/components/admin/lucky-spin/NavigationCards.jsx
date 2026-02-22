@@ -43,9 +43,17 @@ export default function NavigationCards({ activeCard = "spin-items" }) {
             <div
               className={`relative flex h-[162px] items-center justify-center gap-4 overflow-hidden rounded-[12px] px-6 transition-all hover:scale-[1.02] ${
                 isCardActive
-                  ? "border border-[#ffff84] bg-gradient-to-br from-[rgba(242,195,107,0)] to-[#dd8f1f] shadow-[0_4px_24px_rgba(221,143,31,0.4)]"
+                  ? "border border-white shadow-[0_4px_24px_rgba(221,143,31,0.4)]"
                   : "border border-[rgba(255,255,132,0.2)] bg-[rgba(255,255,255,0.1)]"
               }`}
+              style={
+                isCardActive
+                  ? {
+                      backgroundImage:
+                        "linear-gradient(1.3610315416498082deg, hsla(39, 84%, 68%, 0) 74.374%, hsla(35, 75%, 49%, 1) 94.001%), linear-gradient(90deg, hsla(60, 100%, 76%, 1) 0%, hsla(60, 100%, 76%, 1) 100%)",
+                    }
+                  : undefined
+              }
             >
               <div className="relative shrink-0">
                 <Image
@@ -53,12 +61,12 @@ export default function NavigationCards({ activeCard = "spin-items" }) {
                   alt=""
                   width={card.id === "prize-settings" ? 70 : 60}
                   height={card.id === "prize-settings" ? 70 : 60}
-                  className="object-contain"
+                  className={`object-contain ${isCardActive ? "brightness-0" : ""}`}
                 />
               </div>
               <h3
                 className={`text-2xl font-bold leading-[1.5] font-['Times_New_Roman'] ${
-                  isCardActive ? "text-white" : "text-white"
+                  isCardActive ? "text-black" : "text-white"
                 }`}
               >
                 {card.title}

@@ -3,21 +3,29 @@ export default function StatDonut({
   total,
   size = 160,
   stroke = 16,
-  strokeColor = "#f6c75c",
+  strokeColor,
 }) {
   const pct = Math.max(0, Math.min(1, value / total));
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
   const dash = circumference * pct;
 
+  const gradientId = `stat-donut-grad-${size}-${stroke}`;
+
   return (
     <div className="relative" style={{ width: size, height: size }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <defs>
+          <linearGradient id={gradientId} x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#FFFF84" />
+            <stop offset="100%" stopColor="#DD8F1F" />
+          </linearGradient>
+        </defs>
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="rgba(255,255,255,0.12)"
+          stroke="#ffffff"
           strokeWidth={stroke}
           fill="none"
         />
@@ -25,7 +33,7 @@ export default function StatDonut({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={strokeColor}
+          stroke={strokeColor ?? `url(#${gradientId})`}
           strokeWidth={stroke}
           fill="none"
           strokeLinecap="round"
@@ -36,8 +44,12 @@ export default function StatDonut({
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-xs text-gray-400">Active Users</div>
-          <div className="text-2xl font-semibold">{value.toLocaleString()}</div>
+          <div className="text-[16px] font-bold text-[#06b800] font-['Times_New_Roman'] leading-[1.2] capitalize">
+            Active Users
+          </div>
+          <div className="text-[28px] font-bold text-white font-['Times_New_Roman'] leading-[1.1]">
+            {value.toLocaleString()}
+          </div>
         </div>
       </div>
     </div>

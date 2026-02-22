@@ -87,14 +87,20 @@ export default function CheckInCalendar() {
                   background: isSpecial
                     ? 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)'
                     : isChecked
-                    ? '#2d5a3d'
+                    ? 'linear-gradient(135deg, #2d5a3d 0%, #1a3d2a 100%)'
                     : '#1a3d2a',
                   border: '2px solid #8b6914',
                   boxShadow: isChecked
                     ? '0px 4px 10px rgba(45, 90, 61, 0.5)'
                     : '0px 2px 5px rgba(0, 0, 0, 0.3)',
                 }}
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ 
+                  scale: 1.05,
+                  boxShadow: isChecked
+                    ? '0px 6px 15px rgba(45, 90, 61, 0.7)'
+                    : '0px 6px 15px rgba(0, 0, 0, 0.5)',
+                  transition: { duration: 0.2 }
+                }}
                 whileTap={{ scale: 0.95 }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

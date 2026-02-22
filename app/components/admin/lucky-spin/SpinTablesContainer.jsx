@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import SpinItemsTable from "./SpinItemsTable";
+import SpinItemsTable, { SPIN_ITEMS_DATA } from "./SpinItemsTable";
 import SpinSequenceTable from "./SpinSequenceTable";
 import SpinItemModal from "./SpinItemModal";
 import SpinSequenceModal from "./SpinSequenceModal";
@@ -11,6 +11,7 @@ export default function SpinTablesContainer() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("add");
   const [selectedItem, setSelectedItem] = useState(null);
+  const [spinItems, setSpinItems] = useState(SPIN_ITEMS_DATA);
 
   const handleTabToggle = () => {
     setActiveTab(prev => prev === "items" ? "sequence" : "items");
@@ -26,6 +27,12 @@ export default function SpinTablesContainer() {
     setModalMode("edit");
     setSelectedItem(item);
     setIsModalOpen(true);
+  };
+
+  const handleDeleteClick = (item) => {
+    const ok = window.confirm("Are you sure you want to delete this item?");
+    if (!ok) return;
+    setSpinItems((prev) => prev.filter((x) => x.id !== item.id));
   };
 
   const handleModalClose = () => {
@@ -81,7 +88,11 @@ export default function SpinTablesContainer() {
 
         {/* Conditional Table Rendering */}
         {activeTab === "items" ? (
-          <SpinItemsTable onEditClick={handleEditClick} />
+          <SpinItemsTable
+            items={spinItems}
+            onEditClick={handleEditClick}
+            onDeleteClick={handleDeleteClick}
+          />
         ) : (
           <SpinSequenceTable onEditClick={handleEditClick} />
         )}

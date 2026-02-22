@@ -70,10 +70,10 @@ export default function DailyLimitsPage() {
               </div>
 
               <button
-                className="bg-[#f0f0f0] flex items-center justify-center p-[6px] rounded-[8px] shrink-0"
+                className="flex items-center justify-center p-[6px] rounded-[8px] shrink-0"
                 type="button"
               >
-                <div className="relative shrink-0 size-[32px]">
+                <div className="relative shrink-0 size-[42px]">
                   <img
                     src="/assets/admin/lucky-spin/sorting.png"
                     alt=""

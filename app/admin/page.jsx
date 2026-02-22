@@ -10,16 +10,8 @@ import MemberTable from "../components/admin/table/MemberTable";
 export default function AdminDashboard() {
   // Mock data for charts
   const dayLabels = useMemo(() => {
-    const labels = [];
-    const today = new Date();
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      labels.push(`${day}/${month}`);
-    }
-    return labels;
+    const days = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+    return days;
   }, []);
 
   const weeklyActive = [4200, 5100, 4800, 6200, 5500, 7100, 6800];
@@ -28,7 +20,7 @@ export default function AdminDashboard() {
   const totalMembers = 8450;
 
   return (
-    <div className="min-h-screen bg-[#0a0f0a]">
+    <div className="min-h-screen bg-[#07190d]">
       {/* Sidebar (fixed) */}
       <aside className="fixed left-6 top-6 bottom-6 z-20 w-[326px]">
         <Sidebar activeItem="home" />
@@ -64,20 +56,21 @@ export default function AdminDashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1fr_0.5fr]">
           {/* Member Activity Overview */}
-          <div className="lg:col-span-4">
-            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
+          <div className="rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-white font-['Times_New_Roman']">
-                  Member Activity Overview
+                <h2 className="text-[20px] font-bold text-white font-['Times_New_Roman'] capitalize leading-[1.2]">
+                  Member activity overview
                 </h2>
-                <span className="rounded-md bg-[#e9af41]/20 px-3 py-1 text-xs font-bold text-[#e9af41]">
-                  last 7 days
-                </span>
+                <div className="rounded-[4px] px-[15px] py-[9px]" style={{ backgroundImage: "linear-gradient(1.0746108354373831deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)" }}>
+                  <span className="text-[16px] font-bold text-black font-['Times_New_Roman'] leading-none">
+                    last 7 days
+                  </span>
+                </div>
               </div>
-              <p className="mb-4 text-sm text-gray-400">
-                Weekly Active: {weeklyActive.reduce((a, b) => a + b, 0)} · Peak: {Math.max(...weeklyActive)}
+              <p className="mb-4 text-[16px] text-[#5c5c5c] font-['Times_New_Roman'] capitalize leading-[1.2]">
+                active Users : 185
               </p>
               <BarChart
                 labels={dayLabels}
@@ -85,22 +78,22 @@ export default function AdminDashboard() {
                 positiveColor="#f6c75c"
                 baseColor="rgba(255,255,255,0.15)"
               />
-            </div>
           </div>
 
           {/* Daily Check-In Summary */}
-          <div className="lg:col-span-4">
-            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
+          <div className="rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-white font-['Times_New_Roman']">
+                <h2 className="text-[20px] font-bold text-white font-['Times_New_Roman'] capitalize leading-[1.2]">
                   Daily Check-In Summary
                 </h2>
-                <span className="rounded-md bg-[#e9af41]/20 px-3 py-1 text-xs font-bold text-[#e9af41]">
-                  last 7 days
-                </span>
+                <div className="rounded-[4px] px-[15px] py-[9px]" style={{ backgroundImage: "linear-gradient(1.0746108354373831deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)" }}>
+                  <span className="text-[16px] font-bold text-black font-['Times_New_Roman'] leading-none">
+                    last 7 days
+                  </span>
+                </div>
               </div>
               <p className="mb-4 text-sm">
-                <span className="text-emerald-400">▲ 18.4%</span>
+                <span className="text-[#06b800]">▲ 18.4%</span>
                 <span className="ml-2 text-gray-400">
                   · Total: {checkins.reduce((a, b) => a + b, 0)} check-ins
                 </span>
@@ -110,22 +103,15 @@ export default function AdminDashboard() {
                 values={checkins}
                 stroke="#f6c75c"
               />
-            </div>
           </div>
 
           {/* Active Users Today */}
-          <div className="lg:col-span-4">
-            <div className="flex h-full flex-col items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
-              <h2 className="mb-4 text-center text-xl font-bold text-white font-['Times_New_Roman']">
+          <div className="flex h-full flex-col items-center justify-center rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
+              <h2 className="mb-2 text-center text-xl font-bold text-white font-['Times_New_Roman']">
                 Active Users Today
               </h2>
               <div className="my-2">
-                <StatDonut
-                  value={activeToday}
-                  total={totalMembers}
-                  size={100}
-                  stroke={10}
-                />
+                <StatDonut value={activeToday} total={totalMembers} size={217} stroke={20} />
               </div>
               <div className="w-full space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
@@ -143,7 +129,6 @@ export default function AdminDashboard() {
                   </span>
                 </div>
               </div>
-            </div>
           </div>
         </div>
 
