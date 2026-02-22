@@ -165,14 +165,17 @@ export default function Sidebar({ activeItem = "home" }) {
         {/* Primary Menu */}
         <div className="flex flex-col gap-4">
           {MENU_ITEMS.map((item) => {
-            const isItemActive = activeItem === item.id;
+            const isItemActive = activeItem === item.id || (activeItem === "prize-settings" && item.id === "lucky-spin");
+            if (item.id === "lucky-spin" && (activeItem === "lucky-spin" || activeItem === "prize-settings")) {
+              return <HighlightedMenuItem key={item.id} item={item} />;
+            }
             if (item.id === activeItem && !item.isHighlighted) {
               return <HighlightedMenuItem key={item.id} item={item} />;
             }
-            if (item.isHighlighted && activeItem !== item.id) {
+            if (item.isHighlighted && activeItem !== item.id && activeItem !== "prize-settings") {
               return <MenuItem key={item.id} item={item} isActive={false} />;
             }
-            if (item.isHighlighted) {
+            if (item.isHighlighted && (activeItem === item.id || activeItem === "prize-settings")) {
               return <HighlightedMenuItem key={item.id} item={item} />;
             }
             return <MenuItem key={item.id} item={item} isActive={isItemActive} />;

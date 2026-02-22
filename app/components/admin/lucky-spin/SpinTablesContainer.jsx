@@ -4,6 +4,7 @@ import { useState } from "react";
 import SpinItemsTable from "./SpinItemsTable";
 import SpinSequenceTable from "./SpinSequenceTable";
 import SpinItemModal from "./SpinItemModal";
+import SpinSequenceModal from "./SpinSequenceModal";
 
 export default function SpinTablesContainer() {
   const [activeTab, setActiveTab] = useState("items"); // "items" or "sequence"
@@ -82,7 +83,7 @@ export default function SpinTablesContainer() {
         {activeTab === "items" ? (
           <SpinItemsTable onEditClick={handleEditClick} />
         ) : (
-          <SpinSequenceTable />
+          <SpinSequenceTable onEditClick={handleEditClick} />
         )}
 
         {/* Pagination */}
@@ -104,12 +105,21 @@ export default function SpinTablesContainer() {
       </div>
 
       {/* Modal */}
-      <SpinItemModal
-        isOpen={isModalOpen}
-        onClose={handleModalClose}
-        mode={modalMode}
-        initialData={selectedItem}
-      />
+      {activeTab === "items" ? (
+        <SpinItemModal
+          isOpen={isModalOpen}
+          onClose={handleModalClose}
+          mode={modalMode}
+          initialData={selectedItem}
+        />
+      ) : (
+        <SpinSequenceModal
+          isOpen={isModalOpen}
+          onClose={handleModalClose}
+          mode={modalMode}
+          initialData={selectedItem}
+        />
+      )}
     </>
   );
 }

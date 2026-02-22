@@ -1,15 +1,15 @@
 "use client";
 
-import Sidebar from "../../components/admin/Sidebar";
-import NavigationCards from "../../components/admin/lucky-spin/NavigationCards";
-import SpinTablesContainer from "../../components/admin/lucky-spin/SpinTablesContainer";
+import Sidebar from "../../../components/admin/Sidebar";
+import NavigationCards from "../../../components/admin/lucky-spin/NavigationCards";
+import PrizeSettingsTable from "../../../components/admin/lucky-spin/PrizeSettingsTable";
 
-export default function LuckySpinManagement() {
+export default function PrizeSettingsPage() {
   return (
     <div className="min-h-screen bg-[#07190d]">
       {/* Sidebar (fixed) */}
       <aside className="fixed left-6 top-6 bottom-6 z-20 w-[326px]">
-        <Sidebar activeItem="lucky-spin" />
+        <Sidebar activeItem="prize-settings" />
       </aside>
 
       {/* Main Content */}
@@ -17,7 +17,7 @@ export default function LuckySpinManagement() {
         {/* Header */}
         <div className="mb-8 flex items-start justify-between">
           <h1 className="text-4xl font-bold leading-[1.05] text-white font-['Times_New_Roman']">
-            Lucky Spin Management
+            Prize Settings
           </h1>
           <button className="flex h-[26px] w-[26px] items-center justify-center">
             <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
@@ -43,12 +43,37 @@ export default function LuckySpinManagement() {
 
         {/* Navigation Cards */}
         <div className="mb-6">
-          <NavigationCards activeCard="spin-items" />
+          <NavigationCards activeCard="prize-settings" />
         </div>
 
-        {/* Spin Tables Container */}
-        <div>
-          <SpinTablesContainer />
+        {/* Prize Settings Table */}
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
+          {/* Table Header */}
+          <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+            <h2 className="text-xl font-bold text-white font-['Times_New_Roman']">
+              Prize Settings Table
+            </h2>
+          </div>
+
+          {/* Table Content */}
+          <PrizeSettingsTable />
+
+          {/* Pagination */}
+          <div className="flex items-center justify-center border-t border-white/10 px-6 py-4">
+            <div className="flex items-center gap-2">
+              <button className="flex h-8 w-8 items-center justify-center rounded border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10">
+                ‹
+              </button>
+              <div className="flex items-center gap-1 px-2 text-sm text-white/70">
+                <span className="font-bold text-white">1</span>
+                <span>/</span>
+                <span>5</span>
+              </div>
+              <button className="flex h-8 w-8 items-center justify-center rounded border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10">
+                ›
+              </button>
+            </div>
+          </div>
         </div>
       </main>
     </div>

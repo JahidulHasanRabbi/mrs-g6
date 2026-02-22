@@ -11,7 +11,7 @@ const SPIN_SEQUENCE_DATA = [
   { id: 8, sequence: 8, item: "Free Bonus 1.88" },
 ];
 
-export default function SpinSequenceTable() {
+export default function SpinSequenceTable({ onEditClick, onAddClick }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full">
@@ -76,9 +76,12 @@ export default function SpinSequenceTable() {
               </td>
               <td className="px-4 py-4">
                 <div className="flex items-center gap-2">
-                  <button className="rounded bg-[#06b800] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#06b800]/90">
-                    Edit
-                  </button>
+                  <button 
+                      onClick={() => onEditClick(item)}
+                      className="rounded bg-[#06b800] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#06b800]/90"
+                    >
+                      Edit
+                    </button>
                   <button className="rounded border border-[#f04a4a] px-4 py-2 text-sm text-[#f04a4a] transition-colors hover:bg-[#f04a4a]/10">
                     Delete
                   </button>

@@ -33,37 +33,40 @@ const NAVIGATION_CARDS = [
 ];
 
 
-export default function NavigationCards() {
+export default function NavigationCards({ activeCard = "spin-items" }) {
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-      {NAVIGATION_CARDS.map((card) => (
-        <Link key={card.id} href={card.href}>
-          <div
-            className={`relative flex h-[162px] items-center justify-center gap-4 overflow-hidden rounded-[12px] px-6 transition-all hover:scale-[1.02] ${
-              card.isActive
-                ? "border border-[#ffff84] bg-gradient-to-br from-[rgba(242,195,107,0)] to-[#dd8f1f] shadow-[0_4px_24px_rgba(221,143,31,0.4)]"
-                : "border border-[rgba(255,255,132,0.2)] bg-[rgba(255,255,255,0.1)]"
-            }`}
-          >
-            <div className="relative shrink-0">
-              <Image
-                src={card.icon}
-                alt=""
-                width={card.id === "prize-settings" ? 70 : 60}
-                height={card.id === "prize-settings" ? 70 : 60}
-                className="object-contain"
-              />
-            </div>
-            <h3
-              className={`text-2xl font-bold leading-[1.5] font-['Times_New_Roman'] ${
-                card.isActive ? "text-white" : "text-white"
+      {NAVIGATION_CARDS.map((card) => {
+        const isCardActive = card.id === activeCard;
+        return (
+          <Link key={card.id} href={card.href}>
+            <div
+              className={`relative flex h-[162px] items-center justify-center gap-4 overflow-hidden rounded-[12px] px-6 transition-all hover:scale-[1.02] ${
+                isCardActive
+                  ? "border border-[#ffff84] bg-gradient-to-br from-[rgba(242,195,107,0)] to-[#dd8f1f] shadow-[0_4px_24px_rgba(221,143,31,0.4)]"
+                  : "border border-[rgba(255,255,132,0.2)] bg-[rgba(255,255,255,0.1)]"
               }`}
             >
-              {card.title}
-            </h3>
-          </div>
-        </Link>
-      ))}
+              <div className="relative shrink-0">
+                <Image
+                  src={card.icon}
+                  alt=""
+                  width={card.id === "prize-settings" ? 70 : 60}
+                  height={card.id === "prize-settings" ? 70 : 60}
+                  className="object-contain"
+                />
+              </div>
+              <h3
+                className={`text-2xl font-bold leading-[1.5] font-['Times_New_Roman'] ${
+                  isCardActive ? "text-white" : "text-white"
+                }`}
+              >
+                {card.title}
+              </h3>
+            </div>
+          </Link>
+        );
+      })}
     </div>
   );
 }
