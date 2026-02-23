@@ -6,7 +6,7 @@ import { SPIN_ASSETS } from "./spinAssets";
 
 const WinningRow = ({ date, phone, amount, index }) => (
   <motion.div 
-    className="flex items-center justify-between px-6 py-3"
+    className="flex items-center justify-between px-2 sm:px-6 py-3"
     initial={{ opacity: 0, x: -100 }}
     animate={{ opacity: 1, x: 0 }}
     transition={{ 
@@ -16,8 +16,8 @@ const WinningRow = ({ date, phone, amount, index }) => (
     }}
     whileHover={{ scale: 1.02, x: 5 }}
   >
-    <span className="text-[#3d1a02] text-[14px] font-bold w-[80px]">{date}</span>
-    <span className="text-[#3d1a02] text-[14px] font-bold w-[90px] text-center">{phone}</span>
+    <span className="text-[#3d1a02] text-xs sm:text-sm font-bold w-[80px]">{date}</span>
+    <span className="text-[#3d1a02] text-xs sm:text-sm font-bold w-[90px] text-center">{phone}</span>
     <motion.div 
       className="flex items-center gap-2"
       initial={{ opacity: 0, scale: 0 }}
