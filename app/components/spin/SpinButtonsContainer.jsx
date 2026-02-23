@@ -6,7 +6,7 @@ import SpinButton from "./SpinButton";
 const SpinButtonsContainer = ({ buttons, onButtonClick }) => {
   return (
     <motion.div 
-      className="flex justify-center items-center gap-4"
+      className="grid grid-cols-1 sm:grid-cols-2 gap-4"
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}

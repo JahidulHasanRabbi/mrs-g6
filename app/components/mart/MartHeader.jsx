@@ -19,12 +19,13 @@ export default function MartHeader({ balance = "5,450.00", onMenuClick, onProfil
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
       >
-        <div className="relative w-[62px] h-[52px]">
+        <div className="relative">
           <Image
             alt="Menu"
-            src={MART_ASSETS.menuIcon}
-            fill
-            className="object-cover"
+            src={"/assets/images/hamburger-icon.png"}
+            width={32}
+            height={32}
+            className="object-contain"
           />
         </div>
         <p className="text-[#e9af41] text-[14px] font-bold font-['Times_New_Roman']">

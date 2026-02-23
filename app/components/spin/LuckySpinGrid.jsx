@@ -198,7 +198,7 @@ export default function LuckySpinGrid({ onSpinEnd }) {
         ))}
 
         <motion.div 
-          className="absolute left-[77px] top-[73px] w-[143px] h-[143px] cursor-pointer"
+          className="absolute left-[77px] top-[73px] w-[143px] h-[143px] cursor-pointer z-10"
           initial={{ opacity: 0, scale: 0, rotate: 360 }}
           animate={{ opacity: 1, scale: 1, rotate: 0 }}
           transition={{ 

@@ -7,7 +7,7 @@ import { MART_ASSETS } from "./martAssets";
 export default function MartItem({ image, title, originalPrice, discountPrice, coins, onRedeem, index = 0 }) {
   return (
     <motion.div 
-      className="relative w-[203px] h-[270px] mb-4"
+      className="relative w-[223px] h-[270px] mb-4"
       initial={{ opacity: 0, scale: 0.3, y: -100 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{

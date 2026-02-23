@@ -45,13 +45,12 @@ export default function AnimatedSection({
       animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
       transition={{ type: "spring", stiffness: 140, damping: 18, mass: 0.6 }}
     >
-      <div className="relative w-full px-4 pt-3">
+      <div className="relative w-full px-4 pt-3 text-4xl md:text-5xl">
         <h1
-          className="text-center font-bold"
+          className="text-center font-bold  "
           style={{
             fontFamily: '"Times New Roman", serif',
             color: "#e9af41",
-            fontSize: titleSize,
             letterSpacing,
             textShadow: "0px 3px 0px rgba(0,0,0,0.35)",
           }}

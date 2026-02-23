@@ -1,9 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { HOME_ASSETS } from "./homeAssets";
+
+const POPUP_BG_IMG = "/assets/home/popup-deposit-bg.png";
+const POPUP_CLOSE_IMG = "/assets/home/popup-close.png";
+const POPUP_DAY7_BG_IMG = "/assets/home/popup-day7-bg.png";
+const POPUP_DAY7_CLOSE_IMG = "/assets/home/popup-day7-close.png";
 
 function AssetFill({ src, alt, className }) {
   if (!src) {
@@ -31,15 +36,48 @@ function AssetFill({ src, alt, className }) {
 
 export default function CheckInBoard() {
   const [checkedDays, setCheckedDays] = useState([1, 2]);
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [isPopupBgLoaded, setIsPopupBgLoaded] = useState({
+    default: false,
+    day7: false,
+  });
+
+  useEffect(() => {
+    const preload = (src) =>
+      new Promise((resolve) => {
+        const img = new window.Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = src;
+      });
+
+    let cancelled = false;
+
+    (async () => {
+      if (typeof window === "undefined") return;
+      const okDefault = await preload(POPUP_BG_IMG);
+      await preload(POPUP_CLOSE_IMG);
+      const okDay7 = await preload(POPUP_DAY7_BG_IMG);
+      await preload(POPUP_DAY7_CLOSE_IMG);
+      if (!cancelled) {
+        setIsPopupBgLoaded({ default: Boolean(okDefault), day7: Boolean(okDay7) });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const days = useMemo(
     () => [
-      { day: 1, label: "DAY 1", reward: "+100", x: 20, y: 30 },
-      { day: 2, label: "DAY 2", reward: "+100", x: 40, y: 30 },
-      { day: 3, label: "DAY 3", reward: "+100", x: 60, y: 30 },
-      { day: 4, label: "DAY 4", reward: "+100", x: 80, y: 30 },
-      { day: 5, label: "DAY 5", reward: "+100", x: 20, y: 65 },
-      { day: 6, label: "DAY 6", reward: "+100", x: 40, y: 65 },
+      { day: 1, label: "DAY 1", reward: "+100", x: 20, y: 30, iconSrc: HOME_ASSETS.electricSign },
+      { day: 2, label: "DAY 2", reward: "+100", x: 40, y: 30, iconSrc: HOME_ASSETS.electricSign },
+      { day: 3, label: "DAY 3", reward: "+100", x: 60, y: 30, iconSrc: HOME_ASSETS.dayCard3 },
+      { day: 4, label: "DAY 4", reward: "+100", x: 80, y: 30, iconSrc: HOME_ASSETS.electricSign },
+      { day: 5, label: "DAY 5", reward: "+100", x: 20, y: 65, iconSrc: HOME_ASSETS.dayCard5 },
+      { day: 6, label: "DAY 6", reward: "+100", x: 40, y: 65, iconSrc: HOME_ASSETS.electricSign },
       { day: 7, label: "DAY 7", reward: "", x: 70, y: 65, isSpecial: true },
     ],
     [],
@@ -50,8 +88,13 @@ export default function CheckInBoard() {
     setCheckedDays((prev) => [...prev, day]);
   };
 
+  const onDayClick = (day) => {
+    setSelectedDay(day);
+    setIsPopupOpen(true);
+  };
+
   return (
-    <section className="relative w-full px-4">
+    <section className="relative w-full px-2 sm:px-4">
       <motion.div
         className="relative w-full mx-auto"
         initial={{ opacity: 0, y: 34, scale: 0.98, filter: "blur(10px)" }}
@@ -66,7 +109,7 @@ export default function CheckInBoard() {
           maxWidth: 475,
         }}
       >
-        <div className="relative w-full mt-4">
+        <div className="relative w-full mt-2 sm:mt-4">
           {/* Frame Background */}
           <div
             className="relative w-full"
@@ -78,12 +121,12 @@ export default function CheckInBoard() {
               src={HOME_ASSETS.checkinBoard}
               alt="Check in frame"
               fill
-              className="object-contain"
-              sizes="(max-width: 475px) 100vw, 475px"
+              className="object-fill"
+              sizes="(max-width: 490px) 100vw, 475px"
             />
 
             {/* Individual Day Cards Positioned on Frame */}
-            <div className="absolute inset-0">
+            <div className="absolute inset-0 ">
               {days.map((d) => {
                 const isChecked = checkedDays.includes(d.day);
 
@@ -93,13 +136,13 @@ export default function CheckInBoard() {
                     <motion.button
                       key={d.day}
                       type="button"
-                      onClick={() => onPressDay(d.day)}
-                      className="absolute"
+                      onClick={() => onDayClick(d)}
+                      className={`absolute w-[35%] h-[30%] sm:w-[36%] sm:h-[30%] ${
+                        isChecked ? "grayscale opacity-60" : ""
+                      }`}
                       style={{
                         left: `${d.x}%`,
                         top: `${d.y}%`,
-                        width: "36%",
-                        height: "30%",
                         cursor: isChecked ? "default" : "pointer",
                         outline: "none",
                         background: "transparent",
@@ -145,11 +188,10 @@ export default function CheckInBoard() {
 
                       {/* Day 7 Label */}
                       <div
-                        className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 text-center"
+                        className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 text-center text-lg "
                         style={{
                           fontFamily: '"Times New Roman"',
                           color: "#60803C",
-                          fontSize: "20px",
                           fontStyle: "normal",
                           fontWeight: 700,
                           lineHeight: "normal",
@@ -166,18 +208,18 @@ export default function CheckInBoard() {
                   <motion.button
                     key={d.day}
                     type="button"
-                    onClick={() => onPressDay(d.day)}
-                    className="absolute"
+                    onClick={() => onDayClick(d)}
+                    className={`absolute w-[31%] h-[31%] ${
+                      isChecked ? "grayscale opacity-60" : ""
+                    }`}
                     style={{
                       left: `${d.x}%`,
                       top: `${d.y}%`,
-                      width: "31%",
-                      height: "32%",
                       cursor: isChecked ? "default" : "pointer",
                       outline: "none",
                       background: "transparent",
                       x: "-50%",
-                      y: "-50%",
+                      y: "-54%",
                     }}
                     aria-label={`Check in ${d.label}`}
                     initial={{ opacity: 0, scale: 0.3, y: "-150%", x: "-50%" }}
@@ -207,7 +249,7 @@ export default function CheckInBoard() {
                     }
                   >
                     {/* Card Frame */}
-                    <div className="relative w-[150px] h-[150px]">
+                    <div className="relative w-[120px] h-[130px] sm:w-[150px] sm:h-[150px]">
                       <Image
                         src={HOME_ASSETS.dayCard1}
                         alt="Calendar frame"
@@ -219,11 +261,10 @@ export default function CheckInBoard() {
                       {/* Content inside card */}
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
                         <div
-                          className="relative"
-                          style={{ width: 40, height: 40 }}
+                          className="relative w-[30px] h-[30px] sm:w-[40px] sm:h-[40px]"
                         >
                           <Image
-                            src={HOME_ASSETS.electricSign}
+                            src={d.iconSrc}
                             alt="Reward"
                             fill
                             className="object-contain"
@@ -273,11 +314,10 @@ export default function CheckInBoard() {
 
                     {/* Day Label */}
                     <div
-                      className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 text-center"
+                      className="absolute -bottom-7 sm:-bottom-4 left-1/2 transform -translate-x-1/2 text-center text-lg sm:text-xl"
                       style={{
                         fontFamily: '"Times New Roman"',
                         color: "#60803C",
-                        fontSize: "20px",
                         fontStyle: "normal",
                         fontWeight: 700,
                         lineHeight: "normal",
@@ -293,6 +333,181 @@ export default function CheckInBoard() {
           </div>
         </div>
       </motion.div>
+
+      {isPopupOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+          onClick={() => setIsPopupOpen(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          {selectedDay?.isSpecial ? (
+            <div
+              className="relative w-full max-w-[360px]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="absolute inset-0 bg-black/10" />
+              <img
+                src={POPUP_DAY7_BG_IMG}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover transition-opacity duration-300"
+                style={{ opacity: isPopupBgLoaded.day7 ? 1 : 0 }}
+              />
+
+              <div className="relative px-10 pb-12 pt-10">
+                <div className="flex items-end justify-between">
+                  <p
+                    className="text-[16px] font-bold leading-[1.1] text-center"
+                    style={{
+                      fontFamily: '"Times New Roman", serif',
+                      color: "#60803C",
+                    }}
+                  >
+                    🎉 Daily Check-in Reward
+                  </p>
+
+                  <button
+                    type="button"
+                    className="relative h-[30px] w-[30px]"
+                    onClick={() => setIsPopupOpen(false)}
+                    aria-label="Close"
+                  >
+                    <Image
+                      src={POPUP_DAY7_CLOSE_IMG}
+                      alt=""
+                      width={30}
+                      height={30}
+                      className="h-full w-full object-contain"
+                    />
+                  </button>
+                </div>
+
+                <p
+                  className="mt-2 text-[16px] font-bold leading-[1.5] text-center"
+                  style={{
+                    fontFamily: '"Times New Roman", serif',
+                    color: "#60803C",
+                  }}
+                >
+                  Congratulations! You’ve checked in for today and earned +1 “N1 token”!
+                </p>
+
+                <p
+                  className="mt-3 text-[12px] font-bold leading-[1.5]"
+                  style={{
+                    fontFamily: '"Times New Roman", serif',
+                    color: "rgba(96,128,60,0.6)",
+                  }}
+                >
+                  ⚠️ Completed checked in for 7 days will get extra “N1 token” 1 to 10 randomly!
+                </p>
+
+                <button
+                  type="button"
+                  className="mt-4 w-full rounded-[99px] px-6 py-[6px] shadow-[1px_4px_11px_0px_rgba(0,0,0,0.1)]"
+                  style={{
+                    backgroundColor: "#E9AF41",
+                    boxShadow:
+                      "inset -5px -5px 15px rgba(0,0,0,0.4), 1px 4px 11px rgba(0,0,0,0.1)",
+                  }}
+                >
+                  <span
+                    className="text-[16px] font-bold leading-[1.5]"
+                    style={{
+                      fontFamily: '"Times New Roman", serif',
+                      color: "#60803C",
+                    }}
+                  >
+                    Claim Your N1 Token
+                  </span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div
+              className="relative w-full max-w-[360px]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="absolute inset-0 bg-black/10" />
+              <img
+                src={POPUP_BG_IMG}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover transition-opacity duration-300"
+                style={{ opacity: isPopupBgLoaded.default ? 1 : 0 }}
+              />
+
+              <div className="relative flex flex-col gap-6 px-8 pb-12 pt-14">
+                <div className="flex items-start justify-between gap-6">
+                  <p
+                    className="text-[16px] font-bold leading-[1.1]"
+                    style={{
+                      fontFamily: '"Times New Roman", serif',
+                      color: "#60803C",
+                    }}
+                  >
+                    Earn Tokens with Every Deposit!
+                  </p>
+
+                  <button
+                    type="button"
+                    className="relative h-[30px] w-[30px]"
+                    onClick={() => setIsPopupOpen(false)}
+                    aria-label="Close"
+                  >
+                    <Image
+                      src={POPUP_CLOSE_IMG}
+                      alt=""
+                      width={30}
+                      height={30}
+                      className="h-full w-full object-contain"
+                    />
+                  </button>
+                </div>
+
+                <p
+                  className="text-[16px] font-bold leading-[1.5]"
+                  style={{
+                    fontFamily: '"Times New Roman", serif',
+                    color: "#60803C",
+                  }}
+                >
+                  Every Deposit RM10 can get 1pc N1 Token !
+                </p>
+
+                <p
+                  className="text-[16px] font-bold leading-[1.5]"
+                  style={{
+                    fontFamily: '"Times New Roman", serif',
+                    color: "#60803C",
+                  }}
+                >
+                  {selectedDay?.label}{selectedDay?.reward ? ` · ${selectedDay.reward}` : ""}
+                </p>
+
+                <button
+                  type="button"
+                  className="relative w-full rounded-[99px] px-6 py-[6px] shadow-[1px_4px_11px_0px_rgba(0,0,0,0.1)]"
+                  style={{
+                    backgroundColor: "#E9AF41",
+                    boxShadow:
+                      "inset -5px -5px 15px rgba(0,0,0,0.4), 1px 4px 11px rgba(0,0,0,0.1)",
+                  }}
+                >
+                  <span
+                    className="text-[16px] font-bold leading-[1.2]"
+                    style={{
+                      fontFamily: '"Times New Roman", serif',
+                      color: "#60803C",
+                    }}
+                  >
+                    Deposit Now
+                  </span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </section>
   );
 }

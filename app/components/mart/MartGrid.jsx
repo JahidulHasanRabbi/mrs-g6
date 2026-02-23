@@ -6,7 +6,7 @@ import MartItem from "./MartItem";
 export default function MartGrid({ items, onRedeem }) {
   return (
     <motion.div 
-      className="flex flex-wrap gap-4 justify-center px-4 mt-8"
+      className="flex flex-wrap gap-4 justify-center items-center mt-8"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6, delay: 0.4 }}

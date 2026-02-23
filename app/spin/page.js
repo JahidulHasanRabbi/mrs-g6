@@ -48,7 +48,7 @@ export default function SpinPage() {
         </AnimatedSectionWrapper>
 
         <AnimatedSectionWrapper animation="fadeInUp" delay={0.25} viewportAmount={0.3}>
-          <div className="flex justify-center px-8 py-4">
+          <div className="flex sm: flex-wrap justify-center px-8 py-4">
             <SpinButtonsContainer
               buttons={[
                 {
@@ -74,7 +74,7 @@ export default function SpinPage() {
         </AnimatedSectionWrapper>
 
         <AnimatedSectionWrapper animation="fadeInUp" delay={0.35} viewportAmount={0.3}>
-          <div className="flex justify-center py-8">
+          <div className="flex justify-center py-8 px-4">
             <TermsConditions />
           </div>
       </AnimatedSectionWrapper>

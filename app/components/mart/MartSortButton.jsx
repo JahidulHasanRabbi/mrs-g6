@@ -19,7 +19,7 @@ export default function MartSortButton({ onSort }) {
         alt="Sort Button"
         src={MART_ASSETS.sortButton}
         fill
-        className="object-cover"
+        className="object-fill"
       />
       <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[#60803c] text-[14px] font-bold font-['Times_New_Roman']">
         Sort by Default

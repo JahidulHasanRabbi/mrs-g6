@@ -6,7 +6,7 @@ import { SPIN_ASSETS } from "./spinAssets";
 
 const RewardItem = ({ icon, title, index }) => (
   <motion.div 
-    className="relative w-full h-[62px] rounded-[6px] border border-white overflow-hidden"
+    className="relative w-[80%] sm:w-full mx-auto h-[62px] rounded-[6px] border border-white overflow-hidden"
     style={{
       background: "linear-gradient(0.57deg, rgba(242, 195, 107, 0) 74.37%, rgb(221, 143, 31) 94%), linear-gradient(90deg, rgba(7, 25, 13, 0.44) 0%, rgba(7, 25, 13, 0.44) 100%)",
       boxShadow: "3px 3px 48px 3px rgba(231, 196, 87, 0.5)"
@@ -38,7 +38,7 @@ const RewardItem = ({ icon, title, index }) => (
           className="object-cover"
         />
       </motion.div>
-      <p className="text-white text-xl font-bold text-start mx-auto">
+      <p className="text-white text-sm sm:text-xl font-bold text-start mx-auto">
         {title}
       </p>
     </div>
@@ -47,7 +47,7 @@ const RewardItem = ({ icon, title, index }) => (
 
 const CreditCard = ({ range, index }) => (
   <motion.div 
-    className="relative w-[130px] h-[96px]"
+    className="relative w-[100px] h-[100px] sm:w-[130px] sm:h-[96px]"
     initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
     animate={{ opacity: 1, scale: 1, rotate: 0 }}
     transition={{ 
@@ -81,9 +81,9 @@ const CreditCard = ({ range, index }) => (
       />
     </motion.div>
     <div className="absolute inset-0 flex flex-col items-center justify-center text-[#a67520] font-bold text-center gap-0 -mt-2">
-      <p className="text-[16px]  leading-tight">FREE</p>
-      <p className="text-[16px]  leading-tight">CREDIT</p>
-      <p className="text-[12px]  leading-tight mt-1">{range}</p>
+      <p className="text-xs sm:text-md  leading-tight">FREE</p>
+      <p className="text-xs sm:text-md  leading-tight">CREDIT</p>
+      <p className="text-xs sm:text-md  leading-tight mt-1">{range}</p>
     </div>
   </motion.div>
 );
@@ -105,7 +105,7 @@ export default function RewardsList() {
 
   return (
     <motion.div 
-      className="relative w-[520px] h-[950px] mx-auto"
+      className="relative w-[400px] h-[750px] sm:w-[520px] sm:h-[950px] mx-auto"
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.8, ease: "easeOut" }}

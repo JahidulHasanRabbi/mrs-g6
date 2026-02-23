@@ -51,7 +51,7 @@ export default function WinningList() {
 
   return (
     <motion.div 
-      className="relative w-full max-w-[450px] h-[280px] mx-auto"
+      className="relative w-full max-w-[450px] h-[280px] mx-4"
       initial={{ opacity: 0, scale: 0.8, y: 50 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
@@ -60,7 +60,7 @@ export default function WinningList() {
         alt="Winning List Background"
         src={SPIN_ASSETS.winningListBackground}
         fill
-        className="object-cover"
+        className="object-fill"
       />
       
       <div className="absolute inset-0 flex gap-[2px] py-40 flex-col justify-center px-8">

@@ -7,7 +7,7 @@ import { MART_ASSETS } from "./martAssets";
 export default function MartTitleBanner() {
   return (
     <motion.div 
-      className="relative w-[370px] h-[103px] mx-auto mt-8"
+      className="relative flex items-center justify-center mx-auto mt-8"
       initial={{ opacity: 0, scale: 0.8, y: -50 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{
@@ -20,7 +20,8 @@ export default function MartTitleBanner() {
       <Image
         alt="Pagcor Mart"
         src={MART_ASSETS.titleBanner}
-        fill
+        width={370}
+        height={103}
         className="object-contain"
       />
     </motion.div>
