@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { MART_ASSETS } from "./martAssets";
+const POPUP_CLOSE_IMG = "/assets/home/popup-close.png";
 
 export default function RedeemModal({ isOpen, onClose, item }) {
   if (!isOpen) return null;
@@ -38,15 +39,18 @@ export default function RedeemModal({ isOpen, onClose, item }) {
         {/* Close Button */}
         <motion.button
           onClick={onClose}
-          className="absolute right-[241px] top-[50px] w-[30px] h-[30px]"
+          className="absolute right-[20px] top-[40px] w-[50px] h-[30px]"
           whileHover={{ scale: 1.1, rotate: 90 }}
           whileTap={{ scale: 0.9 }}
+          aria-label="Close"
         >
-          <div className="w-full h-full relative">
-            <div className="absolute inset-0 flex items-center justify-center text-[#60803c] text-[20px] font-bold">
-              ×
-            </div>
-          </div>
+          <Image
+            src={POPUP_CLOSE_IMG}
+            alt=""
+            width={30}
+            height={30}
+            className="h-full w-full object-contain"
+          />
         </motion.button>
 
         {/* Content */}
