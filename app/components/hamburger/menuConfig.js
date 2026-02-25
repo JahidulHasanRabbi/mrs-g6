@@ -9,15 +9,15 @@ export const MENU_CONFIG = {
     title: "Mini Game",
       icon: "/assets/images/mini-game-icon.svg",
     items: [
-      { icon: "/assets/images/kasih-spin-icon.png", label: "Kasih Spin", link: "/spin" },
+      { icon: "/assets/images/kasih-spin-icon.png", label: "Lucky Spin", link: "/spin" },
       { icon: "/assets/images/coming-soon-icon.png", label: "Coming Soon", link: "/coming-soon", disabled: true },
     ],
   },
   mainItems: [
-    { icon: "/assets/images/my-account-icon.png", label: "My Account", link: "/my-account" },
+    { icon: "/assets/images/my-account-icon.png", label: "My Account", link: "/profile" },
     { icon: "/assets/images/leaderboard-icon.png", label: "Leaderboard", link: "/leaderboard" },
-    { icon: "/assets/images/vip-membership-icon.png", label: "VIP Membership", link: "/membership-tier" },
-    { icon: "/assets/images/pagcor-mart-icon.png", label: "Pagcor Mart", link: "/mart" },
+    { icon: "/assets/images/vip-membership-icon.png", label: "VIP Membership", link: "/vip-details" },
+    { icon: "/assets/images/pagcor-mart-icon.png", label: "Mart", link: "/mart" },
   ],
   social: {
     title: "Stay Connected",
