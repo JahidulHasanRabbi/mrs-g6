@@ -4,7 +4,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { MART_ASSETS } from "./martAssets";
 
-export default function MartSortButton({ onSort }) {
+export default function MartSortButton({ onSort, label = "Sort by Default" }) {
   return (
     <motion.button
       onClick={onSort}
@@ -21,8 +21,8 @@ export default function MartSortButton({ onSort }) {
         fill
         className="object-fill"
       />
-      <p className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[#60803c] text-[14px] font-bold font-['Times_New_Roman']">
-        Sort by Default
+      <p className="absolute inset-0 flex items-center justify-center px-4 text-center text-[#60803c] text-[12px] leading-[1.05] font-bold font-['Times_New_Roman'] whitespace-normal">
+        {label}
       </p>
     </motion.button>
   );

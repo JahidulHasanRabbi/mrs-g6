@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import MartTitleBanner from "../components/mart/MartTitleBanner";
 import MartSortButton from "../components/mart/MartSortButton";
 import MartGrid from "../components/mart/MartGrid";
@@ -9,6 +9,7 @@ import { MART_ASSETS } from "../components/mart/martAssets";
 
 export default function MartPage() {
   const [selectedItem, setSelectedItem] = useState(null);
+  const [sortMode, setSortMode] = useState("default");
 
   const martItems = [
     {
@@ -37,6 +38,35 @@ export default function MartPage() {
     },
   ];
 
+  const parseCoins = (value) => {
+    if (!value) return 0;
+    const n = Number(String(value).replace(/,/g, ""));
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const sortedItems = useMemo(() => {
+    if (sortMode === "default") return martItems;
+
+    const itemsCopy = [...martItems];
+    itemsCopy.sort((a, b) => {
+      const aPrice = parseCoins(a.discountPrice || a.coins);
+      const bPrice = parseCoins(b.discountPrice || b.coins);
+
+      if (sortMode === "price-asc") return aPrice - bPrice;
+      if (sortMode === "price-desc") return bPrice - aPrice;
+      return 0;
+    });
+
+    return itemsCopy;
+  }, [martItems, sortMode]);
+
+  const sortButtonLabel =
+    sortMode === "price-asc"
+      ? "Sort: Low to High"
+      : sortMode === "price-desc"
+        ? "Sort: High to Low"
+        : "Sort by Default";
+
   const handleRedeem = (item) => {
     setSelectedItem(item);
   };
@@ -46,8 +76,11 @@ export default function MartPage() {
   };
 
   const handleSort = () => {
-    console.log("Sort clicked");
-    // Add sort logic here
+    setSortMode((prev) => {
+      if (prev === "default") return "price-asc";
+      if (prev === "price-asc") return "price-desc";
+      return "default";
+    });
   };
 
   return (
@@ -55,10 +88,10 @@ export default function MartPage() {
       <MartTitleBanner />
         
         <div className="flex justify-end px-8 mt-6">
-          <MartSortButton onSort={handleSort} />
+          <MartSortButton onSort={handleSort} label={sortButtonLabel} />
         </div>
 
-      <MartGrid items={martItems} onRedeem={handleRedeem} />
+      <MartGrid items={sortedItems} onRedeem={handleRedeem} />
       
       <RedeemModal 
         isOpen={!!selectedItem}
