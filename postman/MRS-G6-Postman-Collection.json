@@ -1,0 +1,1248 @@
+{
+	"info": {
+		"_postman_id": "mrs-g6-api-collection",
+		"name": "MRS G6 API Collection",
+		"description": "Complete API collection for MRS G6 with Admin and Member endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "Authentication",
+					"item": [
+						{
+							"name": "Admin Login",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "email",
+											"value": "Admin1",
+											"description": "Admin email/username",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "Qwerabcd!",
+											"description": "Admin password",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/login/admin-access-token/",
+									"host": ["{{base_url}}"],
+									"path": ["login", "admin-access-token", ""]
+								},
+								"description": "Admin login to get access and refresh tokens"
+							},
+							"response": []
+						},
+						{
+							"name": "Logout",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "refresh",
+											"value": "{{refresh_token}}",
+											"description": "Refresh token to invalidate",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/login/logout/",
+									"host": ["{{base_url}}"],
+									"path": ["login", "logout", ""]
+								},
+								"description": "Logout and invalidate refresh token"
+							},
+							"response": []
+						},
+						{
+							"name": "Refresh Token",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "refresh",
+											"value": "{{refresh_token}}",
+											"description": "Refresh token to get new access token",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/login/refresh-token/",
+									"host": ["{{base_url}}"],
+									"path": ["login", "refresh-token", ""]
+								},
+								"description": "Get new access token using refresh token"
+							},
+							"response": []
+						},
+						{
+							"name": "Verify Token",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "token",
+											"value": "{{admin_token}}",
+											"description": "Access token to verify (not refresh token)",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/login/verify-token/",
+									"host": ["{{base_url}}"],
+									"path": ["login", "verify-token", ""]
+								},
+								"description": "Verify if access token is still valid. Returns {} if valid, 401 if invalid"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "VIP Tier Management",
+					"item": [
+						{
+							"name": "Get All VIP Tiers",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/member/vip-tier/",
+									"host": ["{{base_url}}"],
+									"path": ["member", "vip-tier", ""]
+								},
+								"description": "Get list of all VIP tiers with their benefits"
+							},
+							"response": []
+						},
+						{
+							"name": "Create VIP Tier",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "name",
+											"value": "Gold",
+											"description": "VIP tier name",
+											"type": "text"
+										},
+										{
+											"key": "lifetime_deposit_required",
+											"value": "10000.00",
+											"description": "Total lifetime deposit required (Decimal)",
+											"type": "text"
+										},
+										{
+											"key": "monthly_deposit",
+											"value": "1000.00",
+											"description": "Monthly deposit requirement (Decimal)",
+											"type": "text"
+										},
+										{
+											"key": "upgrade_bonus",
+											"value": "500.00",
+											"description": "Bonus given on tier upgrade (Decimal)",
+											"type": "text"
+										},
+										{
+											"key": "monthly_loyalty_bonus",
+											"value": "100.00",
+											"description": "Monthly loyalty bonus (Decimal)",
+											"type": "text"
+										},
+										{
+											"key": "birthday_bonus",
+											"value": "200.00",
+											"description": "Birthday bonus amount (Decimal)",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/member/vip-tier/",
+									"host": ["{{base_url}}"],
+									"path": ["member", "vip-tier", ""]
+								},
+								"description": "Create a new VIP tier"
+							},
+							"response": []
+						},
+						{
+							"name": "Update VIP Tier",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "name",
+											"value": "Platinum",
+											"description": "VIP tier name",
+											"type": "text"
+										},
+										{
+											"key": "lifetime_deposit_required",
+											"value": "50000.00",
+											"description": "Total lifetime deposit required (Decimal)",
+											"type": "text"
+										},
+										{
+											"key": "monthly_deposit",
+											"value": "5000.00",
+											"description": "Monthly deposit requirement (Decimal)",
+											"type": "text"
+										},
+										{
+											"key": "upgrade_bonus",
+											"value": "2000.00",
+											"description": "Bonus given on tier upgrade (Decimal)",
+											"type": "text"
+										},
+										{
+											"key": "monthly_loyalty_bonus",
+											"value": "500.00",
+											"description": "Monthly loyalty bonus (Decimal)",
+											"type": "text"
+										},
+										{
+											"key": "birthday_bonus",
+											"value": "1000.00",
+											"description": "Birthday bonus amount (Decimal)",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/member/vip-tier/{{tier_uuid}}/",
+									"host": ["{{base_url}}"],
+									"path": ["member", "vip-tier", "{{tier_uuid}}", ""]
+								},
+								"description": "Update an existing VIP tier by UUID"
+							},
+							"response": []
+						},
+						{
+							"name": "Archive VIP Tier",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "PATCH",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/member/vip-tier/{{tier_uuid}}/archive/",
+									"host": ["{{base_url}}"],
+									"path": ["member", "vip-tier", "{{tier_uuid}}", "archive", ""]
+								},
+								"description": "Archive a VIP tier by UUID"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Lucky Spin Items",
+					"item": [
+						{
+							"name": "Get All Lucky Spin Items",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/lucky-spin/lucky-spin-items/",
+									"host": ["{{base_url}}"],
+									"path": ["lucky-spin", "lucky-spin-items", ""]
+								},
+								"description": "Get list of all lucky spin items"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Lucky Spin Item by UUID",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/lucky-spin/lucky-spin-items/{{item_uuid}}/",
+									"host": ["{{base_url}}"],
+									"path": ["lucky-spin", "lucky-spin-items", "{{item_uuid}}", ""]
+								},
+								"description": "Get a specific lucky spin item by UUID"
+							},
+							"response": []
+						},
+						{
+							"name": "Create Lucky Spin Item",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "reward_name",
+											"value": "100 Free Credits",
+											"description": "Name of the reward",
+											"type": "text"
+										},
+										{
+											"key": "unlimited",
+											"value": "false",
+											"description": "Is quantity unlimited? (true/false)",
+											"type": "text"
+										},
+										{
+											"key": "quantity",
+											"value": "100",
+											"description": "Quantity available (required if unlimited=false, nullable if unlimited=true)",
+											"type": "text"
+										},
+										{
+											"key": "image",
+											"value": "",
+											"description": "Image file (optional)",
+											"type": "file"
+										},
+										{
+											"key": "item_type",
+											"value": "1",
+											"description": "Item type: 1=Free Credit, 2=Item, 3=Other",
+											"type": "text"
+										},
+										{
+											"key": "min_withdraw",
+											"value": "50.00",
+											"description": "Min withdraw amount (required only if item_type=1 Free Credit)",
+											"type": "text",
+											"disabled": false
+										},
+										{
+											"key": "max_withdraw",
+											"value": "500.00",
+											"description": "Max withdraw amount (required only if item_type=1 Free Credit)",
+											"type": "text",
+											"disabled": false
+										},
+										{
+											"key": "multiplier",
+											"value": "3",
+											"description": "Multiplier (required only if item_type=1 Free Credit)",
+											"type": "text",
+											"disabled": false
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/lucky-spin/lucky-spin-items/",
+									"host": ["{{base_url}}"],
+									"path": ["lucky-spin", "lucky-spin-items", ""]
+								},
+								"description": "Create a new lucky spin item. Note: min_withdraw, max_withdraw, and multiplier are only required when item_type=1 (Free Credit)"
+							},
+							"response": []
+						},
+						{
+							"name": "Update Lucky Spin Item",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "reward_name",
+											"value": "200 Free Credits",
+											"description": "Name of the reward",
+											"type": "text"
+										},
+										{
+											"key": "unlimited",
+											"value": "true",
+											"description": "Is quantity unlimited? (true/false)",
+											"type": "text"
+										},
+										{
+											"key": "quantity",
+											"value": "",
+											"description": "Quantity available (required if unlimited=false, nullable if unlimited=true)",
+											"type": "text",
+											"disabled": true
+										},
+										{
+											"key": "image",
+											"value": "",
+											"description": "Image file (optional)",
+											"type": "file"
+										},
+										{
+											"key": "item_type",
+											"value": "1",
+											"description": "Item type: 1=Free Credit, 2=Item, 3=Other",
+											"type": "text"
+										},
+										{
+											"key": "min_withdraw",
+											"value": "100.00",
+											"description": "Min withdraw amount (required only if item_type=1 Free Credit)",
+											"type": "text"
+										},
+										{
+											"key": "max_withdraw",
+											"value": "1000.00",
+											"description": "Max withdraw amount (required only if item_type=1 Free Credit)",
+											"type": "text"
+										},
+										{
+											"key": "multiplier",
+											"value": "5",
+											"description": "Multiplier (required only if item_type=1 Free Credit)",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/lucky-spin/lucky-spin-items/{{item_uuid}}/",
+									"host": ["{{base_url}}"],
+									"path": ["lucky-spin", "lucky-spin-items", "{{item_uuid}}", ""]
+								},
+								"description": "Update an existing lucky spin item by UUID"
+							},
+							"response": []
+						},
+						{
+							"name": "Archive Lucky Spin Item",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "PATCH",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/lucky-spin/lucky-spin-items/{{item_uuid}}/archive/",
+									"host": ["{{base_url}}"],
+									"path": ["lucky-spin", "lucky-spin-items", "{{item_uuid}}", "archive", ""]
+								},
+								"description": "Archive a lucky spin item by UUID"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Lucky Spin Sequences",
+					"item": [
+						{
+							"name": "Get All Lucky Spin Sequences",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/lucky-spin/lucky-spin-sequences/",
+									"host": ["{{base_url}}"],
+									"path": ["lucky-spin", "lucky-spin-sequences", ""]
+								},
+								"description": "Get list of all lucky spin sequences"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Lucky Spin Sequence by UUID",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/lucky-spin/lucky-spin-sequences/{{sequence_uuid}}/",
+									"host": ["{{base_url}}"],
+									"path": ["lucky-spin", "lucky-spin-sequences", "{{sequence_uuid}}", ""]
+								},
+								"description": "Get a specific lucky spin sequence by UUID"
+							},
+							"response": []
+						},
+						{
+							"name": "Create Lucky Spin Sequence",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "item_order",
+											"value": "1",
+											"description": "Order position of the item in sequence",
+											"type": "text"
+										},
+										{
+											"key": "item_uuid",
+											"value": "",
+											"description": "UUID of the lucky spin item",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/lucky-spin/lucky-spin-sequences/",
+									"host": ["{{base_url}}"],
+									"path": ["lucky-spin", "lucky-spin-sequences", ""]
+								},
+								"description": "Create a new lucky spin sequence entry"
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Lucky Spin Sequence",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/lucky-spin/lucky-spin-sequences/{{sequence_uuid}}/",
+									"host": ["{{base_url}}"],
+									"path": ["lucky-spin", "lucky-spin-sequences", "{{sequence_uuid}}", ""]
+								},
+								"description": "Delete a lucky spin sequence by UUID"
+							},
+							"response": []
+						},
+						{
+							"name": "Change Spin Sequences Order",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"lucky_spins\": [\n    {\n      \"item_order\": 1,\n      \"sequence_UUID\": \"uuid-here\"\n    },\n    {\n      \"item_order\": 2,\n      \"sequence_UUID\": \"uuid-here\"\n    }\n  ]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/lucky-spin/lucky-spin-sequences/change-spin-sequences/",
+									"host": ["{{base_url}}"],
+									"path": ["lucky-spin", "lucky-spin-sequences", "change-spin-sequences", ""]
+								},
+								"description": "Update the order of multiple spin sequences. Provide a list of sequences with their new order positions."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Members Management",
+					"item": [
+						{
+							"name": "Get All Members",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/member/members/",
+									"host": ["{{base_url}}"],
+									"path": ["member", "members", ""]
+								},
+								"description": "Get list of all members with their details"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Redemption Items Management",
+					"item": [
+						{
+							"name": "Get All Redemption Items",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/redemption/redemption-items/",
+									"host": ["{{base_url}}"],
+									"path": ["redemption", "redemption-items", ""]
+								},
+								"description": "Get list of all redemption items"
+							},
+							"response": []
+						},
+						{
+							"name": "Create Redemption Item",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "name",
+											"value": "iPhone 15 Pro",
+											"description": "Item name",
+											"type": "text"
+										},
+										{
+											"key": "quantity_available",
+											"value": "10",
+											"description": "Quantity available",
+											"type": "text"
+										},
+										{
+											"key": "start_date",
+											"value": "2026-01-01",
+											"description": "Start date (YYYY-MM-DD)",
+											"type": "text"
+										},
+										{
+											"key": "end_date",
+											"value": "2026-12-31",
+											"description": "End date (YYYY-MM-DD)",
+											"type": "text"
+										},
+										{
+											"key": "prize_type",
+											"value": "1",
+											"description": "Prize type: 1=ITEM, 2=VOUCHER, 3=CREDIT, 4=OTHERS",
+											"type": "text"
+										},
+										{
+											"key": "credit_amount",
+											"value": "",
+											"description": "Credit amount (required only if prize_type=3)",
+											"type": "text",
+											"disabled": true
+										},
+										{
+											"key": "tokens_needed",
+											"value": "5000",
+											"description": "Tokens needed to redeem",
+											"type": "text"
+										},
+										{
+											"key": "promotion",
+											"value": "0.00",
+											"description": "Promotion discount (Decimal)",
+											"type": "text"
+										},
+										{
+											"key": "image",
+											"value": "",
+											"description": "Item image (optional)",
+											"type": "file"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/redemption/redemption-items/",
+									"host": ["{{base_url}}"],
+									"path": ["redemption", "redemption-items", ""]
+								},
+								"description": "Create a new redemption item. Note: credit_amount is only required when prize_type=3 (CREDIT)"
+							},
+							"response": []
+						},
+						{
+							"name": "Update Redemption Item",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "name",
+											"value": "Samsung Galaxy S24",
+											"description": "Item name",
+											"type": "text"
+										},
+										{
+											"key": "quantity_available",
+											"value": "20",
+											"description": "Quantity available",
+											"type": "text"
+										},
+										{
+											"key": "start_date",
+											"value": "2026-02-01",
+											"description": "Start date (YYYY-MM-DD)",
+											"type": "text"
+										},
+										{
+											"key": "end_date",
+											"value": "2026-11-30",
+											"description": "End date (YYYY-MM-DD)",
+											"type": "text"
+										},
+										{
+											"key": "prize_type",
+											"value": "3",
+											"description": "Prize type: 1=ITEM, 2=VOUCHER, 3=CREDIT, 4=OTHERS",
+											"type": "text"
+										},
+										{
+											"key": "credit_amount",
+											"value": "1000",
+											"description": "Credit amount (required only if prize_type=3)",
+											"type": "text"
+										},
+										{
+											"key": "tokens_needed",
+											"value": "3000",
+											"description": "Tokens needed to redeem",
+											"type": "text"
+										},
+										{
+											"key": "promotion",
+											"value": "10.00",
+											"description": "Promotion discount (Decimal)",
+											"type": "text"
+										},
+										{
+											"key": "image",
+											"value": "",
+											"description": "Item image (optional)",
+											"type": "file"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/redemption/redemption-items/{{redemption_uuid}}/",
+									"host": ["{{base_url}}"],
+									"path": ["redemption", "redemption-items", "{{redemption_uuid}}", ""]
+								},
+								"description": "Update an existing redemption item by UUID"
+							},
+							"response": []
+						},
+						{
+							"name": "Archive Redemption Item",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "PATCH",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/redemption/redemption-items/{{redemption_uuid}}/archive/",
+									"host": ["{{base_url}}"],
+									"path": ["redemption", "redemption-items", "{{redemption_uuid}}", "archive", ""]
+								},
+								"description": "Archive a redemption item by UUID"
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Member",
+			"item": [
+				{
+					"name": "Authentication",
+					"item": [
+						{
+							"name": "Member Login (Generate Token)",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "id",
+											"value": "12345",
+											"description": "Member ID from third party",
+											"type": "text"
+										},
+										{
+											"key": "o",
+											"value": "kinggroup44.com",
+											"description": "Domain from third party (o parameter)",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/login/generate-token/",
+									"host": ["{{base_url}}"],
+									"path": ["login", "generate-token", ""]
+								},
+								"description": "Member login from external system. Returns access token, refresh token, member_uuid, and tokens_obtained"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Home Page",
+					"item": [
+						{
+							"name": "Check-In",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{member_token}}", "type": "string"}]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": []
+								},
+								"url": {
+									"raw": "{{base_url}}/member/members/check-in/",
+									"host": ["{{base_url}}"],
+									"path": ["member", "members", "check-in", ""]
+								},
+								"description": "Member daily check-in to earn tokens"
+							},
+							"response": []
+						},
+						{
+							"name": "Welcome Gift",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{member_token}}", "type": "string"}]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": []
+								},
+								"url": {
+									"raw": "{{base_url}}/member/members/welcome/",
+									"host": ["{{base_url}}"],
+									"path": ["member", "members", "welcome", ""]
+								},
+								"description": "Claim welcome gift for new members"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Member Info",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{member_token}}", "type": "string"}]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/member/members/{{member_uuid}}/",
+									"host": ["{{base_url}}"],
+									"path": ["member", "members", "{{member_uuid}}", ""]
+								},
+								"description": "Get member information including tokens, tier, check-in status"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Lucky Spin",
+					"item": [
+						{
+							"name": "One Spin",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{member_token}}", "type": "string"}]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": []
+								},
+								"url": {
+									"raw": "{{base_url}}/member/{{member_uuid}}/one-spin/",
+									"host": ["{{base_url}}"],
+									"path": ["member", "{{member_uuid}}", "one-spin", ""]
+								},
+								"description": "Perform one lucky spin. Returns reward details (uuid, reward_name, image)"
+							},
+							"response": []
+						},
+						{
+							"name": "Ten Spins",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{member_token}}", "type": "string"}]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": []
+								},
+								"url": {
+									"raw": "{{base_url}}/member/{{member_uuid}}/ten-spin/",
+									"host": ["{{base_url}}"],
+									"path": ["member", "{{member_uuid}}", "ten-spin", ""]
+								},
+								"description": "Perform ten lucky spins. Returns list of 10 reward details"
+							},
+							"response": []
+						},
+						{
+							"name": "Fifty Spins",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{member_token}}", "type": "string"}]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": []
+								},
+								"url": {
+									"raw": "{{base_url}}/member/{{member_uuid}}/fifty-spin/",
+									"host": ["{{base_url}}"],
+									"path": ["member", "{{member_uuid}}", "fifty-spin", ""]
+								},
+								"description": "Perform fifty lucky spins. Returns list of 50 reward details"
+							},
+							"response": []
+						},
+						{
+							"name": "Hundred Spins",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{member_token}}", "type": "string"}]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": []
+								},
+								"url": {
+									"raw": "{{base_url}}/member/{{member_uuid}}/hundred-spin/",
+									"host": ["{{base_url}}"],
+									"path": ["member", "{{member_uuid}}", "hundred-spin", ""]
+								},
+								"description": "Perform hundred lucky spins. Returns list of 100 reward details"
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Profile",
+					"item": [
+						{
+							"name": "Get Profile",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{member_token}}", "type": "string"}]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/member/profile/{{member_uuid}}/",
+									"host": ["{{base_url}}"],
+									"path": ["member", "profile", "{{member_uuid}}", ""]
+								},
+								"description": "Get member profile information including personal data"
+							},
+							"response": []
+						},
+						{
+							"name": "Update Profile",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{member_token}}", "type": "string"}]
+								},
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "full_name",
+											"value": "John Doe",
+											"description": "Full name (optional)",
+											"type": "text"
+										},
+										{
+											"key": "email",
+											"value": "john.doe@example.com",
+											"description": "Email address (optional)",
+											"type": "text"
+										},
+										{
+											"key": "date_of_birth",
+											"value": "1990-01-15",
+											"description": "Date of birth YYYY-MM-DD (optional)",
+											"type": "text"
+										},
+										{
+											"key": "gender",
+											"value": "1",
+											"description": "Gender: 1=Male, 2=Female, 3=Prefer not to say (optional)",
+											"type": "text"
+										},
+										{
+											"key": "hobby",
+											"value": "5",
+											"description": "Hobby: 1=Reading, 2=Cooking/Baking, 3=Travelling, 4=Music, 5=Gaming, 6=Sports, 7=Gardening, 8=Photography, 9=Art, 10=Crafting, 11=Watching Videos, 12=Dancing, 13=Hiking, 14=Writing, 15=Animal Care (optional)",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/member/profile/{{member_uuid}}/update-profile/",
+									"host": ["{{base_url}}"],
+									"path": ["member", "profile", "{{member_uuid}}", "update-profile", ""]
+								},
+								"description": "Update member profile information. All fields are optional."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Lucky Mart - Redemption",
+					"item": [
+						{
+							"name": "Get All Redemption Items",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{member_token}}", "type": "string"}]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/redemption/redemption-items/",
+									"host": ["{{base_url}}"],
+									"path": ["redemption", "redemption-items", ""]
+								},
+								"description": "Get list of all redemption items"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Available Redemption Items",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{member_token}}", "type": "string"}]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/redemption/redemption-items/available-items/",
+									"host": ["{{base_url}}"],
+									"path": ["redemption", "redemption-items", "available-items", ""]
+								},
+								"description": "Get list of currently available redemption items"
+							},
+							"response": []
+						},
+						{
+							"name": "Redeem Item",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{member_token}}", "type": "string"}]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "member_uuid",
+											"value": "{{member_uuid}}",
+											"description": "UUID of the member redeeming the item",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/redemption/redemption-items/{{redemption_uuid}}/redeem/",
+									"host": ["{{base_url}}"],
+									"path": ["redemption", "redemption-items", "{{redemption_uuid}}", "redeem", ""]
+								},
+								"description": "Redeem a specific item using member tokens. Returns details with success/error message"
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://staging-api.kinggroup44.com",
+			"type": "string"
+		},
+		{
+			"key": "admin_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "member_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "member_uuid",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "tier_uuid",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "item_uuid",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "sequence_uuid",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "redemption_uuid",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
