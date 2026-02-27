@@ -2,6 +2,7 @@ import { apiRequest } from './apiClient';
 import { ENDPOINTS } from './api';
 import { tokenStorage } from './tokenStorage';
 
+// POST /login/generate-token/
 export async function generateMemberToken(id, o) {
   const response = await apiRequest(ENDPOINTS.MEMBER.GENERATE_TOKEN, {
     method: 'POST',
@@ -20,73 +21,85 @@ export async function generateMemberToken(id, o) {
   };
 }
 
-export async function checkIn() {
-  return await apiRequest(ENDPOINTS.MEMBER.CHECK_IN, {
-    method: 'POST'
-  }, true, 'member');
-}
-
-export async function claimWelcomeGift() {
-  return await apiRequest(ENDPOINTS.MEMBER.WELCOME_GIFT, {
-    method: 'POST'
-  }, true, 'member');
-}
-
+// GET /member/{uuid}/
 export async function getMemberInfo(memberUuid) {
   return await apiRequest(ENDPOINTS.MEMBER.MEMBER_INFO(memberUuid), {
     method: 'GET'
   }, true, 'member');
 }
 
-export async function performOneSpin(memberUuid) {
-  return await apiRequest(ENDPOINTS.MEMBER.ONE_SPIN(memberUuid), {
+// POST /member/{uuid}/check-in/
+export async function checkIn(memberUuid) {
+  return await apiRequest(ENDPOINTS.MEMBER.CHECK_IN, {
     method: 'POST'
   }, true, 'member');
 }
 
-export async function performTenSpin(memberUuid) {
-  return await apiRequest(ENDPOINTS.MEMBER.TEN_SPIN(memberUuid), {
+// POST /member/{uuid}/welcome-gift/
+export async function claimWelcomeGift(memberUuid) {
+  return await apiRequest(ENDPOINTS.MEMBER.WELCOME_GIFT, {
     method: 'POST'
   }, true, 'member');
 }
 
-export async function performFiftySpin(memberUuid) {
-  return await apiRequest(ENDPOINTS.MEMBER.FIFTY_SPIN(memberUuid), {
-    method: 'POST'
-  }, true, 'member');
-}
-
-export async function performHundredSpin(memberUuid) {
-  return await apiRequest(ENDPOINTS.MEMBER.HUNDRED_SPIN(memberUuid), {
-    method: 'POST'
-  }, true, 'member');
-}
-
-export async function getMemberProfile(memberUuid) {
+// GET /member/{uuid}/profile/
+export async function getProfile(memberUuid) {
   return await apiRequest(ENDPOINTS.MEMBER.PROFILE(memberUuid), {
     method: 'GET'
   }, true, 'member');
 }
 
-export async function updateMemberProfile(memberUuid, profileData) {
+// PUT /member/{uuid}/profile/
+export async function updateProfile(memberUuid, data) {
   return await apiRequest(ENDPOINTS.MEMBER.UPDATE_PROFILE(memberUuid), {
     method: 'PATCH',
-    body: JSON.stringify(profileData)
+    body: data
   }, true, 'member');
 }
 
-export async function getAllRedemptionItems() {
-  return await apiRequest(ENDPOINTS.MEMBER.ALL_REDEMPTION_ITEMS, {
+// GET /lucky-spin/items/
+export async function getAllLuckySpinItems() {
+  return await apiRequest(ENDPOINTS.MEMBER.ALL_LUCKY_SPIN_ITEMS, {
     method: 'GET'
   }, true, 'member');
 }
 
+// POST /member/{uuid}/one-spin/
+export async function oneSpin(memberUuid) {
+  return await apiRequest(ENDPOINTS.MEMBER.ONE_SPIN(memberUuid), {
+    method: 'POST'
+  }, true, 'member');
+}
+
+// POST /member/{uuid}/ten-spin/
+export async function tenSpin(memberUuid) {
+  return await apiRequest(ENDPOINTS.MEMBER.TEN_SPIN(memberUuid), {
+    method: 'POST'
+  }, true, 'member');
+}
+
+// POST /member/{uuid}/fifty-spin/
+export async function fiftySpin(memberUuid) {
+  return await apiRequest(ENDPOINTS.MEMBER.FIFTY_SPIN(memberUuid), {
+    method: 'POST'
+  }, true, 'member');
+}
+
+// POST /member/{uuid}/hundred-spin/
+export async function hundredSpin(memberUuid) {
+  return await apiRequest(ENDPOINTS.MEMBER.HUNDRED_SPIN(memberUuid), {
+    method: 'POST'
+  }, true, 'member');
+}
+
+// GET /redemption/available/
 export async function getAvailableRedemptionItems() {
   return await apiRequest(ENDPOINTS.MEMBER.AVAILABLE_REDEMPTION_ITEMS, {
     method: 'GET'
   }, true, 'member');
 }
 
+// POST /redemption/{uuid}/redeem/
 export async function redeemItem(itemUuid, memberUuid) {
   return await apiRequest(ENDPOINTS.MEMBER.REDEEM_ITEM(itemUuid), {
     method: 'POST',

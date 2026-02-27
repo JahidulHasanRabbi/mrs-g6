@@ -3,8 +3,17 @@
 import Sidebar from "../../../components/admin/Sidebar";
 import NavigationCards from "../../../components/admin/lucky-spin/NavigationCards";
 import PrizeSettingsTable from "../../../components/admin/lucky-spin/PrizeSettingsTable";
+import { AdminRouteGuard } from "../../../components/guards/AdminRouteGuard";
 
 export default function PrizeSettingsPage() {
+  return (
+    <AdminRouteGuard>
+      <PrizeSettingsPageContent />
+    </AdminRouteGuard>
+  );
+}
+
+function PrizeSettingsPageContent() {
   return (
     <div className="min-h-screen bg-[#07190d]">
       {/* Sidebar (fixed) */}

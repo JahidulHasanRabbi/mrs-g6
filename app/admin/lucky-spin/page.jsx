@@ -3,8 +3,17 @@
 import Sidebar from "../../components/admin/Sidebar";
 import NavigationCards from "../../components/admin/lucky-spin/NavigationCards";
 import SpinTablesContainer from "../../components/admin/lucky-spin/SpinTablesContainer";
+import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
 
 export default function LuckySpinManagement() {
+  return (
+    <AdminRouteGuard>
+      <LuckySpinManagementContent />
+    </AdminRouteGuard>
+  );
+}
+
+function LuckySpinManagementContent() {
   return (
     <div className="min-h-screen bg-[#07190d]">
       {/* Sidebar (fixed) */}

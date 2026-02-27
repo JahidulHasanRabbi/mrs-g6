@@ -2,10 +2,10 @@ import { apiRequest } from './apiClient';
 import { ENDPOINTS } from './api';
 import { tokenStorage } from './tokenStorage';
 
-export async function adminLogin(email, password) {
+export async function adminLogin(username, password) {
   const response = await apiRequest(ENDPOINTS.ADMIN.LOGIN, {
     method: 'POST',
-    body: JSON.stringify({ email, password })
+    body: { username, password }
   }, false);
   
   if (response.access && response.refresh) {
@@ -21,14 +21,14 @@ export async function adminLogin(email, password) {
 export async function adminLogout(refreshToken) {
   return await apiRequest(ENDPOINTS.ADMIN.LOGOUT, {
     method: 'POST',
-    body: JSON.stringify({ refresh: refreshToken })
+    body: { refresh: refreshToken }
   }, true, 'admin');
 }
 
 export async function refreshToken(refreshToken) {
   const response = await apiRequest(ENDPOINTS.ADMIN.REFRESH_TOKEN, {
     method: 'POST',
-    body: JSON.stringify({ refresh: refreshToken })
+    body: { refresh: refreshToken }
   }, false);
   
   if (response.access && response.refresh) {
@@ -44,7 +44,7 @@ export async function refreshToken(refreshToken) {
 export async function verifyToken(accessToken) {
   return await apiRequest(ENDPOINTS.ADMIN.VERIFY_TOKEN, {
     method: 'POST',
-    body: JSON.stringify({ token: accessToken })
+    body: { token: accessToken }
   }, false);
 }
 
@@ -57,14 +57,14 @@ export async function getVipTiers() {
 export async function createVipTier(tierData) {
   return await apiRequest(ENDPOINTS.ADMIN.VIP_TIERS, {
     method: 'POST',
-    body: JSON.stringify(tierData)
+    body: tierData
   }, true, 'admin');
 }
 
 export async function updateVipTier(tierUuid, tierData) {
   return await apiRequest(ENDPOINTS.ADMIN.VIP_TIER(tierUuid), {
     method: 'PUT',
-    body: JSON.stringify(tierData)
+    body: tierData
   }, true, 'admin');
 }
 
@@ -89,14 +89,14 @@ export async function getLuckySpinItem(uuid) {
 export async function createLuckySpinItem(itemData) {
   return await apiRequest(ENDPOINTS.ADMIN.LUCKY_SPIN_ITEMS, {
     method: 'POST',
-    body: JSON.stringify(itemData)
+    body: itemData
   }, true, 'admin');
 }
 
 export async function updateLuckySpinItem(uuid, itemData) {
   return await apiRequest(ENDPOINTS.ADMIN.LUCKY_SPIN_ITEM(uuid), {
     method: 'PUT',
-    body: JSON.stringify(itemData)
+    body: itemData
   }, true, 'admin');
 }
 
@@ -121,7 +121,7 @@ export async function getLuckySpinSequence(uuid) {
 export async function createLuckySpinSequence(itemOrder, itemUuid) {
   return await apiRequest(ENDPOINTS.ADMIN.LUCKY_SPIN_SEQUENCES, {
     method: 'POST',
-    body: JSON.stringify({ item_order: itemOrder, item_uuid: itemUuid })
+    body: { item_order: itemOrder, item_uuid: itemUuid }
   }, true, 'admin');
 }
 
@@ -134,7 +134,7 @@ export async function deleteLuckySpinSequence(uuid) {
 export async function changeSpinSequencesOrder(luckySpins) {
   return await apiRequest(ENDPOINTS.ADMIN.CHANGE_SPIN_SEQUENCES, {
     method: 'PATCH',
-    body: JSON.stringify({ lucky_spins: luckySpins })
+    body: { lucky_spins: luckySpins }
   }, true, 'admin');
 }
 
@@ -144,7 +144,7 @@ export async function getMembers() {
   }, true, 'admin');
 }
 
-export async function adminGetRedemptionItems() {
+export async function getRedemptionItems() {
   return await apiRequest(ENDPOINTS.ADMIN.REDEMPTION_ITEMS, {
     method: 'GET'
   }, true, 'admin');
@@ -153,14 +153,14 @@ export async function adminGetRedemptionItems() {
 export async function createRedemptionItem(itemData) {
   return await apiRequest(ENDPOINTS.ADMIN.REDEMPTION_ITEMS, {
     method: 'POST',
-    body: JSON.stringify(itemData)
+    body: itemData
   }, true, 'admin');
 }
 
 export async function updateRedemptionItem(uuid, itemData) {
   return await apiRequest(ENDPOINTS.ADMIN.REDEMPTION_ITEM(uuid), {
     method: 'PUT',
-    body: JSON.stringify(itemData)
+    body: itemData
   }, true, 'admin');
 }
 

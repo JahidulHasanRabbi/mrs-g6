@@ -12,6 +12,7 @@ export const ENDPOINTS = {
     HUNDRED_SPIN: (uuid) => `/member/${uuid}/hundred-spin/`,
     PROFILE: (uuid) => `/member/profile/${uuid}/`,
     UPDATE_PROFILE: (uuid) => `/member/profile/${uuid}/update-profile/`,
+    ALL_LUCKY_SPIN_ITEMS: '/lucky-spin/lucky-spin-items/',
     ALL_REDEMPTION_ITEMS: '/redemption/redemption-items/',
     AVAILABLE_REDEMPTION_ITEMS: '/redemption/redemption-items/available-items/',
     REDEEM_ITEM: (uuid) => `/redemption/redemption-items/${uuid}/redeem/`

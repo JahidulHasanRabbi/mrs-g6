@@ -1,26 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
+import ErrorDisplay from "../../ui/ErrorDisplay";
 
 export default function SpinSequenceModal({ 
   isOpen, 
-  onClose, 
+  onClose,
+  onSubmit,
   mode = "add", // "add" or "edit"
-  initialData = null 
+  initialData = null,
+  spinItems = [],
+  isLoading = false,
+  error = null
 }) {
   const [formData, setFormData] = useState({
-    spinSequence: initialData?.spinSequence || "",
-    items: initialData?.items || "",
+    item_order: initialData?.item_order || "",
+    item_uuid: initialData?.item_uuid || "",
   });
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        item_order: initialData.item_order || "",
+        item_uuid: initialData.item_uuid || "",
+      });
+    }
+  }, [initialData]);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission
-    console.log("Form data:", formData);
-    onClose();
+    
+    const submitData = {
+      item_order: parseInt(formData.item_order, 10),
+      item_uuid: formData.item_uuid
+    };
+    
+    await onSubmit(submitData);
   };
 
   const handleInputChange = (field, value) => {
@@ -48,12 +66,19 @@ export default function SpinSequenceModal({
           </div>
 
           {/* Modal Title */}
-          <h2 className="text-center text-[28px] font-bold text-white capitalize font-['Times_New_Roman'] mb-16">
-            {mode === "add" ? "Add New Spin Items" : "Edit Spin Item"}
+          <h2 className="text-center text-[28px] font-bold text-white capitalize font-['Times_New_Roman'] mb-8">
+            {mode === "add" ? "Add New Spin Sequence" : "Edit Spin Sequence"}
           </h2>
 
+          {/* Error Display */}
+          {error && (
+            <div className="mb-4">
+              <ErrorDisplay error={error} />
+            </div>
+          )}
+
           {/* Form Fields */}
-          <form onSubmit={handleSubmit} className="space-y-16">
+          <form onSubmit={handleSubmit} className="space-y-8">
             {/* Text Input Fields */}
             <div className="space-y-4">
               {/* Spin Sequence */}
@@ -63,12 +88,13 @@ export default function SpinSequenceModal({
                 </label>
                 <input
                   type="number"
-                  value={formData.spinSequence}
-                  onChange={(e) => handleInputChange("spinSequence", e.target.value)}
+                  value={formData.item_order}
+                  onChange={(e) => handleInputChange("item_order", e.target.value)}
                   className="bg-white/10 border-[#f2c36b] border-[0.5px] h-[36px] rounded-[4px] w-[305px] px-3 text-white placeholder-white/50 focus:outline-none focus:border-[#f2c36b]"
                   placeholder="Enter sequence number"
                   min="1"
                   required
+                  disabled={isLoading}
                 />
               </div>
 
@@ -77,14 +103,20 @@ export default function SpinSequenceModal({
                 <label className="text-[18px] text-white font-['Times_New_Roman'] w-[136px]">
                   Items:
                 </label>
-                <input
-                  type="text"
-                  value={formData.items}
-                  onChange={(e) => handleInputChange("items", e.target.value)}
-                  className="bg-white/10 border-[0.5px] border-white/8 h-[36px] rounded-[4px] w-[304px] px-3 text-white placeholder-white/50 focus:outline-none focus:border-[#f2c36b]"
-                  placeholder="Enter item name"
+                <select
+                  value={formData.item_uuid}
+                  onChange={(e) => handleInputChange("item_uuid", e.target.value)}
+                  className="bg-white/10 border-[0.5px] border-white/8 h-[36px] rounded-[4px] w-[304px] px-3 text-white focus:outline-none focus:border-[#f2c36b]"
                   required
-                />
+                  disabled={isLoading}
+                >
+                  <option value="">Select an item</option>
+                  {spinItems.map(item => (
+                    <option key={item.uuid} value={item.uuid}>
+                      {item.reward_name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -94,6 +126,7 @@ export default function SpinSequenceModal({
                 type="button"
                 onClick={onClose}
                 className="bg-white border border-[#e5e6e6] h-[37px] px-[18px] py-[13px] rounded-[4px] flex items-center justify-center"
+                disabled={isLoading}
               >
                 <span className="text-[#f04a4a] text-[14px] font-bold font-['Times_New_Roman']">
                   Cancel
@@ -102,13 +135,14 @@ export default function SpinSequenceModal({
               
               <button
                 type="submit"
-                className="h-[37px] px-[18px] py-[13px] rounded-[4px] flex items-center justify-center"
+                className="h-[37px] px-[18px] py-[13px] rounded-[4px] flex items-center justify-center disabled:opacity-50"
                 style={{
                   backgroundImage: "linear-gradient(1.2852950753927956deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
                 }}
+                disabled={isLoading}
               >
                 <span className="text-black text-[14px] font-bold font-['Times_New_Roman']">
-                  Confirm
+                  {isLoading ? 'Saving...' : 'Confirm'}
                 </span>
               </button>
             </div>

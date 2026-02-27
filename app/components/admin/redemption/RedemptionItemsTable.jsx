@@ -3,11 +3,11 @@
 import Image from "next/image";
 import { getOptionLabel } from "../../../api/apiOptions";
 
-export default function SpinItemsTable({ items = [], onEditClick, onDeleteClick }) {
+export default function RedemptionItemsTable({ items = [], onEditClick, onDeleteClick }) {
   if (items.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-white/60">No spin items found</p>
+        <p className="text-white/60">No redemption items found</p>
       </div>
     );
   }
@@ -18,13 +18,25 @@ export default function SpinItemsTable({ items = [], onEditClick, onDeleteClick 
         <thead>
           <tr className="border-b border-white/10">
             <th className="px-4 py-3 text-left text-sm font-medium text-white/60">
-              Reward Name
+              Name
             </th>
             <th className="px-4 py-3 text-left text-sm font-medium text-white/60">
               Quantity
             </th>
             <th className="px-4 py-3 text-left text-sm font-medium text-white/60">
-              Item Type
+              Start Date
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-white/60">
+              End Date
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-white/60">
+              Prize Type
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-white/60">
+              Tokens
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-medium text-white/60">
+              Promotion
             </th>
             <th className="px-4 py-3 text-left text-sm font-medium text-white/60">
               Image
@@ -42,17 +54,37 @@ export default function SpinItemsTable({ items = [], onEditClick, onDeleteClick 
             >
               <td className="px-4 py-4">
                 <p className="text-sm text-white font-['Times_New_Roman']">
-                  {item.reward_name}
+                  {item.name}
                 </p>
               </td>
               <td className="px-4 py-4">
                 <p className="text-sm text-white/80 font-['Times_New_Roman']">
-                  {item.unlimited ? 'Unlimited' : item.quantity}
+                  {item.quantity}
                 </p>
               </td>
               <td className="px-4 py-4">
                 <p className="text-sm text-white/80 font-['Times_New_Roman']">
-                  {getOptionLabel('ITEM_TYPE', item.item_type)}
+                  {item.start_date}
+                </p>
+              </td>
+              <td className="px-4 py-4">
+                <p className="text-sm text-white/80 font-['Times_New_Roman']">
+                  {item.end_date}
+                </p>
+              </td>
+              <td className="px-4 py-4">
+                <p className="text-sm text-white/80 font-['Times_New_Roman']">
+                  {getOptionLabel('PRIZE_TYPE', item.prize_type)}
+                </p>
+              </td>
+              <td className="px-4 py-4">
+                <p className="text-sm text-white/80 font-['Times_New_Roman']">
+                  {item.tokens_needed}
+                </p>
+              </td>
+              <td className="px-4 py-4">
+                <p className="text-sm text-white/80 font-['Times_New_Roman']">
+                  {item.promotion}
                 </p>
               </td>
               <td className="px-4 py-4">
@@ -60,7 +92,7 @@ export default function SpinItemsTable({ items = [], onEditClick, onDeleteClick 
                   <div className="relative h-10 w-10">
                     <Image
                       src={item.image}
-                      alt={item.reward_name}
+                      alt={item.name}
                       fill
                       className="object-contain"
                     />

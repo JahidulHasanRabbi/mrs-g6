@@ -4,8 +4,17 @@ import { useState } from "react";
 import Sidebar from "../../../components/admin/Sidebar";
 import NavigationCards from "../../../components/admin/lucky-spin/NavigationCards";
 import UserLogsTable from "../../../components/admin/lucky-spin/UserLogsTable";
+import { AdminRouteGuard } from "../../../components/guards/AdminRouteGuard";
 
 export default function UserLogsPage() {
+  return (
+    <AdminRouteGuard>
+      <UserLogsPageContent />
+    </AdminRouteGuard>
+  );
+}
+
+function UserLogsPageContent() {
   const [selectedYear, setSelectedYear] = useState("2024");
 
   const years = ["2024", "2023", "2022", "2021", "2020"];

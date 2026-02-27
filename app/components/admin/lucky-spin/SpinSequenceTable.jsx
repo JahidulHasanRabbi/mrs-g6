@@ -1,17 +1,20 @@
 "use client";
 
-const SPIN_SEQUENCE_DATA = [
-  { id: 1, sequence: 1, item: "iPhone 17 Pro Max" },
-  { id: 2, sequence: 2, item: "Gold Bar 5 Gram" },
-  { id: 3, sequence: 3, item: "Sex Toy" },
-  { id: 4, sequence: 4, item: "Free Bonus 6.88" },
-  { id: 5, sequence: 5, item: "Rolex Day" },
-  { id: 6, sequence: 6, item: "Birthday" },
-  { id: 7, sequence: 7, item: "Thank You" },
-  { id: 8, sequence: 8, item: "Free Bonus 1.88" },
-];
+export default function SpinSequenceTable({ sequences = [], spinItems = [], onEditClick, onDeleteClick, onReorder }) {
+  if (sequences.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-white/60">No spin sequences found</p>
+      </div>
+    );
+  }
 
-export default function SpinSequenceTable({ onEditClick, onAddClick }) {
+  // Helper to get item name from uuid
+  const getItemName = (itemUuid) => {
+    const item = spinItems.find(i => i.uuid === itemUuid);
+    return item ? item.reward_name : 'Unknown Item';
+  };
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full">
@@ -46,7 +49,7 @@ export default function SpinSequenceTable({ onEditClick, onAddClick }) {
             <th className="px-4 py-3 text-left">
               <div className="flex items-center gap-2">
                 <span className="text-[18px] font-bold text-white font-['Times_New_Roman']">
-                  Status
+                  Actions
                 </span>
                 <div className="relative h-8 w-8">
                   <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
@@ -59,30 +62,33 @@ export default function SpinSequenceTable({ onEditClick, onAddClick }) {
           </tr>
         </thead>
         <tbody>
-          {SPIN_SEQUENCE_DATA.map((item) => (
+          {sequences.map((sequence) => (
             <tr
-              key={item.id}
+              key={sequence.uuid}
               className="border-b border-white/5 transition-colors hover:bg-white/[0.02]"
             >
               <td className="px-4 py-4">
                 <p className="text-[16px] text-white font-['Times_New_Roman']">
-                  {item.sequence}
+                  {sequence.item_order}
                 </p>
               </td>
               <td className="px-4 py-4">
                 <p className="text-[16px] text-white/80 font-['Times_New_Roman']">
-                  {item.item}
+                  {getItemName(sequence.item_uuid)}
                 </p>
               </td>
               <td className="px-4 py-4">
                 <div className="flex items-center gap-2">
                   <button 
-                      onClick={() => onEditClick(item)}
-                      className="rounded bg-[#06b800] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#06b800]/90"
-                    >
-                      Edit
-                    </button>
-                  <button className="rounded border border-[#f04a4a] px-4 py-2 text-sm text-[#f04a4a] transition-colors hover:bg-[#f04a4a]/10">
+                    onClick={() => onEditClick(sequence)}
+                    className="rounded bg-[#06b800] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#06b800]/90"
+                  >
+                    Edit
+                  </button>
+                  <button 
+                    onClick={() => onDeleteClick(sequence)}
+                    className="rounded border border-[#f04a4a] px-4 py-2 text-sm text-[#f04a4a] transition-colors hover:bg-[#f04a4a]/10"
+                  >
                     Delete
                   </button>
                 </div>

@@ -5,8 +5,17 @@ import Sidebar from "../../../components/admin/Sidebar";
 import NavigationCards from "../../../components/admin/lucky-spin/NavigationCards";
 import DailyLimitsTable from "../../../components/admin/lucky-spin/DailyLimitsTable";
 import MemberActivityTable from "../../../components/admin/lucky-spin/MemberActivityTable";
+import { AdminRouteGuard } from "../../../components/guards/AdminRouteGuard";
 
 export default function DailyLimitsPage() {
+  return (
+    <AdminRouteGuard>
+      <DailyLimitsPageContent />
+    </AdminRouteGuard>
+  );
+}
+
+function DailyLimitsPageContent() {
   const [activeTab, setActiveTab] = useState("daily-limits");
 
   return (

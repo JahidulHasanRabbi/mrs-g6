@@ -3,6 +3,9 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { adminLogout } from "../../api/adminApi";
+import { tokenStorage } from "../../api/tokenStorage";
 
 const MENU_ITEMS = [
   {
@@ -11,6 +14,7 @@ const MENU_ITEMS = [
     icon: "https://www.figma.com/api/mcp/asset/c410da3d-b2e1-4c8b-8a12-01bb5fd35fa0",
     href: "/admin",
     isHighlighted: true,
+    disabled: false,
   },
   {
     id: "lucky-spin",
@@ -18,13 +22,15 @@ const MENU_ITEMS = [
     icon: "https://www.figma.com/api/mcp/asset/2ac8ef32-ce18-428a-98db-8791f36124f3",
     href: "/admin/lucky-spin",
     hasSubmenu: true,
+    disabled: false,
   },
   {
-    id: "redemption-mall",
+    id: "redemption",
     label: "Points Redemption Mall",
     icon: "https://www.figma.com/api/mcp/asset/c9a60cbd-f7a9-4547-8c67-05985714695b",
-    href: "/admin/redemption-items",
+    href: "/admin/redemption",
     hasSubmenu: true,
+    disabled: false,
   },
   {
     id: "redemption-gift",
@@ -32,6 +38,7 @@ const MENU_ITEMS = [
     icon: "https://www.figma.com/api/mcp/asset/f6833d4f-4f5f-4ee8-b842-44e3cde3d5b9",
     href: "/admin/redemption-gift",
     hasSubmenu: true,
+    disabled: true, // No page yet
   },
 ];
 
@@ -41,6 +48,7 @@ const SECONDARY_MENU = [
     label: "Tournament",
     icon: "https://www.figma.com/api/mcp/asset/e3bb06a1-ee82-4156-869d-e03185e16767",
     href: "/admin/tournament",
+    disabled: true, // No page yet
   },
   {
     id: "vip",
@@ -48,6 +56,7 @@ const SECONDARY_MENU = [
     icon: "https://www.figma.com/api/mcp/asset/550b9d48-a153-4a11-8895-d389eee6d920",
     href: "/admin/vip-tiers",
     hasSubmenu: true,
+    disabled: false,
   },
   {
     id: "reports",
@@ -55,6 +64,7 @@ const SECONDARY_MENU = [
     icon: "https://www.figma.com/api/mcp/asset/3c66f4d6-50f4-497f-849d-5143cae382f5",
     href: "/admin/reports",
     hasSubmenu: true,
+    disabled: true, // No page yet
   },
   {
     id: "user-management",
@@ -62,6 +72,7 @@ const SECONDARY_MENU = [
     icon: "https://www.figma.com/api/mcp/asset/83b20cb2-2759-4347-bf2f-edbfe22a04ef",
     href: "/admin/user-management",
     hasSubmenu: true,
+    disabled: true, // No page yet
   },
   {
     id: "notifications",
@@ -69,13 +80,14 @@ const SECONDARY_MENU = [
     icon: "https://www.figma.com/api/mcp/asset/d78758e0-74c6-48c2-97b0-a89dcfd736b7",
     href: "/admin/notifications",
     hasSubmenu: true,
+    disabled: true, // No page yet
   },
 ];
 
-const MenuItem = ({ item, isActive }) => (
-  <Link href={item.href}>
+const MenuItem = ({ item, isActive }) => {
+  const content = (
     <div className="relative h-10 overflow-hidden">
-      <div className="flex items-center gap-1.5 px-2 py-1.5">
+      <div className={`flex items-center gap-1.5 px-2 py-1.5 ${item.disabled ? 'opacity-40 cursor-not-allowed' : ''}`}>
         <div className="relative h-5 w-5 shrink-0">
           <Image
             src={item.icon}
@@ -88,15 +100,20 @@ const MenuItem = ({ item, isActive }) => (
           {item.label}
         </p>
       </div>
-    
     </div>
-  </Link>
-);
+  );
 
-const HighlightedMenuItem = ({ item }) => (
-  <Link href={item.href}>
+  if (item.disabled) {
+    return <div className="cursor-not-allowed">{content}</div>;
+  }
+
+  return <Link href={item.href}>{content}</Link>;
+};
+
+const HighlightedMenuItem = ({ item }) => {
+  const content = (
     <div
-      className="relative h-[51.765px] w-full overflow-hidden rounded-[6.471px] border-[0.324px] shadow-[3.235px_3.235px_48.529px_3.235px_rgba(231,196,87,0.5)]"
+      className={`relative h-[51.765px] w-full overflow-hidden rounded-[6.471px] border-[0.324px] shadow-[3.235px_3.235px_48.529px_3.235px_rgba(231,196,87,0.5)] ${item.disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
       style={{
         backgroundColor: "#e8b558",
       }}
@@ -115,11 +132,40 @@ const HighlightedMenuItem = ({ item }) => (
         </p>
       </div>
     </div>
-  </Link>
-);
+  );
+
+  if (item.disabled) {
+    return <div className="cursor-not-allowed">{content}</div>;
+  }
+
+  return <Link href={item.href}>{content}</Link>;
+};
 
 export default function Sidebar({ activeItem = "home" }) {
-  const [profileExpanded, setProfileExpanded] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    
+    try {
+      const refreshToken = tokenStorage.getAdminRefreshToken();
+      
+      // Call logout API if refresh token exists
+      if (refreshToken) {
+        try {
+          await adminLogout(refreshToken);
+        } catch (error) {
+          // Continue with logout even if API call fails
+          console.error('Logout API error:', error);
+        }
+      }
+    } finally {
+      // Always clear tokens and redirect, regardless of API success
+      tokenStorage.clearAdminTokens();
+      router.push('/admin/login');
+    }
+  };
 
   return (
     <div 
@@ -183,53 +229,41 @@ export default function Sidebar({ activeItem = "home" }) {
 
         {/* Secondary Menu */}
         <div className="flex flex-col gap-4">
-          {SECONDARY_MENU.map((item) => (
-            <MenuItem key={item.id} item={item} isActive={activeItem === item.id} />
-          ))}
+          {SECONDARY_MENU.map((item) => {
+            // Check if VIP item should be highlighted
+            const shouldHighlight = item.id === "vip" && (activeItem === "vip" || activeItem === "vip-tiers");
+            
+            if (shouldHighlight) {
+              return <HighlightedMenuItem key={item.id} item={item} />;
+            }
+            
+            return <MenuItem key={item.id} item={item} isActive={activeItem === item.id || (item.id === "vip" && activeItem === "vip-tiers")} />;
+          })}
         </div>
-      </div>
 
-      {/* Profile Section */}
-      <div className="absolute bottom-6 left-[27px] w-[270px]">
+        {/* Logout Button */}
         <button
-          onClick={() => setProfileExpanded(!profileExpanded)}
-          className="flex w-full items-center gap-[17px] rounded-md border border-white/20 bg-[#202020] p-2"
+          onClick={handleLogout}
+          disabled={isLoggingOut}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-md border border-white/20 bg-[#202020] px-4 py-3 hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <div className="flex flex-1 items-center gap-2">
-            <div className="relative h-12 w-12 shrink-0">
-              <Image
-                src="https://www.figma.com/api/mcp/asset/5698a08b-cd53-4a1e-b432-874d00e5232e"
-                alt="Profile"
-                fill
-                className="rounded-full object-cover"
-              />
-            </div>
-            <div className="flex flex-col items-start gap-1">
-              <p className="text-[16px] font-bold leading-6 text-white font-['Times_New_Roman']">
-                Andrew Forbist
-              </p>
-              <p className="text-[14px] leading-5 text-[#8c8c8c] font-['Times_New_Roman']">
-                Andrew@Forbist.com
-              </p>
-            </div>
-          </div>
-          <div className="relative h-6 w-6 shrink-0">
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              className={`transition-transform ${profileExpanded ? "rotate-180" : ""}`}
-            >
-              <path
-                d="M7 10L12 15L17 10"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="white"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          <span className="text-[16px] font-bold text-white font-['Times_New_Roman']">
+            {isLoggingOut ? 'Logging out...' : 'Logout'}
+          </span>
         </button>
       </div>
     </div>
