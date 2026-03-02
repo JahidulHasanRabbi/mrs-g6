@@ -4,16 +4,16 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { SPIN_ASSETS } from "./spinAssets";
 
-const SpinButton = ({ spins, tokens, onClick, image, className = "w-[160px] h-[70px]" }) => {
+const SpinButton = ({ spins, tokens, onClick, image, className = "w-[160px] h-[70px]", disabled = false }) => {
   return (
     <motion.div 
-      className={`relative cursor-pointer ${className}`}
-      onClick={onClick}
+      className={`relative ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${className}`}
+      onClick={disabled ? undefined : onClick}
       initial={{ opacity: 0, scale: 0.8, y: 20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
+      animate={{ opacity: disabled ? 0.5 : 1, scale: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
-      whileHover={{ scale: 1.05, y: -2 }}
-      whileTap={{ scale: 0.95 }}
+      whileHover={disabled ? undefined : { scale: 1.05, y: -2 }}
+      whileTap={disabled ? undefined : { scale: 0.95 }}
     >
       <Image
         alt="Button Background"

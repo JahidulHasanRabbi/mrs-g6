@@ -5,8 +5,24 @@ import { motion } from "framer-motion";
 import { MART_ASSETS } from "./martAssets";
 const POPUP_CLOSE_IMG = "/assets/home/popup-close.png";
 
-export default function RedeemModal({ isOpen, onClose, item }) {
+export default function RedeemModal({ isOpen, onClose, item, isRedeeming, redeemResult }) {
   if (!isOpen) return null;
+
+  // Determine message to display
+  let message = "";
+  let isSuccess = false;
+  
+  if (redeemResult) {
+    message = redeemResult.message;
+    isSuccess = redeemResult.success;
+  } else if (isRedeeming) {
+    message = "Processing your redemption...";
+  } else {
+    message = `Are you sure you want to redeem ${item?.title}?`;
+  }
+
+  // Determine title color based on state
+  const titleColor = isSuccess ? "#60803c" : redeemResult && !isSuccess ? "#e94141" : "#60803c";
 
   return (
     <motion.div 
@@ -57,24 +73,24 @@ export default function RedeemModal({ isOpen, onClose, item }) {
         <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex flex-col gap-6 items-center w-[228px]">
           {/* Title */}
           <motion.p 
-            className="text-[#60803c] text-[16px] font-bold font-['Times_New_Roman'] w-[250px]"
+            className="text-[16px] font-bold font-['Times_New_Roman'] w-[250px]"
+            style={{ color: titleColor }}
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            🎁   Redeem Your Reward
+            {isSuccess ? "🎁   Redemption Successful!" : redeemResult && !isSuccess ? "❌   Redemption Failed" : "🎁   Redeem Your Reward"}
           </motion.p>
 
           {/* Message */}
           <motion.p 
-            className="text-[#60803c] text-[16px] font-bold font-['Times_New_Roman'] text-center w-[236px] leading-normal"
+            className="text-[16px] font-bold font-['Times_New_Roman'] text-center w-[236px] leading-normal"
+            style={{ color: titleColor }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}
           >
-            Congratulations! You've checked in for
-            <br />
-            today and earned +1 Coin & +1 bonus points!
+            {message}
           </motion.p>
         </div>
       </motion.div>

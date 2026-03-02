@@ -3,10 +3,10 @@
 import { motion } from "framer-motion";
 import SpinButton from "./SpinButton";
 
-const SpinButtonsContainer = ({ buttons, onButtonClick }) => {
+const SpinButtonsContainer = ({ buttons, onButtonClick, disabled = false }) => {
   return (
     <motion.div 
-      className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+      className="flex flex-row justify-center gap-4 w-full"
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
@@ -27,7 +27,8 @@ const SpinButtonsContainer = ({ buttons, onButtonClick }) => {
             tokens={button.tokens}
             image={button.image}
             className={button.className}
-            onClick={() => onButtonClick(button)}
+            onClick={() => !disabled && onButtonClick(button)}
+            disabled={disabled}
           />
         </motion.div>
       ))}

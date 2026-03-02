@@ -1,42 +1,44 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import MartTitleBanner from "../components/mart/MartTitleBanner";
 import MartSortButton from "../components/mart/MartSortButton";
 import MartGrid from "../components/mart/MartGrid";
 import RedeemModal from "../components/mart/RedeemModal";
-import { MART_ASSETS } from "../components/mart/martAssets";
+import { LoadingState } from "../components/ui/LoadingState";
+import ErrorDisplay from "../components/ui/ErrorDisplay";
+import { getAvailableRedemptionItems, redeemItem } from "../api/memberApi";
+import { mapRedemptionItems } from "../api/responseMappers";
+import { tokenStorage } from "../api/tokenStorage";
 
 export default function MartPage() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [sortMode, setSortMode] = useState("default");
+  const [martItems, setMartItems] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isRedeeming, setIsRedeeming] = useState(false);
+  const [redeemResult, setRedeemResult] = useState(null);
 
-  const martItems = [
-    {
-      image: MART_ASSETS.prize1,
-      title: "iPhone 17 Pro Max",
-      originalPrice: "8,999,000",
-      discountPrice: "6,999,000",
-    },
-    {
-      image: MART_ASSETS.prize2,
-      title: "Sex Toy",
-      originalPrice: "1,500,000",
-      discountPrice: "1,223,000",
-    },
-    {
-      image: MART_ASSETS.prize3,
-      title: "Birthday",
-      originalPrice: "3,000,000",
-      discountPrice: "2,333,000",
-    },
-    {
-      image: MART_ASSETS.prize2,
-      title: "Sex Toy",
-      originalPrice: "1,500,000",
-      discountPrice: "1,223,000",
-    },
-  ];
+  // Fetch redemption items on mount
+  useEffect(() => {
+    fetchRedemptionItems();
+  }, []);
+
+  const fetchRedemptionItems = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await getAvailableRedemptionItems();
+      const mappedItems = mapRedemptionItems(response);
+      setMartItems(mappedItems);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const parseCoins = (value) => {
     if (!value) return 0;
@@ -67,12 +69,45 @@ export default function MartPage() {
         ? "Sort: High to Low"
         : "Sort by Default";
 
-  const handleRedeem = (item) => {
+  const handleRedeem = async (item) => {
     setSelectedItem(item);
+    setRedeemResult(null);
+    setIsRedeeming(true);
+    
+    try {
+      const memberUuid = tokenStorage.getMemberUuid();
+      
+      if (!memberUuid) {
+        setRedeemResult({
+          success: false,
+          message: "Please log in to redeem items"
+        });
+        setIsRedeeming(false);
+        return;
+      }
+      
+      const response = await redeemItem(item.uuid, memberUuid);
+      
+      setRedeemResult({
+        success: true,
+        message: response.details || "Congratulations! You've successfully redeemed this item!"
+      });
+      
+      // Refresh items list after successful redemption
+      await fetchRedemptionItems();
+    } catch (err) {
+      setRedeemResult({
+        success: false,
+        message: err.data?.details || err.message || "Failed to redeem item. Please try again."
+      });
+    } finally {
+      setIsRedeeming(false);
+    }
   };
 
   const handleCloseModal = () => {
     setSelectedItem(null);
+    setRedeemResult(null);
   };
 
   const handleSort = () => {
@@ -87,16 +122,26 @@ export default function MartPage() {
     <>
       <MartTitleBanner />
         
-        <div className="flex justify-end px-8 mt-6">
-          <MartSortButton onSort={handleSort} label={sortButtonLabel} />
-        </div>
+      <div className="flex justify-end px-8 mt-6">
+        <MartSortButton onSort={handleSort} label={sortButtonLabel} />
+      </div>
 
-      <MartGrid items={sortedItems} onRedeem={handleRedeem} />
+      <LoadingState isLoading={isLoading}>
+        {error ? (
+          <div className="px-8 mt-6">
+            <ErrorDisplay error={error} />
+          </div>
+        ) : (
+          <MartGrid items={sortedItems} onRedeem={handleRedeem} />
+        )}
+      </LoadingState>
       
       <RedeemModal 
         isOpen={!!selectedItem}
         onClose={handleCloseModal}
         item={selectedItem}
+        isRedeeming={isRedeeming}
+        redeemResult={redeemResult}
       />
     </>
   );

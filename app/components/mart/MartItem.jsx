@@ -36,11 +36,10 @@ export default function MartItem({ image, title, originalPrice, discountPrice, c
           ease: "easeOut",
         }}
       >
-        <Image
+        <img
           alt={title}
-          src={image}
-          fill
-          className="object-contain"
+          src={image || null}
+          className="w-full h-full object-contain"
         />
       </motion.div>
 
@@ -70,13 +69,13 @@ export default function MartItem({ image, title, originalPrice, discountPrice, c
         {/* Original Price with Strikethrough */}
         {originalPrice && (
           <p className="text-[#e94141] text-[11px] font-bold font-['Times_New_Roman'] line-through decoration-2 whitespace-nowrap">
-            {originalPrice} Pagcor Coins
+            {typeof originalPrice === 'number' ? originalPrice.toLocaleString() : originalPrice} Pagcor Coins
           </p>
         )}
         
         {/* Discount Price */}
         <p className="text-[#e9af41] -mt-2 text-[13px] font-bold font-['Times_New_Roman'] whitespace-nowrap">
-          {discountPrice || coins} Pagcor Coins
+          {typeof (discountPrice || coins) === 'number' ? (discountPrice || coins).toLocaleString() : (discountPrice || coins)} Pagcor Coins
         </p>
       </motion.div>
 

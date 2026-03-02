@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { VIP_DETAILS_ASSETS } from "./vipDetailsAssets";
 
-const VIP_LEVELS = [
+const DEFAULT_VIP_LEVELS = [
   {
     name: "Bronze",
     badge: VIP_DETAILS_ASSETS.badges.bronze,
@@ -53,7 +53,21 @@ const VIP_LEVELS = [
   },
 ];
 
-export default function VipLevelChain({ selectedLevel, onLevelSelect }) {
+// Map API tier names to badge assets
+function getBadgeForTier(tierName) {
+  const lowerName = tierName.toLowerCase();
+  
+  if (lowerName.includes('bronze')) return VIP_DETAILS_ASSETS.badges.bronze;
+  if (lowerName.includes('silver')) return VIP_DETAILS_ASSETS.badges.silver;
+  if (lowerName.includes('gold')) return VIP_DETAILS_ASSETS.badges.gold;
+  if (lowerName.includes('platinum')) return VIP_DETAILS_ASSETS.badges.platinum;
+  if (lowerName.includes('diamond')) return VIP_DETAILS_ASSETS.badges.diamond;
+  
+  // Default to bronze if no match
+  return VIP_DETAILS_ASSETS.badges.bronze;
+}
+
+export default function VipLevelChain({ selectedLevel, onLevelSelect, vipTiers = [] }) {
   const [isSmallScreen, setIsSmallScreen] = useState(false);
 
   useEffect(() => {
@@ -65,6 +79,19 @@ export default function VipLevelChain({ selectedLevel, onLevelSelect }) {
     window.addEventListener('resize', checkWidth);
     return () => window.removeEventListener('resize', checkWidth);
   }, []);
+
+  // Use API tiers if available, otherwise fall back to default
+  const displayLevels = vipTiers.length > 0 
+    ? vipTiers.map((tier, index) => ({
+        name: tier.name,
+        badge: getBadgeForTier(tier.name),
+        rotation: DEFAULT_VIP_LEVELS[index]?.rotation || 0,
+        top: DEFAULT_VIP_LEVELS[index]?.top || 10,
+        left: DEFAULT_VIP_LEVELS[index]?.left || 30 + (index * 90),
+        topSm: DEFAULT_VIP_LEVELS[index]?.topSm || 20,
+        leftSm: DEFAULT_VIP_LEVELS[index]?.leftSm || 55 + (index * 65),
+      }))
+    : DEFAULT_VIP_LEVELS;
 
   return (
     <div className="relative w-full h-[120px] flex justify-center items-center">
@@ -86,7 +113,7 @@ export default function VipLevelChain({ selectedLevel, onLevelSelect }) {
         </div>
 
         {/* VIP Level Badges */}
-        {VIP_LEVELS.map((level, index) => {
+        {displayLevels.map((level, index) => {
           const isSelected = selectedLevel === level.name;
           const size = isSelected ? (isSmallScreen ? 51 : 60) : (isSmallScreen ? 36 : 48);
           const baseTop = isSmallScreen ? level.topSm : level.top;

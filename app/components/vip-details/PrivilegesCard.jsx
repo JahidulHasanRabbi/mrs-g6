@@ -4,7 +4,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { VIP_DETAILS_ASSETS } from "./vipDetailsAssets";
 
-const BENEFITS = [
+const DEFAULT_BENEFITS = [
   { icon: VIP_DETAILS_ASSETS.checkIcon, text: "Weekly Bonus", col: 1 },
   { icon: VIP_DETAILS_ASSETS.checkIcon, text: "Faster\nWithdrawals", col: 2 },
   { icon: VIP_DETAILS_ASSETS.checkIcon, text: "Exclusive\naccess", col: 1 },
@@ -14,8 +14,23 @@ const BENEFITS = [
 ];
 
 
-export default function PrivilegesCard({ level = "Bronze" }) {
+export default function PrivilegesCard({ level = "Bronze", tierData = null }) {
   const currentBg = VIP_DETAILS_ASSETS.privilegesBg[level.toLowerCase()] || VIP_DETAILS_ASSETS.privilegesBg.bronze;
+
+  // Build benefits from API data if available
+  const benefits = tierData ? [
+    { icon: VIP_DETAILS_ASSETS.checkIcon, text: `Upgrade Bonus\n${tierData.upgrade_bonus}`, col: 1 },
+    { icon: VIP_DETAILS_ASSETS.checkIcon, text: `Monthly Loyalty\n${tierData.monthly_loyalty_bonus}`, col: 2 },
+    { icon: VIP_DETAILS_ASSETS.checkIcon, text: `Birthday Bonus\n${tierData.birthday_bonus}`, col: 1 },
+    { icon: VIP_DETAILS_ASSETS.checkIcon, text: "Faster\nWithdrawals", col: 2 },
+    { icon: VIP_DETAILS_ASSETS.checkIcon, text: "Exclusive\naccess", col: 1 },
+    { icon: VIP_DETAILS_ASSETS.checkIcon, text: "Priority\nSupport", col: 2 },
+  ] : DEFAULT_BENEFITS;
+
+  // Format deposit requirements for description
+  const description = tierData 
+    ? `Lifetime deposit required: ${tierData.lifetime_deposit_required}. Monthly deposit: ${tierData.monthly_deposit}. Enjoy exclusive benefits and rewards tailored to your VIP status.`
+    : "Lorem ipsum dolor sit amet, consectetuer adipiecing alit. Sed do elusmod tempor incididunt ut labore et dolore magne alique aliquram erat volutpat.";
 
   return (
     <motion.div
@@ -77,12 +92,12 @@ export default function PrivilegesCard({ level = "Bronze" }) {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5, delay: 1.1 }}
       >
-        <p>Lorem ipsum dolor sit amet, consectetuer adipiecing alit. Sed do elusmod tempor incididunt ut labore et dolore magne alique aliquram erat volutpat.</p>
+        <p>{description}</p>
       </motion.div>
 
       {/* Benefits Grid */}
       <div className="absolute left-[40px] top-[200px] w-[370px] max-[375px]:left-[34px] max-[375px]:top-[170px] max-[375px]:w-[315px]">
-        {BENEFITS.map((benefit, index) => {
+        {benefits.map((benefit, index) => {
           const row = Math.floor(index / 2);
           const col = index % 2;
           const isSmallScreen = typeof window !== 'undefined' && window.innerWidth <= 375;

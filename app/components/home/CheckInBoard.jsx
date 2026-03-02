@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { HOME_ASSETS } from "./homeAssets";
+import { getMemberInfo, checkIn } from "@/app/api/memberApi";
+import { tokenStorage } from "@/app/api/tokenStorage";
+import SuccessModal from "@/app/components/ui/SuccessModal";
 
 const POPUP_BG_IMG = "/assets/home/popup-deposit-bg.png";
 const POPUP_CLOSE_IMG = "/assets/home/popup-close.png";
@@ -35,13 +38,18 @@ function AssetFill({ src, alt, className }) {
 }
 
 export default function CheckInBoard() {
-  const [checkedDays, setCheckedDays] = useState([1, 2]);
+  const [checkedDays, setCheckedDays] = useState([]);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
   const [isPopupBgLoaded, setIsPopupBgLoaded] = useState({
     default: false,
     day7: false,
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [memberInfo, setMemberInfo] = useState(null);
 
   useEffect(() => {
     const preload = (src) =>
@@ -70,6 +78,47 @@ export default function CheckInBoard() {
     };
   }, []);
 
+  // Fetch member info to determine checked days
+  useEffect(() => {
+    const fetchMemberInfo = async () => {
+      try {
+        const memberUuid = tokenStorage.getMemberUuid();
+        if (!memberUuid) return;
+
+        setIsLoading(true);
+        const data = await getMemberInfo(memberUuid);
+        setMemberInfo(data);
+
+        // Calculate checked days based on last_check_in_date
+        if (data.last_check_in_date) {
+          const lastCheckIn = new Date(data.last_check_in_date);
+          const today = new Date();
+          const diffTime = Math.abs(today - lastCheckIn);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          
+          // If checked in today or within the last day, mark days as checked
+          // This is a simplified logic - adjust based on actual API behavior
+          if (diffDays <= 1) {
+            // Calculate which days should be marked as checked
+            // For now, we'll mark days sequentially based on check-in streak
+            const checked = [];
+            for (let i = 1; i <= Math.min(diffDays, 7); i++) {
+              checked.push(i);
+            }
+            setCheckedDays(checked);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch member info:", err);
+        setError("Failed to load check-in status");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMemberInfo();
+  }, []);
+
   const days = useMemo(
     () => [
       { day: 1, label: "DAY 1", reward: "+100", x: 20, y: 30, iconSrc: HOME_ASSETS.electricSign },
@@ -88,10 +137,79 @@ export default function CheckInBoard() {
     setCheckedDays((prev) => [...prev, day]);
   };
 
-  const onDayClick = (day) => {
-    setSelectedDay(day);
-    setIsPopupOpen(true);
+  const onDayClick = async (day) => {
+    // Check if already checked in
+    if (checkedDays.includes(day.day)) {
+      setSuccessMessage("You have already checked in for this day!");
+      setShowSuccessModal(true);
+      return;
+    }
+
+    try {
+      const memberUuid = tokenStorage.getMemberUuid();
+      if (!memberUuid) {
+        setError("Please log in to check in");
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+
+      // Call check-in API
+      const response = await checkIn(memberUuid);
+      
+      // Mark day as checked
+      setCheckedDays((prev) => [...prev, day.day]);
+      
+      // Display success message with earned tokens
+      const tokensEarned = response.tokens_earned || response.reward || 100; // Fallback to 100 if not specified
+      setSuccessMessage(`Congratulations! You've checked in for today and earned ${tokensEarned} tokens!`);
+      setShowSuccessModal(true);
+
+      // Refresh member info after successful check-in
+      const updatedInfo = await getMemberInfo(memberUuid);
+      setMemberInfo(updatedInfo);
+
+    } catch (err) {
+      console.error("Check-in failed:", err);
+      
+      // Extract error message from various possible locations
+      let errorMessage = "";
+      
+      if (err.data) {
+        errorMessage = err.data.details || err.data.detail || err.data.message || err.data.error || "";
+      }
+      
+      if (!errorMessage && err.message) {
+        errorMessage = err.message;
+      }
+      
+      // Check if already checked in error
+      if (errorMessage.toLowerCase().includes("already checked in")) {
+        setSuccessMessage("Already checked in today! Try again tomorrow.");
+        setShowSuccessModal(true);
+      } else {
+        setError(errorMessage || "Failed to check in. Please try again.");
+        setSuccessMessage(errorMessage || "Failed to check in. Please try again.");
+        setShowSuccessModal(true);
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  // Show loading state while fetching member info
+  if (isLoading) {
+    return (
+      <section className="relative w-full px-2 sm:px-4">
+        <div className="relative w-full mx-auto" style={{ maxWidth: 475, minHeight: 400 }}>
+          <div className="flex items-center justify-center h-full">
+            <div className="text-[#60803C] text-lg">Loading check-in board...</div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="relative w-full px-2 sm:px-4">
@@ -508,6 +626,15 @@ export default function CheckInBoard() {
           )}
         </div>
       )}
+
+      {/* Success Modal for Check-in Results */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title="🎉 Daily Check-in"
+        message={successMessage || "Check-in successful!"}
+        backgroundColor="rgba(96, 128, 60, 1)"
+      />
     </section>
   );
 }

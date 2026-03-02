@@ -1,8 +1,13 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { SPIN_ASSETS } from "./spinAssets";
+import { getAllLuckySpinItems } from "../../api/memberApi";
+import { mapLuckySpinItems } from "../../api/responseMappers";
+import LoadingState from "../ui/LoadingState";
+import ErrorDisplay from "../ui/ErrorDisplay";
 
 const RewardItem = ({ icon, title, index }) => (
   <motion.div 
@@ -89,19 +94,52 @@ const CreditCard = ({ range, index }) => (
 );
 
 export default function RewardsList() {
-  const rewards = [
-    { icon: SPIN_ASSETS.prize1, title: "I Phone 17 Pro Max" },
-    { icon: SPIN_ASSETS.prize2, title: "Sexy Toy" },
-    { icon: SPIN_ASSETS.prize3, title: "Birthday" },
-  ];
+  const [items, setItems] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const creditCards = [
-    "RM1.00 ~ RM5.00",
-    "RM5.00 ~ RM15.00",
-    "RM15.00 ~ RM45.00",
-    "RM45.00 ~ RM135.00",
-    "RM135.00 ~ RM400.00",
-  ];
+  useEffect(() => {
+    async function fetchSpinItems() {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const response = await getAllLuckySpinItems();
+        const mappedItems = mapLuckySpinItems(response);
+        setItems(mappedItems);
+      } catch (err) {
+        console.error('Error fetching lucky spin items:', err);
+        setError(err.message || 'Failed to load rewards');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchSpinItems();
+  }, []);
+
+  // Separate items by type
+  const itemRewards = items.filter(item => 
+    (item.item_type === 'ITEM' || item.item_type === 2 || item.item_type === 3) && item.image
+  );
+  const creditRewards = items.filter(item => 
+    item.item_type === 'FREE CREDIT' || item.item_type === 1
+  );
+
+  if (isLoading) {
+    return (
+      <div className="relative w-[400px] h-[750px] sm:w-[520px] sm:h-[950px] mx-auto flex items-center justify-center">
+        <LoadingState />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="relative w-[400px] h-[750px] sm:w-[520px] sm:h-[950px] mx-auto flex items-center justify-center">
+        <ErrorDisplay message={error} />
+      </div>
+    );
+  }
 
   return (
     <motion.div 
@@ -117,9 +155,10 @@ export default function RewardsList() {
         className="object-cover"
       />
       
-      <div className="absolute inset-0 flex flex-col items-center justify-center px-10 py-12">
+      <div className="absolute inset-0 flex flex-col items-center pt-20 px-10 pb-16">
         <motion.h2 
-          className="text-[36px] font-bold text-[#a67520] text-center mb-4"
+          className="text-[36px] font-bold text-center mb-4"
+          style={{ color: '#8B6914' }}
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
@@ -128,22 +167,52 @@ export default function RewardsList() {
         </motion.h2>
         
         <div className="flex flex-col gap-3 w-full max-w-[300px]">
-          {rewards.map((reward, index) => (
-            <RewardItem key={index} index={index} {...reward} />
+          {itemRewards.map((reward, index) => (
+            <RewardItem 
+              key={reward.uuid} 
+              index={index} 
+              icon={reward.image}
+              title={reward.reward_name}
+            />
           ))}
         </div>
 
-        <div className="flex justify-center gap-8 mt-2">
-          <CreditCard range={creditCards[0]} index={0} />
-          <CreditCard range={creditCards[1]} index={1} />
-        </div>
-        <div className="flex justify-center gap-8">
-          <CreditCard range={creditCards[2]} index={2} />
-          <CreditCard range={creditCards[3]} index={3} />
-        </div>
-        <div className="flex justify-center gap-8">
-          <CreditCard range={creditCards[4]} index={4} />
-        </div>
+        {/* Display credit cards in rows */}
+        {creditRewards.length > 0 && (
+          <>
+            <div className="flex justify-center gap-8 mt-2">
+              {creditRewards.slice(0, 2).map((credit, index) => (
+                <CreditCard 
+                  key={credit.uuid} 
+                  range={`RM${credit.min_withdraw} ~ RM${credit.max_withdraw}`}
+                  index={index}
+                />
+              ))}
+            </div>
+            {creditRewards.length > 2 && (
+              <div className="flex justify-center gap-8">
+                {creditRewards.slice(2, 4).map((credit, index) => (
+                  <CreditCard 
+                    key={credit.uuid} 
+                    range={`RM${credit.min_withdraw} ~ RM${credit.max_withdraw}`}
+                    index={index + 2}
+                  />
+                ))}
+              </div>
+            )}
+            {creditRewards.length > 4 && (
+              <div className="flex justify-center gap-8">
+                {creditRewards.slice(4, 6).map((credit, index) => (
+                  <CreditCard 
+                    key={credit.uuid} 
+                    range={`RM${credit.min_withdraw} ~ RM${credit.max_withdraw}`}
+                    index={index + 4}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        )}
       </div>
     </motion.div>
   );

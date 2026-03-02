@@ -1,14 +1,22 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { PROFILE_ASSETS } from "./profileAssets";
+import { getMemberInfo, getProfile, claimWelcomeGift } from "@/app/api/memberApi";
+import { mapMemberInfoToProfileCard } from "@/app/api/responseMappers";
+import { tokenStorage } from "@/app/api/tokenStorage";
+import { handleApiError, formatErrorMessage } from "@/app/api/errorHandler";
+import { LoadingState } from "@/app/components/ui/LoadingState";
+import ErrorDisplay from "@/app/components/ui/ErrorDisplay";
+import SuccessModal from "@/app/components/ui/SuccessModal";
 
 export default function ProfileCard({ 
-  name = "Jhon Doe", 
-  totalTokens = "5,450.00", 
-  currentLevel = "Gold",
+  name: propName, 
+  totalTokens: propTotalTokens, 
+  currentLevel: propCurrentLevel,
   nextLevel = "Platinum",
   progress = 61.6, // percentage
   tokensNeeded = 20000,
@@ -16,6 +24,128 @@ export default function ProfileCard({
   onVipDetailsClick
 }) {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [memberData, setMemberData] = useState({
+    name: propName || "Jhon Doe",
+    totalTokens: propTotalTokens || "5,450.00",
+    currentLevel: propCurrentLevel || "Gold"
+  });
+  const [fullName, setFullName] = useState(null);
+  const [freeTokenFlag, setFreeTokenFlag] = useState(true); // true = claimed, false = unclaimed
+  const [isClaimingGift, setIsClaimingGift] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [claimError, setClaimError] = useState(null);
+
+  useEffect(() => {
+    fetchMemberInfo();
+    fetchProfileData();
+  }, []); // Runs on mount
+  
+  // Also fetch when page becomes visible (user returns to tab)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchMemberInfo();
+        fetchProfileData();
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  const fetchMemberInfo = async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const memberUuid = tokenStorage.getMemberUuid();
+      if (!memberUuid) {
+        throw new Error("Member UUID not found");
+      }
+
+      const response = await getMemberInfo(memberUuid);
+      const transformedData = mapMemberInfoToProfileCard(response);
+      setMemberData(transformedData);
+    } catch (err) {
+      const errorInfo = handleApiError(err, 'ProfileCard.fetchMemberInfo');
+      setError({
+        status: errorInfo.status,
+        message: formatErrorMessage(errorInfo),
+        data: errorInfo.details,
+        retryable: errorInfo.retryable
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchProfileData = async () => {
+    try {
+      const memberUuid = tokenStorage.getMemberUuid();
+      if (!memberUuid) {
+        console.log("ProfileCard: No member UUID found");
+        return;
+      }
+
+      console.log("ProfileCard: Fetching profile data for UUID:", memberUuid);
+      const profileResponse = await getProfile(memberUuid);
+      console.log("ProfileCard: Profile response:", profileResponse);
+      
+      setFreeTokenFlag(profileResponse.free_token_flag);
+      
+      // Set full name if available
+      if (profileResponse.full_name) {
+        console.log("ProfileCard: Setting full name:", profileResponse.full_name);
+        setFullName(profileResponse.full_name);
+      } else {
+        console.log("ProfileCard: No full_name in response");
+      }
+    } catch (err) {
+      console.error("ProfileCard: Error fetching profile data:", err);
+      // Don't show error for profile data fetch, just log it
+    }
+  };
+
+  const handleClaimWelcomeGift = async () => {
+    setIsClaimingGift(true);
+    setClaimError(null);
+    
+    try {
+      const memberUuid = tokenStorage.getMemberUuid();
+      if (!memberUuid) {
+        throw new Error("Member UUID not found");
+      }
+
+      await claimWelcomeGift(memberUuid);
+      
+      // Update free_token_flag to true (claimed)
+      setFreeTokenFlag(true);
+      
+      // Refresh member info to update token balance
+      await fetchMemberInfo();
+      
+      // Refresh profile data to get updated full_name
+      await fetchProfileData();
+      
+      // Show success modal
+      setShowSuccessModal(true);
+    } catch (err) {
+      const errorInfo = handleApiError(err, 'ProfileCard.handleClaimWelcomeGift');
+      setClaimError(formatErrorMessage(errorInfo));
+    } finally {
+      setIsClaimingGift(false);
+    }
+  };
+
+  const { name, totalTokens, currentLevel } = memberData;
+  
+  // Use full_name if available, otherwise use username
+  const displayName = fullName || name;
 
   const handleVipDetailsClick = () => {
     // Navigate to personal-data page
@@ -26,109 +156,179 @@ export default function ProfileCard({
       onVipDetailsClick();
     }
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="relative mx-auto w-[336px] h-[224px] min-[465px]:w-[370px] min-[465px]:h-[246px]">
+        <LoadingState isLoading={true} />
+      </div>
+    );
+  }
+
+  // Show error state with retry option
+  if (error) {
+    return (
+      <div className="relative mx-auto w-[336px] min-[465px]:w-[370px] p-4">
+        <ErrorDisplay error={error} />
+        <button
+          onClick={fetchMemberInfo}
+          className="mt-4 w-full px-4 py-2 bg-[#e9af41] text-[#51340c] font-bold rounded hover:bg-[#d19a35] transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <motion.div
-      className="relative mx-auto w-[336px] h-[224px] min-[465px]:w-[370px] min-[465px]:h-[246px]"
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        type: "spring",
-        stiffness: 200,
-        damping: 20,
-        delay: 0.2,
-      }}
-    >
-      <div className="absolute left-1/2 top-0 -translate-x-1/2 origin-top w-[366px] h-[224px] scale-[1] min-[465px]:scale-[1.1]">
-        {/* Card Background */}
-        <Image
-          alt="Profile Card"
-          src={PROFILE_ASSETS.profileCardBg}
-          fill
-          className="object-cover"
-        />
+    <>
+      <motion.div
+        className="relative mx-auto w-[336px] h-[224px] min-[465px]:w-[370px] min-[465px]:h-[246px]"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{
+          type: "spring",
+          stiffness: 200,
+          damping: 20,
+          delay: 0.2,
+        }}
+      >
+        <div className="absolute left-1/2 top-0 -translate-x-1/2 origin-top w-[366px] h-[224px] scale-[1] min-[465px]:scale-[1.1]">
+          {/* Card Background */}
+          <Image
+            alt="Profile Card"
+            src={PROFILE_ASSETS.profileCardBg}
+            fill
+            className="object-cover"
+          />
 
-        {/* Avatar */}
+          {/* Avatar */}
+          <motion.div
+            className="absolute left-[38px] top-[20px] w-[52px] h-[52px] rounded-full overflow-hidden"
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 20,
+              delay: 0.4,
+            }}
+          >
+            <Image alt={displayName} src={avatarSrc} fill className="object-cover" />
+          </motion.div>
+
+          {/* Name and Tokens */}
+          <motion.div
+            className="absolute left-[100px] top-[25px]"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+          >
+            <p className="text-[#e9af41] text-[18px] font-bold font-['Times_New_Roman'] whitespace-nowrap">
+              {displayName}
+            </p>
+            <p className="text-[#e9af41] text-[10px] font-bold font-['Times_New_Roman'] whitespace-nowrap mt-1">
+              Total Token: {totalTokens}
+            </p>
+          </motion.div>
+
+          {/* VIP Details Button */}
+          <motion.button
+            onClick={handleVipDetailsClick}
+            className="absolute left-[239px] top-[37px] text-[#e9af41] font-bold font-['Times_New_Roman'] whitespace-nowrap cursor-pointer"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <span className="text-[10px]">VIP Details </span>
+            <span className="text-[12px]">&gt;</span>
+          </motion.button>
+
+          {/* Progress Section */}
+          <motion.div
+            className="absolute left-[51px] top-[126px] w-[236px]"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.7 }}
+          >
+            {/* Progress Text */}
+            <p className="text-[#e9af41] text-[12px] font-bold font-['Times_New_Roman'] mb-2">
+              Get {tokensNeeded.toLocaleString()} more to go {nextLevel}
+            </p>
+
+            {/* Progress Bar Container */}
+            <div className="relative w-full h-[8px] bg-[#51340c] border border-[#e9af41] rounded-[20px] shadow-[inset_0px_4px_4px_0px_rgba(0,0,0,0.25)]">
+              {/* Progress Bar Fill */}
+              <motion.div
+                className="absolute left-0 top-0 h-full bg-[#e9af41] rounded-[20px] shadow-[inset_0px_4px_4px_0px_rgba(0,0,0,0.25)]"
+                initial={{ width: 0 }}
+                animate={{ width: `${progress}%` }}
+                transition={{
+                  duration: 1,
+                  delay: 0.9,
+                  ease: "easeOut",
+                }}
+              />
+            </div>
+
+            {/* Level Labels */}
+            <div className="flex justify-between mt-2">
+              <p className="text-[#e9af41] text-[12px] font-bold font-['Times_New_Roman']">
+                {currentLevel}
+              </p>
+              <p className="text-[#e9af41] text-[12px] font-bold font-['Times_New_Roman']">
+                {nextLevel}
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      </motion.div>
+
+      {/* Welcome Gift Section - Only show if unclaimed */}
+      {!freeTokenFlag && (
         <motion.div
-          className="absolute left-[38px] top-[20px] w-[52px] h-[52px] rounded-full overflow-hidden"
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{
-            type: "spring",
-            stiffness: 300,
-            damping: 20,
-            delay: 0.4,
-          }}
-        >
-          <Image alt={name} src={avatarSrc} fill className="object-cover" />
-        </motion.div>
-
-        {/* Name and Tokens */}
-        <motion.div
-          className="absolute left-[100px] top-[25px]"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-        >
-          <p className="text-[#e9af41] text-[18px] font-bold font-['Times_New_Roman'] whitespace-nowrap">
-            {name}
-          </p>
-          <p className="text-[#e9af41] text-[10px] font-bold font-['Times_New_Roman'] whitespace-nowrap mt-1">
-            Total Token: {totalTokens}
-          </p>
-        </motion.div>
-
-        {/* VIP Details Button */}
-        <motion.button
-          onClick={handleVipDetailsClick}
-          className="absolute left-[239px] top-[37px] text-[#e9af41] font-bold font-['Times_New_Roman'] whitespace-nowrap cursor-pointer"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <span className="text-[10px]">VIP Details </span>
-          <span className="text-[12px]">&gt;</span>
-        </motion.button>
-
-        {/* Progress Section */}
-        <motion.div
-          className="absolute left-[51px] top-[126px] w-[236px]"
+          className="mt-4 w-[336px] min-[465px]:w-[370px] mx-auto"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.7 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
         >
-          {/* Progress Text */}
-          <p className="text-[#e9af41] text-[12px] font-bold font-['Times_New_Roman'] mb-2">
-            Get {tokensNeeded.toLocaleString()} more to go {nextLevel}
-          </p>
-
-          {/* Progress Bar Container */}
-          <div className="relative w-full h-[8px] bg-[#51340c] border border-[#e9af41] rounded-[20px] shadow-[inset_0px_4px_4px_0px_rgba(0,0,0,0.25)]">
-            {/* Progress Bar Fill */}
-            <motion.div
-              className="absolute left-0 top-0 h-full bg-[#e9af41] rounded-[20px] shadow-[inset_0px_4px_4px_0px_rgba(0,0,0,0.25)]"
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{
-                duration: 1,
-                delay: 0.9,
-                ease: "easeOut",
-              }}
-            />
-          </div>
-
-          {/* Level Labels */}
-          <div className="flex justify-between mt-2">
-            <p className="text-[#e9af41] text-[12px] font-bold font-['Times_New_Roman']">
-              {currentLevel}
+          <button
+            onClick={handleClaimWelcomeGift}
+            disabled={isClaimingGift}
+            className="w-full px-6 py-3 bg-gradient-to-r from-[#e9af41] to-[#d19a35] text-[#51340c] font-bold font-['Times_New_Roman'] text-[16px] rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isClaimingGift ? (
+              <>
+                <span className="animate-spin">⏳</span>
+                <span>Claiming...</span>
+              </>
+            ) : (
+              <>
+                <span>🎁</span>
+                <span>Claim Welcome Gift</span>
+              </>
+            )}
+          </button>
+          
+          {claimError && (
+            <p className="mt-2 text-red-500 text-sm text-center font-['Times_New_Roman']">
+              {claimError}
             </p>
-            <p className="text-[#e9af41] text-[12px] font-bold font-['Times_New_Roman']">
-              {nextLevel}
-            </p>
-          </div>
+          )}
         </motion.div>
-      </div>
-    </motion.div>
+      )}
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+        title="🎁 Welcome Gift Claimed!"
+        message="Congratulations! Your welcome tokens have been added to your account."
+        backgroundColor="rgba(96, 128, 60, 1)"
+      />
+    </>
   );
 }

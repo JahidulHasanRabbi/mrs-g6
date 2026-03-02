@@ -89,11 +89,10 @@ const MenuItem = ({ item, isActive }) => {
     <div className="relative h-10 overflow-hidden">
       <div className={`flex items-center gap-1.5 px-2 py-1.5 ${item.disabled ? 'opacity-40 cursor-not-allowed' : ''}`}>
         <div className="relative h-5 w-5 shrink-0">
-          <Image
+          <img
             src={item.icon}
             alt=""
-            fill
-            className="object-cover"
+            className="w-full h-full object-cover"
           />
         </div>
         <p className={`text-[18px] font-bold tracking-[-0.396px] font-['Times_New_Roman'] ${isActive ? 'text-white' : 'text-white/70'}`}>
@@ -120,11 +119,10 @@ const HighlightedMenuItem = ({ item }) => {
     >
       <div className="absolute left-[calc(50%+0.6px)] top-[calc(50%-0.24px)] flex -translate-x-1/2 -translate-y-1/2 items-center gap-[25.882px]">
         <div className="relative h-[38px] w-[38px] shrink-0">
-          <Image
+          <img
             src={item.icon}
             alt=""
-            fill
-            className="object-cover"
+            className="w-full h-full object-cover"
           />
         </div>
         <p className="font-['Times_New_Roman'] text-[16px] font-bold leading-[normal] text-white w-[181.176px] whitespace-pre-wrap">
@@ -184,11 +182,10 @@ export default function Sidebar({ activeItem = "home" }) {
             Home
           </p>
           <div className="absolute bottom-[19px] right-[4px] h-[20px] w-[21px]">
-            <Image
+            <img
               src="https://www.figma.com/api/mcp/asset/aaa032d8-e97a-4a0d-add7-2751bd57a14f"
               alt=""
-              fill
-              className="object-cover"
+              className="w-full h-full object-cover"
             />
           </div>
         </div>

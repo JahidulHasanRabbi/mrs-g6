@@ -23,10 +23,10 @@ export const MENU_CONFIG = {
     title: "Stay Connected",
     icon: "/assets/images/mini-game-icon.png",
     links: [
-      { icon: "/assets/images/facebook-icon.png", url: process.env.NEXT_PUBLIC_FACEBOOK || "https://facebook.com", label: "Facebook" },
-      { icon: "/assets/images/instagram-icon.png", url: process.env.NEXT_PUBLIC_INSTAGRAM || "https://instagram.com", label: "Instagram" },
-      { icon: "/assets/images/telegram-icon.png", url: process.env.NEXT_PUBLIC_TELEGRAM || "https://telegram.com", label: "Telegram" },
-      { icon: "/assets/images/whatsapp-icon.png", url: process.env.NEXT_PUBLIC_WHATSAPP || "https://whatsapp.com", label: "WhatsApp" },
+      { icon: "/assets/images/facebook-icon.png", url: process.env.NEXT_PUBLIC_FACEBOOK_URL, label: "Facebook", disabled: !process.env.NEXT_PUBLIC_FACEBOOK_URL },
+      { icon: "/assets/images/youtube-icon.png", url: process.env.NEXT_PUBLIC_YOUTUBE_URL, label: "YouTube", disabled: !process.env.NEXT_PUBLIC_YOUTUBE_URL },
+      { icon: "/assets/images/instagram-icon.png", url: process.env.NEXT_PUBLIC_INSTAGRAM_URL, label: "Instagram", disabled: !process.env.NEXT_PUBLIC_INSTAGRAM_URL },
+      { icon: "/assets/images/twitter-icon.png", url: process.env.NEXT_PUBLIC_TWITTER_URL, label: "Twitter", disabled: !process.env.NEXT_PUBLIC_TWITTER_URL },
     ],
   },
   bottomItems: [

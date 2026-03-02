@@ -31,14 +31,16 @@ export async function getMemberInfo(memberUuid) {
 // POST /member/{uuid}/check-in/
 export async function checkIn(memberUuid) {
   return await apiRequest(ENDPOINTS.MEMBER.CHECK_IN, {
-    method: 'POST'
+    method: 'POST',
+    body: JSON.stringify({ member_uuid: memberUuid })
   }, true, 'member');
 }
 
 // POST /member/{uuid}/welcome-gift/
 export async function claimWelcomeGift(memberUuid) {
   return await apiRequest(ENDPOINTS.MEMBER.WELCOME_GIFT, {
-    method: 'POST'
+    method: 'POST',
+    body: JSON.stringify({ member_uuid: memberUuid })
   }, true, 'member');
 }
 
@@ -104,5 +106,12 @@ export async function redeemItem(itemUuid, memberUuid) {
   return await apiRequest(ENDPOINTS.MEMBER.REDEEM_ITEM(itemUuid), {
     method: 'POST',
     body: JSON.stringify({ member_uuid: memberUuid })
+  }, true, 'member');
+}
+
+// GET /member/vip-tier/
+export async function getVipTiers() {
+  return await apiRequest(ENDPOINTS.ADMIN.VIP_TIERS, {
+    method: 'GET'
   }, true, 'member');
 }

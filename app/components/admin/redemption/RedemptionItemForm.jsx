@@ -68,7 +68,7 @@ export default function RedemptionItemForm({
     
     // Always include these fields
     submitData.name = fieldValues.name;
-    submitData.quantity = parseInt(fieldValues.quantity, 10);
+    submitData.quantity_available = parseInt(fieldValues.quantity, 10);
     submitData.start_date = fieldValues.start_date;
     submitData.end_date = fieldValues.end_date;
     submitData.prize_type = fieldValues.prize_type;

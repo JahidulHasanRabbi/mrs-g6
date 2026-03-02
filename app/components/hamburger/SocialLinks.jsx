@@ -9,7 +9,43 @@ import { motion } from "framer-motion";
  * Individual social media link with hover effects
  * Updated with new Figma design styling
  */
-function SocialIcon({ icon, url, label, variants }) {
+function SocialIcon({ icon, url, label, disabled, variants }) {
+  const content = (
+    <motion.div
+      whileHover={
+        !disabled
+          ? {
+              filter: "brightness(1.2)",
+              transition: { duration: 0.2 },
+            }
+          : {}
+      }
+      style={disabled ? { opacity: 0.4, cursor: "not-allowed" } : {}}
+    >
+      <Image
+        src={icon}
+        alt=""
+        width={30}
+        height={30}
+        aria-hidden="true"
+        className="object-contain"
+      />
+    </motion.div>
+  );
+
+  if (disabled) {
+    return (
+      <motion.div
+        className="flex items-center justify-center"
+        aria-label={`${label} (disabled)`}
+        variants={variants}
+        style={{ cursor: "not-allowed" }}
+      >
+        {content}
+      </motion.div>
+    );
+  }
+
   return (
     <motion.a
       href={url}
@@ -25,21 +61,7 @@ function SocialIcon({ icon, url, label, variants }) {
       }}
       whileTap={{ scale: 0.9 }}
     >
-      <motion.div
-        whileHover={{
-          filter: "brightness(1.2)",
-          transition: { duration: 0.2 },
-        }}
-      >
-        <Image
-          src={icon}
-          alt=""
-          width={30}
-          height={30}
-          aria-hidden="true"
-          className="object-contain"
-        />
-      </motion.div>
+      {content}
     </motion.a>
   );
 }

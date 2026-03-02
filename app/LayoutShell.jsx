@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import AppLayout from "./components/layout/AppLayout";
+import { MemberRouteGuard } from "./components/guards/MemberRouteGuard";
 
 export default function LayoutShell({ children }) {
   const pathname = usePathname();
@@ -12,8 +13,10 @@ export default function LayoutShell({ children }) {
   }
 
   return (
-    <div className="min-h-screen max-w-[475px] mx-auto overflow-hidden">
-      <AppLayout>{children}</AppLayout>
-    </div>
+    <MemberRouteGuard>
+      <div className="min-h-screen max-w-[475px] mx-auto overflow-hidden">
+        <AppLayout>{children}</AppLayout>
+      </div>
+    </MemberRouteGuard>
   );
 }

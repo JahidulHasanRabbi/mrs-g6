@@ -80,9 +80,12 @@ const ORDER = [0, 1, 2, 4, 7, 6, 5, 3];
 
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
-export default function LuckySpinGrid({ onSpinEnd }) {
+export default function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinning }) {
   const [activeGridIndex, setActiveGridIndex] = useState(null);
   const [isSpinning, setIsSpinning] = useState(false);
+
+  // Use external spinning state if provided
+  const spinning = externalIsSpinning !== undefined ? externalIsSpinning : isSpinning;
 
   const centerRotate = useMotionValue(0);
   const centerRotateSpring = useSpring(centerRotate, {
@@ -117,15 +120,17 @@ export default function LuckySpinGrid({ onSpinEnd }) {
       }
       setIsSpinning(false);
       setActiveGridIndex(finalGridIndex);
-      if (typeof onSpinEnd === "function") {
-        onSpinEnd(finalGridIndex);
-      }
+      
+      // Reset center button rotation to 0 after spin completes
+      setTimeout(() => {
+        centerRotate.set(0);
+      }, 300);
     },
-    [onSpinEnd],
+    [centerRotate],
   );
 
   const startSpin = useCallback(() => {
-    if (isSpinning) return;
+    if (spinning) return;
 
     const targetOrderPos = Math.floor(Math.random() * ORDER.length);
     const rounds = 4 + Math.floor(Math.random() * 3);
@@ -134,6 +139,11 @@ export default function LuckySpinGrid({ onSpinEnd }) {
     stepCountRef.current = 0;
     orderPosRef.current = 0;
     setIsSpinning(true);
+
+    // Call the external onSpinClick handler if provided
+    if (typeof onSpinClick === 'function') {
+      onSpinClick();
+    }
 
     const now = performance.now();
     startRef.current = now;
@@ -164,7 +174,7 @@ export default function LuckySpinGrid({ onSpinEnd }) {
     };
 
     rafRef.current = requestAnimationFrame(tick);
-  }, [isSpinning, stopSpin]);
+  }, [spinning, onSpinClick, stopSpin, centerRotate]);
 
   useEffect(() => {
     return () => {
@@ -192,24 +202,24 @@ export default function LuckySpinGrid({ onSpinEnd }) {
             key={index}
             index={index}
             isActive={activeGridIndex === index}
-            isSpinning={isSpinning}
+            isSpinning={spinning}
             {...item}
           />
         ))}
 
         <motion.div 
-          className="absolute left-[77px] top-[73px] w-[143px] h-[143px] cursor-pointer z-10"
+          className={`absolute left-[77px] top-[73px] w-[143px] h-[143px] z-10 ${spinning ? 'cursor-not-allowed' : 'cursor-pointer'}`}
           initial={{ opacity: 0, scale: 0, rotate: 360 }}
-          animate={{ opacity: 1, scale: 1, rotate: 0 }}
+          animate={{ opacity: spinning ? 0.8 : 1, scale: 1, rotate: 0 }}
           transition={{ 
             duration: 0.8, 
             delay: 1.0,
             ease: "easeOut"
           }}
-          whileHover={!isSpinning ? { scale: 1.1, rotate: 5 } : undefined}
-          whileTap={!isSpinning ? { scale: 0.95 } : undefined}
+          whileHover={!spinning ? { scale: 1.1, rotate: 5 } : undefined}
+          whileTap={!spinning ? { scale: 0.95 } : undefined}
           style={{ rotate: centerRotateSpring }}
-          onClick={startSpin}
+          onClick={spinning ? undefined : startSpin}
         >
           <Image
             alt="Spin Now Button"

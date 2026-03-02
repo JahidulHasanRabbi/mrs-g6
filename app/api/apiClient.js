@@ -1,5 +1,6 @@
 import { BASE_URL } from './api';
 import { tokenStorage } from './tokenStorage';
+import { handleApiError } from './errorHandler';
 
 export const REQUEST_TIMEOUT = 30000;
 
@@ -101,11 +102,16 @@ export async function apiRequest(endpoint, options = {}, requiresAuth = false, t
         errorData = { detail: response.statusText };
       }
       
-      throw {
+      const error = {
         message: `HTTP error: ${response.status}`,
         status: response.status,
         data: errorData
       };
+      
+      // Use centralized error handler
+      handleApiError(error, endpoint);
+      
+      throw error;
     }
     
     try {

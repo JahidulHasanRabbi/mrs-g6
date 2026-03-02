@@ -1,3 +1,5 @@
+import { getOptionsArray } from '@/app/api/apiOptions';
+
 export const FORM_COLORS = {
   primary: "#e9af41",
   textInput: "rgba(96, 128, 60, 1)",
@@ -8,7 +10,7 @@ export const FORM_COLORS = {
 
 export const FORM_FIELDS = [
   {
-    id: "fullName",
+    id: "full_name",
     label: "Full Name",
     type: "text",
     placeholder: "",
@@ -20,7 +22,7 @@ export const FORM_FIELDS = [
     placeholder: "",
   },
   {
-    id: "dateOfBirth",
+    id: "date_of_birth",
     label: "Date of Birth",
     type: "date",
     placeholder: "",
@@ -34,9 +36,7 @@ export const FORM_FIELDS = [
     icon: "arrow",
     options: [
       { value: "", label: "Select Gender" },
-      { value: "male", label: "Male" },
-      { value: "female", label: "Female" },
-      { value: "other", label: "Other" },
+      ...getOptionsArray('GENDER')
     ],
   },
   {
@@ -47,11 +47,7 @@ export const FORM_FIELDS = [
     icon: "arrow",
     options: [
       { value: "", label: "Select Hobby" },
-      { value: "reading", label: "Reading" },
-      { value: "sports", label: "Sports" },
-      { value: "music", label: "Music" },
-      { value: "gaming", label: "Gaming" },
-      { value: "travel", label: "Travel" },
+      ...getOptionsArray('HOBBY')
     ],
   },
 ];
