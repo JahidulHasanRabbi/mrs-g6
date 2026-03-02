@@ -9,6 +9,10 @@ YOUTUBE_URL=https://youtube.com/
 INSTAGRAM_URL=https://instagram.com/
 TWITTER_URL=https://twitter.com/
 ```
+In production 
+Turn on AUTHGUARD to True
+
+REDIRECTURL the url site will be redirect 
 
 # Test
 Member login 
