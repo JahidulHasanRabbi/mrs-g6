@@ -23,10 +23,10 @@ export const MENU_CONFIG = {
     title: "Stay Connected",
     icon: "/assets/images/mini-game-icon.png",
     links: [
-      { icon: "/assets/images/facebook-icon.png", url: process.env.NEXT_PUBLIC_FACEBOOK_URL, label: "Facebook", disabled: !process.env.NEXT_PUBLIC_FACEBOOK_URL },
-      { icon: "/assets/images/youtube-icon.png", url: process.env.NEXT_PUBLIC_YOUTUBE_URL, label: "YouTube", disabled: !process.env.NEXT_PUBLIC_YOUTUBE_URL },
-      { icon: "/assets/images/instagram-icon.png", url: process.env.NEXT_PUBLIC_INSTAGRAM_URL, label: "Instagram", disabled: !process.env.NEXT_PUBLIC_INSTAGRAM_URL },
-      { icon: "/assets/images/twitter-icon.png", url: process.env.NEXT_PUBLIC_TWITTER_URL, label: "Twitter", disabled: !process.env.NEXT_PUBLIC_TWITTER_URL },
+      { icon: "/assets/images/facebook-icon.png", url: process.env.FACEBOOK_URL, label: "Facebook", disabled: !process.env.FACEBOOK_URL },
+      { icon: "/assets/images/youtube-icon.png", url: process.env.YOUTUBE_URL, label: "YouTube", disabled: !process.env.YOUTUBE_URL },
+      { icon: "/assets/images/instagram-icon.png", url: process.env.INSTAGRAM_URL, label: "Instagram", disabled: !process.env.INSTAGRAM_URL },
+      { icon: "/assets/images/twitter-icon.png", url: process.env.TWITTER_URL, label: "Twitter", disabled: !process.env.TWITTER_URL },
     ],
   },
   bottomItems: [

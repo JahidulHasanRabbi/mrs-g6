@@ -16,7 +16,7 @@ export function MemberRouteGuard({ children }) {
       return;
     }
 
-    const authGuardEnabled = process.env.NEXT_PUBLIC_AUTHGUARD === 'true';
+    const authGuardEnabled = process.env.AUTHGUARD === 'true';
 
     if (!authGuardEnabled) {
       setIsAuthenticated(true);
@@ -27,7 +27,7 @@ export function MemberRouteGuard({ children }) {
     const token = tokenStorage.getMemberAccessToken();
     
     if (!token) {
-      const redirectUrl = process.env.NEXT_PUBLIC_REDIRECTURL || '/';
+      const redirectUrl = process.env.REDIRECTURL || '/';
       window.location.href = redirectUrl;
       return;
     }
@@ -36,7 +36,7 @@ export function MemberRouteGuard({ children }) {
     setIsLoading(false);
   }, [pathname]);
 
-  const authGuardEnabled = process.env.NEXT_PUBLIC_AUTHGUARD === 'true';
+  const authGuardEnabled = process.env.AUTHGUARD === 'true';
   
   if (!authGuardEnabled || pathname === '/auth') {
     return children;

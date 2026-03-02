@@ -17,9 +17,9 @@ export function handleApiError(error, context = 'api-call') {
       tokenStorage.clearMemberTokens();
       tokenStorage.clearAdminTokens();
       
-      const authGuard = process.env.NEXT_PUBLIC_AUTHGUARD === 'true';
+      const authGuard = process.env.AUTHGUARD === 'true';
       const redirectUrl = authGuard 
-        ? process.env.NEXT_PUBLIC_REDIRECTURL 
+        ? process.env.REDIRECTURL 
         : '/';
       
       window.location.href = redirectUrl;
