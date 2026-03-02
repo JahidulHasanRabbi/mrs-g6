@@ -11,7 +11,7 @@ const MENU_ITEMS = [
   {
     id: "home",
     label: "Home Dashboard",
-    icon: "https://www.figma.com/api/mcp/asset/c410da3d-b2e1-4c8b-8a12-01bb5fd35fa0",
+    icon: "/assets/admin/home-icon.png",
     href: "/admin",
     isHighlighted: true,
     disabled: false,
@@ -19,7 +19,7 @@ const MENU_ITEMS = [
   {
     id: "lucky-spin",
     label: "Lucky Spin Management",
-    icon: "https://www.figma.com/api/mcp/asset/2ac8ef32-ce18-428a-98db-8791f36124f3",
+    icon: "/assets/admin/lucky-spin-icon.png",
     href: "/admin/lucky-spin",
     hasSubmenu: true,
     disabled: false,
@@ -27,7 +27,7 @@ const MENU_ITEMS = [
   {
     id: "redemption",
     label: "Points Redemption Mall",
-    icon: "https://www.figma.com/api/mcp/asset/c9a60cbd-f7a9-4547-8c67-05985714695b",
+    icon: "/assets/admin/redemption-mall-icon.png",
     href: "/admin/redemption",
     hasSubmenu: true,
     disabled: false,
@@ -35,7 +35,7 @@ const MENU_ITEMS = [
   {
     id: "redemption-gift",
     label: "Points Redemption Gift",
-    icon: "https://www.figma.com/api/mcp/asset/f6833d4f-4f5f-4ee8-b842-44e3cde3d5b9",
+    icon: "/assets/admin/redemption-gift-icon.png",
     href: "/admin/redemption-gift",
     hasSubmenu: true,
     disabled: true, // No page yet
@@ -46,14 +46,14 @@ const SECONDARY_MENU = [
   {
     id: "tournament",
     label: "Tournament",
-    icon: "https://www.figma.com/api/mcp/asset/e3bb06a1-ee82-4156-869d-e03185e16767",
+    icon: "/assets/admin/tournament-icon.png",
     href: "/admin/tournament",
     disabled: true, // No page yet
   },
   {
     id: "vip",
     label: "VIP Membership Panel",
-    icon: "https://www.figma.com/api/mcp/asset/550b9d48-a153-4a11-8895-d389eee6d920",
+    icon: "/assets/admin/vip-icon.png",
     href: "/admin/vip-tiers",
     hasSubmenu: true,
     disabled: false,
@@ -61,7 +61,7 @@ const SECONDARY_MENU = [
   {
     id: "reports",
     label: "Reports",
-    icon: "https://www.figma.com/api/mcp/asset/3c66f4d6-50f4-497f-849d-5143cae382f5",
+    icon: "/assets/admin/reports-icon.png",
     href: "/admin/reports",
     hasSubmenu: true,
     disabled: true, // No page yet
@@ -69,7 +69,7 @@ const SECONDARY_MENU = [
   {
     id: "user-management",
     label: "User Management",
-    icon: "https://www.figma.com/api/mcp/asset/83b20cb2-2759-4347-bf2f-edbfe22a04ef",
+    icon: "/assets/admin/user-management-icon.png",
     href: "/admin/user-management",
     hasSubmenu: true,
     disabled: true, // No page yet
@@ -77,7 +77,7 @@ const SECONDARY_MENU = [
   {
     id: "notifications",
     label: "Notification Management",
-    icon: "https://www.figma.com/api/mcp/asset/d78758e0-74c6-48c2-97b0-a89dcfd736b7",
+    icon: "/assets/admin/notifications-icon.png",
     href: "/admin/notifications",
     hasSubmenu: true,
     disabled: true, // No page yet

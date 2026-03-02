@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import AnimatedSection from "../components/ui/AnimatedSection";
 import AnimatedSectionWrapper from "../components/ui/AnimatedSectionWrapper";
 import LuckySpinGrid from "../components/spin/LuckySpinGrid";
@@ -39,6 +39,38 @@ export default function SpinPage() {
     }
   };
 
+  const spinResultsRef = useRef(null);
+  const spinErrorRef = useRef(null);
+
+  const handleSpinComplete = () => {
+    setIsSpinning(false);
+    
+    // Show modal after animation completes
+    setTimeout(() => {
+      if (spinErrorRef.current) {
+        setModalTitle("❌ Spin Failed");
+        setModalMessage(spinErrorRef.current);
+        setModalBgColor("rgba(180, 60, 60, 1)");
+        setIsModalOpen(true);
+        spinErrorRef.current = null;
+      } else if (spinResultsRef.current) {
+        const results = spinResultsRef.current;
+        if (results.length > 0) {
+          const rewardsList = results.map(r => r.reward_name).join(", ");
+          setModalTitle("🎉 Congratulations!");
+          setModalMessage(`You won: ${rewardsList}`);
+          setModalBgColor("rgba(96, 128, 60, 1)");
+        } else {
+          setModalTitle("✅ Spin Complete");
+          setModalMessage("Spin completed successfully!");
+          setModalBgColor("rgba(96, 128, 60, 1)");
+        }
+        setIsModalOpen(true);
+        spinResultsRef.current = null;
+      }
+    }, 100);
+  };
+
   const handleSpinAction = async (spinFunction, spinType) => {
     if (!memberUuid) {
       setModalTitle("❌ Error");
@@ -52,39 +84,18 @@ export default function SpinPage() {
 
     try {
       setIsSpinning(true);
+      spinResultsRef.current = null;
+      spinErrorRef.current = null;
+      
       const response = await spinFunction(memberUuid);
       const results = mapSpinResults(response);
-      
-      // Wait for spin animation to complete (4.5 seconds to be safe)
-      setTimeout(() => {
-        // Display success modal with rewards
-        if (results.length > 0) {
-          const rewardsList = results.map(r => r.reward_name).join(", ");
-          setModalTitle("🎉 Congratulations!");
-          setModalMessage(`You won: ${rewardsList}`);
-          setModalBgColor("rgba(96, 128, 60, 1)");
-        } else {
-          setModalTitle("✅ Spin Complete");
-          setModalMessage("Spin completed successfully!");
-          setModalBgColor("rgba(96, 128, 60, 1)");
-        }
-        setIsModalOpen(true);
-        setIsSpinning(false);
-      }, 4500);
+      spinResultsRef.current = results;
       
       // Refresh token balance
       await refreshMemberInfo();
     } catch (error) {
       console.error(`Error during ${spinType}:`, error);
-      
-      // Wait for animation even on error
-      setTimeout(() => {
-        setModalTitle("❌ Spin Failed");
-        setModalMessage(error.message || "An error occurred. Please try again.");
-        setModalBgColor("rgba(180, 60, 60, 1)");
-        setIsModalOpen(true);
-        setIsSpinning(false);
-      }, 4500);
+      spinErrorRef.current = error.message || "An error occurred. Please try again.";
     }
   };
 
@@ -112,7 +123,7 @@ export default function SpinPage() {
 
         <AnimatedSectionWrapper animation="fadeInUp" delay={0.1} viewportAmount={0.3}>
           <div className="flex justify-center items-center py-8">
-            <LuckySpinGrid onSpinClick={handleCenterButtonClick} isSpinning={isSpinning} disabled={isSpinning} />
+            <LuckySpinGrid onSpinClick={handleCenterButtonClick} isSpinning={isSpinning} disabled={isSpinning} onSpinComplete={handleSpinComplete} />
           </div>
         </AnimatedSectionWrapper>
 

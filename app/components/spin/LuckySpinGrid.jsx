@@ -80,7 +80,7 @@ const ORDER = [0, 1, 2, 4, 7, 6, 5, 3];
 
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
-export default function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinning }) {
+export default function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinning, onSpinComplete }) {
   const [activeGridIndex, setActiveGridIndex] = useState(null);
   const [isSpinning, setIsSpinning] = useState(false);
 
@@ -125,8 +125,13 @@ export default function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinn
       setTimeout(() => {
         centerRotate.set(0);
       }, 300);
+      
+      // Notify parent that spin animation has completed
+      if (typeof onSpinComplete === 'function') {
+        onSpinComplete(finalGridIndex);
+      }
     },
-    [centerRotate],
+    [centerRotate, onSpinComplete],
   );
 
   const startSpin = useCallback(() => {
