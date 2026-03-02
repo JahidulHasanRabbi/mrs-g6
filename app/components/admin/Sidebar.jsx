@@ -175,15 +175,13 @@ export default function Sidebar({ activeItem = "home" }) {
       {/* Breadcrumb Navigation */}
       <div className="absolute left-1/2 top-[9px] flex -translate-x-1/2 items-center gap-[58px]">
         <div className="relative h-[42px] w-[29px]">
-          <p className="absolute bottom-[4.5px] right-[14px] translate-x-1/2 translate-y-1/2 text-center text-[8px] font-bold leading-[normal] text-[#e9af41] font-['Times_New_Roman']">
-            Mart
-          </p>
+         
           <p className="absolute bottom-[14px] right-[13.5px] translate-x-1/2 translate-y-1/2 text-center text-[7px] font-bold leading-[normal] text-[#e9af41] font-['Times_New_Roman']">
             Home
           </p>
           <div className="absolute bottom-[19px] right-[4px] h-[20px] w-[21px]">
             <img
-              src="https://www.figma.com/api/mcp/asset/aaa032d8-e97a-4a0d-add7-2751bd57a14f"
+              src="/assets/admin/home-icon.png"
               alt=""
               className="w-full h-full object-cover"
             />
