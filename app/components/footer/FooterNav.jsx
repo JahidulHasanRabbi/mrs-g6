@@ -62,13 +62,19 @@ const FooterNavItem = memo(({ item, isActive }) => {
   if (isCenter) {
     return (
       <div className="relative flex-1 flex items-center justify-center">
-        <Link
-          href={link}
-          className="cursor-pointer"
-          aria-label={label}
-        >
-          {itemContent}
-        </Link>
+        {item.disabled ? (
+          <div className="cursor-not-allowed opacity-50" aria-label={label}>
+            {itemContent}
+          </div>
+        ) : (
+          <Link
+            href={link}
+            className="cursor-pointer"
+            aria-label={label}
+          >
+            {itemContent}
+          </Link>
+        )}
       </div>
     );
   }
@@ -76,7 +82,7 @@ const FooterNavItem = memo(({ item, isActive }) => {
   return (
     <Link
       href={link}
-      className="flex-1 flex flex-col items-center justify-center pt-4 cursor-pointer hover:opacity-80 transition-opacity"
+      className={`flex-1 flex flex-col items-center justify-center pt-4 cursor-pointer hover:opacity-80 transition-opacity ${item.disabled ? 'cursor-not-allowed opacity-50 pointer-events-none' : ''}`}
       aria-label={label}
     >
       {itemContent}

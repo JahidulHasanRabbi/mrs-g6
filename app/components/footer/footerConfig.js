@@ -12,6 +12,7 @@ export const FOOTER_CONFIG = {
       link: '/leaderboard',
       width: 40,
       height: 40,
+      disabled: true,
     },
     {
       id: 'hot',
@@ -45,6 +46,7 @@ export const FOOTER_CONFIG = {
       link: '/live-chat',
       width: 40,
       height: 40,
+      disabled: true,
     },
   ],
 };

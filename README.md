@@ -17,7 +17,7 @@ REDIRECTURL the url site will be redirect
 # Test
 Member login 
 Add this parameter in the end of main url
-auth?id=12345&o=kinggroup44.com
+auth?id=<id>>&o=<string>
 
 http://192.168.0.130:3000/auth?id=12345&o=kinggroup44.com
 

@@ -22,13 +22,7 @@ npm install
 
 ## 3. Environment Setup
 
-Create a `.env.local` file in the root directory:
-
-```bash
-cp .env.local.example .env.local
-```
-
-Or create it manually with the following content:
+Create a `.env` file in the root directory with the following content:
 
 ```env
 # API Configuration
