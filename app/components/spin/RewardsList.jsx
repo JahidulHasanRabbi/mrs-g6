@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { SPIN_ASSETS } from "./spinAssets";
@@ -9,7 +9,8 @@ import { mapLuckySpinItems } from "../../api/responseMappers";
 import LoadingState from "../ui/LoadingState";
 import ErrorDisplay from "../ui/ErrorDisplay";
 
-const RewardItem = ({ icon, title, index }) => (
+const RewardItem = memo(function RewardItem({ icon, title, index }) {
+  return (
   <motion.div 
     className="relative w-[80%] sm:w-full mx-auto h-[62px] rounded-[6px] border border-white overflow-hidden"
     style={{
@@ -48,9 +49,11 @@ const RewardItem = ({ icon, title, index }) => (
       </p>
     </div>
   </motion.div>
-);
+  );
+});
 
-const CreditCard = ({ range, index }) => (
+const CreditCard = memo(function CreditCard({ range, index }) {
+  return (
   <motion.div 
     className="relative w-[100px] h-[100px] sm:w-[130px] sm:h-[96px]"
     initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
@@ -91,9 +94,10 @@ const CreditCard = ({ range, index }) => (
       <p className="text-xs sm:text-md  leading-tight mt-1">{range}</p>
     </div>
   </motion.div>
-);
+  );
+});
 
-export default function RewardsList() {
+const RewardsList = memo(function RewardsList() {
   const [items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -147,6 +151,7 @@ export default function RewardsList() {
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
+      style={{ willChange: "transform, opacity" }}
     >
       <Image
         alt="Scroll Background"
@@ -216,4 +221,6 @@ export default function RewardsList() {
       </div>
     </motion.div>
   );
-}
+});
+
+export default RewardsList;

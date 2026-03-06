@@ -1,17 +1,20 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { memo, useMemo } from "react";
 import SpinButton from "./SpinButton";
 
-const SpinButtonsContainer = ({ buttons, onButtonClick, disabled = false }) => {
+const SpinButtonsContainer = memo(function SpinButtonsContainer({ buttons, onButtonClick, disabled = false }) {
+  const memoizedButtons = useMemo(() => buttons, [buttons]);
   return (
     <motion.div 
-      className="flex flex-row justify-center gap-4 w-full"
+      className="flex flex-row flex-wrap justify-center gap-2 sm:gap-4 w-full"
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
+      style={{ willChange: "transform, opacity" }}
     >
-      {buttons.map((button, index) => (
+      {memoizedButtons.map((button, index) => (
         <motion.div
           key={index}
           initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
@@ -21,6 +24,7 @@ const SpinButtonsContainer = ({ buttons, onButtonClick, disabled = false }) => {
             delay: index * 0.2,
             ease: "easeOut"
           }}
+          style={{ willChange: "transform, opacity" }}
         >
           <SpinButton 
             spins={button.spins}
@@ -34,6 +38,6 @@ const SpinButtonsContainer = ({ buttons, onButtonClick, disabled = false }) => {
       ))}
     </motion.div>
   );
-};
+});
 
 export default SpinButtonsContainer;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import AnimatedSection from "../components/ui/AnimatedSection";
 import AnimatedSectionWrapper from "../components/ui/AnimatedSectionWrapper";
 import LuckySpinGrid from "../components/spin/LuckySpinGrid";
@@ -42,10 +42,9 @@ export default function SpinPage() {
   const spinResultsRef = useRef(null);
   const spinErrorRef = useRef(null);
 
-  const handleSpinComplete = () => {
+  const handleSpinComplete = useCallback(() => {
     setIsSpinning(false);
     
-    // Show modal after animation completes
     setTimeout(() => {
       if (spinErrorRef.current) {
         setModalTitle("❌ Spin Failed");
@@ -69,9 +68,9 @@ export default function SpinPage() {
         spinResultsRef.current = null;
       }
     }, 100);
-  };
+  }, []);
 
-  const handleSpinAction = async (spinFunction, spinType) => {
+  const handleSpinAction = useCallback(async (spinFunction, spinType) => {
     if (!memberUuid) {
       setModalTitle("❌ Error");
       setModalMessage("Please log in to spin.");
@@ -91,19 +90,18 @@ export default function SpinPage() {
       const results = mapSpinResults(response);
       spinResultsRef.current = results;
       
-      // Refresh token balance
       await refreshMemberInfo();
     } catch (error) {
       console.error(`Error during ${spinType}:`, error);
       spinErrorRef.current = error.message || "An error occurred. Please try again.";
     }
-  };
+  }, [memberUuid, isSpinning, refreshMemberInfo]);
 
-  const handleCenterButtonClick = () => {
+  const handleCenterButtonClick = useCallback(() => {
     handleSpinAction(oneSpin, "one spin");
-  };
+  }, [handleSpinAction]);
 
-  const handleButtonClick = (buttonData) => {
+  const handleButtonClick = useCallback((buttonData) => {
     if (buttonData.spins === "10 Spins") {
       handleSpinAction(tenSpin, "ten spins");
     } else if (buttonData.spins === "50 Spins") {
@@ -111,11 +109,29 @@ export default function SpinPage() {
     } else {
       console.log(`Button clicked: ${buttonData.spins}`);
     }
-  };
+  }, [handleSpinAction]);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setIsModalOpen(false);
-  };
+  }, []);
+
+  const spinButtons = useMemo(() => [
+    { spins: "10 Spins", tokens: "100", className: "w-[140px] h-[60px]" },
+    { spins: "50 Spins", tokens: "500", className: "w-[140px] h-[60px]" },
+  ], []);
+
+  const winningButtons = useMemo(() => [
+    {
+      spins: "Winning Record",
+      image: "/assets/lucky-spin/buttons/winning.png",
+      className: "w-[160px] h-[70px] sm:w-[200px] sm:h-[80px]",
+    },
+    {
+      spins: "Winning List",
+      image: "/assets/lucky-spin/buttons/winning.png",
+      className: "w-[160px] h-[70px] sm:w-[200px] sm:h-[80px]",
+    },
+  ], []);
 
   return (
     <>
@@ -130,10 +146,7 @@ export default function SpinPage() {
         <AnimatedSectionWrapper animation="fadeInUp" delay={0.15} viewportAmount={0.3}>
           <div className="flex justify-center px-4 py-4">
             <SpinButtonsContainer
-              buttons={[
-                { spins: "10 Spins", tokens: "100", className: "w-[140px] h-[60px]" },
-                { spins: "50 Spins", tokens: "500", className: "w-[140px] h-[60px]" },
-              ]}
+              buttons={spinButtons}
               onButtonClick={handleButtonClick}
               disabled={isSpinning}
             />
@@ -147,20 +160,9 @@ export default function SpinPage() {
         </AnimatedSectionWrapper>
 
         <AnimatedSectionWrapper animation="fadeInUp" delay={0.25} viewportAmount={0.3}>
-          <div className="flex sm: flex-wrap justify-center px-8 py-4">
+          <div className="flex flex-wrap justify-center px-4 sm:px-8 py-4 gap-2">
             <SpinButtonsContainer
-              buttons={[
-                {
-                  spins: "Winning Record",
-                  image: "/assets/lucky-spin/buttons/winning.png",
-                  className: "w-[200px] h-[80px]",
-                },
-                {
-                  spins: "Winning List",
-                  image: "/assets/lucky-spin/buttons/winning.png",
-                  className: "w-[200px] h-[80px]",
-                },
-              ]}
+              buttons={winningButtons}
               onButtonClick={handleButtonClick}
             />
           </div>

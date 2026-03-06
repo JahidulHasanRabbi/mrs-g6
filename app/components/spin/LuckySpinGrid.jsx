@@ -2,10 +2,10 @@
 
 import Image from "next/image";
 import { motion, useMotionValue, useSpring } from "framer-motion";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, memo, useMemo } from "react";
 import { SPIN_ASSETS } from "./spinAssets";
 
-const SpinItem = ({
+const SpinItem = memo(function SpinItem({
   background,
   prize,
   position,
@@ -13,7 +13,8 @@ const SpinItem = ({
   index,
   isActive,
   isSpinning,
-}) => (
+}) {
+  return (
   <motion.div
     className={`absolute ${position} ${isActive ? "z-10" : ""}`}
     initial={{ opacity: 0, scale: 0, rotate: -180 }}
@@ -74,13 +75,14 @@ const SpinItem = ({
       </motion.div>
     )}
   </motion.div>
-);
+  );
+});
 
 const ORDER = [0, 1, 2, 4, 7, 6, 5, 3];
 
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
-export default function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinning, onSpinComplete }) {
+export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinning, onSpinComplete }) {
   const [activeGridIndex, setActiveGridIndex] = useState(null);
   const [isSpinning, setIsSpinning] = useState(false);
 
@@ -92,6 +94,8 @@ export default function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinn
     stiffness: 220,
     damping: 26,
     mass: 0.6,
+    restDelta: 0.001,
+    restSpeed: 0.001,
   });
 
   const rafRef = useRef(null);
@@ -101,7 +105,7 @@ export default function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinn
   const totalStepsRef = useRef(0);
   const orderPosRef = useRef(0);
 
-  const gridItems = [
+  const gridItems = useMemo(() => [
     { background: SPIN_ASSETS.itemGold, position: "left-[-8px] top-[-10px]" },
     { background: SPIN_ASSETS.itemGreen, prize: SPIN_ASSETS.prize1, position: "left-[96px] top-[-13px]", size: "w-[99px] h-[112px]" },
     { background: SPIN_ASSETS.itemGold, position: "left-[194px] top-[-10px]" },
@@ -110,7 +114,7 @@ export default function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinn
     { background: SPIN_ASSETS.itemGold, position: "left-[-9px] top-[193px]" },
     { background: SPIN_ASSETS.itemGreen, prize: SPIN_ASSETS.prize3, position: "left-[96px] top-[191px]", size: "w-[100px] h-[113px]" },
     { background: SPIN_ASSETS.itemGold, position: "left-[194px] top-[194px]" },
-  ];
+  ], []);
 
   const stopSpin = useCallback(
     (finalGridIndex) => {
@@ -121,17 +125,15 @@ export default function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinn
       setIsSpinning(false);
       setActiveGridIndex(finalGridIndex);
       
-      // Reset center button rotation to 0 after spin completes
       setTimeout(() => {
         centerRotate.set(0);
       }, 300);
       
-      // Notify parent that spin animation has completed
-      if (typeof onSpinComplete === 'function') {
+      if (onSpinComplete) {
         onSpinComplete(finalGridIndex);
       }
     },
-    [centerRotate, onSpinComplete],
+    [centerRotate, onSpinComplete]
   );
 
   const startSpin = useCallback(() => {
@@ -145,8 +147,7 @@ export default function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinn
     orderPosRef.current = 0;
     setIsSpinning(true);
 
-    // Call the external onSpinClick handler if provided
-    if (typeof onSpinClick === 'function') {
+    if (onSpinClick) {
       onSpinClick();
     }
 
@@ -193,6 +194,7 @@ export default function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinn
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
+      style={{ willChange: "transform, opacity" }}
     >
       <Image
         alt="Spin Grid Background"
@@ -223,7 +225,7 @@ export default function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinn
           }}
           whileHover={!spinning ? { scale: 1.1, rotate: 5 } : undefined}
           whileTap={!spinning ? { scale: 0.95 } : undefined}
-          style={{ rotate: centerRotateSpring }}
+          style={{ rotate: centerRotateSpring, willChange: spinning ? "transform" : "auto" }}
           onClick={spinning ? undefined : startSpin}
         >
           <Image
@@ -237,4 +239,4 @@ export default function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinn
       </div>
     </motion.div>
   );
-}
+});

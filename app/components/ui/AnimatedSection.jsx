@@ -2,8 +2,9 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { memo } from "react";
 
-function AssetBlock({ src, alt, className }) {
+const AssetBlock = memo(function AssetBlock({ src, alt, className }) {
   if (!src) {
     return (
       <div
@@ -26,9 +27,9 @@ function AssetBlock({ src, alt, className }) {
       priority
     />
   );
-}
+});
 
-export default function AnimatedSection({
+const AnimatedSection = memo(function AnimatedSection({
   title,
   imageSrc,
   imageAlt,
@@ -41,9 +42,10 @@ export default function AnimatedSection({
   return (
     <motion.section
       className={`relative w-full ${className}`}
-      initial={{ opacity: 0, y: 28, scale: 0.96, filter: "blur(10px)" }}
-      animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+      initial={{ opacity: 0, y: 28, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ type: "spring", stiffness: 140, damping: 18, mass: 0.6 }}
+      style={{ willChange: "transform, opacity" }}
     >
       <div className="relative w-full px-4 pt-3 text-4xl md:text-5xl">
         <h1
@@ -72,4 +74,6 @@ export default function AnimatedSection({
       </div>
     </motion.section>
   );
-}
+});
+
+export default AnimatedSection;

@@ -2,9 +2,11 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { memo } from "react";
 import { SPIN_ASSETS } from "./spinAssets";
 
-const WinningRow = ({ date, phone, amount, index }) => (
+const WinningRow = memo(function WinningRow({ date, phone, amount, index }) {
+  return (
   <motion.div 
     className="flex items-center justify-between px-2 sm:px-6 py-3"
     initial={{ opacity: 0, x: -100 }}
@@ -39,9 +41,10 @@ const WinningRow = ({ date, phone, amount, index }) => (
       <span className="text-[#3d1a02] text-[16px] font-bold">{amount}</span>
     </motion.div>
   </motion.div>
-);
+  );
+});
 
-export default function WinningList() {
+const WinningList = memo(function WinningList() {
   const winnings = [
     { date: "31-12-2025", phone: "60******869", amount: "RM31.1" },
     { date: "31-12-2025", phone: "60******869", amount: "RM1.27" },
@@ -55,6 +58,7 @@ export default function WinningList() {
       initial={{ opacity: 0, scale: 0.8, y: 50 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
+      style={{ willChange: "transform, opacity" }}
     >
       <Image
         alt="Winning List Background"
@@ -70,4 +74,6 @@ export default function WinningList() {
       </div>
     </motion.div>
   );
-}
+});
+
+export default WinningList;
