@@ -44,6 +44,7 @@ function MenuSection({ title, icon, children, defaultOpen = true, variants }) {
           transition: { duration: 0.2 },
         }}
         whileTap={{ scale: 0.98 }}
+        style={{ willChange: "transform, background-color, box-shadow" }}
       >
         <div className="flex items-center gap-2 min-w-0">
           <Image

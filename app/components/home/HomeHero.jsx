@@ -1,9 +1,10 @@
 "use client";
 
+import { memo } from "react";
 import AnimatedSection from "../ui/AnimatedSection";
 import { HOME_ASSETS } from "./homeAssets";
 
-export default function HomeHero() {
+const HomeHero = memo(function HomeHero() {
   return (
     <AnimatedSection
       title="HOMEPAGE"
@@ -11,4 +12,6 @@ export default function HomeHero() {
       imageAlt="Check in"
     />
   );
-}
+});
+
+export default HomeHero;

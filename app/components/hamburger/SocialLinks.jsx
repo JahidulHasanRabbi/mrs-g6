@@ -20,7 +20,7 @@ function SocialIcon({ icon, url, label, disabled, variants }) {
             }
           : {}
       }
-      style={disabled ? { opacity: 0.4, cursor: "not-allowed" } : {}}
+      style={disabled ? { opacity: 0.4, cursor: "not-allowed" } : { willChange: "filter" }}
     >
       <Image
         src={icon}
@@ -60,6 +60,7 @@ function SocialIcon({ icon, url, label, disabled, variants }) {
         transition: { type: "spring", stiffness: 400, damping: 10 },
       }}
       whileTap={{ scale: 0.9 }}
+      style={{ willChange: "transform" }}
     >
       {content}
     </motion.a>

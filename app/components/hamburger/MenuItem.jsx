@@ -47,6 +47,7 @@ function MenuItem({
           : {}
       }
       whileTap={!disabled ? { scale: 0.98 } : {}}
+      style={{ willChange: disabled ? "auto" : "transform, background-color" }}
     >
       <motion.div
         whileHover={!disabled ? { scale: 1.1, rotate: 5 } : {}}

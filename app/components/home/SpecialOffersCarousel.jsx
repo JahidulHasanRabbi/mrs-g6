@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo, memo } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -8,10 +8,10 @@ import { motion, AnimatePresence } from "framer-motion";
  * SpecialOffersCarousel Component
  * Auto-rotating carousel for special offers and promotions
  */
-export default function SpecialOffersCarousel() {
+const SpecialOffersCarousel = memo(function SpecialOffersCarousel() {
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  const slides = [
+  const slides = useMemo(() => [
     {
       id: 1,
       image: "/assets/home/special_for_you/free_share_bonus.png",
@@ -24,7 +24,7 @@ export default function SpecialOffersCarousel() {
       id: 3,
       image: "/assets/home/special_for_you/free_share_bonus.png",
     },
-  ];
+  ], []);
 
   const nextSlide = useCallback(() => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -34,9 +34,9 @@ export default function SpecialOffersCarousel() {
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
   }, [slides.length]);
 
-  const goToSlide = (index) => {
+  const goToSlide = useCallback((index) => {
     setCurrentSlide(index);
-  };
+  }, []);
 
   // Auto-rotate every 5 seconds
   useEffect(() => {
@@ -47,9 +47,10 @@ export default function SpecialOffersCarousel() {
   return (
     <motion.section
       className="w-full px-4 py-6"
-      initial={{ opacity: 0, y: 32, scale: 0.98, filter: "blur(10px)" }}
-      animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+      initial={{ opacity: 0, y: 32, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ type: "spring", stiffness: 120, damping: 20, delay: 0.16 }}
+      style={{ willChange: "transform, opacity" }}
     >
       {/* Section Title */}
       <h3
@@ -110,4 +111,6 @@ export default function SpecialOffersCarousel() {
       </div>
     </motion.section>
   );
-}
+});
+
+export default SpecialOffersCarousel;

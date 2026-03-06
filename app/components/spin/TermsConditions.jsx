@@ -31,6 +31,7 @@ const TermItem = ({ text, index }) => (
         src={SPIN_ASSETS.bulletIcon}
         fill
         className="object-contain"
+        sizes="12px"
       />
     </motion.div>
     <p className="text-white text-[11px] font-semibold leading-[1.4]">{text}</p>

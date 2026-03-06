@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback, memo } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { HOME_ASSETS } from "./homeAssets";
@@ -13,7 +13,7 @@ const POPUP_CLOSE_IMG = "/assets/home/popup-close.png";
 const POPUP_DAY7_BG_IMG = "/assets/home/popup-day7-bg.png";
 const POPUP_DAY7_CLOSE_IMG = "/assets/home/popup-day7-close.png";
 
-function AssetFill({ src, alt, className }) {
+const AssetFill = memo(function AssetFill({ src, alt, className }) {
   if (!src) {
     return (
       <div
@@ -35,7 +35,7 @@ function AssetFill({ src, alt, className }) {
       sizes="(max-width: 475px) 100vw, 475px"
     />
   );
-}
+});
 
 export default function CheckInBoard() {
   const [checkedDays, setCheckedDays] = useState([]);
@@ -132,12 +132,12 @@ export default function CheckInBoard() {
     [],
   );
 
-  const onPressDay = (day) => {
+  const onPressDay = useCallback((day) => {
     if (checkedDays.includes(day)) return;
     setCheckedDays((prev) => [...prev, day]);
-  };
+  }, [checkedDays]);
 
-  const onDayClick = async (day) => {
+  const onDayClick = useCallback(async (day) => {
     // Check if already checked in
     if (checkedDays.includes(day.day)) {
       setSuccessMessage("You have already checked in for this day!");
@@ -196,7 +196,7 @@ export default function CheckInBoard() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [checkedDays]);
 
   // Show loading state while fetching member info
   if (isLoading) {
@@ -215,8 +215,8 @@ export default function CheckInBoard() {
     <section className="relative w-full px-2 sm:px-4">
       <motion.div
         className="relative w-full mx-auto"
-        initial={{ opacity: 0, y: 34, scale: 0.98, filter: "blur(10px)" }}
-        animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+        initial={{ opacity: 0, y: 34, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{
           type: "spring",
           stiffness: 120,
@@ -225,6 +225,7 @@ export default function CheckInBoard() {
         }}
         style={{
           maxWidth: 475,
+          willChange: "transform, opacity",
         }}
       >
         <div className="relative w-full mt-2 sm:mt-4">

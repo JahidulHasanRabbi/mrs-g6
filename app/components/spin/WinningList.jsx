@@ -36,6 +36,7 @@ const WinningRow = memo(function WinningRow({ date, phone, amount, index }) {
           src={SPIN_ASSETS.coinIcon}
           fill
           className="object-contain"
+          sizes="20px"
         />
       </div>
       <span className="text-[#3d1a02] text-[16px] font-bold">{amount}</span>

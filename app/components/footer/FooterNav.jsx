@@ -40,6 +40,7 @@ const FooterNavItem = memo(({ item, isActive }) => {
           height={height}
           className="object-contain"
           priority={isCenter}
+          style={{ height: "auto" }}
         />
       </motion.div>
       <motion.p

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { useHamburgerMenu } from "./useHamburgerMenu";
 import { MENU_CONFIG, ANIMATION_CONFIG, THEME_CONFIG } from "./menuConfig";
 import MenuSection from "./MenuSection";
@@ -28,15 +28,15 @@ import SocialLinks from "./SocialLinks";
 function HamburgerMenu({ isOpen, onClose }) {
   useHamburgerMenu(isOpen, onClose);
 
-  const panelVariants = {
+  const panelVariants = useMemo(() => ({
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
       transition: { staggerChildren: 0.045, delayChildren: 0.08 },
     },
-  };
+  }), []);
 
-  const rowVariants = {
+  const rowVariants = useMemo(() => ({
     hidden: { opacity: 0, x: -14, y: 10, rotate: -0.6 },
     show: {
       opacity: 1,
@@ -45,7 +45,7 @@ function HamburgerMenu({ isOpen, onClose }) {
       rotate: 0,
       transition: { type: "spring", stiffness: 260, damping: 22, mass: 0.7 },
     },
-  };
+  }), []);
 
   return (
     <AnimatePresence mode="wait">
@@ -56,7 +56,7 @@ function HamburgerMenu({ isOpen, onClose }) {
             {...ANIMATION_CONFIG.overlay}
             onClick={onClose}
             className="fixed inset-0 z-40"
-            style={{ backgroundColor: "rgba(0, 0, 0, 0.6)" }}
+            style={{ backgroundColor: "rgba(0, 0, 0, 0.6)", willChange: "opacity" }}
             aria-hidden="true"
           />
 
@@ -67,6 +67,7 @@ function HamburgerMenu({ isOpen, onClose }) {
             style={{
               scrollbarGutter: "stable",
               backgroundColor: THEME_CONFIG.background,
+              willChange: "transform, opacity",
             }}
             role="dialog"
             aria-modal="true"
@@ -89,6 +90,7 @@ function HamburgerMenu({ isOpen, onClose }) {
                 variants={panelVariants}
                 initial="hidden"
                 animate="show"
+                style={{ willChange: "opacity" }}
               >
                 {/* Mini Games Section */}
                 <MenuSection

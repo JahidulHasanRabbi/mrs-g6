@@ -49,6 +49,7 @@ const SpinItem = memo(function SpinItem({
         width={114}
         height={112}
         className={`${size} object-cover pointer-events-none`}
+        style={{ height: "auto" }}
       />
       {isActive && (
         <div className="absolute inset-[6px] rounded-[14px] border-2 border-[#fde685] pointer-events-none" />
@@ -234,6 +235,8 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
             width={143}
             height={143}
             className="object-cover"
+            loading="eager"
+            priority
           />
         </motion.div>
       </div>

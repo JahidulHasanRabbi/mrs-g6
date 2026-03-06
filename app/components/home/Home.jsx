@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useCallback, memo } from "react";
 import { HamburgerMenu } from "../hamburger";
 import { FooterNav } from "../footer";
 import { Header } from "../header";
@@ -9,8 +9,11 @@ import SpecialOffersCarousel from "./SpecialOffersCarousel";
 import VideoGallery from "./VideoGallery";
 import { HOME_ASSETS } from "./homeAssets";
 
-function Home() {
+const Home = memo(function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const handleMenuOpen = useCallback(() => setIsMenuOpen(true), []);
+  const handleMenuClose = useCallback(() => setIsMenuOpen(false), []);
 
   return (
     <div
@@ -22,9 +25,9 @@ function Home() {
         backgroundRepeat: "no-repeat",
       }}
     >
-      <Header onMenuClick={() => setIsMenuOpen(true)} />
+      <Header onMenuClick={handleMenuOpen} />
 
-      <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+      <HamburgerMenu isOpen={isMenuOpen} onClose={handleMenuClose} />
 
       <main className="w-full">
         <HomeHero />
@@ -37,6 +40,6 @@ function Home() {
       <FooterNav />
     </div>
   );
-}
+});
 
 export default Home;

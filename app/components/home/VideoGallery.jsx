@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo, useCallback, memo } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 
@@ -8,31 +8,30 @@ import Image from "next/image";
  * VideoGallery Component
  * Grid of video thumbnails with play buttons
  */
-export default function VideoGallery() {
+const VideoGallery = memo(function VideoGallery() {
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
   const containerRef = useRef(null);
 
-  const containerVariants = {
-    hidden: { opacity: 0, y: 32, scale: 0.98, filter: "blur(10px)" },
+  const containerVariants = useMemo(() => ({
+    hidden: { opacity: 0, y: 32, scale: 0.98 },
     show: {
       opacity: 1,
       y: 0,
       scale: 1,
-      filter: "blur(0px)",
       transition: { type: "spring", stiffness: 120, damping: 20, delay: 0.24 },
     },
-  };
+  }), []);
 
-  const listVariants = {
+  const listVariants = useMemo(() => ({
     hidden: {},
     show: {
       transition: { staggerChildren: 0.06, delayChildren: 0.05 },
     },
-  };
+  }), []);
 
-  const itemVariants = {
+  const itemVariants = useMemo(() => ({
     hidden: { opacity: 0, y: 18, scale: 0.98 },
     show: {
       opacity: 1,
@@ -40,9 +39,9 @@ export default function VideoGallery() {
       scale: 1,
       transition: { type: "spring", stiffness: 220, damping: 18 },
     },
-  };
+  }), []);
 
-  const videos = [
+  const videos = useMemo(() => [
     {
       id: 1,
       thumbnail: "/assets/home/special_for_you/video_image.png",
@@ -63,29 +62,29 @@ export default function VideoGallery() {
       thumbnail: "/assets/home/special_for_you/video_image.png",
       title: "Bonus Features",
     },
-  ];
+  ], []);
 
-  const handleMouseDown = (e) => {
+  const handleMouseDown = useCallback((e) => {
     setIsDragging(true);
     setStartX(e.pageX - containerRef.current.offsetLeft);
     setScrollLeft(containerRef.current.scrollLeft);
-  };
+  }, []);
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     setIsDragging(false);
-  };
+  }, []);
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = useCallback((e) => {
     if (!isDragging) return;
     e.preventDefault();
     const x = e.pageX - containerRef.current.offsetLeft;
-    const walk = (x - startX) * 2; // Scroll speed
+    const walk = (x - startX) * 2;
     containerRef.current.scrollLeft = scrollLeft - walk;
-  };
+  }, [isDragging, startX, scrollLeft]);
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     setIsDragging(false);
-  };
+  }, []);
 
   return (
     <motion.section
@@ -93,6 +92,7 @@ export default function VideoGallery() {
       variants={containerVariants}
       initial="hidden"
       animate="show"
+      style={{ willChange: "transform, opacity" }}
     >
       {/* Section Title */}
       <h3
@@ -167,4 +167,6 @@ export default function VideoGallery() {
       </motion.div>
     </motion.section>
   );
-}
+});
+
+export default VideoGallery;

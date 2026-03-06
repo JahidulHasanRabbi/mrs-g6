@@ -70,6 +70,7 @@ const CreditCard = memo(function CreditCard({ range, index }) {
       src={SPIN_ASSETS.coinFrame}
       fill
       className="object-cover"
+      sizes="130px"
     />
     <motion.div 
       className="absolute left-[-60px] bottom-[6px] w-[130px] h-[50px]"
@@ -86,6 +87,7 @@ const CreditCard = memo(function CreditCard({ range, index }) {
         src={SPIN_ASSETS.coin2}
         fill
         className="object-contain"
+        sizes="130px"
       />
     </motion.div>
     <div className="absolute inset-0 flex flex-col items-center justify-center text-[#a67520] font-bold text-center gap-0 -mt-2">

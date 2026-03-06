@@ -22,6 +22,7 @@ const SpinButton = memo(function SpinButton({ spins, tokens, onClick, image, cla
         src={image || SPIN_ASSETS.buttonBackground}
         fill
         className="object-contain"
+        sizes="200px"
       />
       <motion.div 
         className="absolute inset-0 flex flex-col items-center justify-center text-[#3d1a02] font-bold"
