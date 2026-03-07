@@ -39,6 +39,7 @@ export default function SuccessModal({
           src={popupBg}
           fill
           className="object-contain"
+          sizes="311px"
         />
 
         {/* Close Button */}

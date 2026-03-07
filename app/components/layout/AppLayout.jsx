@@ -31,6 +31,7 @@ export default function AppLayout({ children }) {
   // Determine if we're on the mart page (uses different header)
   const isMartPage = pathname === "/mart";
   const isHomePage = pathname === "/";
+  const isSpinPage = pathname === "/spin";
 
   // Don't show layout on home page
   if (isHomePage) {
@@ -57,7 +58,11 @@ export default function AppLayout({ children }) {
           showAnimation={!hasAnimated}
         />
       ) : (
-        <Header onMenuClick={() => setIsMenuOpen(true)} showAnimation={!hasAnimated} />
+        <Header
+          onMenuClick={() => setIsMenuOpen(true)}
+          showAnimation={!hasAnimated}
+          balance={isSpinPage ? userData.balance : null}
+        />
       )}
 
       {/* Hamburger Menu - Persists across all pages */}

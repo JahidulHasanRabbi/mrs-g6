@@ -61,92 +61,94 @@ function HamburgerMenu({ isOpen, onClose }) {
           />
 
           {/* Sidebar */}
-          <motion.aside
-            {...ANIMATION_CONFIG.sidebar}
-            className="absolute top-0 left-0 z-50 h-full w-[220px] overflow-y-auto"
-            style={{
-              scrollbarGutter: "stable",
-              backgroundColor: THEME_CONFIG.background,
-              willChange: "transform, opacity",
-            }}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Navigation menu"
-          >
-            {/* Header */}
-            <motion.div variants={rowVariants} initial="hidden" animate="show">
-              <MenuHeader onClose={onClose} />
-            </motion.div>
-
-            {/* Banner */}
-            <motion.div variants={rowVariants} initial="hidden" animate="show">
-              <MenuBanner />
-            </motion.div>
-
-            {/* Menu Items */}
-            <nav className="px-3 pb-20" role="navigation">
-              <motion.div
-                className="rounded-[10px] bg-[#265134] px-2 py-2"
-                variants={panelVariants}
-                initial="hidden"
-                animate="show"
-                style={{ willChange: "opacity" }}
-              >
-                {/* Mini Games Section */}
-                <MenuSection
-                  title={MENU_CONFIG.miniGames.title}
-                  icon={MENU_CONFIG.miniGames.icon}
-                  variants={rowVariants}
-                >
-                  {MENU_CONFIG.miniGames.items.map((item, index) => (
-                    <MenuItem
-                      key={index}
-                      {...item}
-                      onClose={onClose}
-                      isNested={true}
-                      variants={rowVariants}
-                    />
-                  ))}
-                </MenuSection>
-
-                {/* Main Menu Items */}
-                <div className="space-y-1 mb-3">
-                  {MENU_CONFIG.mainItems.map((item, index) => (
-                    <MenuItem
-                      key={index}
-                      {...item}
-                      onClose={onClose}
-                      variants={rowVariants}
-                    />
-                  ))}
-                </div>
-
-                {/* Social Section */}
-                <MenuSection
-                  title={MENU_CONFIG.social.title}
-                  icon={MENU_CONFIG.social.icon}
-                  variants={rowVariants}
-                >
-                  <SocialLinks
-                    links={MENU_CONFIG.social.links}
-                    variants={rowVariants}
-                  />
-                </MenuSection>
-
-                {/* Bottom Items */}
-                <div className="space-y-1 mt-3">
-                  {MENU_CONFIG.bottomItems.map((item, index) => (
-                    <MenuItem
-                      key={index}
-                      {...item}
-                      onClose={onClose}
-                      variants={rowVariants}
-                    />
-                  ))}
-                </div>
+          <div className="fixed inset-0 z-50 left-1/2 w-full max-w-[475px] -translate-x-1/2 pointer-events-none">
+            <motion.aside
+              {...ANIMATION_CONFIG.sidebar}
+              className="pointer-events-auto absolute top-0 left-0 h-dvh w-[220px] overflow-y-auto overscroll-contain"
+              style={{
+                scrollbarGutter: "stable",
+                backgroundColor: THEME_CONFIG.background,
+                willChange: "transform, opacity",
+              }}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Navigation menu"
+            >
+              {/* Header */}
+              <motion.div variants={rowVariants} initial="hidden" animate="show">
+                <MenuHeader onClose={onClose} />
               </motion.div>
-            </nav>
-          </motion.aside>
+
+              {/* Banner */}
+              <motion.div variants={rowVariants} initial="hidden" animate="show">
+                <MenuBanner />
+              </motion.div>
+
+              {/* Menu Items */}
+              <nav className="px-3 pb-20" role="navigation">
+                <motion.div
+                  className="rounded-[10px] bg-[#265134] px-2 py-2"
+                  variants={panelVariants}
+                  initial="hidden"
+                  animate="show"
+                  style={{ willChange: "opacity" }}
+                >
+                  {/* Mini Games Section */}
+                  <MenuSection
+                    title={MENU_CONFIG.miniGames.title}
+                    icon={MENU_CONFIG.miniGames.icon}
+                    variants={rowVariants}
+                  >
+                    {MENU_CONFIG.miniGames.items.map((item, index) => (
+                      <MenuItem
+                        key={index}
+                        {...item}
+                        onClose={onClose}
+                        isNested={true}
+                        variants={rowVariants}
+                      />
+                    ))}
+                  </MenuSection>
+
+                  {/* Main Menu Items */}
+                  <div className="space-y-1 mb-3">
+                    {MENU_CONFIG.mainItems.map((item, index) => (
+                      <MenuItem
+                        key={index}
+                        {...item}
+                        onClose={onClose}
+                        variants={rowVariants}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Social Section */}
+                  <MenuSection
+                    title={MENU_CONFIG.social.title}
+                    icon={MENU_CONFIG.social.icon}
+                    variants={rowVariants}
+                  >
+                    <SocialLinks
+                      links={MENU_CONFIG.social.links}
+                      variants={rowVariants}
+                    />
+                  </MenuSection>
+
+                  {/* Bottom Items */}
+                  <div className="space-y-1 mt-3">
+                    {MENU_CONFIG.bottomItems.map((item, index) => (
+                      <MenuItem
+                        key={index}
+                        {...item}
+                        onClose={onClose}
+                        variants={rowVariants}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              </nav>
+            </motion.aside>
+          </div>
         </>
       )}
     </AnimatePresence>

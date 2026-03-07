@@ -4,6 +4,7 @@ import Image from "next/image";
 import { motion, useMotionValue, useSpring } from "framer-motion";
 import { useCallback, useEffect, useRef, useState, memo, useMemo } from "react";
 import { SPIN_ASSETS } from "./spinAssets";
+import { usePerformanceOptimization } from "../../hooks/usePerformanceOptimization";
 
 const SpinItem = memo(function SpinItem({
   background,
@@ -13,6 +14,8 @@ const SpinItem = memo(function SpinItem({
   index,
   isActive,
   isSpinning,
+  isLowEnd,
+  isMidEnd,
 }) {
   return (
   <motion.div
@@ -31,17 +34,15 @@ const SpinItem = memo(function SpinItem({
       animate={
         isActive
           ? {
-              scale: 1.06,
-              filter:
-                "drop-shadow(0px 0px 10px rgba(253, 230, 133, 0.85)) drop-shadow(0px 0px 18px rgba(253, 230, 133, 0.5))",
+              scale: isLowEnd ? 1.02 : 1.04,
+              boxShadow: isLowEnd ? "0 0 8px rgba(253, 230, 133, 0.4)" : "0 0 15px rgba(253, 230, 133, 0.6)"
             }
-          : { scale: 1, filter: "none" }
+          : { scale: 1, boxShadow: "none" }
       }
-      transition={
-        isActive
-          ? { type: "spring", stiffness: 420, damping: 22 }
-          : { duration: 0.12, ease: "easeOut" }
-      }
+      transition={{
+        duration: isLowEnd ? 0.4 : 0.3,
+        ease: "easeOut"
+      }}
     >
       <Image
         alt=""
@@ -86,15 +87,16 @@ const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinning, onSpinComplete }) {
   const [activeGridIndex, setActiveGridIndex] = useState(null);
   const [isSpinning, setIsSpinning] = useState(false);
+  const { isLowEnd, isMidEnd } = usePerformanceOptimization();
 
   // Use external spinning state if provided
   const spinning = externalIsSpinning !== undefined ? externalIsSpinning : isSpinning;
 
   const centerRotate = useMotionValue(0);
   const centerRotateSpring = useSpring(centerRotate, {
-    stiffness: 220,
-    damping: 26,
-    mass: 0.6,
+    stiffness: isLowEnd ? 80 : isMidEnd ? 100 : 120,
+    damping: isLowEnd ? 15 : isMidEnd ? 18 : 20,
+    mass: isLowEnd ? 1 : 0.8,
     restDelta: 0.001,
     restSpeed: 0.001,
   });
@@ -159,7 +161,7 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
     const tick = (t) => {
       const progress = Math.min(1, (t - startRef.current) / 4200);
       const eased = easeOutCubic(progress);
-      const stepDelayMs = 45 + eased * 220;
+      const stepDelayMs = (isLowEnd ? 80 : isMidEnd ? 70 : 60) + eased * (isLowEnd ? 120 : isMidEnd ? 150 : 180);
 
       if (t - lastStepAtRef.current >= stepDelayMs) {
         lastStepAtRef.current = t;
@@ -211,6 +213,8 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
             index={index}
             isActive={activeGridIndex === index}
             isSpinning={spinning}
+            isLowEnd={isLowEnd}
+            isMidEnd={isMidEnd}
             {...item}
           />
         ))}

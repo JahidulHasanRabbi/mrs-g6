@@ -9,7 +9,7 @@ import { memo } from "react";
  * Top navigation bar with hamburger menu and logo
  * Matches Figma design exactly
  */
-function Header({ onMenuClick, showAnimation = false }) {
+function Header({ onMenuClick, showAnimation = false, balance = null }) {
   return (
     <motion.header
       className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[475px] h-[52px] z-40"
@@ -48,12 +48,44 @@ function Header({ onMenuClick, showAnimation = false }) {
           </div>
         </motion.button>
 
+      
+
         {/* Logo */}
         <motion.div
           className="absolute right-4 top-0 w-[60px] h-[60px]"
           whileHover={{ scale: 1.05, rotate: 5 }}
           transition={{ type: "spring", stiffness: 400, damping: 10 }}
         >
+            {balance !== null && (
+          <motion.div
+            className="absolute right-[58px] top-[8px] w-[140px] h-[48px]"
+            initial={showAnimation ? { opacity: 0, scale: 0.8 } : { opacity: 1, scale: 1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={showAnimation ? { duration: 0.6, delay: 0.2, ease: "easeOut" } : { duration: 0 }}
+          >
+            <Image
+              alt="Balance Frame"
+              src="/assets/mart/coin-balance.png"
+              fill
+              className="object-contain"
+              sizes="146px"
+            />
+            <div className="absolute inset-0 flex items-center justify-center gap-2 px-3">
+              <div className="relative w-[30px] h-[34px] shrink-0">
+                <Image
+                  alt="Coin"
+                  src="/assets/mart/coin-icon.png"
+                  fill
+                  className="object-contain"
+                  sizes="30px"
+                />
+              </div>
+              <p className="truncate text-[#f9d063] text-[14px] font-bold font-['Times_New_Roman']">
+                {balance}
+              </p>
+            </div>
+          </motion.div>
+        )}
           <div className="relative w-[100px] h-auto right-[5px] top-[5px] ">
             <Image
               src="/assets/images/header-logo.png"

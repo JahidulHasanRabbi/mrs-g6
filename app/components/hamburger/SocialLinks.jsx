@@ -4,6 +4,12 @@ import Image from "next/image";
 import { memo } from "react";
 import { motion } from "framer-motion";
 
+const socialItemAnimation = {
+  initial: { opacity: 0, y: 6, scale: 0.96 },
+  animate: { opacity: 1, y: 0, scale: 1 },
+  transition: { duration: 0.22, ease: "easeOut" },
+};
+
 /**
  * SocialIcon Component
  * Individual social media link with hover effects
@@ -38,7 +44,9 @@ function SocialIcon({ icon, url, label, disabled, variants }) {
       <motion.div
         className="flex items-center justify-center"
         aria-label={`${label} (disabled)`}
-        variants={variants}
+        initial={socialItemAnimation.initial}
+        animate={socialItemAnimation.animate}
+        transition={socialItemAnimation.transition}
         style={{ cursor: "not-allowed" }}
       >
         {content}
@@ -53,7 +61,9 @@ function SocialIcon({ icon, url, label, disabled, variants }) {
       rel="noopener noreferrer"
       className="flex items-center justify-center cursor-pointer"
       aria-label={label || "Social media link"}
-      variants={variants}
+      initial={socialItemAnimation.initial}
+      animate={socialItemAnimation.animate}
+      transition={socialItemAnimation.transition}
       whileHover={{
         scale: 1.2,
         rotate: 10,
@@ -77,10 +87,18 @@ function SocialLinks({ links, variants }) {
     <motion.div
       className="flex gap-2 pt-2 justify-start items-center"
       role="list"
-      variants={variants}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.18, ease: "easeOut" }}
     >
       {links.map((link, index) => (
-        <motion.div key={index} role="listitem" variants={variants}>
+        <motion.div
+          key={index}
+          role="listitem"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2, delay: index * 0.03, ease: "easeOut" }}
+        >
           <SocialIcon {...link} variants={variants} />
         </motion.div>
       ))}
