@@ -19,17 +19,24 @@ export function UserProvider({ children }) {
   useEffect(() => {
     const loadUserData = async () => {
       const memberUuid = tokenStorage.getMemberUuid();
-      if (!memberUuid) return;
+      console.log('UserContext: Loading user data, memberUuid:', memberUuid);
+      if (!memberUuid) {
+        console.log('UserContext: No memberUuid found');
+        return;
+      }
 
       try {
         const memberInfo = await getMemberInfo(memberUuid);
+        console.log('UserContext: Member info received:', memberInfo);
+        const formattedBalance = parseFloat(memberInfo.current_tokens).toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+        console.log('UserContext: Formatted balance:', formattedBalance);
         setUserData(prev => ({
           ...prev,
           name: memberInfo.username || prev.name,
-          balance: parseFloat(memberInfo.current_tokens).toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-          }),
+          balance: formattedBalance,
           currentLevel: memberInfo.tier || prev.currentLevel,
         }));
       } catch (error) {
