@@ -4,7 +4,7 @@ export const MART_ASSETS = {
   profileIcon: "/assets/mart/menu-icon.png",
   coinBalance: "/assets/mart/coin-balance.png",
   coinIcon: "/assets/mart/coin-icon.png",
-  titleBanner: "/assets/mart/title-banner.png",
+  titleBanner: "/assets/mart/mart-banner.png",
   sortButton: "/assets/mart/sort-button.png",
   itemCard: "/assets/mart/item-card.png",
   prize1: "/assets/mart/prize-iphone.png",
