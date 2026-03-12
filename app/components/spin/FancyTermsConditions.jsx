@@ -47,7 +47,7 @@ const CollapsibleTermItem = ({ number, title, description, index }) => {
           >
             <span 
               className="text-[#3d1a02] text-[18px] font-extrabold" 
-              style={{ fontFamily: '"Times New Roman", serif', textShadow: "0px 1px 1px rgba(255,255,255,0.3)" }}
+              style={{ textShadow: "0px 1px 1px rgba(255,255,255,0.3)" }}
             >
               {number}
             </span>
@@ -56,7 +56,6 @@ const CollapsibleTermItem = ({ number, title, description, index }) => {
             <h4 
               className="text-[17px] font-bold leading-tight group-hover:text-[#fcd064] transition-colors" 
               style={{ 
-                fontFamily: '"Times New Roman", serif', 
                 color: isExpanded ? "#fcd064" : "#e9af41",
                 textShadow: "0px 2px 6px rgba(0,0,0,0.8)"
               }}
@@ -85,7 +84,6 @@ const CollapsibleTermItem = ({ number, title, description, index }) => {
                 <p 
                   className="text-white/90 text-[15px] font-medium leading-relaxed" 
                   style={{ 
-                    fontFamily: '"Times New Roman", serif', 
                     textShadow: "0px 1px 3px rgba(0,0,0,0.8)"
                   }}
                 >
@@ -168,17 +166,16 @@ export default function FancyTermsConditions() {
               border: "2px solid rgba(255, 219, 133, 0.4)",
             }}
           >
-            <h2 
-              className="text-[#3d1a02] text-[22px] font-extrabold tracking-[0.05em] uppercase" 
+            <p 
+              className="text-[#3d1a02] text-[20px] font-extrabold tracking-wider uppercase"
               style={{ 
-                fontFamily: '"Times New Roman", serif',
-                textShadow: "0px 1px 2px rgba(255, 255, 255, 0.3)"
+                textShadow: "0px 2px 4px rgba(255, 255, 255, 0.3)"
               }}
             >
               Terms & Conditions
-            </h2>
+            </p>
           </div>
-        </motion.div> */}
+        </motion.div>
       
         {/* Terms List */}
         <div className="space-y-3 relative">
