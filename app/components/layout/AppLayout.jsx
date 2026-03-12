@@ -32,6 +32,7 @@ export default function AppLayout({ children }) {
   const isMartPage = pathname === "/mart";
   const isHomePage = pathname === "/";
   const isSpinPage = pathname === "/spin";
+  const isTermsPage = pathname === "/terms-and-conditions";
 
   // Don't show layout on home page
   if (isHomePage) {
@@ -44,8 +45,9 @@ export default function AppLayout({ children }) {
       style={{
         backgroundImage: `url(${HOME_ASSETS.backgroundPattern})`,
         backgroundSize: "cover",
-        backgroundPosition: "center",
+        backgroundPosition: "top center",
         backgroundRepeat: "no-repeat",
+        backgroundAttachment: "fixed",
         paddingTop: isMartPage ? "0" : "52px",
       }}
     >
