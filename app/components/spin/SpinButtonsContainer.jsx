@@ -33,6 +33,7 @@ const SpinButtonsContainer = memo(function SpinButtonsContainer({ buttons, onBut
             className={button.className}
             onClick={() => !disabled && onButtonClick(button)}
             disabled={disabled}
+            dimmed={button.dimmed}
           />
         </motion.div>
       ))}

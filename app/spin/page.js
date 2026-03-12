@@ -21,6 +21,7 @@ export default function SpinPage() {
   const [modalMessage, setModalMessage] = useState("");
   const [modalBgColor, setModalBgColor] = useState("rgba(96, 128, 60, 1)");
   const [isSpinning, setIsSpinning] = useState(false);
+  const [activeWinningView, setActiveWinningView] = useState("record");
   const { updateBalance } = useUser();
 
   const memberUuid = tokenStorage.getMemberUuid();
@@ -106,6 +107,10 @@ export default function SpinPage() {
       handleSpinAction(tenSpin, "ten spins");
     } else if (buttonData.spins === "50 Spins") {
       handleSpinAction(fiftySpin, "fifty spins");
+    } else if (buttonData.spins === "Winning Record") {
+      setActiveWinningView("record");
+    } else if (buttonData.spins === "Winning List") {
+      setActiveWinningView("list");
     } else {
       console.log(`Button clicked: ${buttonData.spins}`);
     }
@@ -125,13 +130,15 @@ export default function SpinPage() {
       spins: "Winning Record",
       image: "/assets/lucky-spin/buttons/winning.png",
       className: "w-[160px] h-[70px] sm:w-[200px] sm:h-[80px]",
+      dimmed: activeWinningView === "list",
     },
     {
       spins: "Winning List",
       image: "/assets/lucky-spin/buttons/winning.png",
       className: "w-[160px] h-[70px] sm:w-[200px] sm:h-[80px]",
+      dimmed: activeWinningView === "record",
     },
-  ], []);
+  ], [activeWinningView]);
 
   return (
     <>
@@ -168,11 +175,13 @@ export default function SpinPage() {
           </div>
         </AnimatedSectionWrapper>
 
-        <AnimatedSectionWrapper animation="fadeInUp" delay={0.3} viewportAmount={0.3}>
-          <div className="flex justify-center py-8">
-            <WinningList />
-          </div>
-        </AnimatedSectionWrapper>
+        {activeWinningView === "record" && (
+          <AnimatedSectionWrapper animation="fadeInUp" delay={0.3} viewportAmount={0.3}>
+            <div className="flex justify-center py-8">
+              <WinningList />
+            </div>
+          </AnimatedSectionWrapper>
+        )}
 
         <AnimatedSectionWrapper animation="fadeInUp" delay={0.35} viewportAmount={0.3}>
           <div className="flex justify-center py-8 px-4">

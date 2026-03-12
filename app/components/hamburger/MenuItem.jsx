@@ -33,7 +33,7 @@ function MenuItem({
   const content = (
     <motion.div
       className={`w-full flex items-center gap-3 ${padding} ${
-        disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+        disabled ? "opacity-30 cursor-not-allowed" : "cursor-pointer"
       }`}
       role="menuitem"
       variants={variants}
