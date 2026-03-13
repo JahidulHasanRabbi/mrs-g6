@@ -1,12 +1,9 @@
 "use client";
 
-import { useState, useEffect, memo } from "react";
+import { memo } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { SPIN_ASSETS } from "./spinAssets";
-import { tokenStorage } from "../../api/tokenStorage";
-import LoadingState from "../ui/LoadingState";
-import ErrorDisplay from "../ui/ErrorDisplay";
 
 const WinningRow = memo(function WinningRow({ date, reward, amount, index }) {
   return (
@@ -48,71 +45,7 @@ const WinningRow = memo(function WinningRow({ date, reward, amount, index }) {
   );
 });
 
-const UserWinningList = memo(function UserWinningList() {
-  const [winnings, setWinnings] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    // TODO: Replace with actual API call when endpoint is available
-    // For now, using mock data
-    const fetchUserWinnings = async () => {
-      try {
-        setIsLoading(true);
-        const memberUuid = tokenStorage.getMemberUuid();
-        
-        if (!memberUuid) {
-          setError({ message: "Please log in to view your winnings" });
-          return;
-        }
-
-        // Mock data - replace with actual API call
-        // const response = await getUserSpinHistory(memberUuid);
-        const mockData = [
-          { date: "31-12-2025", reward: "100 Free Credits", amount: "RM100" },
-          { date: "30-12-2025", reward: "50 Free Credits", amount: "RM50" },
-          { date: "29-12-2025", reward: "Mystery Box", amount: "RM25" },
-          { date: "28-12-2025", reward: "10 Free Credits", amount: "RM10" },
-        ];
-        
-        setWinnings(mockData);
-      } catch (err) {
-        console.error('Error fetching user winnings:', err);
-        setError(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUserWinnings();
-  }, []);
-
-  if (isLoading) {
-    return (
-      <motion.div 
-        className="relative w-full max-w-[450px] h-[280px] mx-4 flex items-center justify-center"
-        initial={{ opacity: 0, scale: 0.8, y: 50 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-      >
-        <LoadingState />
-      </motion.div>
-    );
-  }
-
-  if (error) {
-    return (
-      <motion.div 
-        className="relative w-full max-w-[450px] h-[280px] mx-4 flex items-center justify-center"
-        initial={{ opacity: 0, scale: 0.8, y: 50 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-      >
-        <ErrorDisplay error={error} />
-      </motion.div>
-    );
-  }
-
+const UserWinningList = memo(function UserWinningList({ winnings = [] }) {
   if (winnings.length === 0) {
     return (
       <motion.div 

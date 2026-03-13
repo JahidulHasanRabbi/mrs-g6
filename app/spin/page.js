@@ -23,6 +23,7 @@ export default function SpinPage() {
   const [modalBgColor, setModalBgColor] = useState("rgba(96, 128, 60, 1)");
   const [isSpinning, setIsSpinning] = useState(false);
   const [activeWinningView, setActiveWinningView] = useState("record");
+  const [userWinnings, setUserWinnings] = useState([]);
   const { updateBalance } = useUser();
 
   const memberUuid = tokenStorage.getMemberUuid();
@@ -58,6 +59,14 @@ export default function SpinPage() {
       } else if (spinResultsRef.current) {
         const results = spinResultsRef.current;
         if (results.length > 0) {
+          // Add new winnings to the list
+          const newWinnings = results.map(r => ({
+            date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+            reward: r.reward_name,
+            amount: r.credit_amount ? `RM${r.credit_amount}` : '-'
+          }));
+          setUserWinnings(prev => [...newWinnings, ...prev]);
+          
           const rewardsList = results.map(r => r.reward_name).join(", ");
           setModalTitle("🎉 Congratulations!");
           setModalMessage(`You won: ${rewardsList}`);
@@ -233,7 +242,7 @@ export default function SpinPage() {
         {activeWinningView === "list" && (
           <AnimatedSectionWrapper animation="fadeInUp" delay={0.3} viewportAmount={0.3}>
             <div className="flex justify-center py-8">
-              <UserWinningList />
+              <UserWinningList winnings={userWinnings} />
             </div>
           </AnimatedSectionWrapper>
         )}
