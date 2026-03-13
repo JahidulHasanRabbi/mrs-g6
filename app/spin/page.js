@@ -7,6 +7,7 @@ import LuckySpinGrid from "../components/spin/LuckySpinGrid";
 import SpinButtonsContainer from "../components/spin/SpinButtonsContainer";
 import RewardsList from "../components/spin/RewardsList";
 import WinningList from "../components/spin/WinningList";
+import UserWinningList from "../components/spin/UserWinningList";
 import TermsConditions from "../components/spin/TermsConditions";
 import SuccessModal from "../components/ui/SuccessModal";
 import { oneSpin, tenSpin, fiftySpin, getMemberInfo } from "../api/memberApi";
@@ -225,6 +226,14 @@ export default function SpinPage() {
           <AnimatedSectionWrapper animation="fadeInUp" delay={0.3} viewportAmount={0.3}>
             <div className="flex justify-center py-8">
               <WinningList />
+            </div>
+          </AnimatedSectionWrapper>
+        )}
+
+        {activeWinningView === "list" && (
+          <AnimatedSectionWrapper animation="fadeInUp" delay={0.3} viewportAmount={0.3}>
+            <div className="flex justify-center py-8">
+              <UserWinningList />
             </div>
           </AnimatedSectionWrapper>
         )}
