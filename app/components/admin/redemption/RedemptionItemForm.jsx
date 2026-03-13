@@ -270,11 +270,12 @@ export default function RedemptionItemForm({
                 Promotion:
               </label>
               <input
-                type="text"
+                type="number"
                 value={fieldValues.promotion || ""}
                 onChange={(e) => handleInputChange("promotion", e.target.value)}
                 className="bg-white/10 border-[0.5px] border-white/8 h-[36px] rounded-[4px] w-[304px] px-3 text-white placeholder-white/50 focus:outline-none focus:border-[#f2c36b]"
-                placeholder="Enter promotion text"
+                placeholder="Enter promotion value (e.g., 10.50)"
+                step="0.01"
                 required
                 disabled={isLoading}
               />
@@ -291,11 +292,10 @@ export default function RedemptionItemForm({
               <div className="border-[#d3d3d3] border-[0.5px] border-dashed h-[199px] rounded-[8px] flex items-center justify-center relative overflow-hidden">
                 {imagePreview ? (
                   <div className="relative h-full w-full">
-                    <Image
+                    <img
                       src={imagePreview}
                       alt="Item preview"
-                      fill
-                      className="object-contain"
+                      className="w-full h-full object-contain"
                     />
                   </div>
                 ) : (

@@ -42,6 +42,7 @@ export default function SpinPage() {
 
   const spinResultsRef = useRef(null);
   const spinErrorRef = useRef(null);
+  const gridSpinTriggerRef = useRef(null);
 
   const handleSpinComplete = useCallback(() => {
     setIsSpinning(false);
@@ -71,42 +72,81 @@ export default function SpinPage() {
     }, 100);
   }, []);
 
+  const isProcessingRef = useRef(false);
+
   const handleSpinAction = useCallback(async (spinFunction, spinType) => {
     if (!memberUuid) {
       setModalTitle("❌ Error");
       setModalMessage("Please log in to spin.");
       setModalBgColor("rgba(180, 60, 60, 1)");
       setIsModalOpen(true);
-      return;
+      return false; // Return false to prevent spin animation
     }
 
-    if (isSpinning) return;
+    if (isSpinning || isProcessingRef.current) return false; // Return false to prevent spin animation
+
+    isProcessingRef.current = true;
 
     try {
-      setIsSpinning(true);
       spinResultsRef.current = null;
       spinErrorRef.current = null;
       
+      // Call API first before starting spin animation
       const response = await spinFunction(memberUuid);
       const results = mapSpinResults(response);
       spinResultsRef.current = results;
       
+      // Only start spinning if API call succeeds
+      setIsSpinning(true);
+      
       await refreshMemberInfo();
+      
+      isProcessingRef.current = false;
+      return true; // Return true to allow spin animation
     } catch (error) {
       console.error(`Error during ${spinType}:`, error);
-      spinErrorRef.current = error.message || "An error occurred. Please try again.";
+      
+      // Stop spinning immediately if it was started
+      setIsSpinning(false);
+      isProcessingRef.current = false;
+      
+      // Extract error message from error.data.details or error.data.detail
+      const errorDetails = error.data?.details || error.data?.detail || error.message || "";
+      
+      // Check if error is about insufficient points
+      if (errorDetails.toLowerCase().includes("enough points") || 
+          errorDetails.toLowerCase().includes("insufficient points")) {
+        setModalTitle("❌ Insufficient Points");
+        setModalMessage("You don't have enough points to spin. Please earn more points first!");
+      } else {
+        setModalTitle("❌ Spin Failed");
+        setModalMessage(errorDetails || "An error occurred. Please try again.");
+      }
+      
+      setModalBgColor("rgba(180, 60, 60, 1)");
+      setIsModalOpen(true);
+      
+      return false; // Return false to prevent spin animation
     }
   }, [memberUuid, isSpinning, refreshMemberInfo]);
 
-  const handleCenterButtonClick = useCallback(() => {
-    handleSpinAction(oneSpin, "one spin");
+  const handleCenterButtonClick = useCallback(async () => {
+    return await handleSpinAction(oneSpin, "one spin");
   }, [handleSpinAction]);
 
-  const handleButtonClick = useCallback((buttonData) => {
+  const handleButtonClick = useCallback(async (buttonData) => {
     if (buttonData.spins === "10 Spins") {
-      handleSpinAction(tenSpin, "ten spins");
+      const shouldSpin = await handleSpinAction(tenSpin, "ten spins");
+      // Trigger the grid animation if API succeeds
+      if (shouldSpin && gridSpinTriggerRef.current) {
+        gridSpinTriggerRef.current();
+      }
     } else if (buttonData.spins === "50 Spins") {
-      handleSpinAction(fiftySpin, "fifty spins");
+      const shouldSpin = await handleSpinAction(fiftySpin, "fifty spins");
+      // Trigger the grid animation if API succeeds
+      if (shouldSpin && gridSpinTriggerRef.current) {
+        gridSpinTriggerRef.current();
+      }
     } else if (buttonData.spins === "Winning Record") {
       setActiveWinningView("record");
     } else if (buttonData.spins === "Winning List") {
@@ -146,7 +186,13 @@ export default function SpinPage() {
 
         <AnimatedSectionWrapper animation="fadeInUp" delay={0.1} viewportAmount={0.3}>
           <div className="flex justify-center items-center py-8">
-            <LuckySpinGrid onSpinClick={handleCenterButtonClick} isSpinning={isSpinning} disabled={isSpinning} onSpinComplete={handleSpinComplete} />
+            <LuckySpinGrid 
+              onSpinClick={handleCenterButtonClick} 
+              isSpinning={isSpinning} 
+              disabled={isSpinning} 
+              onSpinComplete={handleSpinComplete}
+              spinTriggerRef={gridSpinTriggerRef}
+            />
           </div>
         </AnimatedSectionWrapper>
 

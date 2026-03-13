@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { getOptionLabel } from "../../../api/apiOptions";
 
 export default function SpinItemsTable({ items = [], onEditClick, onDeleteClick }) {
@@ -58,11 +57,10 @@ export default function SpinItemsTable({ items = [], onEditClick, onDeleteClick 
               <td className="px-4 py-4">
                 {item.image ? (
                   <div className="relative h-10 w-10">
-                    <Image
+                    <img
                       src={item.image}
                       alt={item.reward_name}
-                      fill
-                      className="object-contain"
+                      className="w-full h-full object-contain"
                     />
                   </div>
                 ) : (

@@ -33,7 +33,7 @@
     "**/*.mts",
     "**/*.ts",
     "**/*.tsx"
-, "app/components/home/Home.jsx"  ],
+, ".vscode/app/components/home/Home.jsx"  ],
   "exclude": [
     "node_modules"
   ]

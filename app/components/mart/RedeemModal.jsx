@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { motion } from "framer-motion";
 import { MART_ASSETS } from "./martAssets";
 const POPUP_CLOSE_IMG = "/assets/home/popup-close.png";
@@ -45,11 +44,10 @@ export default function RedeemModal({ isOpen, onClose, item, isRedeeming, redeem
         onClick={(e) => e.stopPropagation()}
       >
         {/* Popup Background */}
-        <Image
+        <img
           alt="Redeem Popup"
           src={MART_ASSETS.redeemPopup}
-          fill
-          className="object-contain"
+          className="w-full h-full object-contain"
         />
 
         {/* Close Button */}
@@ -60,7 +58,7 @@ export default function RedeemModal({ isOpen, onClose, item, isRedeeming, redeem
           whileTap={{ scale: 0.9 }}
           aria-label="Close"
         >
-          <Image
+          <img
             src={POPUP_CLOSE_IMG}
             alt=""
             width={30}

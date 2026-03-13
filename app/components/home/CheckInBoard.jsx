@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useCallback, memo } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { HOME_ASSETS } from "./homeAssets";
-import { getMemberInfo, checkIn } from "@/app/api/memberApi";
+import { getMemberInfo, checkIn, getCheckinSettings } from "@/app/api/memberApi";
 import { tokenStorage } from "@/app/api/tokenStorage";
 import SuccessModal from "@/app/components/ui/SuccessModal";
 
@@ -46,10 +46,12 @@ export default function CheckInBoard() {
     day7: false,
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [memberInfo, setMemberInfo] = useState(null);
+  const [checkinSettings, setCheckinSettings] = useState(null);
 
   useEffect(() => {
     const preload = (src) =>
@@ -119,17 +121,55 @@ export default function CheckInBoard() {
     fetchMemberInfo();
   }, []);
 
+  // Fetch check-in settings
+  useEffect(() => {
+    const fetchCheckinSettings = async () => {
+      try {
+        const settings = await getCheckinSettings();
+        setCheckinSettings(settings);
+      } catch (err) {
+        console.error("Failed to fetch check-in settings:", err);
+        // Use default values if API fails
+      }
+    };
+
+    fetchCheckinSettings();
+  }, []);
+
   const days = useMemo(
-    () => [
-      { day: 1, label: "DAY 1", reward: "+100", x: 20, y: 30, iconSrc: HOME_ASSETS.electricSign },
-      { day: 2, label: "DAY 2", reward: "+100", x: 40, y: 30, iconSrc: HOME_ASSETS.electricSign },
-      { day: 3, label: "DAY 3", reward: "+100", x: 60, y: 30, iconSrc: HOME_ASSETS.dayCard3 },
-      { day: 4, label: "DAY 4", reward: "+100", x: 80, y: 30, iconSrc: HOME_ASSETS.electricSign },
-      { day: 5, label: "DAY 5", reward: "+100", x: 20, y: 65, iconSrc: HOME_ASSETS.dayCard5 },
-      { day: 6, label: "DAY 6", reward: "+100", x: 40, y: 65, iconSrc: HOME_ASSETS.electricSign },
-      { day: 7, label: "DAY 7", reward: "", x: 70, y: 65, isSpecial: true },
-    ],
-    [],
+    () => {
+      // Helper function to get reward text for a day
+      const getRewardText = (day) => {
+        if (!checkinSettings?.rewards) return "+100"; // Default fallback
+        
+        const daySettings = checkinSettings.rewards.find(r => r.day === day);
+        if (!daySettings) return "+100"; // Default fallback
+        
+        // Use display_text if available, otherwise format min/max
+        if (daySettings.display_text) {
+          return daySettings.display_text;
+        }
+        
+        // If min and max are the same, show single value
+        if (daySettings.reward_minimum === daySettings.reward_maximum) {
+          return `+${daySettings.reward_minimum}`;
+        }
+        
+        // Show range
+        return `+${daySettings.reward_minimum}-${daySettings.reward_maximum}`;
+      };
+
+      return [
+        { day: 1, label: "DAY 1", reward: getRewardText(1), x: 20, y: 30, iconSrc: HOME_ASSETS.electricSign },
+        { day: 2, label: "DAY 2", reward: getRewardText(2), x: 40, y: 30, iconSrc: HOME_ASSETS.electricSign },
+        { day: 3, label: "DAY 3", reward: getRewardText(3), x: 60, y: 30, iconSrc: HOME_ASSETS.dayCard3 },
+        { day: 4, label: "DAY 4", reward: getRewardText(4), x: 80, y: 30, iconSrc: HOME_ASSETS.electricSign },
+        { day: 5, label: "DAY 5", reward: getRewardText(5), x: 20, y: 65, iconSrc: HOME_ASSETS.dayCard5 },
+        { day: 6, label: "DAY 6", reward: getRewardText(6), x: 40, y: 65, iconSrc: HOME_ASSETS.electricSign },
+        { day: 7, label: "DAY 7", reward: "", x: 70, y: 65, isSpecial: true },
+      ];
+    },
+    [checkinSettings],
   );
 
   const onPressDay = useCallback((day) => {
@@ -152,7 +192,7 @@ export default function CheckInBoard() {
         return;
       }
 
-      setIsLoading(true);
+      setIsCheckingIn(true);
       setError(null);
 
       // Call check-in API
@@ -194,7 +234,7 @@ export default function CheckInBoard() {
         setShowSuccessModal(true);
       }
     } finally {
-      setIsLoading(false);
+      setIsCheckingIn(false);
     }
   }, [checkedDays]);
 
@@ -401,7 +441,7 @@ export default function CheckInBoard() {
                             lineHeight: "normal",
                           }}
                         >
-                          {d.reward}
+                          {isChecked ? d.reward : "XXXX"}
                         </div>
                       </div>
 

@@ -9,11 +9,53 @@ export default function ErrorDisplay({ error }) {
       return 'Network error. Please check your connection.';
     }
 
+    // Try to extract detailed error messages from API response
+    if (error.data) {
+      // Check for various error formats
+      if (typeof error.data === 'string') {
+        return error.data;
+      }
+      
+      // Check for detail field
+      if (error.data.detail) {
+        return error.data.detail;
+      }
+      
+      // Check for details field
+      if (error.data.details) {
+        return error.data.details;
+      }
+      
+      // Check for error field
+      if (error.data.error) {
+        return error.data.error;
+      }
+      
+      // Check for message field
+      if (error.data.message) {
+        return error.data.message;
+      }
+      
+      // Check for field-specific errors (validation errors)
+      if (typeof error.data === 'object') {
+        const fieldErrors = [];
+        for (const [field, messages] of Object.entries(error.data)) {
+          if (Array.isArray(messages)) {
+            fieldErrors.push(`${field}: ${messages.join(', ')}`);
+          } else if (typeof messages === 'string') {
+            fieldErrors.push(`${field}: ${messages}`);
+          }
+        }
+        if (fieldErrors.length > 0) {
+          return fieldErrors.join('\n');
+        }
+      }
+    }
+
     // Map status codes to user-friendly messages
     switch (error.status) {
       case 400:
-        // Extract error details from API response if available
-        return error.data?.detail || 'Invalid request. Please check your input.';
+        return 'Invalid request. Please check your input.';
       case 401:
         return 'Authentication failed. Please log in again.';
       case 403:
@@ -38,7 +80,7 @@ export default function ErrorDisplay({ error }) {
         color: 'rgba(220, 38, 38, 1)'
       }}
     >
-      <p className="text-sm font-medium">{getErrorMessage(error)}</p>
+      <p className="text-sm font-medium whitespace-pre-line">{getErrorMessage(error)}</p>
     </div>
   );
 }

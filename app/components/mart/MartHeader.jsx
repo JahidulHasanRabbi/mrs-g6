@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { motion } from "framer-motion";
 import { MART_ASSETS } from "./martAssets";
 
@@ -20,7 +19,7 @@ export default function MartHeader({ balance = "5,450.00", onMenuClick, onProfil
         whileTap={{ scale: 0.95 }}
       >
         <div className="relative">
-          <Image
+          <img
             alt="Menu"
             src={"/assets/images/hamburger-icon.png"}
             width={32}
@@ -40,19 +39,17 @@ export default function MartHeader({ balance = "5,450.00", onMenuClick, onProfil
         animate={{ opacity: 1, scale: 1 }}
         transition={showAnimation ? { duration: 0.6, delay: 0.2, ease: "easeOut" } : { duration: 0 }}
       >
-        <Image
+        <img
           alt="Balance Frame"
           src={MART_ASSETS.coinBalance}
-          fill
-          className="object-contain"
+          className="w-full h-full object-contain"
         />
         <div className="absolute inset-0 flex items-center justify-center gap-2">
           <div className="relative w-[30px] h-[34px]">
-            <Image
+            <img
               alt="Coin"
               src={MART_ASSETS.coinIcon}
-              fill
-              className="object-contain"
+              className="w-full h-full object-contain"
             />
           </div>
           <p className="text-[#f9d063] text-[14px] font-bold font-['Times_New_Roman']">
@@ -68,11 +65,10 @@ export default function MartHeader({ balance = "5,450.00", onMenuClick, onProfil
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
       >
-        <Image
+        <img
           alt="Profile"
           src={MART_ASSETS.profileIcon}
-          fill
-          className="object-cover"
+          className="w-full h-full object-cover"
         />
       </motion.button>
     </motion.div>

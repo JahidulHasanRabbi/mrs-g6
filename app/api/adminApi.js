@@ -169,3 +169,16 @@ export async function archiveRedemptionItem(uuid) {
     method: 'PATCH'
   }, true, 'admin');
 }
+
+export async function getCheckinSettings() {
+  return await apiRequest(ENDPOINTS.ADMIN.CHECKIN_SETTINGS, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function updateCheckinSettings(daySettings) {
+  return await apiRequest(ENDPOINTS.ADMIN.CHECKIN_SETTINGS, {
+    method: 'POST',
+    body: { day_settings: daySettings }
+  }, true, 'admin');
+}

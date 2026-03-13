@@ -115,3 +115,10 @@ export async function getVipTiers() {
     method: 'GET'
   }, true, 'member');
 }
+
+// GET /settings/checkin-settings/ (using member token)
+export async function getCheckinSettings() {
+  return await apiRequest(ENDPOINTS.ADMIN.CHECKIN_SETTINGS, {
+    method: 'GET'
+  }, true, 'member');
+}

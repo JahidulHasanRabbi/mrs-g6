@@ -27,24 +27,26 @@ const RewardItem = memo(function RewardItem({ icon, title, index }) {
     whileHover={{ scale: 1.02, y: -2 }}
   >
     <div className="absolute inset-0 flex items-center gap-6 px-4">
-      <motion.div 
-        className="relative w-[50px] h-[51px] shrink-0"
-        initial={{ opacity: 0, scale: 0 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ 
-          duration: 0.4, 
-          delay: index * 0.2 + 0.1,
-          ease: "easeOut"
-        }}
-      >
-        <Image
-          alt={title}
-          src={icon}
-          fill
-          className="object-cover"
-        />
-      </motion.div>
-      <p className="text-white text-sm sm:text-xl font-bold text-start mx-auto">
+      {icon && (
+        <motion.div 
+          className="relative w-[50px] h-[51px] shrink-0"
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ 
+            duration: 0.4, 
+            delay: index * 0.2 + 0.1,
+            ease: "easeOut"
+          }}
+        >
+          <Image
+            alt={title}
+            src={icon}
+            fill
+            className="object-cover"
+          />
+        </motion.div>
+      )}
+      <p className={`text-white text-sm sm:text-xl font-bold text-start ${icon ? 'mx-auto' : 'ml-4'}`}>
         {title}
       </p>
     </div>
@@ -125,7 +127,7 @@ const RewardsList = memo(function RewardsList() {
 
   // Separate items by type
   const itemRewards = items.filter(item => 
-    (item.item_type === 'ITEM' || item.item_type === 2 || item.item_type === 3) && item.image
+    item.item_type === 'ITEM' || item.item_type === 2 || item.item_type === 3
   );
   const creditRewards = items.filter(item => 
     item.item_type === 'FREE CREDIT' || item.item_type === 1

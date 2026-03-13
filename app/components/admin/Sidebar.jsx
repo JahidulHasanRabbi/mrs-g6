@@ -59,6 +59,13 @@ const SECONDARY_MENU = [
     disabled: false,
   },
   {
+    id: "checkin-settings",
+    label: "Check-In Settings",
+    icon: "/assets/admin/home-icon.png", // Using home icon as placeholder
+    href: "/admin/checkin-settings",
+    disabled: false,
+  },
+  {
     id: "reports",
     label: "Reports",
     icon: "/assets/admin/reports-icon.png",

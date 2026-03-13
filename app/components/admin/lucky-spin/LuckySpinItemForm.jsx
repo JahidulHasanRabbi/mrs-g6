@@ -311,11 +311,10 @@ export default function LuckySpinItemForm({
               <div className="border-[#d3d3d3] border-[0.5px] border-dashed h-[199px] rounded-[8px] flex items-center justify-center relative overflow-hidden">
                 {imagePreview ? (
                   <div className="relative h-full w-full">
-                    <Image
+                    <img
                       src={imagePreview}
                       alt="Item preview"
-                      fill
-                      className="object-contain"
+                      className="w-full h-full object-contain"
                     />
                   </div>
                 ) : (

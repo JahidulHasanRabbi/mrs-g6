@@ -34,6 +34,7 @@ export const ENDPOINTS = {
     MEMBERS: '/member/members/',
     REDEMPTION_ITEMS: '/redemption/redemption-items/',
     REDEMPTION_ITEM: (uuid) => `/redemption/redemption-items/${uuid}/`,
-    ARCHIVE_REDEMPTION_ITEM: (uuid) => `/redemption/redemption-items/${uuid}/archive/`
+    ARCHIVE_REDEMPTION_ITEM: (uuid) => `/redemption/redemption-items/${uuid}/archive/`,
+    CHECKIN_SETTINGS: '/settings/checkin-settings/'
   }
 };

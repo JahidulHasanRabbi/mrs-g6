@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { motion } from "framer-motion";
 import { MART_ASSETS } from "./martAssets";
 
@@ -18,11 +17,10 @@ export default function MartItem({ image, title, originalPrice, discountPrice, c
       }}
     >
       {/* Card Background */}
-      <Image
+      <img
         alt="Item Card"
         src={MART_ASSETS.itemCard}
-        fill
-        className="object-cover"
+        className="w-full h-full object-cover"
       />
 
       {/* Product Image */}

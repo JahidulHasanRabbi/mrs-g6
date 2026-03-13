@@ -84,7 +84,7 @@ const ORDER = [0, 1, 2, 4, 7, 6, 5, 3];
 
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
-export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinning, onSpinComplete }) {
+export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinning, onSpinComplete, spinTriggerRef }) {
   const [activeGridIndex, setActiveGridIndex] = useState(null);
   const [isSpinning, setIsSpinning] = useState(false);
   const { isLowEnd, isMidEnd } = usePerformanceOptimization();
@@ -139,7 +139,7 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
     [centerRotate, onSpinComplete]
   );
 
-  const startSpin = useCallback(() => {
+  const startSpinAnimation = useCallback(() => {
     if (spinning) return;
 
     const targetOrderPos = Math.floor(Math.random() * ORDER.length);
@@ -149,10 +149,6 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
     stepCountRef.current = 0;
     orderPosRef.current = 0;
     setIsSpinning(true);
-
-    if (onSpinClick) {
-      onSpinClick();
-    }
 
     const now = performance.now();
     startRef.current = now;
@@ -183,7 +179,29 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
     };
 
     rafRef.current = requestAnimationFrame(tick);
-  }, [spinning, onSpinClick, stopSpin, centerRotate]);
+  }, [spinning, stopSpin, centerRotate, isLowEnd, isMidEnd]);
+
+  const startSpin = useCallback(async () => {
+    if (spinning) return;
+
+    // Call onSpinClick and wait for API validation
+    if (onSpinClick) {
+      const shouldSpin = await onSpinClick();
+      // If API call failed, don't start the animation
+      if (shouldSpin === false) {
+        return;
+      }
+    }
+
+    startSpinAnimation();
+  }, [spinning, onSpinClick, startSpinAnimation]);
+
+  // Expose the animation trigger to parent via ref
+  useEffect(() => {
+    if (spinTriggerRef) {
+      spinTriggerRef.current = startSpinAnimation;
+    }
+  }, [spinTriggerRef, startSpinAnimation]);
 
   useEffect(() => {
     return () => {

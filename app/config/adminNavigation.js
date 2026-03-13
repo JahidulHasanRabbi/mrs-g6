@@ -33,6 +33,12 @@ export const ADMIN_NAVIGATION = [
     id: 'members'
   },
   {
+    label: 'Check-In Settings',
+    path: '/admin/checkin-settings',
+    enabled: true,
+    id: 'checkin-settings'
+  },
+  {
     label: 'Reports',
     path: '/admin/reports',
     enabled: false, // Not yet implemented
