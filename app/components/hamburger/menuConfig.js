@@ -31,7 +31,7 @@ export const MENU_CONFIG = {
   },
   bottomItems: [
     { icon: "/assets/images/live-chat-icon.png", label: "Live Chat", link: "/live-chat" },
-    { icon: "/assets/images/terms-icon.png", label: "Term & Condition", link: "/terms-and-conditions", disabled: true },
+    { icon: "/assets/images/terms-icon.png", label: "Term & Condition", link: "/terms-and-conditions" },
     { icon: "/assets/images/logout-icon.png", label: "Log out", link: "/logout" },
   ],
 };
