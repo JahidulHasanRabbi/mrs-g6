@@ -8,38 +8,38 @@ import { SPIN_ASSETS } from "./spinAssets";
 const WinningRow = memo(function WinningRow({ date, reward, amount, index }) {
   return (
   <motion.div 
-    className="flex items-center justify-between px-2 sm:px-6 py-3"
+    className="flex items-center justify-between px-4 sm:px-6 py-2.5 min-h-[45px]"
     initial={{ opacity: 0, x: -100 }}
     animate={{ opacity: 1, x: 0 }}
     transition={{ 
       duration: 0.5, 
-      delay: index * 0.15,
+      delay: Math.min(index * 0.1, 0.5),
       ease: "easeOut"
     }}
     whileHover={{ scale: 1.02, x: 5 }}
   >
-    <span className="text-[#3d1a02] text-xs sm:text-sm font-bold w-[80px]">{date}</span>
-    <span className="text-[#3d1a02] text-xs sm:text-sm font-bold w-[120px] text-center">{reward}</span>
+    <span className="text-[#3d1a02] text-xs sm:text-sm font-bold w-[85px] flex-shrink-0">{date}</span>
+    <span className="text-[#3d1a02] text-xs sm:text-sm font-bold flex-1 text-center px-2 truncate">{reward}</span>
     <motion.div 
-      className="flex items-center gap-2"
+      className="flex items-center gap-1.5 flex-shrink-0"
       initial={{ opacity: 0, scale: 0 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ 
         duration: 0.4, 
-        delay: index * 0.15 + 0.2,
+        delay: Math.min(index * 0.1 + 0.2, 0.7),
         ease: "easeOut"
       }}
     >
-      <div className="relative w-[20px] h-[20px]">
+      <div className="relative w-[18px] h-[18px] flex-shrink-0">
         <Image
           alt="Coin"
           src={SPIN_ASSETS.coinIcon}
           fill
           className="object-contain"
-          sizes="20px"
+          sizes="18px"
         />
       </div>
-      <span className="text-[#3d1a02] text-[16px] font-bold">{amount}</span>
+      <span className="text-[#3d1a02] text-sm sm:text-base font-bold whitespace-nowrap">{amount}</span>
     </motion.div>
   </motion.div>
   );
@@ -62,7 +62,7 @@ const UserWinningList = memo(function UserWinningList({ winnings = [] }) {
           className="object-fill"
         />
         
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-start justify-center pt-16">
           <p className="text-[#3d1a02] text-lg font-bold">No winnings yet. Start spinning!</p>
         </div>
       </motion.div>
@@ -84,10 +84,16 @@ const UserWinningList = memo(function UserWinningList({ winnings = [] }) {
         className="object-fill"
       />
       
-      <div className="absolute inset-0 flex gap-[2px] py-40 flex-col justify-center px-8">
-        {winnings.map((winning, index) => (
-          <WinningRow key={index} index={index} {...winning} />
-        ))}
+      <div className="absolute inset-0 flex items-start justify-center px-6 sm:px-8 pt-16 pb-8">
+        <div className="w-full h-full flex items-start justify-center">
+          <div className="w-full max-h-full overflow-y-auto scrollbar-hide pr-2">
+            <div className="flex flex-col gap-0.5">
+              {winnings.map((winning, index) => (
+                <WinningRow key={index} index={index} {...winning} />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </motion.div>
   );
