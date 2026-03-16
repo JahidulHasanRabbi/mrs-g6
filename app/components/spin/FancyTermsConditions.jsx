@@ -82,7 +82,7 @@ const CollapsibleTermItem = ({ number, title, description, index }) => {
             >
               <div className="pl-[52px] pr-2">
                 <p 
-                  className="text-white/90 text-[15px] font-medium leading-relaxed" 
+                  className="text-white/90 text-[15px] font-medium leading-relaxed whitespace-pre-line" 
                   style={{ 
                     textShadow: "0px 1px 3px rgba(0,0,0,0.8)"
                   }}
@@ -101,29 +101,37 @@ const CollapsibleTermItem = ({ number, title, description, index }) => {
 export default function FancyTermsConditions() {
   const terms = [
     {
-      title: "Deposit Requirement",
-      description: "Members' monthly accumulated deposit must reach RM500 or above to be entitled to this promotion."
+      title: "Introduction",
+      description: "Welcome to kinggroup44.com (the \"Site\"). By accessing, registering, or using any services provided on this Site, you agree to be bound by these Terms & Conditions. The Site operates as a VIP rewards and promotional platform for the following affiliated brands: KGAME99, LV918, EP369, ACEBET77, N1GANG and UBET CLUB."
     },
     {
-      title: "Birthday Bonus",
-      description: "VIP birthday bonus is calculated based on your registration date."
+      title: "Eligibility and Account Security",
+      description: "You must be at least 18 years of age to participate in any promotional activities, register an account, or use this Site.\nMembers are responsible for maintaining the confidentiality of their account credentials.\nOnly one account per individual, IP address, or household is permitted."
     },
     {
-      title: "Rollover Policy",
-      description: "All bonuses are subject to a rollover requirement of x3."
+      title: "VIP Membership and Points System",
+      description: "Accumulation: VIP members earn points through designated activities on our affiliated partner sites.\nNo Expiration: Points accumulated in your account do not expire.\nNon-Transferable: Points, rewards, and VIP statuses are strictly non-transferable and cannot be exchanged for cash.\nDiscrepancies: KingGroup44 reserves the right to adjust point balances in the event of system errors, fraudulent activity, or chargebacks from affiliated platforms."
     },
     {
-      title: "Withdrawal Limits",
-      description: "All bonuses are subject to rules regarding Minimum/Maximum Withdrawal of the bonus amount."
+      title: "The Mart (Points Exchange)",
+      description: "Redemption: Points can be redeemed for goods, vouchers, or digital items available in the KingGroup44 Mart.\nAvailability: All items in the Mart are subject to availability. We reserve the right to substitute items of equal or greater value if a requested item is out of stock.\nDelivery & Shipping: Physical items will be shipped to the address provided in your profile. KingGroup44 is not responsible for items lost or delayed due to incorrect address details.\nFinal Sale: All point redemptions are final. Exchanged goods cannot be returned or refunded for points."
     },
     {
-      title: "Usage Restrictions",
-      description: "Do not mix with other credits or bonuses; otherwise, all credits will be forfeited."
+      title: "Lucky Draw Rules",
+      description: "Entry: Participation in Lucky Draws requires a specified number of points, VIP tier status, or specific promotional tickets.\nPrizes: Lucky Draw prizes are awarded as-is. KingGroup44 reserves the right to modify or replace prizes without prior notice.\nVerification: Winners may be required to verify their identity before prizes are disbursed."
     },
     {
-      title: "Eligible Games",
-      description: "Bonuses are allowed to be used on event games only (MEGAH52 Slot Game & ACEWIN2 Slot Game)."
+      title: "Affiliated Casino Brands",
+      description: "The Site serves as a promotional hub for KGAME99, LV918, EP369, N1GANG, ACEBET77, and UBET CLUB.\nAny gameplay, wagers, deposits, or withdrawals made on those respective platforms are governed by their individual Terms & Conditions. KingGroup44 is not liable for disputes arising directly on the affiliated casino platforms."
     },
+    {
+      title: "Fraud and Account Termination",
+      description: "KingGroup44 maintains a strict zero-tolerance policy against bonus abuse, point manipulation, multiple account creation, or any form of fraud.\nWe reserve the right to instantly suspend or terminate any account and void all accumulated points and rewards if fraudulent activity is suspected."
+    },
+    {
+      title: "Modifications to Terms",
+      description: "KingGroup44 reserves the right to update, modify, or completely replace these Terms & Conditions at any time. Continued use of the Site following any changes constitutes acceptance of the new terms."
+    }
   ];
 
   return (

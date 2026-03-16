@@ -10,13 +10,13 @@ export function MemberRouteGuard({ children }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const authGuardEnabled = process.env.NEXT_PUBLIC_AUTHGUARD === 'true';
+
     if (pathname === '/auth') {
       setIsAuthenticated(true);
       setIsLoading(false);
       return;
     }
-
-    const authGuardEnabled = process.env.AUTHGUARD === 'true';
 
     if (!authGuardEnabled) {
       setIsAuthenticated(true);
@@ -27,7 +27,7 @@ export function MemberRouteGuard({ children }) {
     const token = tokenStorage.getMemberAccessToken();
     
     if (!token) {
-      const redirectUrl = process.env.REDIRECTURL || '/';
+      const redirectUrl = process.env.NEXT_PUBLIC_REDIRECTURL || '/';
       window.location.href = redirectUrl;
       return;
     }
@@ -35,12 +35,6 @@ export function MemberRouteGuard({ children }) {
     setIsAuthenticated(true);
     setIsLoading(false);
   }, [pathname]);
-
-  const authGuardEnabled = process.env.AUTHGUARD === 'true';
-  
-  if (!authGuardEnabled || pathname === '/auth') {
-    return children;
-  }
 
   if (isLoading) {
     return (

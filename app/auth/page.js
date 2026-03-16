@@ -33,9 +33,9 @@ function AuthContent() {
         setStatus('error');
         setError(err.message || 'Authentication failed');
 
-        const authGuard = process.env.AUTHGUARD === 'true';
+        const authGuard = process.env.NEXT_PUBLIC_AUTHGUARD === 'true';
         const redirectUrl = authGuard 
-          ? process.env.REDIRECTURL 
+          ? process.env.NEXT_PUBLIC_REDIRECTURL 
           : '/';
 
         setTimeout(() => {

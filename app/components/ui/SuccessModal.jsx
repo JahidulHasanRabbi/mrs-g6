@@ -61,11 +61,11 @@ export default function SuccessModal({
 
         {/* Content */}
         <div 
-          className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex flex-col gap-[50px] items-start w-[228px] h-[144px]"
+          className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex flex-col gap-6 items-center justify-center w-[228px] h-[144px]"
         >
           {/* Title */}
           <motion.p 
-            className="font-bold font-['Times_New_Roman'] leading-[1.1] not-relative shrink-0 w-[228px] whitespace-pre-wrap"
+            className="font-bold font-['Times_New_Roman'] leading-[1.1] not-relative shrink-0 w-full whitespace-pre-wrap text-center"
             style={{ 
               color: backgroundColor,
               fontSize: "16px"
@@ -78,8 +78,8 @@ export default function SuccessModal({
           </motion.p>
 
           {/* Message */}
-          <motion.p 
-            className="font-bold font-['Times_New_Roman'] leading-normal not-italic relative shrink-0 text-center w-full whitespace-pre-wrap"
+          <motion.div 
+            className="font-bold font-['Times_New_Roman'] leading-normal not-italic relative w-full whitespace-pre-wrap text-center overflow-y-auto custom-scrollbar max-h-[80px] p-1"
             style={{ 
               color: backgroundColor,
               fontSize: "16px"
@@ -89,7 +89,7 @@ export default function SuccessModal({
             transition={{ duration: 0.5, delay: 0.5 }}
           >
             {message}
-          </motion.p>
+          </motion.div>
         </div>
       </motion.div>
     </motion.div>

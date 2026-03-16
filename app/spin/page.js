@@ -66,8 +66,14 @@ export default function SpinPage() {
             amount: r.credit_amount ? `RM${r.credit_amount}` : '-'
           }));
           setUserWinnings(prev => [...newWinnings, ...prev]);
-          
-          const rewardsList = results.map(r => r.reward_name).join(", ");
+          const rewardCounts = {};
+          results.forEach(r => {
+            rewardCounts[r.reward_name] = (rewardCounts[r.reward_name] || 0) + 1;
+          });
+          const rewardsList = Object.entries(rewardCounts)
+            .map(([name, count]) => `${count > 1 ? count + 'x ' : ''}${name}`)
+            .join(", ");
+            
           setModalTitle("🎉 Congratulations!");
           setModalMessage(`You won: ${rewardsList}`);
           setModalBgColor("rgba(96, 128, 60, 1)");
@@ -123,9 +129,13 @@ export default function SpinPage() {
       // Extract error message from error.data.details or error.data.detail
       const errorDetails = error.data?.details || error.data?.detail || error.message || "";
       
-      // Check if error is about insufficient points
-      if (errorDetails.toLowerCase().includes("enough points") || 
-          errorDetails.toLowerCase().includes("insufficient points")) {
+      // Check if error is about insufficient points, tokens, or balance
+      const lowerError = errorDetails.toLowerCase();
+      if (lowerError.includes("enough") || 
+          lowerError.includes("insufficient") ||
+          lowerError.includes("balance") ||
+          lowerError.includes("credit") ||
+          lowerError.includes("token")) {
         setModalTitle("❌ Insufficient Points");
         setModalMessage("You don't have enough points to spin. Please earn more points first!");
       } else {
@@ -146,16 +156,18 @@ export default function SpinPage() {
 
   const handleButtonClick = useCallback(async (buttonData) => {
     if (buttonData.spins === "10 Spins") {
+      const trigger = gridSpinTriggerRef.current;
       const shouldSpin = await handleSpinAction(tenSpin, "ten spins");
       // Trigger the grid animation if API succeeds
-      if (shouldSpin && gridSpinTriggerRef.current) {
-        gridSpinTriggerRef.current();
+      if (shouldSpin && trigger) {
+        trigger();
       }
     } else if (buttonData.spins === "50 Spins") {
+      const trigger = gridSpinTriggerRef.current;
       const shouldSpin = await handleSpinAction(fiftySpin, "fifty spins");
       // Trigger the grid animation if API succeeds
-      if (shouldSpin && gridSpinTriggerRef.current) {
-        gridSpinTriggerRef.current();
+      if (shouldSpin && trigger) {
+        trigger();
       }
     } else if (buttonData.spins === "Winning Record") {
       setActiveWinningView("record");

@@ -56,7 +56,7 @@ export default function MartItem({ image, title, originalPrice, discountPrice, c
 
       {/* Pricing Section */}
       <motion.div
-        className="absolute left-1/2 -translate-x-1/2 top-[169px] flex flex-col items-center gap-1"
+        className="absolute left-1/2 -translate-x-1/2 top-[185px] flex flex-col items-center gap-1"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{
@@ -65,7 +65,7 @@ export default function MartItem({ image, title, originalPrice, discountPrice, c
         }}
       >
         {/* Original Price with Strikethrough */}
-        {originalPrice && (
+        {originalPrice && originalPrice != (discountPrice || coins) && (
           <p className="text-[#e94141] text-[11px] font-bold font-['Times_New_Roman'] line-through decoration-2 whitespace-nowrap">
             {typeof originalPrice === 'number' ? originalPrice.toLocaleString() : originalPrice} Pagcor Coins
           </p>

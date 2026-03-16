@@ -1,4 +1,4 @@
-export const BASE_URL = process.env.BASEURL || 'https://staging-api.kinggroup44.com';
+export const BASE_URL = process.env.NEXT_PUBLIC_BASEURL || 'https://staging-api.kinggroup44.com';
 
 export const ENDPOINTS = {
   MEMBER: {

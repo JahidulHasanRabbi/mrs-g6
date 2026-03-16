@@ -1,18 +1,21 @@
 # Environment Variables
 
 ```env
-BASEURL=https://staging-api.kinggroup44.com
-AUTHGUARD=false
-REDIRECTURL=https://example.com/login
-FACEBOOK_URL=https://facebook.com/
-YOUTUBE_URL=https://youtube.com/
-INSTAGRAM_URL=https://instagram.com/
-TWITTER_URL=https://twitter.com/
+NEXT_PUBLIC_BASEURL=https://staging-api.kinggroup44.com
+NEXT_PUBLIC_AUTHGUARD=false
+NEXT_PUBLIC_REDIRECTURL=https://example.com/login
+
+# Social Media URLs
+NEXT_PUBLIC_TELEGRAM_URL=https://t.me/addlist/HlimM6bYfqo1MWQ1
+NEXT_PUBLIC_FACEBOOK_URL=https://facebook.com/
+NEXT_PUBLIC_YOUTUBE_URL=https://youtube.com/
+NEXT_PUBLIC_INSTAGRAM_URL=https://instagram.com/
+NEXT_PUBLIC_TWITTER_URL=https://twitter.com/
 ```
 In production 
 Turn on AUTHGUARD to True
 
-REDIRECTURL the url site will be redirect 
+REDIRECTURL the url site will be redirect
 
 # Test
 Member login 
