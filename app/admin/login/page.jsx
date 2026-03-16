@@ -8,8 +8,8 @@ import ErrorDisplay from '../../components/ui/ErrorDisplay';
 export default function AdminLoginPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    username: 'Admin1',
-    password: 'Qwerabcd!'
+    username: '',
+    password: ''
   });
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
