@@ -185,6 +185,14 @@ export default function CheckInBoard() {
       return;
     }
 
+    // Enforce serial check-in: only allow checking in the next day in sequence
+    const nextDayToCheckIn = checkedDays.length + 1;
+    if (day.day !== nextDayToCheckIn) {
+      setSuccessMessage(`Please check in for Day ${nextDayToCheckIn} first!`);
+      setShowSuccessModal(true);
+      return;
+    }
+
     try {
       const memberUuid = tokenStorage.getMemberUuid();
       if (!memberUuid) {
