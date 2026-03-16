@@ -236,6 +236,10 @@ export default function CheckInBoard() {
       if (errorMessage.toLowerCase().includes("already checked in")) {
         setSuccessMessage("Already checked in today! Try again tomorrow.");
         setShowSuccessModal(true);
+      } else if (errorMessage.toLowerCase().includes("module") || errorMessage.toLowerCase().includes("checkinnotsetuperror")) {
+        setError("Check-in is currently unavailable. Please try again later.");
+        setSuccessMessage("Check-in is currently unavailable. Please try again later.");
+        setShowSuccessModal(true);
       } else {
         setError(errorMessage || "Failed to check in. Please try again.");
         setSuccessMessage(errorMessage || "Failed to check in. Please try again.");
