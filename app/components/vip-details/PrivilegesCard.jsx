@@ -23,6 +23,9 @@ export default function PrivilegesCard({ level = "Bronze", tierData = null, tier
 
     if (foundColor) {
       currentBg = VIP_DETAILS_ASSETS.privilegesBg[foundColor];
+    } else if (lowerName.includes("master")) {
+      // Explicitly show silver background for Master and Grand Master
+      currentBg = VIP_DETAILS_ASSETS.privilegesBg.silver;
     } else {
       // Rotate based on index if no specific match
       const bgKey = bgOrder[tierIndex % bgOrder.length];
