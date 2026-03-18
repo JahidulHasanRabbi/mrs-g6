@@ -73,14 +73,18 @@ export function mapLuckySpinItems(apiResponse) {
 export function mapRedemptionItems(apiResponse) {
   return apiResponse.map(item => {
     const originalPrice = item.tokens_needed;
-    const promotion = parseFloat(item.promotion);
-    const discountPrice = Math.round(originalPrice * (1 - promotion));
+    // Promotion is the actual discount price, not a percentage
+    const promotionPrice = parseFloat(item.promotion) || 0;
+    
+    // If promotion exists (> 0), use it as discount price
+    // Otherwise, use the original price
+    const discountPrice = promotionPrice > 0 ? promotionPrice : originalPrice;
     
     return {
       uuid: item.uuid,
       title: item.name,
       coins: item.tokens_needed,
-      originalPrice: originalPrice,
+      originalPrice: promotionPrice > 0 ? originalPrice : null, // Show original only if there's promotion
       discountPrice: discountPrice,
       image: item.image,
       quantity_available: item.quantity_available,
@@ -88,7 +92,7 @@ export function mapRedemptionItems(apiResponse) {
       end_date: item.end_date,
       prize_type: item.prize_type,
       credit_amount: item.credit_amount,
-      promotion: promotion
+      promotion: promotionPrice
     };
   });
 }

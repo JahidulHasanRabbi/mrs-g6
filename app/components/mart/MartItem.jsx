@@ -56,7 +56,7 @@ export default function MartItem({ image, title, originalPrice, discountPrice, c
 
       {/* Pricing Section */}
       <motion.div
-        className="absolute left-1/2 -translate-x-1/2 top-[185px] flex flex-col items-center gap-1"
+        className="absolute left-1/2 -translate-x-1/2 top-[175px] flex flex-col items-center gap-0 max-w-[190px] px-2"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{
@@ -66,13 +66,13 @@ export default function MartItem({ image, title, originalPrice, discountPrice, c
       >
         {/* Original Price with Strikethrough */}
         {originalPrice && originalPrice != (discountPrice || coins) && (
-          <p className="text-[#e94141] text-[11px] font-bold font-['Times_New_Roman'] line-through decoration-2 whitespace-nowrap">
+          <p className="text-[#e94141] text-[10px] font-bold font-['Times_New_Roman'] line-through decoration-1 truncate max-w-full leading-[12px]">
             {typeof originalPrice === 'number' ? originalPrice.toLocaleString() : originalPrice} Pagcor Coins
           </p>
         )}
         
         {/* Discount Price */}
-        <p className="text-[#e9af41] -mt-2 text-[13px] font-bold font-['Times_New_Roman'] whitespace-nowrap">
+        <p className="text-[#e9af41] text-[12px] font-bold font-['Times_New_Roman'] truncate max-w-full leading-[14px]">
           {typeof (discountPrice || coins) === 'number' ? (discountPrice || coins).toLocaleString() : (discountPrice || coins)} Pagcor Coins
         </p>
       </motion.div>
