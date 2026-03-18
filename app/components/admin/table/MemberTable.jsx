@@ -63,7 +63,7 @@ export default function MemberTable({ members = [] }) {
             <p className="text-sm text-gray-300">{row.vipTier}</p>
             <p className="text-sm text-gray-300">
               {members.find(m => m.id === row.id)?.last_check_in_date 
-                ? new Date(members.find(m => m.id === row.id).last_check_in_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                ? new Date(members.find(m => m.id === row.id).last_check_in_date).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
                 : 'Never'}
             </p>
           </div>

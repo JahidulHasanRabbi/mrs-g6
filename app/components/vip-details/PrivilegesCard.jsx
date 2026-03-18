@@ -13,23 +13,24 @@ const DEFAULT_BENEFITS = [
 
 export default function PrivilegesCard({ level = "Bronze", tierData = null }) {
   const currentBg = VIP_DETAILS_ASSETS.privilegesBg[level.toLowerCase()] || VIP_DETAILS_ASSETS.privilegesBg.bronze;
-  const titleText = `${level}'s privileges`;
-  const isLongTitle = titleText.length > 20;
-  const isVeryLongTitle = titleText.length > 24;
+  
+  // Smart title formatting - always put "privileges" on second line
+  const levelName = level.toUpperCase();
+  const firstLine = `${levelName}'s`;
+  const secondLine = "privileges";
+  
+  const titleText = `${levelName}'s privileges`;
+  const isLongTitle = levelName.length > 10; // Adjust based on tier name length
 
-  const titleTop = isVeryLongTitle
+  const titleTop = isLongTitle
     ? "top-[30px] max-[375px]:top-[26px]"
-    : isLongTitle
-      ? "top-[34px] max-[375px]:top-[29px]"
-      : "top-[39px] max-[375px]:top-[33px]";
-  const titleSize = isVeryLongTitle
-    ? "text-[24px] max-[375px]:text-[18px] leading-tight"
-    : isLongTitle
-      ? "text-[27px] max-[375px]:text-[21px] leading-tight"
-      : "text-3xl max-[375px]:text-2xl";
-  const benefitsTop = isLongTitle ? "top-[95px] max-[375px]:top-[84px]" : "top-[81px] max-[375px]:top-[69px]";
-  const descriptionTop = isLongTitle ? "top-[136px] max-[375px]:top-[118px]" : "top-[122px] max-[375px]:top-[104px]";
-  const gridTop = isLongTitle ? "top-[212px] max-[375px]:top-[184px]" : "top-[200px] max-[375px]:top-[170px]";
+    : "top-[34px] max-[375px]:top-[30px]";
+  const titleSize = isLongTitle
+    ? "text-[28px] max-[375px]:text-[22px] leading-[1.1]"
+    : "text-[32px] max-[375px]:text-[26px] leading-[1.1]";
+  const benefitsTop = "top-[100px] max-[375px]:top-[88px]";
+  const descriptionTop = "top-[141px] max-[375px]:top-[123px]";
+  const gridTop = "top-[217px] max-[375px]:top-[189px]";
 
   // Build benefits from API data if available
   const benefits = tierData ? [
@@ -62,14 +63,15 @@ export default function PrivilegesCard({ level = "Bronze", tierData = null }) {
       </div>
 
       {/* Title */}
-      <motion.p
+      <motion.div
         className={`absolute left-1/2 -translate-x-1/2 w-[262px] max-[375px]:w-[225px] text-start text-[#fcd064] font-bold font-['Times_New_Roman'] ${titleTop} ${titleSize}`}
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.8 }}
       >
-        {titleText}
-      </motion.p>
+        <div className="leading-[1.1]">{firstLine}</div>
+        <div className="leading-[1.1]">{secondLine}</div>
+      </motion.div>
 
       {/* Benefits Worth Section */}
       <div className={`absolute left-[38px] flex items-center gap-2 max-[375px]:left-[32px] max-[375px]:gap-1 ${benefitsTop}`}>

@@ -22,7 +22,10 @@ export function handleApiError(error, context = 'api-call') {
         ? process.env.NEXT_PUBLIC_REDIRECTURL 
         : '/';
       
-      window.location.href = redirectUrl;
+      // Only redirect if authGuard is enabled and we're not already at the redirect URL
+      if (authGuard && window.location.pathname !== redirectUrl) {
+        window.location.href = redirectUrl;
+      }
     }
     
     return {

@@ -47,10 +47,10 @@ const WinningRow = memo(function WinningRow({ date, phone, amount, index }) {
 
 const WinningList = memo(function WinningList() {
   const winnings = [
-    { date: "31-12-2025", phone: "60******869", amount: "RM31.1" },
-    { date: "31-12-2025", phone: "60******869", amount: "RM1.27" },
-    { date: "31-12-2025", phone: "60******69", amount: "RM3.19" },
-    { date: "31-12-2025", phone: "60******869", amount: "RM0.97" },
+    { date: "31/12/2025", phone: "60******869", amount: "RM31.1" },
+    { date: "31/12/2025", phone: "60******869", amount: "RM1.27" },
+    { date: "31/12/2025", phone: "60******69", amount: "RM3.19" },
+    { date: "31/12/2025", phone: "60******869", amount: "RM0.97" },
   ];
 
   return (
