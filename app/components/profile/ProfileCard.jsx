@@ -32,7 +32,7 @@ export default function ProfileCard({
     currentLevel: propCurrentLevel || "Gold"
   });
   const [fullName, setFullName] = useState(null);
-  const [freeTokenFlag, setFreeTokenFlag] = useState(true); // true = claimed, false = unclaimed
+  const [freeTokenFlag, setFreeTokenFlag] = useState(null); // null = loading, true = claimed, false = unclaimed
   const [isClaimingGift, setIsClaimingGift] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [claimError, setClaimError] = useState(null);
@@ -69,6 +69,7 @@ export default function ProfileCard({
       }
 
       const response = await getMemberInfo(memberUuid);
+      console.log("ProfileCard: Full member info response:", response);
       const transformedData = mapMemberInfoToProfileCard(response);
       setMemberData(transformedData);
     } catch (err) {
@@ -96,7 +97,14 @@ export default function ProfileCard({
       const profileResponse = await getProfile(memberUuid);
       console.log("ProfileCard: Profile response:", profileResponse);
       
-      setFreeTokenFlag(profileResponse.free_token_flag);
+      // Use free_token_flag or free_tokens_flag for welcome gift button visibility
+      // API returns free_tokens_flag (with 's'), but docs say free_token_flag (without 's')
+      const tokenFlag = profileResponse.free_tokens_flag ?? profileResponse.free_token_flag;
+      console.log("ProfileCard: free_tokens_flag from API:", tokenFlag);
+      if (tokenFlag !== undefined) {
+        setFreeTokenFlag(tokenFlag);
+        console.log("ProfileCard: Set freeTokenFlag to:", tokenFlag);
+      }
       
       // Set full name if available
       if (profileResponse.full_name) {
@@ -288,7 +296,7 @@ export default function ProfileCard({
       </motion.div>
 
       {/* Welcome Gift Section - Only show if unclaimed */}
-      {!freeTokenFlag && (
+      {freeTokenFlag === false && (
         <motion.div
           className="mt-4 w-[336px] min-[465px]:w-[370px] mx-auto"
           initial={{ opacity: 0, y: 20 }}
