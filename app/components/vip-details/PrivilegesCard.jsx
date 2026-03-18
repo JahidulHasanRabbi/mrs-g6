@@ -11,26 +11,27 @@ const DEFAULT_BENEFITS = [
 ];
 
 
-export default function PrivilegesCard({ level = "Bronze", tierData = null }) {
-  const currentBg = VIP_DETAILS_ASSETS.privilegesBg[level.toLowerCase()] || VIP_DETAILS_ASSETS.privilegesBg.bronze;
-  
-  // Smart title formatting - always put "privileges" on second line
-  const levelName = level.toUpperCase();
-  const firstLine = `${levelName}'s`;
-  const secondLine = "privileges";
-  
-  const titleText = `${levelName}'s privileges`;
-  const isLongTitle = levelName.length > 10; // Adjust based on tier name length
+export default function PrivilegesCard({ level = "Bronze", tierData = null, tierIndex = 0 }) {
+  const bgOrder = ['bronze', 'silver', 'gold', 'platinum', 'diamond'];
 
-  const titleTop = isLongTitle
-    ? "top-[30px] max-[375px]:top-[26px]"
-    : "top-[34px] max-[375px]:top-[30px]";
-  const titleSize = isLongTitle
-    ? "text-[28px] max-[375px]:text-[22px] leading-[1.1]"
-    : "text-[32px] max-[375px]:text-[26px] leading-[1.1]";
-  const benefitsTop = "top-[100px] max-[375px]:top-[88px]";
-  const descriptionTop = "top-[141px] max-[375px]:top-[123px]";
-  const gridTop = "top-[217px] max-[375px]:top-[189px]";
+  let currentBg = VIP_DETAILS_ASSETS.privilegesBg[level.toLowerCase()];
+
+  if (!currentBg) {
+    // Check if the level name contains any of the known colors
+    const lowerName = level.toLowerCase();
+    const foundColor = bgOrder.find(color => lowerName.includes(color));
+
+    if (foundColor) {
+      currentBg = VIP_DETAILS_ASSETS.privilegesBg[foundColor];
+    } else {
+      // Rotate based on index if no specific match
+      const bgKey = bgOrder[tierIndex % bgOrder.length];
+      currentBg = VIP_DETAILS_ASSETS.privilegesBg[bgKey];
+    }
+  }
+
+  const titleText = `${level}'s privileges`;
+  // Using flexbox-based positioning for responsive spacing
 
   // Build benefits from API data if available
   const benefits = tierData ? [
@@ -40,7 +41,7 @@ export default function PrivilegesCard({ level = "Bronze", tierData = null }) {
   ] : DEFAULT_BENEFITS;
 
   // Format deposit requirements for description
-  const description = tierData 
+  const description = tierData
     ? `Lifetime deposit required: ${tierData.lifetime_deposit_required}. Monthly deposit: ${tierData.monthly_deposit}. Enjoy exclusive benefits and rewards tailored to your VIP status.`
     : "Lorem ipsum dolor sit amet, consectetuer adipiecing alit. Sed do elusmod tempor incididunt ut labore et dolore magne alique aliquram erat volutpat.";
 
@@ -62,83 +63,87 @@ export default function PrivilegesCard({ level = "Bronze", tierData = null }) {
         />
       </div>
 
-      {/* Title */}
-      <motion.div
-        className={`absolute left-1/2 -translate-x-1/2 w-[262px] max-[375px]:w-[225px] text-start text-[#fcd064] font-bold font-['Times_New_Roman'] ${titleTop} ${titleSize}`}
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.8 }}
-      >
-        <div className="leading-[1.1]">{firstLine}</div>
-        <div className="leading-[1.1]">{secondLine}</div>
-      </motion.div>
-
-      {/* Benefits Worth Section */}
-      <div className={`absolute left-[38px] flex items-center gap-2 max-[375px]:left-[32px] max-[375px]:gap-1 ${benefitsTop}`}>
+      {/* Content Container (Flexbox for natural flow) */}
+      <div className="absolute inset-0 pt-[38px] px-[36px] pb-4 max-[375px]:pt-[31px] max-[375px]:px-[32px] flex flex-col items-start w-[344px] max-[375px]:w-[292px]">
+        {/* Title */}
         <motion.p
-          className="text-[#fcd064] text-[20px] font-bold font-['Times_New_Roman'] max-[375px]:text-[17px]"
+          className={`w-full text-center text-[#fcd064] font-bold font-['Times_New_Roman'] leading-tight mb-3 max-[375px]:mb-2.5 ${titleText.length > 22
+            ? "text-[23px] max-[375px]:text-[19px]"
+            : "text-[28px] max-[375px]:text-[24px]"
+            }`}
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.8 }}
+        >
+          {titleText}
+        </motion.p>
+
+        {/* Benefits Worth Section */}
+        <div className="flex items-center gap-2 max-[375px]:gap-1 mb-2 max-[375px]:mb-1.5 pl-1 max-[375px]:pl-0">
+          <motion.p
+            className="text-[#fcd064] text-[20px] font-bold font-['Times_New_Roman'] max-[375px]:text-[17px]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.9 }}
+          >
+            {benefits.length} benefits worth
+          </motion.p>
+          <motion.div
+            className="relative h-[30px] w-[32px] max-[375px]:h-[25px] max-[375px]:w-[27px]"
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 1, type: "spring" }}
+          >
+            <Image
+              alt="Star"
+              src={VIP_DETAILS_ASSETS.starIcon}
+              fill
+              className="object-contain"
+            />
+          </motion.div>
+        </div>
+
+        {/* Description */}
+        <motion.div
+          className="text-[#fcd064] text-[14px] font-bold font-['Times_New_Roman'] leading-tight max-w-[265px] max-[375px]:text-[12px] max-[375px]:max-w-[225px] mb-5 max-[375px]:mb-4 pl-1 max-[375px]:pl-0"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.9 }}
+          transition={{ duration: 0.5, delay: 1.1 }}
         >
-          {benefits.length} benefits worth
-        </motion.p>
-        <motion.div
-          className="relative h-[30px] w-[32px] max-[375px]:h-[25px] max-[375px]:w-[27px]"
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 1, type: "spring" }}
-        >
-          <Image
-            alt="Star"
-            src={VIP_DETAILS_ASSETS.starIcon}
-            fill
-            className="object-contain"
-          />
+          <p>{description}</p>
         </motion.div>
-      </div>
 
-      {/* Description */}
-      <motion.div
-        className={`absolute left-[38px] text-[#fcd064] text-[14px] font-bold font-['Times_New_Roman'] leading-[1.2] max-w-[270px] max-[375px]:left-[32px] max-[375px]:text-[12px] max-[375px]:max-w-[230px] ${descriptionTop}`}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 1.1 }}
-      >
-        <p>{description}</p>
-      </motion.div>
+        {/* Benefits Grid */}
+        <div className="flex flex-wrap w-[275px] max-[375px]:w-[230px] pl-[2px] max-[375px]:pl-0">
+          {benefits.map((benefit, index) => {
+            const isLastOddItem = benefits.length % 2 === 1 && index === benefits.length - 1;
+            const isMonthlyLoyalty = benefit.text.includes("Monthly Loyalty");
+            const benefitText = isMonthlyLoyalty ? benefit.text.replace("\n", " ") : benefit.text;
 
-      {/* Benefits Grid */}
-      <div className={`absolute left-[40px] w-[275px] max-[375px]:left-[34px] max-[375px]:w-[235px] ${gridTop}`}>
-        {benefits.map((benefit, index) => {
-          const isLastOddItem = benefits.length % 2 === 1 && index === benefits.length - 1;
-          const isMonthlyLoyalty = benefit.text.includes("Monthly Loyalty");
-          const benefitText = isMonthlyLoyalty ? benefit.text.replace("\n", " ") : benefit.text;
-
-          return (
-            <motion.div
-              key={index}
-              className={`inline-flex w-1/2 items-center pb-6 ${
-                isLastOddItem ? "ml-[11%] max-[375px]:ml-[22%]" : ""
-              }`}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4, delay: 1.2 + index * 0.1 }}
-            >
-              <div className="relative w-[35px] h-[34px] shrink-0 max-[375px]:w-[30px] max-[375px]:h-[28px] ">
-                <Image
-                  alt="Check"
-                  src={benefit.icon}
-                  fill
-                  className="object-contain "
-                />
-              </div>
-              <p className={`text-[#fcd064] text-[14px] font-bold font-['Times_New_Roman'] leading-tight pl-1 max-[375px]:text-[12px] ${isMonthlyLoyalty ? "whitespace-nowrap" : "whitespace-pre-line"}`}>
-                {benefitText}
-              </p>
-            </motion.div>
-          );
-        })}
+            return (
+              <motion.div
+                key={index}
+                className={`inline-flex w-1/2 items-start pb-5 max-[375px]:pb-4 ${isLastOddItem ? "ml-[25%]" : ""
+                  }`}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.4, delay: 1.2 + index * 0.1 }}
+              >
+                <div className={`relative w-[35px] h-[34px] shrink-0 max-[375px]:w-[30px] max-[375px]:h-[28px] -mt-1 ${isMonthlyLoyalty ? "ml-[-30px]" : ""}`}>
+                  <Image
+                    alt="Check"
+                    src={benefit.icon}
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+                <p className={`text-[#fcd064] text-[14px] font-bold font-['Times_New_Roman'] leading-tight pl-1.5 max-[375px]:text-[12px] max-[375px]:pl-1 w-[220px] ${isMonthlyLoyalty ? "whitespace-nowrap " : "whitespace-pre-line"}`}>
+                  {benefitText}
+                </p>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     </motion.div>
   );

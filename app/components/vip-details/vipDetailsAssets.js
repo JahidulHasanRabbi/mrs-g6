@@ -6,7 +6,7 @@ export const VIP_DETAILS_ASSETS = {
     silver: "/assets/vip-details/silver-privileges-bgv2.png",
     gold: "/assets/vip-details/gold-privileges-bg.png",
     platinum: "/assets/vip-details/platinum-privileges-bg.png",
-    diamond: "/assets/vip-details/platinum-privileges-bg.png", // Fallback or updated
+    diamond: "/assets/vip-details/diamond-privileges-bg.png",
   },
   starIcon: "/assets/vip-details/star-icon.png",
   checkIcon: "/assets/vip-details/check-icon.png",

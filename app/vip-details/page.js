@@ -60,7 +60,8 @@ export default function VipDetailsPage() {
       });
   };
 
-  const selectedTierData = vipTiers.find(tier => tier.name === selectedLevel);
+  const selectedTierIndex = vipTiers.findIndex(tier => tier.name === selectedLevel);
+  const selectedTierData = vipTiers[Math.max(0, selectedTierIndex)];
 
   return (
     <>
@@ -95,6 +96,7 @@ export default function VipDetailsPage() {
               <PrivilegesCard 
                 level={selectedLevel}
                 tierData={selectedTierData}
+                tierIndex={Math.max(0, selectedTierIndex)}
               />
             </div>
           </>

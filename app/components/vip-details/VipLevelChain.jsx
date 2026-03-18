@@ -54,17 +54,24 @@ const DEFAULT_VIP_LEVELS = [
 ];
 
 // Map API tier names to badge assets
-function getBadgeForTier(tierName) {
+function getBadgeForTier(tierName, index = 0) {
   const lowerName = tierName.toLowerCase();
-  
+
   if (lowerName.includes('bronze')) return VIP_DETAILS_ASSETS.badges.bronze;
   if (lowerName.includes('silver')) return VIP_DETAILS_ASSETS.badges.silver;
   if (lowerName.includes('gold')) return VIP_DETAILS_ASSETS.badges.gold;
   if (lowerName.includes('platinum')) return VIP_DETAILS_ASSETS.badges.platinum;
   if (lowerName.includes('diamond')) return VIP_DETAILS_ASSETS.badges.diamond;
-  
-  // Default to bronze if no match
-  return VIP_DETAILS_ASSETS.badges.bronze;
+
+  // Fallback to cycling through the badges based on their index
+  const badgeOrder = [
+    VIP_DETAILS_ASSETS.badges.bronze,
+    VIP_DETAILS_ASSETS.badges.silver,
+    VIP_DETAILS_ASSETS.badges.gold,
+    VIP_DETAILS_ASSETS.badges.platinum,
+    VIP_DETAILS_ASSETS.badges.diamond,
+  ];
+  return badgeOrder[index % badgeOrder.length];
 }
 
 export default function VipLevelChain({ selectedLevel, onLevelSelect, vipTiers = [] }) {
@@ -74,23 +81,23 @@ export default function VipLevelChain({ selectedLevel, onLevelSelect, vipTiers =
     const checkWidth = () => {
       setIsSmallScreen(window.innerWidth <= 400);
     };
-    
+
     checkWidth();
     window.addEventListener('resize', checkWidth);
     return () => window.removeEventListener('resize', checkWidth);
   }, []);
 
   // Use API tiers if available, otherwise fall back to default
-  const displayLevels = vipTiers.length > 0 
+  const displayLevels = vipTiers.length > 0
     ? vipTiers.map((tier, index) => ({
-        name: tier.name,
-        badge: getBadgeForTier(tier.name),
-        rotation: DEFAULT_VIP_LEVELS[index]?.rotation || 0,
-        top: DEFAULT_VIP_LEVELS[index]?.top || 10,
-        left: DEFAULT_VIP_LEVELS[index]?.left || 30 + (index * 90),
-        topSm: DEFAULT_VIP_LEVELS[index]?.topSm || 20,
-        leftSm: DEFAULT_VIP_LEVELS[index]?.leftSm || 55 + (index * 65),
-      }))
+      name: tier.name,
+      badge: getBadgeForTier(tier.name, index),
+      rotation: DEFAULT_VIP_LEVELS[index]?.rotation || 0,
+      top: DEFAULT_VIP_LEVELS[index]?.top || 10,
+      left: DEFAULT_VIP_LEVELS[index]?.left || 30 + (index * 90),
+      topSm: DEFAULT_VIP_LEVELS[index]?.topSm || 20,
+      leftSm: DEFAULT_VIP_LEVELS[index]?.leftSm || 55 + (index * 65),
+    }))
     : DEFAULT_VIP_LEVELS;
 
   return (
@@ -130,11 +137,10 @@ export default function VipLevelChain({ selectedLevel, onLevelSelect, vipTiers =
                 zIndex: isSelected ? 10 : 1,
               }}
               onClick={() => onLevelSelect(level.name)}
-              initial={{ opacity: 0, scale: 0, rotate: level.rotation }}
+              initial={{ opacity: 0, scale: 0 }}
               animate={{
                 opacity: 1,
                 scale: isSelected ? 1.2 : 1,
-                rotate: level.rotation,
               }}
               whileHover={{ scale: isSelected ? 1.25 : 1.1 }}
               transition={{
@@ -144,9 +150,11 @@ export default function VipLevelChain({ selectedLevel, onLevelSelect, vipTiers =
                 stiffness: 200,
               }}
             >
-              <div
+              <motion.div
                 className="relative transition-all duration-300"
                 style={{ width: `${size}px`, height: `${size}px` }}
+                animate={{ rotate: level.rotation }}
+                transition={{ duration: 0.5 }}
               >
                 <Image
                   alt={level.name}
@@ -154,9 +162,9 @@ export default function VipLevelChain({ selectedLevel, onLevelSelect, vipTiers =
                   fill
                   className={`object-contain transition-all duration-300 ${!isSelected ? "grayscale-[0.7] opacity-90" : ""}`}
                 />
-              </div>
+              </motion.div>
               <p
-                className={`text-center text-[#e9af41] text-[12px] font-bold font-['Times_New_Roman'] mt-2 transition-all ${isSelected ? "scale-110" : ""}`}
+                className={`text-center text-[#e9af41] text-[12px] font-bold font-['Times_New_Roman'] mt-2 transition-all leading-tight max-w-[80px] ${isSelected ? "scale-110" : ""}`}
               >
                 {level.name}
               </p>
