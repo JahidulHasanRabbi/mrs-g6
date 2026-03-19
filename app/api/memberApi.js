@@ -9,13 +9,12 @@ export async function generateMemberToken(id, o) {
     body: JSON.stringify({ id, o })
   }, false);
   
-  if (response.access && response.refresh && response.member_uuid) {
-    tokenStorage.setMemberTokens(response.access, response.refresh, response.member_uuid);
+  if (response.access && response.member_uuid) {
+    tokenStorage.setMemberTokens(response.access, response.member_uuid);
   }
   
   return {
     access: response.access,
-    refresh: response.refresh,
     member_uuid: response.member_uuid,
     tokens_obtained: response.tokens_obtained
   };
