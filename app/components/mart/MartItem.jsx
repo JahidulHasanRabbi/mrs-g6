@@ -67,13 +67,13 @@ export default function MartItem({ image, title, originalPrice, discountPrice, c
         {/* Original Price with Strikethrough */}
         {originalPrice && originalPrice != (discountPrice || coins) && (
           <p className="text-[#e94141] text-[10px] font-bold font-['Times_New_Roman'] line-through decoration-1 truncate max-w-full leading-[12px]">
-            {typeof originalPrice === 'number' ? originalPrice.toLocaleString() : originalPrice} Pagcor Coins
+            {typeof originalPrice === 'number' ? originalPrice.toLocaleString() : originalPrice} Token
           </p>
         )}
         
         {/* Discount Price */}
         <p className="text-[#e9af41] text-[12px] font-bold font-['Times_New_Roman'] truncate max-w-full leading-[14px]">
-          {typeof (discountPrice || coins) === 'number' ? (discountPrice || coins).toLocaleString() : (discountPrice || coins)} Pagcor Coins
+          {typeof (discountPrice || coins) === 'number' ? (discountPrice || coins).toLocaleString() : (discountPrice || coins)} Token
         </p>
       </motion.div>
 
