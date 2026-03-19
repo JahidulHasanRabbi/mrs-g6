@@ -65,14 +65,12 @@ const SpinItem = memo(function SpinItem({
           delay: index * 0.1 + 0.3,
           ease: "easeOut"
         }}
-        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[60px] h-[57px] flex items-center justify-center"
       >
-        <Image
+        <img
           alt=""
           src={prize}
-          width={72}
-          height={69}
-          className="object-cover pointer-events-none"
+          className="max-w-full max-h-full object-contain pointer-events-none"
         />
       </motion.div>
     )}
@@ -84,7 +82,7 @@ const ORDER = [0, 1, 2, 4, 7, 6, 5, 3];
 
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
-export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinning, onSpinComplete, spinTriggerRef }) {
+export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinning, onSpinComplete, spinTriggerRef, items = [] }) {
   const [activeGridIndex, setActiveGridIndex] = useState(null);
   const [isSpinning, setIsSpinning] = useState(false);
   const { isLowEnd, isMidEnd } = usePerformanceOptimization();
@@ -108,16 +106,23 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
   const totalStepsRef = useRef(0);
   const orderPosRef = useRef(0);
 
+  // Filter items to get only ITEM type rewards with images
+  const itemRewards = useMemo(() => {
+    return items
+      .filter(item => (item.item_type === 'ITEM' || item.item_type === 2 || item.item_type === 3) && item.image)
+      .slice(0, 8); // Take up to 8 items (all tiles)
+  }, [items]);
+
   const gridItems = useMemo(() => [
-    { background: SPIN_ASSETS.itemGold, position: "left-[-8px] top-[-10px]" },
-    { background: SPIN_ASSETS.itemGreen, prize: SPIN_ASSETS.prize1, position: "left-[96px] top-[-13px]", size: "w-[99px] h-[112px]" },
-    { background: SPIN_ASSETS.itemGold, position: "left-[194px] top-[-10px]" },
-    { background: SPIN_ASSETS.itemGreen, position: "left-[-7px] top-[88px]", size: "w-[100px] h-[112px]" },
-    { background: SPIN_ASSETS.itemGreen, prize: SPIN_ASSETS.prize2, position: "left-[196px] top-[87px]", size: "w-[101px] h-[114px]" },
-    { background: SPIN_ASSETS.itemGold, position: "left-[-9px] top-[193px]" },
-    { background: SPIN_ASSETS.itemGreen, prize: SPIN_ASSETS.prize3, position: "left-[96px] top-[191px]", size: "w-[100px] h-[113px]" },
-    { background: SPIN_ASSETS.itemGold, position: "left-[194px] top-[194px]" },
-  ], []);
+    { background: SPIN_ASSETS.itemGold, prize: itemRewards[0]?.image, position: "left-[-8px] top-[-10px]" },
+    { background: SPIN_ASSETS.itemGreen, prize: itemRewards[1]?.image, position: "left-[96px] top-[-13px]", size: "w-[99px] h-[112px]" },
+    { background: SPIN_ASSETS.itemGold, prize: itemRewards[2]?.image, position: "left-[194px] top-[-10px]" },
+    { background: SPIN_ASSETS.itemGreen, prize: itemRewards[3]?.image, position: "left-[-7px] top-[88px]", size: "w-[100px] h-[112px]" },
+    { background: SPIN_ASSETS.itemGreen, prize: itemRewards[4]?.image, position: "left-[196px] top-[87px]", size: "w-[101px] h-[114px]" },
+    { background: SPIN_ASSETS.itemGold, prize: itemRewards[5]?.image, position: "left-[-9px] top-[193px]" },
+    { background: SPIN_ASSETS.itemGreen, prize: itemRewards[6]?.image, position: "left-[96px] top-[191px]", size: "w-[100px] h-[113px]" },
+    { background: SPIN_ASSETS.itemGold, prize: itemRewards[7]?.image, position: "left-[194px] top-[194px]" },
+  ], [itemRewards]);
 
   const stopSpin = useCallback(
     (finalGridIndex) => {

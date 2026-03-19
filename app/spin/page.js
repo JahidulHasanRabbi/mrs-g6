@@ -10,8 +10,8 @@ import WinningList from "../components/spin/WinningList";
 import UserWinningList from "../components/spin/UserWinningList";
 import TermsConditions from "../components/spin/TermsConditions";
 import SuccessModal from "../components/ui/SuccessModal";
-import { oneSpin, tenSpin, fiftySpin, getMemberInfo } from "../api/memberApi";
-import { mapSpinResults } from "../api/responseMappers";
+import { oneSpin, tenSpin, fiftySpin, getMemberInfo, getAllLuckySpinItems } from "../api/memberApi";
+import { mapSpinResults, mapLuckySpinItems } from "../api/responseMappers";
 import { tokenStorage } from "../api/tokenStorage";
 import { useUser } from "../contexts/UserContext";
 
@@ -24,9 +24,24 @@ export default function SpinPage() {
   const [isSpinning, setIsSpinning] = useState(false);
   const [activeWinningView, setActiveWinningView] = useState("record");
   const [userWinnings, setUserWinnings] = useState([]);
+  const [spinItems, setSpinItems] = useState([]);
   const { updateBalance } = useUser();
 
   const memberUuid = tokenStorage.getMemberUuid();
+
+  // Fetch spin items on mount
+  useEffect(() => {
+    async function fetchSpinItems() {
+      try {
+        const response = await getAllLuckySpinItems();
+        const mappedItems = mapLuckySpinItems(response);
+        setSpinItems(mappedItems);
+      } catch (error) {
+        console.error('Error fetching spin items:', error);
+      }
+    }
+    fetchSpinItems();
+  }, []);
 
   const refreshMemberInfo = async () => {
     if (!memberUuid) return;
@@ -214,6 +229,7 @@ export default function SpinPage() {
               disabled={isSpinning} 
               onSpinComplete={handleSpinComplete}
               spinTriggerRef={gridSpinTriggerRef}
+              items={spinItems}
             />
           </div>
         </AnimatedSectionWrapper>

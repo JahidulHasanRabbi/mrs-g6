@@ -38,11 +38,10 @@ const RewardItem = memo(function RewardItem({ icon, title, index }) {
             ease: "easeOut"
           }}
         >
-          <Image
+          <img
             alt={title}
             src={icon}
-            fill
-            className="object-cover"
+            className="w-full h-full object-cover"
           />
         </motion.div>
       )}
