@@ -124,22 +124,13 @@ export default function AdminLoginPage() {
             {/* Login Button */}
             <button
               type="submit"
-              className="w-full rounded-lg px-6 py-3 text-base font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed font-['Times_New_Roman']"
+              className="w-full rounded-lg px-6 py-3 text-base font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed font-['Times_New_Roman'] text-black"
               style={{
                 backgroundImage: "linear-gradient(2.1326483653998594deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
               }}
               disabled={isLoading}
             >
-              <span 
-                className="bg-clip-text text-transparent" 
-                style={{
-                  backgroundImage: "linear-gradient(2.1326483653998594deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent"
-                }}
-              >
-                {isLoading ? 'Logging in...' : 'Login'}
-              </span>
+              {isLoading ? 'Logging in...' : 'Login'}
             </button>
           </form>
         </div>

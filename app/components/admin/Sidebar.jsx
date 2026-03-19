@@ -154,17 +154,11 @@ export default function Sidebar({ activeItem = "home" }) {
     setIsLoggingOut(true);
     
     try {
-      const refreshToken = tokenStorage.getAdminRefreshToken();
-      
-      // Call logout API if refresh token exists
-      if (refreshToken) {
-        try {
-          await adminLogout(refreshToken);
-        } catch (error) {
-          // Continue with logout even if API call fails
-          console.error('Logout API error:', error);
-        }
-      }
+      // Call logout API
+      await adminLogout();
+    } catch (error) {
+      // Continue with logout even if API call fails
+      console.error('Logout API error:', error);
     } finally {
       // Always clear tokens and redirect, regardless of API success
       tokenStorage.clearAdminTokens();
@@ -174,7 +168,7 @@ export default function Sidebar({ activeItem = "home" }) {
 
   return (
     <div 
-      className="relative h-full w-full overflow-hidden rounded-[14px] border border-[rgba(255,255,132,0.2)]"
+      className="relative h-full w-full overflow-y-auto overflow-x-hidden rounded-[14px] border border-[rgba(255,255,132,0.2)]"
       style={{
         background: "linear-gradient(180deg, rgba(7, 25, 13, 1) 0%, rgba(10, 30, 15, 1) 100%)",
       }}
@@ -209,7 +203,7 @@ export default function Sidebar({ activeItem = "home" }) {
       </div>
 
       {/* Menu Items */}
-      <div className="absolute left-1/2 top-[110px] flex w-[304px] -translate-x-1/2 flex-col gap-4">
+      <div className="pt-[110px] pb-6 px-3 flex w-full flex-col gap-4">
         {/* Primary Menu */}
         <div className="flex flex-col gap-4">
           {MENU_ITEMS.map((item) => {
