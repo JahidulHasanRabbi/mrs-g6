@@ -126,7 +126,10 @@ const RewardsList = memo(function RewardsList() {
 
   // Separate items by type
   const itemRewards = items.filter(item => 
-    item.item_type === 'ITEM' || item.item_type === 2 || item.item_type === 3
+    item.item_type === 'ITEM' || item.item_type === 2
+  );
+  const tokenRewards = items.filter(item => 
+    item.item_type === 'TOKEN' || item.item_type === 3
   );
   const creditRewards = items.filter(item => 
     item.item_type === 'FREE CREDIT' || item.item_type === 1
@@ -181,6 +184,14 @@ const RewardsList = memo(function RewardsList() {
               index={index} 
               icon={reward.image}
               title={reward.reward_name}
+            />
+          ))}
+          {tokenRewards.map((reward, index) => (
+            <RewardItem 
+              key={reward.uuid} 
+              index={itemRewards.length + index} 
+              icon={reward.image}
+              title={`${reward.reward_name} (${reward.token_amount} tokens)`}
             />
           ))}
         </div>

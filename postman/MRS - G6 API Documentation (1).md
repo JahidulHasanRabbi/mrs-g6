@@ -410,6 +410,7 @@ If it’s not valid, it returns 401 unauthorized
 | **8** | min\_withdraw | Decimal | Yes | To only show if item\_type \== Free Credit |
 | **9** | max\_withdraw | Decimal | Yes | To only show if item\_type \== Free Credit |
 | **10** | multiplier | Int | Yes | To only show if item\_type \== Free Credit |
+| **11** | token\_amount | Int | Yes | To only show if item\_type \== Token |
 
 ### Lucky Spin Items \- POST and PUT {#lucky-spin-items---post-and-put}
 
@@ -427,6 +428,7 @@ If it’s not valid, it returns 401 unauthorized
 | **6** | min\_withdraw | Decimal | No | To only input if item\_type \== Free Credit |
 | **7** | max\_withdraw | Decimal | No | To only input if item\_type \== Free Credit |
 | **8** | multiplier | Int | No | To only input if item\_type \== Free Credit |
+| **9** | token\_amount | Int | No | To only input if item\_type \== Token |
 
 ### 
 
@@ -434,7 +436,8 @@ If it’s not valid, it returns 401 unauthorized
 | ----- | ----- |
 | 1 | Free Credit |
 | 2 | Item |
-| 3 | Other |
+| 3 | Token |
+| 4 | Other |
 
 #### /lucky-spin/lucky-spin-items/{uuid}/archive/ \- PATCH {#/lucky-spin/lucky-spin-items/{uuid}/archive/---patch}
 

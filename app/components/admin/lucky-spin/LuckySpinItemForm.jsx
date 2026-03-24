@@ -23,6 +23,11 @@ const luckySpinFieldConfig = {
       field: 'multiplier',
       showWhen: [1], // Free Credit
       required: true
+    },
+    {
+      field: 'token_amount',
+      showWhen: [3], // Token
+      required: true
     }
   ],
   unlimited: [
@@ -61,7 +66,8 @@ export default function LuckySpinItemForm({
         unlimited: initialData.unlimited || false,
         min_withdraw: initialData.min_withdraw || "",
         max_withdraw: initialData.max_withdraw || "",
-        multiplier: initialData.multiplier || ""
+        multiplier: initialData.multiplier || "",
+        token_amount: initialData.token_amount || ""
       };
       
       setFieldValues(initialValues);
@@ -104,6 +110,11 @@ export default function LuckySpinItemForm({
     }
     if (visibleFields.multiplier) {
       submitData.multiplier = parseFloat(fieldValues.multiplier);
+    }
+    
+    // Include token_amount for Token type
+    if (visibleFields.token_amount) {
+      submitData.token_amount = parseInt(fieldValues.token_amount, 10);
     }
     
     // Include image file if uploaded
@@ -200,6 +211,9 @@ export default function LuckySpinItemForm({
                 value={fieldValues.item_type || ""}
                 onChange={(e) => handleItemTypeChange(e.target.value)}
                 className="bg-white/10 border-[0.5px] border-white/8 h-[36px] rounded-[4px] w-[304px] px-3 text-white focus:outline-none focus:border-[#f2c36b]"
+                style={{
+                  colorScheme: 'dark'
+                }}
                 required
                 disabled={isLoading}
               >
@@ -261,6 +275,24 @@ export default function LuckySpinItemForm({
                   className="bg-white/10 border-[0.5px] border-white/8 h-[36px] rounded-[4px] w-[304px] px-3 text-white placeholder-white/50 focus:outline-none focus:border-[#f2c36b]"
                   placeholder="Enter multiplier"
                   step="0.01"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+            )}
+
+            {visibleFields.token_amount && (
+              <div className="flex items-center gap-[18px]">
+                <label className="text-[18px] text-white font-['Times_New_Roman'] w-[136px]">
+                  Token Amount:
+                </label>
+                <input
+                  type="number"
+                  value={fieldValues.token_amount || ""}
+                  onChange={(e) => handleInputChange("token_amount", e.target.value)}
+                  className="bg-white/10 border-[0.5px] border-white/8 h-[36px] rounded-[4px] w-[304px] px-3 text-white placeholder-white/50 focus:outline-none focus:border-[#f2c36b]"
+                  placeholder="Enter token amount"
+                  min="0"
                   required
                   disabled={isLoading}
                 />

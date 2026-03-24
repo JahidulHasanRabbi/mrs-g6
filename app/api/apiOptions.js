@@ -33,7 +33,8 @@ export const API_OPTIONS = {
   ITEM_TYPE: {
     1: "Free Credit",
     2: "Item",
-    3: "Other"
+    3: "Token",
+    4: "Other"
   }
 };
 

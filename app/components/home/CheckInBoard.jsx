@@ -39,6 +39,7 @@ const AssetFill = memo(function AssetFill({ src, alt, className }) {
 
 export default function CheckInBoard() {
   const [checkedDays, setCheckedDays] = useState([]);
+  const [checkedRewards, setCheckedRewards] = useState({});
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
   const [isPopupBgLoaded, setIsPopupBgLoaded] = useState({
@@ -140,23 +141,17 @@ export default function CheckInBoard() {
     () => {
       // Helper function to get reward text for a day
       const getRewardText = (day) => {
-        if (!checkinSettings?.rewards) return "+100"; // Default fallback
+        if (!checkinSettings?.rewards) return ""; // Default empty
         
         const daySettings = checkinSettings.rewards.find(r => r.day === day);
-        if (!daySettings) return "+100"; // Default fallback
+        if (!daySettings) return ""; // Default empty
         
-        // Use display_text if available, otherwise format min/max
-        if (daySettings.display_text) {
+        // Use display_text if available and not empty, otherwise return empty
+        if (daySettings.display_text && daySettings.display_text.trim()) {
           return daySettings.display_text;
         }
         
-        // If min and max are the same, show single value
-        if (daySettings.reward_minimum === daySettings.reward_maximum) {
-          return `+${daySettings.reward_minimum}`;
-        }
-        
-        // Show range
-        return `+${daySettings.reward_minimum}-${daySettings.reward_maximum}`;
+        return "";
       };
 
       return [
@@ -375,7 +370,7 @@ export default function CheckInBoard() {
                               zIndex: 10,
                             }}
                           >
-                            {d.reward || "XXXX"}
+                            {d.reward}
                           </div>
                         </div>
                       </div>
@@ -476,7 +471,7 @@ export default function CheckInBoard() {
                             lineHeight: "normal",
                           }}
                         >
-                          {isChecked ? d.reward : "XXXX"}
+                          {isChecked ? (checkedRewards[d.day] || d.reward) : d.reward}
                         </div>
                       </div>
 

@@ -3,6 +3,8 @@ export const SPIN_ASSETS = {
   itemGold: "/assets/lucky-spin/lucky-spin-grid/spin-item-gold.png",
   itemGreen: "/assets/lucky-spin/lucky-spin-grid/spin-item-green.png",
   itemFrame: "/assets/lucky-spin/lucky-spin-grid/spin-item-frame.png",
+  itemEmptyGold: "/assets/lucky-spin/lucky-spin-grid/2.png",
+  itemEmptyGreen: "/assets/lucky-spin/lucky-spin-grid/1.png",
   prize1: "/assets/lucky-spin/lucky-spin-grid/spin-prize-1.png",
   prize2: "/assets/lucky-spin/lucky-spin-grid/spin-prize-2.png",
   prize3: "/assets/lucky-spin/lucky-spin-grid/spin-prize-3.png",
