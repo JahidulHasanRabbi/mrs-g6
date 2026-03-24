@@ -106,10 +106,9 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
   const totalStepsRef = useRef(0);
   const orderPosRef = useRef(0);
 
-  // Filter items to get only ITEM type rewards with images and distribute them randomly across tiles
+  // Filter items to get ALL items with images and distribute them randomly across tiles
   const itemRewards = useMemo(() => {
-    const filtered = items
-      .filter(item => (item.item_type === 'ITEM' || item.item_type === 2 || item.item_type === 3) && item.image);
+    const filtered = items.filter(item => item.image);
     
     if (filtered.length === 0) return [];
     
