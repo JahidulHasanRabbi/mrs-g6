@@ -52,7 +52,6 @@ export default function CheckInBoard() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [memberInfo, setMemberInfo] = useState(null);
   const [checkinSettings, setCheckinSettings] = useState(null);
-  const [checkedRewards, setCheckedRewards] = useState({});
 
   useEffect(() => {
     const preload = (src) =>
@@ -141,17 +140,23 @@ export default function CheckInBoard() {
     () => {
       // Helper function to get reward text for a day
       const getRewardText = (day) => {
-        if (!checkinSettings?.rewards) return ""; // Default empty
+        if (!checkinSettings?.rewards) return "+100"; // Default fallback
         
         const daySettings = checkinSettings.rewards.find(r => r.day === day);
-        if (!daySettings) return ""; // Default empty
+        if (!daySettings) return "+100"; // Default fallback
         
-        // Use display_text if available and not empty, otherwise return empty
-        if (daySettings.display_text && daySettings.display_text.trim()) {
+        // Use display_text if available, otherwise format min/max
+        if (daySettings.display_text) {
           return daySettings.display_text;
         }
         
-        return "";
+        // If min and max are the same, show single value
+        if (daySettings.reward_minimum === daySettings.reward_maximum) {
+          return `+${daySettings.reward_minimum}`;
+        }
+        
+        // Show range
+        return `+${daySettings.reward_minimum}-${daySettings.reward_maximum}`;
       };
 
       return [
@@ -161,7 +166,7 @@ export default function CheckInBoard() {
         { day: 4, label: "DAY 4", reward: getRewardText(4), x: 80, y: 30, iconSrc: HOME_ASSETS.electricSign },
         { day: 5, label: "DAY 5", reward: getRewardText(5), x: 20, y: 65, iconSrc: HOME_ASSETS.dayCard5 },
         { day: 6, label: "DAY 6", reward: getRewardText(6), x: 40, y: 65, iconSrc: HOME_ASSETS.electricSign },
-        { day: 7, label: "DAY 7", reward: "", x: 70, y: 65, isSpecial: true },
+        { day: 7, label: "DAY 7", reward: getRewardText(7), x: 70, y: 65, isSpecial: true },
       ];
     },
     [checkinSettings],
@@ -204,25 +209,9 @@ export default function CheckInBoard() {
       // Mark day as checked
       setCheckedDays((prev) => [...prev, day.day]);
       
-      // Store the actual tokens earned from API response
-      let tokensEarned = response.tokens_earned || response.reward;
-      
-      // If no tokens in response, try to get from checkinSettings display_text
-      if (!tokensEarned && checkinSettings?.rewards) {
-        const daySettings = checkinSettings.rewards.find(r => r.day === day.day);
-        if (daySettings && daySettings.display_text && daySettings.display_text.trim()) {
-          tokensEarned = daySettings.display_text;
-        }
-      }
-      
-      tokensEarned = tokensEarned || ""; // Keep empty if no value
-      setCheckedRewards((prev) => ({ ...prev, [day.day]: tokensEarned }));
-      
       // Display success message with earned tokens
-      const message = tokensEarned 
-        ? `Congratulations! You've checked in for today and earned ${tokensEarned} tokens!`
-        : `Congratulations! You've checked in for today!`;
-      setSuccessMessage(message);
+      const tokensEarned = response.tokens_earned || response.reward || 100; // Fallback to 100 if not specified
+      setSuccessMessage(`Congratulations! You've checked in for today and earned ${tokensEarned} tokens!`);
       setShowSuccessModal(true);
 
       // Refresh member info after successful check-in
@@ -366,6 +355,29 @@ export default function CheckInBoard() {
                           className="object-contain"
                           sizes="120px"
                         />
+                        
+                        {/* Reward Text for Day 7 - positioned inside chest */}
+                        <div
+                          className="absolute inset-0 flex items-center justify-center"
+                          style={{
+                            paddingTop: "0%",
+                            paddingBottom:'15%'
+                          }}
+                        >
+                          <div
+                            className="text-sm sm:text-base"
+                            style={{
+                              fontFamily: '"Times New Roman"',
+                              color: "green",
+                              fontStyle: "normal",
+                              fontWeight: 700,
+                              lineHeight: "normal",
+                              zIndex: 10,
+                            }}
+                          >
+                            {d.reward || "XXXX"}
+                          </div>
+                        </div>
                       </div>
 
                       {/* Day 7 Label */}
@@ -464,7 +476,7 @@ export default function CheckInBoard() {
                             lineHeight: "normal",
                           }}
                         >
-                          {isChecked ? (checkedRewards[d.day] || d.reward) : d.reward}
+                          {isChecked ? d.reward : "XXXX"}
                         </div>
                       </div>
 
