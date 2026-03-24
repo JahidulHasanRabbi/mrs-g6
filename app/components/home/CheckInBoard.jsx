@@ -52,6 +52,7 @@ export default function CheckInBoard() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [memberInfo, setMemberInfo] = useState(null);
   const [checkinSettings, setCheckinSettings] = useState(null);
+  const [checkedRewards, setCheckedRewards] = useState({});
 
   useEffect(() => {
     const preload = (src) =>
@@ -209,8 +210,11 @@ export default function CheckInBoard() {
       // Mark day as checked
       setCheckedDays((prev) => [...prev, day.day]);
       
+      // Store the actual tokens earned from API response
+      const tokensEarned = response.tokens_earned || response.reward || 100;
+      setCheckedRewards((prev) => ({ ...prev, [day.day]: tokensEarned }));
+      
       // Display success message with earned tokens
-      const tokensEarned = response.tokens_earned || response.reward || 100; // Fallback to 100 if not specified
       setSuccessMessage(`Congratulations! You've checked in for today and earned ${tokensEarned} tokens!`);
       setShowSuccessModal(true);
 
@@ -453,7 +457,7 @@ export default function CheckInBoard() {
                             lineHeight: "normal",
                           }}
                         >
-                          {isChecked ? d.reward : "XXXX"}
+                          {isChecked ? (checkedRewards[d.day] || d.reward) : d.reward}
                         </div>
                       </div>
 
