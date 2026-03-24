@@ -146,8 +146,8 @@ export default function CheckInBoard() {
         const daySettings = checkinSettings.rewards.find(r => r.day === day);
         if (!daySettings) return "+100"; // Default fallback
         
-        // Use display_text if available, otherwise format min/max
-        if (daySettings.display_text) {
+        // Use display_text if available and not empty
+        if (daySettings.display_text && daySettings.display_text.trim()) {
           return daySettings.display_text;
         }
         
@@ -210,8 +210,24 @@ export default function CheckInBoard() {
       // Mark day as checked
       setCheckedDays((prev) => [...prev, day.day]);
       
-      // Store the actual tokens earned from API response
-      const tokensEarned = response.tokens_earned || response.reward || 100;
+      // Store the actual tokens earned from API response, or use the display_text from settings
+      let tokensEarned = response.tokens_earned || response.reward;
+      
+      // If no tokens in response, try to get from checkinSettings
+      if (!tokensEarned && checkinSettings?.rewards) {
+        const daySettings = checkinSettings.rewards.find(r => r.day === day.day);
+        if (daySettings) {
+          if (daySettings.display_text && daySettings.display_text.trim()) {
+            tokensEarned = daySettings.display_text;
+          } else if (daySettings.reward_minimum === daySettings.reward_maximum) {
+            tokensEarned = `+${daySettings.reward_minimum}`;
+          } else {
+            tokensEarned = `+${daySettings.reward_minimum}-${daySettings.reward_maximum}`;
+          }
+        }
+      }
+      
+      tokensEarned = tokensEarned || 100; // Final fallback
       setCheckedRewards((prev) => ({ ...prev, [day.day]: tokensEarned }));
       
       // Display success message with earned tokens
