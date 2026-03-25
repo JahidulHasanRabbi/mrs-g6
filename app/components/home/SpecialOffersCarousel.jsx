@@ -14,15 +14,23 @@ const SpecialOffersCarousel = memo(function SpecialOffersCarousel() {
   const slides = useMemo(() => [
     {
       id: 1,
-      image: "/assets/home/special_for_you/free_share_bonus.png",
+      image: "/assets/home/special_for_you/new/acebet77.png",
     },
     {
       id: 2,
-      image: "/assets/home/special_for_you/free_share_bonus.png",
+      image: "/assets/home/special_for_you/new/ep369.png",
     },
     {
       id: 3,
-      image: "/assets/home/special_for_you/free_share_bonus.png",
+      image: "/assets/home/special_for_you/new/kgame.png",
+    },
+    {
+      id: 4,
+      image: "/assets/home/special_for_you/new/lv918.png",
+    },
+    {
+      id: 5,
+      image: "/assets/home/special_for_you/new/ubetclub.png",
     },
   ], []);
 

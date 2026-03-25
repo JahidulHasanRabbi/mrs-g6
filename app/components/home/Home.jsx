@@ -57,8 +57,8 @@ const Home = memo(function Home() {
         <CheckInBoard />
         <SpecialOffersCarousel />
 
-        {/* Video Gallery */}
-        <VideoGallery />
+        {/* Video Gallery - Temporarily Hidden */}
+        {/* <VideoGallery /> */}
       </main>
       <FooterNav />
     </div>
