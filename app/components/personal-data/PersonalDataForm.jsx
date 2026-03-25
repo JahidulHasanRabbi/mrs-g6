@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import ProgressBar from "./StepIndicator";
 import ProfileImageUpload from "./ProfileImageUpload";
@@ -13,6 +14,7 @@ import { mapProfileDataToForm, mapFormDataToProfileUpdate } from "@/app/api/resp
 import { tokenStorage } from "@/app/api/tokenStorage";
 
 export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
+  const router = useRouter();
   const [formData, setFormData] = useState(
     FORM_FIELDS.reduce((acc, field) => ({ ...acc, [field.id]: "" }), {})
   );
@@ -120,6 +122,8 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
 
   const handleCloseModal = () => {
     setShowSuccessModal(false);
+    // Navigate back to profile page after closing the success modal
+    router.push('/profile');
   };
 
   // Loading state

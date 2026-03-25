@@ -32,7 +32,7 @@ export default function ProfileCard({
     currentLevel: propCurrentLevel || "Gold"
   });
   const [fullName, setFullName] = useState(null);
-  const [freeTokenFlag, setFreeTokenFlag] = useState(null); // null = loading, true = claimed, false = unclaimed
+  const [welcomeFlag, setWelcomeFlag] = useState(null); // null = loading, true = claimed, false = unclaimed
   const [isClaimingGift, setIsClaimingGift] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [claimError, setClaimError] = useState(null);
@@ -93,6 +93,12 @@ export default function ProfileCard({
       console.log("ProfileCard: Full member info response:", response);
       const transformedData = mapMemberInfoToProfileCard(response);
       setMemberData(transformedData);
+      
+      // Set welcome_flag from member info
+      if (response.welcome_flag !== undefined) {
+        setWelcomeFlag(response.welcome_flag);
+        console.log("ProfileCard: Set welcomeFlag to:", response.welcome_flag);
+      }
       
       // Calculate VIP tier progress
       if (vipTiers.length > 0 && transformedData.tierId) {
@@ -178,15 +184,6 @@ export default function ProfileCard({
       const profileResponse = await getProfile(memberUuid);
       console.log("ProfileCard: Profile response:", profileResponse);
       
-      // Use free_token_flag or free_tokens_flag for welcome gift button visibility
-      // API returns free_tokens_flag (with 's'), but docs say free_token_flag (without 's')
-      const tokenFlag = profileResponse.free_tokens_flag ?? profileResponse.free_token_flag;
-      console.log("ProfileCard: free_tokens_flag from API:", tokenFlag);
-      if (tokenFlag !== undefined) {
-        setFreeTokenFlag(tokenFlag);
-        console.log("ProfileCard: Set freeTokenFlag to:", tokenFlag);
-      }
-      
       // Set full name if available
       if (profileResponse.full_name) {
         console.log("ProfileCard: Setting full name:", profileResponse.full_name);
@@ -212,8 +209,8 @@ export default function ProfileCard({
 
       await claimWelcomeGift(memberUuid);
       
-      // Update free_token_flag to true (claimed)
-      setFreeTokenFlag(true);
+      // Update welcome_flag to true (claimed)
+      setWelcomeFlag(true);
       
       // Refresh VIP tiers first
       await fetchVipTiers();
@@ -397,8 +394,8 @@ export default function ProfileCard({
         </div>
       </motion.div>
 
-      {/* Welcome Gift Section - Only show if unclaimed */}
-      {freeTokenFlag === false && (
+      {/* Welcome Gift Section - Only show if unclaimed (welcome_flag is false) */}
+      {welcomeFlag === false && (
         <motion.div
           className="mt-4 w-[336px] min-[465px]:w-[370px] mx-auto"
           initial={{ opacity: 0, y: 20 }}
