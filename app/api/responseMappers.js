@@ -11,7 +11,9 @@ export function mapMemberInfoToProfileCard(apiResponse) {
   return {
     name: apiResponse.username,
     totalTokens: formatTokens(apiResponse.current_tokens),
-    currentLevel: apiResponse.tier
+    currentLevel: apiResponse.tier,
+    tierId: apiResponse.tier_id,
+    totalDeposit: apiResponse.total_deposit
   };
 }
 

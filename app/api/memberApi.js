@@ -115,6 +115,13 @@ export async function getVipTiers() {
   }, true, 'member');
 }
 
+// GET /member/vip-tier/{uuid}/
+export async function getVipTierById(tierUuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.VIP_TIER(tierUuid), {
+    method: 'GET'
+  }, true, 'member');
+}
+
 // GET /settings/checkin-settings/ (using member token)
 export async function getCheckinSettings() {
   return await apiRequest(ENDPOINTS.ADMIN.CHECKIN_SETTINGS, {

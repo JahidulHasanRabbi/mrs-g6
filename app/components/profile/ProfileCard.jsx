@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { PROFILE_ASSETS } from "./profileAssets";
-import { getMemberInfo, getProfile, claimWelcomeGift } from "@/app/api/memberApi";
+import { getMemberInfo, getProfile, claimWelcomeGift, getVipTiers } from "@/app/api/memberApi";
 import { mapMemberInfoToProfileCard } from "@/app/api/responseMappers";
 import { tokenStorage } from "@/app/api/tokenStorage";
 import { handleApiError, formatErrorMessage } from "@/app/api/errorHandler";
@@ -36,8 +36,14 @@ export default function ProfileCard({
   const [isClaimingGift, setIsClaimingGift] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [claimError, setClaimError] = useState(null);
+  const [vipTiers, setVipTiers] = useState([]);
+  const [currentTierData, setCurrentTierData] = useState(null);
+  const [nextTierData, setNextTierData] = useState(null);
+  const [tokensToNextTier, setTokensToNextTier] = useState(0);
+  const [progressPercentage, setProgressPercentage] = useState(0);
 
   useEffect(() => {
+    fetchVipTiers();
     fetchMemberInfo();
     fetchProfileData();
   }, []); // Runs on mount
@@ -46,6 +52,7 @@ export default function ProfileCard({
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
+        fetchVipTiers();
         fetchMemberInfo();
         fetchProfileData();
       }
@@ -57,6 +64,20 @@ export default function ProfileCard({
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
+
+  const fetchVipTiers = async () => {
+    try {
+      const tiers = await getVipTiers();
+      console.log("ProfileCard: VIP tiers response:", tiers);
+      // Sort tiers by lifetime_deposit_required to get proper order
+      const sortedTiers = [...tiers].sort((a, b) => 
+        parseFloat(a.lifetime_deposit_required) - parseFloat(b.lifetime_deposit_required)
+      );
+      setVipTiers(sortedTiers);
+    } catch (err) {
+      console.error("ProfileCard: Error fetching VIP tiers:", err);
+    }
+  };
 
   const fetchMemberInfo = async () => {
     setIsLoading(true);
@@ -72,6 +93,11 @@ export default function ProfileCard({
       console.log("ProfileCard: Full member info response:", response);
       const transformedData = mapMemberInfoToProfileCard(response);
       setMemberData(transformedData);
+      
+      // Calculate VIP tier progress
+      if (vipTiers.length > 0 && transformedData.tierId) {
+        calculateTierProgress(transformedData.tierId, transformedData.totalDeposit, vipTiers);
+      }
     } catch (err) {
       const errorInfo = handleApiError(err, 'ProfileCard.fetchMemberInfo');
       setError({
@@ -84,6 +110,61 @@ export default function ProfileCard({
       setIsLoading(false);
     }
   };
+  
+  const calculateTierProgress = (currentTierId, totalDeposit, tiers) => {
+    // Find current tier by UUID
+    const currentTierIndex = tiers.findIndex(tier => tier.uuid === currentTierId);
+    
+    if (currentTierIndex === -1) {
+      console.log("ProfileCard: Current tier not found");
+      return;
+    }
+    
+    const current = tiers[currentTierIndex];
+    setCurrentTierData(current);
+    
+    // Get next tier (if exists)
+    if (currentTierIndex < tiers.length - 1) {
+      const next = tiers[currentTierIndex + 1];
+      setNextTierData(next);
+      
+      const currentDeposit = parseFloat(totalDeposit) || 0;
+      const currentRequired = parseFloat(current.lifetime_deposit_required) || 0;
+      const nextRequired = parseFloat(next.lifetime_deposit_required) || 0;
+      
+      // Calculate tokens needed to reach next tier
+      const tokensNeeded = Math.max(0, nextRequired - currentDeposit);
+      setTokensToNextTier(tokensNeeded);
+      
+      // Calculate progress percentage
+      const tierRange = nextRequired - currentRequired;
+      const progressInTier = currentDeposit - currentRequired;
+      const percentage = tierRange > 0 ? Math.min(100, Math.max(0, (progressInTier / tierRange) * 100)) : 0;
+      setProgressPercentage(percentage);
+      
+      console.log("ProfileCard: Tier progress calculated", {
+        currentTier: current.name,
+        nextTier: next.name,
+        currentDeposit,
+        nextRequired,
+        tokensNeeded,
+        percentage
+      });
+    } else {
+      // User is at max tier
+      setNextTierData(null);
+      setTokensToNextTier(0);
+      setProgressPercentage(100);
+      console.log("ProfileCard: User is at maximum tier");
+    }
+  };
+  
+  // Recalculate tier progress when vipTiers or memberData changes
+  useEffect(() => {
+    if (vipTiers.length > 0 && memberData.tierId && memberData.totalDeposit !== undefined) {
+      calculateTierProgress(memberData.tierId, memberData.totalDeposit, vipTiers);
+    }
+  }, [vipTiers, memberData.tierId, memberData.totalDeposit]);
 
   const fetchProfileData = async () => {
     try {
@@ -134,6 +215,9 @@ export default function ProfileCard({
       // Update free_token_flag to true (claimed)
       setFreeTokenFlag(true);
       
+      // Refresh VIP tiers first
+      await fetchVipTiers();
+      
       // Refresh member info to update token balance
       await fetchMemberInfo();
       
@@ -180,7 +264,10 @@ export default function ProfileCard({
       <div className="relative mx-auto w-[336px] min-[465px]:w-[370px] p-4">
         <ErrorDisplay error={error} />
         <button
-          onClick={fetchMemberInfo}
+          onClick={() => {
+            fetchVipTiers();
+            fetchMemberInfo();
+          }}
           className="mt-4 w-full px-4 py-2 bg-[#e9af41] text-[#51340c] font-bold rounded hover:bg-[#d19a35] transition-colors"
         >
           Retry
@@ -257,15 +344,28 @@ export default function ProfileCard({
 
           {/* Progress Section */}
           <motion.div
-            className="absolute left-[51px] top-[126px] w-[236px]"
+            className="absolute left-[51px] top-[100px] w-[236px]"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.7 }}
           >
+            {/* Current Tier with Star - Reduced Size */}
+            <div className="mb-2">
+              <p className="text-[#e9af41] text-[18px] font-bold font-['Times_New_Roman'] leading-none uppercase">
+                {currentTierData ? currentTierData.name : currentLevel} ⭐
+              </p>
+            </div>
+
             {/* Progress Text */}
-            <p className="text-[#e9af41] text-[12px] font-bold font-['Times_New_Roman'] mb-2">
-              Get {tokensNeeded.toLocaleString()} more to go {nextLevel}
-            </p>
+            {nextTierData ? (
+              <p className="text-[#e9af41] text-[11px] font-bold font-['Times_New_Roman'] mb-2">
+                Get {tokensToNextTier.toLocaleString()} more to go {nextTierData.name.toUpperCase()}
+              </p>
+            ) : (
+              <p className="text-[#e9af41] text-[11px] font-bold font-['Times_New_Roman'] mb-2">
+                Maximum tier reached! 🎉
+              </p>
+            )}
 
             {/* Progress Bar Container */}
             <div className="relative w-full h-[8px] bg-[#51340c] border border-[#e9af41] rounded-[20px] shadow-[inset_0px_4px_4px_0px_rgba(0,0,0,0.25)]">
@@ -273,7 +373,7 @@ export default function ProfileCard({
               <motion.div
                 className="absolute left-0 top-0 h-full bg-[#e9af41] rounded-[20px] shadow-[inset_0px_4px_4px_0px_rgba(0,0,0,0.25)]"
                 initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
+                animate={{ width: `${progressPercentage}%` }}
                 transition={{
                   duration: 1,
                   delay: 0.9,
@@ -284,12 +384,14 @@ export default function ProfileCard({
 
             {/* Level Labels */}
             <div className="flex justify-between mt-2">
-              <p className="text-[#e9af41] text-[12px] font-bold font-['Times_New_Roman']">
-                {currentLevel}
+              <p className="text-[#e9af41] text-[10px] font-bold font-['Times_New_Roman'] uppercase">
+                {currentTierData ? currentTierData.name : currentLevel}
               </p>
-              <p className="text-[#e9af41] text-[12px] font-bold font-['Times_New_Roman']">
-                {nextLevel}
-              </p>
+              {nextTierData && (
+                <p className="text-[#e9af41] text-[10px] font-bold font-['Times_New_Roman'] uppercase">
+                  {nextTierData.name}
+                </p>
+              )}
             </div>
           </motion.div>
         </div>

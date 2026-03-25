@@ -249,9 +249,11 @@ Output
 | **3** | phone\_number | Str | No |  |
 | **4** | username | Str | No |  |
 | **5** | tier | Str | No |  |
+| **5a** | tier\_id | UUID | No |  |
 | **6** | current\_tokens | Str | No |  |
 | **7** | last\_check\_in\_date | Date | Yes |  |
 | **8** | last\_login\_datetime | DateTime | Yes |  |
+| **9** | total\_deposit | Str(Decimal) | No |  |
 
 ## LUCKY SPIN {#lucky-spin}
 
