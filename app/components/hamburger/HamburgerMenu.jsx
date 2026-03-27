@@ -192,13 +192,13 @@ MenuHeader.displayName = "MenuHeader";
  */
 const MenuBanner = memo(() => (
   <div className="flex justify-center py-4 px-4">
-    <div className="flex h-[79px] w-[130px] items-center justify-center rounded-[12px] bg-gray-200 shadow-[0px_5px_20px_0px_rgba(0,0,0,0.25)]">
+    <div className="flex h-[79px] w-[130px] items-center justify-center rounded-[12px] overflow-hidden shadow-[0px_5px_20px_0px_rgba(0,0,0,0.25)]">
       <Image
-        src="/assets/images/funding-banner.jpg"
-        alt="banner"
+        src="/assets/home/special_for_you/new/acebet77.png"
+        alt="Special offer"
         width={130}
         height={79}
-        className="rounded-[12px] object-cover"
+        className="rounded-[12px] object-contain w-full h-full"
       />
     </div>
   </div>
