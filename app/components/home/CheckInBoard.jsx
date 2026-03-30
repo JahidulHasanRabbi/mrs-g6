@@ -98,7 +98,7 @@ export default function CheckInBoard() {
           const today = new Date();
           const diffTime = Math.abs(today - lastCheckIn);
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          
+
           // If checked in today or within the last day, mark days as checked
           // This is a simplified logic - adjust based on actual API behavior
           if (diffDays <= 1) {
@@ -142,15 +142,15 @@ export default function CheckInBoard() {
       // Helper function to get reward text for a day
       const getRewardText = (day) => {
         if (!checkinSettings?.rewards) return ""; // Default empty
-        
+
         const daySettings = checkinSettings.rewards.find(r => r.day === day);
         if (!daySettings) return ""; // Default empty
-        
+
         // Use display_text if available and not empty, otherwise return empty
         if (daySettings.display_text && daySettings.display_text.trim()) {
           return daySettings.display_text;
         }
-        
+
         return "";
       };
 
@@ -200,10 +200,10 @@ export default function CheckInBoard() {
 
       // Call check-in API
       const response = await checkIn(memberUuid);
-      
+
       // Mark day as checked
       setCheckedDays((prev) => [...prev, day.day]);
-      
+
       // Display success message with earned tokens
       const displayReward = response.reward || (response.tokens_earned ? `${response.tokens_earned} tokens` : "your reward");
       setSuccessMessage(`Congratulations! You've checked in for today and earned ${displayReward}!`);
@@ -215,18 +215,18 @@ export default function CheckInBoard() {
 
     } catch (err) {
       console.error("Check-in failed:", err);
-      
+
       // Extract error message from various possible locations
       let errorMessage = "";
-      
+
       if (err.data) {
         errorMessage = err.data.details || err.data.detail || err.data.message || err.data.error || "";
       }
-      
+
       if (!errorMessage && err.message) {
         errorMessage = err.message;
       }
-      
+
       // Check if already checked in error
       if (errorMessage.toLowerCase().includes("already checked in")) {
         setSuccessMessage("Already checked in today! Try again tomorrow.");
@@ -303,9 +303,8 @@ export default function CheckInBoard() {
                       key={d.day}
                       type="button"
                       onClick={() => onDayClick(d)}
-                      className={`absolute w-[35%] h-[30%] sm:w-[36%] sm:h-[30%] ${
-                        isChecked ? "grayscale opacity-60" : ""
-                      }`}
+                      className={`absolute w-[35%] h-[30%] sm:w-[36%] sm:h-[30%] ${isChecked ? "grayscale opacity-60" : ""
+                        }`}
                       style={{
                         left: `${d.x}%`,
                         top: `${d.y}%`,
@@ -328,18 +327,18 @@ export default function CheckInBoard() {
                         isChecked
                           ? undefined
                           : {
-                              scale: 1.15,
-                              y: "-55%",
-                              transition: { type: "spring", stiffness: 400, damping: 10 },
-                            }
+                            scale: 1.15,
+                            y: "-55%",
+                            transition: { type: "spring", stiffness: 400, damping: 10 },
+                          }
                       }
                       whileTap={
                         isChecked
                           ? undefined
                           : {
-                              scale: 0.95,
-                              transition: { duration: 0.1 },
-                            }
+                            scale: 0.95,
+                            transition: { duration: 0.1 },
+                          }
                       }
                     >
                       <div className="relative w-full h-full">
@@ -350,13 +349,13 @@ export default function CheckInBoard() {
                           className="object-contain"
                           sizes="120px"
                         />
-                        
+
                         {/* Reward Text for Day 7 - positioned inside chest */}
                         <div
                           className="absolute inset-0 flex items-center justify-center"
                           style={{
                             paddingTop: "0%",
-                            paddingBottom:'15%'
+                            paddingBottom: '15%'
                           }}
                         >
                           <div
@@ -398,9 +397,8 @@ export default function CheckInBoard() {
                     key={d.day}
                     type="button"
                     onClick={() => onDayClick(d)}
-                    className={`absolute w-[31%] h-[31%] ${
-                      isChecked ? "grayscale opacity-60" : ""
-                    }`}
+                    className={`absolute w-[31%] h-[31%] ${isChecked ? "grayscale opacity-60" : ""
+                      }`}
                     style={{
                       left: `${d.x}%`,
                       top: `${d.y}%`,
@@ -423,18 +421,18 @@ export default function CheckInBoard() {
                       isChecked
                         ? undefined
                         : {
-                            scale: 1.1,
-                            y: "-55%",
-                            transition: { type: "spring", stiffness: 400, damping: 10 },
-                          }
+                          scale: 1.1,
+                          y: "-55%",
+                          transition: { type: "spring", stiffness: 400, damping: 10 },
+                        }
                     }
                     whileTap={
                       isChecked
                         ? undefined
                         : {
-                            scale: 0.95,
-                            transition: { duration: 0.1 },
-                          }
+                          scale: 0.95,
+                          transition: { duration: 0.1 },
+                        }
                     }
                   >
                     {/* Card Frame */}
