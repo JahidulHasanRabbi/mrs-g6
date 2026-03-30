@@ -17,6 +17,9 @@ export const ENDPOINTS = {
     AVAILABLE_REDEMPTION_ITEMS: '/redemption/redemption-items/available-items/',
     REDEEM_ITEM: (uuid) => `/redemption/redemption-items/${uuid}/redeem/`
   },
+  FRONT_VIEW: {
+    WINNING_LIST: '/front-view/winning-list/'
+  },
   ADMIN: {
     LOGIN: '/login/admin-access-token/',
     LOGOUT: '/login/logout/',

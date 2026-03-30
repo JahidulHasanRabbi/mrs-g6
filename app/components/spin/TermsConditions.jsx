@@ -40,7 +40,6 @@ const TermItem = ({ text, index }) => (
 
 export default function TermsConditions() {
   const terms = [
-    "Members' monthly accumulated deposit must reach RM500 or above to be entitled to this promotion.",
     "VIP birthday bonus is calculated based on your registration date.",
     "All bonuses are subject to a rollover requirement of x3.",
     "All bonuses are subject to rules regarding Minimum/Maximum Withdrawal of the bonus amount.",

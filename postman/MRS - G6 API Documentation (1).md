@@ -28,6 +28,10 @@
 
 [HOME PAGE	8](#home-page)
 
+[Front View \- Winning List	8](#front-view---winning-list)
+
+[/front-view/winning-list/ GET	8](#/front-view/winning-list/-get)
+
 [Checkin	8](#checkin)
 
 [/member/members/check-in/ POST	8](#/member/members/check-in/-post)
@@ -40,116 +44,117 @@
 
 [/member/members/{member\_uuid}/ GET	8](#/member/members/{member_uuid}/-get)
 
-[LUCKY SPIN	9](#lucky-spin)
+[LUCKY SPIN	10](#lucky-spin)
 
-[Spins	9](#spins)
+[Spins	10](#spins)
 
-[/member/\<member\_uuid\>/one-spin/ POST	9](#/member/\<member_uuid\>/one-spin/-post)
+[/member/\<member\_uuid\>/one-spin/ POST	10](#/member/\<member_uuid\>/one-spin/-post)
 
-[/member/\<member\_uuid\>/ten-spin/ POST	9](#/member/\<member_uuid\>/ten-spin/-post)
+[/member/\<member\_uuid\>/ten-spin/ POST	10](#/member/\<member_uuid\>/ten-spin/-post)
 
-[/member/\<member\_uuid\>/fifty-spin/ POST	9](#/member/\<member_uuid\>/fifty-spin/-post)
+[/member/\<member\_uuid\>/fifty-spin/ POST	10](#/member/\<member_uuid\>/fifty-spin/-post)
 
-[/member/\<member\_uuid\>/hundred-spin/ POST	9](#/member/\<member_uuid\>/hundred-spin/-post)
+[/member/\<member\_uuid\>/hundred-spin/ POST	10](#/member/\<member_uuid\>/hundred-spin/-post)
 
-[**PROFILE PAGE	10**](#profile-page)
+[**PROFILE PAGE	11**](#profile-page)
 
-[Personal data page	10](#personal-data-page)
+[Personal data page	11](#personal-data-page)
 
-[/member/profile/\<member\_uuid\>/ GET	10](#/member/profile/\<member_uuid\>/-get)
+[/member/profile/\<member\_uuid\>/ GET	11](#/member/profile/\<member_uuid\>/-get)
 
-[/member/profile/\<member\_uuid\>/update-profile/ PATCH	10](#/member/profile/\<member_uuid\>/update-profile/-patch)
+[/member/profile/\<member\_uuid\>/update-profile/ PATCH	11](#/member/profile/\<member_uuid\>/update-profile/-patch)
 
-[**LUCKY MART \- REDEMPTION	12**](#lucky-mart---redemption)
+[**LUCKY MART \- REDEMPTION	13**](#lucky-mart---redemption)
 
-[Redemption items / redeem	12](#redemption-items-/-redeem)
+[Redemption items / redeem	13](#redemption-items-/-redeem)
 
-[/redemption/redemption-items/ GET	12](#/redemption/redemption-items/-get)
+[/redemption/redemption-items/ GET	13](#/redemption/redemption-items/-get)
 
-[/redemption/redemption-items/available-items/ GET	12](#/redemption/redemption-items/available-items/-get)
+[/redemption/redemption-items/available-items/ GET	13](#/redemption/redemption-items/available-items/-get)
 
-[/redemption/redemption-items/{uuid}/redeem/ POST	12](#/redemption/redemption-items/{uuid}/redeem/-post)
+[/redemption/redemption-items/{uuid}/redeem/ POST	13](#/redemption/redemption-items/{uuid}/redeem/-post)
 
-[**BACK OFFICE	14**](#back-office)
+[**BACK OFFICE	15**](#back-office)
 
-[**Logins	14**](#logins)
+[**Logins	15**](#logins)
 
-[Login \- Admin Access Token	14](#login---admin-access-token)
+[Login \- Admin Access Token	15](#login---admin-access-token)
 
-[/login/admin-access-token/ POST	14](#/login/admin-access-token/-post)
+[/login/admin-access-token/ POST	15](#/login/admin-access-token/-post)
 
-[Login \- Logout	14](#login---logout)
+[Login \- Logout	15](#login---logout)
 
-[/login/logout/ POST	14](#/login/logout/-post)
+[/login/logout/ POST	15](#/login/logout/-post)
 
-[Login \- Refresh Token	14](#login---refresh-token)
+[Login \- Refresh Token	15](#login---refresh-token)
 
-[/login/refresh-token/ POST	14](#/login/refresh-token/-post)
+[/login/refresh-token/ POST	15](#/login/refresh-token/-post)
 
-[Login \- Verify Token	14](#login---verify-token)
+[Login \- Verify Token	15](#login---verify-token)
 
-[/login/verify-token/ POST	14](#/login/verify-token/-post)
+[/login/verify-token/ POST	15](#/login/verify-token/-post)
 
-[Lucky Spin Management	16](#lucky-spin-management)
+[Lucky Spin Management	17](#lucky-spin-management)
 
-[Lucky Spin Items	16](#lucky-spin-items)
+[Lucky Spin Items	17](#lucky-spin-items)
 
-[/lucky-spin/lucky-spin-items/ \- GET	16](#/lucky-spin/lucky-spin-items/---get)
+[/lucky-spin/lucky-spin-items/ \- GET	17](#/lucky-spin/lucky-spin-items/---get)
 
-[/lucky-spin/lucky-spin-items/{uuid}/ \- GET	16](#/lucky-spin/lucky-spin-items/{uuid}/---get)
+[/lucky-spin/lucky-spin-items/{uuid}/ \- GET	17](#/lucky-spin/lucky-spin-items/{uuid}/---get)
 
-[Lucky Spin Items \- POST and PUT	16](#lucky-spin-items---post-and-put)
+[Lucky Spin Items \- POST and PUT	17](#lucky-spin-items---post-and-put)
 
-[/lucky-spin/lucky-spin-items/ \- POST	16](#/lucky-spin/lucky-spin-items/---post)
+[/lucky-spin/lucky-spin-items/ \- POST	17](#/lucky-spin/lucky-spin-items/---post)
 
-[/lucky-spin/lucky-spin-items/{uuid}/ \- PUT	16](#/lucky-spin/lucky-spin-items/{uuid}/---put)
+[/lucky-spin/lucky-spin-items/{uuid}/ \- PUT	17](#/lucky-spin/lucky-spin-items/{uuid}/---put)
 
-[/lucky-spin/lucky-spin-items/{uuid}/archive/ \- PATCH	17](#/lucky-spin/lucky-spin-items/{uuid}/archive/---patch)
+[/lucky-spin/lucky-spin-items/{uuid}/archive/ \- PATCH	18](#/lucky-spin/lucky-spin-items/{uuid}/archive/---patch)
 
-[**Lucky Spin Sequence	17**](#lucky-spin-sequence)
+[**Lucky Spin Sequence	19**](#lucky-spin-sequence)
 
-[Lucky Spin Sequence \- GET	17](#lucky-spin-sequence---get)
+[Lucky Spin Sequence \- GET	19](#lucky-spin-sequence---get)
 
-[/lucky-spin/lucky-spin-sequences/ \- GET	17](#/lucky-spin/lucky-spin-sequences/---get)
+[/lucky-spin/lucky-spin-sequences/ \- GET	19](#/lucky-spin/lucky-spin-sequences/---get)
 
-[/lucky-spin/lucky-spin-sequences/{uuid}/ \- GET	17](#/lucky-spin/lucky-spin-sequences/{uuid}/---get)
+[/lucky-spin/lucky-spin-sequences/{uuid}/ \- GET	19](#/lucky-spin/lucky-spin-sequences/{uuid}/---get)
 
-[Lucky Spin Sequences \- POST	18](#lucky-spin-sequences---post)
+[Lucky Spin Sequences \- POST	19](#lucky-spin-sequences---post)
 
-[/lucky-spin/lucky-spin-sequences/ \- POST	18](#/lucky-spin/lucky-spin-sequences/---post)
+[/lucky-spin/lucky-spin-sequences/ \- POST	19](#/lucky-spin/lucky-spin-sequences/---post)
 
-[Lucky Spin Sequences \- DELETE	18](#lucky-spin-sequences---delete)
+[Lucky Spin Sequences \- DELETE	20](#lucky-spin-sequences---delete)
 
-[/lucky-spin/lucky-spin-sequences/{uuid}/ \- DELETE	18](#/lucky-spin/lucky-spin-sequences/{uuid}/---delete)
+[/lucky-spin/lucky-spin-sequences/{uuid}/ \- DELETE	20](#/lucky-spin/lucky-spin-sequences/{uuid}/---delete)
 
-[Lucky Spin Sequences ORDER \- PATCH	18](#lucky-spin-sequences-order---patch)
+[Lucky Spin Sequences ORDER \- PATCH	20](#lucky-spin-sequences-order---patch)
 
-[/lucky-spin/lucky-spin-sequences/change-spin-sequences/ \- PATCH	18](#/lucky-spin/lucky-spin-sequences/change-spin-sequences/---patch)
+[/lucky-spin/lucky-spin-sequences/change-spin-sequences/ \- PATCH	20](#/lucky-spin/lucky-spin-sequences/change-spin-sequences/---patch)
 
-[**Members	19**](#members)
+[**Members	21**](#members)
 
-[/member/members/ GET	19](#/member/members/-get)
+[/member/members/ GET	21](#/member/members/-get)
 
-[LUCKY MART \- Redemption Items	20](#lucky-mart---redemption-items)
+[LUCKY MART \- Redemption Items	22](#lucky-mart---redemption-items)
 
-[/redemption/redemption-items/ GET	20](#/redemption/redemption-items/-get-1)
+[/redemption/redemption-items/ GET	22](#/redemption/redemption-items/-get-1)
 
-[/redemption/redemption-items/ POST	20](#/redemption/redemption-items/-post)
+[/redemption/redemption-items/ POST	22](#/redemption/redemption-items/-post)
 
-[/redemption/redemption-items/{uuid}/ PUT	20](#/redemption/redemption-items/{uuid}/-put)
+[/redemption/redemption-items/{uuid}/ PUT	22](#/redemption/redemption-items/{uuid}/-put)
 
-[/redemption/redemption-items/{uuid}/archive/ PATCH	21](#/redemption/redemption-items/{uuid}/archive/-patch)
+[/redemption/redemption-items/{uuid}/archive/ PATCH	23](#/redemption/redemption-items/{uuid}/archive/-patch)
 
-[Checkin \- Settings	22](#checkin---settings)
+[Checkin \- Settings	24](#checkin---settings)
 
-[/settings/checkin-settings/ GET	22](#/settings/checkin-settings/-get)
+[/settings/checkin-settings/ GET	24](#/settings/checkin-settings/-get)
 
-[/settings/checkin-settings/ POST	22](#/settings/checkin-settings/-post)
+[/settings/checkin-settings/ POST	24](#/settings/checkin-settings/-post)
 
 # Changelog {#changelog}
 
 | Date | Changes Made | Modules |
 | :---- | :---- | :---- |
+| 2026/03/30 | Added winning list | Modules:User Page \- Front View \- Winning List |
 | 2026/03/09 | Added check in settings | Modules:Settings \- Checkin Settings |
 | 2026/01/19 | Added Welcome Gift Added Promotion to Redemption item | Modules:Member \- Welcome Gift Redemption \- Redemption Item |
 | 2025/12/23 | Added Member VIp Tier | Modules:Admin Page \- VIP Tiers Member \- Vip Badge Page |
@@ -229,6 +234,19 @@ Output
 | **4** | tokens\_obtained | Int |  |
 
 ## HOME PAGE {#home-page}
+
+### Front View \- Winning List {#front-view---winning-list}
+
+#### /front-view/winning-list/ GET {#/front-view/winning-list/-get}
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | uuid | UUID | No |  |
+| **2** | datetime\_obtained | datetime | No |  |
+| **3** | display\_name | Str | No | If phone number, will be masked automatically |
+| **4** | prize\_name | Str | No |  |
+
+Returns 200 maximum
 
 ### Checkin {#checkin}
 

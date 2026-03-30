@@ -128,3 +128,10 @@ export async function getCheckinSettings() {
     method: 'GET'
   }, true, 'member');
 }
+
+// GET /front-view/winning-list/
+export async function getWinningList() {
+  return await apiRequest(ENDPOINTS.FRONT_VIEW.WINNING_LIST, {
+    method: 'GET'
+  }, false);
+}

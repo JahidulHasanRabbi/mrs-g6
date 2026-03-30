@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { memo } from "react";
+import { memo, useState, useEffect } from "react";
 import { SPIN_ASSETS } from "./spinAssets";
+import { getWinningList } from "@/app/api/memberApi";
 
 const WinningRow = memo(function WinningRow({ date, phone, amount, index }) {
   return (
@@ -46,12 +47,30 @@ const WinningRow = memo(function WinningRow({ date, phone, amount, index }) {
 });
 
 const WinningList = memo(function WinningList() {
-  const winnings = [
-    { date: "31/12/2025", phone: "60******869", amount: "RM31.1" },
-    { date: "31/12/2025", phone: "60******869", amount: "RM1.27" },
-    { date: "31/12/2025", phone: "60******69", amount: "RM3.19" },
-    { date: "31/12/2025", phone: "60******869", amount: "RM0.97" },
-  ];
+  const [winnings, setWinnings] = useState([]);
+
+  useEffect(() => {
+    const fetchWinnings = async () => {
+      try {
+        const data = await getWinningList();
+        if (Array.isArray(data)) {
+          const formattedData = data.map(item => {
+            const dt = new Date(item.datetime_obtained || Date.now());
+            const dateStr = dt.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            return {
+              date: dateStr,
+              phone: item.display_name,
+              amount: item.prize_name
+            };
+          });
+          setWinnings(formattedData);
+        }
+      } catch (error) {
+        console.error("Failed to fetch winning list:", error);
+      }
+    };
+    fetchWinnings();
+  }, []);
 
   return (
     <motion.div 

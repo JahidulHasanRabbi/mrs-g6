@@ -205,8 +205,8 @@ export default function CheckInBoard() {
       setCheckedDays((prev) => [...prev, day.day]);
       
       // Display success message with earned tokens
-      const tokensEarned = response.tokens_earned || response.reward || 100; // Fallback to 100 if not specified
-      setSuccessMessage(`Congratulations! You've checked in for today and earned ${tokensEarned} tokens!`);
+      const displayReward = response.reward || (response.tokens_earned ? `${response.tokens_earned} tokens` : "your reward");
+      setSuccessMessage(`Congratulations! You've checked in for today and earned ${displayReward}!`);
       setShowSuccessModal(true);
 
       // Refresh member info after successful check-in
@@ -578,7 +578,7 @@ export default function CheckInBoard() {
                     color: "#60803C",
                   }}
                 >
-                  Congratulations! You’ve checked in for today and earned +1 “N1 token”!
+                  Congratulations! You’ve checked in for today and earned your reward(s)!
                 </p>
 
                 <p
