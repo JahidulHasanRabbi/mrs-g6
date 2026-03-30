@@ -6,6 +6,19 @@ import { memo, useState, useEffect } from "react";
 import { SPIN_ASSETS } from "./spinAssets";
 import { getWinningList } from "@/app/api/memberApi";
 
+const maskUsername = (name) => {
+  if (!name) return "";
+  if (name.includes("*")) return name; // Already masked by backend
+  if (name.length <= 2) return name[0] + "*";
+  if (name.length <= 4) return name[0] + "*".repeat(name.length - 2) + name[name.length - 1];
+  
+  const prefixLen = 2;
+  const suffixLen = 2;
+  const maskedLen = name.length - prefixLen - suffixLen;
+  
+  return name.substring(0, prefixLen) + "*".repeat(maskedLen) + name.substring(name.length - suffixLen);
+};
+
 const WinningRow = memo(function WinningRow({ date, phone, amount, index }) {
   return (
   <motion.div 
@@ -59,7 +72,7 @@ const WinningList = memo(function WinningList() {
             const dateStr = dt.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
             return {
               date: dateStr,
-              phone: item.display_name,
+              phone: maskUsername(item.display_name),
               amount: item.prize_name
             };
           });
@@ -69,7 +82,12 @@ const WinningList = memo(function WinningList() {
         console.error("Failed to fetch winning list:", error);
       }
     };
+    
     fetchWinnings();
+    
+    // Auto-update list every 30 seconds
+    const interval = setInterval(fetchWinnings, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
