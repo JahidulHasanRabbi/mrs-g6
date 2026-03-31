@@ -204,8 +204,9 @@ export default function CheckInBoard() {
       // Mark day as checked
       setCheckedDays((prev) => [...prev, day.day]);
 
-      // Display success message with earned tokens
-      const displayReward = response.reward || (response.tokens_earned ? `${response.tokens_earned} tokens` : "your reward");
+      // Display success message with earned tokens from API response
+      const tokensObtained = response.tokens_obtained;
+      const displayReward = tokensObtained != null ? `${tokensObtained} token${tokensObtained !== 1 ? 's' : ''}` : "your reward";
       setSuccessMessage(`Congratulations! You've checked in for today and earned ${displayReward}!`);
       setShowSuccessModal(true);
 

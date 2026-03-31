@@ -127,7 +127,6 @@ function CheckinSettingsContent() {
                     <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Minimum Reward</th>
                     <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Maximum Reward</th>
                     <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Display Text</th>
-                    <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Preview</th>
                     <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Actions</th>
                   </tr>
                 </thead>
@@ -161,15 +160,6 @@ function CheckinSettingsContent() {
                         </td>
                         <td className="px-5 py-3 text-sm text-white">
                           {dayReward.display_text || <span className="text-gray-500">Auto</span>}
-                        </td>
-                        <td className="px-5 py-3 text-sm">
-                          <span className="font-bold text-yellow-400">
-                            {dayReward.display_text || (
-                              dayReward.reward_minimum === dayReward.reward_maximum
-                                ? `+${dayReward.reward_minimum}`
-                                : `+${dayReward.reward_minimum}-${dayReward.reward_maximum}`
-                            )}
-                          </span>
                         </td>
                         <td className="px-5 py-3 text-sm">
                           <button
