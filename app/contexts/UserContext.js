@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect } from 'react';
-import { getMemberInfo } from '../api/memberApi';
+import { getMemberInfo, getProfile } from '../api/memberApi';
 import { tokenStorage } from '../api/tokenStorage';
 
 const UserContext = createContext();
@@ -15,17 +15,47 @@ export function UserProvider({ children }) {
     progress: 61.6,
     tokensNeeded: 20000,
   });
+  const [profilePicture, setProfilePicture] = useState(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [memberUuid, setMemberUuid] = useState(null);
+
+  // Check for memberUuid changes (e.g., after authentication)
+  useEffect(() => {
+    const checkMemberUuid = () => {
+      const uuid = tokenStorage.getMemberUuid();
+      if (uuid !== memberUuid) {
+        setMemberUuid(uuid);
+      }
+    };
+
+    // Check immediately
+    checkMemberUuid();
+
+    // Also check periodically in case tokens are set after mount
+    const interval = setInterval(checkMemberUuid, 500);
+
+    // Clear interval after 5 seconds (enough time for auth to complete)
+    const timeout = setTimeout(() => clearInterval(interval), 5000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [memberUuid]);
 
   useEffect(() => {
     const loadUserData = async () => {
-      const memberUuid = tokenStorage.getMemberUuid();
       console.log('UserContext: Loading user data, memberUuid:', memberUuid);
       if (!memberUuid) {
         console.log('UserContext: No memberUuid found');
+        setIsLoadingProfile(false);
         return;
       }
 
+      setIsLoadingProfile(true);
+
       try {
+        // Fetch member info for balance and basic data
         const memberInfo = await getMemberInfo(memberUuid);
         console.log('UserContext: Member info received:', memberInfo);
         const formattedBalance = parseFloat(memberInfo.current_tokens).toLocaleString('en-US', {
@@ -39,13 +69,26 @@ export function UserProvider({ children }) {
           balance: formattedBalance,
           currentLevel: memberInfo.tier || prev.currentLevel,
         }));
+
+        // Fetch profile data for profile picture
+        try {
+          const profileData = await getProfile(memberUuid);
+          console.log('UserContext: Profile data received:', profileData);
+          if (profileData.profile_picture) {
+            setProfilePicture(profileData.profile_picture);
+          }
+        } catch (profileError) {
+          console.error('UserContext: Error loading profile picture:', profileError);
+        }
       } catch (error) {
         console.error('Error loading user data:', error);
+      } finally {
+        setIsLoadingProfile(false);
       }
     };
 
     loadUserData();
-  }, []);
+  }, [memberUuid]);
 
   const updateBalance = (newBalance) => {
     setUserData(prev => ({ ...prev, balance: newBalance }));
@@ -55,8 +98,29 @@ export function UserProvider({ children }) {
     setUserData(prev => ({ ...prev, ...newData }));
   };
 
+  const updateProfilePicture = async () => {
+    const memberUuid = tokenStorage.getMemberUuid();
+    if (!memberUuid) return;
+
+    try {
+      const profileData = await getProfile(memberUuid);
+      if (profileData.profile_picture) {
+        setProfilePicture(profileData.profile_picture);
+      }
+    } catch (error) {
+      console.error('Error updating profile picture:', error);
+    }
+  };
+
   return (
-    <UserContext.Provider value={{ userData, updateBalance, updateUserData }}>
+    <UserContext.Provider value={{ 
+      userData, 
+      profilePicture, 
+      isLoadingProfile,
+      updateBalance, 
+      updateUserData,
+      updateProfilePicture 
+    }}>
       {children}
     </UserContext.Provider>
   );

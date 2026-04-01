@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, memo, useEffect } from "react";
+import { useState, useCallback, memo } from "react";
 import { HamburgerMenu } from "../hamburger";
 import { FooterNav } from "../footer";
 import { Header } from "../header";
@@ -8,35 +8,14 @@ import CheckInBoard from "./CheckInBoard";
 import SpecialOffersCarousel from "./SpecialOffersCarousel";
 import VideoGallery from "./VideoGallery";
 import { HOME_ASSETS } from "./homeAssets";
-import { getProfile } from "@/app/api/memberApi";
-import { tokenStorage } from "@/app/api/tokenStorage";
+import { useUser } from "@/app/contexts/UserContext";
 
 const Home = memo(function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [profilePhoto, setProfilePhoto] = useState(null);
+  const { profilePicture } = useUser();
 
   const handleMenuOpen = useCallback(() => setIsMenuOpen(true), []);
   const handleMenuClose = useCallback(() => setIsMenuOpen(false), []);
-
-  // Fetch profile data to get profile photo
-  useEffect(() => {
-    const fetchProfileData = async () => {
-      try {
-        const memberUuid = tokenStorage.getMemberUuid();
-        if (!memberUuid) return;
-
-        const profileData = await getProfile(memberUuid);
-        // Use profile photo if available from API
-        if (profileData.profile_photo) {
-          setProfilePhoto(profileData.profile_photo);
-        }
-      } catch (error) {
-        console.error("Error fetching profile data:", error);
-      }
-    };
-
-    fetchProfileData();
-  }, []);
 
   return (
     <div
@@ -48,7 +27,7 @@ const Home = memo(function Home() {
         backgroundRepeat: "no-repeat",
       }}
     >
-      <Header onMenuClick={handleMenuOpen} profilePhoto={profilePhoto} />
+      <Header onMenuClick={handleMenuOpen} profilePhoto={profilePicture} />
 
       <HamburgerMenu isOpen={isMenuOpen} onClose={handleMenuClose} />
 

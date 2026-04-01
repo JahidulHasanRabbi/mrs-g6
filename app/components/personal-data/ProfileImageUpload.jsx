@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { FORM_COLORS } from "./constants";
 import { PencilIcon } from "./FormIcons";
 
@@ -12,12 +11,12 @@ export default function ProfileImageUpload({ imageSrc, onEditClick }) {
         className="w-full h-full rounded-full overflow-hidden border-4"
         style={{ borderColor: FORM_COLORS.primary }}
       >
-        <Image
+        <img
           src={imageSrc}
           alt="Profile"
           width={140}
           height={140}
-          className="object-cover"
+          className="object-cover w-full h-full"
         />
       </div>
 

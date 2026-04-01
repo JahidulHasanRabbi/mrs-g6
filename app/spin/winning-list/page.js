@@ -6,6 +6,7 @@ import { HamburgerMenu } from "../../components/hamburger";
 import { FooterNav } from "../../components/footer";
 import { Header } from "../../components/header";
 import { HOME_ASSETS } from "../../components/home/homeAssets";
+import { useUser } from "@/app/contexts/UserContext";
 
 const imgLuckySpinWinningList =
   "http://localhost:3845/assets/f315c0f933f1d247d589c0a45aee6ddd03255f62.png";
@@ -13,6 +14,7 @@ const imgLuckySpinWinningList =
 export default function SpinWinningListPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const { profilePicture } = useUser();
 
   return (
     <div
@@ -24,7 +26,7 @@ export default function SpinWinningListPage() {
         backgroundRepeat: "no-repeat",
       }}
     >
-      <Header onMenuClick={() => setIsMenuOpen(true)} />
+      <Header onMenuClick={() => setIsMenuOpen(true)} profilePhoto={profilePicture} />
 
       <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 

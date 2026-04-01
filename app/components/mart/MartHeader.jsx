@@ -2,8 +2,9 @@
 
 import { motion } from "framer-motion";
 import { MART_ASSETS } from "./martAssets";
+import { PROFILE_ASSETS } from "../profile/profileAssets";
 
-export default function MartHeader({ balance = "5,450.00", onMenuClick, onProfileClick, showAnimation = false }) {
+export default function MartHeader({ balance = "5,450.00", onMenuClick, onProfileClick, showAnimation = false, profilePhoto = null }) {
   return (
     <motion.div 
       className="relative w-full h-[56px] px-[21px] pt-[14px]"
@@ -61,13 +62,13 @@ export default function MartHeader({ balance = "5,450.00", onMenuClick, onProfil
       {/* Profile Button */}
       <motion.button
         onClick={onProfileClick}
-        className="absolute right-[21px] top-[14px] w-[52px] h-[52px] cursor-pointer"
+        className="absolute right-[21px] top-[14px] w-[52px] h-[52px] rounded-full overflow-hidden border-2 border-[#e9af41] cursor-pointer"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
       >
         <img
           alt="Profile"
-          src={MART_ASSETS.profileIcon}
+          src={profilePhoto || PROFILE_ASSETS.profileAvatar}
           className="w-full h-full object-cover"
         />
       </motion.button>

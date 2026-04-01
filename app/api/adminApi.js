@@ -182,3 +182,36 @@ export async function updateCheckinSettings(daySettings) {
     body: { day_settings: daySettings }
   }, true, 'admin');
 }
+
+// Banners Management
+export async function getBanners() {
+  return await apiRequest(ENDPOINTS.ADMIN.BANNERS, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function getBanner(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.BANNER(uuid), {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function createBanner(bannerData) {
+  return await apiRequest(ENDPOINTS.ADMIN.BANNERS, {
+    method: 'POST',
+    body: bannerData
+  }, true, 'admin');
+}
+
+export async function updateBanner(uuid, bannerData) {
+  return await apiRequest(ENDPOINTS.ADMIN.BANNER(uuid), {
+    method: 'PUT',
+    body: bannerData
+  }, true, 'admin');
+}
+
+export async function archiveBanner(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.ARCHIVE_BANNER(uuid), {
+    method: 'PATCH'
+  }, true, 'admin');
+}

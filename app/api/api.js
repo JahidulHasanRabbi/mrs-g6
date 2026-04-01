@@ -20,6 +20,9 @@ export const ENDPOINTS = {
   FRONT_VIEW: {
     WINNING_LIST: '/front-view/winning-list/'
   },
+  SETTINGS: {
+    PUBLIC_BANNERS: '/settings/banners/public/'
+  },
   ADMIN: {
     LOGIN: '/login/admin-access-token/',
     LOGOUT: '/login/logout/',
@@ -38,6 +41,9 @@ export const ENDPOINTS = {
     REDEMPTION_ITEMS: '/redemption/redemption-items/',
     REDEMPTION_ITEM: (uuid) => `/redemption/redemption-items/${uuid}/`,
     ARCHIVE_REDEMPTION_ITEM: (uuid) => `/redemption/redemption-items/${uuid}/archive/`,
-    CHECKIN_SETTINGS: '/settings/checkin-settings/'
+    CHECKIN_SETTINGS: '/settings/checkin-settings/',
+    BANNERS: '/settings/banners/',
+    BANNER: (uuid) => `/settings/banners/${uuid}/`,
+    ARCHIVE_BANNER: (uuid) => `/settings/banners/${uuid}/archive/`
   }
 };

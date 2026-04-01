@@ -32,6 +32,7 @@ export default function ProfileCard({
     currentLevel: propCurrentLevel || "Gold"
   });
   const [fullName, setFullName] = useState(null);
+  const [profilePicture, setProfilePicture] = useState(null);
   const [welcomeFlag, setWelcomeFlag] = useState(null); // null = loading, true = claimed, false = unclaimed
   const [isClaimingGift, setIsClaimingGift] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -191,6 +192,14 @@ export default function ProfileCard({
       } else {
         console.log("ProfileCard: No full_name in response");
       }
+      
+      // Set profile picture if available
+      if (profileResponse.profile_picture) {
+        console.log("ProfileCard: Setting profile picture:", profileResponse.profile_picture);
+        setProfilePicture(profileResponse.profile_picture);
+      } else {
+        console.log("ProfileCard: No profile_picture in response");
+      }
     } catch (err) {
       console.error("ProfileCard: Error fetching profile data:", err);
       // Don't show error for profile data fetch, just log it
@@ -307,7 +316,11 @@ export default function ProfileCard({
               delay: 0.4,
             }}
           >
-            <Image alt={displayName} src={avatarSrc} fill className="object-cover" />
+            <img 
+              alt={displayName} 
+              src={profilePicture || avatarSrc} 
+              className="object-cover w-full h-full" 
+            />
           </motion.div>
 
           {/* Name and Tokens */}

@@ -66,6 +66,13 @@ const SECONDARY_MENU = [
     disabled: false,
   },
   {
+    id: "banners",
+    label: "Banners Management",
+    icon: "/assets/admin/home-icon.png", // Using home icon as placeholder
+    href: "/admin/banners",
+    disabled: false,
+  },
+  {
     id: "reports",
     label: "Reports",
     icon: "/assets/admin/reports-icon.png",

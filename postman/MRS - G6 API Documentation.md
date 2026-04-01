@@ -74,6 +74,12 @@
 
 [/redemption/redemption-items/{uuid}/redeem/ POST	13](#/redemption/redemption-items/{uuid}/redeem/-post)
 
+[**User Page \- Banners	14**](#user-page---banners)
+
+[Public Banners	14](#public-banners)
+
+[/settings/banners/public/ GET	14](#/settings/banners/public/-get)
+
 [**BACK OFFICE	15**](#back-office)
 
 [**Logins	15**](#logins)
@@ -150,10 +156,23 @@
 
 [/settings/checkin-settings/ POST	24](#/settings/checkin-settings/-post)
 
+[Banners \- Settings	25](#banners---settings)
+
+[Banners in Admin Panel	25](#banners-in-admin-panel)
+
+[/settings/banners/ GET	25](#/settings/banners/-get)
+
+[/settings/banners/ POST	25](#/settings/banners/-post)
+
+[/settings/banners/{uuid}/ PUT	25](#/settings/banners/{uuid}/-put)
+
+[/settings/banners/{uuid}/archive/ PATCH	25](#/settings/banners/{uuid}/archive/-patch)
+
 # Changelog {#changelog}
 
 | Date | Changes Made | Modules |
 | :---- | :---- | :---- |
+| 2026/03/31 | Added profile picture to member profileAdded banners | Modules: Profile Page User Page \- Banners Back Office \- Banners |
 | 2026/03/30 | Added winning list | Modules:User Page \- Front View \- Winning List |
 | 2026/03/09 | Added check in settings | Modules:Settings \- Checkin Settings |
 | 2026/01/19 | Added Welcome Gift Added Promotion to Redemption item | Modules:Member \- Welcome Gift Redemption \- Redemption Item |
@@ -252,6 +271,13 @@ Returns 200 maximum
 
 #### /member/members/check-in/ POST {#/member/members/check-in/-post}
 
+Returns
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | uuid | UUID | No |  |
+| **2** | tokens\_obtained | Int | No |  |
+
 ### Welcome Gift {#welcome-gift}
 
 #### /member/members/welcome/ POST {#/member/members/welcome/-post}
@@ -312,6 +338,7 @@ Response
 | **6** | gender | str | Yes |  |
 | **7** | hobby | str | Yes |  |
 | **8** | free\_token\_flag | bool | \- | False if tokens is unclaimed, True if tokens are claimed |
+| **9** | profile\_picture | Image | Yes |  |
 
 #### /member/profile/\<member\_uuid\>/update-profile/ PATCH {#/member/profile/<member_uuid>/update-profile/-patch}
 
@@ -324,6 +351,7 @@ Input
 | **3** | date\_of\_birth | date | Yes |  |
 | **4** | gender | Int (Enum) | Yes | 1 \- Male 2 \- Female 3 \- Prefer not to say |
 | **5** | hobby | Int (Enum) | Yes | 1 \- Reading 2 \- Cooking / Baking 3 \- Travelling 4 \- Music 5 \- Gaming 6 \- Sports 7 \- Gardening 8 \- Photography 9 \- Art 10 \- Crafting 11 \- Watching Videos 12 \- Dancing 13 \- Hiking 14 \- Writing 15 \- Animal Care |
+| **6** | profile\_picture | Image | Yes |  |
 
 # LUCKY MART \- REDEMPTION {#lucky-mart---redemption}
 
@@ -363,7 +391,21 @@ Output
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | details | str | No | Provides error message if necessary |
 
-# 
+# User Page \- Banners {#user-page---banners}
+
+### Public Banners {#public-banners}
+
+### /settings/banners/public/ GET {#/settings/banners/public/-get}
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | uuid | UUID | No |  |
+| **2** | name | str | No |  |
+| **3** | image | Image | No |  |
+| **4** | slug | Str (url) | No | Where the banner will link to |
+| **5** | active\_until | datetime | No |  |
+
+### 
 
 # BACK OFFICE {#back-office}
 
@@ -586,3 +628,30 @@ Input
 | **1d** | display\_text | str | True |  |
 
 It will automatically delete days which are not inputted
+
+## Banners \- Settings {#banners---settings}
+
+### Banners in Admin Panel {#banners-in-admin-panel}
+
+### /settings/banners/ GET {#/settings/banners/-get}
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | uuid | UUID | No |  |
+| **2** | name | str | No |  |
+| **3** | image | Image | No |  |
+| **4** | slug | Str (url) | No | Where the banner will link to |
+| **5** | active\_until | datetime | No |  |
+
+### /settings/banners/ POST {#/settings/banners/-post}
+
+### /settings/banners/{uuid}/ PUT {#/settings/banners/{uuid}/-put}
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | name | str | No |  |
+| **2** | image | Image | No |  |
+| **3** | slug | Str (url) | No | Where the banner will link to |
+| **4** | active\_until | datetime | No |  |
+
+### /settings/banners/{uuid}/archive/ PATCH {#/settings/banners/{uuid}/archive/-patch}

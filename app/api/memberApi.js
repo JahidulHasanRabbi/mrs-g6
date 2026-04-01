@@ -50,12 +50,19 @@ export async function getProfile(memberUuid) {
   }, true, 'member');
 }
 
-// PUT /member/{uuid}/profile/
-export async function updateProfile(memberUuid, data) {
+// PATCH /member/{uuid}/update-profile/
+export async function updateProfile(memberUuid, profileData) {
   return await apiRequest(ENDPOINTS.MEMBER.UPDATE_PROFILE(memberUuid), {
     method: 'PATCH',
-    body: data
+    body: profileData
   }, true, 'member');
+}
+
+// GET /settings/banners/public/
+export async function getPublicBanners() {
+  return await apiRequest(ENDPOINTS.SETTINGS.PUBLIC_BANNERS, {
+    method: 'GET'
+  }, false);
 }
 
 // GET /lucky-spin/items/

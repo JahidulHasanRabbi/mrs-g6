@@ -100,12 +100,10 @@ function Header({ onMenuClick, showAnimation = false, balance = null, profilePho
               whileTap={{ scale: 0.95 }}
               aria-label="Go to profile"
             >
-              <Image
+              <img
                 alt="Profile"
                 src={profilePhoto || PROFILE_ASSETS.profileAvatar}
-                fill
-                className="object-cover"
-                sizes="44px"
+                className="object-cover w-full h-full"
               />
             </motion.button>
 

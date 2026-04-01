@@ -12,12 +12,16 @@ import { FORM_FIELDS, PERSONAL_DATA_ASSETS } from "./constants";
 import { getProfile, updateProfile } from "@/app/api/memberApi";
 import { mapProfileDataToForm, mapFormDataToProfileUpdate } from "@/app/api/responseMappers";
 import { tokenStorage } from "@/app/api/tokenStorage";
+import { useUser } from "@/app/contexts/UserContext";
 
 export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
   const router = useRouter();
+  const { updateProfilePicture } = useUser();
   const [formData, setFormData] = useState(
     FORM_FIELDS.reduce((acc, field) => ({ ...acc, [field.id]: "" }), {})
   );
+  const [profileImage, setProfileImage] = useState(null);
+  const [profileImageFile, setProfileImageFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -48,6 +52,11 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
           hobby: mappedData.hobby
         });
         
+        // Set profile image if available
+        if (profileData.profile_picture) {
+          setProfileImage(profileData.profile_picture);
+        }
+        
         setFreeTokenFlag(mappedData.free_token_flag);
       } catch (err) {
         console.error("Error fetching profile data:", err);
@@ -60,10 +69,12 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
     fetchProfileData();
   }, []);
 
-  // Calculate progress based on filled fields (20% per field)
+  // Calculate progress based on filled fields + profile image (16.67% per field for 6 total items)
   const calculateProgress = () => {
     const filledFields = Object.values(formData).filter(value => value && value.toString().trim() !== "").length;
-    return (filledFields / FORM_FIELDS.length) * 100;
+    const hasProfileImage = profileImage ? 1 : 0;
+    const totalItems = FORM_FIELDS.length + 1; // 5 fields + 1 profile image
+    return ((filledFields + hasProfileImage) / totalItems) * 100;
   };
 
   const progress = calculateProgress();
@@ -74,7 +85,20 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
 
   const handleProfileEdit = () => {
     console.log("Edit profile picture clicked");
-    // Add file upload logic here
+    // Create a file input element
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        // Create preview URL
+        const previewUrl = URL.createObjectURL(file);
+        setProfileImage(previewUrl);
+        setProfileImageFile(file);
+      }
+    };
+    input.click();
   };
 
   const handleSubmit = async () => {
@@ -90,6 +114,11 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
       // Transform form data to API format (only filled fields, convert enums to integers)
       const updatePayload = mapFormDataToProfileUpdate(formData);
       
+      // Add profile picture if a new one was selected
+      if (profileImageFile) {
+        updatePayload.profile_picture = profileImageFile;
+      }
+      
       // Call update profile API
       await updateProfile(memberUuid, updatePayload);
       
@@ -103,15 +132,31 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
         gender: mappedData.gender,
         hobby: mappedData.hobby
       });
+      
+      // Set profile image if available
+      if (updatedProfile.profile_picture) {
+        setProfileImage(updatedProfile.profile_picture);
+      }
+      
+      // Check if user just earned free tokens (was false, now true)
+      const earnedTokens = !freeTokenFlag && mappedData.free_token_flag;
       setFreeTokenFlag(mappedData.free_token_flag);
+      
+      // Update profile picture in global context
+      await updateProfilePicture();
       
       // Call parent onSubmit if provided
       if (onSubmit) {
         await onSubmit(formData);
       }
       
-      // Show success modal
-      setShowSuccessModal(true);
+      // Show success modal only if tokens were earned
+      if (earnedTokens) {
+        setShowSuccessModal(true);
+      } else {
+        // Just navigate back if no tokens earned
+        router.push('/profile');
+      }
     } catch (err) {
       console.error("Form submission error:", err);
       setError(err.message || "Failed to update profile");
@@ -170,7 +215,7 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
       <ProgressBar progress={progress} />
 
       <ProfileImageUpload
-        imageSrc="/assets/personal-data/profile-placeholder.png"
+        imageSrc={profileImage || "/assets/personal-data/profile-placeholder.png"}
         onEditClick={handleProfileEdit}
       />
 

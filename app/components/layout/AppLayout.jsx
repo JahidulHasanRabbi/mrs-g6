@@ -13,7 +13,7 @@ export default function AppLayout({ children }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hasAnimated, setHasAnimated] = useState(false);
   const pathname = usePathname();
-  const { userData } = useUser();
+  const { userData, profilePicture } = useUser();
 
   // Track initial mount to show animations only once
   useEffect(() => {
@@ -58,12 +58,14 @@ export default function AppLayout({ children }) {
           onMenuClick={() => setIsMenuOpen(true)}
           onProfileClick={() => console.log("Profile clicked")}
           showAnimation={!hasAnimated}
+          profilePhoto={profilePicture}
         />
       ) : (
         <Header
           onMenuClick={() => setIsMenuOpen(true)}
           showAnimation={!hasAnimated}
           balance={isSpinPage ? userData.balance : null}
+          profilePhoto={profilePicture}
         />
       )}
 
