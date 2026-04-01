@@ -55,56 +55,87 @@ function AdminDashboardContent() {
       };
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     
-    // Count active users today (logged in today)
+    // Count active users today (logged in today OR checked in today)
     const activeToday = members.filter(member => {
-      if (!member.last_login_datetime) return false;
-      const loginDate = new Date(member.last_login_datetime);
-      loginDate.setHours(0, 0, 0, 0);
-      return loginDate.getTime() === today.getTime();
+      // Check if logged in today
+      if (member.last_login_datetime) {
+        const loginDate = new Date(member.last_login_datetime);
+        const loginDay = new Date(loginDate.getFullYear(), loginDate.getMonth(), loginDate.getDate());
+        if (loginDay.getTime() === today.getTime()) return true;
+      }
+      
+      // Check if checked in today
+      if (member.last_check_in_date) {
+        const checkinDate = new Date(member.last_check_in_date);
+        const checkinDay = new Date(checkinDate.getFullYear(), checkinDate.getMonth(), checkinDate.getDate());
+        if (checkinDay.getTime() === today.getTime()) return true;
+      }
+      
+      return false;
     }).length;
 
     // Calculate weekly activity (last 7 days)
     const weeklyActive = [];
     const checkins = [];
-    let activeUsers7Days = 0;
     
     for (let i = 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      date.setHours(0, 0, 0, 0);
+      const targetDate = new Date(today);
+      targetDate.setDate(targetDate.getDate() - i);
       
-      const nextDate = new Date(date);
-      nextDate.setDate(nextDate.getDate() + 1);
-      
-      // Count logins for this day
-      const loginsThisDay = members.filter(member => {
-        if (!member.last_login_datetime) return false;
-        const loginDate = new Date(member.last_login_datetime);
-        return loginDate >= date && loginDate < nextDate;
+      // Count unique users active on this day (login OR check-in)
+      const activeThisDay = members.filter(member => {
+        // Check login
+        if (member.last_login_datetime) {
+          const loginDate = new Date(member.last_login_datetime);
+          const loginDay = new Date(loginDate.getFullYear(), loginDate.getMonth(), loginDate.getDate());
+          if (loginDay.getTime() === targetDate.getTime()) return true;
+        }
+        
+        // Check check-in
+        if (member.last_check_in_date) {
+          const checkinDate = new Date(member.last_check_in_date);
+          const checkinDay = new Date(checkinDate.getFullYear(), checkinDate.getMonth(), checkinDate.getDate());
+          if (checkinDay.getTime() === targetDate.getTime()) return true;
+        }
+        
+        return false;
       }).length;
       
       // Count check-ins for this day
       const checkinsThisDay = members.filter(member => {
         if (!member.last_check_in_date) return false;
         const checkinDate = new Date(member.last_check_in_date);
-        checkinDate.setHours(0, 0, 0, 0);
-        return checkinDate.getTime() === date.getTime();
+        const checkinDay = new Date(checkinDate.getFullYear(), checkinDate.getMonth(), checkinDate.getDate());
+        return checkinDay.getTime() === targetDate.getTime();
       }).length;
       
-      weeklyActive.push(loginsThisDay);
+      weeklyActive.push(activeThisDay);
       checkins.push(checkinsThisDay);
     }
 
-    // Count unique users active in last 7 days
+    // Count unique users active in last 7 days (login OR check-in)
     const sevenDaysAgo = new Date(today);
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    activeUsers7Days = members.filter(member => {
-      if (!member.last_login_datetime) return false;
-      const loginDate = new Date(member.last_login_datetime);
-      return loginDate >= sevenDaysAgo;
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6); // Last 7 days including today
+    
+    const activeUsers7Days = members.filter(member => {
+      // Check login in last 7 days
+      if (member.last_login_datetime) {
+        const loginDate = new Date(member.last_login_datetime);
+        const loginDay = new Date(loginDate.getFullYear(), loginDate.getMonth(), loginDate.getDate());
+        if (loginDay >= sevenDaysAgo && loginDay <= today) return true;
+      }
+      
+      // Check check-in in last 7 days
+      if (member.last_check_in_date) {
+        const checkinDate = new Date(member.last_check_in_date);
+        const checkinDay = new Date(checkinDate.getFullYear(), checkinDate.getMonth(), checkinDate.getDate());
+        if (checkinDay >= sevenDaysAgo && checkinDay <= today) return true;
+      }
+      
+      return false;
     }).length;
 
     const totalCheckins = checkins.reduce((a, b) => a + b, 0);
@@ -120,8 +151,20 @@ function AdminDashboardContent() {
   }, [members]);
 
   const dayLabels = useMemo(() => {
-    const days = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-    return days;
+    const labels = [];
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      // Format as "MM/DD" (e.g., "03/25")
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      labels.push(`${month}/${day}`);
+    }
+    
+    return labels;
   }, []);
 
   if (loading) {

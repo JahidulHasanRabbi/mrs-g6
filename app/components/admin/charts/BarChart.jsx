@@ -6,8 +6,26 @@ export default function BarChart({
   height = 269,
   highlightIndex = 3,
 }) {
-  const max = 8000;
-  const yLabels = ["8K", "6K", "4K", "2K", "0"];
+  // Calculate max dynamically from values, with a minimum of 10 for better visualization
+  const dataMax = Math.max(...values, 1);
+  const max = Math.max(Math.ceil(dataMax * 1.2), 10); // Add 20% padding and minimum of 10
+  
+  // Generate Y-axis labels dynamically - evenly spaced
+  const generateYLabels = (maxValue) => {
+    const numLabels = 5;
+    const labels = [];
+    for (let i = 0; i < numLabels; i++) {
+      const value = Math.round(maxValue * (1 - i / (numLabels - 1)));
+      if (value >= 1000) {
+        labels.push(`${(value / 1000).toFixed(value % 1000 === 0 ? 0 : 1)}K`);
+      } else {
+        labels.push(value.toString());
+      }
+    }
+    return labels;
+  };
+  
+  const yLabels = generateYLabels(max);
   const barWidth = 25;
   const barSpacing = 80;
   const chartWidth = labels.length * barSpacing + 60;
@@ -18,7 +36,7 @@ export default function BarChart({
   return (
     <div className="w-full flex">
       {/* Y-axis labels */}
-      <div className="flex flex-col justify-between pr-[18px] pb-[12px]" style={{ height: `${height}px` }}>
+      <div className="flex flex-col justify-between pr-[18px]" style={{ height: `${chartHeight}px` }}>
         {yLabels.map((label, i) => (
           <p key={i} className="text-[12px] text-[#757575] font-['Times_New_Roman'] leading-[1.3] text-right">
             {label}
