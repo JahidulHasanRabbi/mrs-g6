@@ -58,11 +58,15 @@ export default function FormField({
               type="date"
               value={value}
               onChange={(e) => onChange(id, e.target.value)}
-              className={`${commonClasses} pr-12`}
+              className={`${commonClasses} pr-12 cursor-pointer`}
               style={commonStyles}
+              onClick={(e) => e.currentTarget.showPicker?.()}
             />
             {icon === "calendar" && (
-              <div className="absolute right-[23px] top-1/2 -translate-y-1/2 w-6 h-6 pointer-events-none">
+              <div 
+                className="absolute right-[23px] top-1/2 -translate-y-1/2 w-6 h-6 cursor-pointer"
+                onClick={() => document.getElementById(id)?.showPicker?.()}
+              >
                 <CalendarIcon />
               </div>
             )}

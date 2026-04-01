@@ -55,7 +55,11 @@ const SpecialOffersCarousel = memo(function SpecialOffersCarousel() {
 
   const handleBannerClick = useCallback((slug) => {
     if (slug) {
-      window.open(slug, '_blank', 'noopener,noreferrer');
+      // Ensure the URL has a protocol, otherwise add https://
+      const url = slug.startsWith('http://') || slug.startsWith('https://') 
+        ? slug 
+        : `https://${slug}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
     }
   }, []);
 

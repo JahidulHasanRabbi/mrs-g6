@@ -50,7 +50,7 @@ export default function BannersTable({ banners, onEdit, onArchive }) {
                   <td className="px-5 py-3 text-sm text-white">{banner.name}</td>
                   <td className="px-5 py-3 text-sm text-gray-400">
                     <a
-                      href={banner.slug}
+                      href={banner.slug.startsWith('http://') || banner.slug.startsWith('https://') ? banner.slug : `https://${banner.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[#e9af41] hover:underline"

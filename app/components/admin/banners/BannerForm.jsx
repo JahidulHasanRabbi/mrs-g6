@@ -192,7 +192,8 @@ export default function BannerForm({ banner, onClose, onSuccess }) {
             value={formData.active_until}
             onChange={handleInputChange}
             required
-            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded text-white focus:outline-none focus:ring-2 focus:ring-[#e9af41]"
+            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded text-white focus:outline-none focus:ring-2 focus:ring-[#e9af41] cursor-pointer"
+            onClick={(e) => e.currentTarget.showPicker?.()}
           />
         </div>
 
