@@ -59,8 +59,9 @@ export async function updateProfile(memberUuid, profileData) {
 }
 
 // GET /settings/banners/public/
-export async function getPublicBanners() {
-  return await apiRequest(ENDPOINTS.SETTINGS.PUBLIC_BANNERS, {
+export async function getPublicBanners(location = null) {
+  const queryParams = location ? `?location=${location}` : '';
+  return await apiRequest(`${ENDPOINTS.SETTINGS.PUBLIC_BANNERS}${queryParams}`, {
     method: 'GET'
   }, false);
 }

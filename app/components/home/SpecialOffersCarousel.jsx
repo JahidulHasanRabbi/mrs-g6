@@ -18,7 +18,8 @@ const SpecialOffersCarousel = memo(function SpecialOffersCarousel() {
     const fetchBanners = async () => {
       try {
         setLoading(true);
-        const data = await getPublicBanners();
+        // Fetch only Main Page banners (location = 1)
+        const data = await getPublicBanners(1);
         console.log("Fetched banners:", data);
         
         // Filter active banners (active_until is in the future)

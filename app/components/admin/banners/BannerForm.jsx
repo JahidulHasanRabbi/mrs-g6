@@ -8,6 +8,7 @@ export default function BannerForm({ banner, onClose, onSuccess }) {
     name: '',
     slug: '',
     active_until: '',
+    location: 1, // Default to Main Page
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -24,6 +25,7 @@ export default function BannerForm({ banner, onClose, onSuccess }) {
             name: bannerDetails.name || '',
             slug: bannerDetails.slug || '',
             active_until: bannerDetails.active_until ? formatDateTimeLocal(bannerDetails.active_until) : '',
+            location: bannerDetails.location === 'Side Panel' ? 2 : 1, // Convert string to enum
           });
           setImagePreview(bannerDetails.image);
         } catch (error) {
@@ -33,6 +35,7 @@ export default function BannerForm({ banner, onClose, onSuccess }) {
             name: banner.name || '',
             slug: banner.slug || '',
             active_until: banner.active_until ? formatDateTimeLocal(banner.active_until) : '',
+            location: banner.location === 'Side Panel' ? 2 : 1,
           });
           setImagePreview(banner.image);
         }
@@ -79,6 +82,7 @@ export default function BannerForm({ banner, onClose, onSuccess }) {
         name: formData.name,
         slug: formData.slug,
         active_until: new Date(formData.active_until).toISOString(),
+        location: parseInt(formData.location), // Ensure it's an integer
       };
 
       // Only add image if user uploaded a new one
@@ -180,6 +184,22 @@ export default function BannerForm({ banner, onClose, onSuccess }) {
             className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#e9af41]"
             placeholder="https://example.com"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-400 mb-2">
+            Location *
+          </label>
+          <select
+            name="location"
+            value={formData.location}
+            onChange={handleInputChange}
+            required
+            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded text-white focus:outline-none focus:ring-2 focus:ring-[#e9af41] cursor-pointer"
+          >
+            <option value={1}>Main Page</option>
+            <option value={2}>Side Panel</option>
+          </select>
         </div>
 
         <div>

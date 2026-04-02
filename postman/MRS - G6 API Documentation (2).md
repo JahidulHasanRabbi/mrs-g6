@@ -2,176 +2,177 @@
 
 [**Table of Contents	1**](#table-of-contents)
 
-[**Changelog	3**](#changelog)
+[**Changelog	4**](#changelog)
 
-[**Initial Setup of MRS	4**](#initial-setup-of-mrs)
+[**Initial Setup of MRS	5**](#initial-setup-of-mrs)
 
-[Base Domain	4](#base-domain)
+[Base Domain	5](#base-domain)
 
-[Developer Access	4](#developer-access)
+[Developer Access	5](#developer-access)
 
-[**ADMIN PAGE	5**](#admin-page)
+[**ADMIN PAGE	6**](#admin-page)
 
-[MEMBER VIP TIER	5](#member-vip-tier)
+[MEMBER VIP TIER	6](#member-vip-tier)
 
-[/member/vip-tier/ GET	5](#/member/vip-tier/-get)
+[/member/vip-tier/ GET	6](#/member/vip-tier/-get)
 
-[/member/vip-tier/ POST	5](#/member/vip-tier/-post)
+[/member/vip-tier/ POST	6](#/member/vip-tier/-post)
 
-[/member/vip-tier/{tier\_uuid}/ PUT	5](#/member/vip-tier/{tier_uuid}/-put)
+[/member/vip-tier/{tier\_uuid}/ PUT	6](#/member/vip-tier/{tier_uuid}/-put)
 
-[**USER PAGE	7**](#user-page)
+[**USER PAGE	8**](#user-page)
 
-[MEMBER LOGIN FROM EXTERNAL	7](#member-login-from-external)
+[MEMBER LOGIN FROM EXTERNAL	8](#member-login-from-external)
 
-[/login/generate-token/ POST	7](#/login/generate-token/-post)
+[/login/generate-token/ POST	8](#/login/generate-token/-post)
 
-[HOME PAGE	8](#home-page)
+[HOME PAGE	9](#home-page)
 
-[Front View \- Winning List	8](#front-view---winning-list)
+[Front View \- Winning List	9](#front-view---winning-list)
 
-[/front-view/winning-list/ GET	8](#/front-view/winning-list/-get)
+[/front-view/winning-list/ GET	9](#/front-view/winning-list/-get)
 
-[Checkin	8](#checkin)
+[Checkin	9](#checkin)
 
-[/member/members/check-in/ POST	8](#/member/members/check-in/-post)
+[/member/members/check-in/ POST	9](#/member/members/check-in/-post)
 
-[Welcome Gift	8](#welcome-gift)
+[Welcome Gift	9](#welcome-gift)
 
-[/member/members/welcome/ POST	8](#/member/members/welcome/-post)
+[/member/members/welcome/ POST	9](#/member/members/welcome/-post)
 
-[Member Info	8](#member-info)
+[Member Info	9](#member-info)
 
-[/member/members/{member\_uuid}/ GET	8](#/member/members/{member_uuid}/-get)
+[/member/members/{member\_uuid}/ GET	9](#/member/members/{member_uuid}/-get)
 
-[LUCKY SPIN	10](#lucky-spin)
+[LUCKY SPIN	11](#lucky-spin)
 
-[Spins	10](#spins)
+[Spins	11](#spins)
 
-[/member/\<member\_uuid\>/one-spin/ POST	10](#/member/\<member_uuid\>/one-spin/-post)
+[/member/\<member\_uuid\>/one-spin/ POST	11](#/member/\<member_uuid\>/one-spin/-post)
 
-[/member/\<member\_uuid\>/ten-spin/ POST	10](#/member/\<member_uuid\>/ten-spin/-post)
+[/member/\<member\_uuid\>/ten-spin/ POST	11](#/member/\<member_uuid\>/ten-spin/-post)
 
-[/member/\<member\_uuid\>/fifty-spin/ POST	10](#/member/\<member_uuid\>/fifty-spin/-post)
+[/member/\<member\_uuid\>/fifty-spin/ POST	11](#/member/\<member_uuid\>/fifty-spin/-post)
 
-[/member/\<member\_uuid\>/hundred-spin/ POST	10](#/member/\<member_uuid\>/hundred-spin/-post)
+[/member/\<member\_uuid\>/hundred-spin/ POST	11](#/member/\<member_uuid\>/hundred-spin/-post)
 
-[**PROFILE PAGE	11**](#profile-page)
+[**PROFILE PAGE	12**](#profile-page)
 
-[Personal data page	11](#personal-data-page)
+[Personal data page	12](#personal-data-page)
 
-[/member/profile/\<member\_uuid\>/ GET	11](#/member/profile/\<member_uuid\>/-get)
+[/member/profile/\<member\_uuid\>/ GET	12](#/member/profile/\<member_uuid\>/-get)
 
-[/member/profile/\<member\_uuid\>/update-profile/ PATCH	11](#/member/profile/\<member_uuid\>/update-profile/-patch)
+[/member/profile/\<member\_uuid\>/update-profile/ PATCH	12](#/member/profile/\<member_uuid\>/update-profile/-patch)
 
-[**LUCKY MART \- REDEMPTION	13**](#lucky-mart---redemption)
+[**LUCKY MART \- REDEMPTION	14**](#lucky-mart---redemption)
 
-[Redemption items / redeem	13](#redemption-items-/-redeem)
+[Redemption items / redeem	14](#redemption-items-/-redeem)
 
-[/redemption/redemption-items/ GET	13](#/redemption/redemption-items/-get)
+[/redemption/redemption-items/ GET	14](#/redemption/redemption-items/-get)
 
-[/redemption/redemption-items/available-items/ GET	13](#/redemption/redemption-items/available-items/-get)
+[/redemption/redemption-items/available-items/ GET	14](#/redemption/redemption-items/available-items/-get)
 
-[/redemption/redemption-items/{uuid}/redeem/ POST	13](#/redemption/redemption-items/{uuid}/redeem/-post)
+[/redemption/redemption-items/{uuid}/redeem/ POST	14](#/redemption/redemption-items/{uuid}/redeem/-post)
 
-[**User Page \- Banners	14**](#user-page---banners)
+[**User Page \- Banners	15**](#user-page---banners)
 
-[Public Banners	14](#public-banners)
+[Public Banners	15](#public-banners)
 
-[/settings/banners/public/ GET	14](#/settings/banners/public/-get)
+[/settings/banners/public/ GET	15](#/settings/banners/public/-get)
 
-[**BACK OFFICE	15**](#back-office)
+[**BACK OFFICE	16**](#back-office)
 
-[**Logins	15**](#logins)
+[**Logins	16**](#logins)
 
-[Login \- Admin Access Token	15](#login---admin-access-token)
+[Login \- Admin Access Token	16](#login---admin-access-token)
 
-[/login/admin-access-token/ POST	15](#/login/admin-access-token/-post)
+[/login/admin-access-token/ POST	16](#/login/admin-access-token/-post)
 
-[Login \- Logout	15](#login---logout)
+[Login \- Logout	16](#login---logout)
 
-[/login/logout/ POST	15](#/login/logout/-post)
+[/login/logout/ POST	16](#/login/logout/-post)
 
-[Login \- Refresh Token	15](#login---refresh-token)
+[Login \- Refresh Token	16](#login---refresh-token)
 
-[/login/refresh-token/ POST	15](#/login/refresh-token/-post)
+[/login/refresh-token/ POST	16](#/login/refresh-token/-post)
 
-[Login \- Verify Token	15](#login---verify-token)
+[Login \- Verify Token	16](#login---verify-token)
 
-[/login/verify-token/ POST	15](#/login/verify-token/-post)
+[/login/verify-token/ POST	16](#/login/verify-token/-post)
 
-[Lucky Spin Management	17](#lucky-spin-management)
+[Lucky Spin Management	18](#lucky-spin-management)
 
-[Lucky Spin Items	17](#lucky-spin-items)
+[Lucky Spin Items	18](#lucky-spin-items)
 
-[/lucky-spin/lucky-spin-items/ \- GET	17](#/lucky-spin/lucky-spin-items/---get)
+[/lucky-spin/lucky-spin-items/ \- GET	18](#/lucky-spin/lucky-spin-items/---get)
 
-[/lucky-spin/lucky-spin-items/{uuid}/ \- GET	17](#/lucky-spin/lucky-spin-items/{uuid}/---get)
+[/lucky-spin/lucky-spin-items/{uuid}/ \- GET	18](#/lucky-spin/lucky-spin-items/{uuid}/---get)
 
-[Lucky Spin Items \- POST and PUT	17](#lucky-spin-items---post-and-put)
+[Lucky Spin Items \- POST and PUT	18](#lucky-spin-items---post-and-put)
 
-[/lucky-spin/lucky-spin-items/ \- POST	17](#/lucky-spin/lucky-spin-items/---post)
+[/lucky-spin/lucky-spin-items/ \- POST	18](#/lucky-spin/lucky-spin-items/---post)
 
-[/lucky-spin/lucky-spin-items/{uuid}/ \- PUT	17](#/lucky-spin/lucky-spin-items/{uuid}/---put)
+[/lucky-spin/lucky-spin-items/{uuid}/ \- PUT	18](#/lucky-spin/lucky-spin-items/{uuid}/---put)
 
-[/lucky-spin/lucky-spin-items/{uuid}/archive/ \- PATCH	18](#/lucky-spin/lucky-spin-items/{uuid}/archive/---patch)
+[/lucky-spin/lucky-spin-items/{uuid}/archive/ \- PATCH	19](#/lucky-spin/lucky-spin-items/{uuid}/archive/---patch)
 
-[**Lucky Spin Sequence	19**](#lucky-spin-sequence)
+[**Lucky Spin Sequence	20**](#lucky-spin-sequence)
 
-[Lucky Spin Sequence \- GET	19](#lucky-spin-sequence---get)
+[Lucky Spin Sequence \- GET	20](#lucky-spin-sequence---get)
 
-[/lucky-spin/lucky-spin-sequences/ \- GET	19](#/lucky-spin/lucky-spin-sequences/---get)
+[/lucky-spin/lucky-spin-sequences/ \- GET	20](#/lucky-spin/lucky-spin-sequences/---get)
 
-[/lucky-spin/lucky-spin-sequences/{uuid}/ \- GET	19](#/lucky-spin/lucky-spin-sequences/{uuid}/---get)
+[/lucky-spin/lucky-spin-sequences/{uuid}/ \- GET	20](#/lucky-spin/lucky-spin-sequences/{uuid}/---get)
 
-[Lucky Spin Sequences \- POST	19](#lucky-spin-sequences---post)
+[Lucky Spin Sequences \- POST	20](#lucky-spin-sequences---post)
 
-[/lucky-spin/lucky-spin-sequences/ \- POST	19](#/lucky-spin/lucky-spin-sequences/---post)
+[/lucky-spin/lucky-spin-sequences/ \- POST	20](#/lucky-spin/lucky-spin-sequences/---post)
 
-[Lucky Spin Sequences \- DELETE	20](#lucky-spin-sequences---delete)
+[Lucky Spin Sequences \- DELETE	21](#lucky-spin-sequences---delete)
 
-[/lucky-spin/lucky-spin-sequences/{uuid}/ \- DELETE	20](#/lucky-spin/lucky-spin-sequences/{uuid}/---delete)
+[/lucky-spin/lucky-spin-sequences/{uuid}/ \- DELETE	21](#/lucky-spin/lucky-spin-sequences/{uuid}/---delete)
 
-[Lucky Spin Sequences ORDER \- PATCH	20](#lucky-spin-sequences-order---patch)
+[Lucky Spin Sequences ORDER \- PATCH	21](#lucky-spin-sequences-order---patch)
 
-[/lucky-spin/lucky-spin-sequences/change-spin-sequences/ \- PATCH	20](#/lucky-spin/lucky-spin-sequences/change-spin-sequences/---patch)
+[/lucky-spin/lucky-spin-sequences/change-spin-sequences/ \- PATCH	21](#/lucky-spin/lucky-spin-sequences/change-spin-sequences/---patch)
 
-[**Members	21**](#members)
+[**Members	22**](#members)
 
-[/member/members/ GET	21](#/member/members/-get)
+[/member/members/ GET	22](#/member/members/-get)
 
-[LUCKY MART \- Redemption Items	22](#lucky-mart---redemption-items)
+[LUCKY MART \- Redemption Items	23](#lucky-mart---redemption-items)
 
-[/redemption/redemption-items/ GET	22](#/redemption/redemption-items/-get-1)
+[/redemption/redemption-items/ GET	23](#/redemption/redemption-items/-get-1)
 
-[/redemption/redemption-items/ POST	22](#/redemption/redemption-items/-post)
+[/redemption/redemption-items/ POST	23](#/redemption/redemption-items/-post)
 
-[/redemption/redemption-items/{uuid}/ PUT	22](#/redemption/redemption-items/{uuid}/-put)
+[/redemption/redemption-items/{uuid}/ PUT	23](#/redemption/redemption-items/{uuid}/-put)
 
-[/redemption/redemption-items/{uuid}/archive/ PATCH	23](#/redemption/redemption-items/{uuid}/archive/-patch)
+[/redemption/redemption-items/{uuid}/archive/ PATCH	24](#/redemption/redemption-items/{uuid}/archive/-patch)
 
-[Checkin \- Settings	24](#checkin---settings)
+[Checkin \- Settings	25](#checkin---settings)
 
-[/settings/checkin-settings/ GET	24](#/settings/checkin-settings/-get)
+[/settings/checkin-settings/ GET	25](#/settings/checkin-settings/-get)
 
-[/settings/checkin-settings/ POST	24](#/settings/checkin-settings/-post)
+[/settings/checkin-settings/ POST	25](#/settings/checkin-settings/-post)
 
-[Banners \- Settings	25](#banners---settings)
+[Banners \- Settings	26](#banners---settings)
 
-[Banners in Admin Panel	25](#banners-in-admin-panel)
+[Banners in Admin Panel	26](#banners-in-admin-panel)
 
-[/settings/banners/ GET	25](#/settings/banners/-get)
+[/settings/banners/ GET	26](#/settings/banners/-get)
 
-[/settings/banners/ POST	25](#/settings/banners/-post)
+[/settings/banners/ POST	26](#/settings/banners/-post)
 
-[/settings/banners/{uuid}/ PUT	25](#/settings/banners/{uuid}/-put)
+[/settings/banners/{uuid}/ PUT	26](#/settings/banners/{uuid}/-put)
 
-[/settings/banners/{uuid}/archive/ PATCH	25](#/settings/banners/{uuid}/archive/-patch)
+[/settings/banners/{uuid}/archive/ PATCH	26](#/settings/banners/{uuid}/archive/-patch)
 
 # Changelog {#changelog}
 
 | Date | Changes Made | Modules |
 | :---- | :---- | :---- |
+| 2026/04/02 | Added location to banner | User Page \- Banners Back Office \- Banners |
 | 2026/03/31 | Added profile picture to member profileAdded banners | Modules: Profile Page User Page \- Banners Back Office \- Banners |
 | 2026/03/30 | Added winning list | Modules:User Page \- Front View \- Winning List |
 | 2026/03/09 | Added check in settings | Modules:Settings \- Checkin Settings |
@@ -397,6 +398,14 @@ Output
 
 ### /settings/banners/public/ GET {#/settings/banners/public/-get}
 
+Query parameter
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | location | Int | Yes | 1 \- Main Page 2 \- Side Panel |
+
+Output
+
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | uuid | UUID | No |  |
@@ -404,6 +413,7 @@ Output
 | **3** | image | Image | No |  |
 | **4** | slug | Str (url) | No | Where the banner will link to |
 | **5** | active\_until | datetime | No |  |
+| **6** | location | Str | No |  |
 
 ### 
 
@@ -642,6 +652,7 @@ It will automatically delete days which are not inputted
 | **3** | image | Image | No |  |
 | **4** | slug | Str (url) | No | Where the banner will link to |
 | **5** | active\_until | datetime | No |  |
+| **6** | location | Str | No |  |
 
 ### /settings/banners/ POST {#/settings/banners/-post}
 
@@ -653,5 +664,6 @@ It will automatically delete days which are not inputted
 | **2** | image | Image | No |  |
 | **3** | slug | Str (url) | No | Where the banner will link to |
 | **4** | active\_until | datetime | No |  |
+| **5** | location | Int (Enum) | No | 1 \- Main Page 2 \- Side Panel |
 
 ### /settings/banners/{uuid}/archive/ PATCH {#/settings/banners/{uuid}/archive/-patch}

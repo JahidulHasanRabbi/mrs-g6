@@ -2,12 +2,13 @@
 
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState, useEffect } from "react";
 import { useHamburgerMenu } from "./useHamburgerMenu";
 import { MENU_CONFIG, ANIMATION_CONFIG, THEME_CONFIG } from "./menuConfig";
 import MenuSection from "./MenuSection";
 import MenuItem from "./MenuItem";
 import SocialLinks from "./SocialLinks";
+import { getPublicBanners } from "@/app/api/memberApi";
 
 /**
  * HamburgerMenu Component
@@ -187,22 +188,80 @@ const MenuHeader = memo(({ onClose }) => (
 MenuHeader.displayName = "MenuHeader";
 
 /**
- * MenuBanner - Placeholder banner section
- * Updated with new Figma design
+ * MenuBanner - Dynamic banner section from API
+ * Fetches and displays Side Panel banners (location = 2)
+ * Cached to avoid reloading on every menu open
  */
-const MenuBanner = memo(() => (
-  <div className="flex justify-center py-4 px-4">
-    <div className="flex h-[79px] w-[130px] items-center justify-center rounded-[12px] overflow-hidden shadow-[0px_5px_20px_0px_rgba(0,0,0,0.25)]">
-      <Image
-        src="/assets/home/special_for_you/new/acebet77.png"
-        alt="Special offer"
-        width={130}
-        height={79}
-        className="rounded-[12px] object-contain w-full h-full"
-      />
+const MenuBanner = memo(() => {
+  const [banner, setBanner] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [hasFetched, setHasFetched] = useState(false);
+
+  useEffect(() => {
+    // Only fetch once, not every time menu opens
+    if (hasFetched) return;
+
+    const fetchSidePanelBanners = async () => {
+      try {
+        setLoading(true);
+        // Fetch only Side Panel banners (location = 2)
+        const data = await getPublicBanners(2);
+        
+        // Filter active banners (active_until is in the future)
+        const now = new Date();
+        const activeBanners = data.filter(banner => {
+          const activeUntil = new Date(banner.active_until);
+          return activeUntil > now;
+        });
+        
+        // Use the first active banner
+        if (activeBanners.length > 0) {
+          setBanner(activeBanners[0]);
+        }
+      } catch (error) {
+        console.error("Error fetching side panel banners:", error);
+      } finally {
+        setLoading(false);
+        setHasFetched(true);
+      }
+    };
+
+    fetchSidePanelBanners();
+  }, [hasFetched]);
+
+  const handleBannerClick = () => {
+    if (banner?.slug) {
+      const url = banner.slug.startsWith('http://') || banner.slug.startsWith('https://') 
+        ? banner.slug 
+        : `https://${banner.slug}`;
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  return (
+    <div className="flex justify-center py-4 px-4">
+      <div 
+        className={`flex h-[79px] w-[130px] items-center justify-center rounded-[12px] overflow-hidden shadow-[0px_5px_20px_0px_rgba(0,0,0,0.25)] ${banner ? 'cursor-pointer' : ''}`}
+        onClick={handleBannerClick}
+        style={{
+          backgroundColor: loading || !banner ? 'rgba(38, 81, 52, 0.3)' : 'transparent'
+        }}
+      >
+        {loading ? (
+          <div className="text-gray-400 text-xs">Loading...</div>
+        ) : banner ? (
+          <img
+            src={banner.image}
+            alt={banner.name || "Banner"}
+            className="rounded-[12px] object-cover w-full h-full"
+          />
+        ) : (
+          <div className="text-gray-500 text-xs text-center px-2">No banner</div>
+        )}
+      </div>
     </div>
-  </div>
-));
+  );
+});
 
 MenuBanner.displayName = "MenuBanner";
 

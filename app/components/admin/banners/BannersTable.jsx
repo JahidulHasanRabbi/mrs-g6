@@ -24,6 +24,7 @@ export default function BannersTable({ banners, onEdit, onArchive }) {
             <tr className="border-b border-white/10">
               <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Preview</th>
               <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Name</th>
+              <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Location</th>
               <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Link (Slug)</th>
               <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Active Until</th>
               <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Status</th>
@@ -33,7 +34,7 @@ export default function BannersTable({ banners, onEdit, onArchive }) {
           <tbody>
             {banners.length === 0 ? (
               <tr>
-                <td colSpan="6" className="px-5 py-8 text-center text-gray-400">
+                <td colSpan="7" className="px-5 py-8 text-center text-gray-400">
                   No banners found. Create your first banner to get started.
                 </td>
               </tr>
@@ -48,6 +49,15 @@ export default function BannersTable({ banners, onEdit, onArchive }) {
                     />
                   </td>
                   <td className="px-5 py-3 text-sm text-white">{banner.name}</td>
+                  <td className="px-5 py-3 text-sm text-gray-400">
+                    <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                      banner.location === 'Main Page' 
+                        ? 'bg-purple-500/20 text-purple-400' 
+                        : 'bg-blue-500/20 text-blue-400'
+                    }`}>
+                      {banner.location || 'Main Page'}
+                    </span>
+                  </td>
                   <td className="px-5 py-3 text-sm text-gray-400">
                     <a
                       href={banner.slug.startsWith('http://') || banner.slug.startsWith('https://') ? banner.slug : `https://${banner.slug}`}
