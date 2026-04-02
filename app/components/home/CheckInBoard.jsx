@@ -92,23 +92,35 @@ export default function CheckInBoard() {
         const data = await getMemberInfo(memberUuid);
         setMemberInfo(data);
 
-        // Calculate checked days based on last_check_in_date
-        if (data.last_check_in_date) {
-          const lastCheckIn = new Date(data.last_check_in_date);
-          const today = new Date();
-          const diffTime = Math.abs(today - lastCheckIn);
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        // Calculate checked days based on current_streak
+        // current_streak represents how many days have been checked in consecutively
+        // If current_streak >= 7, show all 7 days as checked (cycle completed)
+        if (data.current_streak !== undefined && data.current_streak !== null) {
+          const streak = data.current_streak >= 7 ? 7 : data.current_streak;
+          
+          // Mark days 1 through current_streak as checked
+          const checked = [];
+          for (let i = 1; i <= streak; i++) {
+            checked.push(i);
+          }
+          setCheckedDays(checked);
+        } else {
+          // Fallback: if current_streak is not available, check last_check_in_date
+          if (data.last_check_in_date) {
+            const lastCheckIn = new Date(data.last_check_in_date);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            lastCheckIn.setHours(0, 0, 0, 0);
+            
+            const diffTime = today - lastCheckIn;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-          // If checked in today or within the last day, mark days as checked
-          // This is a simplified logic - adjust based on actual API behavior
-          if (diffDays <= 1) {
-            // Calculate which days should be marked as checked
-            // For now, we'll mark days sequentially based on check-in streak
-            const checked = [];
-            for (let i = 1; i <= Math.min(diffDays, 7); i++) {
-              checked.push(i);
+            // If checked in today (diffDays === 0), we need to know which day they're on
+            // This fallback is limited without streak information
+            if (diffDays === 0) {
+              // Can't determine which days are checked without streak info
+              console.warn("current_streak not available, cannot determine checked days accurately");
             }
-            setCheckedDays(checked);
           }
         }
       } catch (err) {
@@ -213,6 +225,19 @@ export default function CheckInBoard() {
       // Refresh member info after successful check-in
       const updatedInfo = await getMemberInfo(memberUuid);
       setMemberInfo(updatedInfo);
+
+      // Update checked days based on new streak
+      if (updatedInfo.current_streak !== undefined && updatedInfo.current_streak !== null) {
+        // After check-in, if streak reaches 7 or more, the backend should reset it
+        // But we display it as 7 days checked (completed cycle)
+        // On the next check-in after completing day 7, backend should return current_streak = 1 (new cycle)
+        const streak = updatedInfo.current_streak >= 7 ? 7 : updatedInfo.current_streak;
+        const checked = [];
+        for (let i = 1; i <= streak; i++) {
+          checked.push(i);
+        }
+        setCheckedDays(checked);
+      }
 
     } catch (err) {
       console.error("Check-in failed:", err);
