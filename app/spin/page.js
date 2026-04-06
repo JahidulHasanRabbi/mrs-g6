@@ -25,7 +25,7 @@ export default function SpinPage() {
   const [activeWinningView, setActiveWinningView] = useState("record");
   const [userWinnings, setUserWinnings] = useState([]);
   const [spinItems, setSpinItems] = useState([]);
-  const { updateBalance } = useUser();
+  const { refreshUserData } = useUser();
 
   const memberUuid = tokenStorage.getMemberUuid();
 
@@ -42,20 +42,6 @@ export default function SpinPage() {
     }
     fetchSpinItems();
   }, []);
-
-  const refreshMemberInfo = async () => {
-    if (!memberUuid) return;
-    
-    try {
-      const memberInfo = await getMemberInfo(memberUuid);
-      updateBalance(parseFloat(memberInfo.current_tokens).toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }));
-    } catch (error) {
-      console.error('Error refreshing member info:', error);
-    }
-  };
 
   const spinResultsRef = useRef(null);
   const spinErrorRef = useRef(null);
@@ -130,7 +116,7 @@ export default function SpinPage() {
       // Only start spinning if API call succeeds
       setIsSpinning(true);
       
-      await refreshMemberInfo();
+      await refreshUserData();
       
       isProcessingRef.current = false;
       return true; // Return true to allow spin animation
@@ -163,7 +149,7 @@ export default function SpinPage() {
       
       return false; // Return false to prevent spin animation
     }
-  }, [memberUuid, isSpinning, refreshMemberInfo]);
+  }, [memberUuid, isSpinning, refreshUserData]);
 
   const handleCenterButtonClick = useCallback(async () => {
     return await handleSpinAction(oneSpin, "one spin");

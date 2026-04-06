@@ -10,6 +10,7 @@ import ErrorDisplay from "../components/ui/ErrorDisplay";
 import { getAvailableRedemptionItems, redeemItem } from "../api/memberApi";
 import { mapRedemptionItems } from "../api/responseMappers";
 import { tokenStorage } from "../api/tokenStorage";
+import { useUser } from "../contexts/UserContext";
 
 export default function MartPage() {
   const [selectedItem, setSelectedItem] = useState(null);
@@ -19,6 +20,7 @@ export default function MartPage() {
   const [error, setError] = useState(null);
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [redeemResult, setRedeemResult] = useState(null);
+  const { refreshUserData } = useUser();
 
   // Fetch redemption items on mount
   useEffect(() => {
@@ -93,8 +95,11 @@ export default function MartPage() {
         message: response.details || "Congratulations! You've successfully redeemed this item!"
       });
       
-      // Refresh items list after successful redemption
-      await fetchRedemptionItems();
+      // Refresh balance and items list after successful redemption
+      await Promise.all([
+        refreshUserData(),
+        fetchRedemptionItems()
+      ]);
     } catch (err) {
       setRedeemResult({
         success: false,
@@ -127,9 +132,16 @@ export default function MartPage() {
       </div>
 
       <LoadingState isLoading={isLoading}>
-        {error ? (
-          <div className="px-8 mt-6">
-            <ErrorDisplay error={error} />
+        {error || sortedItems.length === 0 ? (
+          <div className="flex flex-col items-center justify-center px-8 mt-12 mb-12">
+            <div className="text-center">
+              <p className="text-[#60803C] text-[20px] font-bold font-['Times_New_Roman'] mb-2">
+                No Items Available
+              </p>
+              <p className="text-[#60803C] text-[16px] font-['Times_New_Roman'] opacity-70">
+                There are currently no items in the mart.
+              </p>
+            </div>
           </div>
         ) : (
           <MartGrid items={sortedItems} onRedeem={handleRedeem} />

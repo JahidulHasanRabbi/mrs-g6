@@ -90,6 +90,31 @@ export function UserProvider({ children }) {
     loadUserData();
   }, [memberUuid]);
 
+  const refreshUserData = async () => {
+    const uuid = tokenStorage.getMemberUuid();
+    if (!uuid) return;
+
+    try {
+      console.log('UserContext: Refreshing user data...');
+      const memberInfo = await getMemberInfo(uuid);
+      console.log('UserContext: Refresh - Member info received:', memberInfo);
+      const formattedBalance = parseFloat(memberInfo.current_tokens).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+      console.log('UserContext: Refresh - Formatted balance:', formattedBalance);
+      setUserData(prev => ({
+        ...prev,
+        name: memberInfo.username || prev.name,
+        balance: formattedBalance,
+        currentLevel: memberInfo.tier || prev.currentLevel,
+      }));
+      console.log('UserContext: User data updated successfully');
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+    }
+  };
+
   const updateBalance = (newBalance) => {
     setUserData(prev => ({ ...prev, balance: newBalance }));
   };
@@ -119,7 +144,8 @@ export function UserProvider({ children }) {
       isLoadingProfile,
       updateBalance, 
       updateUserData,
-      updateProfilePicture 
+      updateProfilePicture,
+      refreshUserData
     }}>
       {children}
     </UserContext.Provider>

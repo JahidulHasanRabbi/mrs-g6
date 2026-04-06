@@ -7,6 +7,7 @@ import { HOME_ASSETS } from "./homeAssets";
 import { getMemberInfo, checkIn, getCheckinSettings } from "@/app/api/memberApi";
 import { tokenStorage } from "@/app/api/tokenStorage";
 import SuccessModal from "@/app/components/ui/SuccessModal";
+import { useUser } from "@/app/contexts/UserContext";
 
 const POPUP_BG_IMG = "/assets/home/popup-deposit-bg.png";
 const POPUP_CLOSE_IMG = "/assets/home/popup-close.png";
@@ -53,6 +54,7 @@ export default function CheckInBoard() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [memberInfo, setMemberInfo] = useState(null);
   const [checkinSettings, setCheckinSettings] = useState(null);
+  const { refreshUserData } = useUser();
 
   useEffect(() => {
     const preload = (src) =>
@@ -222,9 +224,12 @@ export default function CheckInBoard() {
       setSuccessMessage(`Congratulations! You've checked in for today and earned ${displayReward}!`);
       setShowSuccessModal(true);
 
-      // Refresh member info after successful check-in
+      // Refresh member info and global user data after successful check-in
+      console.log('CheckInBoard: Refreshing user data after check-in...');
       const updatedInfo = await getMemberInfo(memberUuid);
       setMemberInfo(updatedInfo);
+      await refreshUserData();
+      console.log('CheckInBoard: User data refreshed');
 
       // Update checked days based on new streak
       if (updatedInfo.current_streak !== undefined && updatedInfo.current_streak !== null) {
@@ -269,7 +274,7 @@ export default function CheckInBoard() {
     } finally {
       setIsCheckingIn(false);
     }
-  }, [checkedDays]);
+  }, [checkedDays, refreshUserData]);
 
   // Show loading state while fetching member info
   if (isLoading) {

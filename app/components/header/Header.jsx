@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { memo } from "react";
+import { memo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { PROFILE_ASSETS } from "../profile/profileAssets";
 
@@ -13,6 +13,12 @@ import { PROFILE_ASSETS } from "../profile/profileAssets";
  */
 function Header({ onMenuClick, showAnimation = false, balance = null, profilePhoto = null }) {
   const router = useRouter();
+  
+  // Debug logging
+  useEffect(() => {
+    console.log('Header: Balance prop changed to:', balance);
+  }, [balance]);
+  
   return (
     <motion.header
       className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[475px] h-[52px] z-40"

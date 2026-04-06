@@ -12,7 +12,7 @@ import { useUser } from "@/app/contexts/UserContext";
 
 const Home = memo(function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { profilePicture } = useUser();
+  const { profilePicture, userData } = useUser();
 
   const handleMenuOpen = useCallback(() => setIsMenuOpen(true), []);
   const handleMenuClose = useCallback(() => setIsMenuOpen(false), []);
@@ -27,7 +27,7 @@ const Home = memo(function Home() {
         backgroundRepeat: "no-repeat",
       }}
     >
-      <Header onMenuClick={handleMenuOpen} profilePhoto={profilePicture} />
+      <Header onMenuClick={handleMenuOpen} profilePhoto={profilePicture} balance={userData.balance} />
 
       <HamburgerMenu isOpen={isMenuOpen} onClose={handleMenuClose} />
 

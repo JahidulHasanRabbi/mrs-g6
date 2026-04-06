@@ -15,6 +15,11 @@ export default function AppLayout({ children }) {
   const pathname = usePathname();
   const { userData, profilePicture } = useUser();
 
+  // Debug logging for userData changes
+  useEffect(() => {
+    console.log('AppLayout: userData changed:', userData);
+  }, [userData]);
+
   // Track initial mount to show animations only once
   useEffect(() => {
     console.log('AppLayout mounted, hasAnimated:', hasAnimated);

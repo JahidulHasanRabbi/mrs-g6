@@ -12,6 +12,7 @@ import { handleApiError, formatErrorMessage } from "@/app/api/errorHandler";
 import { LoadingState } from "@/app/components/ui/LoadingState";
 import ErrorDisplay from "@/app/components/ui/ErrorDisplay";
 import SuccessModal from "@/app/components/ui/SuccessModal";
+import { useUser } from "@/app/contexts/UserContext";
 
 export default function ProfileCard({ 
   name: propName, 
@@ -42,6 +43,7 @@ export default function ProfileCard({
   const [nextTierData, setNextTierData] = useState(null);
   const [tokensToNextTier, setTokensToNextTier] = useState(0);
   const [progressPercentage, setProgressPercentage] = useState(0);
+  const { refreshUserData } = useUser();
 
   useEffect(() => {
     fetchVipTiers();
@@ -226,6 +228,9 @@ export default function ProfileCard({
       
       // Refresh member info to update token balance
       await fetchMemberInfo();
+      
+      // Refresh global user data
+      await refreshUserData();
       
       // Refresh profile data to get updated full_name
       await fetchProfileData();
