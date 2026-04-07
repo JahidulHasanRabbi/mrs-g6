@@ -94,11 +94,6 @@ export default function BannerForm({ banner, onClose, onSuccess }) {
       }
       // For PUT without new image: don't include image field, API will keep existing image
 
-      console.log('Submitting banner with payload:', {
-        ...payload,
-        image: payload.image ? 'File object' : 'Not included'
-      });
-
       if (banner) {
         // Update existing banner
         await adminApi.updateBanner(banner.uuid, payload);

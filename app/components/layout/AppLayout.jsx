@@ -15,18 +15,10 @@ export default function AppLayout({ children }) {
   const pathname = usePathname();
   const { userData, profilePicture } = useUser();
 
-  // Debug logging for userData changes
-  useEffect(() => {
-    console.log('AppLayout: userData changed:', userData);
-  }, [userData]);
-
   // Track initial mount to show animations only once
   useEffect(() => {
-    console.log('AppLayout mounted, hasAnimated:', hasAnimated);
-    
     // Delay setting hasAnimated to allow entrance animations to complete
     const timer = setTimeout(() => {
-      console.log('Setting hasAnimated to true');
       setHasAnimated(true);
     }, 1000); // Wait 1 second for animations to finish
 
@@ -61,7 +53,7 @@ export default function AppLayout({ children }) {
         <MartHeader
           balance={userData.balance}
           onMenuClick={() => setIsMenuOpen(true)}
-          onProfileClick={() => console.log("Profile clicked")}
+          onProfileClick={() => {}}
           showAnimation={!hasAnimated}
           profilePhoto={profilePicture}
         />

@@ -100,9 +100,6 @@ FooterNavItem.displayName = 'FooterNavItem';
 function FooterNav({ showAnimation = false }) {
   const pathname = usePathname();
 
-  // Debug: Log to see if animation prop is working
-  console.log('FooterNav showAnimation:', showAnimation);
-
   return (
     <motion.footer
       className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[475px] h-[100px] z-40"

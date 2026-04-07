@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react";
 import SpinItemsTable from "./SpinItemsTable";
-import SpinSequenceTable from "./SpinSequenceTable";
+import SpinSequenceManager from "./SpinSequenceManager";
 import LuckySpinItemForm from "./LuckySpinItemForm";
-import SpinSequenceModal from "./SpinSequenceModal";
 import ErrorDisplay from "../../ui/ErrorDisplay";
 import * as adminApi from "../../../api/adminApi";
 
@@ -95,20 +94,31 @@ export default function SpinTablesContainer() {
     }
   };
 
-  const handleSequenceDeleteClick = async (sequence) => {
-    const ok = window.confirm("Are you sure you want to delete this sequence?");
-    if (!ok) return;
+  const handleSequenceSave = async (filledPositions) => {
+    setIsSubmitting(true);
+    setFormError(null);
     
-    setIsLoading(true);
-    setError(null);
     try {
-      await adminApi.deleteLuckySpinSequence(sequence.uuid);
-      await loadSpinSequences(); // Refresh list
+      // Delete all existing sequences first
+      for (const seq of spinSequences) {
+        await adminApi.deleteLuckySpinSequence(seq.uuid);
+      }
+      
+      // Create new sequences only for filled positions
+      for (const pos of filledPositions) {
+        await adminApi.createLuckySpinSequence(pos.position, pos.item_uuid);
+      }
+      
+      // Refresh sequences
+      await loadSpinSequences();
+      setFormError(null);
+      
+      alert(`Spin sequences saved successfully! ${filledPositions.length} position(s) configured.`);
     } catch (err) {
-      console.error('Failed to delete spin sequence:', err);
-      setError(err);
+      console.error('Failed to save sequences:', err);
+      setFormError(err);
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -187,22 +197,24 @@ export default function SpinTablesContainer() {
                 Spin Sequence Setting
               </span>
             </button>
-            <button 
-              onClick={handleAddClick}
-              className="rounded-lg px-4 py-2 text-sm font-bold transition-colors disabled:opacity-50"
-              style={{
-                backgroundImage: "linear-gradient(2.1326483653998594deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
-              }}
-              disabled={isLoading}
-            >
-              <span className="bg-clip-text text-transparent" style={{
-                backgroundImage: "linear-gradient(2.1326483653998594deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent"
-              }}>
-                Add
-              </span>
-            </button>
+            {activeTab === "items" && (
+              <button 
+                onClick={handleAddClick}
+                className="rounded-lg px-4 py-2 text-sm font-bold transition-colors disabled:opacity-50"
+                style={{
+                  backgroundImage: "linear-gradient(2.1326483653998594deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
+                }}
+                disabled={isLoading}
+              >
+                <span className="bg-clip-text text-transparent" style={{
+                  backgroundImage: "linear-gradient(2.1326483653998594deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent"
+                }}>
+                  Add
+                </span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -218,12 +230,15 @@ export default function SpinTablesContainer() {
             onDeleteClick={handleDeleteClick}
           />
         ) : (
-          <SpinSequenceTable
-            sequences={spinSequences}
-            spinItems={spinItems}
-            onEditClick={handleEditClick}
-            onDeleteClick={handleSequenceDeleteClick}
-          />
+          <div className="p-6">
+            <SpinSequenceManager
+              sequences={spinSequences}
+              spinItems={spinItems}
+              onSave={handleSequenceSave}
+              isLoading={isSubmitting}
+              error={formError}
+            />
+          </div>
         )}
 
         {/* Pagination */}
@@ -248,25 +263,14 @@ export default function SpinTablesContainer() {
         </div>
       </div>
 
-      {/* Modal */}
-      {activeTab === "items" ? (
+      {/* Modal - Only for Items */}
+      {activeTab === "items" && (
         <LuckySpinItemForm
           isOpen={isModalOpen}
           onClose={handleModalClose}
           onSubmit={handleFormSubmit}
           mode={modalMode}
           initialData={selectedItem}
-          isLoading={isSubmitting}
-          error={formError}
-        />
-      ) : (
-        <SpinSequenceModal
-          isOpen={isModalOpen}
-          onClose={handleModalClose}
-          onSubmit={handleFormSubmit}
-          mode={modalMode}
-          initialData={selectedItem}
-          spinItems={spinItems}
           isLoading={isSubmitting}
           error={formError}
         />

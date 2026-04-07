@@ -71,7 +71,6 @@ export default function ProfileCard({
   const fetchVipTiers = async () => {
     try {
       const tiers = await getVipTiers();
-      console.log("ProfileCard: VIP tiers response:", tiers);
       // Sort tiers by lifetime_deposit_required to get proper order
       const sortedTiers = [...tiers].sort((a, b) => 
         parseFloat(a.lifetime_deposit_required) - parseFloat(b.lifetime_deposit_required)
@@ -93,14 +92,12 @@ export default function ProfileCard({
       }
 
       const response = await getMemberInfo(memberUuid);
-      console.log("ProfileCard: Full member info response:", response);
       const transformedData = mapMemberInfoToProfileCard(response);
       setMemberData(transformedData);
       
       // Set welcome_flag from member info
       if (response.welcome_flag !== undefined) {
         setWelcomeFlag(response.welcome_flag);
-        console.log("ProfileCard: Set welcomeFlag to:", response.welcome_flag);
       }
       
       // Calculate VIP tier progress
@@ -125,7 +122,6 @@ export default function ProfileCard({
     const currentTierIndex = tiers.findIndex(tier => tier.uuid === currentTierId);
     
     if (currentTierIndex === -1) {
-      console.log("ProfileCard: Current tier not found");
       return;
     }
     
@@ -150,21 +146,11 @@ export default function ProfileCard({
       const progressInTier = currentDeposit - currentRequired;
       const percentage = tierRange > 0 ? Math.min(100, Math.max(0, (progressInTier / tierRange) * 100)) : 0;
       setProgressPercentage(percentage);
-      
-      console.log("ProfileCard: Tier progress calculated", {
-        currentTier: current.name,
-        nextTier: next.name,
-        currentDeposit,
-        nextRequired,
-        tokensNeeded,
-        percentage
-      });
     } else {
       // User is at max tier
       setNextTierData(null);
       setTokensToNextTier(0);
       setProgressPercentage(100);
-      console.log("ProfileCard: User is at maximum tier");
     }
   };
   
@@ -179,28 +165,19 @@ export default function ProfileCard({
     try {
       const memberUuid = tokenStorage.getMemberUuid();
       if (!memberUuid) {
-        console.log("ProfileCard: No member UUID found");
         return;
       }
 
-      console.log("ProfileCard: Fetching profile data for UUID:", memberUuid);
       const profileResponse = await getProfile(memberUuid);
-      console.log("ProfileCard: Profile response:", profileResponse);
       
       // Set full name if available
       if (profileResponse.full_name) {
-        console.log("ProfileCard: Setting full name:", profileResponse.full_name);
         setFullName(profileResponse.full_name);
-      } else {
-        console.log("ProfileCard: No full_name in response");
       }
       
       // Set profile picture if available
       if (profileResponse.profile_picture) {
-        console.log("ProfileCard: Setting profile picture:", profileResponse.profile_picture);
         setProfilePicture(profileResponse.profile_picture);
-      } else {
-        console.log("ProfileCard: No profile_picture in response");
       }
     } catch (err) {
       console.error("ProfileCard: Error fetching profile data:", err);

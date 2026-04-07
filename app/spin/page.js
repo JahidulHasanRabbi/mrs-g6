@@ -50,6 +50,7 @@ export default function SpinPage() {
   const handleSpinComplete = useCallback(() => {
     setIsSpinning(false);
     
+    // Wait 1.5 seconds after spin stops to show modal (let user see the winning tile)
     setTimeout(() => {
       if (spinErrorRef.current) {
         setModalTitle("❌ Spin Failed");
@@ -86,7 +87,7 @@ export default function SpinPage() {
         setIsModalOpen(true);
         spinResultsRef.current = null;
       }
-    }, 100);
+    }, 1500);
   }, []);
 
   const isProcessingRef = useRef(false);
@@ -152,30 +153,33 @@ export default function SpinPage() {
   }, [memberUuid, isSpinning, refreshUserData]);
 
   const handleCenterButtonClick = useCallback(async () => {
-    return await handleSpinAction(oneSpin, "one spin");
+    const result = await handleSpinAction(oneSpin, "one spin");
+    // Return the first result's UUID if successful
+    if (result === true && spinResultsRef.current && spinResultsRef.current.length > 0) {
+      return { uuid: spinResultsRef.current[0].uuid };
+    }
+    return result;
   }, [handleSpinAction]);
 
   const handleButtonClick = useCallback(async (buttonData) => {
     if (buttonData.spins === "10 Spins") {
       const trigger = gridSpinTriggerRef.current;
       const shouldSpin = await handleSpinAction(tenSpin, "ten spins");
-      // Trigger the grid animation if API succeeds
-      if (shouldSpin && trigger) {
-        trigger();
+      // Trigger the grid animation if API succeeds with first result's UUID
+      if (shouldSpin && trigger && spinResultsRef.current && spinResultsRef.current.length > 0) {
+        trigger(spinResultsRef.current[0].uuid);
       }
     } else if (buttonData.spins === "50 Spins") {
       const trigger = gridSpinTriggerRef.current;
       const shouldSpin = await handleSpinAction(fiftySpin, "fifty spins");
-      // Trigger the grid animation if API succeeds
-      if (shouldSpin && trigger) {
-        trigger();
+      // Trigger the grid animation if API succeeds with first result's UUID
+      if (shouldSpin && trigger && spinResultsRef.current && spinResultsRef.current.length > 0) {
+        trigger(spinResultsRef.current[0].uuid);
       }
     } else if (buttonData.spins === "Winning Record") {
       setActiveWinningView("record");
     } else if (buttonData.spins === "Winning List") {
       setActiveWinningView("list");
-    } else {
-      console.log(`Button clicked: ${buttonData.spins}`);
     }
   }, [handleSpinAction]);
 

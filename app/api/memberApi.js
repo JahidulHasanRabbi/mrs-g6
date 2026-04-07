@@ -66,6 +66,13 @@ export async function getPublicBanners(location = null) {
   }, false);
 }
 
+// GET /lucky-spin/sequences/
+export async function getAllLuckySpinSequences() {
+  return await apiRequest(ENDPOINTS.ADMIN.LUCKY_SPIN_SEQUENCES, {
+    method: 'GET'
+  }, true, 'member');
+}
+
 // GET /lucky-spin/items/
 export async function getAllLuckySpinItems() {
   return await apiRequest(ENDPOINTS.MEMBER.ALL_LUCKY_SPIN_ITEMS, {

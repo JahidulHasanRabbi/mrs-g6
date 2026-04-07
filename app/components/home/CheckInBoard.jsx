@@ -225,11 +225,9 @@ export default function CheckInBoard() {
       setShowSuccessModal(true);
 
       // Refresh member info and global user data after successful check-in
-      console.log('CheckInBoard: Refreshing user data after check-in...');
       const updatedInfo = await getMemberInfo(memberUuid);
       setMemberInfo(updatedInfo);
       await refreshUserData();
-      console.log('CheckInBoard: User data refreshed');
 
       // Update checked days based on new streak
       if (updatedInfo.current_streak !== undefined && updatedInfo.current_streak !== null) {

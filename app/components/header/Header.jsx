@@ -14,10 +14,7 @@ import { PROFILE_ASSETS } from "../profile/profileAssets";
 function Header({ onMenuClick, showAnimation = false, balance = null, profilePhoto = null }) {
   const router = useRouter();
   
-  // Debug logging
-  useEffect(() => {
-    console.log('Header: Balance prop changed to:', balance);
-  }, [balance]);
+
   
   return (
     <motion.header

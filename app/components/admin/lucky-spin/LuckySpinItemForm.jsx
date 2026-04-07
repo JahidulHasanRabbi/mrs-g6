@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useConditionalFields } from "../../../hooks/useConditionalFields";
-import { getOptionsArray } from "../../../api/apiOptions";
+import { getOptionsArray, getOptionValue } from "../../../api/apiOptions";
 import ErrorDisplay from "../../ui/ErrorDisplay";
 
 // Configuration for conditional fields
@@ -58,10 +58,14 @@ export default function LuckySpinItemForm({
 
   // Initialize form with existing data
   useEffect(() => {
-    if (initialData) {
+    if (mode === "edit" && initialData) {
+      const itemTypeValue = typeof initialData.item_type === 'string'
+        ? getOptionValue('ITEM_TYPE', initialData.item_type)
+        : initialData.item_type;
+      
       const initialValues = {
         reward_name: initialData.reward_name || "",
-        item_type: initialData.item_type || "",
+        item_type: itemTypeValue || "",
         quantity: initialData.quantity || "",
         unlimited: initialData.unlimited || false,
         min_withdraw: initialData.min_withdraw || "",
@@ -73,15 +77,28 @@ export default function LuckySpinItemForm({
       setFieldValues(initialValues);
       setImagePreview(initialData.image || null);
       
-      // Set initial visibility
-      if (initialData.item_type) {
-        updateFieldVisibility('item_type', initialData.item_type);
+      if (itemTypeValue) {
+        updateFieldVisibility('item_type', itemTypeValue);
       }
+      
       if (initialData.unlimited !== undefined) {
         updateFieldVisibility('unlimited', initialData.unlimited);
       }
+    } else if (mode === "add") {
+      setFieldValues({
+        reward_name: "",
+        item_type: "",
+        quantity: "",
+        unlimited: false,
+        min_withdraw: "",
+        max_withdraw: "",
+        multiplier: "",
+        token_amount: ""
+      });
+      setImagePreview(null);
+      setImageFile(null);
     }
-  }, [initialData]);
+  }, [mode, initialData, updateFieldVisibility, setFieldValues]);
 
   if (!isOpen) return null;
 

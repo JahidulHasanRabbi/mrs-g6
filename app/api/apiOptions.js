@@ -63,3 +63,19 @@ export function getOptionLabel(optionKey, value) {
   
   return options[value] || '';
 }
+
+// Get numeric value from string label (reverse lookup)
+export function getOptionValue(optionKey, label) {
+  const options = API_OPTIONS[optionKey];
+  if (!options) {
+    console.warn(`Invalid option key: ${optionKey}`);
+    return null;
+  }
+  
+  // Find the key where the value matches the label (case-insensitive)
+  const entry = Object.entries(options).find(
+    ([key, value]) => value.toUpperCase() === label.toUpperCase()
+  );
+  
+  return entry ? parseInt(entry[0], 10) : null;
+}

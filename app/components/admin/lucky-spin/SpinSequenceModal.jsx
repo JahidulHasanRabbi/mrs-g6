@@ -15,18 +15,23 @@ export default function SpinSequenceModal({
   error = null
 }) {
   const [formData, setFormData] = useState({
-    item_order: initialData?.item_order || "",
-    item_uuid: initialData?.item_uuid || "",
+    item_order: "",
+    item_uuid: "",
   });
 
   useEffect(() => {
-    if (initialData) {
+    if (mode === "edit" && initialData) {
       setFormData({
         item_order: initialData.item_order || "",
         item_uuid: initialData.item_uuid || "",
       });
+    } else if (mode === "add") {
+      setFormData({
+        item_order: "",
+        item_uuid: "",
+      });
     }
-  }, [initialData]);
+  }, [mode, initialData]);
 
   if (!isOpen) return null;
 

@@ -23,7 +23,6 @@ export default function SpinItemModal({
   const handleSubmit = (e) => {
     e.preventDefault();
     // Handle form submission
-    console.log("Form data:", formData);
     onClose();
   };
 

@@ -20,7 +20,6 @@ const SpecialOffersCarousel = memo(function SpecialOffersCarousel() {
         setLoading(true);
         // Fetch only Main Page banners (location = 1)
         const data = await getPublicBanners(1);
-        console.log("Fetched banners:", data);
         
         // Filter active banners (active_until is in the future)
         const now = new Date();

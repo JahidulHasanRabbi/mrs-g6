@@ -34,8 +34,10 @@ const SpinItem = memo(function SpinItem({
       animate={
         isActive
           ? {
-              scale: isLowEnd ? 1.02 : 1.04,
-              boxShadow: isLowEnd ? "0 0 8px rgba(253, 230, 133, 0.4)" : "0 0 15px rgba(253, 230, 133, 0.6)"
+              scale: isLowEnd ? 1.08 : 1.12,
+              boxShadow: isLowEnd 
+                ? "0 0 15px rgba(253, 230, 133, 0.8), 0 0 30px rgba(253, 230, 133, 0.4)" 
+                : "0 0 20px rgba(253, 230, 133, 1), 0 0 40px rgba(253, 230, 133, 0.6)"
             }
           : { scale: 1, boxShadow: "none" }
       }
@@ -53,7 +55,18 @@ const SpinItem = memo(function SpinItem({
         style={{ height: "auto" }}
       />
       {isActive && (
-        <div className="absolute inset-[6px] rounded-[14px] border-2 border-[#fde685] pointer-events-none" />
+        <motion.div 
+          className="absolute inset-[6px] rounded-[14px] border-2 border-[#fde685] pointer-events-none"
+          animate={{
+            opacity: [1, 0.6, 1],
+            borderWidth: ["2px", "3px", "2px"]
+          }}
+          transition={{
+            duration: 0.8,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
       )}
     </motion.div>
     {prize && (
@@ -82,7 +95,7 @@ const ORDER = [0, 1, 2, 4, 7, 6, 5, 3];
 
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
-export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinning, onSpinComplete, spinTriggerRef, items = [] }) {
+export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinning, onSpinComplete, spinTriggerRef, items = [], winningUuid = null }) {
   const [activeGridIndex, setActiveGridIndex] = useState(null);
   const [isSpinning, setIsSpinning] = useState(false);
   const { isLowEnd, isMidEnd } = usePerformanceOptimization();
@@ -106,44 +119,35 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
   const totalStepsRef = useRef(0);
   const orderPosRef = useRef(0);
 
-  // Filter items to get ALL items with content (image, text, or any data) and distribute them randomly across tiles
+  // Store items with UUIDs in fixed positions (no random shuffling)
   const itemRewards = useMemo(() => {
     const filtered = items.filter(item => item.image || item.reward_name || item.text || item.content);
     
     if (filtered.length === 0) return [];
     
-    // Create an array of 8 positions
+    // Create an array of 8 positions with full item data including UUID
     const positions = Array(8).fill(null);
     
-    // Shuffle and assign items to random positions
-    const shuffledItems = [...filtered];
-    for (let i = shuffledItems.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffledItems[i], shuffledItems[j]] = [shuffledItems[j], shuffledItems[i]];
-    }
-    
-    // Distribute items randomly across the 8 positions
-    const availablePositions = [0, 1, 2, 3, 4, 5, 6, 7];
-    shuffledItems.forEach(item => {
-      if (availablePositions.length > 0) {
-        const randomIndex = Math.floor(Math.random() * availablePositions.length);
-        const position = availablePositions.splice(randomIndex, 1)[0];
-        positions[position] = item.image || item.reward_name || item.text || item.content;
-      }
+    // Assign items to positions in order (up to 8 items)
+    filtered.slice(0, 8).forEach((item, index) => {
+      positions[index] = {
+        image: item.image || item.reward_name || item.text || item.content,
+        uuid: item.uuid
+      };
     });
     
     return positions;
   }, [items]);
 
   const gridItems = useMemo(() => [
-    { background: SPIN_ASSETS.itemEmptyGold, prize: itemRewards[0], position: "left-[-8px] top-[-10px]" },
-    { background: SPIN_ASSETS.itemEmptyGreen, prize: itemRewards[1], position: "left-[96px] top-[-13px]", size: "w-[99px] h-[112px]" },
-    { background: SPIN_ASSETS.itemEmptyGold, prize: itemRewards[2], position: "left-[194px] top-[-10px]" },
-    { background: SPIN_ASSETS.itemEmptyGreen, prize: itemRewards[3], position: "left-[-7px] top-[88px]", size: "w-[100px] h-[112px]" },
-    { background: SPIN_ASSETS.itemEmptyGreen, prize: itemRewards[4], position: "left-[196px] top-[87px]", size: "w-[101px] h-[114px]" },
-    { background: SPIN_ASSETS.itemEmptyGold, prize: itemRewards[5], position: "left-[-9px] top-[193px]" },
-    { background: SPIN_ASSETS.itemEmptyGreen, prize: itemRewards[6], position: "left-[96px] top-[191px]", size: "w-[100px] h-[113px]" },
-    { background: SPIN_ASSETS.itemEmptyGold, prize: itemRewards[7], position: "left-[194px] top-[194px]" },
+    { background: SPIN_ASSETS.itemEmptyGold, prize: itemRewards[0]?.image, uuid: itemRewards[0]?.uuid, position: "left-[-8px] top-[-10px]" },
+    { background: SPIN_ASSETS.itemEmptyGreen, prize: itemRewards[1]?.image, uuid: itemRewards[1]?.uuid, position: "left-[96px] top-[-13px]", size: "w-[99px] h-[112px]" },
+    { background: SPIN_ASSETS.itemEmptyGold, prize: itemRewards[2]?.image, uuid: itemRewards[2]?.uuid, position: "left-[194px] top-[-10px]" },
+    { background: SPIN_ASSETS.itemEmptyGreen, prize: itemRewards[3]?.image, uuid: itemRewards[3]?.uuid, position: "left-[-7px] top-[88px]", size: "w-[100px] h-[112px]" },
+    { background: SPIN_ASSETS.itemEmptyGreen, prize: itemRewards[4]?.image, uuid: itemRewards[4]?.uuid, position: "left-[196px] top-[87px]", size: "w-[101px] h-[114px]" },
+    { background: SPIN_ASSETS.itemEmptyGold, prize: itemRewards[5]?.image, uuid: itemRewards[5]?.uuid, position: "left-[-9px] top-[193px]" },
+    { background: SPIN_ASSETS.itemEmptyGreen, prize: itemRewards[6]?.image, uuid: itemRewards[6]?.uuid, position: "left-[96px] top-[191px]", size: "w-[100px] h-[113px]" },
+    { background: SPIN_ASSETS.itemEmptyGold, prize: itemRewards[7]?.image, uuid: itemRewards[7]?.uuid, position: "left-[194px] top-[194px]" },
   ], [itemRewards]);
 
   const stopSpin = useCallback(
@@ -155,21 +159,41 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
       setIsSpinning(false);
       setActiveGridIndex(finalGridIndex);
       
+      // Keep the center button rotation reset
       setTimeout(() => {
         centerRotate.set(0);
       }, 300);
       
+      // Call onSpinComplete after a brief delay to let the winning tile highlight show
       if (onSpinComplete) {
-        onSpinComplete(finalGridIndex);
+        setTimeout(() => {
+          onSpinComplete(finalGridIndex);
+        }, 500);
       }
     },
     [centerRotate, onSpinComplete]
   );
 
-  const startSpinAnimation = useCallback(() => {
+  const startSpinAnimation = useCallback((targetUuid = null) => {
     if (spinning) return;
 
-    const targetOrderPos = Math.floor(Math.random() * ORDER.length);
+    // Find the grid index that matches the winning UUID
+    let targetGridIndex = 0;
+    if (targetUuid) {
+      const foundIndex = gridItems.findIndex(item => item.uuid === targetUuid);
+      if (foundIndex !== -1) {
+        targetGridIndex = foundIndex;
+      } else {
+        console.warn('Winning UUID not found in grid items, using random position');
+        targetGridIndex = Math.floor(Math.random() * 8);
+      }
+    } else {
+      // Fallback to random if no UUID provided
+      targetGridIndex = Math.floor(Math.random() * 8);
+    }
+
+    // Find the position in ORDER array that corresponds to this grid index
+    const targetOrderPos = ORDER.indexOf(targetGridIndex);
     const rounds = 4 + Math.floor(Math.random() * 3);
     totalStepsRef.current = rounds * ORDER.length + targetOrderPos;
 
@@ -206,16 +230,21 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
     };
 
     rafRef.current = requestAnimationFrame(tick);
-  }, [spinning, stopSpin, centerRotate, isLowEnd, isMidEnd]);
+  }, [spinning, stopSpin, centerRotate, isLowEnd, isMidEnd, gridItems]);
 
   const startSpin = useCallback(async () => {
     if (spinning) return;
 
     // Call onSpinClick and wait for API validation
     if (onSpinClick) {
-      const shouldSpin = await onSpinClick();
+      const result = await onSpinClick();
       // If API call failed, don't start the animation
-      if (shouldSpin === false) {
+      if (result === false) {
+        return;
+      }
+      // If result contains UUID, pass it to animation
+      if (result && result.uuid) {
+        startSpinAnimation(result.uuid);
         return;
       }
     }

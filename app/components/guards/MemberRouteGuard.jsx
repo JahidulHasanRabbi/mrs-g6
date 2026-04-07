@@ -17,38 +17,31 @@ export function MemberRouteGuard({ children }) {
       return;
     }
 
-    console.log('[MemberRouteGuard] Checking auth for pathname:', pathname);
     lastPathnameRef.current = pathname;
     checkedRef.current = true;
 
     const authGuardEnabled = process.env.NEXT_PUBLIC_AUTHGUARD === 'true';
-    console.log('[MemberRouteGuard] authGuardEnabled:', authGuardEnabled);
 
     if (pathname === '/auth') {
-      console.log('[MemberRouteGuard] Auth page, allowing access');
       setIsAuthenticated(true);
       setIsLoading(false);
       return;
     }
 
     if (!authGuardEnabled) {
-      console.log('[MemberRouteGuard] Auth guard disabled, allowing access');
       setIsAuthenticated(true);
       setIsLoading(false);
       return;
     }
 
     const token = tokenStorage.getMemberAccessToken();
-    console.log('[MemberRouteGuard] Token exists:', !!token);
     
     if (!token) {
       const redirectUrl = process.env.NEXT_PUBLIC_REDIRECTURL || '/';
-      console.log('[MemberRouteGuard] No token, redirecting to:', redirectUrl);
       window.location.href = redirectUrl;
       return;
     }
 
-    console.log('[MemberRouteGuard] Token valid, allowing access');
     setIsAuthenticated(true);
     setIsLoading(false);
   }, [pathname]);

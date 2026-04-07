@@ -12,13 +12,11 @@ export default function ProfilePage() {
   const handleVipDetailsClick = () => {
     // Navigate to VIP details page
     router.push('/vip-details');
-    console.log("VIP Details clicked - navigating to vip-details");
   };
 
   const handleEditProfileItem = (item) => {
     // Navigate to personal-data page for all edit profile items
     router.push('/personal-data');
-    console.log(`${item} clicked - navigating to personal-data`);
   };
 
   const handleDisplayPhoto = () => handleEditProfileItem("Display Photo");

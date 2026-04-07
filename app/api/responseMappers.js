@@ -60,6 +60,15 @@ export function mapFormDataToProfileUpdate(formData) {
   return payload;
 }
 
+export function mapLuckySpinSequences(apiResponse) {
+  return apiResponse.map(seq => ({
+    uuid: seq.uuid,
+    item_order: seq.item_order,
+    item_name: seq.item_name,
+    item_uuid: seq.item_uuid
+  }));
+}
+
 export function mapLuckySpinItems(apiResponse) {
   return apiResponse.map(item => ({
     uuid: item.uuid,
@@ -137,6 +146,7 @@ export function mapSpinResults(apiResponse) {
   return results.map(result => ({
     uuid: result.uuid,
     reward_name: result.reward_name,
-    image: result.image
+    image: result.image,
+    credit_amount: result.credit_amount || null
   }));
 }

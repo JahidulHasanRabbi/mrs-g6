@@ -45,9 +45,7 @@ export function UserProvider({ children }) {
 
   useEffect(() => {
     const loadUserData = async () => {
-      console.log('UserContext: Loading user data, memberUuid:', memberUuid);
       if (!memberUuid) {
-        console.log('UserContext: No memberUuid found');
         setIsLoadingProfile(false);
         return;
       }
@@ -57,12 +55,10 @@ export function UserProvider({ children }) {
       try {
         // Fetch member info for balance and basic data
         const memberInfo = await getMemberInfo(memberUuid);
-        console.log('UserContext: Member info received:', memberInfo);
         const formattedBalance = parseFloat(memberInfo.current_tokens).toLocaleString('en-US', {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2
         });
-        console.log('UserContext: Formatted balance:', formattedBalance);
         setUserData(prev => ({
           ...prev,
           name: memberInfo.username || prev.name,
@@ -73,7 +69,6 @@ export function UserProvider({ children }) {
         // Fetch profile data for profile picture
         try {
           const profileData = await getProfile(memberUuid);
-          console.log('UserContext: Profile data received:', profileData);
           if (profileData.profile_picture) {
             setProfilePicture(profileData.profile_picture);
           }
@@ -95,21 +90,17 @@ export function UserProvider({ children }) {
     if (!uuid) return;
 
     try {
-      console.log('UserContext: Refreshing user data...');
       const memberInfo = await getMemberInfo(uuid);
-      console.log('UserContext: Refresh - Member info received:', memberInfo);
       const formattedBalance = parseFloat(memberInfo.current_tokens).toLocaleString('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       });
-      console.log('UserContext: Refresh - Formatted balance:', formattedBalance);
       setUserData(prev => ({
         ...prev,
         name: memberInfo.username || prev.name,
         balance: formattedBalance,
         currentLevel: memberInfo.tier || prev.currentLevel,
       }));
-      console.log('UserContext: User data updated successfully');
     } catch (error) {
       console.error('Error refreshing user data:', error);
     }

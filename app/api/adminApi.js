@@ -1,5 +1,5 @@
 import { apiRequest } from './apiClient';
-import { ENDPOINTS } from './api';
+import { ENDPOINTS, BASE_URL } from './api';
 import { tokenStorage } from './tokenStorage';
 
 export async function adminLogin(username, password) {
@@ -126,9 +126,38 @@ export async function createLuckySpinSequence(itemOrder, itemUuid) {
 }
 
 export async function deleteLuckySpinSequence(uuid) {
-  return await apiRequest(ENDPOINTS.ADMIN.LUCKY_SPIN_SEQUENCE(uuid), {
-    method: 'DELETE'
-  }, true, 'admin');
+  const response = await fetch(`${BASE_URL}${ENDPOINTS.ADMIN.LUCKY_SPIN_SEQUENCE(uuid)}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${tokenStorage.getAdminAccessToken()}`
+    }
+  });
+  
+  if (!response.ok) {
+    let errorData = null;
+    try {
+      errorData = await response.json();
+    } catch (e) {
+      errorData = { detail: response.statusText };
+    }
+    throw {
+      message: `HTTP error: ${response.status}`,
+      status: response.status,
+      data: errorData
+    };
+  }
+  
+  // DELETE might return 204 No Content, which has no body
+  if (response.status === 204) {
+    return { success: true };
+  }
+  
+  try {
+    return await response.json();
+  } catch (e) {
+    // If no JSON body, return success
+    return { success: true };
+  }
 }
 
 export async function changeSpinSequencesOrder(luckySpins) {

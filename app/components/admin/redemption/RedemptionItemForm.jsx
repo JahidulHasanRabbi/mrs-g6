@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useConditionalFields } from "../../../hooks/useConditionalFields";
-import { getOptionsArray } from "../../../api/apiOptions";
+import { getOptionsArray, getOptionValue } from "../../../api/apiOptions";
 import ErrorDisplay from "../../ui/ErrorDisplay";
 
 // Configuration for conditional fields
@@ -36,13 +36,19 @@ export default function RedemptionItemForm({
 
   // Initialize form with existing data
   useEffect(() => {
-    if (initialData) {
+    if (mode === "edit" && initialData) {
+      // Convert string prize_type to numeric value if needed
+      let prizeTypeValue = initialData.prize_type;
+      if (typeof prizeTypeValue === 'string') {
+        prizeTypeValue = getOptionValue('PRIZE_TYPE', prizeTypeValue);
+      }
+      
       const initialValues = {
         name: initialData.name || "",
-        quantity: initialData.quantity || "",
+        quantity: initialData.quantity_available || initialData.quantity || "",
         start_date: initialData.start_date || "",
         end_date: initialData.end_date || "",
-        prize_type: initialData.prize_type || "",
+        prize_type: prizeTypeValue || "",
         tokens_needed: initialData.tokens_needed || "",
         promotion: initialData.promotion || "",
         credit_amount: initialData.credit_amount || ""
@@ -51,12 +57,26 @@ export default function RedemptionItemForm({
       setFieldValues(initialValues);
       setImagePreview(initialData.image || null);
       
-      // Set initial visibility
-      if (initialData.prize_type) {
-        updateFieldVisibility('prize_type', initialData.prize_type);
+      // Set initial visibility based on prize_type
+      if (prizeTypeValue) {
+        updateFieldVisibility('prize_type', prizeTypeValue);
       }
+    } else if (mode === "add") {
+      // Reset form for add mode
+      setFieldValues({
+        name: "",
+        quantity: "",
+        start_date: "",
+        end_date: "",
+        prize_type: "",
+        tokens_needed: "",
+        promotion: "",
+        credit_amount: ""
+      });
+      setImagePreview(null);
+      setImageFile(null);
     }
-  }, [initialData]);
+  }, [mode, initialData, updateFieldVisibility, setFieldValues]);
 
   if (!isOpen) return null;
 

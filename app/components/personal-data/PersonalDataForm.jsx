@@ -84,7 +84,6 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
   };
 
   const handleProfileEdit = () => {
-    console.log("Edit profile picture clicked");
     // Create a file input element
     const input = document.createElement('input');
     input.type = 'file';
