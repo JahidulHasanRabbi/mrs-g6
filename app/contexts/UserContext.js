@@ -50,6 +50,12 @@ export function UserProvider({ children }) {
         return;
       }
 
+      // Don't load user data if we're on the auth page (login in progress)
+      if (typeof window !== 'undefined' && window.location.pathname === '/auth') {
+        setIsLoadingProfile(false);
+        return;
+      }
+
       setIsLoadingProfile(true);
 
       try {

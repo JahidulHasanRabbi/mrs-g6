@@ -16,6 +16,7 @@ function AuthContent() {
       try {
         const id = searchParams.get('id');
         const o = searchParams.get('o');
+        const page = searchParams.get('page');
 
         if (!id || !o) {
           setStatus('error');
@@ -23,23 +24,40 @@ function AuthContent() {
           return;
         }
 
+        // Clear old tokens and old o
         tokenStorage.clearMemberTokens();
+        tokenStorage.clearRedirectO();
 
+        // Normalize o to full URL if needed
+        const normalizedO = o.startsWith('http') ? o : `https://${o}`;
+
+        // Save new o to localStorage
+        tokenStorage.setRedirectO(normalizedO);
+
+        // Call API
         await generateMemberToken(id, o);
 
         setStatus('success');
-        router.push('/');
+
+        // Navigate to page parameter or homepage
+        const targetPage = page || '/';
+        
+        setTimeout(() => {
+          router.push(targetPage);
+        }, 100);
       } catch (err) {
         setStatus('error');
         setError(err.message || 'Authentication failed');
 
-        const authGuard = process.env.NEXT_PUBLIC_AUTHGUARD === 'true';
-        const redirectUrl = authGuard 
-          ? process.env.NEXT_PUBLIC_REDIRECTURL 
-          : '/';
+        // On fail, redirect to saved o or fallback to /
+        const savedO = tokenStorage.getRedirectO();
+        let fallbackUrl = '/';
+        if (savedO) {
+          fallbackUrl = savedO.startsWith('http') ? savedO : `https://${savedO}`;
+        }
 
         setTimeout(() => {
-          window.location.href = redirectUrl;
+          window.location.href = fallbackUrl;
         }, 2000);
       }
     };

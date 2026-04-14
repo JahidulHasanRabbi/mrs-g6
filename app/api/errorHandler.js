@@ -18,9 +18,15 @@ export function handleApiError(error, context = 'api-call') {
       tokenStorage.clearAdminTokens();
       
       const authGuard = process.env.NEXT_PUBLIC_AUTHGUARD === 'true';
-      const redirectUrl = authGuard 
-        ? process.env.NEXT_PUBLIC_REDIRECTURL 
-        : '/';
+      
+      // Use saved o or fallback to /
+      const savedO = tokenStorage.getRedirectO();
+      
+      // Ensure savedO is a full URL
+      let redirectUrl = '/';
+      if (savedO) {
+        redirectUrl = savedO.startsWith('http') ? savedO : `https://${savedO}`;
+      }
       
       // Only redirect if authGuard is enabled and we're not already at the redirect URL
       if (authGuard && window.location.pathname !== redirectUrl) {

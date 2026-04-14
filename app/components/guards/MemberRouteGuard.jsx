@@ -37,7 +37,15 @@ export function MemberRouteGuard({ children }) {
     const token = tokenStorage.getMemberAccessToken();
     
     if (!token) {
-      const redirectUrl = process.env.NEXT_PUBLIC_REDIRECTURL || '/';
+      // Use saved o or fallback to /
+      const savedO = tokenStorage.getRedirectO();
+      
+      // Ensure savedO is a full URL
+      let redirectUrl = '/';
+      if (savedO) {
+        redirectUrl = savedO.startsWith('http') ? savedO : `https://${savedO}`;
+      }
+      
       window.location.href = redirectUrl;
       return;
     }

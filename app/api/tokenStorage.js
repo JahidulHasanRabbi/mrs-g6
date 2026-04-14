@@ -3,7 +3,8 @@ export const STORAGE_KEYS = {
   MEMBER_UUID: 'mrs_member_uuid',
   MEMBER_TOKEN_EXPIRY: 'mrs_member_token_expiry',
   ADMIN_ACCESS_TOKEN: 'mrs_admin_access_token',
-  ADMIN_TOKEN_EXPIRY: 'mrs_admin_token_expiry'
+  ADMIN_TOKEN_EXPIRY: 'mrs_admin_token_expiry',
+  REDIRECT_O: 'mrs_redirect_o'
 };
 
 export const tokenStorage = {
@@ -37,9 +38,6 @@ export const tokenStorage = {
 
   setMemberTokens: (access, memberUuid, expiresIn = 3600) => {
     if (typeof window !== 'undefined') {
-      // Clear old tokens first
-      tokenStorage.clearMemberTokens();
-      
       // Calculate expiry time (default 1 hour, subtract 5 minutes as buffer)
       const expiryTime = Date.now() + ((expiresIn - 300) * 1000);
       
@@ -90,9 +88,6 @@ export const tokenStorage = {
 
   setAdminTokens: (access, expiresIn = 3600) => {
     if (typeof window !== 'undefined') {
-      // Clear old tokens first
-      tokenStorage.clearAdminTokens();
-      
       // Calculate expiry time (default 1 hour, subtract 5 minutes as buffer)
       const expiryTime = Date.now() + ((expiresIn - 300) * 1000);
       
@@ -116,5 +111,25 @@ export const tokenStorage = {
       return Date.now() >= parseInt(expiry, 10);
     }
     return true;
+  },
+
+  // Redirect O methods (external domain for redirects)
+  setRedirectO: (o) => {
+    if (typeof window !== 'undefined' && o) {
+      localStorage.setItem(STORAGE_KEYS.REDIRECT_O, o);
+    }
+  },
+
+  getRedirectO: () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(STORAGE_KEYS.REDIRECT_O);
+    }
+    return null;
+  },
+
+  clearRedirectO: () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEYS.REDIRECT_O);
+    }
   }
 };
