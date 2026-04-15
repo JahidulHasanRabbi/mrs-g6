@@ -21,6 +21,15 @@ function AuthContent() {
         if (!id || !o) {
           setStatus('error');
           setError('Missing authentication parameters');
+          
+          // Redirect to o if available, otherwise to /
+          const redirectUrl = o 
+            ? (o.startsWith('http') ? o : `https://${o}`)
+            : '/';
+          
+          setTimeout(() => {
+            window.location.href = redirectUrl;
+          }, 1000);
           return;
         }
 
