@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { memo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { PROFILE_ASSETS } from "../profile/profileAssets";
 
@@ -13,8 +12,6 @@ import { PROFILE_ASSETS } from "../profile/profileAssets";
  */
 function Header({ onMenuClick, showAnimation = false, balance = null, profilePhoto = null }) {
   const router = useRouter();
-  
-
   
   return (
     <motion.header
@@ -125,4 +122,4 @@ function Header({ onMenuClick, showAnimation = false, balance = null, profilePho
   );
 }
 
-export default memo(Header);
+export default Header;
