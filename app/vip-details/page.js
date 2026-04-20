@@ -71,7 +71,7 @@ export default function VipDetailsPage() {
         imageAlt="VIP Details"
       />
 
-      <main className="w-full px-4">
+      <main className="w-full px-4 relative">
         {isLoading ? (
           <div className="mt-8">
             <LoadingState />
@@ -83,7 +83,7 @@ export default function VipDetailsPage() {
         ) : (
           <>
             {/* VIP Level Chain */}
-            <div className="mt-8">
+            <div className="mt-8 relative">
               <VipLevelChain 
                 selectedLevel={selectedLevel} 
                 onLevelSelect={setSelectedLevel}
@@ -92,12 +92,24 @@ export default function VipDetailsPage() {
             </div>
 
             {/* Privileges Card */}
-            <div className="mt-12 mb-8">
+            <div className="mt-12 mb-8 relative">
               <PrivilegesCard 
                 level={selectedLevel}
                 tierData={selectedTierData}
                 tierIndex={Math.max(0, selectedTierIndex)}
               />
+            </div>
+
+            {/* Coming Soon Overlay */}
+            <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-10 rounded-lg">
+              <div className="text-center px-6 py-8">
+                <h2 className="text-[#e9af41] text-4xl md:text-5xl font-bold font-['Times_New_Roman'] mb-4 animate-pulse">
+                  COMING SOON
+                </h2>
+                <p className="text-[#e9af41] text-lg md:text-xl font-['Times_New_Roman']">
+                  VIP Features are on the way!
+                </p>
+              </div>
             </div>
           </>
         )}

@@ -385,6 +385,18 @@ export default function ProfileCard({
                 </p>
               )}
             </div>
+
+            {/* Coming Soon Overlay for VIP Progress */}
+            <motion.div
+              className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-[2px] rounded-lg -left-2 -right-2 -top-2 -bottom-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 1.2 }}
+            >
+              <p className="text-[#e9af41] text-[14px] font-bold font-['Times_New_Roman'] animate-pulse">
+                COMING SOON
+              </p>
+            </motion.div>
           </motion.div>
         </div>
       </motion.div>
