@@ -334,29 +334,29 @@ export default function ProfileCard({
             <span className="text-[12px]">&gt;</span>
           </motion.button>
 
-          {/* Progress Section */}
-          <motion.div
+          {/* Coming Soon Overlay - Blurred VIP Box */}
+          <div className="absolute left-[38px] top-[90px] w-[290px] h-[120px] flex items-center justify-center backdrop-blur-md bg-black/30 rounded-lg z-10">
+            <p className="text-[#e9af41] text-[24px] font-bold font-['Times_New_Roman'] animate-pulse drop-shadow-lg">
+              COMING SOON
+            </p>
+          </div>
+
+          {/* Progress Section - COMMENTED OUT FOR LATER USE */}
+          {/* <motion.div
             className="absolute left-[51px] top-[100px] w-[236px]"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.7 }}
-          >
-            {/* Coming Soon Overlay for VIP Section */}
-            <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm rounded-lg z-10">
-              <p className="text-[#e9af41] text-[16px] font-bold font-['Times_New_Roman'] animate-pulse">
-                COMING SOON
-              </p>
-            </div>
-
+          > */}
             {/* Current Tier with Star - Reduced Size */}
-            <div className="mb-2">
+            {/* <div className="mb-2">
               <p className="text-[#e9af41] text-[18px] font-bold font-['Times_New_Roman'] leading-none uppercase">
                 {currentTierData ? currentTierData.name : currentLevel} ⭐
               </p>
-            </div>
+            </div> */}
 
             {/* Progress Text */}
-            {nextTierData ? (
+            {/* {nextTierData ? (
               <p className="text-[#e9af41] text-[11px] font-bold font-['Times_New_Roman'] mb-2">
                 Get {tokensToNextTier.toLocaleString()} more to go {nextTierData.name.toUpperCase()}
               </p>
@@ -364,12 +364,12 @@ export default function ProfileCard({
               <p className="text-[#e9af41] text-[11px] font-bold font-['Times_New_Roman'] mb-2">
                 Maximum tier reached! 🎉
               </p>
-            )}
+            )} */}
 
             {/* Progress Bar Container */}
-            <div className="relative w-full h-[8px] bg-[#51340c] border border-[#e9af41] rounded-[20px] shadow-[inset_0px_4px_4px_0px_rgba(0,0,0,0.25)]">
+            {/* <div className="relative w-full h-[8px] bg-[#51340c] border border-[#e9af41] rounded-[20px] shadow-[inset_0px_4px_4px_0px_rgba(0,0,0,0.25)]"> */}
               {/* Progress Bar Fill */}
-              <motion.div
+              {/* <motion.div
                 className="absolute left-0 top-0 h-full bg-[#e9af41] rounded-[20px] shadow-[inset_0px_4px_4px_0px_rgba(0,0,0,0.25)]"
                 initial={{ width: 0 }}
                 animate={{ width: `${progressPercentage}%` }}
@@ -379,10 +379,10 @@ export default function ProfileCard({
                   ease: "easeOut",
                 }}
               />
-            </div>
+            </div> */}
 
             {/* Level Labels */}
-            <div className="flex justify-between mt-2">
+            {/* <div className="flex justify-between mt-2">
               <p className="text-[#e9af41] text-[10px] font-bold font-['Times_New_Roman'] uppercase">
                 {currentTierData ? currentTierData.name : currentLevel}
               </p>
@@ -392,7 +392,7 @@ export default function ProfileCard({
                 </p>
               )}
             </div>
-          </motion.div>
+          </motion.div> */}
         </div>
       </motion.div>
 
