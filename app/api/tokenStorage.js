@@ -1,3 +1,5 @@
+import { dispatchAuthChanged } from './authEvents';
+
 export const STORAGE_KEYS = {
   MEMBER_ACCESS_TOKEN: 'mrs_member_access_token',
   MEMBER_UUID: 'mrs_member_uuid',
@@ -44,6 +46,7 @@ export const tokenStorage = {
       localStorage.setItem(STORAGE_KEYS.MEMBER_ACCESS_TOKEN, access);
       localStorage.setItem(STORAGE_KEYS.MEMBER_UUID, memberUuid);
       localStorage.setItem(STORAGE_KEYS.MEMBER_TOKEN_EXPIRY, expiryTime.toString());
+      dispatchAuthChanged();
     }
   },
 
@@ -52,6 +55,7 @@ export const tokenStorage = {
       localStorage.removeItem(STORAGE_KEYS.MEMBER_ACCESS_TOKEN);
       localStorage.removeItem(STORAGE_KEYS.MEMBER_UUID);
       localStorage.removeItem(STORAGE_KEYS.MEMBER_TOKEN_EXPIRY);
+      dispatchAuthChanged();
     }
   },
   

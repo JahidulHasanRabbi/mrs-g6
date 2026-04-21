@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { memo } from "react";
 import { motion } from "framer-motion";
+import { tokenStorage } from "../../api/tokenStorage";
 
 /**
  * MenuItem Component
@@ -12,7 +13,8 @@ import { motion } from "framer-motion";
  * @param {Object} props
  * @param {string} props.icon - Icon path
  * @param {string} props.label - Menu item label
- * @param {string} props.link - Navigation link
+ * @param {string} [props.link] - Navigation link
+ * @param {string} [props.action] - Action type (e.g. 'logout')
  * @param {() => void} [props.onClose] - Close callback
  * @param {boolean} [props.isNested] - Whether this is a nested item
  * @param {boolean} [props.disabled] - Whether item is disabled
@@ -21,6 +23,7 @@ function MenuItem({
   icon,
   label,
   link,
+  action,
   onClose,
   isNested = false,
   disabled = false,
@@ -29,6 +32,21 @@ function MenuItem({
   const iconSize = isNested ? 20 : 28;
   const textSize = "text-[10px]";
   const padding = isNested ? "px-2 py-1" : "px-2 py-1";
+
+  const handleAction = () => {
+    if (action === "logout") {
+      tokenStorage.clearMemberTokens();
+
+      const savedO = tokenStorage.getRedirectO();
+      let redirectUrl = "/";
+      if (savedO) {
+        redirectUrl = savedO.startsWith("http") ? savedO : `https://${savedO}`;
+      }
+
+      window.location.href = redirectUrl;
+      return;
+    }
+  };
 
   const content = (
     <motion.div
@@ -75,6 +93,19 @@ function MenuItem({
     return <div className="block">{content}</div>;
   }
 
+  // Action items (like logout) use a button instead of a link
+  if (action) {
+    return (
+      <button
+        onClick={() => { handleAction(); if (onClose) onClose(); }}
+        className="block w-full text-left"
+        aria-label={label}
+      >
+        {content}
+      </button>
+    );
+  }
+
   return (
     <Link href={link} onClick={onClose} className="block" aria-label={label}>
       {content}
@@ -83,3 +114,4 @@ function MenuItem({
 }
 
 export default memo(MenuItem);
+

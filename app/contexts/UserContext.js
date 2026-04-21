@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { getMemberInfo, getProfile } from '../api/memberApi';
 import { tokenStorage } from '../api/tokenStorage';
+import { onAuthChanged } from '../api/authEvents';
 
 const UserContext = createContext();
 
@@ -19,39 +20,38 @@ export function UserProvider({ children }) {
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [memberUuid, setMemberUuid] = useState(null);
 
-  // Check for memberUuid changes (e.g., after authentication)
+  // Check for memberUuid changes natively via events
   useEffect(() => {
-    const checkMemberUuid = () => {
-      const uuid = tokenStorage.getMemberUuid();
-      if (uuid !== memberUuid) {
-        setMemberUuid(uuid);
+    // Check immediately on mount
+    const uuid = tokenStorage.getMemberUuid();
+    if (uuid !== memberUuid) {
+      setMemberUuid(uuid);
+    }
+
+    // Subscribe to auth events (dispatched when tokens are set/cleared)
+    const unsubscribe = onAuthChanged(() => {
+      const newUuid = tokenStorage.getMemberUuid();
+      if (newUuid !== memberUuid) {
+        setMemberUuid(newUuid);
       }
-    };
+    });
 
-    // Check immediately
-    checkMemberUuid();
-
-    // Also check periodically in case tokens are set after mount
-    const interval = setInterval(checkMemberUuid, 500);
-
-    // Clear interval after 5 seconds (enough time for auth to complete)
-    const timeout = setTimeout(() => clearInterval(interval), 5000);
-
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
-    };
+    return () => unsubscribe();
   }, [memberUuid]);
 
   useEffect(() => {
     const loadUserData = async () => {
       if (!memberUuid) {
-        setIsLoadingProfile(false);
-        return;
-      }
-
-      // Don't load user data if we're on the auth page (login in progress)
-      if (typeof window !== 'undefined' && window.location.pathname === '/auth') {
+        // Reset to defaults when logged out / token expired / cleared
+        setUserData({
+          name: "Jhon Doe",
+          balance: "0.00",
+          currentLevel: "Gold",
+          nextLevel: "Platinum",
+          progress: 61.6,
+          tokensNeeded: 20000,
+        });
+        setProfilePicture(null);
         setIsLoadingProfile(false);
         return;
       }
