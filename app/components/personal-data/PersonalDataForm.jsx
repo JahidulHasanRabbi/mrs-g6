@@ -214,7 +214,7 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
       <ProgressBar progress={progress} />
 
       <ProfileImageUpload
-        imageSrc={profileImage || "/assets/personal-data/profile-placeholder.png"}
+        imageSrc={profileImage || "/android-chrome-512x512.png"}
         onEditClick={handleProfileEdit}
       />
 
