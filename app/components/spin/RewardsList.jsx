@@ -10,12 +10,13 @@ import LoadingState from "../ui/LoadingState";
 import ErrorDisplay from "../ui/ErrorDisplay";
 
 const RewardItem = memo(function RewardItem({ icon, title, index }) {
-  // Determine font size based on text length
+  // More aggressive font size reduction for mobile to ensure full text shows
   const getFontSizeClass = (text) => {
     const length = text.length;
-    if (length > 25) return "text-xs sm:text-sm"; // Very long text
-    if (length > 18) return "text-sm sm:text-base"; // Long text
-    return "text-sm sm:text-lg"; // Normal text
+    if (length > 25) return "text-[10px] sm:text-xs"; // Very long text
+    if (length > 18) return "text-[11px] sm:text-sm"; // Long text
+    if (length > 12) return "text-xs sm:text-base"; // Medium text
+    return "text-sm sm:text-lg"; // Short text
   };
 
   return (
@@ -34,10 +35,10 @@ const RewardItem = memo(function RewardItem({ icon, title, index }) {
     }}
     whileHover={{ scale: 1.02, y: -2 }}
   >
-    <div className="absolute inset-0 flex items-center justify-between px-4 gap-3">
+    <div className="absolute inset-0 flex items-center justify-between px-2 sm:px-4 gap-2 sm:gap-3">
       {icon && (
         <motion.div 
-          className="relative w-[50px] h-[51px] shrink-0"
+          className="relative w-[45px] h-[45px] sm:w-[50px] sm:h-[51px] shrink-0"
           initial={{ opacity: 0, scale: 0 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ 
@@ -55,7 +56,7 @@ const RewardItem = memo(function RewardItem({ icon, title, index }) {
       )}
       <div className="flex-1 flex items-center justify-center min-w-0">
         <p 
-          className={`text-white ${getFontSizeClass(title)} font-bold text-center drop-shadow-lg px-2 leading-tight`}
+          className={`text-white ${getFontSizeClass(title)} font-bold text-center drop-shadow-lg px-1 leading-[1.1]`}
           style={{
             display: '-webkit-box',
             WebkitLineClamp: 2,
@@ -68,7 +69,7 @@ const RewardItem = memo(function RewardItem({ icon, title, index }) {
           {title}
         </p>
       </div>
-      {icon && <div className="w-[50px] shrink-0" />}
+      {icon && <div className="w-[45px] sm:w-[50px] shrink-0" />}
     </div>
   </motion.div>
   );
