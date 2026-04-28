@@ -46,7 +46,16 @@ const RewardItem = memo(function RewardItem({ icon, title, index }) {
         </motion.div>
       )}
       <div className="flex-1 flex items-center justify-center min-w-0">
-        <p className="text-white text-base sm:text-xl font-bold text-center drop-shadow-lg break-words px-2 leading-tight">
+        <p 
+          className="text-white text-sm sm:text-lg font-bold text-center drop-shadow-lg px-2 leading-tight"
+          style={{
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis'
+          }}
+        >
           {title}
         </p>
       </div>
