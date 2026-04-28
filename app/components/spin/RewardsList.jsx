@@ -26,7 +26,7 @@ const RewardItem = memo(function RewardItem({ icon, title, index }) {
     }}
     whileHover={{ scale: 1.02, y: -2 }}
   >
-    <div className="absolute inset-0 flex items-center justify-between px-4">
+    <div className="absolute inset-0 flex items-center justify-between px-4 gap-3">
       {icon && (
         <motion.div 
           className="relative w-[50px] h-[51px] shrink-0"
@@ -45,8 +45,8 @@ const RewardItem = memo(function RewardItem({ icon, title, index }) {
           />
         </motion.div>
       )}
-      <div className="flex-1 flex items-center justify-center">
-        <p className="text-white text-lg sm:text-2xl font-bold text-center drop-shadow-lg">
+      <div className="flex-1 flex items-center justify-center min-w-0">
+        <p className="text-white text-base sm:text-xl font-bold text-center drop-shadow-lg break-words px-2 leading-tight">
           {title}
         </p>
       </div>
