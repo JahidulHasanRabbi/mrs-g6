@@ -10,6 +10,14 @@ import LoadingState from "../ui/LoadingState";
 import ErrorDisplay from "../ui/ErrorDisplay";
 
 const RewardItem = memo(function RewardItem({ icon, title, index }) {
+  // Determine font size based on text length
+  const getFontSizeClass = (text) => {
+    const length = text.length;
+    if (length > 25) return "text-xs sm:text-sm"; // Very long text
+    if (length > 18) return "text-sm sm:text-base"; // Long text
+    return "text-sm sm:text-lg"; // Normal text
+  };
+
   return (
   <motion.div 
     className="relative w-[80%] sm:w-full mx-auto h-[62px] rounded-[6px] border border-white overflow-hidden"
@@ -47,13 +55,14 @@ const RewardItem = memo(function RewardItem({ icon, title, index }) {
       )}
       <div className="flex-1 flex items-center justify-center min-w-0">
         <p 
-          className="text-white text-sm sm:text-lg font-bold text-center drop-shadow-lg px-2 leading-tight"
+          className={`text-white ${getFontSizeClass(title)} font-bold text-center drop-shadow-lg px-2 leading-tight`}
           style={{
             display: '-webkit-box',
             WebkitLineClamp: 2,
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
-            textOverflow: 'ellipsis'
+            textOverflow: 'ellipsis',
+            wordBreak: 'break-word'
           }}
         >
           {title}
