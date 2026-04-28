@@ -26,7 +26,7 @@ const RewardItem = memo(function RewardItem({ icon, title, index }) {
     }}
     whileHover={{ scale: 1.02, y: -2 }}
   >
-    <div className="absolute inset-0 flex items-center gap-6 px-4">
+    <div className="absolute inset-0 flex items-center justify-between px-4">
       {icon && (
         <motion.div 
           className="relative w-[50px] h-[51px] shrink-0"
@@ -45,9 +45,12 @@ const RewardItem = memo(function RewardItem({ icon, title, index }) {
           />
         </motion.div>
       )}
-      <p className={`text-white text-sm sm:text-xl font-bold text-start ${icon ? 'mx-auto' : 'ml-4'}`}>
-        {title}
-      </p>
+      <div className="flex-1 flex items-center justify-center">
+        <p className="text-white text-lg sm:text-2xl font-bold text-center drop-shadow-lg">
+          {title}
+        </p>
+      </div>
+      {icon && <div className="w-[50px] shrink-0" />}
     </div>
   </motion.div>
   );
@@ -186,14 +189,21 @@ const RewardsList = memo(function RewardsList() {
               title={reward.reward_name}
             />
           ))}
-          {tokenRewards.map((reward, index) => (
-            <RewardItem 
-              key={reward.uuid} 
-              index={itemRewards.length + index} 
-              icon={reward.image}
-              title={`${reward.reward_name} (${reward.token_amount} tokens)`}
-            />
-          ))}
+          {tokenRewards.map((reward, index) => {
+            // Format token rewards to look better
+            const displayName = reward.reward_name.toLowerCase().includes('token') 
+              ? reward.reward_name 
+              : `${reward.reward_name} Token${reward.token_amount > 1 ? 's' : ''}`;
+            
+            return (
+              <RewardItem 
+                key={reward.uuid} 
+                index={itemRewards.length + index} 
+                icon={reward.image}
+                title={displayName}
+              />
+            );
+          })}
         </div>
 
         {/* Display credit cards in rows */}

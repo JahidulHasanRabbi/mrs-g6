@@ -77,7 +77,10 @@ export function mapLuckySpinItems(apiResponse) {
     item_type: item.item_type,
     min_withdraw: item.min_withdraw,
     max_withdraw: item.max_withdraw,
-    multiplier: item.multiplier
+    multiplier: item.multiplier,
+    token_amount: item.token_amount,
+    quantity: item.quantity,
+    unlimited: item.unlimited
   }));
 }
 
