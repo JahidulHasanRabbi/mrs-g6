@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import Sidebar from "../../../components/admin/Sidebar";
 import { AdminRouteGuard } from "../../../components/guards/AdminRouteGuard";
 
 const PAGE_SIZE = 4;
@@ -392,12 +391,7 @@ function RewardReportContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#07190d]">
-      <aside className="fixed bottom-6 left-6 top-6 z-20 w-[326px]">
-        <Sidebar activeItem="reward-report" />
-      </aside>
-
-      <main className="min-h-screen pl-[388px] pr-10 pt-8 pb-10">
+    <main className="min-h-screen pl-[388px] pr-10 pt-8 pb-10">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <h1 className="font-['Times_New_Roman'] text-[30px] font-bold leading-none text-white">
@@ -505,8 +499,7 @@ function RewardReportContent() {
 
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </section>
-      </main>
-    </div>
+    </main>
   );
 }
 

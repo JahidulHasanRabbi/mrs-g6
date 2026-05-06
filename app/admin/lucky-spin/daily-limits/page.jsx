@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Sidebar from "../../../components/admin/Sidebar";
 import NavigationCards from "../../../components/admin/lucky-spin/NavigationCards";
 import DailyLimitsTable from "../../../components/admin/lucky-spin/DailyLimitsTable";
 import MemberActivityTable from "../../../components/admin/lucky-spin/MemberActivityTable";
@@ -19,14 +18,7 @@ function DailyLimitsPageContent() {
   const [activeTab, setActiveTab] = useState("daily-limits");
 
   return (
-    <div className="min-h-screen bg-[#07190d]">
-      {/* Sidebar (fixed) */}
-      <aside className="fixed left-6 top-6 bottom-6 z-20 w-[326px]">
-        <Sidebar activeItem="daily-limits" />
-      </aside>
-
-      {/* Main Content */}
-      <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
+    <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
         {/* Header */}
         <div className="mb-8 flex items-start justify-between">
           <h1 className="text-4xl font-bold leading-[1.05] text-white font-['Times_New_Roman']">
@@ -147,7 +139,6 @@ function DailyLimitsPageContent() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+    </main>
   );
 }

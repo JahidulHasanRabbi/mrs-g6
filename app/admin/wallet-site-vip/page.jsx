@@ -3,8 +3,8 @@
 import { useState, useMemo, useCallback } from "react";
 
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
-import Sidebar from "../../components/admin/Sidebar";
 import { SortIcon, Pagination } from "../../components/admin/members/DataTable";
+import Image from "next/image";
 
 // ── Constants ────────────────────────────────────────────────────────────
 const PAGE_SIZE = 10;
@@ -17,26 +17,26 @@ const GOLD_BG =
 // Wallet Site VIP tiers (per-brand) — data from client requirements Item 11 & 12.
 // Fields: Tier Name, Lifetime Deposit, Monthly Deposit, Upgrade Bonus, Monthly Loyalty, Birthday Bonus, Station
 const MOCK_WALLET_VIP_TIERS = [
-  { id: 1, tierName: "WARRIOR",        lifetimeDeposit: 0,      monthlyDeposit: 0,   upgradeBonus: 0,    monthlyLoyalty: 0,    birthdayBonus: 0,    station: "VIP 0" },
-  { id: 2, tierName: "BRONZE ELITE",   lifetimeDeposit: 500,    monthlyDeposit: 300, upgradeBonus: 88,   monthlyLoyalty: 38,   birthdayBonus: 68,   station: "VIP 1" },
-  { id: 3, tierName: "MASTER",         lifetimeDeposit: 2500,   monthlyDeposit: 300, upgradeBonus: 188,  monthlyLoyalty: 68,   birthdayBonus: 118,  station: "VIP 2" },
-  { id: 4, tierName: "GRAND MASTER",   lifetimeDeposit: 10000,  monthlyDeposit: 300, upgradeBonus: 388,  monthlyLoyalty: 188,  birthdayBonus: 228,  station: "VIP 3" },
-  { id: 5, tierName: "EPIC",           lifetimeDeposit: 35000,  monthlyDeposit: 300, upgradeBonus: 688,  monthlyLoyalty: 288,  birthdayBonus: 328,  station: "VIP 4" },
-  { id: 6, tierName: "LEGEND",         lifetimeDeposit: 75000,  monthlyDeposit: 300, upgradeBonus: 888,  monthlyLoyalty: 388,  birthdayBonus: 668,  station: "VIP 5" },
-  { id: 7, tierName: "MYTHIC",         lifetimeDeposit: 150000, monthlyDeposit: 300, upgradeBonus: 1288, monthlyLoyalty: 588,  birthdayBonus: 888,  station: "VIP 6" },
-  { id: 8, tierName: "MYTHIC GLORY",   lifetimeDeposit: 300000, monthlyDeposit: 300, upgradeBonus: 1888, monthlyLoyalty: 1288, birthdayBonus: 1188, station: "VIP 7" },
-  { id: 9, tierName: "MYTHIC PRIME",   lifetimeDeposit: 700000, monthlyDeposit: 300, upgradeBonus: 3888, monthlyLoyalty: 1888, birthdayBonus: 1688, station: "VIP 8" },
+  { id: 1, tierName: "WARRIOR", lifetimeDeposit: 0, monthlyDeposit: 0, upgradeBonus: 0, monthlyLoyalty: 0, birthdayBonus: 0, station: "VIP 0" },
+  { id: 2, tierName: "BRONZE ELITE", lifetimeDeposit: 500, monthlyDeposit: 300, upgradeBonus: 88, monthlyLoyalty: 38, birthdayBonus: 68, station: "VIP 1" },
+  { id: 3, tierName: "MASTER", lifetimeDeposit: 2500, monthlyDeposit: 300, upgradeBonus: 188, monthlyLoyalty: 68, birthdayBonus: 118, station: "VIP 2" },
+  { id: 4, tierName: "GRAND MASTER", lifetimeDeposit: 10000, monthlyDeposit: 300, upgradeBonus: 388, monthlyLoyalty: 188, birthdayBonus: 228, station: "VIP 3" },
+  { id: 5, tierName: "EPIC", lifetimeDeposit: 35000, monthlyDeposit: 300, upgradeBonus: 688, monthlyLoyalty: 288, birthdayBonus: 328, station: "VIP 4" },
+  { id: 6, tierName: "LEGEND", lifetimeDeposit: 75000, monthlyDeposit: 300, upgradeBonus: 888, monthlyLoyalty: 388, birthdayBonus: 668, station: "VIP 5" },
+  { id: 7, tierName: "MYTHIC", lifetimeDeposit: 150000, monthlyDeposit: 300, upgradeBonus: 1288, monthlyLoyalty: 588, birthdayBonus: 888, station: "VIP 6" },
+  { id: 8, tierName: "MYTHIC GLORY", lifetimeDeposit: 300000, monthlyDeposit: 300, upgradeBonus: 1888, monthlyLoyalty: 1288, birthdayBonus: 1188, station: "VIP 7" },
+  { id: 9, tierName: "MYTHIC PRIME", lifetimeDeposit: 700000, monthlyDeposit: 300, upgradeBonus: 3888, monthlyLoyalty: 1888, birthdayBonus: 1688, station: "VIP 8" },
 ];
 
 const TABLE_COLUMNS = [
-  { key: "rowNum",          label: "No",               minW: "min-w-[60px]" },
-  { key: "tierName",        label: "Tier Name",        minW: "min-w-[140px]" },
-  { key: "lifetimeDeposit", label: "Lifetime Deposit",  minW: "min-w-[130px]" },
-  { key: "monthlyDeposit",  label: "Monthly Deposit",   minW: "min-w-[130px]" },
-  { key: "upgradeBonus",    label: "Upgrade Bonus",     minW: "min-w-[120px]" },
-  { key: "monthlyLoyalty",  label: "Monthly Loyalty",    minW: "min-w-[120px]" },
-  { key: "birthdayBonus",   label: "Birthday Bonus",     minW: "min-w-[120px]" },
-  { key: "station",         label: "Station",            minW: "min-w-[100px]" },
+  { key: "rowNum", label: "No", minW: "min-w-[60px]" },
+  { key: "tierName", label: "Tier Name", minW: "min-w-[140px]" },
+  { key: "lifetimeDeposit", label: "Lifetime Deposit", minW: "min-w-[130px]" },
+  { key: "monthlyDeposit", label: "Monthly Deposit", minW: "min-w-[130px]" },
+  { key: "upgradeBonus", label: "Upgrade Bonus", minW: "min-w-[120px]" },
+  { key: "monthlyLoyalty", label: "Monthly Loyalty", minW: "min-w-[120px]" },
+  { key: "birthdayBonus", label: "Birthday Bonus", minW: "min-w-[120px]" },
+  { key: "station", label: "Station", minW: "min-w-[100px]" },
 ];
 
 // ── Helpers ──────────────────────────────────────────────────────────────
@@ -80,13 +80,13 @@ function TierFormModal({ tier, onClose, onSave }) {
   };
 
   const fields = [
-    { key: "tierName",        label: "Tier Name",        type: "text" },
-    { key: "lifetimeDeposit", label: "Lifetime Deposit",  type: "number" },
-    { key: "monthlyDeposit",  label: "Monthly Deposit",   type: "number" },
-    { key: "upgradeBonus",    label: "Upgrade Bonus",     type: "number" },
-    { key: "monthlyLoyalty",  label: "Monthly Loyalty",    type: "number" },
-    { key: "birthdayBonus",   label: "Birthday Bonus",     type: "number" },
-    { key: "station",         label: "Station",            type: "select" },
+    { key: "tierName", label: "Tier Name", type: "text" },
+    { key: "lifetimeDeposit", label: "Lifetime Deposit", type: "number" },
+    { key: "monthlyDeposit", label: "Monthly Deposit", type: "number" },
+    { key: "upgradeBonus", label: "Upgrade Bonus", type: "number" },
+    { key: "monthlyLoyalty", label: "Monthly Loyalty", type: "number" },
+    { key: "birthdayBonus", label: "Birthday Bonus", type: "number" },
+    { key: "station", label: "Station", type: "select" },
   ];
 
   return (
@@ -105,23 +105,16 @@ function TierFormModal({ tier, onClose, onSave }) {
         {/* Gold badge */}
         <div className="flex justify-center -mt-2 mb-2">
           <div
-            className="h-[98px] w-[98px] rounded-full flex items-center justify-center"
-            style={{
-              background: "linear-gradient(180deg, #ffff84 0%, #dd8f1f 100%)",
-              boxShadow: "0 4px 24px rgba(231,196,87,0.35)",
-            }}
+            className=" flex items-center justify-center"
+
           >
             {/* Crown / star icon */}
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
-                fill="#4d4d4d"
-                stroke="#4d4d4d"
-                strokeWidth="1"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <Image
+              src="/assets/admin/Tier.png"
+              alt="VIP"
+              width={70}
+              height={70}
+            />
           </div>
         </div>
 
@@ -180,11 +173,10 @@ function TierFormModal({ tier, onClose, onSave }) {
                   required
                   min={f.type === "number" ? 0 : undefined}
                   step={f.type === "number" ? "0.01" : undefined}
-                  className={`h-[36px] flex-1 rounded-[4px] px-3 bg-[rgba(255,255,255,0.1)] border-[0.5px] font-['Times_New_Roman'] text-[14px] text-white outline-none focus:border-[#f2c36b] ${
-                    f.key === "tierName"
-                      ? "border-[#f2c36b]"
-                      : "border-[rgba(255,255,255,0.08)]"
-                  }`}
+                  className={`h-[36px] flex-1 rounded-[4px] px-3 bg-[rgba(255,255,255,0.1)] border-[0.5px] font-['Times_New_Roman'] text-[14px] text-white outline-none focus:border-[#f2c36b] ${f.key === "tierName"
+                    ? "border-[#f2c36b]"
+                    : "border-[rgba(255,255,255,0.08)]"
+                    }`}
                 />
               )}
             </div>
@@ -276,14 +268,8 @@ function WalletSiteVipContent() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#07190d]">
-      {/* Sidebar */}
-      <aside className="fixed left-6 top-6 bottom-6 z-20 w-[326px] hidden xl:block">
-        <Sidebar activeItem="wallet-site-vip" />
-      </aside>
-
-      {/* Main content */}
-      <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:pl-[388px] xl:pr-10 xl:pt-8">
+    <>
+    <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:pl-[388px] xl:pr-10 xl:pt-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h1 className="font-['Times_New_Roman'] font-bold text-[22px] sm:text-[28px] text-white">
@@ -423,26 +409,26 @@ function WalletSiteVipContent() {
 
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
-      </main>
+    </main>
 
-      {/* Edit Modal */}
-      {editingTier && (
-        <TierFormModal
-          tier={editingTier}
-          onClose={() => setEditingTier(null)}
-          onSave={handleSaveTier}
-        />
-      )}
+    {/* Edit Modal */}
+    {editingTier && (
+      <TierFormModal
+        tier={editingTier}
+        onClose={() => setEditingTier(null)}
+        onSave={handleSaveTier}
+      />
+    )}
 
-      {/* Create Modal */}
-      {showCreateForm && (
-        <TierFormModal
-          tier={null}
-          onClose={() => setShowCreateForm(false)}
-          onSave={handleCreateTier}
-        />
-      )}
-    </div>
+    {/* Create Modal */}
+    {showCreateForm && (
+      <TierFormModal
+        tier={null}
+        onClose={() => setShowCreateForm(false)}
+        onSave={handleCreateTier}
+      />
+    )}
+    </>
   );
 }
 

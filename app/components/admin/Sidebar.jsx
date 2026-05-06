@@ -2,9 +2,32 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { adminLogout } from "../../api/adminApi";
 import { tokenStorage } from "../../api/tokenStorage";
+
+// Map a pathname → sidebar item id. Keeps the sidebar a single source of truth
+// so it doesn't depend on a per-page `activeItem` prop (which would force a
+// re-render dance from each page).
+function pathnameToActiveItem(pathname) {
+  if (!pathname) return "home";
+  // Most specific first
+  if (pathname.startsWith("/admin/lucky-spin/prize-settings")) return "prize-settings";
+  if (pathname.startsWith("/admin/lucky-spin/user-logs")) return "user-logs";
+  if (pathname.startsWith("/admin/lucky-spin/daily-limits")) return "daily-limits";
+  if (pathname.startsWith("/admin/lucky-spin")) return "lucky-spin";
+  if (pathname.startsWith("/admin/reports/token")) return "token-report";
+  if (pathname.startsWith("/admin/reports/reward")) return "reward-report";
+  if (pathname.startsWith("/admin/reports/member")) return "member-report";
+  if (pathname.startsWith("/admin/members")) return "member-list";
+  if (pathname.startsWith("/admin/redemption")) return "redemption";
+  if (pathname.startsWith("/admin/checkin-settings")) return "checkin-settings";
+  if (pathname.startsWith("/admin/banners")) return "banners";
+  if (pathname.startsWith("/admin/wallet-site-vip")) return "wallet-site-vip";
+  if (pathname.startsWith("/admin/vip-tiers")) return "vip-tiers";
+  if (pathname === "/admin" || pathname === "/admin/") return "home";
+  return "home";
+}
 
 const MENU_ITEMS = [
   {
@@ -277,7 +300,9 @@ const ExpandableMenuItem = ({ item, activeItem }) => {
   );
 };
 
-export default function Sidebar({ activeItem = "home" }) {
+export default function Sidebar({ activeItem: activeItemProp }) {
+  const pathname = usePathname();
+  const activeItem = activeItemProp ?? pathnameToActiveItem(pathname);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
 

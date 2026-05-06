@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Sidebar from "../../components/admin/Sidebar";
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
 import ErrorDisplay from "../../components/ui/ErrorDisplay";
 import { LoadingState, LoadingButton } from "../../components/ui/LoadingState";
@@ -77,14 +76,7 @@ function VipTiersContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#07190d]">
-      {/* Sidebar */}
-      <aside className="fixed left-6 top-6 bottom-6 z-20 w-[326px]">
-        <Sidebar activeItem="vip-tiers" />
-      </aside>
-
-      {/* Main Content */}
-      <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
+    <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
         {/* Header */}
         <div className="mb-8 flex items-start justify-between">
           <h1 className="text-4xl font-bold leading-[1.05] text-white font-['Times_New_Roman']">
@@ -187,8 +179,7 @@ function VipTiersContent() {
             </div>
           </div>
         </LoadingState>
-      </main>
-    </div>
+    </main>
   );
 }
 

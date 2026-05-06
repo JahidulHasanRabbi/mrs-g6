@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import Sidebar from "../Sidebar";
 
 /**
  * Shared page shell for all member-history sub-pages.
  *
- * Renders the admin sidebar (highlighting "Member List"), a page title with
- * bell icon, a "Back to Member List" link, and the member subtitle.
+ * The admin sidebar + dark background are provided by app/admin/layout.jsx
+ * (so they persist across navigation). This shell only renders the page
+ * title with bell icon, a "Back to Member List" link, and the member
+ * subtitle.
  *
  * @param {Object} props
  * @param {string} props.title       - e.g. "Member Tokens"
@@ -17,14 +18,7 @@ import Sidebar from "../Sidebar";
  */
 export default function HistoryPageShell({ title, memberName, memberId, children }) {
   return (
-    <div className="min-h-screen bg-[#07190d]">
-      {/* Sidebar — hidden below xl */}
-      <aside className="fixed left-6 top-6 bottom-6 z-20 w-[326px] hidden xl:block">
-        <Sidebar activeItem="member-list" />
-      </aside>
-
-      {/* Main content */}
-      <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:pl-[388px] xl:pr-10 xl:pt-8">
+    <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:pl-[388px] xl:pr-10 xl:pt-8">
         {/* Header row */}
         <div className="flex items-center justify-between mb-1">
           <h1 className="font-['Times_New_Roman'] font-bold text-[22px] sm:text-[28px] text-white">
@@ -64,9 +58,8 @@ export default function HistoryPageShell({ title, memberName, memberId, children
           </p>
         )}
 
-        {/* Page-specific content (table card) */}
-        {children}
-      </main>
-    </div>
+      {/* Page-specific content (table card) */}
+      {children}
+    </main>
   );
 }

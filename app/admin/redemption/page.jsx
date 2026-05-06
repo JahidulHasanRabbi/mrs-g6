@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Sidebar from "../../components/admin/Sidebar";
 import RedemptionItemsTable from "../../components/admin/redemption/RedemptionItemsTable";
 import RedemptionItemForm from "../../components/admin/redemption/RedemptionItemForm";
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
@@ -103,14 +102,8 @@ function RedemptionManagementContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#07190d]">
-      {/* Sidebar (fixed) */}
-      <aside className="fixed left-6 top-6 bottom-6 z-20 w-[326px]">
-        <Sidebar activeItem="redemption" />
-      </aside>
-
-      {/* Main Content */}
-      <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
+    <>
+    <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
         {/* Header */}
         <div className="mb-8 flex items-start justify-between">
           <h1 className="text-4xl font-bold leading-[1.05] text-white font-['Times_New_Roman']">
@@ -204,18 +197,18 @@ function RedemptionManagementContent() {
             </div>
           </div>
         </div>
-      </main>
+    </main>
 
-      {/* Modal */}
-      <RedemptionItemForm
-        isOpen={isModalOpen}
-        onClose={handleModalClose}
-        onSubmit={handleFormSubmit}
-        mode={modalMode}
-        initialData={selectedItem}
-        isLoading={isSubmitting}
-        error={formError}
-      />
-    </div>
+    {/* Modal */}
+    <RedemptionItemForm
+      isOpen={isModalOpen}
+      onClose={handleModalClose}
+      onSubmit={handleFormSubmit}
+      mode={modalMode}
+      initialData={selectedItem}
+      isLoading={isSubmitting}
+      error={formError}
+    />
+    </>
   );
 }

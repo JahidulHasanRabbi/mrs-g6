@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Sidebar from "../../components/admin/Sidebar";
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
+import Image from "next/image";
 
 // ── Mock data ──────────────────────────────────────────────────────────
 // TODO (Backend): Replace MOCK_MEMBERS with real API call to adminApi.getMembers()
@@ -401,11 +401,10 @@ function FilterDropdown({ label, options, value, onChange, icon = "chevron" }) {
               onChange("");
               setOpen(false);
             }}
-            className={`w-full text-left px-3 py-2.5 font-['Times_New_Roman'] text-[13px] transition-colors ${
-              !value
+            className={`w-full text-left px-3 py-2.5 font-['Times_New_Roman'] text-[13px] transition-colors ${!value
                 ? "text-[#e9af41] bg-[rgba(233,175,65,0.1)]"
                 : "text-white/70 hover:bg-white/5 hover:text-white"
-            }`}
+              }`}
           >
             All
           </button>
@@ -416,11 +415,10 @@ function FilterDropdown({ label, options, value, onChange, icon = "chevron" }) {
                 onChange(opt);
                 setOpen(false);
               }}
-              className={`w-full text-left px-3 py-2.5 font-['Times_New_Roman'] text-[13px] border-t border-white/5 transition-colors ${
-                value === opt
+              className={`w-full text-left px-3 py-2.5 font-['Times_New_Roman'] text-[13px] border-t border-white/5 transition-colors ${value === opt
                   ? "text-[#e9af41] bg-[rgba(233,175,65,0.1)]"
                   : "text-white/70 hover:bg-white/5 hover:text-white"
-              }`}
+                }`}
             >
               {opt}
             </button>
@@ -618,11 +616,10 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
           <button
             key={page}
             onClick={() => onPageChange(page)}
-            className={`font-['Times_New_Roman'] text-[13px] min-w-[28px] h-[28px] rounded flex items-center justify-center transition-colors ${
-              currentPage === page
+            className={`font-['Times_New_Roman'] text-[13px] min-w-[28px] h-[28px] rounded flex items-center justify-center transition-colors ${currentPage === page
                 ? "bg-[#e9af41] text-black font-bold"
                 : "text-white/70 hover:text-white hover:bg-white/10"
-            }`}
+              }`}
           >
             {page}
           </button>
@@ -800,20 +797,9 @@ function EditMemberModal({ member, onClose, onSave }) {
       >
         {/* Gold badge + title */}
         <div className="flex flex-col items-center mb-6">
-          <div className="w-[72px] h-[72px] relative mb-2">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-[#ffff84] to-[#dd8f1f] shadow-[0_0_20px_rgba(233,175,65,0.4)]" />
-            <div className="absolute inset-[4px] rounded-full bg-gradient-to-br from-[#e9af41] to-[#c4882a] border-2 border-[#ffdf80]" />
-            <div className="absolute inset-[10px] rounded-full bg-gradient-to-br from-[#f5d17a] to-[#d4952e]" />
-          </div>
+          <Image src="/assets/admin/Edit-profile.png" alt="Gold Badge" width={80} height={80} className="object-contain" />
           {/* Ribbon */}
-          <div
-            className="w-[90px] h-[14px] -mt-3 mb-1"
-            style={{
-              background:
-                "linear-gradient(90deg, transparent 0%, #e9af41 15%, #ffdf80 50%, #e9af41 85%, transparent 100%)",
-              clipPath: "polygon(0% 0%, 100% 0%, 90% 100%, 10% 100%)",
-            }}
-          />
+
           <h2 className="font-['Times_New_Roman'] font-bold text-[22px] text-white">
             Edit Profile
           </h2>
@@ -1063,14 +1049,8 @@ function MembersContent() {
   ].filter(Boolean).length;
 
   return (
-    <div className="min-h-screen bg-[#07190d]">
-      {/* Sidebar — hidden on smaller screens */}
-      <aside className="fixed left-6 top-6 bottom-6 z-20 w-[326px] hidden xl:block">
-        <Sidebar activeItem="member-list" />
-      </aside>
-
-      {/* Main Content — responsive padding */}
-      <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:pl-[388px] xl:pr-10 xl:pt-8">
+    <>
+    <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:pl-[388px] xl:pr-10 xl:pt-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <h1 className="font-['Times_New_Roman'] font-bold text-[22px] sm:text-[28px] text-white">
@@ -1315,22 +1295,22 @@ function MembersContent() {
             />
           )}
         </div>
-      </main>
+    </main>
 
-      {/* Modals */}
-      {viewMember && (
-        <ViewMemberModal
-          member={viewMember}
-          onClose={() => setViewMember(null)}
-          onNavigate={handleHistoryNavigate}
-        />
-      )}
-      {editMember && (
-        <EditMemberModal
-          member={editMember}
-          onClose={() => setEditMember(null)}
-        />
-      )}
-    </div>
+    {/* Modals */}
+    {viewMember && (
+      <ViewMemberModal
+        member={viewMember}
+        onClose={() => setViewMember(null)}
+        onNavigate={handleHistoryNavigate}
+      />
+    )}
+    {editMember && (
+      <EditMemberModal
+        member={editMember}
+        onClose={() => setEditMember(null)}
+      />
+    )}
+    </>
   );
 }

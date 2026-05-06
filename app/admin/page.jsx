@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import Sidebar from "../components/admin/Sidebar";
 import BarChart from "../components/admin/charts/BarChart";
 import LineChart from "../components/admin/charts/LineChart";
 import StatDonut from "../components/admin/charts/StatDonut";
@@ -169,26 +168,14 @@ function AdminDashboardContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#07190d]">
-        <aside className="fixed left-6 top-6 bottom-6 z-20 w-[326px]">
-          <Sidebar activeItem="home" />
-        </aside>
-        <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
-          <LoadingState message="Loading dashboard data..." />
-        </main>
-      </div>
+      <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
+        <LoadingState message="Loading dashboard data..." />
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#07190d]">
-      {/* Sidebar (fixed) */}
-      <aside className="fixed left-6 top-6 bottom-6 z-20 w-[326px]">
-        <Sidebar activeItem="home" />
-      </aside>
-
-      {/* Main Content */}
-      <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
+    <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
         {/* Header */}
         <div className="mb-8 flex items-start justify-between">
           <h1 className="text-4xl font-bold leading-[1.05] text-white font-['Times_New_Roman']">
@@ -327,7 +314,6 @@ function AdminDashboardContent() {
             </button>
           </div>
         </div>
-      </main>
-    </div>
+    </main>
   );
 }

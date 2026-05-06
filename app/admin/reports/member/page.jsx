@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import Sidebar from "../../../components/admin/Sidebar";
 import { AdminRouteGuard } from "../../../components/guards/AdminRouteGuard";
 
 const PAGE_SIZE = 9;
@@ -254,12 +253,7 @@ function MemberReportContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#07190d]">
-      <aside className="fixed bottom-6 left-6 top-6 z-20 w-[326px]">
-        <Sidebar activeItem="member-report" />
-      </aside>
-
-      <main className="min-h-screen pl-[388px] pr-10 pt-8 pb-10">
+    <main className="min-h-screen pl-[388px] pr-10 pt-8 pb-10">
         <section className="overflow-hidden rounded-[12px] border border-[rgba(255,255,132,0.18)] bg-[linear-gradient(180deg,rgba(28,48,31,0.98)_0%,rgba(24,44,28,0.98)_100%)] shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
           <div className="flex items-center justify-between gap-4 px-4 pb-4 pt-4">
             <h1 className="font-['Times_New_Roman'] text-[30px] font-bold leading-none text-[#f4efe0]">
@@ -339,8 +333,7 @@ function MemberReportContent() {
 
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </section>
-      </main>
-    </div>
+    </main>
   );
 }
 
