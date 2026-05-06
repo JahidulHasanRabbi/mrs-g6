@@ -63,6 +63,9 @@ const SECONDARY_MENU = [
     href: "/admin/vip-tiers",
     hasSubmenu: true,
     disabled: false,
+    children: [
+      { id: "wallet-site-vip", label: "Wallet Side VIP", href: "/admin/wallet-site-vip" },
+    ],
   },
   {
     id: "checkin-settings",
@@ -180,21 +183,37 @@ const BarChartIcon = () => (
   </svg>
 );
 
+const CoinIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="8" />
+    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+    <line x1="12" y1="17" x2="12.01" y2="17" />
+  </svg>
+);
+
+const CHILD_ICONS = {
+  reports: BarChartIcon,
+  vip: CoinIcon,
+};
+
 const ExpandableMenuItem = ({ item, activeItem }) => {
   const isAnyChildActive = item.children?.some((c) => c.id === activeItem);
   const [open, setOpen] = useState(isAnyChildActive);
-  const isActive = open || isAnyChildActive;
+
+  // Full gold highlight only when a child page is actually active.
+  // When merely expanded (open) but no child active, use a subtle outline style.
+  const headerClass = isAnyChildActive
+    ? "border-[0.324px] border-[#9f7722] bg-[#e8b558] shadow-[3.235px_3.235px_48.529px_3.235px_rgba(231,196,87,0.5)]"
+    : open
+      ? "border-[rgba(233,175,65,0.35)] bg-white/5"
+      : "border-transparent bg-transparent hover:border-[rgba(233,175,65,0.35)] hover:bg-white/5";
 
   return (
     <div>
       {/* Parent header */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className={`relative flex h-[51.765px] w-full items-center justify-between overflow-hidden rounded-[6.471px] border px-3 transition-all duration-200 ${
-          isActive
-            ? "border-[0.324px] border-[#9f7722] bg-[#e8b558] shadow-[3.235px_3.235px_48.529px_3.235px_rgba(231,196,87,0.5)]"
-            : "border-transparent bg-transparent hover:border-[rgba(233,175,65,0.35)] hover:bg-white/5"
-        }`}
+        className={`relative flex h-[51.765px] w-full items-center justify-between overflow-hidden rounded-[6.471px] border px-3 transition-all duration-200 ${headerClass}`}
       >
         <div className="flex items-center gap-[10px]">
           <div className="relative h-[22px] w-[22px] shrink-0">
@@ -202,7 +221,7 @@ const ExpandableMenuItem = ({ item, activeItem }) => {
           </div>
           <span
             className={`font-['Times_New_Roman'] text-[16px] font-bold leading-normal ${
-              isActive ? "text-white" : "text-white/80"
+              isAnyChildActive ? "text-white" : "text-white/80"
             }`}
           >
             {item.label}
@@ -213,7 +232,7 @@ const ExpandableMenuItem = ({ item, activeItem }) => {
           height="16"
           viewBox="0 0 24 24"
           fill="none"
-          stroke={isActive ? "white" : "rgba(255,255,255,0.8)"}
+          stroke={isAnyChildActive ? "white" : "rgba(255,255,255,0.8)"}
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -239,7 +258,7 @@ const ExpandableMenuItem = ({ item, activeItem }) => {
                   }`}
                 >
                   <span className={isActive ? "text-[#e9af41]" : "text-white/60"}>
-                    <BarChartIcon />
+                    {(() => { const Icon = CHILD_ICONS[item.id] || BarChartIcon; return <Icon />; })()}
                   </span>
                   <span
                     className={`font-['Times_New_Roman'] text-[15px] font-bold ${
@@ -339,7 +358,7 @@ export default function Sidebar({ activeItem = "home" }) {
         {/* Secondary Menu */}
         <div className="flex flex-col gap-4">
           {SECONDARY_MENU.map((item) => {
-            if (item.id === "reports" && item.children) {
+            if (item.children) {
               return <ExpandableMenuItem key={item.id} item={item} activeItem={activeItem} />;
             }
 

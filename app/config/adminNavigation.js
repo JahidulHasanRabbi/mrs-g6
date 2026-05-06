@@ -15,6 +15,12 @@ export const ADMIN_NAVIGATION = [
     id: 'vip-tiers'
   },
   {
+    label: 'Wallet Side VIP',
+    path: '/admin/wallet-site-vip',
+    enabled: true,
+    id: 'wallet-site-vip'
+  },
+  {
     label: 'Lucky Spin',
     path: '/admin/lucky-spin',
     enabled: true,
