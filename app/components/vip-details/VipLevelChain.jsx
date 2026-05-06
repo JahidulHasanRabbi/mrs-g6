@@ -51,6 +51,42 @@ const DEFAULT_VIP_LEVELS = [
     topSm: 22,
     leftSm: 350,
   },
+  {
+    name: "Emerald",
+    badge: VIP_DETAILS_ASSETS.badges.emerald,
+    rotation: -20,
+    top: 18,
+    left: 480,
+    topSm: 28,
+    leftSm: 420,
+  },
+  {
+    name: "Ruby",
+    badge: VIP_DETAILS_ASSETS.badges.ruby,
+    rotation: -26,
+    top: 10,
+    left: 570,
+    topSm: 22,
+    leftSm: 485,
+  },
+  {
+    name: "Sapphire",
+    badge: VIP_DETAILS_ASSETS.badges.sapphire,
+    rotation: -32,
+    top: 18,
+    left: 660,
+    topSm: 28,
+    leftSm: 550,
+  },
+  {
+    name: "Amethyst",
+    badge: VIP_DETAILS_ASSETS.badges.amethyst,
+    rotation: -38,
+    top: 12,
+    left: 750,
+    topSm: 24,
+    leftSm: 615,
+  },
 ];
 
 // Map API tier names to badge assets
@@ -62,6 +98,10 @@ function getBadgeForTier(tierName, index = 0) {
   if (lowerName.includes('gold')) return VIP_DETAILS_ASSETS.badges.gold;
   if (lowerName.includes('platinum')) return VIP_DETAILS_ASSETS.badges.platinum;
   if (lowerName.includes('diamond')) return VIP_DETAILS_ASSETS.badges.diamond;
+  if (lowerName.includes('emerald')) return VIP_DETAILS_ASSETS.badges.emerald;
+  if (lowerName.includes('ruby')) return VIP_DETAILS_ASSETS.badges.ruby;
+  if (lowerName.includes('sapphire')) return VIP_DETAILS_ASSETS.badges.sapphire;
+  if (lowerName.includes('amethyst') || lowerName.includes('amiehyst')) return VIP_DETAILS_ASSETS.badges.amethyst;
 
   // Fallback to cycling through the badges based on their index
   const badgeOrder = [
@@ -70,6 +110,10 @@ function getBadgeForTier(tierName, index = 0) {
     VIP_DETAILS_ASSETS.badges.gold,
     VIP_DETAILS_ASSETS.badges.platinum,
     VIP_DETAILS_ASSETS.badges.diamond,
+    VIP_DETAILS_ASSETS.badges.emerald,
+    VIP_DETAILS_ASSETS.badges.ruby,
+    VIP_DETAILS_ASSETS.badges.sapphire,
+    VIP_DETAILS_ASSETS.badges.amethyst,
   ];
   return badgeOrder[index % badgeOrder.length];
 }

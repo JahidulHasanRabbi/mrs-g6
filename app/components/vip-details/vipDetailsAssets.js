@@ -16,5 +16,9 @@ export const VIP_DETAILS_ASSETS = {
     gold: "/assets/vip-details/gold-badge.png",
     platinum: "/assets/vip-details/platinum-badge.png",
     diamond: "/assets/vip-details/diamond-badge.png",
+    emerald: "/assets/vip-details/emerald-badge.svg",
+    ruby: "/assets/vip-details/ruby-badge.svg",
+    sapphire: "/assets/vip-details/sapphire-badge.svg",
+    amethyst: "/assets/vip-details/amethyst-badge.svg",
   }
 };

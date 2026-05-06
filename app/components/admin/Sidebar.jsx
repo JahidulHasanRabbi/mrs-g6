@@ -16,6 +16,13 @@ const MENU_ITEMS = [
     disabled: false,
   },
   {
+    id: "member-list",
+    label: "Member List",
+    icon: "/assets/admin/member-list.png",
+    href: "/admin/members",
+    disabled: false,
+  },
+  {
     id: "lucky-spin",
     label: "Lucky Spin Management",
     icon: "/assets/admin/lucky-spin-icon.png",
@@ -313,10 +320,11 @@ export default function Sidebar({ activeItem = "home" }) {
         <div className="flex flex-col gap-4">
           {MENU_ITEMS.map((item) => {
             // Check if this item should be highlighted
-            const shouldHighlight = 
+            const shouldHighlight =
               (item.id === "lucky-spin" && (activeItem === "lucky-spin" || activeItem === "prize-settings" || activeItem === "user-logs" || activeItem === "daily-limits")) ||
               (item.id === "redemption" && activeItem === "redemption") ||
-              (item.id === "home" && activeItem === "home");
+              (item.id === "home" && activeItem === "home") ||
+              (item.id === "member-list" && activeItem === "member-list");
             
             if (shouldHighlight) {
               return <HighlightedMenuItem key={item.id} item={item} />;

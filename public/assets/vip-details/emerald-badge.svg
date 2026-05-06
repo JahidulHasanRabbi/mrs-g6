@@ -1,0 +1,57 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="emerald_bg" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(512 430) rotate(90) scale(430 430)">
+      <stop offset="0" stop-color="#1f8f64" stop-opacity="0.85"/>
+      <stop offset="0.56" stop-color="#0b3d34" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#051716" stop-opacity="1"/>
+    </radialGradient>
+    <linearGradient id="emerald_shield" x1="180" y1="130" x2="845" y2="910" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#43ff9b"/>
+      <stop offset="0.32" stop-color="#13c878"/>
+      <stop offset="1" stop-color="#0a6e49"/>
+    </linearGradient>
+    <linearGradient id="emerald_metal" x1="210" y1="150" x2="825" y2="850" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#d8f8ea"/>
+      <stop offset="0.25" stop-color="#88ffca"/>
+      <stop offset="1" stop-color="#0d5f3f"/>
+    </linearGradient>
+    <linearGradient id="emerald_banner" x1="165" y1="705" x2="860" y2="860" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#d9edf4"/>
+      <stop offset="0.48" stop-color="#9bc8d5"/>
+      <stop offset="1" stop-color="#6ca7b9"/>
+    </linearGradient>
+    <filter id="emerald_shadow" x="100" y="70" width="824" height="900" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#021210" flood-opacity="0.55"/>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#emerald_bg)"/>
+  <g filter="url(#emerald_shadow)">
+    <path d="M512 104L826 202V492C826 665 732 805 512 920C292 805 198 665 198 492V202L512 104Z" fill="url(#emerald_shield)" stroke="#061611" stroke-width="18"/>
+    <path d="M512 150L784 236V486C784 626 704 748 512 847C320 748 240 626 240 486V236L512 150Z" fill="#0b3d34" stroke="url(#emerald_metal)" stroke-width="12"/>
+    <path d="M512 188L754 260V474C754 594 688 698 512 787C336 698 270 594 270 474V260L512 188Z" fill="#082a26" opacity="0.94"/>
+
+    <path d="M512 246L604 306L566 394L512 430L458 394L420 306L512 246Z" fill="url(#emerald_metal)" stroke="#04110e" stroke-width="10"/>
+    <path d="M373 404L458 350L458 438L394 500L341 455L373 404Z" fill="#1dcf82" opacity="0.95"/>
+    <path d="M651 404L566 350L566 438L630 500L683 455L651 404Z" fill="#1dcf82" opacity="0.95"/>
+    <path d="M360 320L430 256L454 320L412 372L360 320Z" fill="#36f0a1" opacity="0.9"/>
+    <path d="M664 320L594 256L570 320L612 372L664 320Z" fill="#36f0a1" opacity="0.9"/>
+
+    <path d="M396 394L334 462L386 560L456 496L396 394Z" fill="#0ea069" opacity="0.85"/>
+    <path d="M628 394L690 462L638 560L568 496L628 394Z" fill="#0ea069" opacity="0.85"/>
+    <path d="M512 428L570 470L544 572L512 614L480 572L454 470L512 428Z" fill="url(#emerald_metal)"/>
+    <circle cx="454" cy="470" r="18" fill="#46ff9f"/>
+    <circle cx="570" cy="470" r="18" fill="#46ff9f"/>
+    <path d="M430 540C454 519 482 512 512 512C542 512 570 519 594 540" stroke="#d3fff0" stroke-width="16" stroke-linecap="round"/>
+
+    <path d="M470 234H554L576 192H448L470 234Z" fill="#b3ffdd" opacity="0.95"/>
+    <path d="M500 164L526 164L540 206H486L500 164Z" fill="#eafff8"/>
+    <rect x="484" y="144" width="56" height="40" rx="14" fill="#74ffd0" stroke="#0d4f38" stroke-width="8"/>
+    <path d="M506 154L518 154L524 164H500L506 154Z" fill="#eafff8"/>
+
+    <path d="M182 718C318 665 430 646 512 646C594 646 706 665 842 718L812 846C709 814 618 798 512 798C406 798 315 814 212 846L182 718Z" fill="url(#emerald_banner)" stroke="#244c58" stroke-width="10"/>
+    <path d="M166 732L86 784L180 802L154 860L226 820L245 846L274 784L166 732Z" fill="#84aebc"/>
+    <path d="M858 732L938 784L844 802L870 860L798 820L779 846L750 784L858 732Z" fill="#84aebc"/>
+    <text x="512" y="784" text-anchor="middle" fill="#16362e" font-size="68" font-weight="800" font-family="Times New Roman, serif" letter-spacing="2">VIP LEVEL 6</text>
+    <text x="512" y="848" text-anchor="middle" fill="#2fdc8e" font-size="58" font-weight="900" font-family="Times New Roman, serif" letter-spacing="3">EMERALD</text>
+  </g>
+</svg>
