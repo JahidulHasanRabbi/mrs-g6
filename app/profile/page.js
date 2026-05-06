@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation";
 import AnimatedSection from "../components/ui/AnimatedSection";
 import ProfileCard from "../components/profile/ProfileCard";
+import HistorySection from "../components/profile/HistorySection";
 import EditProfileSection from "../components/profile/EditProfileSection";
 import { useUser } from "../contexts/UserContext";
 
@@ -45,6 +46,8 @@ export default function ProfilePage() {
             onVipDetailsClick={handleVipDetailsClick}
           />
         </div>
+
+        <HistorySection />
 
         <div className="mt-6">
           <EditProfileSection
