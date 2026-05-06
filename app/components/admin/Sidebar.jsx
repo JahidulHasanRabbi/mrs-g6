@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { adminLogout } from "../../api/adminApi";
@@ -78,7 +77,12 @@ const SECONDARY_MENU = [
     icon: "/assets/admin/reports-icon.png",
     href: "/admin/reports",
     hasSubmenu: true,
-    disabled: true, // No page yet
+    disabled: false,
+    children: [
+      { id: "token-report", label: "Token Report", href: "/admin/reports/token" },
+      { id: "reward-report", label: "Reward Report", href: "/admin/reports/reward" },
+      { id: "member-report", label: "Member Report", href: "/admin/reports/member" },
+    ],
   },
   {
     id: "user-management",
@@ -100,8 +104,16 @@ const SECONDARY_MENU = [
 
 const MenuItem = ({ item, isActive }) => {
   const content = (
-    <div className="relative h-10 overflow-hidden">
-      <div className={`flex items-center gap-1.5 px-2 py-1.5 ${item.disabled ? 'opacity-40 cursor-not-allowed' : ''}`}>
+    <div
+      className={`relative overflow-hidden rounded-[10px] border transition-all duration-200 ${
+        isActive
+          ? "border-[#e9af41] bg-[rgba(232,181,88,0.14)] shadow-[0_0_24px_rgba(231,196,87,0.22)]"
+          : "border-transparent"
+      }`}
+    >
+      <div
+        className={`flex min-h-10 items-center gap-1.5 px-2 py-1.5 ${item.disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+      >
         <div className="relative h-5 w-5 shrink-0">
           <img
             src={item.icon}
@@ -153,6 +165,92 @@ const HighlightedMenuItem = ({ item }) => {
   return <Link href={item.href}>{content}</Link>;
 };
 
+const BarChartIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="20" x2="18" y2="10" />
+    <line x1="12" y1="20" x2="12" y2="4" />
+    <line x1="6" y1="20" x2="6" y2="14" />
+  </svg>
+);
+
+const ExpandableMenuItem = ({ item, activeItem }) => {
+  const isAnyChildActive = item.children?.some((c) => c.id === activeItem);
+  const [open, setOpen] = useState(isAnyChildActive);
+  const isActive = open || isAnyChildActive;
+
+  return (
+    <div>
+      {/* Parent header */}
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className={`relative flex h-[51.765px] w-full items-center justify-between overflow-hidden rounded-[6.471px] border px-3 transition-all duration-200 ${
+          isActive
+            ? "border-[0.324px] border-[#9f7722] bg-[#e8b558] shadow-[3.235px_3.235px_48.529px_3.235px_rgba(231,196,87,0.5)]"
+            : "border-transparent bg-transparent hover:border-[rgba(233,175,65,0.35)] hover:bg-white/5"
+        }`}
+      >
+        <div className="flex items-center gap-[10px]">
+          <div className="relative h-[22px] w-[22px] shrink-0">
+            <img src={item.icon} alt="" className="w-full h-full object-cover" />
+          </div>
+          <span
+            className={`font-['Times_New_Roman'] text-[16px] font-bold leading-normal ${
+              isActive ? "text-white" : "text-white/80"
+            }`}
+          >
+            {item.label}
+          </span>
+        </div>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke={isActive ? "white" : "rgba(255,255,255,0.8)"}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="transition-transform duration-200"
+          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+
+      {/* Sub-items */}
+      {open && (
+        <div className="mt-1 flex flex-col gap-1 pl-2">
+          {item.children.map((child) => {
+            const isActive = child.id === activeItem;
+            return (
+              <Link key={child.id} href={child.href}>
+                <div
+                  className={`flex items-center gap-2 px-3 py-2 rounded-[6px] transition-colors ${
+                    isActive
+                      ? "bg-[rgba(232,181,88,0.18)]"
+                      : "hover:bg-white/5"
+                  }`}
+                >
+                  <span className={isActive ? "text-[#e9af41]" : "text-white/60"}>
+                    <BarChartIcon />
+                  </span>
+                  <span
+                    className={`font-['Times_New_Roman'] text-[15px] font-bold ${
+                      isActive ? "text-white" : "text-white/70"
+                    }`}
+                  >
+                    {child.label}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function Sidebar({ activeItem = "home" }) {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
@@ -175,7 +273,7 @@ export default function Sidebar({ activeItem = "home" }) {
 
   return (
     <div 
-      className="relative h-full w-full overflow-y-auto overflow-x-hidden rounded-[14px] border border-[rgba(255,255,132,0.2)]"
+      className="scrollbar-admin relative h-full w-full overflow-y-auto overflow-x-hidden rounded-[14px] border border-[rgba(255,255,132,0.2)]"
       style={{
         background: "linear-gradient(180deg, rgba(7, 25, 13, 1) 0%, rgba(10, 30, 15, 1) 100%)",
       }}
@@ -217,7 +315,7 @@ export default function Sidebar({ activeItem = "home" }) {
             // Check if this item should be highlighted
             const shouldHighlight = 
               (item.id === "lucky-spin" && (activeItem === "lucky-spin" || activeItem === "prize-settings" || activeItem === "user-logs" || activeItem === "daily-limits")) ||
-              (item.id === activeItem && !item.isHighlighted) ||
+              (item.id === "redemption" && activeItem === "redemption") ||
               (item.id === "home" && activeItem === "home");
             
             if (shouldHighlight) {
@@ -233,14 +331,19 @@ export default function Sidebar({ activeItem = "home" }) {
         {/* Secondary Menu */}
         <div className="flex flex-col gap-4">
           {SECONDARY_MENU.map((item) => {
-            // Check if VIP item should be highlighted
-            const shouldHighlight = item.id === "vip" && (activeItem === "vip" || activeItem === "vip-tiers");
-            
+            if (item.id === "reports" && item.children) {
+              return <ExpandableMenuItem key={item.id} item={item} activeItem={activeItem} />;
+            }
+
+            const shouldHighlight =
+              (item.id === "vip" && (activeItem === "vip" || activeItem === "vip-tiers")) ||
+              item.id === activeItem;
+
             if (shouldHighlight) {
               return <HighlightedMenuItem key={item.id} item={item} />;
             }
-            
-            return <MenuItem key={item.id} item={item} isActive={activeItem === item.id || (item.id === "vip" && activeItem === "vip-tiers")} />;
+
+            return <MenuItem key={item.id} item={item} isActive={false} />;
           })}
         </div>
 

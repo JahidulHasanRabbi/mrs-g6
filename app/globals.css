@@ -10,6 +10,48 @@
   display: none; /* Chrome, Safari and Opera */
 }
 
+/* Admin sidebar scrollbar — thin gold-themed */
+.scrollbar-admin::-webkit-scrollbar {
+  width: 4px;
+}
+.scrollbar-admin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-admin::-webkit-scrollbar-thumb {
+  background: rgba(233, 175, 65, 0.35);
+  border-radius: 999px;
+}
+.scrollbar-admin::-webkit-scrollbar-thumb:hover {
+  background: rgba(233, 175, 65, 0.65);
+}
+/* Firefox */
+.scrollbar-admin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(233, 175, 65, 0.35) transparent;
+}
+
+/* Custom Gold Scrollbar for Member UI */
+.scrollbar-gold::-webkit-scrollbar {
+  width: 4px;
+}
+.scrollbar-gold::-webkit-scrollbar-track {
+  background: rgba(184, 136, 42, 0.05);
+  border-radius: 999px;
+}
+.scrollbar-gold::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #c9a050 0%, #b8882a 100%);
+  border-radius: 999px;
+  border: 1px solid rgba(253, 230, 133, 0.3);
+}
+.scrollbar-gold::-webkit-scrollbar-thumb:hover {
+  background: #fde685;
+}
+/* Firefox support */
+.scrollbar-gold {
+  scrollbar-width: thin;
+  scrollbar-color: #b8882a rgba(184, 136, 42, 0.05);
+}
+
 /* Spinner animation for loading states */
 @keyframes spin {
   0% { transform: rotate(0deg); }
