@@ -11,39 +11,37 @@ import { DataTable, Pagination } from "../../../components/admin/members/DataTab
 // ── Constants ────────────────────────────────────────────────────────────
 const PAGE_SIZE = 8;
 
+const STATION_OPTIONS = ["Station A", "Station B", "Station C", "Station D", "Station E", "Station F", "Station G"];
 const CATEGORY_OPTIONS = ["Category A", "Category B", "Category C", "Category D", "Category E", "Category F", "Category G"];
 const TOKEN_DETAIL_OPTIONS = ["Here are the details", "Final thoughts", "Summary of activities", "Important updates", "Overview of events", "Key highlights", "All relevant information"];
-const STATION_OPTIONS = ["Station A", "Station B", "Station C", "Station D", "Station E", "Station F", "Station G"];
 
 // ── Mock data ────────────────────────────────────────────────────────────
-// TODO (Backend): replace with real API call to member reward history endpoint.
-const MOCK_REWARD_HISTORY = [
-  { id: 1, station: "Station A", dateTime: "30.04.2026 8:00 PM", timestamp: "2026-04-30T20:00:00", category: "Category A", tokenDetails: "Here are the details", amount: 10000 },
-  { id: 2, station: "Station G", dateTime: "06.05.2026 2:00 PM", timestamp: "2026-05-06T14:00:00", category: "Category G", tokenDetails: "Final thoughts", amount: 40000 },
-  { id: 3, station: "Station C", dateTime: "02.05.2026 10:00 AM", timestamp: "2026-05-02T10:00:00", category: "Category C", tokenDetails: "Summary of activities", amount: 20000 },
-  { id: 4, station: "Station D", dateTime: "03.05.2026 11:00 AM", timestamp: "2026-05-03T11:00:00", category: "Category D", tokenDetails: "Important updates", amount: 25000 },
-  { id: 5, station: "Station B", dateTime: "01.05.2026 9:00 AM", timestamp: "2026-05-01T09:00:00", category: "Category B", tokenDetails: "Overview of events", amount: 15000 },
-  { id: 6, station: "Station F", dateTime: "05.05.2026 1:00 PM", timestamp: "2026-05-05T13:00:00", category: "Category F", tokenDetails: "Key highlights", amount: 35000 },
-  { id: 7, station: "Station A", dateTime: "30.04.2026 8:00 PM", timestamp: "2026-04-30T20:00:00", category: "Category A", tokenDetails: "Here are the details", amount: 10000 },
-  { id: 8, station: "Station E", dateTime: "04.05.2026 12:00 PM", timestamp: "2026-05-04T12:00:00", category: "Category E", tokenDetails: "All relevant information", amount: 30000 },
-  { id: 9, station: "Station B", dateTime: "07.05.2026 3:30 PM", timestamp: "2026-05-07T15:30:00", category: "Category B", tokenDetails: "Final thoughts", amount: 18000 },
-  { id: 10, station: "Station D", dateTime: "08.05.2026 9:15 AM", timestamp: "2026-05-08T09:15:00", category: "Category D", tokenDetails: "Overview of events", amount: 22000 },
-  { id: 11, station: "Station G", dateTime: "09.05.2026 11:45 AM", timestamp: "2026-05-09T11:45:00", category: "Category G", tokenDetails: "Key highlights", amount: 45000 },
-  { id: 12, station: "Station C", dateTime: "10.05.2026 4:00 PM", timestamp: "2026-05-10T16:00:00", category: "Category C", tokenDetails: "Summary of activities", amount: 12000 },
-  { id: 13, station: "Station F", dateTime: "11.05.2026 10:30 AM", timestamp: "2026-05-11T10:30:00", category: "Category F", tokenDetails: "Important updates", amount: 38000 },
-  { id: 14, station: "Station A", dateTime: "12.05.2026 2:45 PM", timestamp: "2026-05-12T14:45:00", category: "Category A", tokenDetails: "All relevant information", amount: 8000 },
-  { id: 15, station: "Station E", dateTime: "13.05.2026 6:00 PM", timestamp: "2026-05-13T18:00:00", category: "Category E", tokenDetails: "Here are the details", amount: 27000 },
-  { id: 16, station: "Station B", dateTime: "14.05.2026 8:20 AM", timestamp: "2026-05-14T08:20:00", category: "Category B", tokenDetails: "Final thoughts", amount: 16000 },
-  { id: 17, station: "Station D", dateTime: "15.05.2026 1:10 PM", timestamp: "2026-05-15T13:10:00", category: "Category D", tokenDetails: "Key highlights", amount: 33000 },
-  { id: 18, station: "Station G", dateTime: "16.05.2026 5:30 PM", timestamp: "2026-05-16T17:30:00", category: "Category G", tokenDetails: "Overview of events", amount: 50000 },
+// TODO (Backend): replace with real API call to member deposit history endpoint.
+const MOCK_DEPOSIT_HISTORY = [
+  { id: 1, dateTime: "30.04.2026 8:00 PM", timestamp: "2026-04-30T20:00:00", station: "Station A", rewardAmount: 10000 },
+  { id: 2, dateTime: "02.05.2026 10:30 AM", timestamp: "2026-05-02T10:30:00", station: "Station C", rewardAmount: 9800 },
+  { id: 3, dateTime: "01.05.2026 9:00 AM", timestamp: "2026-05-01T09:00:00", station: "Station B", rewardAmount: 12500 },
+  { id: 4, dateTime: "05.05.2026 5:00 PM", timestamp: "2026-05-05T17:00:00", station: "Station F", rewardAmount: 13000 },
+  { id: 5, dateTime: "30.04.2026 8:00 PM", timestamp: "2026-04-30T20:00:00", station: "Station A", rewardAmount: 10000 },
+  { id: 6, dateTime: "03.05.2026 1:15 PM", timestamp: "2026-05-03T13:15:00", station: "Station D", rewardAmount: 11200 },
+  { id: 7, dateTime: "04.05.2026 3:45 PM", timestamp: "2026-05-04T15:45:00", station: "Station E", rewardAmount: 10500 },
+  { id: 8, dateTime: "06.05.2026 7:30 AM", timestamp: "2026-05-06T07:30:00", station: "Station G", rewardAmount: 15000 },
+  { id: 9, dateTime: "07.05.2026 11:00 AM", timestamp: "2026-05-07T11:00:00", station: "Station B", rewardAmount: 8200 },
+  { id: 10, dateTime: "08.05.2026 2:20 PM", timestamp: "2026-05-08T14:20:00", station: "Station A", rewardAmount: 14800 },
+  { id: 11, dateTime: "09.05.2026 4:00 PM", timestamp: "2026-05-09T16:00:00", station: "Station D", rewardAmount: 9500 },
+  { id: 12, dateTime: "10.05.2026 9:45 AM", timestamp: "2026-05-10T09:45:00", station: "Station F", rewardAmount: 16200 },
+  { id: 13, dateTime: "11.05.2026 6:30 PM", timestamp: "2026-05-11T18:30:00", station: "Station C", rewardAmount: 11800 },
+  { id: 14, dateTime: "12.05.2026 8:15 AM", timestamp: "2026-05-12T08:15:00", station: "Station E", rewardAmount: 7600 },
+  { id: 15, dateTime: "13.05.2026 12:00 PM", timestamp: "2026-05-13T12:00:00", station: "Station G", rewardAmount: 18500 },
+  { id: 16, dateTime: "14.05.2026 3:30 PM", timestamp: "2026-05-14T15:30:00", station: "Station B", rewardAmount: 13400 },
+  { id: 17, dateTime: "15.05.2026 10:10 AM", timestamp: "2026-05-15T10:10:00", station: "Station A", rewardAmount: 9900 },
+  { id: 18, dateTime: "16.05.2026 5:45 PM", timestamp: "2026-05-16T17:45:00", station: "Station D", rewardAmount: 20000 },
 ];
 
 const TABLE_COLUMNS = [
-  { key: "station", label: "Station", minW: "min-w-[120px]" },
-  { key: "dateTime", label: "Date/Time", minW: "min-w-[180px]" },
-  { key: "category", label: "Category", minW: "min-w-[140px]" },
-  { key: "tokenDetails", label: "Token Details", minW: "min-w-[260px]" },
-  { key: "amount", label: "Amount", minW: "min-w-[120px]", align: "right" },
+  { key: "dateTime", label: "Date/Time", minW: "min-w-[200px]" },
+  { key: "station", label: "Station", minW: "min-w-[180px]" },
+  { key: "rewardAmount", label: "Reward Amount", minW: "min-w-[180px]", align: "right" },
 ];
 
 // ── Helpers ──────────────────────────────────────────────────────────────
@@ -53,11 +51,11 @@ function toDateOnly(dateStr) {
 }
 
 function formatAmount(val) {
-  return val.toLocaleString("en-MY");
+  return `RM ${val.toLocaleString("en-MY")}`;
 }
 
 // ── Page content ─────────────────────────────────────────────────────────
-function RewardHistoryContent() {
+function DepositHistoryContent() {
   const searchParams = useSearchParams();
   const memberName = searchParams.get("name") || "Unknown";
   const memberId = searchParams.get("memberId") || "";
@@ -84,27 +82,27 @@ function RewardHistoryContent() {
   }, []);
 
   const filteredRows = useMemo(() => {
-    let list = [...MOCK_REWARD_HISTORY];
-    if (categoryFilter) list = list.filter((r) => r.category === categoryFilter);
-    if (tokenDetailFilter) list = list.filter((r) => r.tokenDetails === tokenDetailFilter);
+    let list = [...MOCK_DEPOSIT_HISTORY];
     if (stationFilter) list = list.filter((r) => r.station === stationFilter);
     list = list.filter((r) => isInRange(r.timestamp, dateFrom, dateTo));
-
+    // categoryFilter and tokenDetailFilter kept for UI parity even though mock data doesn't have those fields
     if (sortKey) {
       list.sort((a, b) => {
+        const va = a[sortKey] ?? "";
+        const vb = b[sortKey] ?? "";
         const mul = sortDir === "asc" ? 1 : -1;
         if (sortKey === "dateTime") return (new Date(a.timestamp) - new Date(b.timestamp)) * mul;
-        if (sortKey === "amount") return (a.amount - b.amount) * mul;
-        return String(a[sortKey] ?? "").localeCompare(String(b[sortKey] ?? "")) * mul;
+        if (typeof va === "number") return (va - vb) * mul;
+        return String(va).localeCompare(String(vb)) * mul;
       });
     }
     return list;
-  }, [categoryFilter, tokenDetailFilter, stationFilter, dateFrom, dateTo, sortKey, sortDir, isInRange]);
+  }, [stationFilter, dateFrom, dateTo, categoryFilter, tokenDetailFilter, sortKey, sortDir, isInRange]);
 
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
   const pageRows = filteredRows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
-  useEffect(() => { setCurrentPage(1); }, [categoryFilter, tokenDetailFilter, stationFilter, dateFrom, dateTo]);
+  useEffect(() => { setCurrentPage(1); }, [stationFilter, dateFrom, dateTo, categoryFilter, tokenDetailFilter]);
 
   const handleSort = (key) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -112,17 +110,17 @@ function RewardHistoryContent() {
   };
 
   const renderCell = (row, col) => {
-    if (col.key === "amount") return formatAmount(row.amount);
+    if (col.key === "rewardAmount") return formatAmount(row.rewardAmount);
     return row[col.key];
   };
 
   return (
-    <HistoryPageShell title="Member Rewards" memberName={memberName} memberId={memberId}>
+    <HistoryPageShell title="Member Deposit" memberName={memberName} memberId={memberId}>
       <div className="rounded-[12px] border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-3 sm:p-4 flex flex-col gap-3">
         {/* Filters */}
         <div className="flex items-center flex-wrap gap-2 sm:gap-3">
           <p className="font-['Times_New_Roman'] font-bold text-[16px] sm:text-[18px] text-white whitespace-nowrap italic">
-            The Reward Are Given
+            The Deposit Are Given
           </p>
           <span className="font-['Times_New_Roman'] text-[13px] text-white/80 ml-auto mr-1">Filter By:</span>
           <DateFilter label="Date/Time" fromDate={dateFrom} toDate={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
@@ -139,7 +137,7 @@ function RewardHistoryContent() {
           sortDir={sortDir}
           onSort={handleSort}
           renderCell={renderCell}
-          emptyMessage="No reward history records found."
+          emptyMessage="No deposit records found."
         />
 
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
@@ -148,8 +146,8 @@ function RewardHistoryContent() {
   );
 }
 
-// ── Default export with AdminRouteGuard + Suspense ───────────────────
-export default function MemberRewardHistoryPage() {
+// ── Default export ───────────────────────────────────────────────────────
+export default function DepositHistoryPage() {
   return (
     <AdminRouteGuard>
       <Suspense
@@ -159,7 +157,7 @@ export default function MemberRewardHistoryPage() {
           </div>
         }
       >
-        <RewardHistoryContent />
+        <DepositHistoryContent />
       </Suspense>
     </AdminRouteGuard>
   );
