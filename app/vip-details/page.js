@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import AnimatedSection from "../components/ui/AnimatedSection";
 import VipLevelChain from "../components/vip-details/VipLevelChain";
-import PrivilegesCard from "../components/vip-details/PrivilegesCard";
+import PrivilegesCarousel from "../components/vip-details/PrivilegesCarousel";
 import LoadingState from "../components/ui/LoadingState";
 import ErrorDisplay from "../components/ui/ErrorDisplay";
 import { getVipTiers } from "../api/memberApi";
@@ -60,9 +60,6 @@ export default function VipDetailsPage() {
       });
   };
 
-  const selectedTierIndex = vipTiers.findIndex(tier => tier.name === selectedLevel);
-  const selectedTierData = vipTiers[Math.max(0, selectedTierIndex)];
-
   return (
     <>
       <AnimatedSection
@@ -91,12 +88,12 @@ export default function VipDetailsPage() {
               />
             </div>
 
-            {/* Privileges Card */}
-            <div className="mt-12 mb-8 relative">
-              <PrivilegesCard 
-                level={selectedLevel}
-                tierData={selectedTierData}
-                tierIndex={Math.max(0, selectedTierIndex)}
+            {/* Privileges Carousel — breaks out of page px-4 so prev/next cards peek further */}
+            <div className="mt-12 mb-8 relative -mx-4">
+              <PrivilegesCarousel
+                tiers={vipTiers}
+                activeName={selectedLevel}
+                onSelect={setSelectedLevel}
               />
             </div>
           </>

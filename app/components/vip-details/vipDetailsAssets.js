@@ -20,5 +20,16 @@ export const VIP_DETAILS_ASSETS = {
     ruby: "/assets/vip-details/ruby-badge.svg",
     sapphire: "/assets/vip-details/sapphire-badge.svg",
     amethyst: "/assets/vip-details/amethyst-badge.svg",
+  },
+  rankIcons: {
+    1: "/assets/ranks/vip-level-1.png",
+    2: "/assets/ranks/vip-level-2.png",
+    3: "/assets/ranks/vip-level-3.png",
+    4: "/assets/ranks/vip-level-4.png",
+    5: "/assets/ranks/vip-level-5.png",
+    6: "/assets/ranks/vip-level-6.png",
+    7: "/assets/ranks/vip-level-7.png",
+    8: "/assets/ranks/vip-level-8.png",
+    9: "/assets/ranks/vip-level-9.png",
   }
 };

@@ -116,6 +116,8 @@ export function mapVipTiers(apiResponse) {
     name: tier.name,
     lifetime_deposit_required: tier.lifetime_deposit_required,
     monthly_deposit: tier.monthly_deposit,
+    check_in_token: tier.check_in_token,
+    upgrade_free_token: tier.upgrade_free_token,
     upgrade_bonus: tier.upgrade_bonus,
     monthly_loyalty_bonus: tier.monthly_loyalty_bonus,
     birthday_bonus: tier.birthday_bonus

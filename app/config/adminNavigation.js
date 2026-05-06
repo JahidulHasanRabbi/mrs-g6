@@ -15,10 +15,22 @@ export const ADMIN_NAVIGATION = [
     id: 'vip-tiers'
   },
   {
+    label: 'Frame Setting',
+    path: '/admin/frame-setting',
+    enabled: true,
+    id: 'frame-setting'
+  },
+  {
     label: 'Wallet Side VIP',
     path: '/admin/wallet-site-vip',
     enabled: true,
     id: 'wallet-site-vip'
+  },
+  {
+    label: 'MRS VIP Level',
+    path: '/admin/mrs-vip',
+    enabled: true,
+    id: 'mrs-vip-level'
   },
   {
     label: 'Lucky Spin',

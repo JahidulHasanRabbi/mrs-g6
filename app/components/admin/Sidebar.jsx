@@ -16,6 +16,7 @@ function pathnameToActiveItem(pathname) {
   if (pathname.startsWith("/admin/lucky-spin/user-logs")) return "user-logs";
   if (pathname.startsWith("/admin/lucky-spin/daily-limits")) return "daily-limits";
   if (pathname.startsWith("/admin/lucky-spin")) return "lucky-spin";
+  if (pathname.startsWith("/admin/redemption-mall")) return "redemption-mall";
   if (pathname.startsWith("/admin/reports/token")) return "token-report";
   if (pathname.startsWith("/admin/reports/reward")) return "reward-report";
   if (pathname.startsWith("/admin/reports/member")) return "member-report";
@@ -23,7 +24,9 @@ function pathnameToActiveItem(pathname) {
   if (pathname.startsWith("/admin/redemption")) return "redemption";
   if (pathname.startsWith("/admin/checkin-settings")) return "checkin-settings";
   if (pathname.startsWith("/admin/banners")) return "banners";
+  if (pathname.startsWith("/admin/frame-setting")) return "frame-setting";
   if (pathname.startsWith("/admin/wallet-site-vip")) return "wallet-site-vip";
+  if (pathname.startsWith("/admin/mrs-vip")) return "mrs-vip-level";
   if (pathname.startsWith("/admin/vip-tiers")) return "vip-tiers";
   if (pathname === "/admin" || pathname === "/admin/") return "home";
   return "home";
@@ -54,9 +57,17 @@ const MENU_ITEMS = [
     disabled: false,
   },
   {
-    id: "redemption",
+    id: "redemption-mall",
     label: "Points Redemption Mall",
     icon: "/assets/admin/redemption-mall-icon.png",
+    href: "/admin/redemption-mall",
+    hasSubmenu: true,
+    disabled: false,
+  },
+  {
+    id: "redemption",
+    label: "Points Redemption Gift",
+    icon: "/assets/admin/redemption-gift-icon.png",
     href: "/admin/redemption",
     hasSubmenu: true,
     disabled: false,
@@ -80,6 +91,13 @@ const SECONDARY_MENU = [
     disabled: true, // No page yet
   },
   {
+    id: "frame-setting",
+    label: "Frame Setting",
+    icon: "/assets/admin/Frame-setting.png", // Using home icon as placeholder
+    href: "/admin/frame-setting",
+    disabled: false,
+  },
+  {
     id: "vip",
     label: "VIP Membership Panel",
     icon: "/assets/admin/vip-icon.png",
@@ -88,6 +106,7 @@ const SECONDARY_MENU = [
     disabled: false,
     children: [
       { id: "wallet-site-vip", label: "Wallet Side VIP", href: "/admin/wallet-site-vip" },
+      { id: "mrs-vip-level", label: "MRS VIP Level", href: "/admin/mrs-vip" },
     ],
   },
   {
@@ -367,13 +386,14 @@ export default function Sidebar({ activeItem: activeItemProp }) {
             const shouldHighlight =
               (item.id === "lucky-spin" && (activeItem === "lucky-spin" || activeItem === "prize-settings" || activeItem === "user-logs" || activeItem === "daily-limits")) ||
               (item.id === "redemption" && activeItem === "redemption") ||
+              (item.id === "redemption-mall" && activeItem === "redemption-mall") ||
               (item.id === "home" && activeItem === "home") ||
               (item.id === "member-list" && activeItem === "member-list");
-            
+
             if (shouldHighlight) {
               return <HighlightedMenuItem key={item.id} item={item} />;
             }
-            
+
             // Regular menu item with proper active state
             const isActive = item.id === activeItem;
             return <MenuItem key={item.id} item={item} isActive={isActive} />;
