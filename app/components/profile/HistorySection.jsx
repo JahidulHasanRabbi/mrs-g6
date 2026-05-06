@@ -17,23 +17,14 @@ const MOCK_REWARD_HISTORY = [
 function HistoryCard({ title, items, renderItem, delay = 0 }) {
   return (
     <motion.div
-      className="relative"
-      style={{ width: 177, height: 122 }}
+      className="flex flex-col rounded-[10px]"
+      style={{ width: 177, border: "1px solid #e9af41" }}
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: "easeOut", delay }}
     >
-      {/* Gold border card */}
-      <div
-        className="absolute inset-0 rounded-[10px]"
-        style={{ border: "1px solid #e9af41" }}
-      />
-
-      {/* Title banner image — centered, overlaps top border */}
-      <div
-        className="absolute top-0 flex items-center justify-center"
-        style={{ width: 146, height: 41, left: "50%", transform: "translateX(-50%)" }}
-      >
+      {/* Title banner — centered on top border */}
+      <div className="relative flex items-center justify-center mx-auto" style={{ width: 146, height: 41, flexShrink: 0 }}>
         <Image
           src="/assets/profile/history-title-banner.png"
           alt={title}
@@ -48,8 +39,8 @@ function HistoryCard({ title, items, renderItem, delay = 0 }) {
         </span>
       </div>
 
-      {/* List content — sits below banner */}
-      <div className="absolute left-[8px] right-[4px] top-[44px] bottom-[6px] overflow-y-auto">
+      {/* List content — grows to fit all items, no scroll */}
+      <div className="px-[8px] pb-[8px]">
         {items.length === 0 ? (
           <p
             className="font-['Times_New_Roman'] text-center mt-2"
@@ -62,13 +53,13 @@ function HistoryCard({ title, items, renderItem, delay = 0 }) {
             <ul
               key={idx}
               className="list-disc"
-              style={{ paddingLeft: "16.5px", marginBottom: idx < items.length - 1 ? 4 : 0 }}
+              style={{ paddingLeft: "16.5px", marginBottom: idx < items.length - 1 ? 6 : 0 }}
             >
               {renderItem(item).map((line, i) => (
                 <li
                   key={i}
                   className="font-['Times_New_Roman'] not-italic leading-normal"
-                  style={{ color: "#e9af41", fontSize: 11, marginBottom: 0 }}
+                  style={{ color: "#e9af41", fontSize: 11 }}
                 >
                   {line}
                 </li>
