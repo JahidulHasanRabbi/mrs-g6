@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { animate, motion, useMotionValue, useReducedMotion } from "framer-motion";
 import PrivilegesCard from "./PrivilegesCard";
 
 const CARD_W = 344;
@@ -9,11 +9,32 @@ const CARD_W_SM = 292;
 const SM_BREAKPOINT = 400;
 const GAP = 16;
 
+// How much weight to give release velocity when projecting a swipe's
+// landing spot. Higher = faster flicks travel further. 0.25 feels close
+// to native-app carousels.
+const SWIPE_POWER = 0.25;
+
+// Cap multi-card jumps from a single fling so a violent swipe doesn't
+// skip the entire deck.
+const MAX_SKIP = 2;
+
+// A pointer move under this threshold is treated as a click, not a drag.
+// Used to suppress the per-card onClick when the user actually dragged.
+const CLICK_DRAG_THRESHOLD_PX = 6;
+
 export default function PrivilegesCarousel({ tiers = [], activeName, onSelect }) {
   const containerRef = useRef(null);
   const [containerW, setContainerW] = useState(0);
   const [isSmall, setIsSmall] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  // Imperative motion value — lets us snap the carousel back even when
+  // the active card hasn't changed (e.g., a small drag past the first
+  // or last card that didn't pass the swipe threshold).
+  const x = useMotionValue(0);
+  // Track whether the most recent pointer interaction was a true drag —
+  // not just a press-and-release. Prevents a stale `onClick` on the
+  // active card from firing right after a release.
+  const draggedRef = useRef(false);
   const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
@@ -42,14 +63,63 @@ export default function PrivilegesCarousel({ tiers = [], activeName, onSelect })
     return containerW / 2 - cardW / 2 - activeIndex * stride;
   }, [containerW, cardW, stride, activeIndex]);
 
+  const springConfig = useMemo(
+    () =>
+      prefersReducedMotion
+        ? { duration: 0 }
+        : { type: "spring", stiffness: 320, damping: 36, mass: 0.7 },
+    [prefersReducedMotion],
+  );
+
+  // Animate x toward targetX whenever the active card changes (or the
+  // container resizes and shifts the centred position).
+  useEffect(() => {
+    const controls = animate(x, targetX, springConfig);
+    return () => controls.stop();
+  }, [targetX, x, springConfig]);
+
+  const handleDragStart = (_, info) => {
+    draggedRef.current = false;
+    setIsDragging(true);
+  };
+
+  const handleDrag = (_, info) => {
+    if (!draggedRef.current && Math.abs(info.offset.x) > CLICK_DRAG_THRESHOLD_PX) {
+      draggedRef.current = true;
+    }
+  };
+
   const handleDragEnd = (_, info) => {
     setIsDragging(false);
-    const threshold = 60;
-    if (info.offset.x < -threshold && activeIndex < tiers.length - 1) {
-      onSelect?.(tiers[activeIndex + 1].name);
-    } else if (info.offset.x > threshold && activeIndex > 0) {
-      onSelect?.(tiers[activeIndex - 1].name);
+    const offset = info.offset.x;
+    const velocity = info.velocity.x;
+
+    // Project where the swipe "wants" to land using flick velocity.
+    // Negative offset/velocity = swiping left = advancing forward.
+    const projected = offset + SWIPE_POWER * velocity;
+
+    // Snap to the nearest card boundary; a fling of >25% of a card width
+    // (or equivalent velocity) is enough to advance one card.
+    let delta = -Math.round(projected / stride);
+    if (Math.abs(projected) < stride * 0.25) delta = 0;
+    delta = Math.max(-MAX_SKIP, Math.min(MAX_SKIP, delta));
+
+    const newIndex = Math.max(0, Math.min(tiers.length - 1, activeIndex + delta));
+    if (newIndex !== activeIndex) {
+      onSelect?.(tiers[newIndex].name);
+      // useEffect above will animate to the new targetX.
+    } else {
+      // The active card didn't change (small drag, or already at the
+      // first/last card). Snap explicitly back to the current targetX
+      // so the deck doesn't get stuck off-position.
+      animate(x, targetX, springConfig);
     }
+
+    // Reset the dragged flag on the next tick so the per-card onClick
+    // (which fires after pointerup) sees the correct value.
+    setTimeout(() => {
+      draggedRef.current = false;
+    }, 0);
   };
 
   if (tiers.length === 0) return null;
@@ -57,29 +127,29 @@ export default function PrivilegesCarousel({ tiers = [], activeName, onSelect })
   return (
     <div
       ref={containerRef}
-      className="relative w-full overflow-hidden"
+      className="relative w-full overflow-hidden select-none"
       style={{ height: isSmall ? 332 : 396 }}
     >
       <motion.div
         className="absolute top-0 left-0 flex items-center"
         style={{
+          x,
           height: "100%",
           gap: `${GAP}px`,
           touchAction: "pan-y",
           willChange: isDragging ? "transform" : "auto",
+          cursor: isDragging ? "grabbing" : "grab",
         }}
         drag="x"
-        dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={0.18}
+        // No constraints — let the user drag freely. The post-drag
+        // animation always snaps back to targetX (handled imperatively
+        // in handleDragEnd / the targetX useEffect), so first / last
+        // card overshoots can't get stuck off-position.
+        dragElastic={0.35}
         dragMomentum={false}
-        onDragStart={() => setIsDragging(true)}
+        onDragStart={handleDragStart}
+        onDrag={handleDrag}
         onDragEnd={handleDragEnd}
-        animate={{ x: targetX }}
-        transition={
-          prefersReducedMotion
-            ? { duration: 0 }
-            : { type: "spring", stiffness: 260, damping: 30, mass: 0.9 }
-        }
       >
         {tiers.map((tier, index) => {
           const distance = Math.abs(index - activeIndex);
@@ -96,10 +166,15 @@ export default function PrivilegesCarousel({ tiers = [], activeName, onSelect })
               transition={
                 prefersReducedMotion
                   ? { duration: 0 }
-                  : { type: "spring", stiffness: 260, damping: 30 }
+                  : { type: "spring", stiffness: 320, damping: 36 }
               }
               onClick={() => {
-                if (!isActive && !isDragging) onSelect?.(tier.name);
+                // Suppress click-to-jump if this pointer interaction was
+                // actually a drag (offset > threshold). Without this,
+                // dragging horizontally and releasing on a different card
+                // would also "click" the card under the pointer.
+                if (draggedRef.current) return;
+                if (!isActive) onSelect?.(tier.name);
               }}
             >
               <PrivilegesCard

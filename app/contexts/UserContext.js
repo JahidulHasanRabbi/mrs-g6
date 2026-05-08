@@ -4,6 +4,9 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { getMemberInfo, getProfile } from '../api/memberApi';
 import { tokenStorage } from '../api/tokenStorage';
 import { onAuthChanged } from '../api/authEvents';
+import { DEFAULT_FRAME_ID, getFrameById } from '../components/profile/profileFrames';
+
+const FRAME_STORAGE_KEY = 'mrs_member_profile_frame';
 
 const UserContext = createContext();
 
@@ -20,6 +23,31 @@ export function UserProvider({ children }) {
   const [profileData, setProfileData] = useState(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [memberUuid, setMemberUuid] = useState(null);
+  const [selectedFrameId, setSelectedFrameId] = useState(DEFAULT_FRAME_ID);
+
+  // Load persisted frame choice on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const stored = window.localStorage.getItem(FRAME_STORAGE_KEY);
+      if (stored) setSelectedFrameId(stored);
+    } catch (e) {
+      // localStorage unavailable (private mode, etc.) — fall back to default
+    }
+  }, []);
+
+  const updateSelectedFrame = (frameId) => {
+    setSelectedFrameId(frameId);
+    if (typeof window !== 'undefined') {
+      try {
+        window.localStorage.setItem(FRAME_STORAGE_KEY, frameId);
+      } catch (e) {
+        // ignore
+      }
+    }
+  };
+
+  const selectedFrame = getFrameById(selectedFrameId);
 
   // Check for memberUuid changes natively via events
   useEffect(() => {
@@ -151,7 +179,10 @@ export function UserProvider({ children }) {
       updateBalance,
       updateUserData,
       updateProfilePicture,
-      refreshUserData
+      refreshUserData,
+      selectedFrame,
+      selectedFrameId,
+      updateSelectedFrame
     }}>
       {children}
     </UserContext.Provider>

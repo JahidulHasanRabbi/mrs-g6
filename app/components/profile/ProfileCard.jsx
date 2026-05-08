@@ -298,10 +298,10 @@ export default function ProfileCard({
               delay: 0.4,
             }}
           >
-            <img 
-              alt={displayName} 
-              src={profilePicture || avatarSrc} 
-              className="object-cover w-full h-full" 
+            <img
+              alt={displayName}
+              src={profilePicture || avatarSrc}
+              className="object-cover w-full h-full"
             />
           </motion.div>
 

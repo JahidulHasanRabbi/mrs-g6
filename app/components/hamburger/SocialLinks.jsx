@@ -12,10 +12,11 @@ const socialItemAnimation = {
 
 /**
  * SocialIcon Component
- * Individual social media link with hover effects
- * Updated with new Figma design styling
+ * Individual social media icon. Either a link (`url`) or an action button
+ * (`action`) — actions bubble up via `onAction` so the parent menu can open
+ * a modal, etc.
  */
-function SocialIcon({ icon, url, label, disabled, variants }) {
+function SocialIcon({ icon, url, action, label, disabled, onAction }) {
   const content = (
     <motion.div
       whileHover={
@@ -39,6 +40,19 @@ function SocialIcon({ icon, url, label, disabled, variants }) {
     </motion.div>
   );
 
+  const sharedMotionProps = {
+    initial: socialItemAnimation.initial,
+    animate: socialItemAnimation.animate,
+    transition: socialItemAnimation.transition,
+    whileHover: {
+      scale: 1.2,
+      rotate: 10,
+      transition: { type: "spring", stiffness: 400, damping: 10 },
+    },
+    whileTap: { scale: 0.9 },
+    style: { willChange: "transform" },
+  };
+
   if (disabled) {
     return (
       <motion.div
@@ -54,6 +68,20 @@ function SocialIcon({ icon, url, label, disabled, variants }) {
     );
   }
 
+  if (action) {
+    return (
+      <motion.button
+        type="button"
+        onClick={() => onAction && onAction(action)}
+        className="flex items-center justify-center cursor-pointer bg-transparent border-0 p-0"
+        aria-label={label || "Action"}
+        {...sharedMotionProps}
+      >
+        {content}
+      </motion.button>
+    );
+  }
+
   return (
     <motion.a
       href={url}
@@ -61,16 +89,7 @@ function SocialIcon({ icon, url, label, disabled, variants }) {
       rel="noopener noreferrer"
       className="flex items-center justify-center cursor-pointer"
       aria-label={label || "Social media link"}
-      initial={socialItemAnimation.initial}
-      animate={socialItemAnimation.animate}
-      transition={socialItemAnimation.transition}
-      whileHover={{
-        scale: 1.2,
-        rotate: 10,
-        transition: { type: "spring", stiffness: 400, damping: 10 },
-      }}
-      whileTap={{ scale: 0.9 }}
-      style={{ willChange: "transform" }}
+      {...sharedMotionProps}
     >
       {content}
     </motion.a>
@@ -79,10 +98,10 @@ function SocialIcon({ icon, url, label, disabled, variants }) {
 
 /**
  * SocialLinks Component
- * Container for social media icons
- * Updated with new Figma design layout
+ * Container for social media icons. `onAction` is forwarded to icons that
+ * declare an `action` instead of a `url`.
  */
-function SocialLinks({ links, variants }) {
+function SocialLinks({ links, onAction }) {
   return (
     <motion.div
       className="flex gap-2 pt-2 justify-start items-center"
@@ -99,7 +118,7 @@ function SocialLinks({ links, variants }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2, delay: index * 0.03, ease: "easeOut" }}
         >
-          <SocialIcon {...link} variants={variants} />
+          <SocialIcon {...link} onAction={onAction} />
         </motion.div>
       ))}
     </motion.div>

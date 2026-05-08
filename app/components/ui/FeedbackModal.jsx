@@ -1,0 +1,222 @@
+"use client";
+
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useCallback } from "react";
+
+/**
+ * FeedbackModal — collects a star rating + free-text message from the player.
+ *
+ * Backend integration is intentionally a thin async stub right now: the
+ * codebase has no /feedback endpoint and we don't want to block shipping
+ * the UI on that. When the endpoint exists, replace the stub in
+ * `submitFeedback` with a call to `memberApi.submitFeedback({ rating, message })`.
+ */
+export default function FeedbackModal({ isOpen, onClose }) {
+  const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState(null);
+
+  const reset = useCallback(() => {
+    setRating(0);
+    setHoverRating(0);
+    setMessage("");
+    setIsSubmitting(false);
+    setSubmitted(false);
+    setError(null);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    onClose();
+    // Reset after exit animation completes.
+    setTimeout(reset, 350);
+  }, [onClose, reset]);
+
+  const submitFeedback = useCallback(async ({ rating, message }) => {
+    // Stubbed — wire to memberApi.submitFeedback when the backend route lands.
+    await new Promise((r) => setTimeout(r, 600));
+    if (typeof window !== "undefined") {
+      // eslint-disable-next-line no-console
+      console.info("[feedback] submitted", { rating, message });
+    }
+  }, []);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (rating === 0) {
+      setError("Please pick a rating before submitting.");
+      return;
+    }
+    if (!message.trim()) {
+      setError("Please add a short message before submitting.");
+      return;
+    }
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      await submitFeedback({ rating, message: message.trim() });
+      setSubmitted(true);
+    } catch (err) {
+      setError("Could not send your feedback right now. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          className="fixed inset-0 z-[60] flex items-center justify-center px-4"
+          style={{ backgroundColor: "rgba(0,0,0,0.65)" }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={handleClose}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="feedback-modal-title"
+        >
+          <motion.div
+            className="relative w-full max-w-[340px] overflow-hidden rounded-2xl"
+            initial={{ scale: 0.85, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.85, opacity: 0, y: 20 }}
+            transition={{ type: "spring", stiffness: 280, damping: 26 }}
+            onClick={(event) => event.stopPropagation()}
+            style={{
+              background: "linear-gradient(180deg, #1a3a22 0%, #07190d 100%)",
+              border: "2px solid #c08f32",
+              boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
+            }}
+          >
+            <div className="flex items-center justify-between px-5 pt-5 pb-3">
+              <h2
+                id="feedback-modal-title"
+                className="text-[#fde685] text-[18px] font-bold"
+                style={{ fontFamily: '"Times New Roman", serif' }}
+              >
+                Send Us Feedback
+              </h2>
+              <button
+                onClick={handleClose}
+                aria-label="Close feedback"
+                className="text-white/60 hover:text-white text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            {!submitted ? (
+              <form onSubmit={handleSubmit} className="space-y-4 px-5 pb-5">
+                <div>
+                  <p
+                    className="mb-2 text-[12px] text-white/80"
+                    style={{ fontFamily: '"Times New Roman", serif' }}
+                  >
+                    How would you rate your experience?
+                  </p>
+                  <div className="flex justify-center gap-1.5">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setRating(n)}
+                        onMouseEnter={() => setHoverRating(n)}
+                        onMouseLeave={() => setHoverRating(0)}
+                        className="text-3xl leading-none transition-transform hover:scale-110"
+                        aria-label={`Rate ${n} star${n > 1 ? "s" : ""}`}
+                      >
+                        <span style={{ color: (hoverRating || rating) >= n ? "#fde685" : "#3d4a3a" }}>★</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="feedback-message"
+                    className="mb-1 block text-[12px] text-white/80"
+                    style={{ fontFamily: '"Times New Roman", serif' }}
+                  >
+                    Your message
+                  </label>
+                  <textarea
+                    id="feedback-message"
+                    value={message}
+                    onChange={(event) => setMessage(event.target.value)}
+                    rows={4}
+                    maxLength={500}
+                    placeholder="Tell us what's on your mind..."
+                    className="w-full resize-none rounded-lg border border-[#c08f32]/40 bg-black/30 px-3 py-2 text-[13px] text-white placeholder-white/30 focus:border-[#fde685] focus:outline-none"
+                    style={{ fontFamily: '"Times New Roman", serif' }}
+                  />
+                  <div className="mt-1 text-right text-[10px] text-white/40">{message.length}/500</div>
+                </div>
+
+                {error && (
+                  <div className="text-center text-[12px] text-red-400" role="alert">
+                    {error}
+                  </div>
+                )}
+
+                <div className="flex gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    disabled={isSubmitting}
+                    className="flex-1 rounded-full border border-[#c08f32]/60 px-3 py-2 text-[12px] font-bold text-[#fde685] hover:bg-white/5 disabled:opacity-40"
+                    style={{ fontFamily: '"Times New Roman", serif' }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex-1 rounded-full px-3 py-2 text-[12px] font-bold text-white shadow-md disabled:opacity-50"
+                    style={{
+                      background: "linear-gradient(180deg, #7da348 0%, #4d7530 100%)",
+                      fontFamily: '"Times New Roman", serif',
+                      textShadow: "0 1px 2px rgba(0,0,0,0.35)",
+                    }}
+                  >
+                    {isSubmitting ? "Sending…" : "Submit"}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="space-y-3 px-5 pb-6 pt-2 text-center">
+                <div className="text-5xl">🎉</div>
+                <p
+                  className="text-[16px] font-bold text-[#fde685]"
+                  style={{ fontFamily: '"Times New Roman", serif' }}
+                >
+                  Thank you for your feedback!
+                </p>
+                <p
+                  className="text-[12px] text-white/70"
+                  style={{ fontFamily: '"Times New Roman", serif' }}
+                >
+                  We appreciate your input and will use it to improve the experience.
+                </p>
+                <button
+                  onClick={handleClose}
+                  className="mt-2 rounded-full px-6 py-2 text-[12px] font-bold text-white shadow-md"
+                  style={{
+                    background: "linear-gradient(180deg, #7da348 0%, #4d7530 100%)",
+                    fontFamily: '"Times New Roman", serif',
+                    textShadow: "0 1px 2px rgba(0,0,0,0.35)",
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            )}
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}

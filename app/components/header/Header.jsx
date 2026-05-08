@@ -4,6 +4,8 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { PROFILE_ASSETS } from "../profile/profileAssets";
+import ProfileFrame from "../profile/ProfileFrame";
+import { useUser } from "../../contexts/UserContext";
 
 /**
  * Header Component
@@ -12,6 +14,7 @@ import { PROFILE_ASSETS } from "../profile/profileAssets";
  */
 function Header({ onMenuClick, showAnimation = false, balance = null, profilePhoto = null }) {
   const router = useRouter();
+  const { selectedFrameId } = useUser();
   
   return (
     <motion.header
@@ -90,31 +93,17 @@ function Header({ onMenuClick, showAnimation = false, balance = null, profilePho
               </div>
             </motion.div>
           )}
-          {/* Profile Photo Button */}
-
+          {/* Profile Photo Button (with VIP frame) */}
           <div className="relative w-[100px] h-auto right-[5px] top-[5px] ">
-            <motion.button
-              onClick={() => router.push('/profile')}
-              className="absolute right-[40%] top-[4px] w-[50px] h-[50px] rounded-full overflow-hidden border-2 border-[#e9af41] cursor-pointer"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-              aria-label="Go to profile"
-            >
-              <img
-                alt="Profile"
+            <div className="absolute right-[28%] top-[-4px]">
+              <ProfileFrame
                 src={profilePhoto || PROFILE_ASSETS.profileAvatar}
-                className="object-cover w-full h-full"
+                frameId={selectedFrameId}
+                size={64}
+                alt="Profile"
+                onClick={() => router.push('/profile')}
               />
-            </motion.button>
-
-            {/* <Image
-              src="/assets/images/header-logo.png"
-              alt="Logo"
-              width={71}
-              height={52}
-              className="object-cover"
-              priority
-            /> */}
+            </div>
           </div>
         </motion.div>
       </div>

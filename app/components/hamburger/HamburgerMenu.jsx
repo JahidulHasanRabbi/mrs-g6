@@ -2,12 +2,13 @@
 
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { memo, useMemo, useState, useEffect } from "react";
+import { memo, useMemo, useState, useEffect, useCallback } from "react";
 import { useHamburgerMenu } from "./useHamburgerMenu";
 import { MENU_CONFIG, ANIMATION_CONFIG, THEME_CONFIG } from "./menuConfig";
 import MenuSection from "./MenuSection";
 import MenuItem from "./MenuItem";
 import SocialLinks from "./SocialLinks";
+import FeedbackModal from "../ui/FeedbackModal";
 import { getPublicBanners } from "@/app/api/memberApi";
 
 /**
@@ -29,6 +30,17 @@ import { getPublicBanners } from "@/app/api/memberApi";
 function HamburgerMenu({ isOpen, onClose }) {
   useHamburgerMenu(isOpen, onClose);
 
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+
+  const handleMenuAction = useCallback((actionType) => {
+    if (actionType === "feedback") {
+      // Open the feedback modal AND close the menu drawer; the modal lives
+      // outside the drawer so it stays mounted after the drawer animates out.
+      setFeedbackOpen(true);
+      onClose();
+    }
+  }, [onClose]);
+
   const panelVariants = useMemo(() => ({
     hidden: { opacity: 0 },
     show: {
@@ -49,6 +61,7 @@ function HamburgerMenu({ isOpen, onClose }) {
   }), []);
 
   return (
+    <>
     <AnimatePresence mode="wait">
       {isOpen && (
         <>
@@ -123,7 +136,7 @@ function HamburgerMenu({ isOpen, onClose }) {
                     ))}
                   </div>
 
-                  {/* Social Section */}
+                  {/* Social Section — icon-only row mixing social links + actions (Feedback) */}
                   <MenuSection
                     title={MENU_CONFIG.social.title}
                     icon={MENU_CONFIG.social.icon}
@@ -131,7 +144,7 @@ function HamburgerMenu({ isOpen, onClose }) {
                   >
                     <SocialLinks
                       links={MENU_CONFIG.social.links}
-                      variants={rowVariants}
+                      onAction={handleMenuAction}
                     />
                   </MenuSection>
 
@@ -142,6 +155,7 @@ function HamburgerMenu({ isOpen, onClose }) {
                         key={index}
                         {...item}
                         onClose={onClose}
+                        onAction={handleMenuAction}
                         variants={rowVariants}
                       />
                     ))}
@@ -153,6 +167,10 @@ function HamburgerMenu({ isOpen, onClose }) {
         </>
       )}
     </AnimatePresence>
+
+    {/* Lives outside AnimatePresence so it survives the drawer closing. */}
+    <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+    </>
   );
 }
 

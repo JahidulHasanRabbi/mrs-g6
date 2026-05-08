@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <radialGradient id="fb-bg" cx="50%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#fde685"/>
+      <stop offset="55%" stop-color="#e9af41"/>
+      <stop offset="100%" stop-color="#a87a26"/>
+    </radialGradient>
+  </defs>
+  <circle cx="16" cy="16" r="15" fill="url(#fb-bg)" stroke="#5b3a10" stroke-width="1.5"/>
+  <path d="M22.4 13.8c0 3.1-2.86 5.6-6.4 5.6-.74 0-1.44-.1-2.1-.3l-3.2 1.7.92-2.85c-.95-.97-1.52-2.21-1.52-3.55 0-3.1 2.86-5.6 6.4-5.6 3.54 0 6.4 2.5 6.4 5.6z" fill="#fff" stroke="#5b3a10" stroke-width="0.8" stroke-linejoin="round"/>
+  <circle cx="13.4" cy="13.8" r="0.9" fill="#5b3a10"/>
+  <circle cx="16" cy="13.8" r="0.9" fill="#5b3a10"/>
+  <circle cx="18.6" cy="13.8" r="0.9" fill="#5b3a10"/>
+</svg>
