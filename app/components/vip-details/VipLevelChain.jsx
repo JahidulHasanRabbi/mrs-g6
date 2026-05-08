@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { VIP_DETAILS_ASSETS } from "./vipDetailsAssets";
 
 const DEFAULT_VIP_LEVELS = [
-  { name: "Bronze",   badge: VIP_DETAILS_ASSETS.badges.bronze,   left:  30, leftSm:  55 },
+  { name: "Bronze",   badge: VIP_DETAILS_ASSETS.badges.bronze,   left:  40, leftSm:  55 },
   { name: "Silver",   badge: VIP_DETAILS_ASSETS.badges.silver,   left: 120, leftSm: 120 },
   { name: "Gold",     badge: VIP_DETAILS_ASSETS.badges.gold,     left: 210, leftSm: 205 },
   { name: "Platinum", badge: VIP_DETAILS_ASSETS.badges.platinum, left: 300, leftSm: 285 },
