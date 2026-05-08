@@ -179,9 +179,9 @@ export default function SpinTablesContainer() {
           <div className="flex items-center gap-3">
             <button 
               onClick={handleTabToggle}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              className={`inline-flex min-w-[172px] items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-center font-['Times_New_Roman'] text-sm font-bold leading-none transition-colors ${
                 activeTab === "sequence"
-                  ? "border-[0.5px] border-[#f2c36b]"
+                  ? "border-[0.5px] border-[#f2c36b] text-black"
                   : "border border-[#e9af41]/30 bg-[#e9af41]/10 text-[#e9af41] hover:bg-[#e9af41]/20"
               }`}
               style={
@@ -193,26 +193,18 @@ export default function SpinTablesContainer() {
               }
               disabled={isLoading}
             >
-              <span className={activeTab === "sequence" ? "text-black font-bold" : ""}>
-                Spin Sequence Setting
-              </span>
+              Spin Sequence Setting
             </button>
             {activeTab === "items" && (
               <button 
                 onClick={handleAddClick}
-                className="rounded-lg px-4 py-2 text-sm font-bold transition-colors disabled:opacity-50"
+                className="inline-flex min-w-[72px] items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-center font-['Times_New_Roman'] text-sm font-bold leading-none text-black transition-colors disabled:opacity-50"
                 style={{
                   backgroundImage: "linear-gradient(2.1326483653998594deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
                 }}
                 disabled={isLoading}
               >
-                <span className="bg-clip-text text-transparent" style={{
-                  backgroundImage: "linear-gradient(2.1326483653998594deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent"
-                }}>
-                  Add
-                </span>
+                Add
               </button>
             )}
           </div>

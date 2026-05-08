@@ -6,21 +6,21 @@
 export const FOOTER_CONFIG = {
   navItems: [
     {
-      id: 'leaderboard',
-      icon: '/assets/images/footer-leaderboard.png',
-      label: 'LEADERBOARD',
-      link: '/leaderboard',
+      id: 'lucky-spin',
+      icon: '/assets/images/kasih-spin-icon.png',
+      label: 'LUCKY SPIN',
+      link: '/spin',
+      width: 40,
+      height: 40,
+    },
+    {
+      id: 'smash-egg',
+      icon: '/assets/images/coming-soon-icon.png',
+      label: 'SMASH EGG',
+      link: '/smash-egg',
       width: 40,
       height: 40,
       disabled: true,
-    },
-    {
-      id: 'hot',
-      icon: '/assets/images/footer-hot.png',
-      label: 'HOT',
-      link: '/mart',
-      width: 40,
-      height: 40,
     },
     {
       id: 'home',
@@ -32,12 +32,13 @@ export const FOOTER_CONFIG = {
       isCenter: true,
     },
     {
-      id: 'profile',
-      icon: '/assets/images/footer-profile.png',
-      label: 'PROFILE',
-      link: '/profile',
+      id: 'leaderboard',
+      icon: '/assets/images/footer-leaderboard.png',
+      label: 'LEADERBOARD',
+      link: '/leaderboard',
       width: 40,
       height: 40,
+      disabled: true,
     },
     {
       id: 'livechat',

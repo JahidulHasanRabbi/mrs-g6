@@ -2,6 +2,18 @@
 
 import { getOptionLabel } from "../../../api/apiOptions";
 
+// API may return prize_type as a numeric enum (1..4) or as a string label ("ITEM").
+// Show the label either way; fall back to the raw value if we don't recognize it.
+function formatPrizeType(value) {
+  if (value == null || value === "") return "";
+  if (typeof value === "number") return getOptionLabel("PRIZE_TYPE", value) || "";
+  const numeric = Number(value);
+  if (!Number.isNaN(numeric) && getOptionLabel("PRIZE_TYPE", numeric)) {
+    return getOptionLabel("PRIZE_TYPE", numeric);
+  }
+  return String(value);
+}
+
 export default function RedemptionItemsTable({ items = [], onEditClick, onDeleteClick }) {
   if (items.length === 0) {
     return (
@@ -58,7 +70,7 @@ export default function RedemptionItemsTable({ items = [], onEditClick, onDelete
               </td>
               <td className="px-4 py-4">
                 <p className="text-sm text-white/80 font-['Times_New_Roman']">
-                  {item.quantity}
+                  {item.quantity_available ?? item.quantity ?? ""}
                 </p>
               </td>
               <td className="px-4 py-4">
@@ -73,7 +85,7 @@ export default function RedemptionItemsTable({ items = [], onEditClick, onDelete
               </td>
               <td className="px-4 py-4">
                 <p className="text-sm text-white/80 font-['Times_New_Roman']">
-                  {getOptionLabel('PRIZE_TYPE', item.prize_type)}
+                  {formatPrizeType(item.prize_type)}
                 </p>
               </td>
               <td className="px-4 py-4">

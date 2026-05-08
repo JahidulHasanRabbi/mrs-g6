@@ -18,7 +18,7 @@ export default function SpinWinningRecordPage() {
 
   return (
     <div
-      className="min-h-screen w-full pt-[52px] pb-[100px] relative"
+      className="min-h-screen w-full pt-[72px] pb-[100px] relative"
       style={{
         backgroundImage: `url(${HOME_ASSETS.backgroundPattern})`,
         backgroundSize: "cover",

@@ -17,6 +17,7 @@ export function UserProvider({ children }) {
     tokensNeeded: 20000,
   });
   const [profilePicture, setProfilePicture] = useState(null);
+  const [profileData, setProfileData] = useState(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [memberUuid, setMemberUuid] = useState(null);
 
@@ -52,6 +53,7 @@ export function UserProvider({ children }) {
           tokensNeeded: 20000,
         });
         setProfilePicture(null);
+        setProfileData(null);
         setIsLoadingProfile(false);
         return;
       }
@@ -72,15 +74,21 @@ export function UserProvider({ children }) {
           currentLevel: memberInfo.tier || prev.currentLevel,
         }));
 
-        // Fetch profile data for profile picture
+        // Fetch profile data for profile picture and field-completion checks
         try {
-          const profileData = await getProfile(memberUuid);
-          if (profileData.profile_picture) {
-            setProfilePicture(profileData.profile_picture);
+          const profile = await getProfile(memberUuid);
+          setProfileData(profile);
+          if (profile.profile_picture) {
+            setProfilePicture(profile.profile_picture);
           }
         } catch (profileError) {
-          console.error('UserContext: Error loading profile picture:', profileError);
+          console.error('UserContext: Error loading profile data:', profileError);
         }
+
+        setUserData(prev => ({
+          ...prev,
+          phoneNumber: memberInfo.phone_number || prev.phoneNumber,
+        }));
       } catch (error) {
         console.error('Error loading user data:', error);
       } finally {
@@ -135,11 +143,12 @@ export function UserProvider({ children }) {
   };
 
   return (
-    <UserContext.Provider value={{ 
-      userData, 
-      profilePicture, 
+    <UserContext.Provider value={{
+      userData,
+      profilePicture,
+      profileData,
       isLoadingProfile,
-      updateBalance, 
+      updateBalance,
       updateUserData,
       updateProfilePicture,
       refreshUserData

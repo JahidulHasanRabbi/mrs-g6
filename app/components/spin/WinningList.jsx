@@ -21,19 +21,19 @@ const maskUsername = (name) => {
 
 const WinningRow = memo(function WinningRow({ date, phone, amount, index }) {
   return (
-  <motion.div 
-    className="flex items-center justify-between px-4 sm:px-6 py-2.5 min-h-[45px]"
+  <motion.div
+    className="flex items-center justify-between px-4 sm:px-6 py-2.5 h-[45px] overflow-x-auto winning-row-scroll"
     initial={{ opacity: 0, x: -100 }}
     animate={{ opacity: 1, x: 0 }}
-    transition={{ 
-      duration: 0.5, 
+    transition={{
+      duration: 0.5,
       delay: Math.min(index * 0.1, 0.5),
       ease: "easeOut"
     }}
     whileHover={{ scale: 1.02, x: 5 }}
   >
     <span className="text-[#3d1a02] text-xs sm:text-sm font-bold w-[85px] flex-shrink-0">{date}</span>
-    <span className="text-[#3d1a02] text-xs sm:text-sm font-bold flex-1 text-center px-2 truncate">{phone}</span>
+    <span className="text-[#3d1a02] text-xs sm:text-sm font-bold flex-1 text-center px-2 whitespace-nowrap">{phone}</span>
     <motion.div 
       className="flex items-center gap-1.5 flex-shrink-0"
       initial={{ opacity: 0, scale: 0 }}
@@ -91,13 +91,22 @@ const WinningList = memo(function WinningList() {
   }, []);
 
   return (
-    <motion.div 
+    <motion.div
       className="relative w-full max-w-[450px] h-[280px] mx-4"
       initial={{ opacity: 0, scale: 0.8, y: 50 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
       style={{ willChange: "transform, opacity" }}
     >
+      <style>{`
+        .winning-row-scroll { scrollbar-width: thin; scrollbar-color: rgba(184, 136, 42, 0.65) transparent; }
+        .winning-row-scroll::-webkit-scrollbar { height: 4px; background: transparent; }
+        .winning-row-scroll::-webkit-scrollbar-track { background: rgba(61, 26, 2, 0.08); border-radius: 999px; margin: 0 6px; }
+        .winning-row-scroll::-webkit-scrollbar-thumb { background: linear-gradient(90deg, #c9a050 0%, #b8882a 100%); border-radius: 999px; }
+        .winning-row-scroll::-webkit-scrollbar-thumb:hover { background: #fde685; }
+        .winning-row-scroll::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+        .winning-row-scroll::-webkit-scrollbar-corner { background: transparent; }
+      `}</style>
       <Image
         alt="Winning List Background"
         src={SPIN_ASSETS.winningListBackground}

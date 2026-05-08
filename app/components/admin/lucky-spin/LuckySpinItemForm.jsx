@@ -20,11 +20,6 @@ const luckySpinFieldConfig = {
       required: true
     },
     {
-      field: 'multiplier',
-      showWhen: [1], // Free Credit
-      required: true
-    },
-    {
       field: 'token_amount',
       showWhen: [3], // Token
       required: true
@@ -70,7 +65,6 @@ export default function LuckySpinItemForm({
         unlimited: initialData.unlimited || false,
         min_withdraw: initialData.min_withdraw || "",
         max_withdraw: initialData.max_withdraw || "",
-        multiplier: initialData.multiplier || "",
         token_amount: initialData.token_amount || ""
       };
       
@@ -92,7 +86,6 @@ export default function LuckySpinItemForm({
         unlimited: false,
         min_withdraw: "",
         max_withdraw: "",
-        multiplier: "",
         token_amount: ""
       });
       setImagePreview(null);
@@ -125,10 +118,7 @@ export default function LuckySpinItemForm({
     if (visibleFields.max_withdraw) {
       submitData.max_withdraw = parseFloat(fieldValues.max_withdraw);
     }
-    if (visibleFields.multiplier) {
-      submitData.multiplier = parseFloat(fieldValues.multiplier);
-    }
-    
+
     // Include token_amount for Token type
     if (visibleFields.token_amount) {
       submitData.token_amount = parseInt(fieldValues.token_amount, 10);
@@ -273,24 +263,6 @@ export default function LuckySpinItemForm({
                   onChange={(e) => handleInputChange("max_withdraw", e.target.value)}
                   className="bg-white/10 border-[0.5px] border-white/8 h-[36px] rounded-[4px] w-[304px] px-3 text-white placeholder-white/50 focus:outline-none focus:border-[#f2c36b]"
                   placeholder="Enter maximum withdraw"
-                  step="0.01"
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-            )}
-
-            {visibleFields.multiplier && (
-              <div className="flex items-center gap-[18px]">
-                <label className="text-[18px] text-white font-['Times_New_Roman'] w-[136px]">
-                  Multiplier:
-                </label>
-                <input
-                  type="number"
-                  value={fieldValues.multiplier || ""}
-                  onChange={(e) => handleInputChange("multiplier", e.target.value)}
-                  className="bg-white/10 border-[0.5px] border-white/8 h-[36px] rounded-[4px] w-[304px] px-3 text-white placeholder-white/50 focus:outline-none focus:border-[#f2c36b]"
-                  placeholder="Enter multiplier"
                   step="0.01"
                   required
                   disabled={isLoading}

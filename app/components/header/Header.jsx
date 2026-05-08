@@ -15,7 +15,7 @@ function Header({ onMenuClick, showAnimation = false, balance = null, profilePho
   
   return (
     <motion.header
-      className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[475px] h-[52px] z-40"
+      className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[475px] h-[72px] z-40 bg-[#0a1a0a]/95 backdrop-blur-sm border-b-2 border-[#e9af41]/60 shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
       initial={showAnimation ? { y: -100, opacity: 0 } : { y: 0, opacity: 1 }}
       animate={{ y: 0, opacity: 1 }}
       transition={showAnimation ? { type: "spring", stiffness: 300, damping: 30 } : { duration: 0 }}
@@ -56,7 +56,7 @@ function Header({ onMenuClick, showAnimation = false, balance = null, profilePho
 
         {/* Logo */}
         <motion.div
-          className="absolute right-4 top-0 w-[60px] h-[60px]"
+          className="absolute right-4 top-1/2 -translate-y-1/2 w-[60px] h-[60px]"
           whileHover={{ scale: 1.05, rotate: 5 }}
           transition={{ type: "spring", stiffness: 400, damping: 10 }}
         >

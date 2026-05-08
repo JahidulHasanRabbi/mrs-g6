@@ -4,7 +4,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { PROFILE_ASSETS } from "./profileAssets";
 
-const Row = ({ index, label, onClick, top }) => {
+const Row = ({ index, label, onClick, top, complete }) => {
   return (
     <motion.button
       type="button"
@@ -28,6 +28,23 @@ const Row = ({ index, label, onClick, top }) => {
         </span>
       </span>
 
+      {complete && (
+        <span
+          aria-label={`${label} completed`}
+          className="absolute right-[22px] top-1/2 -translate-y-1/2 flex h-[14px] w-[14px] items-center justify-center rounded-full bg-[#3a8a2a] shadow-[0_0_4px_rgba(58,138,42,0.6)]"
+        >
+          <svg width="9" height="9" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path
+              d="M2.5 6.2 L4.9 8.6 L9.5 3.6"
+              stroke="#fff"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+      )}
+
       <span className="absolute right-0 top-1/2 -translate-y-1/2 w-[16px] h-[18px]">
         <Image alt="" src={PROFILE_ASSETS.editIcon} fill className="object-cover" />
       </span>
@@ -42,14 +59,15 @@ export default function EditProfileSection({
   onPhone,
   onEmail,
   onInterest,
+  completion = {},
 }) {
   const rows = [
-    { label: "Display Photo", onClick: onDisplayPhoto, top: 52 },
-    { label: "Gender", onClick: onGender, top: 84 },
-    { label: "Birthday", onClick: onBirthday, top: 114 },
-    { label: "Phone", onClick: onPhone, top: 147 },
-    { label: "Email", onClick: onEmail, top: 179 },
-    { label: "Interest", onClick: onInterest, top: 211 },
+    { label: "Display Photo", onClick: onDisplayPhoto, top: 52,  complete: !!completion.displayPhoto },
+    { label: "Gender",        onClick: onGender,       top: 84,  complete: !!completion.gender },
+    { label: "Birthday",      onClick: onBirthday,     top: 114, complete: !!completion.birthday },
+    { label: "Phone",         onClick: onPhone,        top: 147, complete: !!completion.phone },
+    { label: "Email",         onClick: onEmail,        top: 179, complete: !!completion.email },
+    { label: "Interest",      onClick: onInterest,     top: 211, complete: !!completion.interest },
   ];
 
   return (
@@ -72,7 +90,14 @@ export default function EditProfileSection({
         </motion.p>
 
         {rows.map((r, i) => (
-          <Row key={r.label} index={i} label={r.label} onClick={r.onClick} top={r.top} />
+          <Row
+            key={r.label}
+            index={i}
+            label={r.label}
+            onClick={r.onClick}
+            top={r.top}
+            complete={r.complete}
+          />
         ))}
       </div>
     </motion.div>

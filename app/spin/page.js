@@ -49,45 +49,46 @@ export default function SpinPage() {
 
   const handleSpinComplete = useCallback(() => {
     setIsSpinning(false);
-    
-    // Wait 1.5 seconds after spin stops to show modal (let user see the winning tile)
-    setTimeout(() => {
-      if (spinErrorRef.current) {
-        setModalTitle("❌ Spin Failed");
-        setModalMessage(spinErrorRef.current);
-        setModalBgColor("rgba(180, 60, 60, 1)");
-        setIsModalOpen(true);
-        spinErrorRef.current = null;
-      } else if (spinResultsRef.current) {
-        const results = spinResultsRef.current;
-        if (results.length > 0) {
-          // Add new winnings to the list
-          const newWinnings = results.map(r => ({
-            date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-            reward: r.reward_name,
-            amount: r.credit_amount ? `RM${r.credit_amount}` : '-'
-          }));
-          setUserWinnings(prev => [...newWinnings, ...prev]);
-          const rewardCounts = {};
-          results.forEach(r => {
-            rewardCounts[r.reward_name] = (rewardCounts[r.reward_name] || 0) + 1;
-          });
-          const rewardsList = Object.entries(rewardCounts)
-            .map(([name, count]) => `${count > 1 ? count + 'x ' : ''}${name}`)
-            .join(", ");
-            
-          setModalTitle("🎉 Congratulations!");
-          setModalMessage(`You won: ${rewardsList}`);
-          setModalBgColor("rgba(96, 128, 60, 1)");
-        } else {
-          setModalTitle("✅ Spin Complete");
-          setModalMessage("Spin completed successfully!");
-          setModalBgColor("rgba(96, 128, 60, 1)");
-        }
-        setIsModalOpen(true);
-        spinResultsRef.current = null;
+
+    // Open the result dialog at the same instant the spinner stops, per
+    // client request (slide 8). The grid's `stopSpin` already sets the
+    // winning-tile highlight before this fires, so the user sees the
+    // landed tile + result modal together.
+    if (spinErrorRef.current) {
+      setModalTitle("❌ Spin Failed");
+      setModalMessage(spinErrorRef.current);
+      setModalBgColor("rgba(180, 60, 60, 1)");
+      setIsModalOpen(true);
+      spinErrorRef.current = null;
+    } else if (spinResultsRef.current) {
+      const results = spinResultsRef.current;
+      if (results.length > 0) {
+        // Add new winnings to the list
+        const newWinnings = results.map(r => ({
+          date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+          reward: r.reward_name,
+          amount: r.credit_amount ? `RM${r.credit_amount}` : '-'
+        }));
+        setUserWinnings(prev => [...newWinnings, ...prev]);
+        const rewardCounts = {};
+        results.forEach(r => {
+          rewardCounts[r.reward_name] = (rewardCounts[r.reward_name] || 0) + 1;
+        });
+        const rewardsList = Object.entries(rewardCounts)
+          .map(([name, count]) => `${count > 1 ? count + 'x ' : ''}${name}`)
+          .join(", ");
+
+        setModalTitle("🎉 Congratulations!");
+        setModalMessage(`You won: ${rewardsList}`);
+        setModalBgColor("rgba(96, 128, 60, 1)");
+      } else {
+        setModalTitle("✅ Spin Complete");
+        setModalMessage("Spin completed successfully!");
+        setModalBgColor("rgba(96, 128, 60, 1)");
       }
-    }, 1500);
+      setIsModalOpen(true);
+      spinResultsRef.current = null;
+    }
   }, []);
 
   const isProcessingRef = useRef(false);

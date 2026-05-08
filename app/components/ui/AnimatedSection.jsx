@@ -47,7 +47,7 @@ const AnimatedSection = memo(function AnimatedSection({
       transition={{ type: "spring", stiffness: 140, damping: 18, mass: 0.6 }}
       style={{ willChange: "transform, opacity" }}
     >
-      <div className="relative w-full px-4 pt-3 text-4xl md:text-5xl">
+      <div className="relative w-full px-4 pt-3 text-4xl ">
         <h1
           className="text-center font-bold  "
           style={{

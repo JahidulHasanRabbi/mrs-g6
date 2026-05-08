@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import AnimatedSection from "../components/ui/AnimatedSection";
 import VipLevelChain from "../components/vip-details/VipLevelChain";
 import PrivilegesCarousel from "../components/vip-details/PrivilegesCarousel";
@@ -7,6 +7,20 @@ import LoadingState from "../components/ui/LoadingState";
 import ErrorDisplay from "../components/ui/ErrorDisplay";
 import { getVipTiers } from "../api/memberApi";
 import { mapVipTiers } from "../api/responseMappers";
+
+// All 9 chain tiers — must match the chain in VipLevelChain.jsx and the rank icons
+// in /public/assets/ranks/ (vip-level-1.png .. vip-level-9.png).
+const ALL_TIER_NAMES = [
+  "Bronze",
+  "Silver",
+  "Gold",
+  "Platinum",
+  "Diamond",
+  "Emerald",
+  "Ruby",
+  "Sapphire",
+  "Amethyst",
+];
 
 export default function VipDetailsPage() {
   const [selectedLevel, setSelectedLevel] = useState("Bronze");
@@ -38,6 +52,13 @@ export default function VipDetailsPage() {
 
     fetchVipTiers();
   }, []);
+
+  // Always expose 9 tiers downstream so the carousel renders one card per chain slot.
+  // API tiers fill positions 0..N; remaining slots get a placeholder name and "—" stats.
+  const displayTiers = useMemo(
+    () => ALL_TIER_NAMES.map((name, i) => vipTiers[i] || { name }),
+    [vipTiers]
+  );
 
   const handleRetry = () => {
     setError(null);
@@ -81,17 +102,17 @@ export default function VipDetailsPage() {
           <>
             {/* VIP Level Chain */}
             <div className="mt-8 relative">
-              <VipLevelChain 
-                selectedLevel={selectedLevel} 
+              <VipLevelChain
+                selectedLevel={selectedLevel}
                 onLevelSelect={setSelectedLevel}
-                vipTiers={vipTiers}
+                vipTiers={displayTiers}
               />
             </div>
 
             {/* Privileges Carousel — breaks out of page px-4 so prev/next cards peek further */}
             <div className="mt-12 mb-8 relative -mx-4">
               <PrivilegesCarousel
-                tiers={vipTiers}
+                tiers={displayTiers}
                 activeName={selectedLevel}
                 onSelect={setSelectedLevel}
               />

@@ -136,14 +136,12 @@ export default function SpinSequenceManager({
         <button
           onClick={handleSave}
           disabled={isLoading}
-          className="px-6 py-3 rounded-lg text-sm font-bold transition-colors disabled:opacity-50"
+          className="inline-flex min-w-[164px] items-center justify-center whitespace-nowrap rounded-lg px-6 py-3 font-['Times_New_Roman'] text-sm font-bold leading-none text-black transition-colors disabled:opacity-50"
           style={{
             backgroundImage: "linear-gradient(2.1326483653998594deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
           }}
         >
-          <span className="text-black">
-            {isLoading ? 'Saving...' : 'Save All Positions'}
-          </span>
+          {isLoading ? 'Saving...' : 'Save All Positions'}
         </button>
       </div>
     </div>

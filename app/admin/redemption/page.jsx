@@ -35,7 +35,7 @@ function RedemptionManagementContent() {
     setError(null);
     try {
       const items = await adminApi.getRedemptionItems();
-      setRedemptionItems(items);
+      setRedemptionItems(Array.isArray(items) ? items : items?.results ?? []);
     } catch (err) {
       console.error('Failed to load redemption items:', err);
       setError(err);
@@ -147,19 +147,13 @@ function RedemptionManagementContent() {
             </h2>
             <button 
               onClick={handleAddClick}
-              className="rounded-lg px-4 py-2 text-sm font-bold transition-colors disabled:opacity-50"
+              className="inline-flex min-w-[72px] items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-center font-['Times_New_Roman'] text-sm font-bold leading-none text-black transition-colors disabled:opacity-50"
               style={{
                 backgroundImage: "linear-gradient(2.1326483653998594deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
               }}
               disabled={isLoading}
             >
-              <span className="bg-clip-text text-transparent" style={{
-                backgroundImage: "linear-gradient(2.1326483653998594deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent"
-              }}>
-                Add
-              </span>
+              Add
             </button>
           </div>
 

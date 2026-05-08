@@ -111,7 +111,7 @@ export default function RedemptionMallTable({ items, onCreate, onEdit }) {
         </h2>
         <button
           onClick={onCreate}
-          className="flex items-center gap-2 rounded-[6px] bg-[#e8b558] px-4 py-2 font-['Times_New_Roman'] text-[14px] font-bold text-white shadow-[0_2px_8px_rgba(231,196,87,0.35)] transition hover:brightness-110"
+          className="inline-flex min-w-[190px] items-center justify-center gap-2 whitespace-nowrap rounded-[6px] bg-[#e8b558] px-4 py-2 font-['Times_New_Roman'] text-[14px] font-bold leading-none text-black shadow-[0_2px_8px_rgba(231,196,87,0.35)] transition hover:brightness-110"
         >
           <span>Create Redemption Item</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">

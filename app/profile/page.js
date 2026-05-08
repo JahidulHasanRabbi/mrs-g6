@@ -6,9 +6,20 @@ import HistorySection from "../components/profile/HistorySection";
 import EditProfileSection from "../components/profile/EditProfileSection";
 import { useUser } from "../contexts/UserContext";
 
+const hasValue = (v) => v != null && String(v).trim() !== "";
+
 export default function ProfilePage() {
   const router = useRouter();
-  const { userData } = useUser();
+  const { userData, profilePicture, profileData } = useUser();
+
+  const completion = {
+    displayPhoto: hasValue(profilePicture),
+    gender:       hasValue(profileData?.gender),
+    birthday:     hasValue(profileData?.date_of_birth),
+    phone:        hasValue(userData?.phoneNumber),
+    email:        hasValue(profileData?.email),
+    interest:     hasValue(profileData?.hobby),
+  };
 
   const handleVipDetailsClick = () => {
     // Navigate to VIP details page
@@ -57,6 +68,7 @@ export default function ProfilePage() {
             onPhone={handlePhone}
             onEmail={handleEmail}
             onInterest={handleInterest}
+            completion={completion}
           />
       </div>
     </>

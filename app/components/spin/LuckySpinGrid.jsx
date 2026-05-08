@@ -6,11 +6,20 @@ import { useCallback, useEffect, useRef, useState, memo, useMemo } from "react";
 import { SPIN_ASSETS } from "./spinAssets";
 import { usePerformanceOptimization } from "../../hooks/usePerformanceOptimization";
 
+const GRID_AREA = [
+  "col-start-1 row-start-1",
+  "col-start-2 row-start-1",
+  "col-start-3 row-start-1",
+  "col-start-1 row-start-2",
+  "col-start-3 row-start-2",
+  "col-start-1 row-start-3",
+  "col-start-2 row-start-3",
+  "col-start-3 row-start-3",
+];
+
 const SpinItem = memo(function SpinItem({
   background,
   prize,
-  position,
-  size = "w-[114px] h-[112px]",
   index,
   isActive,
   isSpinning,
@@ -19,24 +28,24 @@ const SpinItem = memo(function SpinItem({
 }) {
   return (
   <motion.div
-    className={`absolute ${position} ${isActive ? "z-10" : ""}`}
+    className={`relative ${GRID_AREA[index]} w-full h-full ${isActive ? "z-10" : ""}`}
     initial={{ opacity: 0, scale: 0, rotate: -180 }}
     animate={{ opacity: 1, scale: 1, rotate: 0 }}
-    transition={{ 
-      duration: 0.6, 
+    transition={{
+      duration: 0.6,
       delay: index * 0.1,
       ease: "easeOut"
     }}
     whileHover={!isSpinning ? { scale: 1.05 } : undefined}
   >
     <motion.div
-      className="relative"
+      className="relative w-full h-full"
       animate={
         isActive
           ? {
               scale: isLowEnd ? 1.08 : 1.12,
-              boxShadow: isLowEnd 
-                ? "0 0 15px rgba(253, 230, 133, 0.8), 0 0 30px rgba(253, 230, 133, 0.4)" 
+              boxShadow: isLowEnd
+                ? "0 0 15px rgba(253, 230, 133, 0.8), 0 0 30px rgba(253, 230, 133, 0.4)"
                 : "0 0 20px rgba(253, 230, 133, 1), 0 0 40px rgba(253, 230, 133, 0.6)"
             }
           : { scale: 1, boxShadow: "none" }
@@ -51,11 +60,10 @@ const SpinItem = memo(function SpinItem({
         src={background}
         width={114}
         height={112}
-        className={`${size} object-cover pointer-events-none`}
-        style={{ height: "auto" }}
+        className="w-full h-full object-fill pointer-events-none"
       />
       {isActive && (
-        <motion.div 
+        <motion.div
           className="absolute inset-[6px] rounded-[14px] border-2 border-[#fde685] pointer-events-none"
           animate={{
             opacity: [1, 0.6, 1],
@@ -73,8 +81,8 @@ const SpinItem = memo(function SpinItem({
       <motion.div
         initial={{ opacity: 0, scale: 0 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ 
-          duration: 0.4, 
+        transition={{
+          duration: 0.4,
           delay: index * 0.1 + 0.3,
           ease: "easeOut"
         }}
@@ -118,6 +126,12 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
   const stepCountRef = useRef(0);
   const totalStepsRef = useRef(0);
   const orderPosRef = useRef(0);
+  // Manual stop refs (slide 8 — "Allow users to manually stop the spin
+  // after clicking Spin Now"). The animation loop checks `manualStopRef`
+  // each frame and short-circuits to `targetGridIndexRef` after a minimum
+  // spin time (anti-spam).
+  const manualStopRef = useRef(false);
+  const targetGridIndexRef = useRef(0);
 
   // Store items with UUIDs in fixed positions (no random shuffling)
   const itemRewards = useMemo(() => {
@@ -140,14 +154,14 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
   }, [items]);
 
   const gridItems = useMemo(() => [
-    { background: SPIN_ASSETS.itemEmptyGold, prize: itemRewards[0]?.image, uuid: itemRewards[0]?.uuid, position: "left-[-8px] top-[-10px]" },
-    { background: SPIN_ASSETS.itemEmptyGreen, prize: itemRewards[1]?.image, uuid: itemRewards[1]?.uuid, position: "left-[96px] top-[-13px]", size: "w-[99px] h-[112px]" },
-    { background: SPIN_ASSETS.itemEmptyGold, prize: itemRewards[2]?.image, uuid: itemRewards[2]?.uuid, position: "left-[194px] top-[-10px]" },
-    { background: SPIN_ASSETS.itemEmptyGreen, prize: itemRewards[3]?.image, uuid: itemRewards[3]?.uuid, position: "left-[-7px] top-[88px]", size: "w-[100px] h-[112px]" },
-    { background: SPIN_ASSETS.itemEmptyGreen, prize: itemRewards[4]?.image, uuid: itemRewards[4]?.uuid, position: "left-[196px] top-[87px]", size: "w-[101px] h-[114px]" },
-    { background: SPIN_ASSETS.itemEmptyGold, prize: itemRewards[5]?.image, uuid: itemRewards[5]?.uuid, position: "left-[-9px] top-[193px]" },
-    { background: SPIN_ASSETS.itemEmptyGreen, prize: itemRewards[6]?.image, uuid: itemRewards[6]?.uuid, position: "left-[96px] top-[191px]", size: "w-[100px] h-[113px]" },
-    { background: SPIN_ASSETS.itemEmptyGold, prize: itemRewards[7]?.image, uuid: itemRewards[7]?.uuid, position: "left-[194px] top-[194px]" },
+    { background: SPIN_ASSETS.itemEmptyGold, prize: itemRewards[0]?.image, uuid: itemRewards[0]?.uuid },
+    { background: SPIN_ASSETS.itemEmptyGreen, prize: itemRewards[1]?.image, uuid: itemRewards[1]?.uuid },
+    { background: SPIN_ASSETS.itemEmptyGold, prize: itemRewards[2]?.image, uuid: itemRewards[2]?.uuid },
+    { background: SPIN_ASSETS.itemEmptyGreen, prize: itemRewards[3]?.image, uuid: itemRewards[3]?.uuid },
+    { background: SPIN_ASSETS.itemEmptyGreen, prize: itemRewards[4]?.image, uuid: itemRewards[4]?.uuid },
+    { background: SPIN_ASSETS.itemEmptyGold, prize: itemRewards[5]?.image, uuid: itemRewards[5]?.uuid },
+    { background: SPIN_ASSETS.itemEmptyGreen, prize: itemRewards[6]?.image, uuid: itemRewards[6]?.uuid },
+    { background: SPIN_ASSETS.itemEmptyGold, prize: itemRewards[7]?.image, uuid: itemRewards[7]?.uuid },
   ], [itemRewards]);
 
   const stopSpin = useCallback(
@@ -158,17 +172,16 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
       }
       setIsSpinning(false);
       setActiveGridIndex(finalGridIndex);
-      
+
       // Keep the center button rotation reset
       setTimeout(() => {
         centerRotate.set(0);
       }, 300);
-      
-      // Call onSpinComplete after a brief delay to let the winning tile highlight show
+
+      // Fire onSpinComplete immediately so the result dialog opens at the
+      // exact moment the spinner stops (per client request — slide 8).
       if (onSpinComplete) {
-        setTimeout(() => {
-          onSpinComplete(finalGridIndex);
-        }, 500);
+        onSpinComplete(finalGridIndex);
       }
     },
     [centerRotate, onSpinComplete]
@@ -199,6 +212,8 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
 
     stepCountRef.current = 0;
     orderPosRef.current = 0;
+    manualStopRef.current = false;
+    targetGridIndexRef.current = targetGridIndex;
     setIsSpinning(true);
 
     const now = performance.now();
@@ -206,9 +221,21 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
     lastStepAtRef.current = now;
 
     const tick = (t) => {
-      const progress = Math.min(1, (t - startRef.current) / 4200);
+      const elapsed = t - startRef.current;
+      // 4 seconds total spin time per slide 8 ("Speed up spin animation
+      // to 4 seconds"). Step easing still scales by device tier.
+      const progress = Math.min(1, elapsed / 4000);
       const eased = easeOutCubic(progress);
       const stepDelayMs = (isLowEnd ? 80 : isMidEnd ? 70 : 60) + eased * (isLowEnd ? 120 : isMidEnd ? 150 : 180);
+
+      // Manual stop short-circuit — once at least 1 second of spin has
+      // elapsed, an honoured Stop click ends the animation on the next
+      // frame, snapping to the pre-determined landing tile so the
+      // result dialog opens at the same instant the spinner stops.
+      if (manualStopRef.current && elapsed >= 1000) {
+        stopSpin(targetGridIndexRef.current);
+        return;
+      }
 
       if (t - lastStepAtRef.current >= stepDelayMs) {
         lastStepAtRef.current = t;
@@ -252,6 +279,14 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
     startSpinAnimation();
   }, [spinning, onSpinClick, startSpinAnimation]);
 
+  // Manual stop request handler — the centre button calls this while
+  // spinning. The actual halt happens on the next rAF tick (after the
+  // 1-second anti-spam guard) so easing and landing logic stay intact.
+  const requestManualStop = useCallback(() => {
+    if (!spinning) return;
+    manualStopRef.current = true;
+  }, [spinning]);
+
   // Expose the animation trigger to parent via ref
   useEffect(() => {
     if (spinTriggerRef) {
@@ -280,7 +315,7 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
         className="object-cover pointer-events-none"
       />
 
-      <div className="absolute left-[41px] top-[21px] w-[290px] h-[298px]">
+      <div className="absolute left-[41px] top-[21px] w-[290px] h-[298px] grid grid-cols-3 grid-rows-3">
         {gridItems.map((item, index) => (
           <SpinItem
             key={index}
@@ -293,29 +328,38 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
           />
         ))}
 
-        <motion.div 
-          className={`absolute left-[77px] top-[73px] w-[143px] h-[143px] z-10 ${spinning ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+        <motion.div
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[143px] h-[143px] z-10 cursor-pointer"
           initial={{ opacity: 0, scale: 0, rotate: 360 }}
-          animate={{ opacity: spinning ? 0.8 : 1, scale: 1, rotate: 0 }}
-          transition={{ 
-            duration: 0.8, 
+          animate={{ opacity: 1, scale: 1, rotate: 0 }}
+          transition={{
+            duration: 0.8,
             delay: 1.0,
             ease: "easeOut"
           }}
-          whileHover={!spinning ? { scale: 1.1, rotate: 5 } : undefined}
-          whileTap={!spinning ? { scale: 0.95 } : undefined}
-          style={{ rotate: centerRotateSpring, willChange: spinning ? "transform" : "auto" }}
-          onClick={spinning ? undefined : startSpin}
+          whileHover={{ scale: spinning ? 1.05 : 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={spinning ? requestManualStop : startSpin}
+          aria-label={spinning ? "Stop spin" : "Spin now"}
         >
-          <Image
-            alt="Spin Now Button"
-            src={SPIN_ASSETS.centerButton}
-            width={143}
-            height={143}
-            className="object-cover"
-            loading="eager"
-            priority
-          />
+          {/* Rotating spin artwork — same image for both states. While
+              spinning, clicking it again triggers a manual stop (slide 8
+              — "Allow users to manually stop the spin after clicking Spin
+              Now"). No visible STOP label is rendered, per UX preference. */}
+          <motion.div
+            className="w-full h-full"
+            style={{ rotate: centerRotateSpring, willChange: spinning ? "transform" : "auto" }}
+          >
+            <Image
+              alt={spinning ? "Stop spin" : "Spin Now Button"}
+              src={SPIN_ASSETS.centerButton}
+              width={143}
+              height={143}
+              className="object-cover"
+              loading="eager"
+              priority
+            />
+          </motion.div>
         </motion.div>
       </div>
     </motion.div>

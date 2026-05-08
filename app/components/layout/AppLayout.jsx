@@ -45,7 +45,7 @@ export default function AppLayout({ children }) {
         backgroundPosition: "top center",
         backgroundRepeat: "no-repeat",
         backgroundAttachment: "fixed",
-        paddingTop: isMartPage ? "0" : "52px",
+        paddingTop: isMartPage ? "0" : "72px",
       }}
     >
       {/* Conditional Header */}

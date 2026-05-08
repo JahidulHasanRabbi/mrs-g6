@@ -6,8 +6,8 @@ import { PROFILE_ASSETS } from "../profile/profileAssets";
 
 export default function MartHeader({ balance = "5,450.00", onMenuClick, onProfileClick, showAnimation = false, profilePhoto = null }) {
   return (
-    <motion.div 
-      className="relative w-full h-[56px] px-[21px] pt-[14px]"
+    <motion.div
+      className="relative w-full h-[80px] px-[21px] pt-[14px] bg-[#0a1a0a]/95 backdrop-blur-sm border-b-2 border-[#e9af41]/60 shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
       initial={showAnimation ? { opacity: 0, y: -20 } : { opacity: 1, y: 0 }}
       animate={{ opacity: 1, y: 0 }}
       transition={showAnimation ? { duration: 0.6, ease: "easeOut" } : { duration: 0 }}

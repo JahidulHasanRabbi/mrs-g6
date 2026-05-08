@@ -7,7 +7,7 @@ import { HOME_ASSETS } from "./homeAssets";
 const HomeHero = memo(function HomeHero() {
   return (
     <AnimatedSection
-      title="HOMEPAGE"
+      title="KINGGROUP44"
       imageSrc={HOME_ASSETS.heroTitleCheckin}
       imageAlt="Check in"
     />
