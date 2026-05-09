@@ -112,7 +112,7 @@ export default function SuccessModal({
                     key={i}
                     type="button"
                     onClick={action.onClick}
-                    className="flex-1 max-w-[110px] rounded-full px-3 py-2 text-[12px] font-bold text-white whitespace-nowrap shadow-[0_3px_6px_rgba(0,0,0,0.25)] ring-1 ring-black/10"
+                    className="flex-1 max-w-[120px] rounded-full px-3 py-2 text-[12px] font-bold text-white whitespace-nowrap shadow-[0_3px_6px_rgba(0,0,0,0.25)] ring-1 ring-black/10"
                     style={{
                       background: isSecondary
                         ? "linear-gradient(180deg, #6b3a14 0%, #3d1a02 100%)"

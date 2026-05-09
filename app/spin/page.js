@@ -50,13 +50,13 @@ export default function SpinPage() {
   const spinErrorRef = useRef(null);
   const gridSpinTriggerRef = useRef(null);
 
-  const handleSpinComplete = useCallback(() => {
+  const handleSpinComplete = useCallback((_finalGridIndex, opts = {}) => {
     setIsSpinning(false);
 
-    // Open the result dialog at the same instant the spinner stops, per
-    // client request (slide 8). The grid's `stopSpin` already sets the
-    // winning-tile highlight before this fires, so the user sees the
-    // landed tile + result modal together.
+    const wasManualStop = !!opts.wasManualStop;
+
+    // Always record errors. If the user manually stopped, surface the error
+    // popup anyway (so they don't lose visibility into a failed spin).
     if (spinErrorRef.current) {
       setModalTitle("❌ Spin Failed");
       setModalMessage(spinErrorRef.current);
@@ -64,16 +64,33 @@ export default function SpinPage() {
       setModalShowSpinActions(false);
       setIsModalOpen(true);
       spinErrorRef.current = null;
-    } else if (spinResultsRef.current) {
+      return;
+    }
+
+    if (spinResultsRef.current) {
       const results = spinResultsRef.current;
+
+      // Always add the win to the user's session winnings list — the spin
+      // happened on the server, the player paid for it, and the result is
+      // already recorded server-side. We must reflect that in the UI history
+      // regardless of whether the player let it spin out or stopped early.
       if (results.length > 0) {
-        // Add new winnings to the list
         const newWinnings = results.map(r => ({
           date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }),
           reward: r.reward_name,
           amount: r.credit_amount ? `RM${r.credit_amount}` : '-'
         }));
         setUserWinnings(prev => [...newWinnings, ...prev]);
+      }
+
+      // Manual stop = the player chose to halt early; the highlighted winning
+      // tile is enough feedback. Skip the modal so they aren't interrupted.
+      if (wasManualStop) {
+        spinResultsRef.current = null;
+        return;
+      }
+
+      if (results.length > 0) {
         const rewardCounts = {};
         results.forEach(r => {
           rewardCounts[r.reward_name] = (rewardCounts[r.reward_name] || 0) + 1;

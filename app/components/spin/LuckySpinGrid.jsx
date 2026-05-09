@@ -165,7 +165,7 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
   ], [itemRewards]);
 
   const stopSpin = useCallback(
-    (finalGridIndex) => {
+    (finalGridIndex, { wasManualStop = false } = {}) => {
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
         rafRef.current = null;
@@ -179,12 +179,12 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
       }, 300);
 
       // Brief pause so the player sees the winning-tile highlight ring
-      // before the result dialog opens. This is especially important for
-      // manual stops (slide 8) — without it the spin appears to "teleport"
-      // straight into the dialog.
+      // before the parent reacts. The flag is passed through so the parent
+      // can suppress the result dialog on manual stops (the player chose to
+      // halt early; surfacing the result is enough — see slide 8 follow-up).
       if (onSpinComplete) {
         setTimeout(() => {
-          onSpinComplete(finalGridIndex);
+          onSpinComplete(finalGridIndex, { wasManualStop });
         }, 700);
       }
     },
@@ -230,16 +230,14 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
       // to 4 seconds"). Step easing still scales by device tier.
       const progress = Math.min(1, elapsed / 4000);
       const eased = easeOutCubic(progress);
-      const stepDelayMs = (isLowEnd ? 80 : isMidEnd ? 70 : 60) + eased * (isLowEnd ? 120 : isMidEnd ? 150 : 180);
+      const baseDelay = (isLowEnd ? 80 : isMidEnd ? 70 : 60) + eased * (isLowEnd ? 120 : isMidEnd ? 150 : 180);
 
-      // Manual stop short-circuit — once at least 1 second of spin has
-      // elapsed, an honoured Stop click ends the animation on the next
-      // frame, snapping to the pre-determined landing tile so the
-      // result dialog opens at the same instant the spinner stops.
-      if (manualStopRef.current && elapsed >= 1000) {
-        stopSpin(targetGridIndexRef.current);
-        return;
-      }
+      // Manual stop = visible fast-forward to the target tile. After the
+      // 1-second anti-spam guard, drop step delay to ~40 ms so the spinner
+      // visibly accelerates and lands on the winning tile rather than
+      // teleporting (which made it look like "click → dialog").
+      const stoppingFast = manualStopRef.current && elapsed >= 1000;
+      const stepDelayMs = stoppingFast ? 40 : baseDelay;
 
       if (t - lastStepAtRef.current >= stepDelayMs) {
         lastStepAtRef.current = t;
@@ -251,8 +249,16 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
         const gridIndex = ORDER[orderPosRef.current];
         setActiveGridIndex(gridIndex);
 
+        // During fast-forward, halt the moment we land on the predetermined
+        // winning tile so the user sees the spinner come to rest on the
+        // winning gem rather than overshooting it.
+        if (stoppingFast && gridIndex === targetGridIndexRef.current) {
+          stopSpin(gridIndex, { wasManualStop: true });
+          return;
+        }
+
         if (stepCountRef.current >= totalStepsRef.current) {
-          stopSpin(gridIndex);
+          stopSpin(gridIndex, { wasManualStop: false });
           return;
         }
       }
