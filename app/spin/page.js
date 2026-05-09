@@ -25,6 +25,9 @@ export default function SpinPage() {
   const [activeWinningView, setActiveWinningView] = useState("record");
   const [userWinnings, setUserWinnings] = useState([]);
   const [spinItems, setSpinItems] = useState([]);
+  // Whether the result modal should show "Spin Again / Return To Website"
+  // action buttons (only true when a spin completes — not for error popups).
+  const [modalShowSpinActions, setModalShowSpinActions] = useState(false);
   const { refreshUserData } = useUser();
 
   const memberUuid = tokenStorage.getMemberUuid();
@@ -58,6 +61,7 @@ export default function SpinPage() {
       setModalTitle("❌ Spin Failed");
       setModalMessage(spinErrorRef.current);
       setModalBgColor("rgba(180, 60, 60, 1)");
+      setModalShowSpinActions(false);
       setIsModalOpen(true);
       spinErrorRef.current = null;
     } else if (spinResultsRef.current) {
@@ -81,10 +85,12 @@ export default function SpinPage() {
         setModalTitle("🎉 Congratulations!");
         setModalMessage(`You won: ${rewardsList}`);
         setModalBgColor("rgba(96, 128, 60, 1)");
+        setModalShowSpinActions(true);
       } else {
         setModalTitle("✅ Spin Complete");
         setModalMessage("Spin completed successfully!");
         setModalBgColor("rgba(96, 128, 60, 1)");
+        setModalShowSpinActions(true);
       }
       setIsModalOpen(true);
       spinResultsRef.current = null;
@@ -186,7 +192,26 @@ export default function SpinPage() {
 
   const closeModal = useCallback(() => {
     setIsModalOpen(false);
+    setModalShowSpinActions(false);
   }, []);
+
+  // "Return To Website" sends the player back to the external host saved
+  // during member auth (kinggroup44.com etc). Falls back to "/" when missing.
+  const handleReturnToWebsite = useCallback(() => {
+    const savedO = tokenStorage.getRedirectO();
+    const url = savedO ? (savedO.startsWith("http") ? savedO : `https://${savedO}`) : "/";
+    window.location.href = url;
+  }, []);
+
+  // Two action buttons attached to the win modal (slide 8). Null otherwise so
+  // error popups stay button-less.
+  const modalActions = useMemo(() => {
+    if (!modalShowSpinActions) return null;
+    return [
+      { label: "Spin Again", onClick: closeModal },
+      { label: "Return To Website", onClick: handleReturnToWebsite, variant: "secondary" },
+    ];
+  }, [modalShowSpinActions, closeModal, handleReturnToWebsite]);
 
   const spinButtons = useMemo(() => [
     { spins: "10 Spins", tokens: "100", className: "w-[140px] h-[60px]" },
@@ -277,6 +302,7 @@ export default function SpinPage() {
         onClose={closeModal}
         title={modalTitle}
         message={modalMessage}
+        actions={modalActions}
         backgroundColor={modalBgColor}
       />
     </>

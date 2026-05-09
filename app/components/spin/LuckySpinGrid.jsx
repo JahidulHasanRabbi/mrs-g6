@@ -178,10 +178,14 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
         centerRotate.set(0);
       }, 300);
 
-      // Fire onSpinComplete immediately so the result dialog opens at the
-      // exact moment the spinner stops (per client request — slide 8).
+      // Brief pause so the player sees the winning-tile highlight ring
+      // before the result dialog opens. This is especially important for
+      // manual stops (slide 8) — without it the spin appears to "teleport"
+      // straight into the dialog.
       if (onSpinComplete) {
-        onSpinComplete(finalGridIndex);
+        setTimeout(() => {
+          onSpinComplete(finalGridIndex);
+        }, 700);
       }
     },
     [centerRotate, onSpinComplete]
