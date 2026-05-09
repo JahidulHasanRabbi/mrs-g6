@@ -93,6 +93,14 @@ export function mapRedemptionItems(apiResponse) {
     // Otherwise, use the original price
     const discountPrice = promotionPrice > 0 ? promotionPrice : originalPrice;
     
+    const rawCategory = (item.category || item.tier_required || item.tier || "")
+      .toString()
+      .trim()
+      .toLowerCase();
+    const category = ["starter", "premium", "exclusive", "vip"].includes(rawCategory)
+      ? rawCategory
+      : "starter";
+
     return {
       uuid: item.uuid,
       title: item.name,
@@ -105,7 +113,8 @@ export function mapRedemptionItems(apiResponse) {
       end_date: item.end_date,
       prize_type: item.prize_type,
       credit_amount: item.credit_amount,
-      promotion: promotionPrice
+      promotion: promotionPrice,
+      category
     };
   });
 }

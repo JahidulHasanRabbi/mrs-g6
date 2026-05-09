@@ -3,9 +3,9 @@
 import { motion } from "framer-motion";
 import MartItem from "./MartItem";
 
-export default function MartGrid({ items, onRedeem }) {
+export default function MartGrid({ items, onRedeem, isLocked = false, requiredTierLabel }) {
   return (
-    <motion.div 
+    <motion.div
       className="flex flex-wrap gap-4 justify-center items-center mt-8"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -20,6 +20,8 @@ export default function MartGrid({ items, onRedeem }) {
           originalPrice={item.originalPrice}
           discountPrice={item.discountPrice}
           coins={item.coins}
+          isLocked={isLocked}
+          requiredTierLabel={requiredTierLabel}
           onRedeem={() => onRedeem(item)}
         />
       ))}

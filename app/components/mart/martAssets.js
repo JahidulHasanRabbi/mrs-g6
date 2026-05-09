@@ -7,6 +7,7 @@ export const MART_ASSETS = {
   titleBanner: "/assets/mart/mart-banner.png",
   sortButton: "/assets/mart/sort-button.png",
   itemCard: "/assets/mart/item-card.png",
+  lockIcon: "/assets/mart/lockticon.svg",
   prize1: "/assets/mart/prize-iphone.png",
   prize2: "/assets/mart/prize-sex-toy.png",
   prize3: "/assets/mart/prize-birthday.png",

@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import MartTitleBanner from "../components/mart/MartTitleBanner";
 import MartSortButton from "../components/mart/MartSortButton";
+import MartCategoryPills, { MART_CATEGORIES } from "../components/mart/MartCategoryPills";
 import MartGrid from "../components/mart/MartGrid";
 import RedeemModal from "../components/mart/RedeemModal";
 import { LoadingState } from "../components/ui/LoadingState";
@@ -12,15 +13,112 @@ import { mapRedemptionItems } from "../api/responseMappers";
 import { tokenStorage } from "../api/tokenStorage";
 import { useUser } from "../contexts/UserContext";
 
+const TIER_NAME_TO_ORDER = {
+  starter: 1,
+  bronze: 1,
+  silver: 1,
+  premium: 2,
+  gold: 2,
+  exclusive: 3,
+  platinum: 3,
+  vip: 4,
+  diamond: 4,
+};
+
+function resolveUnlockedTierOrder(currentLevel) {
+  if (!currentLevel) return 1;
+  const key = String(currentLevel).trim().toLowerCase();
+  return TIER_NAME_TO_ORDER[key] || 1;
+}
+
+// Dummy preview data — used when the API returns nothing so designers can
+// preview locked + unlocked card states across all 4 categories.
+const DUMMY_PREVIEW_ITEMS = [
+  {
+    uuid: "dummy-starter-1",
+    title: "Starter Rewards",
+    coins: 6999000,
+    originalPrice: 8999000,
+    discountPrice: 6999000,
+    image: "/assets/mart/prize-iphone.png",
+    category: "starter",
+  },
+  {
+    uuid: "dummy-starter-2",
+    title: "Starter Rewards",
+    coins: 1500000,
+    originalPrice: null,
+    discountPrice: 1500000,
+    image: "/assets/mart/prize-birthday.png",
+    category: "starter",
+  },
+  {
+    uuid: "dummy-premium-1",
+    title: "Premium Rewards",
+    coins: 1223000,
+    originalPrice: null,
+    discountPrice: 1223000,
+    image: "/assets/mart/prize-sex-toy.png",
+    category: "premium",
+  },
+  {
+    uuid: "dummy-premium-2",
+    title: "Premium Rewards",
+    coins: 2000000,
+    originalPrice: null,
+    discountPrice: 2000000,
+    image: "/assets/mart/prize-iphone.png",
+    category: "premium",
+  },
+  {
+    uuid: "dummy-exclusive-1",
+    title: "Exclusive Rewards",
+    coins: 2333000,
+    originalPrice: null,
+    discountPrice: 2333000,
+    image: "/assets/mart/prize-birthday.png",
+    category: "exclusive",
+  },
+  {
+    uuid: "dummy-exclusive-2",
+    title: "Exclusive Rewards",
+    coins: 3000000,
+    originalPrice: null,
+    discountPrice: 3000000,
+    image: "/assets/mart/prize-iphone.png",
+    category: "exclusive",
+  },
+  {
+    uuid: "dummy-vip-1",
+    title: "VIP Privileges",
+    coins: 1223000,
+    originalPrice: null,
+    discountPrice: 1223000,
+    image: "/assets/mart/prize-sex-toy.png",
+    category: "vip",
+  },
+  {
+    uuid: "dummy-vip-2",
+    title: "VIP Privileges",
+    coins: 5000000,
+    originalPrice: null,
+    discountPrice: 5000000,
+    image: "/assets/mart/prize-iphone.png",
+    category: "vip",
+  },
+];
+
 export default function MartPage() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [sortMode, setSortMode] = useState("default");
+  const [selectedCategory, setSelectedCategory] = useState("starter");
   const [martItems, setMartItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [redeemResult, setRedeemResult] = useState(null);
-  const { refreshUserData } = useUser();
+  const { refreshUserData, userData } = useUser();
+  const unlockedTierOrder = resolveUnlockedTierOrder(userData?.currentLevel);
 
   // Fetch redemption items on mount
   useEffect(() => {
@@ -34,9 +132,12 @@ export default function MartPage() {
     try {
       const response = await getAvailableRedemptionItems();
       const mappedItems = mapRedemptionItems(response);
-      setMartItems(mappedItems);
+      // Merge dummy preview items into every category so the lock/unlock
+      // design is reviewable while backend category data is still WIP.
+      setMartItems([...mappedItems, ...DUMMY_PREVIEW_ITEMS]);
     } catch (err) {
       setError(err);
+      setMartItems(DUMMY_PREVIEW_ITEMS);
     } finally {
       setIsLoading(false);
     }
@@ -48,10 +149,15 @@ export default function MartPage() {
     return Number.isFinite(n) ? n : 0;
   };
 
-  const sortedItems = useMemo(() => {
-    if (sortMode === "default") return martItems;
+  const filteredItems = useMemo(
+    () => martItems.filter((item) => (item.category || "starter") === selectedCategory),
+    [martItems, selectedCategory]
+  );
 
-    const itemsCopy = [...martItems];
+  const sortedItems = useMemo(() => {
+    if (sortMode === "default") return filteredItems;
+
+    const itemsCopy = [...filteredItems];
     itemsCopy.sort((a, b) => {
       const aPrice = parseCoins(a.discountPrice || a.coins);
       const bPrice = parseCoins(b.discountPrice || b.coins);
@@ -62,7 +168,12 @@ export default function MartPage() {
     });
 
     return itemsCopy;
-  }, [martItems, sortMode]);
+  }, [filteredItems, sortMode]);
+
+  const selectedCategoryDef = MART_CATEGORIES.find((c) => c.key === selectedCategory);
+  const selectedCategoryFullLabel = selectedCategoryDef?.fullLabel || "Rewards";
+  const isCategoryLocked = (selectedCategoryDef?.tierOrder || 1) > unlockedTierOrder;
+  const requiredTierLabel = selectedCategoryDef?.label;
 
   const sortButtonLabel =
     sortMode === "price-asc"
@@ -74,8 +185,18 @@ export default function MartPage() {
   const handleRedeem = async (item) => {
     setSelectedItem(item);
     setRedeemResult(null);
+
+    if (isCategoryLocked) {
+      setRedeemResult({
+        success: false,
+        message: `Upgrade to ${requiredTierLabel} to unlock this item.`,
+      });
+      setIsRedeeming(false);
+      return;
+    }
+
     setIsRedeeming(true);
-    
+
     try {
       const memberUuid = tokenStorage.getMemberUuid();
       
@@ -126,25 +247,36 @@ export default function MartPage() {
   return (
     <>
       <MartTitleBanner />
-        
-      <div className="flex justify-end px-8 mt-6">
+
+      <MartCategoryPills
+        selected={selectedCategory}
+        onSelect={setSelectedCategory}
+        unlockedTierOrder={unlockedTierOrder}
+      />
+
+      <div className="flex justify-end px-8 mt-4">
         <MartSortButton onSort={handleSort} label={sortButtonLabel} />
       </div>
 
       <LoadingState isLoading={isLoading}>
-        {error || sortedItems.length === 0 ? (
+        {sortedItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-8 mt-12 mb-12">
             <div className="text-center">
               <p className="text-[#60803C] text-[20px] font-bold font-['Times_New_Roman'] mb-2">
-                No Items Available
+                No {selectedCategoryFullLabel} Available
               </p>
               <p className="text-[#60803C] text-[16px] font-['Times_New_Roman'] opacity-70">
-                There are currently no items in the mart.
+                There are currently no items in this category.
               </p>
             </div>
           </div>
         ) : (
-          <MartGrid items={sortedItems} onRedeem={handleRedeem} />
+          <MartGrid
+            items={sortedItems}
+            onRedeem={handleRedeem}
+            isLocked={isCategoryLocked}
+            requiredTierLabel={requiredTierLabel}
+          />
         )}
       </LoadingState>
       
