@@ -1,0 +1,342 @@
+/* Animation styles ported from the design's "Animated Frames.html".
+   The component layers these effects on top of each tier's PNG frame:
+   - aura: pulsing radial glow behind the medallion
+   - ring: rotating conic-gradient highlight on the inner ring
+   - sparkle: twinkling pinpoint stars (positioned per-tier)
+   - per-tier extras: orbit-comet / embers / nebula-swirl / spiral /
+     planet orbits / supernova rays / gold dust / crown rays. */
+
+.stage {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  isolation: isolate;
+}
+
+/* Frame artwork sits in the middle of the z-stack so the user's photo
+   can layer on top of its dark inner circle. */
+.frameArt {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 0 18px var(--glow, rgba(120, 160, 255, 0.45)));
+  animation: breathe 4.4s ease-in-out infinite;
+  will-change: transform, filter;
+}
+
+@keyframes breathe {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    filter: drop-shadow(0 0 14px var(--glow)) brightness(1);
+  }
+  50% {
+    transform: translateY(-3%) scale(1.012);
+    filter: drop-shadow(0 0 26px var(--glow-strong, var(--glow))) brightness(1.08);
+  }
+}
+
+/* Photo slot sits above the frame, covering its dark inner circle. */
+.photoSlot {
+  position: absolute;
+  z-index: 4;
+  border-radius: 50%;
+  overflow: hidden;
+}
+.photoSlot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ── aura ─────────────────────────────────────────── */
+.aura {
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%,
+              var(--glow-soft, rgba(100, 140, 240, 0.45)) 0%,
+              transparent 65%);
+  filter: blur(18px);
+  z-index: 1;
+  animation: auraPulse 5s ease-in-out infinite;
+}
+@keyframes auraPulse {
+  0%, 100% { opacity: 0.55; transform: scale(0.92); }
+  50%      { opacity: 1.00; transform: scale(1.10); }
+}
+
+/* ── inner-ring conic sweep ──────────────────────── */
+.ring {
+  
+}
+@keyframes spin  { to { transform: rotate(360deg); } }
+@keyframes spinR { to { transform: rotate(-360deg); } }
+
+/* ── twinkling sparkle ──────────────────────────── */
+.sparkle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--spark, #fff) 0%, transparent 70%);
+  box-shadow: 0 0 8px var(--spark, #fff);
+  z-index: 6;
+  animation: twinkle 2.8s ease-in-out infinite;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0;  transform: translate(-50%, -50%) scale(0.4); }
+  50%      { opacity: 1;  transform: translate(-50%, -50%) scale(1.2); }
+}
+
+/* ── tier 2 — Comet ─────────────────────────────── */
+.orbitComet {
+  position: absolute;
+  inset: 6%;
+  z-index: 6;
+  pointer-events: none;
+  animation: spin 6.5s linear infinite;
+}
+.orbitComet::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -2%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, #6ee9ff 40%, transparent 70%);
+  box-shadow:
+    0 0 18px 4px #6ee9ff,
+    -28px 0 30px -2px rgba(110, 233, 255, 0.7),
+    -54px 0 40px -8px rgba(110, 233, 255, 0.45);
+  transform: translateY(-50%);
+}
+
+/* ── tier 3 — Meteor embers / tier 7 red embers ─ */
+.embers,
+.embersRed {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  overflow: hidden;
+}
+.ember {
+  position: absolute;
+  bottom: 18%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffd28a 0%, #ff7a1f 50%, transparent 75%);
+  box-shadow: 0 0 10px #ff7a1f;
+  opacity: 0;
+  animation: emberRise 3.4s linear infinite;
+}
+.embersRed .ember {
+  background: radial-gradient(circle, #ffe2e8 0%, #ff2d6f 50%, transparent 75%);
+  box-shadow: 0 0 10px #ff2d6f;
+}
+@keyframes emberRise {
+  0%   { transform: translate(0, 0)            scale(0.6); opacity: 0; }
+  15%  {                                                     opacity: 1; }
+  100% { transform: translate(var(--ex, 8px), -160%) scale(0.2); opacity: 0; }
+}
+
+/* ── tier 4 — Nebula swirl ──────────────────────── */
+.nebulaSwirl {
+  position: absolute;
+  inset: 6%;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg,
+    rgba(168, 85, 247, 0.0)  0%,
+    rgba(168, 85, 247, 0.35) 20%,
+    rgba(236, 72, 153, 0.30) 45%,
+    rgba(99, 102, 241, 0.30) 70%,
+    rgba(168, 85, 247, 0.0)  100%);
+  filter: blur(14px);
+  -webkit-mask: radial-gradient(circle, transparent 38%, #000 50%, transparent 75%);
+          mask: radial-gradient(circle, transparent 38%, #000 50%, transparent 75%);
+  z-index: 2;
+  mix-blend-mode: screen;
+  animation: spin 18s linear infinite;
+}
+
+/* ── tier 5 — Galaxy spiral arms ────────────────── */
+.spiral {
+  position: absolute;
+  inset: 9%;
+  border-radius: 50%;
+  z-index: 2;
+  background: conic-gradient(from 0deg,
+    transparent 0%,
+    rgba(251, 191, 36, 0.55) 12%,
+    transparent 28%,
+    transparent 50%,
+    rgba(251, 191, 36, 0.55) 62%,
+    transparent 78%);
+  -webkit-mask: radial-gradient(circle, transparent 42%, #000 52%, #000 56%, transparent 64%);
+          mask: radial-gradient(circle, transparent 42%, #000 52%, #000 56%, transparent 64%);
+  mix-blend-mode: screen;
+  animation: spinR 9s linear infinite;
+}
+
+/* ── tier 6 — Universe planet orbits ────────────── */
+.orbit {
+  position: absolute;
+  inset: 4%;
+  z-index: 6;
+  pointer-events: none;
+  animation: spin 11s linear infinite;
+}
+.orbit2 { inset: 10%; animation: spinR 14s linear infinite; }
+.orbit3 { inset: 14%; animation: spin 8s linear infinite; }
+.planet {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.planetP1 {
+  left: -4px;
+  background: radial-gradient(circle at 35% 35%, #c8e0ff, #2563eb 60%, #0a1430);
+  box-shadow: 0 0 10px rgba(96, 165, 250, 0.6);
+}
+.planetP2 {
+  right: -4px;
+  width: 8px; height: 8px;
+  background: radial-gradient(circle at 35% 35%, #ffd6f0, #a855f7 60%, #1a0a2e);
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.6);
+}
+.planetP3 {
+  left: -4px;
+  width: 7px; height: 7px;
+  background: radial-gradient(circle at 35% 35%, #fff0c8, #fbbf24 60%, #2a1a05);
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
+}
+
+/* ── tier 7 — Supernova rays ────────────────────── */
+.rays {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: conic-gradient(from 0deg,
+    transparent 0deg,    rgba(255, 45, 111, 0.45) 6deg,    transparent 12deg,
+    transparent 30deg,   rgba(255, 45, 111, 0.45) 36deg,   transparent 42deg,
+    transparent 60deg,   rgba(255, 122, 138, 0.40) 66deg,  transparent 72deg,
+    transparent 90deg,   rgba(255, 45, 111, 0.45) 96deg,   transparent 102deg,
+    transparent 120deg,  rgba(255, 45, 111, 0.45) 126deg,  transparent 132deg,
+    transparent 150deg,  rgba(255, 122, 138, 0.40) 156deg, transparent 162deg,
+    transparent 180deg,  rgba(255, 45, 111, 0.45) 186deg,  transparent 192deg,
+    transparent 210deg,  rgba(255, 45, 111, 0.45) 216deg,  transparent 222deg,
+    transparent 240deg,  rgba(255, 122, 138, 0.40) 246deg, transparent 252deg,
+    transparent 270deg,  rgba(255, 45, 111, 0.45) 276deg,  transparent 282deg,
+    transparent 300deg,  rgba(255, 45, 111, 0.45) 306deg,  transparent 312deg,
+    transparent 330deg,  rgba(255, 122, 138, 0.40) 336deg, transparent 342deg,
+    transparent 360deg);
+  -webkit-mask: radial-gradient(circle, transparent 30%, #000 32%, #000 64%, transparent 78%);
+          mask: radial-gradient(circle, transparent 30%, #000 32%, #000 64%, transparent 78%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  animation: rayBurst 4.4s ease-in-out infinite;
+}
+@keyframes rayBurst {
+  0%, 70% { opacity: 0;   transform: scale(0.85) rotate(0deg); }
+  80%     { opacity: 0.9; transform: scale(1.08) rotate(8deg); }
+  95%     { opacity: 0;   transform: scale(1.18) rotate(14deg); }
+  100%    { opacity: 0;   transform: scale(0.85) rotate(0deg); }
+}
+
+/* ── tier 8 / 9 — drifting gold dust ────────────── */
+.goldDust {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 6;
+}
+.dust {
+  position: absolute;
+  top: -10%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff8d8, #f5c44a 60%, transparent 75%);
+  box-shadow: 0 0 8px #f5c44a;
+  opacity: 0;
+  animation: dustFall 6s linear infinite;
+}
+@keyframes dustFall {
+  0%   { transform: translateY(0)    rotate(0);    opacity: 0; }
+  10%  { opacity: 0.9; }
+  100% { transform: translateY(110%) rotate(120deg); opacity: 0; }
+}
+
+/* ── tier 9 — Crown rays sweep ──────────────────── */
+.crownRays {
+  position: absolute;
+  inset: 5%;
+  z-index: 2;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg,
+    transparent 0deg,
+    rgba(251, 191, 36, 0.0)  0deg,
+    rgba(251, 191, 36, 0.45) 8deg,
+    rgba(251, 191, 36, 0.0)  16deg,
+    transparent 22deg,
+    transparent 360deg);
+  -webkit-mask: radial-gradient(circle, transparent 35%, #000 38%, #000 65%, transparent 80%);
+          mask: radial-gradient(circle, transparent 35%, #000 38%, #000 65%, transparent 80%);
+  mix-blend-mode: screen;
+  animation: spin 8s linear infinite;
+}
+
+/* ── per-tier theme tokens (CSS vars cascade to children) ── */
+.t1 { --glow: rgba(155, 184, 255, 0.55); --glow-strong: rgba(203, 217, 255, 0.85); --glow-soft: rgba(110, 150, 240, 0.45); --ring-1: #9bb8ff; --ring-2: #ffffff; --spark: #cbd9ff; }
+.t2 { --glow: rgba(110, 233, 255, 0.55); --glow-strong: rgba(160, 245, 255, 0.90); --glow-soft: rgba( 34, 211, 238, 0.45); --ring-1: #6ee9ff; --ring-2: #93c5fd; --spark: #aef0ff; }
+.t3 { --glow: rgba(255, 122,  31, 0.60); --glow-strong: rgba(255, 200, 120, 0.90); --glow-soft: rgba(255, 122,  31, 0.50); --ring-1: #ff7a1f; --ring-2: #ffb547; --spark: #ffd28a; }
+.t4 { --glow: rgba(168,  85, 247, 0.55); --glow-strong: rgba(220, 140, 255, 0.90); --glow-soft: rgba(168,  85, 247, 0.50); --ring-1: #c084fc; --ring-2: #ec4899; --spark: #e9c5ff; }
+.t5 { --glow: rgba(168,  85, 247, 0.55); --glow-strong: rgba(251, 191,  36, 0.85); --glow-soft: rgba(139,  92, 246, 0.45); --ring-1: #fbbf24; --ring-2: #a855f7; --spark: #fde2a8; }
+.t6 { --glow: rgba( 34, 211, 238, 0.55); --glow-strong: rgba(160, 245, 255, 0.90); --glow-soft: rgba( 34, 211, 238, 0.50); --ring-1: #22d3ee; --ring-2: #93c5fd; --spark: #aef0ff; }
+.t7 { --glow: rgba(255,  45, 111, 0.55); --glow-strong: rgba(255, 140, 170, 0.90); --glow-soft: rgba(255,  45, 111, 0.50); --ring-1: #ff2d6f; --ring-2: #ff7a8a; --spark: #ffd0dc; }
+.t8 { --glow: rgba(168,  85, 247, 0.55); --glow-strong: rgba(251, 191,  36, 0.90); --glow-soft: rgba(168,  85, 247, 0.50); --ring-1: #fbbf24; --ring-2: #c084fc; --spark: #f7e6a8; }
+.t9 { --glow: rgba(251, 191,  36, 0.60); --glow-strong: rgba(255, 225, 140, 0.95); --glow-soft: rgba(251, 191,  36, 0.50); --ring-1: #fde047; --ring-2: #f59e0b; --spark: #ffeaa3; }
+
+/* Static (non-animated) variant — used in the picker grid for unselected tiles */
+.static .frameArt,
+.static .aura,
+.static .ring,
+.static .sparkle,
+.static .orbitComet,
+.static .ember,
+.static .nebulaSwirl,
+.static .spiral,
+.static .orbit,
+.static .rays,
+.static .dust,
+.static .crownRays {
+  animation: none !important;
+  opacity: var(--static-opacity, 1);
+}
+.static .sparkle,
+.static .ember,
+.static .dust { opacity: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .frameArt, .aura, .ring, .sparkle,
+  .orbitComet, .ember, .nebulaSwirl, .spiral,
+  .orbit, .orbit2, .orbit3, .rays, .dust, .crownRays {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
