@@ -61,6 +61,49 @@ const DATE_OPTIONS = [
   { value: "this-year", label: "This Year" },
 ];
 
+const QUICK_FILTERS = [
+  { value: "daily", label: "Daily" },
+  { value: "this-month", label: "Monthly" },
+  { value: "this-year", label: "Yearly" },
+];
+
+function CalendarIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  );
+}
+
+function QuickFilterButtons({ value, onChange }) {
+  return (
+    <div className="flex items-center gap-3">
+      {QUICK_FILTERS.map((filter) => {
+        const active = value === filter.value;
+
+        return (
+          <button
+            key={filter.value}
+            type="button"
+            onClick={() => onChange(filter.value)}
+            className={`flex h-10 items-center gap-2 rounded-[6px] border px-4 font-['Times_New_Roman'] text-[15px] font-bold text-black transition ${
+              active
+                ? "border-[#8a5a14] bg-[linear-gradient(180deg,#f6c65c_0%,#c98018_100%)] shadow-[0_2px_0_rgba(0,0,0,0.35),inset_0_-2px_0_rgba(0,0,0,0.18)]"
+                : "border-[#a36e1c] bg-[linear-gradient(180deg,#f6c65c_0%,#dd9526_100%)] shadow-[0_2px_0_rgba(0,0,0,0.35),inset_0_-2px_0_rgba(0,0,0,0.12)] hover:brightness-105"
+            }`}
+          >
+            <CalendarIcon />
+            <span>{filter.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function SortIcon({ active, direction }) {
   const stroke = active ? "#ffffff" : "rgba(255,255,255,0.55)";
 
@@ -203,6 +246,14 @@ function MemberReportContent() {
         return rowDate >= sevenDaysAgo;
       }
 
+      if (dateFilter === "daily") {
+        return (
+          rowDate.getDate() === latestDate.getDate() &&
+          rowDate.getMonth() === latestDate.getMonth() &&
+          rowDate.getFullYear() === latestDate.getFullYear()
+        );
+      }
+
       if (dateFilter === "this-month") {
         return rowDate.getMonth() === latestDate.getMonth() && rowDate.getFullYear() === latestDate.getFullYear();
       }
@@ -254,11 +305,31 @@ function MemberReportContent() {
 
   return (
     <main className="min-h-screen pl-[388px] pr-10 pt-8 pb-10">
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <h1 className="font-['Times_New_Roman'] text-[34px] font-bold leading-none text-[#f4efe0]">
+            Member Report
+          </h1>
+
+          <button
+            type="button"
+            aria-label="Settings"
+            className="flex h-9 w-9 items-center justify-center text-[#f4efe0] transition hover:text-white"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19.14 12.94c.04-.31.06-.62.06-.94 0-.32-.02-.63-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.61l-1.92-3.32a.5.5 0 0 0-.59-.22l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54A.49.49 0 0 0 13.91 2h-3.84a.49.49 0 0 0-.49.42l-.36 2.54c-.59.24-1.13.55-1.62.94l-2.39-.96a.5.5 0 0 0-.59.22L2.7 8.48a.5.5 0 0 0 .12.61l2.03 1.58c-.04.31-.06.62-.06.94 0 .32.02.63.06.94L2.82 14.13a.5.5 0 0 0-.12.61l1.92 3.32c.14.24.43.34.69.22l2.39-.96c.49.39 1.03.7 1.62.94l.36 2.54c.05.24.26.42.49.42h3.84c.24 0 .44-.18.49-.42l.36-2.54c.59-.24 1.13-.55 1.62-.94l2.39.96c.27.1.56 0 .69-.22l1.92-3.32a.5.5 0 0 0-.12-.61l-2.02-1.58zM12 15.6A3.6 3.6 0 0 1 8.4 12c0-1.99 1.61-3.6 3.6-3.6s3.6 1.61 3.6 3.6-1.61 3.6-3.6 3.6z" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="mb-4 flex justify-end">
+          <QuickFilterButtons value={dateFilter} onChange={setDateFilter} />
+        </div>
+
         <section className="overflow-hidden rounded-[12px] border border-[rgba(255,255,132,0.18)] bg-[linear-gradient(180deg,rgba(28,48,31,0.98)_0%,rgba(24,44,28,0.98)_100%)] shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
           <div className="flex items-center justify-between gap-4 px-4 pb-4 pt-4">
-            <h1 className="font-['Times_New_Roman'] text-[30px] font-bold leading-none text-[#f4efe0]">
+            <h2 className="font-['Times_New_Roman'] text-[22px] font-bold leading-none text-[#f4efe0]">
               Member Report
-            </h1>
+            </h2>
 
             <div className="flex items-center gap-3">
               <span className="whitespace-nowrap font-['Times_New_Roman'] text-[13px] text-[#d6d6d6]">
