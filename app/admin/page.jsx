@@ -2,9 +2,6 @@
 
 import { useState, useEffect, useMemo } from "react";
 import BarChart from "../components/admin/charts/BarChart";
-import LineChart from "../components/admin/charts/LineChart";
-import StatDonut from "../components/admin/charts/StatDonut";
-import MemberTable from "../components/admin/table/MemberTable";
 import { AdminRouteGuard } from "../components/guards/AdminRouteGuard";
 import LoadingState from "../components/ui/LoadingState";
 import ErrorDisplay from "../components/ui/ErrorDisplay";
@@ -47,10 +44,9 @@ function AdminDashboardContent() {
       return {
         totalMembers: 0,
         activeToday: 0,
-        weeklyActive: [0, 0, 0, 0, 0, 0, 0],
+        newMembers: 0,
         checkins: [0, 0, 0, 0, 0, 0, 0],
         totalCheckins: 0,
-        activeUsers7Days: 0
       };
     }
 
@@ -76,76 +72,39 @@ function AdminDashboardContent() {
       return false;
     }).length;
 
-    // Calculate weekly activity (last 7 days)
-    const weeklyActive = [];
     const checkins = [];
-    
+
     for (let i = 6; i >= 0; i--) {
       const targetDate = new Date(today);
       targetDate.setDate(targetDate.getDate() - i);
-      
-      // Count unique users active on this day (login OR check-in)
-      const activeThisDay = members.filter(member => {
-        // Check login
-        if (member.last_login_datetime) {
-          const loginDate = new Date(member.last_login_datetime);
-          const loginDay = new Date(loginDate.getFullYear(), loginDate.getMonth(), loginDate.getDate());
-          if (loginDay.getTime() === targetDate.getTime()) return true;
-        }
-        
-        // Check check-in
-        if (member.last_check_in_date) {
-          const checkinDate = new Date(member.last_check_in_date);
-          const checkinDay = new Date(checkinDate.getFullYear(), checkinDate.getMonth(), checkinDate.getDate());
-          if (checkinDay.getTime() === targetDate.getTime()) return true;
-        }
-        
-        return false;
-      }).length;
-      
-      // Count check-ins for this day
+
       const checkinsThisDay = members.filter(member => {
         if (!member.last_check_in_date) return false;
         const checkinDate = new Date(member.last_check_in_date);
         const checkinDay = new Date(checkinDate.getFullYear(), checkinDate.getMonth(), checkinDate.getDate());
         return checkinDay.getTime() === targetDate.getTime();
       }).length;
-      
-      weeklyActive.push(activeThisDay);
+
       checkins.push(checkinsThisDay);
     }
 
-    // Count unique users active in last 7 days (login OR check-in)
-    const sevenDaysAgo = new Date(today);
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6); // Last 7 days including today
-    
-    const activeUsers7Days = members.filter(member => {
-      // Check login in last 7 days
-      if (member.last_login_datetime) {
-        const loginDate = new Date(member.last_login_datetime);
-        const loginDay = new Date(loginDate.getFullYear(), loginDate.getMonth(), loginDate.getDate());
-        if (loginDay >= sevenDaysAgo && loginDay <= today) return true;
-      }
-      
-      // Check check-in in last 7 days
-      if (member.last_check_in_date) {
-        const checkinDate = new Date(member.last_check_in_date);
-        const checkinDay = new Date(checkinDate.getFullYear(), checkinDate.getMonth(), checkinDate.getDate());
-        if (checkinDay >= sevenDaysAgo && checkinDay <= today) return true;
-      }
-      
-      return false;
-    }).length;
-
     const totalCheckins = checkins.reduce((a, b) => a + b, 0);
+
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 6);
+    const newMembers = members.filter((member) => {
+      if (!member.registered_date) return false;
+      const registered = new Date(member.registered_date);
+      const registeredDay = new Date(registered.getFullYear(), registered.getMonth(), registered.getDate());
+      return registeredDay >= sevenDaysAgo && registeredDay <= today;
+    }).length;
 
     return {
       totalMembers: members.length,
       activeToday,
-      weeklyActive,
+      newMembers,
       checkins,
       totalCheckins,
-      activeUsers7Days
     };
   }, [members]);
 
@@ -210,12 +169,12 @@ function AdminDashboardContent() {
         )}
 
         {/* Stats Grid */}
-        <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_1fr_0.5fr]">
-          {/* Member Activity Overview */}
+        <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr_1fr]">
+          {/* Daily Check-In */}
           <div className="rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-[20px] font-bold text-white font-['Times_New_Roman'] capitalize leading-[1.2]">
-                  Member activity overview
+                  Daily Check-In
                 </h2>
                 <div className="rounded-[4px] px-[15px] py-[9px]" style={{ backgroundImage: "linear-gradient(1.0746108354373831deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)" }}>
                   <span className="text-[16px] font-bold text-black font-['Times_New_Roman'] leading-none">
@@ -224,96 +183,92 @@ function AdminDashboardContent() {
                 </div>
               </div>
               <p className="mb-4 text-[16px] text-[#5c5c5c] font-['Times_New_Roman'] capitalize leading-[1.2]">
-                active Users : {stats.activeUsers7Days}
+                Active Counts : {stats.totalCheckins}
               </p>
               <BarChart
                 labels={dayLabels}
-                values={stats.weeklyActive}
+                values={stats.checkins}
                 positiveColor="#f6c75c"
                 baseColor="rgba(255,255,255,0.15)"
               />
           </div>
 
-          {/* Daily Check-In Summary */}
-          <div className="rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-[20px] font-bold text-white font-['Times_New_Roman'] capitalize leading-[1.2]">
-                  Daily Check-In Summary
-                </h2>
-                <div className="rounded-[4px] px-[15px] py-[9px]" style={{ backgroundImage: "linear-gradient(1.0746108354373831deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)" }}>
-                  <span className="text-[16px] font-bold text-black font-['Times_New_Roman'] leading-none">
-                    last 7 days
-                  </span>
-                </div>
-              </div>
-              <p className="mb-4 text-sm">
-                <span className="ml-2 text-gray-400">
-                  Total: {stats.totalCheckins} check-ins
-                </span>
-              </p>
-              <LineChart
-                labels={dayLabels}
-                values={stats.checkins}
-                stroke="#f6c75c"
-              />
-          </div>
+          {/* Total Active Users */}
+          <TotalActiveUsersCard activeToday={stats.activeToday} totalMembers={stats.totalMembers} />
 
-          {/* Active Users Today */}
-          <div className="flex h-full flex-col items-center justify-center rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
-              <h2 className="mb-2 text-center text-xl font-bold text-white font-['Times_New_Roman']">
-                Active Users Today
-              </h2>
-              <div className="my-2">
-                <StatDonut value={stats.activeToday} total={stats.totalMembers} size={217} stroke={20} />
-              </div>
-              <div className="w-full space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-400">Total</span>
-                  <span className="font-semibold text-white">{stats.totalMembers.toLocaleString()}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-400">Active</span>
-                  <span className="font-semibold text-emerald-400">{stats.activeToday.toLocaleString()}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-400">Rate</span>
-                  <span className="font-semibold text-white">
-                    {stats.totalMembers > 0 ? ((stats.activeToday / stats.totalMembers) * 100).toFixed(1) : '0.0'}%
-                  </span>
-                </div>
-              </div>
-          </div>
-        </div>
-
-        {/* Member Activity Table */}
-        <div className="rounded-xl border border-white/10 bg-white/[0.03] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
-          <div className="flex items-center justify-between border-b border-white/10 px-5 py-3">
-            <h2 className="text-sm font-medium text-gray-400">
-              Member Activity Overview Table
-            </h2>
-            <div className="relative">
-              <input
-                placeholder="Search..."
-                className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400/30"
-              />
-              <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
-                ⌘K
-              </div>
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <MemberTable members={members} />
-          </div>
-          <div className="flex items-center justify-end gap-3 border-t border-white/10 px-5 py-3">
-            <div className="text-xs text-gray-400">1–{Math.min(10, members.length)} of {members.length}</div>
-            <button className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-sm hover:bg-white/10">
-              ‹
-            </button>
-            <button className="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-sm hover:bg-white/10">
-              ›
-            </button>
+          {/* Members Snapshot */}
+          <div className="flex flex-col justify-around gap-4 rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] px-8 py-8 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
+            <SnapshotStat label="Total Users" value={stats.totalMembers} />
+            <SnapshotStat label="New Members" value={stats.newMembers} />
+            <SnapshotStat label="Active Members" value={stats.activeToday} />
           </div>
         </div>
     </main>
+  );
+}
+
+function SnapshotStat({ label, value }) {
+  return (
+    <div className="flex flex-col items-center gap-3 text-center">
+      <span className="font-['Times_New_Roman'] text-[18px] font-bold leading-none text-[#f4bf55]">
+        {label}
+      </span>
+      <span className="font-['Times_New_Roman'] text-[44px] font-bold leading-none text-white">
+        {value.toLocaleString()}
+      </span>
+    </div>
+  );
+}
+
+function TotalActiveUsersCard({ activeToday, totalMembers }) {
+  const size = 200;
+  const stroke = 22;
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const pct = totalMembers > 0 ? Math.max(0, Math.min(1, activeToday / totalMembers)) : 0;
+  const dash = circumference * pct;
+
+  return (
+    <div className="flex h-full flex-col items-center justify-between rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
+      <h2 className="mb-2 text-center font-['Times_New_Roman'] text-[20px] font-bold leading-[1.2] text-white capitalize">
+        Total Active Users
+      </h2>
+
+      <div className="relative" style={{ width: size, height: size }}>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+          <defs>
+            <linearGradient id="total-active-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#FFFF84" />
+              <stop offset="100%" stopColor="#DD8F1F" />
+            </linearGradient>
+          </defs>
+          <circle cx={size / 2} cy={size / 2} r={radius} stroke="#ffffff" strokeWidth={stroke} fill="none" />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke="url(#total-active-grad)"
+            strokeWidth={stroke}
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={`${dash} ${circumference - dash}`}
+            transform={`rotate(-90 ${size / 2} ${size / 2})`}
+            className="drop-shadow-[0_0_20px_rgba(246,199,92,0.25)]"
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+          <span className="font-['Times_New_Roman'] text-[14px] font-bold leading-tight text-[#06b800]">
+            Active Users Today
+          </span>
+          <span className="font-['Times_New_Roman'] text-[30px] font-bold leading-none text-white">
+            {activeToday.toLocaleString()}
+          </span>
+        </div>
+      </div>
+
+      <p className="mt-2 text-center font-['Times_New_Roman'] text-[14px] text-[#9f9f9f]">
+        Setup Active Users
+      </p>
+    </div>
   );
 }
