@@ -209,9 +209,15 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
       targetGridIndex = Math.floor(Math.random() * 8);
     }
 
-    // Find the position in ORDER array that corresponds to this grid index
+    // Find the position in ORDER array that corresponds to this grid index.
+    // Fixed at 3 rounds (24 steps + 0..7 target offset = 24-31 total steps)
+    // — variance was previously 4-6 rounds, which pushed natural spins to
+    // 5.5-8s. With the tightened delay curve below this lands at ~3.5s of
+    // cell-cycling + the 700ms post-stop highlight pause = ~4s total wall
+    // time, matching the slide 8 "Speed up spin animation to 4 seconds"
+    // brief without losing the deceleration feel.
     const targetOrderPos = ORDER.indexOf(targetGridIndex);
-    const rounds = 4 + Math.floor(Math.random() * 3);
+    const rounds = 3;
     totalStepsRef.current = rounds * ORDER.length + targetOrderPos;
 
     stepCountRef.current = 0;
@@ -226,11 +232,14 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
 
     const tick = (t) => {
       const elapsed = t - startRef.current;
-      // 4 seconds total spin time per slide 8 ("Speed up spin animation
-      // to 4 seconds"). Step easing still scales by device tier.
-      const progress = Math.min(1, elapsed / 4000);
+      // Easing reference is 3000ms — that's the window over which the step
+      // delay ramps from min to max. With ~27 steps the avg per-step delay
+      // under ease-out lands at ~125-130ms, so cell-cycling completes in
+      // ~3.3s, then stopSpin's 700ms pre-modal pause brings the player to
+      // ~4s total before the result dialog opens.
+      const progress = Math.min(1, elapsed / 3000);
       const eased = easeOutCubic(progress);
-      const baseDelay = (isLowEnd ? 80 : isMidEnd ? 70 : 60) + eased * (isLowEnd ? 120 : isMidEnd ? 150 : 180);
+      const baseDelay = (isLowEnd ? 60 : isMidEnd ? 50 : 40) + eased * (isLowEnd ? 130 : isMidEnd ? 115 : 100);
 
       // Manual stop = visible fast-forward to the target tile. After the
       // 1-second anti-spam guard, drop step delay to ~40 ms so the spinner

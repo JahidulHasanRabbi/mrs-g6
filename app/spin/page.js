@@ -186,14 +186,14 @@ export default function SpinPage() {
   }, [handleSpinAction]);
 
   const handleButtonClick = useCallback(async (buttonData) => {
-    if (buttonData.spins === "10 Spins") {
+    if (buttonData.spins === "SPIN X10") {
       const trigger = gridSpinTriggerRef.current;
       const shouldSpin = await handleSpinAction(tenSpin, "ten spins");
       // Trigger the grid animation if API succeeds with first result's UUID
       if (shouldSpin && trigger && spinResultsRef.current && spinResultsRef.current.length > 0) {
         trigger(spinResultsRef.current[0].uuid);
       }
-    } else if (buttonData.spins === "50 Spins") {
+    } else if (buttonData.spins === "SPIN X50") {
       const trigger = gridSpinTriggerRef.current;
       const shouldSpin = await handleSpinAction(fiftySpin, "fifty spins");
       // Trigger the grid animation if API succeeds with first result's UUID
@@ -231,8 +231,8 @@ export default function SpinPage() {
   }, [modalShowSpinActions, closeModal, handleReturnToWebsite]);
 
   const spinButtons = useMemo(() => [
-    { spins: "10 Spins", tokens: "100", className: "w-[140px] h-[60px]" },
-    { spins: "50 Spins", tokens: "500", className: "w-[140px] h-[60px]" },
+    { spins: "SPIN X10", tokens: "100", className: "w-[140px] h-[60px]" },
+    { spins: "SPIN X50", tokens: "500", className: "w-[140px] h-[60px]" },
   ], []);
 
   const winningButtons = useMemo(() => [
