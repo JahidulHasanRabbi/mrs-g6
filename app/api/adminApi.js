@@ -281,3 +281,12 @@ export async function getMemberRewardHistory(memberUuid, params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.MEMBER.MEMBER_REWARDS(memberUuid)}${qs}`, { method: 'GET' }, true, 'admin');
 }
+
+// GET /member/member-report/(daily|monthly|yearly)/
+export async function getMemberReport(type, params = {}) {
+  const qs = buildQueryParams(params);
+  let endpoint = ENDPOINTS.ADMIN.MEMBER_REPORT_DAILY;
+  if (type === 'monthly') endpoint = ENDPOINTS.ADMIN.MEMBER_REPORT_MONTHLY;
+  if (type === 'yearly') endpoint = ENDPOINTS.ADMIN.MEMBER_REPORT_YEARLY;
+  return await apiRequest(`${endpoint}${qs}`, { method: 'GET' }, true, 'admin');
+}

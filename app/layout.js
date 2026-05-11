@@ -1,5 +1,21 @@
 import { Inter, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+
+/**
+ * ---------------------------------------------------------------------------
+ * IMPORTANT NOTICE TO ALL DEVELOPERS: DATE FORMAT CONVENTION
+ * ---------------------------------------------------------------------------
+ * Across this entire application, you MUST follow this format for date and time:
+ *   dd/mm/yyyy HH:MM AM|PM
+ * 
+ * If displaying only the month and year, use:
+ *   mm/yyyy
+ * 
+ * If displaying only the year, use:
+ *   yyyy
+ * ---------------------------------------------------------------------------
+ */
+
 import { UserProvider } from "./contexts/UserContext";
 import LayoutShell from "./LayoutShell";
 

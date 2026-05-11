@@ -134,6 +134,11 @@ export function DateFilter({ label, fromDate, toDate, onFromChange, onToChange, 
           <input
             type="date"
             value={fromDate}
+            onClick={(e) => {
+              try {
+                e.target.showPicker();
+              } catch (err) {}
+            }}
             onChange={(e) => onFromChange(e.target.value)}
             className="w-full h-9 rounded px-2.5 bg-white/10 border border-white/10 font-['Times_New_Roman'] text-[13px] text-white outline-none focus:border-[#e9af41]/50 [color-scheme:dark]"
           />
@@ -141,6 +146,11 @@ export function DateFilter({ label, fromDate, toDate, onFromChange, onToChange, 
           <input
             type="date"
             value={toDate}
+            onClick={(e) => {
+              try {
+                e.target.showPicker();
+              } catch (err) {}
+            }}
             onChange={(e) => onToChange(e.target.value)}
             className="w-full h-9 rounded px-2.5 bg-white/10 border border-white/10 font-['Times_New_Roman'] text-[13px] text-white outline-none focus:border-[#e9af41]/50 [color-scheme:dark]"
           />

@@ -34,7 +34,7 @@ function formatDateTime(isoStr) {
     const minutes = String(d.getMinutes()).padStart(2, "0");
     const ampm = hours >= 12 ? "PM" : "AM";
     const h12 = hours % 12 || 12;
-    return `${dd}.${mm}.${yyyy} ${h12}:${minutes} ${ampm}`;
+    return `${dd}/${mm}/${yyyy} ${h12}:${minutes} ${ampm}`;
   } catch {
     return isoStr;
   }

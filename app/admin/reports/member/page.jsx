@@ -1,58 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { AdminRouteGuard } from "../../../components/guards/AdminRouteGuard";
+import { getMemberReport } from "../../../api/adminApi";
 
 const PAGE_SIZE = 9;
-
-function buildRow(no, dateTime, timestamp, newMembers, totalMembers, activeMembers, tokenIssued) {
-  return {
-    no,
-    dateTime,
-    timestamp,
-    newMembers,
-    totalMembers,
-    activeMembers,
-    tokenIssued,
-  };
-}
-
-// TODO (Backend): replace with real daily/monthly/yearly member report APIs.
-// Source confirmed from PDFs + Figma: date/time, new member, total member,
-// active members, token issued.
-const MOCK_MEMBER_REPORT = [
-  buildRow(1, "30.04.2026 8:00 PM", "2026-04-30T20:00:00", 300, 5000, 12000, 45646),
-  buildRow(2, "01.05.2026 9:00 AM", "2026-05-01T09:00:00", 250, 6000, 15000, 45646),
-  buildRow(3, "02.05.2026 10:30 AM", "2026-05-02T10:30:00", 400, 7000, 18000, 45646),
-  buildRow(4, "03.05.2026 11:00 AM", "2026-05-03T11:00:00", 350, 8000, 14000, 45646),
-  buildRow(5, "04.05.2026 3:00 PM", "2026-05-04T15:00:00", 500, 9000, 16000, 45646),
-  buildRow(6, "05.05.2026 4:30 PM", "2026-05-05T16:30:00", 450, 4000, 17000, 45646),
-  buildRow(7, "06.05.2026 5:45 PM", "2026-05-06T17:45:00", 600, 10000, 19000, 45646),
-  buildRow(8, "07.05.2026 6:15 PM", "2026-05-07T18:15:00", 700, 11000, 20000, 45646),
-  buildRow(9, "08.05.2026 7:00 PM", "2026-05-08T19:00:00", 820, 11800, 21000, 50120),
-  buildRow(10, "09.05.2026 10:10 AM", "2026-05-09T10:10:00", 410, 12200, 19800, 48720),
-  buildRow(11, "10.05.2026 1:20 PM", "2026-05-10T13:20:00", 360, 12800, 20500, 49800),
-  buildRow(12, "11.05.2026 9:40 AM", "2026-05-11T09:40:00", 520, 13500, 22300, 51260),
-  buildRow(13, "12.05.2026 8:30 PM", "2026-05-12T20:30:00", 610, 14200, 23100, 52040),
-  buildRow(14, "13.05.2026 6:50 PM", "2026-05-13T18:50:00", 480, 14950, 24400, 53480),
-  buildRow(15, "14.05.2026 2:15 PM", "2026-05-14T14:15:00", 560, 15600, 25750, 54920),
-  buildRow(16, "15.05.2026 11:35 AM", "2026-05-15T11:35:00", 640, 16420, 26810, 55880),
-  buildRow(17, "16.05.2026 5:05 PM", "2026-05-16T17:05:00", 715, 17230, 28140, 57240),
-  buildRow(18, "17.05.2026 7:25 PM", "2026-05-17T19:25:00", 780, 18010, 29550, 58760),
-  buildRow(19, "18.05.2026 10:05 AM", "2026-05-18T10:05:00", 835, 18900, 30920, 60340),
-  buildRow(20, "19.05.2026 4:45 PM", "2026-05-19T16:45:00", 890, 19780, 32680, 64520),
-  buildRow(21, "20.05.2026 8:45 PM", "2026-05-20T20:45:00", 930, 20500, 34800, 68950),
-];
-
-const TABLE_COLUMNS = [
-  { key: "no", label: "No", className: "w-[88px]" },
-  { key: "dateTime", label: "Date/Time", className: "w-[300px]" },
-  { key: "newMembers", label: "New Member", className: "w-[220px]" },
-  { key: "totalMembers", label: "Total Member", className: "w-[260px]" },
-  { key: "activeMembers", label: "Active Members", className: "w-[260px]" },
-  { key: "tokenIssued", label: "Token Issued", className: "w-[260px] text-right" },
-];
 
 const DATE_OPTIONS = [
   { value: "all", label: "Select Date" },
@@ -63,8 +15,8 @@ const DATE_OPTIONS = [
 
 const QUICK_FILTERS = [
   { value: "daily", label: "Daily" },
-  { value: "this-month", label: "Monthly" },
-  { value: "this-year", label: "Yearly" },
+  { value: "monthly", label: "Monthly" },
+  { value: "yearly", label: "Yearly" },
 ];
 
 function CalendarIcon() {
@@ -163,7 +115,31 @@ function DateFilter({ value, onChange }) {
 }
 
 function Pagination({ currentPage, totalPages, onPageChange }) {
-  const visiblePages = Array.from({ length: Math.min(totalPages, 3) }, (_, index) => index + 1);
+  const pageNumbers = [];
+
+  if (totalPages <= 7) {
+    for (let page = 1; page <= totalPages; page += 1) {
+      pageNumbers.push(page);
+    }
+  } else {
+    if (currentPage <= 4) {
+      for (let i = 1; i <= 5; i++) pageNumbers.push(i);
+      pageNumbers.push("ellipsis-1");
+      pageNumbers.push(totalPages);
+    } else if (currentPage >= totalPages - 3) {
+      pageNumbers.push(1);
+      pageNumbers.push("ellipsis-1");
+      for (let i = totalPages - 4; i <= totalPages; i++) pageNumbers.push(i);
+    } else {
+      pageNumbers.push(1);
+      pageNumbers.push("ellipsis-1");
+      pageNumbers.push(currentPage - 1);
+      pageNumbers.push(currentPage);
+      pageNumbers.push(currentPage + 1);
+      pageNumbers.push("ellipsis-2");
+      pageNumbers.push(totalPages);
+    }
+  }
 
   return (
     <div className="flex items-center justify-end gap-[16px] px-4 pb-3 pt-1 font-['Times_New_Roman'] text-[11px] text-white/80">
@@ -177,22 +153,28 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
       </button>
 
       <div className="flex items-center gap-[16px]">
-        {visiblePages.map((page) => {
-          const active = page === currentPage;
+        {pageNumbers.map((item) => {
+          if (typeof item === "string") {
+            return (
+              <span key={item} className="text-white/45">
+                ...
+              </span>
+            );
+          }
+
+          const active = item === currentPage;
 
           return (
             <button
-              key={page}
+              key={item}
               type="button"
-              onClick={() => onPageChange(page)}
+              onClick={() => onPageChange(item)}
               className={active ? "font-bold text-[#f4bf55]" : "transition hover:text-white"}
             >
-              {page}
+              {item}
             </button>
           );
         })}
-
-        {totalPages > 3 ? <span className="text-white/45">...</span> : null}
       </div>
 
       <button
@@ -211,70 +193,108 @@ function compareRows(a, b, sortConfig) {
   const { key, direction } = sortConfig;
   const multiplier = direction === "asc" ? 1 : -1;
 
-  if (key === "dateTime") {
-    return (new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()) * multiplier;
+  if (key === "date") {
+    return (new Date(a.date).getTime() - new Date(b.date).getTime()) * multiplier;
   }
 
-  return (a[key] - b[key]) * multiplier;
+  return ((a[key] || 0) - (b[key] || 0)) * multiplier;
 }
 
 function formatNumber(value) {
-  return value.toLocaleString("en-MY");
+  return Number(value || 0).toLocaleString("en-MY");
+}
+
+function formatDateDisplay(dateStr, type) {
+  if (!dateStr) return "N/A";
+  if (type === "daily") {
+    // Expected format from API: YYYY-MM-DD -> DD/MM/YYYY
+    const parts = dateStr.split("-");
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+  } else if (type === "monthly") {
+    // Expected format: YYYY-MM -> MM/YYYY
+    const parts = dateStr.split("-");
+    if (parts.length === 2) {
+      return `${parts[1]}/${parts[0]}`;
+    }
+  } else if (type === "yearly") {
+    // Expected format: YYYY -> YYYY
+    return dateStr;
+  }
+  return dateStr;
 }
 
 function MemberReportContent() {
+  const [reportType, setReportType] = useState("daily");
   const [dateFilter, setDateFilter] = useState("all");
-  const [sortConfig, setSortConfig] = useState({ key: "no", direction: "asc" });
+  const [sortConfig, setSortConfig] = useState({ key: "date", direction: "desc" });
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [apiResults, setApiResults] = useState([]);
+  
+  const TABLE_COLUMNS = [
+    { key: "no", label: "No", className: "w-[88px]" },
+    { key: "date", label: "Date", className: "w-[300px]" },
+    { key: "new_members", label: "New Member", className: "w-[220px]" },
+    { key: "total_members", label: "Total Member", className: "w-[260px]" },
+    { key: "active_members", label: "Active Members", className: "w-[260px]" },
+    { key: "total_tokens_issued", label: "Token Issued", className: "w-[260px] text-right" },
+  ];
 
-  const latestTime = useMemo(() => {
-    return Math.max(...MOCK_MEMBER_REPORT.map((item) => new Date(item.timestamp).getTime()));
-  }, []);
-
-  const filteredRows = useMemo(() => {
-    return MOCK_MEMBER_REPORT.filter((row) => {
+  const fetchReport = useCallback(async () => {
+    setLoading(true);
+    try {
+      const today = new Date();
+      let start_date = new Date();
       if (dateFilter === "all") {
-        return true;
+        if (reportType === "daily") {
+          start_date = new Date(today.getFullYear(), today.getMonth(), 1);
+        } else if (reportType === "monthly") {
+          start_date = new Date(today.getFullYear() - 1, today.getMonth(), 1);
+        } else if (reportType === "yearly") {
+          start_date = new Date(today.getFullYear() - 10, 0, 1);
+        }
+      } else if (dateFilter === "this-year") {
+        start_date = new Date(today.getFullYear(), 0, 1);
+      } else if (dateFilter === "this-month") {
+        start_date = new Date(today.getFullYear(), today.getMonth(), 1);
+      } else {
+        start_date.setDate(today.getDate() - 7);
       }
 
-      const rowDate = new Date(row.timestamp);
-      const latestDate = new Date(latestTime);
+      // Format to YYYY-MM-DD
+      const startStr = `${start_date.getFullYear()}-${String(start_date.getMonth() + 1).padStart(2, "0")}-${String(start_date.getDate()).padStart(2, "0")}`;
+      const endStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
-      if (dateFilter === "latest-7") {
-        const sevenDaysAgo = new Date(latestDate);
-        sevenDaysAgo.setDate(latestDate.getDate() - 6);
-        return rowDate >= sevenDaysAgo;
+      const res = await getMemberReport(reportType, {
+        start_date: startStr,
+        end_date: endStr,
+      });
+
+      if (res && res.results) {
+        setApiResults(res.results.map((r, i) => ({ ...r, no: i + 1 })));
+      } else {
+        setApiResults([]);
       }
-
-      if (dateFilter === "daily") {
-        return (
-          rowDate.getDate() === latestDate.getDate() &&
-          rowDate.getMonth() === latestDate.getMonth() &&
-          rowDate.getFullYear() === latestDate.getFullYear()
-        );
-      }
-
-      if (dateFilter === "this-month") {
-        return rowDate.getMonth() === latestDate.getMonth() && rowDate.getFullYear() === latestDate.getFullYear();
-      }
-
-      if (dateFilter === "this-year") {
-        return rowDate.getFullYear() === latestDate.getFullYear();
-      }
-
-      return true;
-    });
-  }, [dateFilter, latestTime]);
-
-  const sortedRows = useMemo(() => {
-    return [...filteredRows].sort((a, b) => compareRows(a, b, sortConfig));
-  }, [filteredRows, sortConfig]);
-
-  const totalPages = Math.max(1, Math.ceil(sortedRows.length / PAGE_SIZE));
+    } catch (err) {
+      console.error(err);
+      setApiResults([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [reportType, dateFilter]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [dateFilter]);
+    fetchReport();
+  }, [fetchReport]);
+
+  const sortedRows = useMemo(() => {
+    return [...apiResults].sort((a, b) => compareRows(a, b, sortConfig));
+  }, [apiResults, sortConfig]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedRows.length / PAGE_SIZE));
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -298,7 +318,7 @@ function MemberReportContent() {
 
       return {
         key,
-        direction: key === "no" ? "asc" : "desc",
+        direction: key === "no" || key === "date" ? "desc" : "desc",
       };
     });
   };
@@ -322,16 +342,22 @@ function MemberReportContent() {
         </div>
 
         <div className="mb-4 flex justify-end">
-          <QuickFilterButtons value={dateFilter} onChange={setDateFilter} />
+          <QuickFilterButtons 
+            value={reportType} 
+            onChange={(val) => {
+              setReportType(val);
+              setDateFilter("all");
+            }} 
+          />
         </div>
 
         <section className="overflow-hidden rounded-[12px] border border-[rgba(255,255,132,0.18)] bg-[linear-gradient(180deg,rgba(28,48,31,0.98)_0%,rgba(24,44,28,0.98)_100%)] shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
-          <div className="flex items-center justify-between gap-4 px-4 pb-4 pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-4 px-4 pb-4 pt-4">
             <h2 className="font-['Times_New_Roman'] text-[22px] font-bold leading-none text-[#f4efe0]">
               Member Report
             </h2>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <span className="whitespace-nowrap font-['Times_New_Roman'] text-[13px] text-[#d6d6d6]">
                 Filter By:
               </span>
@@ -351,7 +377,7 @@ function MemberReportContent() {
                         <button
                           type="button"
                           onClick={() => handleSort(column.key)}
-                          className={`flex w-full items-center ${column.key === "tokenIssued" ? "justify-end" : "justify-start"}`}
+                          className={`flex w-full items-center ${column.key === "total_tokens_issued" ? "justify-end" : "justify-start"}`}
                         >
                           <span className="whitespace-nowrap font-['Times_New_Roman'] text-[14px] font-bold text-white">
                             {column.label}
@@ -365,26 +391,32 @@ function MemberReportContent() {
               </thead>
 
               <tbody>
-                {paginatedRows.length > 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={TABLE_COLUMNS.length} className="px-5 py-12 text-center font-['Times_New_Roman'] text-[14px] text-white/60">
+                      Loading...
+                    </td>
+                  </tr>
+                ) : paginatedRows.length > 0 ? (
                   paginatedRows.map((row) => (
                     <tr key={row.no} className="border-b border-[rgba(255,255,255,0.08)] transition-colors hover:bg-white/[0.03]">
                       <td className="px-4 py-[14px] first:pl-5 font-['Times_New_Roman'] text-[13px] text-[#f1f1f1] whitespace-nowrap">
                         {row.no}
                       </td>
                       <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#f1f1f1] whitespace-nowrap">
-                        {row.dateTime}
+                        {formatDateDisplay(row.date, reportType)}
                       </td>
                       <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#ece9dc] whitespace-nowrap">
-                        {formatNumber(row.newMembers)}
+                        {formatNumber(row.new_members)}
                       </td>
                       <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#ece9dc] whitespace-nowrap">
-                        {formatNumber(row.totalMembers)}
+                        {formatNumber(row.total_members)}
                       </td>
                       <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#ece9dc] whitespace-nowrap">
-                        {formatNumber(row.activeMembers)}
+                        {formatNumber(row.active_members)}
                       </td>
                       <td className="px-4 py-[14px] pr-5 text-right font-['Times_New_Roman'] text-[13px] text-[#f1f1f1] whitespace-nowrap">
-                        {formatNumber(row.tokenIssued)}
+                        {formatNumber(row.total_tokens_issued)}
                       </td>
                     </tr>
                   ))
@@ -394,7 +426,7 @@ function MemberReportContent() {
                       colSpan={TABLE_COLUMNS.length}
                       className="px-5 py-12 text-center font-['Times_New_Roman'] text-[14px] text-white/60"
                     >
-                      No member report rows match the selected date filter.
+                      No member report rows match the selected filters.
                     </td>
                   </tr>
                 )}

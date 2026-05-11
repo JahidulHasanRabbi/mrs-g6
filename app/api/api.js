@@ -51,6 +51,9 @@ export const ENDPOINTS = {
     CHECKIN_SETTINGS: '/settings/checkin-settings/',
     BANNERS: '/settings/banners/',
     BANNER: (uuid) => `/settings/banners/${uuid}/`,
-    ARCHIVE_BANNER: (uuid) => `/settings/banners/${uuid}/archive/`
+    ARCHIVE_BANNER: (uuid) => `/settings/banners/${uuid}/archive/`,
+    MEMBER_REPORT_DAILY: '/member/member-report/daily/',
+    MEMBER_REPORT_MONTHLY: '/member/member-report/monthly/',
+    MEMBER_REPORT_YEARLY: '/member/member-report/yearly/'
   }
 };

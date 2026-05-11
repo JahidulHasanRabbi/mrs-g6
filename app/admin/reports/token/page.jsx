@@ -31,7 +31,7 @@ function formatDateTime(isoStr) {
     const minutes = String(d.getMinutes()).padStart(2, "0");
     const ampm = hours >= 12 ? "PM" : "AM";
     const h12 = hours % 12 || 12;
-    return `${dd}.${mm}.${yyyy} ${h12}:${minutes} ${ampm}`;
+    return `${dd}/${mm}/${yyyy} ${h12}:${minutes} ${ampm}`;
   } catch {
     return isoStr;
   }
@@ -64,28 +64,28 @@ function SortIcon({ active, direction }) {
 function Pagination({ currentPage, totalPages, onPageChange }) {
   const pageNumbers = [];
 
-  if (totalPages <= 4) {
+  if (totalPages <= 7) {
     for (let page = 1; page <= totalPages; page += 1) {
       pageNumbers.push(page);
     }
   } else {
-    pageNumbers.push(1);
-    const middleStart = Math.max(2, currentPage - 1);
-    const middleEnd = Math.min(totalPages - 1, currentPage + 1);
-
-    if (middleStart > 2) {
-      pageNumbers.push("ellipsis-left");
+    if (currentPage <= 4) {
+      for (let i = 1; i <= 5; i++) pageNumbers.push(i);
+      pageNumbers.push("ellipsis-1");
+      pageNumbers.push(totalPages);
+    } else if (currentPage >= totalPages - 3) {
+      pageNumbers.push(1);
+      pageNumbers.push("ellipsis-1");
+      for (let i = totalPages - 4; i <= totalPages; i++) pageNumbers.push(i);
+    } else {
+      pageNumbers.push(1);
+      pageNumbers.push("ellipsis-1");
+      pageNumbers.push(currentPage - 1);
+      pageNumbers.push(currentPage);
+      pageNumbers.push(currentPage + 1);
+      pageNumbers.push("ellipsis-2");
+      pageNumbers.push(totalPages);
     }
-
-    for (let page = middleStart; page <= middleEnd; page += 1) {
-      pageNumbers.push(page);
-    }
-
-    if (middleEnd < totalPages - 1) {
-      pageNumbers.push("ellipsis-right");
-    }
-
-    pageNumbers.push(totalPages);
   }
 
   return (
@@ -247,7 +247,7 @@ function TokenReportContent() {
 
         <section className="overflow-hidden rounded-[12px] border border-[rgba(255,255,132,0.18)] bg-[linear-gradient(180deg,rgba(28,48,31,0.98)_0%,rgba(24,44,28,0.98)_100%)] shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
           <div className="border-b border-white/5 px-4 pt-4 pb-3">
-            <div className="flex flex-wrap items-center gap-3 xl:flex-nowrap xl:gap-4">
+            <div className="flex flex-wrap items-center gap-3">
               <h2 className="mr-auto whitespace-nowrap font-['Times_New_Roman'] text-[15px] font-bold text-[#f4efe0] sm:text-[16px] lg:text-[17px]">
                 The Token Reports Are Given
               </h2>
