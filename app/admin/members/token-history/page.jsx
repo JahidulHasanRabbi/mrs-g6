@@ -14,7 +14,6 @@ import { getCategoryOptions } from "../../../api/queryParams";
 const PAGE_SIZE = 8;
 
 const TABLE_COLUMNS = [
-  { key: "station", label: "Station", minW: "min-w-[120px]" },
   { key: "created", label: "Date/Time", minW: "min-w-[180px]" },
   { key: "category", label: "Category", minW: "min-w-[140px]" },
   { key: "token_details", label: "Token Details", minW: "min-w-[220px]" },

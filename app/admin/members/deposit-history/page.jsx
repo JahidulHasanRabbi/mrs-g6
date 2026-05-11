@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 
 import { AdminRouteGuard } from "../../../components/guards/AdminRouteGuard";
 import HistoryPageShell from "../../../components/admin/members/HistoryPageShell";
-import { FilterDropdown, DateFilter } from "../../../components/admin/members/FilterControls";
+import { FilterDropdown, DateFilter, TextSearchInput } from "../../../components/admin/members/FilterControls";
 import { DataTable, Pagination } from "../../../components/admin/members/DataTable";
 
 // API imports
@@ -14,7 +14,6 @@ import { getCategoryOptions } from "../../../api/queryParams";
 
 // ── Constants ────────────────────────────────────────────────────────────
 const PAGE_SIZE = 10;
-const STATION_OPTIONS = ["Station A", "Station B", "Station C", "Station D", "Station E", "Station F", "Station G"];
 
 const TABLE_COLUMNS = [
   { key: "created", label: "Date/Time", minW: "min-w-[200px]" },
@@ -42,7 +41,8 @@ function formatDateTime(isoStr) {
 }
 
 function formatAmount(val) {
-  return `RM ${val.toLocaleString("en-MY")}`;
+  if (!val) return "RM 0.00";
+  return `RM ${parseFloat(val).toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 // ── Page content ─────────────────────────────────────────────────────────
@@ -54,9 +54,6 @@ function DepositHistoryContent() {
   // Filters
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [tokenDetailFilter, setTokenDetailFilter] = useState("");
-  const [stationFilter, setStationFilter] = useState("");
 
   // Table state
   const [sortKey, setSortKey] = useState(null);
@@ -70,15 +67,11 @@ function DepositHistoryContent() {
     if (!memberId) return;
     setLoading(true);
     try {
-      const catValue = getCategoryOptions("token").find(o => o.label === categoryFilter)?.value;
       const params = {
         page,
         page_size: PAGE_SIZE,
         start_datetime: dateFrom || undefined,
         end_datetime: dateTo || undefined,
-        category: catValue || undefined,
-        token_details: tokenDetailFilter || undefined,
-        station_uuid: stationFilter || undefined
       };
       const res = await getMemberDeposit(memberId, params);
       setRows(res.results || []);
@@ -89,12 +82,24 @@ function DepositHistoryContent() {
     } finally {
       setLoading(false);
     }
-  }, [memberId, dateFrom, dateTo, categoryFilter, tokenDetailFilter, stationFilter]);
+  }, [memberId, dateFrom, dateTo]);
 
+  // Debounced fetch - only trigger when user stops selecting for 500ms
   useEffect(() => {
-    setCurrentPage(1);
-    fetchHistory(1);
-  }, [fetchHistory]);
+    const timer = setTimeout(() => {
+      setCurrentPage(1);
+      fetchHistory(1);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [dateFrom, dateTo]);
+
+  // Initial fetch on mount
+  useEffect(() => {
+    if (memberId) {
+      fetchHistory(1);
+    }
+  }, [memberId]);
 
   const sortedRows = useMemo(() => {
     let list = [...rows];
@@ -124,8 +129,9 @@ function DepositHistoryContent() {
   };
 
   const renderCell = (row, col) => {
-    if (col.key === "amount") return formatAmount(row.amount || 0);
     if (col.key === "created") return formatDateTime(row.created);
+    if (col.key === "amount") return formatAmount(row.amount);
+    if (col.key === "station") return row.station || "—";
     return row[col.key] || "—";
   };
 
@@ -138,9 +144,7 @@ function DepositHistoryContent() {
             The Deposit Are Given
           </p>
           <span className="font-['Times_New_Roman'] text-[13px] text-white/80 ml-auto mr-1">Filter By:</span>
-          <DateFilter label="Date/Time" fromDate={dateFrom} toDate={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
-          <FilterDropdown label="Category" options={getCategoryOptions("token").map(o => o.label)} value={categoryFilter} onChange={setCategoryFilter} />
-          <FilterDropdown label="Station" options={STATION_OPTIONS} value={stationFilter} onChange={setStationFilter} align="right" />
+          <DateFilter label="Date/Time" fromDate={dateFrom} toDate={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} align="right" />
         </div>
 
         {/* Table */}

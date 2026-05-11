@@ -3,11 +3,11 @@
 import { useEffect, useMemo, useState, useCallback, Suspense } from "react";
 import { AdminRouteGuard } from "../../../components/guards/AdminRouteGuard";
 import { FilterDropdown, DateFilter, TextSearchInput } from "../../../components/admin/members/FilterControls";
+import { Pagination } from "../../../components/admin/members/DataTable";
 import { getTokenReport } from "../../../api/adminApi";
 import { getCategoryOptions } from "../../../api/queryParams";
 
 const PAGE_SIZE = 8;
-const STATION_OPTIONS = ["Station A", "Station B", "Station C", "Station D", "Station E"];
 
 const TABLE_COLUMNS = [
   { key: "phone_number", label: "Phone Number", className: "w-[170px]" },
@@ -61,81 +61,6 @@ function SortIcon({ active, direction }) {
   );
 }
 
-function Pagination({ currentPage, totalPages, onPageChange }) {
-  const pageNumbers = [];
-
-  if (totalPages <= 7) {
-    for (let page = 1; page <= totalPages; page += 1) {
-      pageNumbers.push(page);
-    }
-  } else {
-    if (currentPage <= 4) {
-      for (let i = 1; i <= 5; i++) pageNumbers.push(i);
-      pageNumbers.push("ellipsis-1");
-      pageNumbers.push(totalPages);
-    } else if (currentPage >= totalPages - 3) {
-      pageNumbers.push(1);
-      pageNumbers.push("ellipsis-1");
-      for (let i = totalPages - 4; i <= totalPages; i++) pageNumbers.push(i);
-    } else {
-      pageNumbers.push(1);
-      pageNumbers.push("ellipsis-1");
-      pageNumbers.push(currentPage - 1);
-      pageNumbers.push(currentPage);
-      pageNumbers.push(currentPage + 1);
-      pageNumbers.push("ellipsis-2");
-      pageNumbers.push(totalPages);
-    }
-  }
-
-  return (
-    <div className="flex items-center justify-end gap-[16px] px-4 pb-3 pt-1 font-['Times_New_Roman'] text-[11px] text-white/80">
-      <button
-        type="button"
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="transition hover:text-white disabled:cursor-not-allowed disabled:text-white/35"
-      >
-        Previous
-      </button>
-
-      <div className="flex items-center gap-[16px]">
-        {pageNumbers.map((item) => {
-          if (typeof item === "string") {
-            return (
-              <span key={item} className="text-white/45">
-                ...
-              </span>
-            );
-          }
-
-          const active = item === currentPage;
-
-          return (
-            <button
-              key={item}
-              type="button"
-              onClick={() => onPageChange(item)}
-              className={active ? "font-bold text-[#f4bf55]" : "transition hover:text-white"}
-            >
-              {item}
-            </button>
-          );
-        })}
-      </div>
-
-      <button
-        type="button"
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className="transition hover:text-white disabled:cursor-not-allowed disabled:text-white/35"
-      >
-        Next
-      </button>
-    </div>
-  );
-}
-
 function formatAmount(amount) {
   const formattedNumber = Math.abs(amount).toLocaleString("en-MY");
 
@@ -168,7 +93,6 @@ function TokenReportContent() {
   const [detailFilter, setDetailFilter] = useState("");
   const [usernameQuery, setUsernameQuery] = useState("");
   const [phoneQuery, setPhoneQuery] = useState("");
-  const [stationFilter, setStationFilter] = useState("");
 
   const [sortConfig, setSortConfig] = useState({ key: "created", direction: "desc" });
   const [currentPage, setCurrentPage] = useState(1);
@@ -189,7 +113,6 @@ function TokenReportContent() {
         token_details: detailFilter || undefined,
         username: usernameQuery || undefined,
         phone_number: phoneQuery || undefined,
-        station_uuid: stationFilter || undefined
       };
       const res = await getTokenReport(params);
       setRows(res.results || []);
@@ -200,7 +123,7 @@ function TokenReportContent() {
     } finally {
       setLoading(false);
     }
-  }, [dateFrom, dateTo, categoryFilter, detailFilter, usernameQuery, phoneQuery, stationFilter]);
+  }, [dateFrom, dateTo, categoryFilter, detailFilter, usernameQuery, phoneQuery]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -261,7 +184,6 @@ function TokenReportContent() {
               <TextSearchInput placeholder="Token Details" value={detailFilter} onChange={setDetailFilter} />
               <TextSearchInput placeholder="Enter Username" value={usernameQuery} onChange={setUsernameQuery} />
               <TextSearchInput placeholder="Enter Phone" value={phoneQuery} onChange={setPhoneQuery} />
-              <FilterDropdown label="Station" options={STATION_OPTIONS} value={stationFilter} onChange={setStationFilter} />
             </div>
           </div>
 
@@ -341,7 +263,11 @@ function TokenReportContent() {
             </table>
           </div>
 
-          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+          {totalPages > 1 && (
+            <div className="border-t border-white/5 pt-3">
+              <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+            </div>
+          )}
         </section>
     </main>
   );

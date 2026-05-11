@@ -54,6 +54,15 @@ export const ENDPOINTS = {
     ARCHIVE_BANNER: (uuid) => `/settings/banners/${uuid}/archive/`,
     MEMBER_REPORT_DAILY: '/member/member-report/daily/',
     MEMBER_REPORT_MONTHLY: '/member/member-report/monthly/',
-    MEMBER_REPORT_YEARLY: '/member/member-report/yearly/'
+    MEMBER_REPORT_YEARLY: '/member/member-report/yearly/',
+    STATION_LIST: '/front-view/station-list/',
+    REDEMPTION_TIERS: '/redemption/redemption-tier/',
+    CHECKIN_TIER: '/settings/check-in-tier/',
+    WALLET_VIP: '/third-party/wallet-vip/',
+    WALLET_VIP_SINGLE: (uuid) => `/third-party/wallet-vip/${uuid}/`,
+    WALLET_VIP_ARCHIVE: (uuid) => `/third-party/wallet-vip/${uuid}/archive/`,
+    FLOATING_MENU: '/third-party/floating-menu/',
+    FLOATING_MENU_SINGLE: (uuid) => `/third-party/floating-menu/${uuid}/`,
+    FLOATING_MENU_ARCHIVE: (uuid) => `/third-party/floating-menu/${uuid}/archive/`
   }
 };

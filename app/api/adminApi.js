@@ -290,3 +290,26 @@ export async function getMemberReport(type, params = {}) {
   if (type === 'yearly') endpoint = ENDPOINTS.ADMIN.MEMBER_REPORT_YEARLY;
   return await apiRequest(`${endpoint}${qs}`, { method: 'GET' }, true, 'admin');
 }
+
+// GET /member/member-list/{uuid}/ - Single member details (view modal)
+export async function getMemberListSingle(memberUuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.MEMBER_LIST_SINGLE(memberUuid), { method: 'GET' }, true, 'admin');
+}
+
+// PUT /member/member-list/{uuid}/ - Edit member
+export async function updateMember(memberUuid, data) {
+  return await apiRequest(ENDPOINTS.ADMIN.MEMBER_LIST_SINGLE(memberUuid), {
+    method: 'PUT',
+    body: data
+  }, true, 'admin');
+}
+
+// GET /front-end/station-list/ - For station filter dropdowns
+export async function getStationList() {
+  return await apiRequest(ENDPOINTS.ADMIN.STATION_LIST, { method: 'GET' }, true, 'admin');
+}
+
+// GET /member/vip-tier/ - reusable for filter dropdowns
+export async function getVipTierList() {
+  return await apiRequest(ENDPOINTS.ADMIN.VIP_TIERS, { method: 'GET' }, true, 'admin');
+}

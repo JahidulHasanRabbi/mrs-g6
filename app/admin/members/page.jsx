@@ -5,27 +5,15 @@ import { useRouter } from "next/navigation";
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
 import Image from "next/image";
 
-import { getMemberList } from "../../api/adminApi";
+import { 
+  getMemberList, 
+  getMemberListSingle, 
+  updateMember,
+  getVipTierList,
+  getStationList 
+} from "../../api/adminApi";
 import { FilterDropdown, DateFilter, TextSearchInput, GOLD_BG } from "../../components/admin/members/FilterControls";
 import { Pagination } from "../../components/admin/members/DataTable";
-
-// ── Mock data ──────────────────────────────────────────────────────────
-// TODO (Backend): Replace MOCK_MEMBERS with real API call to adminApi.getMembers()
-// API endpoint: GET /member/members/
-// Response fields: id, uuid, phone_number, username, tier, current_tokens,
-//   last_check_in_date, last_login_datetime
-// Additional fields from member info: registered_date, station
-const TIER_OPTIONS = ["Bronze", "Silver", "Gold", "Platinum", "Diamond"];
-const STATION_OPTIONS = [
-  "KGAME99",
-  "LV918",
-  "Acebet77",
-  "Ubetclub",
-  "n1gang",
-  "ep369",
-];
-
-// Mock removed. Data now fetched from API.
 
 export default function MembersPage() {
   return (
@@ -95,17 +83,29 @@ function toDateOnly(dateString) {
 
 // ── View Member Profile Modal ──────────────────────────────────────────
 function ViewMemberModal({ member, onClose, onNavigate }) {
-  if (!member) return null;
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Mock profile data — TODO (Backend): fetch from GET /member/members/{uuid}/
-  const profile = {
-    full_name: member.username || "",
-    email: `${(member.username || "user").toLowerCase()}@email.com`,
-    gender: "Male",
-    dob: "15/03/1995",
-    interest: "Lucky Spin, Mart",
-    mrs_vip_tier: member.tier || "Bronze",
-  };
+  useEffect(() => {
+    if (!member?.uuid) return;
+    
+    const fetchProfile = async () => {
+      setLoading(true);
+      try {
+        const data = await getMemberListSingle(member.uuid);
+        setProfile(data);
+      } catch (err) {
+        console.error("Failed to fetch member profile:", err);
+        setProfile(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProfile();
+  }, [member?.uuid]);
+
+  if (!member) return null;
 
   return (
     <div
@@ -116,85 +116,83 @@ function ViewMemberModal({ member, onClose, onNavigate }) {
         className="relative w-full max-w-[520px] rounded-[14px] border border-[#6a6a6a] bg-[#484848] p-6 sm:p-8 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Profile info card */}
-        <div className="rounded-[10px] border border-[#6e6e6e] bg-[#555555] p-5 sm:p-6 mb-5">
-          <h2 className="font-['Times_New_Roman'] font-bold text-[20px] text-white text-center mb-5">
-            Member Profile
-          </h2>
-
-          {/* Profile picture */}
-          <div className="flex items-center gap-2 mb-3">
-            <span className="font-['Times_New_Roman'] text-[14px] text-white/90">
-              Profile Picture
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#e9af41] border-t-transparent" />
+            <span className="ml-3 font-['Times_New_Roman'] text-white/60">
+              Loading profile...
             </span>
-            <div className="w-[30px] h-[30px] rounded bg-[#e9af41]/20 flex items-center justify-center">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <rect
-                  x="2"
-                  y="3"
-                  width="20"
-                  height="18"
-                  rx="3"
-                  fill="#e9af41"
-                />
-                <circle cx="8.5" cy="9.5" r="2.5" fill="white" />
-                <path
-                  d="M2 17l5-5 3 3 4-4 8 6"
-                  fill="white"
-                  fillOpacity="0.7"
-                />
-              </svg>
-            </div>
           </div>
+        ) : (
+          <>
+            {/* Profile info card */}
+            <div className="rounded-[10px] border border-[#6e6e6e] bg-[#555555] p-5 sm:p-6 mb-5">
+              <h2 className="font-['Times_New_Roman'] font-bold text-[20px] text-white text-center mb-5">
+                Member Profile
+              </h2>
 
-          {/* Info rows */}
-          {[
-            { label: "Full Name:", value: profile.full_name },
-            { label: "Email:", value: profile.email },
-            { label: "Gender:", value: profile.gender },
-            { label: "DOB:", value: profile.dob },
-            { label: "Interest:", value: profile.interest },
-            { label: "MRS VIP Tier:", value: profile.mrs_vip_tier },
-          ].map((row) => (
-            <div key={row.label} className="flex items-baseline gap-2 py-1.5">
-              <span className="font-['Times_New_Roman'] font-bold text-[14px] text-white/90 w-[110px] shrink-0">
-                {row.label}
-              </span>
-              <span className="font-['Times_New_Roman'] text-[14px] text-white/70">
-                {row.value}
-              </span>
+              {/* Profile picture */}
+              {profile?.profile_picture && (
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="font-['Times_New_Roman'] text-[14px] text-white/90">
+                    Profile Picture
+                  </span>
+                  <div className="w-[30px] h-[30px] rounded bg-[#e9af41]/20 flex items-center justify-center overflow-hidden">
+                    <img src={profile.profile_picture} alt="Profile" className="w-full h-full object-cover" />
+                  </div>
+                </div>
+              )}
+
+              {/* Info rows */}
+              {[
+                { label: "Full Name:", value: profile?.full_name || "N/A" },
+                { label: "Email:", value: profile?.email || "N/A" },
+                { label: "Gender:", value: profile?.gender || "N/A" },
+                { label: "DOB:", value: profile?.date_of_birth ? new Date(profile.date_of_birth).toLocaleDateString('en-GB') : "N/A" },
+                { label: "Hobby:", value: profile?.hobby || "N/A" },
+                { label: "MRS VIP Tier:", value: profile?.vip_tier || member.tier || "N/A" },
+              ].map((row) => (
+                <div key={row.label} className="flex items-baseline gap-2 py-1.5">
+                  <span className="font-['Times_New_Roman'] font-bold text-[14px] text-white/90 w-[110px] shrink-0">
+                    {row.label}
+                  </span>
+                  <span className="font-['Times_New_Roman'] text-[14px] text-white/70">
+                    {row.value}
+                  </span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
 
-        {/* Action buttons — 2x2 grid */}
-        <div className="grid grid-cols-2 gap-3 mb-5">
-          {[
-            { label: "Token History", action: () => onNavigate && onNavigate("token-history", member) },
-            { label: "Reward History", action: () => onNavigate && onNavigate("reward-history", member) },
-            { label: "Deposit History", action: () => onNavigate && onNavigate("deposit-history", member) },
-            { label: "Station", action: () => onNavigate && onNavigate("station", member) },
-          ].map((btn) => (
-            <button
-              key={btn.label}
-              onClick={btn.action || undefined}
-              className="h-[44px] rounded-[8px] border border-[#2ed82e] bg-[#06b800] font-['Times_New_Roman'] font-bold text-[15px] text-white hover:bg-[#05a000] transition-colors shadow-md"
-            >
-              {btn.label}
-            </button>
-          ))}
-        </div>
+            {/* Action buttons — 2x2 grid */}
+            <div className="grid grid-cols-2 gap-3 mb-5">
+              {[
+                { label: "Token History", action: () => onNavigate && onNavigate("token-history", member) },
+                { label: "Reward History", action: () => onNavigate && onNavigate("reward-history", member) },
+                { label: "Deposit History", action: () => onNavigate && onNavigate("deposit-history", member) },
+                { label: "Station", action: () => onNavigate && onNavigate("station", member) },
+              ].map((btn) => (
+                <button
+                  key={btn.label}
+                  onClick={btn.action || undefined}
+                  className="h-[44px] rounded-[8px] border border-[#2ed82e] bg-[#06b800] font-['Times_New_Roman'] font-bold text-[15px] text-white hover:bg-[#05a000] transition-colors shadow-md"
+                >
+                  {btn.label}
+                </button>
+              ))}
+            </div>
 
-        {/* Close button */}
-        <div className="flex justify-end">
-          <button
-            onClick={onClose}
-            className="h-[36px] px-5 rounded font-['Times_New_Roman'] font-bold text-[14px] text-black hover:opacity-90 transition-opacity"
-            style={{ background: GOLD_BG }}
-          >
-            Close
-          </button>
-        </div>
+            {/* Close button */}
+            <div className="flex justify-end">
+              <button
+                onClick={onClose}
+                className="h-[36px] px-5 rounded font-['Times_New_Roman'] font-bold text-[14px] text-black hover:opacity-90 transition-opacity"
+                style={{ background: GOLD_BG }}
+              >
+                Close
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -202,26 +200,113 @@ function ViewMemberModal({ member, onClose, onNavigate }) {
 
 // ── Edit Member Profile Modal ──────────────────────────────────────────
 function EditMemberModal({ member, onClose, onSave }) {
-  if (!member) return null;
+  const [form, setForm] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [vipTiers, setVipTiers] = useState([]);
+  const [profilePictureFile, setProfilePictureFile] = useState(null);
 
-  // Mock profile for editing — TODO (Backend): fetch & update via API
-  const [form, setForm] = useState({
-    full_name: member.username || "",
-    email: `${(member.username || "user").toLowerCase()}@email.com`,
-    gender: "Male",
-    dob: "1995-03-15",
-    interest: "Lucky Spin, Mart",
-    mrs_vip_tier: member.tier || "Bronze",
-  });
+  // Gender enum mapping
+  const GENDER_OPTIONS = [
+    { value: 1, label: "Male" },
+    { value: 2, label: "Female" },
+    { value: 3, label: "Prefer not to say" }
+  ];
+
+  // Hobby enum mapping
+  const HOBBY_OPTIONS = [
+    { value: 1, label: "Reading" },
+    { value: 2, label: "Cooking / Baking" },
+    { value: 3, label: "Travelling" },
+    { value: 4, label: "Music" },
+    { value: 5, label: "Gaming" },
+    { value: 6, label: "Sports" },
+    { value: 7, label: "Gardening" },
+    { value: 8, label: "Photography" },
+    { value: 9, label: "Art" },
+    { value: 10, label: "Crafting" },
+    { value: 11, label: "Watching Videos" },
+    { value: 12, label: "Dancing" },
+    { value: 13, label: "Hiking" },
+    { value: 14, label: "Writing" },
+    { value: 15, label: "Animal Care" }
+  ];
+
+  useEffect(() => {
+    if (!member?.uuid) return;
+    
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [profileData, tiersData] = await Promise.all([
+          getMemberListSingle(member.uuid),
+          getVipTierList()
+        ]);
+        
+        // Find gender value from label
+        const genderOption = GENDER_OPTIONS.find(g => g.label === profileData.gender);
+        // Find hobby value from label
+        const hobbyOption = HOBBY_OPTIONS.find(h => h.label === profileData.hobby);
+        
+        setForm({
+          full_name: profileData.full_name || "",
+          email: profileData.email || "",
+          gender: genderOption?.value || "",
+          date_of_birth: profileData.date_of_birth || "",
+          hobby: hobbyOption?.value || "",
+          mrs_vip_tier_uuid: tiersData.find(t => t.name === profileData.vip_tier)?.uuid || "",
+          profile_picture: profileData.profile_picture || null
+        });
+        setVipTiers(tiersData);
+      } catch (err) {
+        console.error("Failed to fetch member data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [member?.uuid]);
+
+  if (!member || !form) return null;
 
   const handleChange = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleConfirm = () => {
-    // TODO (Backend): PATCH /member/profile/{uuid}/update-profile/
-    onSave?.(form);
-    onClose();
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setProfilePictureFile(file);
+    }
+  };
+
+  const handleConfirm = async () => {
+    setSaving(true);
+    try {
+      const updateData = {
+        full_name: form.full_name || null,
+        email: form.email || null,
+        date_of_birth: form.date_of_birth || null,
+        gender: form.gender || null,
+        hobby: form.hobby || null,
+        mrs_vip_tier_uuid: form.mrs_vip_tier_uuid,
+      };
+
+      // If there's a new profile picture file, include it
+      if (profilePictureFile) {
+        updateData.profile_picture = profilePictureFile;
+      }
+
+      await updateMember(member.uuid, updateData);
+      onSave?.(updateData);
+      onClose();
+    } catch (err) {
+      console.error("Failed to update member:", err);
+      alert("Failed to update member profile. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const fields = [
@@ -231,15 +316,20 @@ function EditMemberModal({ member, onClose, onSave }) {
       key: "gender",
       label: "Gender:",
       type: "select",
-      options: ["Male", "Female", "Other"],
+      options: GENDER_OPTIONS
     },
-    { key: "dob", label: "DOB:", type: "date" },
-    { key: "interest", label: "Interest:", type: "text" },
+    { key: "date_of_birth", label: "DOB:", type: "date" },
     {
-      key: "mrs_vip_tier",
+      key: "hobby",
+      label: "Hobby:",
+      type: "select",
+      options: HOBBY_OPTIONS
+    },
+    {
+      key: "mrs_vip_tier_uuid",
       label: "MRS VIP Tier:",
       type: "select",
-      options: TIER_OPTIONS,
+      options: vipTiers.map(t => ({ value: t.uuid, label: t.name }))
     },
   ];
 
@@ -252,77 +342,98 @@ function EditMemberModal({ member, onClose, onSave }) {
         className="relative w-full max-w-[540px] rounded-[14px] border border-[#6a6a6a] bg-[#484848] p-6 sm:p-8 shadow-2xl max-h-[90vh] overflow-y-auto scrollbar-admin"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Gold badge + title */}
-        <div className="flex flex-col items-center mb-6">
-          <Image src="/assets/admin/Edit-profile.png" alt="Gold Badge" width={80} height={80} className="object-contain" />
-          {/* Ribbon */}
-
-          <h2 className="font-['Times_New_Roman'] font-bold text-[22px] text-white">
-            Edit Profile
-          </h2>
-        </div>
-
-        {/* Profile picture upload */}
-        <div className="mb-5">
-          <p className="font-['Times_New_Roman'] text-[14px] text-white/90 mb-2">
-            Profile Picture
-          </p>
-          <div className="w-full h-[80px] rounded-lg border-2 border-dashed border-[#e9af41]/40 flex items-center justify-center cursor-pointer hover:border-[#e9af41]/70 transition-colors bg-white/[0.03]">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-              <rect x="2" y="3" width="20" height="18" rx="3" fill="#e9af41" />
-              <circle cx="8.5" cy="9.5" r="2.5" fill="white" />
-              <path d="M2 17l5-5 3 3 4-4 8 6" fill="white" fillOpacity="0.7" />
-            </svg>
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#e9af41] border-t-transparent" />
+            <span className="ml-3 font-['Times_New_Roman'] text-white/60">
+              Loading...
+            </span>
           </div>
-        </div>
-
-        {/* Form fields */}
-        <div className="flex flex-col gap-4 mb-6">
-          {fields.map((f) => (
-            <div key={f.key} className="flex items-center gap-3">
-              <label className="font-['Times_New_Roman'] font-bold text-[14px] text-white/90 w-[110px] shrink-0">
-                {f.label}
-              </label>
-              {f.type === "select" ? (
-                <select
-                  value={form[f.key]}
-                  onChange={(e) => handleChange(f.key, e.target.value)}
-                  className="flex-1 h-[38px] rounded px-3 bg-[#b0b0b0] text-[#333] font-['Times_New_Roman'] text-[14px] outline-none focus:ring-2 focus:ring-[#e9af41]/40 border-none cursor-pointer"
-                >
-                  {f.options.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  type={f.type}
-                  value={form[f.key]}
-                  onChange={(e) => handleChange(f.key, e.target.value)}
-                  className="flex-1 h-[38px] rounded px-3 bg-[#b0b0b0] text-[#333] font-['Times_New_Roman'] text-[14px] outline-none focus:ring-2 focus:ring-[#e9af41]/40 placeholder:text-[#666] [color-scheme:light]"
-                />
-              )}
+        ) : (
+          <>
+            {/* Gold badge + title */}
+            <div className="flex flex-col items-center mb-6">
+              <Image src="/assets/admin/Edit-profile.png" alt="Gold Badge" width={80} height={80} className="object-contain" />
+              <h2 className="font-['Times_New_Roman'] font-bold text-[22px] text-white">
+                Edit Profile
+              </h2>
             </div>
-          ))}
-        </div>
 
-        {/* Action buttons */}
-        <div className="flex items-center justify-center gap-3">
-          <button
-            onClick={onClose}
-            className="h-[38px] px-6 rounded border border-white/20 bg-white font-['Times_New_Roman'] font-bold text-[14px] text-red-500 hover:bg-white/90 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleConfirm}
-            className="h-[38px] px-6 rounded font-['Times_New_Roman'] font-bold text-[14px] text-black hover:opacity-90 transition-opacity"
-            style={{ background: GOLD_BG }}
-          >
-            Confirm
-          </button>
-        </div>
+            {/* Profile picture upload */}
+            <div className="mb-5">
+              <p className="font-['Times_New_Roman'] text-[14px] text-white/90 mb-2">
+                Profile Picture
+              </p>
+              <label className="w-full h-[80px] rounded-lg border-2 border-dashed border-[#e9af41]/40 flex items-center justify-center cursor-pointer hover:border-[#e9af41]/70 transition-colors bg-white/[0.03]">
+                <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                {profilePictureFile ? (
+                  <span className="font-['Times_New_Roman'] text-[13px] text-white/70">
+                    {profilePictureFile.name}
+                  </span>
+                ) : form.profile_picture ? (
+                  <img src={form.profile_picture} alt="Current" className="h-full object-contain" />
+                ) : (
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                    <rect x="2" y="3" width="20" height="18" rx="3" fill="#e9af41" />
+                    <circle cx="8.5" cy="9.5" r="2.5" fill="white" />
+                    <path d="M2 17l5-5 3 3 4-4 8 6" fill="white" fillOpacity="0.7" />
+                  </svg>
+                )}
+              </label>
+            </div>
+
+            {/* Form fields */}
+            <div className="flex flex-col gap-4 mb-6">
+              {fields.map((f) => (
+                <div key={f.key} className="flex items-center gap-3">
+                  <label className="font-['Times_New_Roman'] font-bold text-[14px] text-white/90 w-[110px] shrink-0">
+                    {f.label}
+                  </label>
+                  {f.type === "select" ? (
+                    <select
+                      value={form[f.key]}
+                      onChange={(e) => handleChange(f.key, f.key === "gender" || f.key === "hobby" ? parseInt(e.target.value) : e.target.value)}
+                      className="flex-1 h-[38px] rounded px-3 bg-[#b0b0b0] text-[#333] font-['Times_New_Roman'] text-[14px] outline-none focus:ring-2 focus:ring-[#e9af41]/40 border-none cursor-pointer"
+                    >
+                      <option value="">Select...</option>
+                      {f.options.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type={f.type}
+                      value={form[f.key]}
+                      onChange={(e) => handleChange(f.key, e.target.value)}
+                      className="flex-1 h-[38px] rounded px-3 bg-[#b0b0b0] text-[#333] font-['Times_New_Roman'] text-[14px] outline-none focus:ring-2 focus:ring-[#e9af41]/40 placeholder:text-[#666] [color-scheme:light]"
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex items-center justify-center gap-3">
+              <button
+                onClick={onClose}
+                disabled={saving}
+                className="h-[38px] px-6 rounded border border-white/20 bg-white font-['Times_New_Roman'] font-bold text-[14px] text-red-500 hover:bg-white/90 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirm}
+                disabled={saving}
+                className="h-[38px] px-6 rounded font-['Times_New_Roman'] font-bold text-[14px] text-black hover:opacity-90 transition-opacity disabled:opacity-50"
+                style={{ background: GOLD_BG }}
+              >
+                {saving ? "Saving..." : "Confirm"}
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -337,6 +448,10 @@ function MembersContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Dynamic options from API
+  const [vipTiers, setVipTiers] = useState([]);
+  const [stations, setStations] = useState([]);
+
   // Modal state
   const [viewMember, setViewMember] = useState(null);
   const [editMember, setEditMember] = useState(null);
@@ -346,7 +461,7 @@ function MembersContent() {
     (type, member) => {
       const params = new URLSearchParams({
         memberId: String(member.uuid),
-        name: member.username || "",
+        name: member.username || member.full_name || "",
       });
       router.push(`/admin/members/${type}?${params.toString()}`);
     },
@@ -371,6 +486,33 @@ function MembersContent() {
   const [sortDir, setSortDir] = useState("asc");
   const itemsPerPage = 10;
 
+  // Fetch VIP tiers and stations on mount
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const [tiersData, stationsData] = await Promise.all([
+          getVipTierList(),
+          getStationList()
+        ]);
+        console.log('VIP Tiers:', tiersData);
+        console.log('Stations:', stationsData);
+        
+        // Handle if response is paginated (has results array) or direct array
+        const tiers = Array.isArray(tiersData) ? tiersData : (tiersData?.results || []);
+        const stations = Array.isArray(stationsData) ? stationsData : (stationsData?.results || []);
+        
+        console.log('Processed Tiers:', tiers);
+        console.log('Processed Stations:', stations);
+        
+        setVipTiers(tiers);
+        setStations(stations);
+      } catch (err) {
+        console.error("Failed to fetch filter options:", err);
+      }
+    };
+    fetchOptions();
+  }, []);
+
   const fetchMembers = useCallback(async (page) => {
     setIsLoading(true);
     setError(null);
@@ -378,16 +520,16 @@ function MembersContent() {
       const params = {
         page,
         page_size: itemsPerPage,
-        username: searchQuery || undefined,
+        member_name: searchQuery || undefined,
         phone_number: phoneQuery || undefined,
-        tier: tierFilter || undefined,
+        vip_tier_uuid: tierFilter || undefined,
         station_uuid: stationFilter || undefined,
-        register_start: regFrom || undefined,
-        register_end: regTo || undefined,
-        checkin_start: checkinFrom || undefined,
-        checkin_end: checkinTo || undefined,
-        login_start: loginFrom || undefined,
-        login_end: loginTo || undefined,
+        registered_start_datetime: regFrom || undefined,
+        registered_end_datetime: regTo || undefined,
+        last_checkin_start_date: checkinFrom || undefined,
+        last_checkin_end_date: checkinTo || undefined,
+        last_login_start_datetime: loginFrom || undefined,
+        last_login_end_datetime: loginTo || undefined,
       };
       const res = await getMemberList(params);
       setMembers(res.results || []);
@@ -401,11 +543,15 @@ function MembersContent() {
     }
   }, [searchQuery, phoneQuery, tierFilter, stationFilter, regFrom, regTo, checkinFrom, checkinTo, loginFrom, loginTo]);
 
-  // Reset page when filters change
+  // Debounced fetch - only trigger when user stops typing/selecting for 500ms
   useEffect(() => {
-    setCurrentPage(1);
-    fetchMembers(1);
-  }, [fetchMembers]);
+    const timer = setTimeout(() => {
+      setCurrentPage(1);
+      fetchMembers(1);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, phoneQuery, tierFilter, stationFilter, regFrom, regTo, checkinFrom, checkinTo, loginFrom, loginTo]);
 
   // Sort
   const currentMembers = useMemo(() => {
@@ -445,12 +591,12 @@ function MembersContent() {
   // Column definitions
   const columns = [
     { key: "id", label: "No", minW: "min-w-[50px]" },
-    { key: "username", label: "Member Name", minW: "min-w-[120px]" },
+    { key: "full_name", label: "Member Name", minW: "min-w-[120px]" },
     { key: "phone_number", label: "Phone Number", minW: "min-w-[130px]" },
-    { key: "tier", label: "MRS VIP Tier", minW: "min-w-[110px]" },
+    { key: "vip_tier", label: "MRS VIP Tier", minW: "min-w-[110px]" },
     { key: "current_tokens", label: "Current Tokens", minW: "min-w-[110px]" },
     {
-      key: "registered_date",
+      key: "registered_datetime",
       label: "Registered Date/Time",
       minW: "min-w-[165px]",
     },
@@ -514,9 +660,29 @@ function MembersContent() {
               The Member List
             </p>
             {activeFilterCount > 0 && (
-              <span className="font-['Times_New_Roman'] text-[11px] text-[#e9af41] bg-[rgba(233,175,65,0.15)] rounded-full px-2 py-0.5">
-                {activeFilterCount} active
-              </span>
+              <>
+                <span className="font-['Times_New_Roman'] text-[11px] text-[#e9af41] bg-[rgba(233,175,65,0.15)] rounded-full px-2 py-0.5">
+                  {activeFilterCount} active
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setPhoneQuery("");
+                    setTierFilter("");
+                    setStationFilter("");
+                    setRegFrom("");
+                    setRegTo("");
+                    setCheckinFrom("");
+                    setCheckinTo("");
+                    setLoginFrom("");
+                    setLoginTo("");
+                  }}
+                  className="font-['Times_New_Roman'] text-[11px] text-red-400 hover:text-red-300 underline"
+                >
+                  Clear All
+                </button>
+              </>
             )}
             <span className="font-['Times_New_Roman'] text-[13px] text-white/80 ml-auto mr-1 sm:mr-2">
               Filter By:
@@ -548,15 +714,29 @@ function MembersContent() {
             {/* Dropdown filters */}
             <FilterDropdown
               label="Station"
-              options={STATION_OPTIONS}
-              value={stationFilter}
-              onChange={setStationFilter}
+              options={stations.map(s => s.station_name || s.name || '')}
+              value={stationFilter ? (stations.find(s => s.uuid === stationFilter)?.station_name || stations.find(s => s.uuid === stationFilter)?.name || "") : ""}
+              onChange={(name) => {
+                if (!name) {
+                  setStationFilter("");
+                } else {
+                  const station = stations.find(s => (s.station_name || s.name) === name);
+                  setStationFilter(station?.uuid || "");
+                }
+              }}
             />
             <FilterDropdown
               label="MRS VIP Tier"
-              options={TIER_OPTIONS}
-              value={tierFilter}
-              onChange={setTierFilter}
+              options={vipTiers.map(t => t.name || '')}
+              value={tierFilter ? (vipTiers.find(t => t.uuid === tierFilter)?.name || "") : ""}
+              onChange={(name) => {
+                if (!name) {
+                  setTierFilter("");
+                } else {
+                  const tier = vipTiers.find(t => t.name === name);
+                  setTierFilter(tier?.uuid || "");
+                }
+              }}
             />
 
             {/* Text search inputs */}
@@ -634,19 +814,19 @@ function MembersContent() {
                           {startIndex + idx + 1}
                         </td>
                         <td className="px-2 py-3 font-['Times_New_Roman'] text-[13px] text-white/80 whitespace-nowrap">
-                          {m.username || "N/A"}
+                          {m.full_name || m.username || "N/A"}
                         </td>
                         <td className="px-2 py-3 font-['Times_New_Roman'] text-[13px] text-white/80 whitespace-nowrap">
                           {m.phone_number || "N/A"}
                         </td>
                         <td className="px-2 py-3 font-['Times_New_Roman'] text-[13px] text-white/80 whitespace-nowrap">
-                          {m.tier || "N/A"}
+                          {m.vip_tier || "N/A"}
                         </td>
                         <td className="px-2 py-3 font-['Times_New_Roman'] text-[13px] text-white/80 whitespace-nowrap">
                           {m.current_tokens?.toLocaleString() || "0"}
                         </td>
                         <td className="px-2 py-3 font-['Times_New_Roman'] text-[13px] text-white/80 whitespace-nowrap">
-                          {formatDateTime(m.registered_date)}
+                          {formatDateTime(m.registered_datetime)}
                         </td>
                         <td className="px-2 py-3 font-['Times_New_Roman'] text-[13px] text-white/80 whitespace-nowrap">
                           {formatDateTime(m.last_check_in_date)}
@@ -703,6 +883,10 @@ function MembersContent() {
       <EditMemberModal
         member={editMember}
         onClose={() => setEditMember(null)}
+        onSave={() => {
+          // Reload the member list after successful edit
+          fetchMembers(currentPage);
+        }}
       />
     )}
     </>

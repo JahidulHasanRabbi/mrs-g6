@@ -50,6 +50,7 @@ export function FilterDropdown({ label, options, value, onChange, align = "left"
       {open && (
         <div className={`absolute top-full mt-1 z-50 min-w-[180px] max-h-[280px] overflow-y-auto rounded-lg border border-[rgba(255,255,132,0.3)] bg-[#0f2618] shadow-xl ${align === "right" ? "right-0" : "left-0"}`}>
           <button
+            key="all-option"
             type="button"
             onClick={() => { onChange(""); setOpen(false); }}
             className={`w-full text-left px-3 py-2.5 font-['Times_New_Roman'] text-[13px] transition-colors ${
@@ -60,10 +61,10 @@ export function FilterDropdown({ label, options, value, onChange, align = "left"
           >
             All
           </button>
-          {options.map((opt) => (
+          {options.map((opt, index) => (
             <button
               type="button"
-              key={opt}
+              key={`${opt}-${index}`}
               onClick={() => { onChange(opt); setOpen(false); }}
               className={`w-full text-left px-3 py-2.5 font-['Times_New_Roman'] text-[13px] border-t border-white/5 transition-colors ${
                 value === opt

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { AdminRouteGuard } from "../../../components/guards/AdminRouteGuard";
+import { Pagination } from "../../../components/admin/members/DataTable";
 import { getMemberReport } from "../../../api/adminApi";
 
 const PAGE_SIZE = 9;
@@ -110,81 +111,6 @@ function DateFilter({ value, onChange }) {
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </div>
-    </div>
-  );
-}
-
-function Pagination({ currentPage, totalPages, onPageChange }) {
-  const pageNumbers = [];
-
-  if (totalPages <= 7) {
-    for (let page = 1; page <= totalPages; page += 1) {
-      pageNumbers.push(page);
-    }
-  } else {
-    if (currentPage <= 4) {
-      for (let i = 1; i <= 5; i++) pageNumbers.push(i);
-      pageNumbers.push("ellipsis-1");
-      pageNumbers.push(totalPages);
-    } else if (currentPage >= totalPages - 3) {
-      pageNumbers.push(1);
-      pageNumbers.push("ellipsis-1");
-      for (let i = totalPages - 4; i <= totalPages; i++) pageNumbers.push(i);
-    } else {
-      pageNumbers.push(1);
-      pageNumbers.push("ellipsis-1");
-      pageNumbers.push(currentPage - 1);
-      pageNumbers.push(currentPage);
-      pageNumbers.push(currentPage + 1);
-      pageNumbers.push("ellipsis-2");
-      pageNumbers.push(totalPages);
-    }
-  }
-
-  return (
-    <div className="flex items-center justify-end gap-[16px] px-4 pb-3 pt-1 font-['Times_New_Roman'] text-[11px] text-white/80">
-      <button
-        type="button"
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="transition hover:text-white disabled:cursor-not-allowed disabled:text-white/35"
-      >
-        Previous
-      </button>
-
-      <div className="flex items-center gap-[16px]">
-        {pageNumbers.map((item) => {
-          if (typeof item === "string") {
-            return (
-              <span key={item} className="text-white/45">
-                ...
-              </span>
-            );
-          }
-
-          const active = item === currentPage;
-
-          return (
-            <button
-              key={item}
-              type="button"
-              onClick={() => onPageChange(item)}
-              className={active ? "font-bold text-[#f4bf55]" : "transition hover:text-white"}
-            >
-              {item}
-            </button>
-          );
-        })}
-      </div>
-
-      <button
-        type="button"
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className="transition hover:text-white disabled:cursor-not-allowed disabled:text-white/35"
-      >
-        Next
-      </button>
     </div>
   );
 }
@@ -437,7 +363,11 @@ function MemberReportContent() {
             </table>
           </div>
 
-          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+          {totalPages > 1 && (
+            <div className="border-t border-white/5 pt-3">
+              <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+            </div>
+          )}
         </section>
     </main>
   );
