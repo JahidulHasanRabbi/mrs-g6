@@ -21,49 +21,67 @@ function formatHistoryDate(isoString) {
 const HISTORY_CONFIG = {
   token: {
     title: "Token History",
-    contentWidth: "302px",
-    contentOffset: "37px",
+    contentWidth: "288px",
+    contentOffset: "30px",
     contentTop: "114px",
     paginationTop: "346px",
-    gridTemplateColumns: "23% 27% 32% 18%",
+    gridTemplateColumns:
+      "minmax(0,26%) minmax(0,26%) minmax(0,26%) minmax(0,22%)",
     columns: [
       {
         key: "created",
         label: "Date/time",
-        cellClassName: "whitespace-nowrap",
+        cellClassName: "whitespace-nowrap overflow-hidden pl-1",
+        headerAlign: "text-left pl-1",
       },
       {
         key: "category",
         label: "Category",
-        cellClassName: "break-words pr-1",
+        cellClassName: "break-words overflow-hidden pr-1",
       },
-      { key: "token_details", label: "Token details", cellClassName: "break-words pr-1" },
-      { key: "amount", label: "Amount", cellClassName: "break-words" },
+      {
+        key: "token_details",
+        label: "Token details",
+        cellClassName: "break-words overflow-hidden pr-1",
+      },
+      {
+        key: "amount",
+        label: "Amount",
+        cellClassName: "break-words overflow-hidden text-right pr-1",
+        headerAlign: "text-right pr-1",
+      },
     ],
   },
   reward: {
     title: "Reward History",
-    contentWidth: "308px",
-    contentOffset: "33px",
+    contentWidth: "288px",
+    contentOffset: "30px",
     contentTop: "114px",
     paginationTop: "346px",
-    gridTemplateColumns: "23% 25% 26% 26%",
+    gridTemplateColumns:
+      "minmax(0,24%) minmax(0,24%) minmax(0,26%) minmax(0,26%)",
     columns: [
       {
         key: "created",
         label: "Date/time",
-        cellClassName: "whitespace-nowrap",
+        cellClassName: "whitespace-nowrap overflow-hidden pl-1",
+        headerAlign: "text-left pl-1",
       },
       {
         key: "category",
         label: "Category",
-        cellClassName: "break-words pr-1",
+        cellClassName: "break-words overflow-hidden pr-1",
       },
-      { key: "reward_details", label: "Reward details", cellClassName: "break-words pr-1" },
+      {
+        key: "reward_details",
+        label: "Reward details",
+        cellClassName: "break-words overflow-hidden pr-1",
+      },
       {
         key: "reward_name",
         label: "Reward name",
-        cellClassName: "break-words",
+        cellClassName: "break-words overflow-hidden text-right pr-1",
+        headerAlign: "text-right pr-1",
       },
     ],
   },
@@ -186,7 +204,7 @@ function HistoryModal({ type, onClose }) {
   const fetchHistory = useCallback(async (page) => {
     const uuid = tokenStorage.getMemberUuid();
     if (!uuid) return;
-    
+
     setLoading(true);
     try {
       const params = { page, page_size: PAGE_SIZE };
@@ -304,7 +322,7 @@ function HistoryModal({ type, onClose }) {
               {config.columns.map((column) => (
                 <div
                   key={column.key}
-                  className="whitespace-pre-line px-0 text-left leading-[1.1]"
+                  className={`whitespace-pre-line px-0 leading-[1.1] ${column.headerAlign || "text-left"}`}
                 >
                   {column.label}
                 </div>
@@ -330,11 +348,11 @@ function HistoryModal({ type, onClose }) {
                     {config.columns.map((column) => {
                       let cellValue = row[column.key];
                       if (column.key === "created") cellValue = formatHistoryDate(cellValue);
-                      
+
                       if (cellValue === null || cellValue === undefined || cellValue === "") {
                         cellValue = "—";
                       }
-                      
+
                       return (
                         <div
                           key={column.key}
