@@ -2,127 +2,21 @@
 
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { getMemberTokenHistory, getMemberRewardHistory } from "../../api/memberApi";
+import { tokenStorage } from "../../api/tokenStorage";
 
 const PAGE_SIZE = 6;
 
-// TODO (Backend): replace with token history API data.
-// Token History fields: created_at, category, details, amount
-const MOCK_TOKEN_HISTORY = [
-  {
-    created_at: "3.4.2026",
-    category: "1",
-    details: "Good token",
-    amount: "RM 200",
-  },
-  {
-    created_at: "3.5.2026",
-    category: "2",
-    details: "Excellent token",
-    amount: "RM 250",
-  },
-  {
-    created_at: "3.6.2026",
-    category: "3",
-    details: "Average token",
-    amount: "RM 150",
-  },
-  {
-    created_at: "3.7.2026",
-    category: "4",
-    details: "Below average token",
-    amount: "RM 100",
-  },
-  {
-    created_at: "3.8.2026",
-    category: "5",
-    details: "Poor token",
-    amount: "RM 50",
-  },
-  {
-    created_at: "3.9.2026",
-    category: "6",
-    details: "Exceptional token",
-    amount: "RM 300",
-  },
-  {
-    created_at: "3.10.2026",
-    category: "7",
-    details: "Seasonal token",
-    amount: "RM 180",
-  },
-  {
-    created_at: "3.11.2026",
-    category: "8",
-    details: "Loyalty token",
-    amount: "RM 220",
-  },
-  {
-    created_at: "3.12.2026",
-    category: "9",
-    details: "Mystery token",
-    amount: "RM 260",
-  },
-];
-
-// TODO (Backend): replace with reward history API data.
-// Reward History fields: created_at, category, details, reward_name
-const MOCK_REWARD_HISTORY = [
-  {
-    created_at: "3.4.2026",
-    category: "1",
-    details: "Good rewards",
-    reward_name: "Reward 1",
-  },
-  {
-    created_at: "3.5.2026",
-    category: "2",
-    details: "Better incentives",
-    reward_name: "Reward 2",
-  },
-  {
-    created_at: "3.6.2026",
-    category: "3",
-    details: "Exclusive perks",
-    reward_name: "Reward 3",
-  },
-  {
-    created_at: "3.7.2026",
-    category: "4",
-    details: "Bonus opportunities",
-    reward_name: "Reward 4",
-  },
-  {
-    created_at: "3.8.2026",
-    category: "5",
-    details: "Special access",
-    reward_name: "Reward 5",
-  },
-  {
-    created_at: "3.9.2026",
-    category: "6",
-    details: "Loyalty benefits",
-    reward_name: "Reward 6",
-  },
-  {
-    created_at: "3.10.2026",
-    category: "7",
-    details: "Referral surprise",
-    reward_name: "Reward 7",
-  },
-  {
-    created_at: "3.11.2026",
-    category: "8",
-    details: "Weekend booster",
-    reward_name: "Reward 8",
-  },
-  {
-    created_at: "3.12.2026",
-    category: "9",
-    details: "VIP exclusive",
-    reward_name: "Reward 9",
-  },
-];
+function formatHistoryDate(isoString) {
+  if (!isoString) return "—";
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return isoString;
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${dd}.${mm}.${yyyy}`;
+}
 
 const HISTORY_CONFIG = {
   token: {
@@ -131,22 +25,21 @@ const HISTORY_CONFIG = {
     contentOffset: "37px",
     contentTop: "114px",
     paginationTop: "346px",
-    gridTemplateColumns: "70px 44px 110px 60px",
+    gridTemplateColumns: "23% 27% 32% 18%",
     columns: [
       {
-        key: "created_at",
+        key: "created",
         label: "Date/time",
         cellClassName: "whitespace-nowrap",
       },
       {
         key: "category",
         label: "Category",
-        cellClassName: "whitespace-nowrap",
+        cellClassName: "break-words pr-1",
       },
-      { key: "details", label: "Token details" },
-      { key: "amount", label: "Amount", cellClassName: "whitespace-nowrap" },
+      { key: "token_details", label: "Token details", cellClassName: "break-words pr-1" },
+      { key: "amount", label: "Amount", cellClassName: "break-words" },
     ],
-    rows: MOCK_TOKEN_HISTORY,
   },
   reward: {
     title: "Reward History",
@@ -154,26 +47,25 @@ const HISTORY_CONFIG = {
     contentOffset: "33px",
     contentTop: "114px",
     paginationTop: "346px",
-    gridTemplateColumns: "70px 42px 104px 74px",
+    gridTemplateColumns: "23% 25% 26% 26%",
     columns: [
       {
-        key: "created_at",
+        key: "created",
         label: "Date/time",
         cellClassName: "whitespace-nowrap",
       },
       {
         key: "category",
         label: "Category",
-        cellClassName: "whitespace-nowrap",
+        cellClassName: "break-words pr-1",
       },
-      { key: "details", label: "Reward details" },
+      { key: "reward_details", label: "Reward details", cellClassName: "break-words pr-1" },
       {
         key: "reward_name",
         label: "Reward name",
-        cellClassName: "whitespace-nowrap",
+        cellClassName: "break-words",
       },
     ],
-    rows: MOCK_REWARD_HISTORY,
   },
 };
 
@@ -203,10 +95,23 @@ function HistoryButton({ title, onClick, delay = 0 }) {
 }
 
 function HistoryPagination({ currentPage, totalPages, onPageChange }) {
-  const pageItems =
-    totalPages <= 5
-      ? Array.from({ length: totalPages }, (_, index) => index + 1)
-      : [1, 2, 3, "ellipsis", totalPages];
+  const getPageNumbers = () => {
+    const pages = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push("ellipsis-1");
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (currentPage < totalPages - 2) pages.push("ellipsis-2");
+      pages.push(totalPages);
+    }
+    return pages;
+  };
+
+  const pageItems = getPageNumbers();
 
   return (
     <div className="relative flex items-center justify-center gap-5 font-['Times_New_Roman'] text-[16px] text-[#efc868]">
@@ -220,10 +125,10 @@ function HistoryPagination({ currentPage, totalPages, onPageChange }) {
         ←
       </button>
 
-      {pageItems.map((item) => {
-        if (item === "ellipsis") {
+      {pageItems.map((item, idx) => {
+        if (typeof item === "string" && item.startsWith("ellipsis")) {
           return (
-            <span key="ellipsis" className="text-[14px] opacity-70">
+            <span key={`ellipsis-${idx}`} className="text-[14px] opacity-70">
               ...
             </span>
           );
@@ -262,17 +167,44 @@ function HistoryModal({ type, onClose }) {
   const config = HISTORY_CONFIG[type];
   const [currentPage, setCurrentPage] = useState(1);
   const [modalScale, setModalScale] = useState(1);
+  const [rows, setRows] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  const totalPages = Math.max(1, Math.ceil(config.rows.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
-  const visibleRows = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return config.rows.slice(start, start + PAGE_SIZE);
-  }, [config.rows, currentPage]);
+  const fetchHistory = useCallback(async (page) => {
+    const uuid = tokenStorage.getMemberUuid();
+    if (!uuid) return;
+    
+    setLoading(true);
+    try {
+      const params = { page, page_size: PAGE_SIZE };
+      let res;
+      if (type === "token") {
+        res = await getMemberTokenHistory(uuid, params);
+      } else {
+        res = await getMemberRewardHistory(uuid, params);
+      }
+      setRows(res.results || []);
+      setTotalCount(res.count || 0);
+    } catch (err) {
+      console.error("Failed to load history:", err);
+      setRows([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [type]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [type]);
+    fetchHistory(1);
+  }, [type, fetchHistory]);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    fetchHistory(page);
+  };
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -356,7 +288,7 @@ function HistoryModal({ type, onClose }) {
             }}
           >
             <div
-              className="grid items-start gap-x-[6px] pb-[12px] font-['Times_New_Roman'] text-[11px] font-normal text-[#efc868]"
+              className="grid items-start gap-x-[6px] pb-[12px] font-['Times_New_Roman'] text-[min(11px,3vw)] font-normal text-[#efc868]"
               style={{ gridTemplateColumns: config.gridTemplateColumns }}
             >
               {config.columns.map((column) => (
@@ -370,22 +302,41 @@ function HistoryModal({ type, onClose }) {
             </div>
 
             <div className="flex flex-col gap-[10px]">
-              {visibleRows.map((row, rowIndex) => (
-                <div
-                  key={`${config.title}-${row.created_at}-${rowIndex}`}
-                  className="grid items-start gap-x-[6px] font-['Times_New_Roman'] text-[10.5px] leading-[1.15] text-[#f8f0db]"
-                  style={{ gridTemplateColumns: config.gridTemplateColumns }}
-                >
-                  {config.columns.map((column) => (
-                    <div
-                      key={column.key}
-                      className={`px-0 text-left break-words ${column.cellClassName || ""}`}
-                    >
-                      {row[column.key]}
-                    </div>
-                  ))}
+              {loading ? (
+                <div className="text-center font-['Times_New_Roman'] text-[12px] text-[#f8f0db]/50 pt-10">
+                  Loading...
                 </div>
-              ))}
+              ) : rows.length === 0 ? (
+                <div className="text-center font-['Times_New_Roman'] text-[12px] text-[#f8f0db]/50 pt-10">
+                  No records found.
+                </div>
+              ) : (
+                rows.map((row, rowIndex) => (
+                  <div
+                    key={`${config.title}-${row.id || rowIndex}`}
+                    className="grid items-start gap-x-[6px] font-['Times_New_Roman'] text-[min(10.5px,2.8vw)] leading-[1.15] text-[#f8f0db]"
+                    style={{ gridTemplateColumns: config.gridTemplateColumns }}
+                  >
+                    {config.columns.map((column) => {
+                      let cellValue = row[column.key];
+                      if (column.key === "created") cellValue = formatHistoryDate(cellValue);
+                      
+                      if (cellValue === null || cellValue === undefined || cellValue === "") {
+                        cellValue = "—";
+                      }
+                      
+                      return (
+                        <div
+                          key={column.key}
+                          className={`px-0 text-left break-words ${column.cellClassName || ""}`}
+                        >
+                          {cellValue}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -396,7 +347,7 @@ function HistoryModal({ type, onClose }) {
             <HistoryPagination
               currentPage={currentPage}
               totalPages={totalPages}
-              onPageChange={setCurrentPage}
+              onPageChange={handlePageChange}
             />
           </div>
 

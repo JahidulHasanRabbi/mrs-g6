@@ -1,6 +1,7 @@
 import { apiRequest } from './apiClient';
 import { ENDPOINTS } from './api';
 import { tokenStorage } from './tokenStorage';
+import { buildQueryParams } from './queryParams';
 
 // POST /login/generate-token/
 export async function generateMemberToken(id, o) {
@@ -149,4 +150,22 @@ export async function getWinningList() {
   return await apiRequest(ENDPOINTS.FRONT_VIEW.WINNING_LIST, {
     method: 'GET'
   }, false);
+}
+
+// GET /member/<uuid>/member-tokens/
+export async function getMemberTokenHistory(memberUuid, params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(
+    `${ENDPOINTS.MEMBER.MEMBER_TOKENS(memberUuid)}${qs}`,
+    { method: 'GET' }, true, 'member'
+  );
+}
+
+// GET /member/<uuid>/member-rewards/
+export async function getMemberRewardHistory(memberUuid, params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(
+    `${ENDPOINTS.MEMBER.MEMBER_REWARDS(memberUuid)}${qs}`,
+    { method: 'GET' }, true, 'member'
+  );
 }

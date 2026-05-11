@@ -7,52 +7,37 @@ import { AdminRouteGuard } from "../../../components/guards/AdminRouteGuard";
 import HistoryPageShell from "../../../components/admin/members/HistoryPageShell";
 import { FilterDropdown, DateFilter, TextSearchInput } from "../../../components/admin/members/FilterControls";
 import { DataTable, Pagination } from "../../../components/admin/members/DataTable";
+import { getMemberTokenHistory } from "../../../api/adminApi";
+import { getCategoryOptions } from "../../../api/queryParams";
 
 // ── Constants ────────────────────────────────────────────────────────────
 const PAGE_SIZE = 8;
 
-const CATEGORY_OPTIONS = ["Category A", "Category B", "Category C", "Category D", "Category E", "Category F", "Category G"];
-const REWARD_DETAILS_OPTIONS = ["Here are the details", "Additional information", "Further details provided"];
-const REWARD_NAME_OPTIONS = ["Name Abc", "Name Def", "Name Ghi"];
-const STATION_OPTIONS = ["Station A", "Station B", "Station C", "Station D", "Station E", "Station F", "Station G"];
-
-// ── Mock data ────────────────────────────────────────────────────────────
-// TODO (Backend): replace with real API call to member token history endpoint.
-const MOCK_TOKEN_HISTORY = [
-  { id: 1, station: "Station A", dateTime: "30.04.2026 8:00 PM", timestamp: "2026-04-30T20:00:00", category: "Category A", rewardDetails: "Here are the details", rewardName: "Name Abc" },
-  { id: 2, station: "Station B", dateTime: "30.04.2026 9:00 PM", timestamp: "2026-04-30T21:00:00", category: "Category B", rewardDetails: "Additional information", rewardName: "Name Def" },
-  { id: 3, station: "Station A", dateTime: "30.04.2026 8:00 PM", timestamp: "2026-04-30T20:00:00", category: "Category A", rewardDetails: "Here are the details", rewardName: "Name Abc" },
-  { id: 4, station: "Station C", dateTime: "30.04.2026 10:00 PM", timestamp: "2026-04-30T22:00:00", category: "Category C", rewardDetails: "Further details provided", rewardName: "Name Ghi" },
-  { id: 5, station: "Station D", dateTime: "01.05.2026 11:00 AM", timestamp: "2026-05-01T11:00:00", category: "Category D", rewardDetails: "Here are the details", rewardName: "Name Def" },
-  { id: 6, station: "Station E", dateTime: "01.05.2026 2:30 PM", timestamp: "2026-05-01T14:30:00", category: "Category E", rewardDetails: "Additional information", rewardName: "Name Ghi" },
-  { id: 7, station: "Station F", dateTime: "01.05.2026 4:00 PM", timestamp: "2026-05-01T16:00:00", category: "Category F", rewardDetails: "Further details provided", rewardName: "Name Abc" },
-  { id: 8, station: "Station G", dateTime: "02.05.2026 9:15 AM", timestamp: "2026-05-02T09:15:00", category: "Category G", rewardDetails: "Here are the details", rewardName: "Name Def" },
-  { id: 9, station: "Station A", dateTime: "02.05.2026 11:45 AM", timestamp: "2026-05-02T11:45:00", category: "Category A", rewardDetails: "Additional information", rewardName: "Name Abc" },
-  { id: 10, station: "Station B", dateTime: "02.05.2026 3:20 PM", timestamp: "2026-05-02T15:20:00", category: "Category B", rewardDetails: "Here are the details", rewardName: "Name Ghi" },
-  { id: 11, station: "Station C", dateTime: "03.05.2026 8:00 AM", timestamp: "2026-05-03T08:00:00", category: "Category C", rewardDetails: "Further details provided", rewardName: "Name Def" },
-  { id: 12, station: "Station D", dateTime: "03.05.2026 12:30 PM", timestamp: "2026-05-03T12:30:00", category: "Category D", rewardDetails: "Additional information", rewardName: "Name Abc" },
-  { id: 13, station: "Station E", dateTime: "04.05.2026 10:00 AM", timestamp: "2026-05-04T10:00:00", category: "Category E", rewardDetails: "Here are the details", rewardName: "Name Ghi" },
-  { id: 14, station: "Station F", dateTime: "04.05.2026 2:15 PM", timestamp: "2026-05-04T14:15:00", category: "Category F", rewardDetails: "Further details provided", rewardName: "Name Def" },
-  { id: 15, station: "Station G", dateTime: "05.05.2026 9:00 AM", timestamp: "2026-05-05T09:00:00", category: "Category G", rewardDetails: "Additional information", rewardName: "Name Abc" },
-  { id: 16, station: "Station A", dateTime: "05.05.2026 1:45 PM", timestamp: "2026-05-05T13:45:00", category: "Category A", rewardDetails: "Here are the details", rewardName: "Name Def" },
-  { id: 17, station: "Station B", dateTime: "06.05.2026 11:30 AM", timestamp: "2026-05-06T11:30:00", category: "Category B", rewardDetails: "Further details provided", rewardName: "Name Ghi" },
-  { id: 18, station: "Station C", dateTime: "06.05.2026 4:00 PM", timestamp: "2026-05-06T16:00:00", category: "Category C", rewardDetails: "Additional information", rewardName: "Name Abc" },
-  { id: 19, station: "Station D", dateTime: "07.05.2026 8:30 AM", timestamp: "2026-05-07T08:30:00", category: "Category D", rewardDetails: "Here are the details", rewardName: "Name Def" },
-  { id: 20, station: "Station E", dateTime: "07.05.2026 3:00 PM", timestamp: "2026-05-07T15:00:00", category: "Category E", rewardDetails: "Further details provided", rewardName: "Name Ghi" },
-];
-
 const TABLE_COLUMNS = [
   { key: "station", label: "Station", minW: "min-w-[120px]" },
-  { key: "dateTime", label: "Date/Time", minW: "min-w-[180px]" },
+  { key: "created", label: "Date/Time", minW: "min-w-[180px]" },
   { key: "category", label: "Category", minW: "min-w-[140px]" },
-  { key: "rewardDetails", label: "Reward Details", minW: "min-w-[220px]" },
-  { key: "rewardName", label: "Reward Name", minW: "min-w-[140px]", align: "right" },
+  { key: "token_details", label: "Token Details", minW: "min-w-[220px]" },
+  { key: "amount", label: "Amount", minW: "min-w-[140px]", align: "right" },
 ];
 
 // ── Helpers ──────────────────────────────────────────────────────────────
-function toDateOnly(dateStr) {
-  if (!dateStr) return null;
-  try { return new Date(dateStr).toISOString().slice(0, 10); } catch { return null; }
+function formatDateTime(isoStr) {
+  if (!isoStr) return "N/A";
+  try {
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return isoStr;
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    const hours = d.getHours();
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+    const h12 = hours % 12 || 12;
+    return `${dd}.${mm}.${yyyy} ${h12}:${minutes} ${ampm}`;
+  } catch {
+    return isoStr;
+  }
 }
 
 // ── Page content ─────────────────────────────────────────────────────────
@@ -65,48 +50,64 @@ function TokenHistoryContent() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
-  const [detailsFilter, setDetailsFilter] = useState("");
-  const [nameFilter, setNameFilter] = useState("");
-  const [stationFilter, setStationFilter] = useState("");
-  const [usernameSearch, setUsernameSearch] = useState("");
-  const [phoneSearch, setPhoneSearch] = useState("");
+  const [detailsSearch, setDetailsSearch] = useState("");
 
   // Table state
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState("asc");
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const isInRange = useCallback((ts, from, to) => {
-    if (!from && !to) return true;
-    const d = toDateOnly(ts);
-    if (!d) return true;
-    if (from && d < from) return false;
-    if (to && d > to) return false;
-    return true;
-  }, []);
+  const fetchHistory = useCallback(async (page) => {
+    if (!memberId) return;
+    setLoading(true);
+    try {
+      const catValue = getCategoryOptions("token").find(o => o.label === categoryFilter)?.value;
+      
+      const params = {
+        page,
+        page_size: PAGE_SIZE,
+        start_datetime: dateFrom || undefined,
+        end_datetime: dateTo || undefined,
+        category: catValue || undefined,
+        token_details: detailsSearch || undefined
+      };
+      const res = await getMemberTokenHistory(memberId, params);
+      setRows(res.results || []);
+      setTotalCount(res.count || 0);
+    } catch (err) {
+      console.error(err);
+      setRows([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [memberId, dateFrom, dateTo, categoryFilter, detailsSearch]);
 
-  const filteredRows = useMemo(() => {
-    let list = [...MOCK_TOKEN_HISTORY];
-    if (categoryFilter) list = list.filter((r) => r.category === categoryFilter);
-    if (detailsFilter) list = list.filter((r) => r.rewardDetails === detailsFilter);
-    if (nameFilter) list = list.filter((r) => r.rewardName === nameFilter);
-    if (stationFilter) list = list.filter((r) => r.station === stationFilter);
-    list = list.filter((r) => isInRange(r.timestamp, dateFrom, dateTo));
+  useEffect(() => {
+    setCurrentPage(1);
+    fetchHistory(1);
+  }, [fetchHistory]);
 
+  const sortedRows = useMemo(() => {
+    let list = [...rows];
     if (sortKey) {
       list.sort((a, b) => {
         const mul = sortDir === "asc" ? 1 : -1;
-        if (sortKey === "dateTime") return (new Date(a.timestamp) - new Date(b.timestamp)) * mul;
+        if (sortKey === "created") return (new Date(a.created) - new Date(b.created)) * mul;
         return String(a[sortKey] ?? "").localeCompare(String(b[sortKey] ?? "")) * mul;
       });
     }
     return list;
-  }, [categoryFilter, detailsFilter, nameFilter, stationFilter, dateFrom, dateTo, sortKey, sortDir, isInRange]);
+  }, [rows, sortKey, sortDir]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
-  const pageRows = filteredRows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
-  useEffect(() => { setCurrentPage(1); }, [categoryFilter, detailsFilter, nameFilter, stationFilter, dateFrom, dateTo, usernameSearch, phoneSearch]);
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    fetchHistory(page);
+  };
 
   const handleSort = (key) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -122,30 +123,31 @@ function TokenHistoryContent() {
             The Token Are Given
           </p>
           <DateFilter label="Date/Time" fromDate={dateFrom} toDate={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
-          <FilterDropdown label="Category" options={CATEGORY_OPTIONS} value={categoryFilter} onChange={setCategoryFilter} />
-          <FilterDropdown label="Reward Details" options={REWARD_DETAILS_OPTIONS} value={detailsFilter} onChange={setDetailsFilter} />
-          <FilterDropdown label="Reward Name" options={REWARD_NAME_OPTIONS} value={nameFilter} onChange={setNameFilter} />
-          <TextSearchInput placeholder="Enter Username" value={usernameSearch} onChange={setUsernameSearch} />
-          <TextSearchInput placeholder="Enter Phone Number" value={phoneSearch} onChange={setPhoneSearch} />
-          <FilterDropdown label="Station" options={STATION_OPTIONS} value={stationFilter} onChange={setStationFilter} />
+          <FilterDropdown label="Category" options={getCategoryOptions("token").map(o => o.label)} value={categoryFilter} onChange={setCategoryFilter} />
+          <TextSearchInput placeholder="Token Details" value={detailsSearch} onChange={setDetailsSearch} />
         </div>
 
         {/* Record count */}
         <div className="font-['Times_New_Roman'] text-[12px] text-white/40">
-          Showing {pageRows.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}&ndash;{Math.min(currentPage * PAGE_SIZE, filteredRows.length)} of {filteredRows.length} records
+          Showing {totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}&ndash;{Math.min(currentPage * PAGE_SIZE, totalCount)} of {totalCount} records
         </div>
 
         {/* Table */}
         <DataTable
           columns={TABLE_COLUMNS}
-          rows={pageRows}
+          rows={sortedRows}
           sortKey={sortKey}
           sortDir={sortDir}
           onSort={handleSort}
-          emptyMessage="No token history records found."
+          emptyMessage={loading ? "Loading..." : "No token history records found."}
+          renderCell={(row, col) => {
+            if (col.key === "created") return formatDateTime(row.created);
+            if (col.key === "token_details") return row.token_details || "—";
+            return row[col.key];
+          }}
         />
 
-        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       </div>
     </HistoryPageShell>
   );

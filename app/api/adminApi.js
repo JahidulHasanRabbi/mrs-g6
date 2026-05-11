@@ -1,6 +1,7 @@
 import { apiRequest } from './apiClient';
 import { ENDPOINTS, BASE_URL } from './api';
 import { tokenStorage } from './tokenStorage';
+import { buildQueryParams } from './queryParams';
 
 export async function adminLogin(username, password) {
   const response = await apiRequest(ENDPOINTS.ADMIN.LOGIN, {
@@ -243,4 +244,40 @@ export async function archiveBanner(uuid) {
   return await apiRequest(ENDPOINTS.ADMIN.ARCHIVE_BANNER(uuid), {
     method: 'PATCH'
   }, true, 'admin');
+}
+
+// GET /member/token-report/
+export async function getTokenReport(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.TOKEN_REPORT}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+// GET /member/reward-report/
+export async function getRewardReport(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.REWARD_REPORT}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+// GET /member/member-list/
+export async function getMemberList(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.MEMBER_LIST}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+// GET /member/<uuid>/member-deposit/
+export async function getMemberDeposit(memberUuid, params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.MEMBER_DEPOSIT(memberUuid)}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+// GET /member/<uuid>/member-tokens/ (Admin access)
+export async function getMemberTokenHistory(memberUuid, params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.MEMBER.MEMBER_TOKENS(memberUuid)}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+// GET /member/<uuid>/member-rewards/ (Admin access)
+export async function getMemberRewardHistory(memberUuid, params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.MEMBER.MEMBER_REWARDS(memberUuid)}${qs}`, { method: 'GET' }, true, 'admin');
 }

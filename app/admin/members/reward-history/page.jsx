@@ -5,55 +5,38 @@ import { useSearchParams } from "next/navigation";
 
 import { AdminRouteGuard } from "../../../components/guards/AdminRouteGuard";
 import HistoryPageShell from "../../../components/admin/members/HistoryPageShell";
-import { FilterDropdown, DateFilter } from "../../../components/admin/members/FilterControls";
+import { FilterDropdown, DateFilter, TextSearchInput } from "../../../components/admin/members/FilterControls";
 import { DataTable, Pagination } from "../../../components/admin/members/DataTable";
+import { getMemberRewardHistory } from "../../../api/adminApi";
+import { getCategoryOptions } from "../../../api/queryParams";
 
 // ── Constants ────────────────────────────────────────────────────────────
 const PAGE_SIZE = 8;
 
-const CATEGORY_OPTIONS = ["Category A", "Category B", "Category C", "Category D", "Category E", "Category F", "Category G"];
-const TOKEN_DETAIL_OPTIONS = ["Here are the details", "Final thoughts", "Summary of activities", "Important updates", "Overview of events", "Key highlights", "All relevant information"];
-const STATION_OPTIONS = ["Station A", "Station B", "Station C", "Station D", "Station E", "Station F", "Station G"];
-
-// ── Mock data ────────────────────────────────────────────────────────────
-// TODO (Backend): replace with real API call to member reward history endpoint.
-const MOCK_REWARD_HISTORY = [
-  { id: 1, station: "Station A", dateTime: "30.04.2026 8:00 PM", timestamp: "2026-04-30T20:00:00", category: "Category A", tokenDetails: "Here are the details", amount: 10000 },
-  { id: 2, station: "Station G", dateTime: "06.05.2026 2:00 PM", timestamp: "2026-05-06T14:00:00", category: "Category G", tokenDetails: "Final thoughts", amount: 40000 },
-  { id: 3, station: "Station C", dateTime: "02.05.2026 10:00 AM", timestamp: "2026-05-02T10:00:00", category: "Category C", tokenDetails: "Summary of activities", amount: 20000 },
-  { id: 4, station: "Station D", dateTime: "03.05.2026 11:00 AM", timestamp: "2026-05-03T11:00:00", category: "Category D", tokenDetails: "Important updates", amount: 25000 },
-  { id: 5, station: "Station B", dateTime: "01.05.2026 9:00 AM", timestamp: "2026-05-01T09:00:00", category: "Category B", tokenDetails: "Overview of events", amount: 15000 },
-  { id: 6, station: "Station F", dateTime: "05.05.2026 1:00 PM", timestamp: "2026-05-05T13:00:00", category: "Category F", tokenDetails: "Key highlights", amount: 35000 },
-  { id: 7, station: "Station A", dateTime: "30.04.2026 8:00 PM", timestamp: "2026-04-30T20:00:00", category: "Category A", tokenDetails: "Here are the details", amount: 10000 },
-  { id: 8, station: "Station E", dateTime: "04.05.2026 12:00 PM", timestamp: "2026-05-04T12:00:00", category: "Category E", tokenDetails: "All relevant information", amount: 30000 },
-  { id: 9, station: "Station B", dateTime: "07.05.2026 3:30 PM", timestamp: "2026-05-07T15:30:00", category: "Category B", tokenDetails: "Final thoughts", amount: 18000 },
-  { id: 10, station: "Station D", dateTime: "08.05.2026 9:15 AM", timestamp: "2026-05-08T09:15:00", category: "Category D", tokenDetails: "Overview of events", amount: 22000 },
-  { id: 11, station: "Station G", dateTime: "09.05.2026 11:45 AM", timestamp: "2026-05-09T11:45:00", category: "Category G", tokenDetails: "Key highlights", amount: 45000 },
-  { id: 12, station: "Station C", dateTime: "10.05.2026 4:00 PM", timestamp: "2026-05-10T16:00:00", category: "Category C", tokenDetails: "Summary of activities", amount: 12000 },
-  { id: 13, station: "Station F", dateTime: "11.05.2026 10:30 AM", timestamp: "2026-05-11T10:30:00", category: "Category F", tokenDetails: "Important updates", amount: 38000 },
-  { id: 14, station: "Station A", dateTime: "12.05.2026 2:45 PM", timestamp: "2026-05-12T14:45:00", category: "Category A", tokenDetails: "All relevant information", amount: 8000 },
-  { id: 15, station: "Station E", dateTime: "13.05.2026 6:00 PM", timestamp: "2026-05-13T18:00:00", category: "Category E", tokenDetails: "Here are the details", amount: 27000 },
-  { id: 16, station: "Station B", dateTime: "14.05.2026 8:20 AM", timestamp: "2026-05-14T08:20:00", category: "Category B", tokenDetails: "Final thoughts", amount: 16000 },
-  { id: 17, station: "Station D", dateTime: "15.05.2026 1:10 PM", timestamp: "2026-05-15T13:10:00", category: "Category D", tokenDetails: "Key highlights", amount: 33000 },
-  { id: 18, station: "Station G", dateTime: "16.05.2026 5:30 PM", timestamp: "2026-05-16T17:30:00", category: "Category G", tokenDetails: "Overview of events", amount: 50000 },
-];
-
 const TABLE_COLUMNS = [
-  { key: "station", label: "Station", minW: "min-w-[120px]" },
-  { key: "dateTime", label: "Date/Time", minW: "min-w-[180px]" },
+  { key: "created", label: "Date/Time", minW: "min-w-[180px]" },
   { key: "category", label: "Category", minW: "min-w-[140px]" },
-  { key: "tokenDetails", label: "Token Details", minW: "min-w-[260px]" },
-  { key: "amount", label: "Amount", minW: "min-w-[120px]", align: "right" },
+  { key: "reward_details", label: "Reward Details", minW: "min-w-[260px]" },
+  { key: "reward_name", label: "Reward Name", minW: "min-w-[140px]" },
 ];
 
 // ── Helpers ──────────────────────────────────────────────────────────────
-function toDateOnly(dateStr) {
-  if (!dateStr) return null;
-  try { return new Date(dateStr).toISOString().slice(0, 10); } catch { return null; }
-}
-
-function formatAmount(val) {
-  return val.toLocaleString("en-MY");
+function formatDateTime(isoStr) {
+  if (!isoStr) return "N/A";
+  try {
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return isoStr;
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    const hours = d.getHours();
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+    const h12 = hours % 12 || 12;
+    return `${dd}.${mm}.${yyyy} ${h12}:${minutes} ${ampm}`;
+  } catch {
+    return isoStr;
+  }
 }
 
 // ── Page content ─────────────────────────────────────────────────────────
@@ -66,45 +49,65 @@ function RewardHistoryContent() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
-  const [tokenDetailFilter, setTokenDetailFilter] = useState("");
-  const [stationFilter, setStationFilter] = useState("");
+  const [detailsSearch, setDetailsSearch] = useState("");
+  const [nameSearch, setNameSearch] = useState("");
 
   // Table state
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState("asc");
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const isInRange = useCallback((ts, from, to) => {
-    if (!from && !to) return true;
-    const d = toDateOnly(ts);
-    if (!d) return true;
-    if (from && d < from) return false;
-    if (to && d > to) return false;
-    return true;
-  }, []);
+  const fetchHistory = useCallback(async (page) => {
+    if (!memberId) return;
+    setLoading(true);
+    try {
+      const catValue = getCategoryOptions("reward").find(o => o.label === categoryFilter)?.value;
+      const params = {
+        page,
+        page_size: PAGE_SIZE,
+        start_datetime: dateFrom || undefined,
+        end_datetime: dateTo || undefined,
+        category: catValue || undefined,
+        reward_details: detailsSearch || undefined,
+        reward_name: nameSearch || undefined
+      };
+      const res = await getMemberRewardHistory(memberId, params);
+      setRows(res.results || []);
+      setTotalCount(res.count || 0);
+    } catch (err) {
+      console.error(err);
+      setRows([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [memberId, dateFrom, dateTo, categoryFilter, detailsSearch, nameSearch]);
 
-  const filteredRows = useMemo(() => {
-    let list = [...MOCK_REWARD_HISTORY];
-    if (categoryFilter) list = list.filter((r) => r.category === categoryFilter);
-    if (tokenDetailFilter) list = list.filter((r) => r.tokenDetails === tokenDetailFilter);
-    if (stationFilter) list = list.filter((r) => r.station === stationFilter);
-    list = list.filter((r) => isInRange(r.timestamp, dateFrom, dateTo));
+  useEffect(() => {
+    setCurrentPage(1);
+    fetchHistory(1);
+  }, [fetchHistory]);
 
+  const sortedRows = useMemo(() => {
+    let list = [...rows];
     if (sortKey) {
       list.sort((a, b) => {
         const mul = sortDir === "asc" ? 1 : -1;
-        if (sortKey === "dateTime") return (new Date(a.timestamp) - new Date(b.timestamp)) * mul;
-        if (sortKey === "amount") return (a.amount - b.amount) * mul;
+        if (sortKey === "created") return (new Date(a.created) - new Date(b.created)) * mul;
         return String(a[sortKey] ?? "").localeCompare(String(b[sortKey] ?? "")) * mul;
       });
     }
     return list;
-  }, [categoryFilter, tokenDetailFilter, stationFilter, dateFrom, dateTo, sortKey, sortDir, isInRange]);
+  }, [rows, sortKey, sortDir]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
-  const pageRows = filteredRows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
-  useEffect(() => { setCurrentPage(1); }, [categoryFilter, tokenDetailFilter, stationFilter, dateFrom, dateTo]);
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    fetchHistory(page);
+  };
 
   const handleSort = (key) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -112,7 +115,9 @@ function RewardHistoryContent() {
   };
 
   const renderCell = (row, col) => {
-    if (col.key === "amount") return formatAmount(row.amount);
+    if (col.key === "created") return formatDateTime(row.created);
+    if (col.key === "reward_details") return row.reward_details || "—";
+    if (col.key === "reward_name") return row.reward_name || "—";
     return row[col.key];
   };
 
@@ -126,23 +131,28 @@ function RewardHistoryContent() {
           </p>
           <span className="font-['Times_New_Roman'] text-[13px] text-white/80 ml-auto mr-1">Filter By:</span>
           <DateFilter label="Date/Time" fromDate={dateFrom} toDate={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
-          <FilterDropdown label="Category" options={CATEGORY_OPTIONS} value={categoryFilter} onChange={setCategoryFilter} />
-          <FilterDropdown label="Token Details" options={TOKEN_DETAIL_OPTIONS} value={tokenDetailFilter} onChange={setTokenDetailFilter} />
-          <FilterDropdown label="Station" options={STATION_OPTIONS} value={stationFilter} onChange={setStationFilter} align="right" />
+          <FilterDropdown label="Category" options={getCategoryOptions("reward").map(o => o.label)} value={categoryFilter} onChange={setCategoryFilter} />
+          <TextSearchInput placeholder="Reward Details" value={detailsSearch} onChange={setDetailsSearch} />
+          <TextSearchInput placeholder="Reward Name" value={nameSearch} onChange={setNameSearch} />
+        </div>
+
+        {/* Record count */}
+        <div className="font-['Times_New_Roman'] text-[12px] text-white/40">
+          Showing {totalCount === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}&ndash;{Math.min(currentPage * PAGE_SIZE, totalCount)} of {totalCount} records
         </div>
 
         {/* Table */}
         <DataTable
           columns={TABLE_COLUMNS}
-          rows={pageRows}
+          rows={sortedRows}
           sortKey={sortKey}
           sortDir={sortDir}
           onSort={handleSort}
           renderCell={renderCell}
-          emptyMessage="No reward history records found."
+          emptyMessage={loading ? "Loading..." : "No reward history records found."}
         />
 
-        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
       </div>
     </HistoryPageShell>
   );

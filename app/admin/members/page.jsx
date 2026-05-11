@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
 import Image from "next/image";
 
+import { getMemberList } from "../../api/adminApi";
+import { FilterDropdown, DateFilter, TextSearchInput, GOLD_BG } from "../../components/admin/members/FilterControls";
+import { Pagination } from "../../components/admin/members/DataTable";
+
 // ── Mock data ──────────────────────────────────────────────────────────
 // TODO (Backend): Replace MOCK_MEMBERS with real API call to adminApi.getMembers()
 // API endpoint: GET /member/members/
@@ -21,308 +25,7 @@ const STATION_OPTIONS = [
   "ep369",
 ];
 
-const MOCK_MEMBERS = [
-  {
-    id: 1,
-    uuid: "uuid-1",
-    username: "John88",
-    phone_number: "+6012345567",
-    tier: "Bronze",
-    current_tokens: 1200,
-    station: "KGAME99",
-    registered_date: "2026-04-30T20:00:00",
-    last_check_in_date: "2026-04-30T20:00:00",
-    last_login_datetime: "2026-04-30T20:00:00",
-  },
-  {
-    id: 2,
-    uuid: "uuid-2",
-    username: "AceKing99",
-    phone_number: "+60198765432",
-    tier: "Silver",
-    current_tokens: 3500,
-    station: "LV918",
-    registered_date: "2026-04-28T15:00:00",
-    last_check_in_date: "2026-04-29T10:00:00",
-    last_login_datetime: "2026-04-30T18:00:00",
-  },
-  {
-    id: 3,
-    uuid: "uuid-3",
-    username: "LuckyDraw01",
-    phone_number: "+60112223344",
-    tier: "Gold",
-    current_tokens: 8200,
-    station: "Acebet77",
-    registered_date: "2026-03-15T09:00:00",
-    last_check_in_date: "2026-04-30T19:00:00",
-    last_login_datetime: "2026-04-30T21:00:00",
-  },
-  {
-    id: 4,
-    uuid: "uuid-4",
-    username: "SpinMaster",
-    phone_number: "+60177889900",
-    tier: "Bronze",
-    current_tokens: 900,
-    station: "Ubetclub",
-    registered_date: "2026-04-01T12:00:00",
-    last_check_in_date: "2026-04-29T17:00:00",
-    last_login_datetime: "2026-04-29T20:00:00",
-  },
-  {
-    id: 5,
-    uuid: "uuid-5",
-    username: "GoldRush77",
-    phone_number: "+60133445566",
-    tier: "Platinum",
-    current_tokens: 15800,
-    station: "n1gang",
-    registered_date: "2025-12-10T08:30:00",
-    last_check_in_date: "2026-04-30T08:00:00",
-    last_login_datetime: "2026-04-30T22:00:00",
-  },
-  {
-    id: 6,
-    uuid: "uuid-6",
-    username: "StarPlayer",
-    phone_number: "+60144556677",
-    tier: "Diamond",
-    current_tokens: 42000,
-    station: "ep369",
-    registered_date: "2025-11-05T14:00:00",
-    last_check_in_date: "2026-04-30T12:00:00",
-    last_login_datetime: "2026-04-30T23:30:00",
-  },
-  {
-    id: 7,
-    uuid: "uuid-7",
-    username: "CoolBet22",
-    phone_number: "+60155667788",
-    tier: "Silver",
-    current_tokens: 2800,
-    station: "KGAME99",
-    registered_date: "2026-03-20T16:00:00",
-    last_check_in_date: "2026-04-28T09:00:00",
-    last_login_datetime: "2026-04-29T14:00:00",
-  },
-  {
-    id: 8,
-    uuid: "uuid-8",
-    username: "WinnerX",
-    phone_number: "+60166778899",
-    tier: "Gold",
-    current_tokens: 6500,
-    station: "LV918",
-    registered_date: "2026-02-14T10:00:00",
-    last_check_in_date: "2026-04-30T15:00:00",
-    last_login_datetime: "2026-04-30T20:00:00",
-  },
-  {
-    id: 9,
-    uuid: "uuid-9",
-    username: "ProSpin44",
-    phone_number: "+60177889901",
-    tier: "Bronze",
-    current_tokens: 450,
-    station: "Acebet77",
-    registered_date: "2026-04-25T09:00:00",
-    last_check_in_date: "2026-04-27T11:00:00",
-    last_login_datetime: "2026-04-28T16:00:00",
-  },
-  {
-    id: 10,
-    uuid: "uuid-10",
-    username: "BigWin2026",
-    phone_number: "+60188990011",
-    tier: "Platinum",
-    current_tokens: 19200,
-    station: "Ubetclub",
-    registered_date: "2025-10-01T07:00:00",
-    last_check_in_date: "2026-04-30T06:00:00",
-    last_login_datetime: "2026-04-30T19:00:00",
-  },
-  {
-    id: 11,
-    uuid: "uuid-11",
-    username: "MegaSpin",
-    phone_number: "+60199001122",
-    tier: "Silver",
-    current_tokens: 4100,
-    station: "n1gang",
-    registered_date: "2026-01-15T13:00:00",
-    last_check_in_date: "2026-04-29T14:00:00",
-    last_login_datetime: "2026-04-30T10:00:00",
-  },
-  {
-    id: 12,
-    uuid: "uuid-12",
-    username: "TopPlayer99",
-    phone_number: "+60111223345",
-    tier: "Gold",
-    current_tokens: 7800,
-    station: "ep369",
-    registered_date: "2026-02-28T11:00:00",
-    last_check_in_date: "2026-04-30T16:00:00",
-    last_login_datetime: "2026-04-30T21:30:00",
-  },
-  {
-    id: 13,
-    uuid: "uuid-13",
-    username: "RoyalFlush",
-    phone_number: "+60122334456",
-    tier: "Diamond",
-    current_tokens: 38500,
-    station: "KGAME99",
-    registered_date: "2025-09-20T10:00:00",
-    last_check_in_date: "2026-04-30T07:00:00",
-    last_login_datetime: "2026-04-30T18:00:00",
-  },
-  {
-    id: 14,
-    uuid: "uuid-14",
-    username: "LuckyCharm",
-    phone_number: "+60133445567",
-    tier: "Bronze",
-    current_tokens: 600,
-    station: "LV918",
-    registered_date: "2026-04-20T15:00:00",
-    last_check_in_date: "2026-04-26T12:00:00",
-    last_login_datetime: "2026-04-27T09:00:00",
-  },
-  {
-    id: 15,
-    uuid: "uuid-15",
-    username: "SuperStar88",
-    phone_number: "+60144556678",
-    tier: "Silver",
-    current_tokens: 3200,
-    station: "Acebet77",
-    registered_date: "2026-03-05T08:00:00",
-    last_check_in_date: "2026-04-30T10:00:00",
-    last_login_datetime: "2026-04-30T17:00:00",
-  },
-  {
-    id: 16,
-    uuid: "uuid-16",
-    username: "KingCobra",
-    phone_number: "+60155667789",
-    tier: "Gold",
-    current_tokens: 9100,
-    station: "Ubetclub",
-    registered_date: "2026-01-08T14:00:00",
-    last_check_in_date: "2026-04-29T20:00:00",
-    last_login_datetime: "2026-04-30T12:00:00",
-  },
-  {
-    id: 17,
-    uuid: "uuid-17",
-    username: "BetMaster7",
-    phone_number: "+60166778890",
-    tier: "Platinum",
-    current_tokens: 22000,
-    station: "n1gang",
-    registered_date: "2025-08-15T09:00:00",
-    last_check_in_date: "2026-04-30T09:00:00",
-    last_login_datetime: "2026-04-30T22:30:00",
-  },
-  {
-    id: 18,
-    uuid: "uuid-18",
-    username: "Phoenix99",
-    phone_number: "+60177889912",
-    tier: "Bronze",
-    current_tokens: 350,
-    station: "ep369",
-    registered_date: "2026-04-28T11:00:00",
-    last_check_in_date: "2026-04-29T08:00:00",
-    last_login_datetime: "2026-04-29T15:00:00",
-  },
-  {
-    id: 19,
-    uuid: "uuid-19",
-    username: "DragonSpin",
-    phone_number: "+60188990023",
-    tier: "Silver",
-    current_tokens: 2900,
-    station: "KGAME99",
-    registered_date: "2026-03-12T16:00:00",
-    last_check_in_date: "2026-04-30T11:00:00",
-    last_login_datetime: "2026-04-30T20:30:00",
-  },
-  {
-    id: 20,
-    uuid: "uuid-20",
-    username: "EagleEye",
-    phone_number: "+60199001134",
-    tier: "Gold",
-    current_tokens: 5600,
-    station: "LV918",
-    registered_date: "2026-02-01T10:00:00",
-    last_check_in_date: "2026-04-28T15:00:00",
-    last_login_datetime: "2026-04-30T09:00:00",
-  },
-  {
-    id: 21,
-    uuid: "uuid-21",
-    username: "TigerLuck",
-    phone_number: "+60111224456",
-    tier: "Diamond",
-    current_tokens: 51000,
-    station: "Acebet77",
-    registered_date: "2025-07-01T08:00:00",
-    last_check_in_date: "2026-04-30T14:00:00",
-    last_login_datetime: "2026-04-30T23:00:00",
-  },
-  {
-    id: 22,
-    uuid: "uuid-22",
-    username: "NovaBet",
-    phone_number: "+60122335567",
-    tier: "Bronze",
-    current_tokens: 780,
-    station: "Ubetclub",
-    registered_date: "2026-04-15T09:00:00",
-    last_check_in_date: "2026-04-25T10:00:00",
-    last_login_datetime: "2026-04-26T18:00:00",
-  },
-  {
-    id: 23,
-    uuid: "uuid-23",
-    username: "QuantumWin",
-    phone_number: "+60133446678",
-    tier: "Platinum",
-    current_tokens: 17500,
-    station: "n1gang",
-    registered_date: "2025-11-20T12:00:00",
-    last_check_in_date: "2026-04-30T08:30:00",
-    last_login_datetime: "2026-04-30T21:00:00",
-  },
-  {
-    id: 24,
-    uuid: "uuid-24",
-    username: "BlazeSpin",
-    phone_number: "+60144557789",
-    tier: "Silver",
-    current_tokens: 4800,
-    station: "ep369",
-    registered_date: "2026-01-25T15:00:00",
-    last_check_in_date: "2026-04-30T13:00:00",
-    last_login_datetime: "2026-04-30T19:30:00",
-  },
-  {
-    id: 25,
-    uuid: "uuid-25",
-    username: "MysticBet",
-    phone_number: "+60155668890",
-    tier: "Gold",
-    current_tokens: 7200,
-    station: "KGAME99",
-    registered_date: "2026-02-18T11:00:00",
-    last_check_in_date: "2026-04-29T18:00:00",
-    last_login_datetime: "2026-04-30T16:00:00",
-  },
-];
+// Mock removed. Data now fetched from API.
 
 export default function MembersPage() {
   return (
@@ -332,193 +35,7 @@ export default function MembersPage() {
   );
 }
 
-// ── Reusable gold gradient style ──────────────────────────────────────
-const GOLD_BG =
-  "linear-gradient(1deg, rgba(242,195,107,0) 74%, #dd8f1f 94%), linear-gradient(90deg, #ffff84, #ffff84)";
-
-// ── Dropdown filter component ─────────────────────────────────────────
-function FilterDropdown({ label, options, value, onChange, icon = "chevron" }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const displayLabel = value || label;
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1 h-9 rounded px-3 py-2 shrink-0 transition-opacity hover:opacity-90"
-        style={{ background: GOLD_BG }}
-      >
-        {icon === "calendar" && (
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="black"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-            <line x1="16" y1="2" x2="16" y2="6" />
-            <line x1="8" y1="2" x2="8" y2="6" />
-            <line x1="3" y1="10" x2="21" y2="10" />
-          </svg>
-        )}
-        <span className="font-['Times_New_Roman'] text-[14px] text-black whitespace-nowrap">
-          {displayLabel}
-        </span>
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="black"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className={`transition-transform ${open ? "rotate-180" : ""}`}
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
-
-      {open && (
-        <div className="absolute top-full left-0 mt-1 z-50 min-w-[180px] rounded-lg border border-[rgba(255,255,132,0.3)] bg-[#0f2618] shadow-xl overflow-hidden">
-          {/* Clear / All option */}
-          <button
-            onClick={() => {
-              onChange("");
-              setOpen(false);
-            }}
-            className={`w-full text-left px-3 py-2.5 font-['Times_New_Roman'] text-[13px] transition-colors ${!value
-                ? "text-[#e9af41] bg-[rgba(233,175,65,0.1)]"
-                : "text-white/70 hover:bg-white/5 hover:text-white"
-              }`}
-          >
-            All
-          </button>
-          {options.map((opt) => (
-            <button
-              key={opt}
-              onClick={() => {
-                onChange(opt);
-                setOpen(false);
-              }}
-              className={`w-full text-left px-3 py-2.5 font-['Times_New_Roman'] text-[13px] border-t border-white/5 transition-colors ${value === opt
-                  ? "text-[#e9af41] bg-[rgba(233,175,65,0.1)]"
-                  : "text-white/70 hover:bg-white/5 hover:text-white"
-                }`}
-            >
-              {opt}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Date range filter ─────────────────────────────────────────────────
-function DateFilter({ label, fromDate, toDate, onFromChange, onToChange }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const hasValue = fromDate || toDate;
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1 h-9 rounded px-3 py-2 shrink-0 transition-opacity hover:opacity-90"
-        style={{ background: GOLD_BG }}
-      >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="black"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-          <line x1="16" y1="2" x2="16" y2="6" />
-          <line x1="8" y1="2" x2="8" y2="6" />
-          <line x1="3" y1="10" x2="21" y2="10" />
-        </svg>
-        <span className="font-['Times_New_Roman'] text-[14px] text-black whitespace-nowrap">
-          {label}
-        </span>
-        {hasValue && <span className="w-1.5 h-1.5 rounded-full bg-[#06b800]" />}
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="black"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className={`transition-transform ${open ? "rotate-180" : ""}`}
-        >
-          <polyline points="6 9 12 15 18 9" />
-        </svg>
-      </button>
-
-      {open && (
-        <div className="absolute top-full left-0 mt-1 z-50 w-[260px] rounded-lg border border-[rgba(255,255,132,0.3)] bg-[#0f2618] shadow-xl p-3 flex flex-col gap-2.5">
-          <label className="font-['Times_New_Roman'] text-[12px] text-white/60">
-            From
-          </label>
-          <input
-            type="date"
-            value={fromDate}
-            onChange={(e) => onFromChange(e.target.value)}
-            className="w-full h-9 rounded px-2.5 bg-white/10 border border-white/10 font-['Times_New_Roman'] text-[13px] text-white outline-none focus:border-[#e9af41]/50 [color-scheme:dark]"
-          />
-          <label className="font-['Times_New_Roman'] text-[12px] text-white/60">
-            To
-          </label>
-          <input
-            type="date"
-            value={toDate}
-            onChange={(e) => onToChange(e.target.value)}
-            className="w-full h-9 rounded px-2.5 bg-white/10 border border-white/10 font-['Times_New_Roman'] text-[13px] text-white outline-none focus:border-[#e9af41]/50 [color-scheme:dark]"
-          />
-          <button
-            onClick={() => {
-              onFromChange("");
-              onToChange("");
-            }}
-            className="font-['Times_New_Roman'] text-[12px] text-[#e9af41] hover:underline self-end mt-1"
-          >
-            Clear dates
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
+// Replaced inline components with imports from FilterControls.jsx
 
 // ── Sort icon for table headers ────────────────────────────────────────
 function SortIcon({ active, dir }) {
@@ -575,66 +92,6 @@ function toDateOnly(dateString) {
   }
 }
 
-// ── Pagination component ───────────────────────────────────────────────
-function Pagination({ currentPage, totalPages, onPageChange }) {
-  if (totalPages <= 1) return null;
-
-  const getPageNumbers = () => {
-    const pages = [];
-    if (totalPages <= 5) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      if (currentPage > 3) pages.push("...");
-      const start = Math.max(2, currentPage - 1);
-      const end = Math.min(totalPages - 1, currentPage + 1);
-      for (let i = start; i <= end; i++) pages.push(i);
-      if (currentPage < totalPages - 2) pages.push("...");
-      pages.push(totalPages);
-    }
-    return pages;
-  };
-
-  return (
-    <div className="flex items-center justify-end gap-2 pt-4 pr-2 pb-2">
-      <button
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="font-['Times_New_Roman'] text-[13px] text-white/70 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed px-2 py-1 italic"
-      >
-        Previous
-      </button>
-      {getPageNumbers().map((page, idx) =>
-        page === "..." ? (
-          <span
-            key={`ellipsis-${idx}`}
-            className="font-['Times_New_Roman'] text-[13px] text-white/40 px-1"
-          >
-            ...
-          </span>
-        ) : (
-          <button
-            key={page}
-            onClick={() => onPageChange(page)}
-            className={`font-['Times_New_Roman'] text-[13px] min-w-[28px] h-[28px] rounded flex items-center justify-center transition-colors ${currentPage === page
-                ? "bg-[#e9af41] text-black font-bold"
-                : "text-white/70 hover:text-white hover:bg-white/10"
-              }`}
-          >
-            {page}
-          </button>
-        ),
-      )}
-      <button
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className="font-['Times_New_Roman'] text-[13px] text-white/70 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed px-2 py-1 italic"
-      >
-        Next
-      </button>
-    </div>
-  );
-}
 
 // ── View Member Profile Modal ──────────────────────────────────────────
 function ViewMemberModal({ member, onClose, onNavigate }) {
@@ -875,10 +332,10 @@ function EditMemberModal({ member, onClose, onSave }) {
 function MembersContent() {
   const router = useRouter();
 
-  // TODO (Backend): Replace mock data with real API call
-  const [members] = useState(MOCK_MEMBERS);
-  const [isLoading] = useState(false);
-  const [error] = useState(null);
+  const [members, setMembers] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // Modal state
   const [viewMember, setViewMember] = useState(null);
@@ -888,7 +345,7 @@ function MembersContent() {
   const handleHistoryNavigate = useCallback(
     (type, member) => {
       const params = new URLSearchParams({
-        memberId: String(member.id),
+        memberId: String(member.uuid),
         name: member.username || "",
       });
       router.push(`/admin/members/${type}?${params.toString()}`);
@@ -914,44 +371,45 @@ function MembersContent() {
   const [sortDir, setSortDir] = useState("asc");
   const itemsPerPage = 10;
 
-  // Date range helper
-  const isInDateRange = useCallback((dateStr, from, to) => {
-    if (!from && !to) return true;
-    const d = toDateOnly(dateStr);
-    if (!d) return true;
-    if (from && d < from) return false;
-    if (to && d > to) return false;
-    return true;
-  }, []);
+  const fetchMembers = useCallback(async (page) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const params = {
+        page,
+        page_size: itemsPerPage,
+        username: searchQuery || undefined,
+        phone_number: phoneQuery || undefined,
+        tier: tierFilter || undefined,
+        station_uuid: stationFilter || undefined,
+        register_start: regFrom || undefined,
+        register_end: regTo || undefined,
+        checkin_start: checkinFrom || undefined,
+        checkin_end: checkinTo || undefined,
+        login_start: loginFrom || undefined,
+        login_end: loginTo || undefined,
+      };
+      const res = await getMemberList(params);
+      setMembers(res.results || []);
+      setTotalCount(res.count || 0);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load members.");
+      setMembers([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchQuery, phoneQuery, tierFilter, stationFilter, regFrom, regTo, checkinFrom, checkinTo, loginFrom, loginTo]);
 
-  // Filter + sort
-  const filteredMembers = useMemo(() => {
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+    fetchMembers(1);
+  }, [fetchMembers]);
+
+  // Sort
+  const currentMembers = useMemo(() => {
     let list = [...members];
-
-    // Text search
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      list = list.filter((m) => m.username?.toLowerCase().includes(q));
-    }
-    if (phoneQuery.trim()) {
-      const q = phoneQuery.toLowerCase();
-      list = list.filter((m) => m.phone_number?.toLowerCase().includes(q));
-    }
-
-    // Dropdown filters
-    if (tierFilter) list = list.filter((m) => m.tier === tierFilter);
-    if (stationFilter) list = list.filter((m) => m.station === stationFilter);
-
-    // Date range filters
-    list = list.filter((m) => isInDateRange(m.registered_date, regFrom, regTo));
-    list = list.filter((m) =>
-      isInDateRange(m.last_check_in_date, checkinFrom, checkinTo),
-    );
-    list = list.filter((m) =>
-      isInDateRange(m.last_login_datetime, loginFrom, loginTo),
-    );
-
-    // Sort
     if (sortKey) {
       list.sort((a, b) => {
         const va = a[sortKey] ?? "";
@@ -964,46 +422,16 @@ function MembersContent() {
       });
     }
     return list;
-  }, [
-    members,
-    searchQuery,
-    phoneQuery,
-    tierFilter,
-    stationFilter,
-    regFrom,
-    regTo,
-    checkinFrom,
-    checkinTo,
-    loginFrom,
-    loginTo,
-    sortKey,
-    sortDir,
-    isInDateRange,
-  ]);
+  }, [members, sortKey, sortDir]);
 
-  // Pagination
-  const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
+  // Pagination bounds
+  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const currentMembers = filteredMembers.slice(
-    startIndex,
-    startIndex + itemsPerPage,
-  );
 
-  // Reset page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [
-    searchQuery,
-    phoneQuery,
-    tierFilter,
-    stationFilter,
-    regFrom,
-    regTo,
-    checkinFrom,
-    checkinTo,
-    loginFrom,
-    loginTo,
-  ]);
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    fetchMembers(page);
+  };
 
   const handleSort = (key) => {
     if (sortKey === key) {
@@ -1132,52 +560,16 @@ function MembersContent() {
             />
 
             {/* Text search inputs */}
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Enter Member"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-9 w-[120px] sm:w-[140px] rounded px-3 py-2 font-['Times_New_Roman'] text-[14px] text-black italic placeholder:text-black/50 outline-none"
-                style={{ background: GOLD_BG }}
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-black/40 hover:text-black text-[16px] leading-none"
-                >
-                  ×
-                </button>
-              )}
-            </div>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Enter Phone Number"
-                value={phoneQuery}
-                onChange={(e) => setPhoneQuery(e.target.value)}
-                className="h-9 w-[140px] sm:w-[160px] rounded px-3 py-2 font-['Times_New_Roman'] text-[14px] text-black italic placeholder:text-black/50 outline-none"
-                style={{ background: GOLD_BG }}
-              />
-              {phoneQuery && (
-                <button
-                  onClick={() => setPhoneQuery("")}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-black/40 hover:text-black text-[16px] leading-none"
-                >
-                  ×
-                </button>
-              )}
-            </div>
+            <TextSearchInput placeholder="Enter Member" value={searchQuery} onChange={setSearchQuery} />
+            <TextSearchInput placeholder="Enter Phone Number" value={phoneQuery} onChange={setPhoneQuery} />
           </div>
 
           {/* Results count */}
           {!isLoading && (
             <div className="font-['Times_New_Roman'] text-[12px] text-white/40">
-              Showing {filteredMembers.length === 0 ? 0 : startIndex + 1}–
-              {Math.min(startIndex + itemsPerPage, filteredMembers.length)} of{" "}
-              {filteredMembers.length} members
-              {activeFilterCount > 0 &&
-                ` (filtered from ${members.length} total)`}
+              Showing {totalCount === 0 ? 0 : startIndex + 1}–
+              {Math.min(startIndex + itemsPerPage, totalCount)} of{" "}
+              {totalCount} members
             </div>
           )}
 
@@ -1287,12 +679,14 @@ function MembersContent() {
           )}
 
           {/* Pagination */}
-          {!isLoading && (
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
+          {!isLoading && totalPages > 1 && (
+            <div className="mt-4 border-t border-[rgba(255,255,255,0.05)] pt-3">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
           )}
         </div>
     </main>

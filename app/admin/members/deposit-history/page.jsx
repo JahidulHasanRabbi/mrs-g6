@@ -8,46 +8,37 @@ import HistoryPageShell from "../../../components/admin/members/HistoryPageShell
 import { FilterDropdown, DateFilter } from "../../../components/admin/members/FilterControls";
 import { DataTable, Pagination } from "../../../components/admin/members/DataTable";
 
+// API imports
+import { getMemberDeposit } from "../../../api/adminApi";
+import { getCategoryOptions } from "../../../api/queryParams";
+
 // ── Constants ────────────────────────────────────────────────────────────
-const PAGE_SIZE = 8;
-
+const PAGE_SIZE = 10;
 const STATION_OPTIONS = ["Station A", "Station B", "Station C", "Station D", "Station E", "Station F", "Station G"];
-const CATEGORY_OPTIONS = ["Category A", "Category B", "Category C", "Category D", "Category E", "Category F", "Category G"];
-const TOKEN_DETAIL_OPTIONS = ["Here are the details", "Final thoughts", "Summary of activities", "Important updates", "Overview of events", "Key highlights", "All relevant information"];
-
-// ── Mock data ────────────────────────────────────────────────────────────
-// TODO (Backend): replace with real API call to member deposit history endpoint.
-const MOCK_DEPOSIT_HISTORY = [
-  { id: 1, dateTime: "30.04.2026 8:00 PM", timestamp: "2026-04-30T20:00:00", station: "Station A", rewardAmount: 10000 },
-  { id: 2, dateTime: "02.05.2026 10:30 AM", timestamp: "2026-05-02T10:30:00", station: "Station C", rewardAmount: 9800 },
-  { id: 3, dateTime: "01.05.2026 9:00 AM", timestamp: "2026-05-01T09:00:00", station: "Station B", rewardAmount: 12500 },
-  { id: 4, dateTime: "05.05.2026 5:00 PM", timestamp: "2026-05-05T17:00:00", station: "Station F", rewardAmount: 13000 },
-  { id: 5, dateTime: "30.04.2026 8:00 PM", timestamp: "2026-04-30T20:00:00", station: "Station A", rewardAmount: 10000 },
-  { id: 6, dateTime: "03.05.2026 1:15 PM", timestamp: "2026-05-03T13:15:00", station: "Station D", rewardAmount: 11200 },
-  { id: 7, dateTime: "04.05.2026 3:45 PM", timestamp: "2026-05-04T15:45:00", station: "Station E", rewardAmount: 10500 },
-  { id: 8, dateTime: "06.05.2026 7:30 AM", timestamp: "2026-05-06T07:30:00", station: "Station G", rewardAmount: 15000 },
-  { id: 9, dateTime: "07.05.2026 11:00 AM", timestamp: "2026-05-07T11:00:00", station: "Station B", rewardAmount: 8200 },
-  { id: 10, dateTime: "08.05.2026 2:20 PM", timestamp: "2026-05-08T14:20:00", station: "Station A", rewardAmount: 14800 },
-  { id: 11, dateTime: "09.05.2026 4:00 PM", timestamp: "2026-05-09T16:00:00", station: "Station D", rewardAmount: 9500 },
-  { id: 12, dateTime: "10.05.2026 9:45 AM", timestamp: "2026-05-10T09:45:00", station: "Station F", rewardAmount: 16200 },
-  { id: 13, dateTime: "11.05.2026 6:30 PM", timestamp: "2026-05-11T18:30:00", station: "Station C", rewardAmount: 11800 },
-  { id: 14, dateTime: "12.05.2026 8:15 AM", timestamp: "2026-05-12T08:15:00", station: "Station E", rewardAmount: 7600 },
-  { id: 15, dateTime: "13.05.2026 12:00 PM", timestamp: "2026-05-13T12:00:00", station: "Station G", rewardAmount: 18500 },
-  { id: 16, dateTime: "14.05.2026 3:30 PM", timestamp: "2026-05-14T15:30:00", station: "Station B", rewardAmount: 13400 },
-  { id: 17, dateTime: "15.05.2026 10:10 AM", timestamp: "2026-05-15T10:10:00", station: "Station A", rewardAmount: 9900 },
-  { id: 18, dateTime: "16.05.2026 5:45 PM", timestamp: "2026-05-16T17:45:00", station: "Station D", rewardAmount: 20000 },
-];
 
 const TABLE_COLUMNS = [
-  { key: "dateTime", label: "Date/Time", minW: "min-w-[200px]" },
+  { key: "created", label: "Date/Time", minW: "min-w-[200px]" },
   { key: "station", label: "Station", minW: "min-w-[180px]" },
-  { key: "rewardAmount", label: "Reward Amount", minW: "min-w-[180px]", align: "right" },
+  { key: "amount", label: "Deposit Amount", minW: "min-w-[180px]", align: "right" },
 ];
 
 // ── Helpers ──────────────────────────────────────────────────────────────
-function toDateOnly(dateStr) {
-  if (!dateStr) return null;
-  try { return new Date(dateStr).toISOString().slice(0, 10); } catch { return null; }
+function formatDateTime(isoStr) {
+  if (!isoStr) return "N/A";
+  try {
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return isoStr;
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    const hours = d.getHours();
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+    const h12 = hours % 12 || 12;
+    return `${dd}.${mm}.${yyyy} ${h12}:${minutes} ${ampm}`;
+  } catch {
+    return isoStr;
+  }
 }
 
 function formatAmount(val) {
@@ -71,38 +62,61 @@ function DepositHistoryContent() {
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState("asc");
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const isInRange = useCallback((ts, from, to) => {
-    if (!from && !to) return true;
-    const d = toDateOnly(ts);
-    if (!d) return true;
-    if (from && d < from) return false;
-    if (to && d > to) return false;
-    return true;
-  }, []);
+  const fetchHistory = useCallback(async (page) => {
+    if (!memberId) return;
+    setLoading(true);
+    try {
+      const catValue = getCategoryOptions("token").find(o => o.label === categoryFilter)?.value;
+      const params = {
+        page,
+        page_size: PAGE_SIZE,
+        start_datetime: dateFrom || undefined,
+        end_datetime: dateTo || undefined,
+        category: catValue || undefined,
+        token_details: tokenDetailFilter || undefined,
+        station_uuid: stationFilter || undefined
+      };
+      const res = await getMemberDeposit(memberId, params);
+      setRows(res.results || []);
+      setTotalCount(res.count || 0);
+    } catch (err) {
+      console.error(err);
+      setRows([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [memberId, dateFrom, dateTo, categoryFilter, tokenDetailFilter, stationFilter]);
 
-  const filteredRows = useMemo(() => {
-    let list = [...MOCK_DEPOSIT_HISTORY];
-    if (stationFilter) list = list.filter((r) => r.station === stationFilter);
-    list = list.filter((r) => isInRange(r.timestamp, dateFrom, dateTo));
-    // categoryFilter and tokenDetailFilter kept for UI parity even though mock data doesn't have those fields
+  useEffect(() => {
+    setCurrentPage(1);
+    fetchHistory(1);
+  }, [fetchHistory]);
+
+  const sortedRows = useMemo(() => {
+    let list = [...rows];
     if (sortKey) {
       list.sort((a, b) => {
         const va = a[sortKey] ?? "";
         const vb = b[sortKey] ?? "";
         const mul = sortDir === "asc" ? 1 : -1;
-        if (sortKey === "dateTime") return (new Date(a.timestamp) - new Date(b.timestamp)) * mul;
+        if (sortKey === "created") return (new Date(a.created) - new Date(b.created)) * mul;
         if (typeof va === "number") return (va - vb) * mul;
         return String(va).localeCompare(String(vb)) * mul;
       });
     }
     return list;
-  }, [stationFilter, dateFrom, dateTo, categoryFilter, tokenDetailFilter, sortKey, sortDir, isInRange]);
+  }, [rows, sortKey, sortDir]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
-  const pageRows = filteredRows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
-  useEffect(() => { setCurrentPage(1); }, [stationFilter, dateFrom, dateTo, categoryFilter, tokenDetailFilter]);
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    fetchHistory(page);
+  };
 
   const handleSort = (key) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -110,8 +124,9 @@ function DepositHistoryContent() {
   };
 
   const renderCell = (row, col) => {
-    if (col.key === "rewardAmount") return formatAmount(row.rewardAmount);
-    return row[col.key];
+    if (col.key === "amount") return formatAmount(row.amount || 0);
+    if (col.key === "created") return formatDateTime(row.created);
+    return row[col.key] || "—";
   };
 
   return (
@@ -124,23 +139,24 @@ function DepositHistoryContent() {
           </p>
           <span className="font-['Times_New_Roman'] text-[13px] text-white/80 ml-auto mr-1">Filter By:</span>
           <DateFilter label="Date/Time" fromDate={dateFrom} toDate={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
-          <FilterDropdown label="Category" options={CATEGORY_OPTIONS} value={categoryFilter} onChange={setCategoryFilter} />
-          <FilterDropdown label="Token Details" options={TOKEN_DETAIL_OPTIONS} value={tokenDetailFilter} onChange={setTokenDetailFilter} />
+          <FilterDropdown label="Category" options={getCategoryOptions("token").map(o => o.label)} value={categoryFilter} onChange={setCategoryFilter} />
           <FilterDropdown label="Station" options={STATION_OPTIONS} value={stationFilter} onChange={setStationFilter} align="right" />
         </div>
 
         {/* Table */}
         <DataTable
           columns={TABLE_COLUMNS}
-          rows={pageRows}
+          rows={sortedRows}
           sortKey={sortKey}
           sortDir={sortDir}
           onSort={handleSort}
           renderCell={renderCell}
-          emptyMessage="No deposit records found."
+          emptyMessage={loading ? "Loading..." : "No deposit records found."}
         />
 
-        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+        {totalPages > 1 && (
+          <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+        )}
       </div>
     </HistoryPageShell>
   );
