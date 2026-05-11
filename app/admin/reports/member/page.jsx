@@ -398,28 +398,31 @@ function MemberReportContent() {
                     </td>
                   </tr>
                 ) : paginatedRows.length > 0 ? (
-                  paginatedRows.map((row) => (
-                    <tr key={row.no} className="border-b border-[rgba(255,255,255,0.08)] transition-colors hover:bg-white/[0.03]">
-                      <td className="px-4 py-[14px] first:pl-5 font-['Times_New_Roman'] text-[13px] text-[#f1f1f1] whitespace-nowrap">
-                        {row.no}
-                      </td>
-                      <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#f1f1f1] whitespace-nowrap">
-                        {formatDateDisplay(row.date, reportType)}
-                      </td>
-                      <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#ece9dc] whitespace-nowrap">
-                        {formatNumber(row.new_members)}
-                      </td>
-                      <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#ece9dc] whitespace-nowrap">
-                        {formatNumber(row.total_members)}
-                      </td>
-                      <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#ece9dc] whitespace-nowrap">
-                        {formatNumber(row.active_members)}
-                      </td>
-                      <td className="px-4 py-[14px] pr-5 text-right font-['Times_New_Roman'] text-[13px] text-[#f1f1f1] whitespace-nowrap">
-                        {formatNumber(row.total_tokens_issued)}
-                      </td>
-                    </tr>
-                  ))
+                  paginatedRows.map((row, index) => {
+                    const displayNo = (currentPage - 1) * PAGE_SIZE + index + 1;
+                    return (
+                      <tr key={row.no || index} className="border-b border-[rgba(255,255,255,0.08)] transition-colors hover:bg-white/[0.03]">
+                        <td className="px-4 py-[14px] first:pl-5 font-['Times_New_Roman'] text-[13px] text-[#f1f1f1] whitespace-nowrap">
+                          {displayNo}
+                        </td>
+                        <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#f1f1f1] whitespace-nowrap">
+                          {formatDateDisplay(row.date, reportType)}
+                        </td>
+                        <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#ece9dc] whitespace-nowrap">
+                          {formatNumber(row.new_members)}
+                        </td>
+                        <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#ece9dc] whitespace-nowrap">
+                          {formatNumber(row.total_members)}
+                        </td>
+                        <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#ece9dc] whitespace-nowrap">
+                          {formatNumber(row.active_members)}
+                        </td>
+                        <td className="px-4 py-[14px] pr-5 text-right font-['Times_New_Roman'] text-[13px] text-[#f1f1f1] whitespace-nowrap">
+                          {formatNumber(row.total_tokens_issued)}
+                        </td>
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr>
                     <td
