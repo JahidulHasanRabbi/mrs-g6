@@ -366,3 +366,18 @@ export async function getMemberFeedback(params = {}) {
     method: 'GET'
   }, true, 'admin');
 }
+
+// GET /settings/terms-and-conditions/ - Get all terms and conditions
+export async function getTermsAndConditions() {
+  return await apiRequest('/settings/terms-and-conditions/', {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+// POST /settings/terms-and-conditions/ - Update terms and conditions for a category
+export async function updateTermsAndConditions(data) {
+  return await apiRequest('/settings/terms-and-conditions/', {
+    method: 'POST',
+    body: data
+  }, true, 'admin');
+}
