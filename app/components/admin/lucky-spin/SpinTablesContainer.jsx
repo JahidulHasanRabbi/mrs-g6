@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import SpinItemsTable from "./SpinItemsTable";
-import SpinSequenceManager from "./SpinSequenceManager";
+import SpinSequenceTable from "./SpinSequenceTable";
 import LuckySpinItemForm from "./LuckySpinItemForm";
 import ErrorDisplay from "../../ui/ErrorDisplay";
 import * as adminApi from "../../../api/adminApi";
@@ -28,6 +28,10 @@ export default function SpinTablesContainer() {
   useEffect(() => {
     if (activeTab === "sequence") {
       loadSpinSequences();
+      // Also load spin items for the dropdown in sequence modal
+      if (spinItems.length === 0) {
+        loadSpinItems();
+      }
     }
   }, [activeTab]);
 
@@ -49,7 +53,11 @@ export default function SpinTablesContainer() {
     setIsLoading(true);
     setError(null);
     try {
-      const sequences = await adminApi.getLuckySpinSequences();
+      const response = await adminApi.getLuckySpinSequences();
+      // Handle paginated response
+      const sequences = Array.isArray(response) ? response : (response?.results || []);
+      // Sort by item_order
+      sequences.sort((a, b) => a.item_order - b.item_order);
       setSpinSequences(sequences);
     } catch (err) {
       console.error('Failed to load spin sequences:', err);
@@ -94,29 +102,65 @@ export default function SpinTablesContainer() {
     }
   };
 
-  const handleSequenceSave = async (filledPositions) => {
+  const handleSequenceAdd = async (formData) => {
     setIsSubmitting(true);
-    setFormError(null);
+    setError(null);
     
     try {
-      // Delete all existing sequences first
-      for (const seq of spinSequences) {
-        await adminApi.deleteLuckySpinSequence(seq.uuid);
-      }
-      
-      // Create new sequences only for filled positions
-      for (const pos of filledPositions) {
-        await adminApi.createLuckySpinSequence(pos.position, pos.item_uuid);
-      }
-      
-      // Refresh sequences
+      await adminApi.createLuckySpinSequence(formData.item_order, formData.item_uuid);
       await loadSpinSequences();
-      setFormError(null);
-      
-      alert(`Spin sequences saved successfully! ${filledPositions.length} position(s) configured.`);
     } catch (err) {
-      console.error('Failed to save sequences:', err);
-      setFormError(err);
+      console.error('Failed to add sequence:', err);
+      setError(err);
+      throw err;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSequenceEdit = async (uuid, formData) => {
+    setIsSubmitting(true);
+    setError(null);
+    
+    try {
+      // API doesn't have PUT for sequences, so delete and recreate
+      await adminApi.deleteLuckySpinSequence(uuid);
+      await adminApi.createLuckySpinSequence(formData.item_order, formData.item_uuid);
+      await loadSpinSequences();
+    } catch (err) {
+      console.error('Failed to edit sequence:', err);
+      setError(err);
+      throw err;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSequenceDelete = async (sequence) => {
+    setIsSubmitting(true);
+    setError(null);
+    
+    try {
+      await adminApi.deleteLuckySpinSequence(sequence.uuid);
+      await loadSpinSequences();
+    } catch (err) {
+      console.error('Failed to delete sequence:', err);
+      setError(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSequenceReorder = async (luckySpins) => {
+    setIsSubmitting(true);
+    setError(null);
+    
+    try {
+      await adminApi.changeSpinSequencesOrder(luckySpins);
+      await loadSpinSequences();
+    } catch (err) {
+      console.error('Failed to reorder sequences:', err);
+      setError(err);
     } finally {
       setIsSubmitting(false);
     }
@@ -211,24 +255,28 @@ export default function SpinTablesContainer() {
         </div>
 
         {/* Loading State or Conditional Table Rendering */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-white/60">Loading...</div>
-          </div>
-        ) : activeTab === "items" ? (
-          <SpinItemsTable
-            items={spinItems}
-            onEditClick={handleEditClick}
-            onDeleteClick={handleDeleteClick}
-          />
+        {activeTab === "items" ? (
+          isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-white/60">Loading...</div>
+            </div>
+          ) : (
+            <SpinItemsTable
+              items={spinItems}
+              onEditClick={handleEditClick}
+              onDeleteClick={handleDeleteClick}
+            />
+          )
         ) : (
           <div className="p-6">
-            <SpinSequenceManager
+            <SpinSequenceTable
               sequences={spinSequences}
               spinItems={spinItems}
-              onSave={handleSequenceSave}
-              isLoading={isSubmitting}
-              error={formError}
+              onAdd={handleSequenceAdd}
+              onEdit={handleSequenceEdit}
+              onDelete={handleSequenceDelete}
+              onReorder={handleSequenceReorder}
+              isLoading={isLoading || isSubmitting}
             />
           </div>
         )}

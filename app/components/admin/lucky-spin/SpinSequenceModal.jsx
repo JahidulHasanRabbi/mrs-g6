@@ -1,80 +1,95 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import ErrorDisplay from "../../ui/ErrorDisplay";
 
-export default function SpinSequenceModal({ 
-  isOpen, 
+export default function SpinSequenceModal({
+  isOpen,
   onClose,
   onSubmit,
-  mode = "add", // "add" or "edit"
+  mode = "add",
   initialData = null,
   spinItems = [],
+  existingOrders = [],
   isLoading = false,
   error = null
 }) {
   const [formData, setFormData] = useState({
     item_order: "",
-    item_uuid: "",
+    item_uuid: ""
   });
 
   useEffect(() => {
     if (mode === "edit" && initialData) {
       setFormData({
-        item_order: initialData.item_order || "",
-        item_uuid: initialData.item_uuid || "",
+        item_order: initialData.item_order,
+        item_uuid: initialData.item_uuid
       });
-    } else if (mode === "add") {
+    } else {
+      // For add mode, suggest next available order
+      const maxOrder = existingOrders.length > 0 ? Math.max(...existingOrders) : 0;
       setFormData({
-        item_order: "",
-        item_uuid: "",
+        item_order: maxOrder + 1,
+        item_uuid: ""
       });
     }
-  }, [mode, initialData]);
+  }, [mode, initialData, existingOrders]);
 
-  if (!isOpen) return null;
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    const submitData = {
-      item_order: parseInt(formData.item_order, 10),
-      item_uuid: formData.item_uuid
-    };
+    // Validation
+    if (!formData.item_uuid) {
+      alert("Please select a spin item.");
+      return;
+    }
     
-    await onSubmit(submitData);
+    if (!formData.item_order || formData.item_order < 1) {
+      alert("Please enter a valid item order (must be 1 or greater).");
+      return;
+    }
+
+    // Check for duplicate order (only in add mode or if order changed in edit mode)
+    if (mode === "add" || (mode === "edit" && formData.item_order !== initialData?.item_order)) {
+      if (existingOrders.includes(parseInt(formData.item_order))) {
+        alert(`Item order ${formData.item_order} is already in use. Please choose a different order.`);
+        return;
+      }
+    }
+
+    await onSubmit({
+      item_order: parseInt(formData.item_order),
+      item_uuid: formData.item_uuid
+    });
   };
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="relative mx-4 max-w-[465px] w-full">
-        {/* Modal Content */}
-        <div className="bg-[#4d4d4d] border border-white/50 rounded-[14px] shadow-[1px_4px_75px_9px_rgba(174,174,174,0.15)] p-8">
-          {/* Modal Icon */}
-          <div className="flex justify-center mb-4">
-            <div className="relative h-[60px] w-[60px]">
-              <Image
-                src="/assets/admin/spin-items/modal-icon.svg"
-                alt=""
-                fill
-                className="object-contain"
-              />
-            </div>
-          </div>
-
-          {/* Modal Title */}
-          <h2 className="text-center text-[28px] font-bold text-white capitalize font-['Times_New_Roman'] mb-8">
-            {mode === "add" ? "Add New Spin Sequence" : "Edit Spin Sequence"}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md rounded-xl border border-white/10 bg-[#1a1a1a] shadow-xl">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+          <h2 className="text-xl font-bold text-white font-['Times_New_Roman']">
+            {mode === "add" ? "Add Spin Sequence" : "Edit Spin Sequence"}
           </h2>
+          <button
+            onClick={onClose}
+            disabled={isLoading}
+            className="text-white/60 hover:text-white disabled:opacity-50"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
 
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Error Display */}
           {error && (
             <div className="mb-4">
@@ -82,77 +97,68 @@ export default function SpinSequenceModal({
             </div>
           )}
 
-          {/* Form Fields */}
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Text Input Fields */}
-            <div className="space-y-4">
-              {/* Spin Sequence */}
-              <div className="flex items-center gap-[18px]">
-                <label className="text-[18px] text-white font-['Times_New_Roman'] w-[135px]">
-                  Spin Sequence:
-                </label>
-                <input
-                  type="number"
-                  value={formData.item_order}
-                  onChange={(e) => handleInputChange("item_order", e.target.value)}
-                  className="bg-white/10 border-[#f2c36b] border-[0.5px] h-[36px] rounded-[4px] w-[305px] px-3 text-white placeholder-white/50 focus:outline-none focus:border-[#f2c36b]"
-                  placeholder="Enter sequence number"
-                  min="1"
-                  required
-                  disabled={isLoading}
-                />
-              </div>
+          {/* Item Order */}
+          <div className="space-y-2">
+            <label className="block text-sm font-bold text-white font-['Times_New_Roman']">
+              Item Order <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="number"
+              min="1"
+              value={formData.item_order}
+              onChange={(e) => handleChange("item_order", e.target.value)}
+              className="w-full bg-white/10 border border-white/20 h-[40px] rounded-[4px] px-3 text-white focus:outline-none focus:border-[#f2c36b]"
+              disabled={isLoading}
+              required
+            />
+            <p className="text-xs text-white/40 font-['Times_New_Roman']">
+              The position order of this item in the spin sequence
+            </p>
+          </div>
 
-              {/* Items */}
-              <div className="flex items-center gap-[18px]">
-                <label className="text-[18px] text-white font-['Times_New_Roman'] w-[136px]">
-                  Items:
-                </label>
-                <select
-                  value={formData.item_uuid}
-                  onChange={(e) => handleInputChange("item_uuid", e.target.value)}
-                  className="bg-white/10 border-[0.5px] border-white/8 h-[36px] rounded-[4px] w-[304px] px-3 text-white focus:outline-none focus:border-[#f2c36b]"
-                  required
-                  disabled={isLoading}
-                >
-                  <option value="">Select an item</option>
-                  {spinItems.map(item => (
-                    <option key={item.uuid} value={item.uuid}>
-                      {item.reward_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+          {/* Spin Item */}
+          <div className="space-y-2">
+            <label className="block text-sm font-bold text-white font-['Times_New_Roman']">
+              Spin Item <span className="text-red-400">*</span>
+            </label>
+            <select
+              value={formData.item_uuid}
+              onChange={(e) => handleChange("item_uuid", e.target.value)}
+              className="w-full bg-white/10 border border-white/20 h-[40px] rounded-[4px] px-3 text-white focus:outline-none focus:border-[#f2c36b] [&>option]:bg-[#1a1a1a] [&>option]:text-white"
+              disabled={isLoading}
+              required
+            >
+              <option value="" className="bg-[#1a1a1a] text-white">-- Select Spin Item --</option>
+              {spinItems.map(item => (
+                <option key={item.uuid} value={item.uuid} className="bg-[#1a1a1a] text-white">
+                  {item.reward_name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-[21px] justify-end">
-              <button
-                type="button"
-                onClick={onClose}
-                className="bg-white border border-[#e5e6e6] h-[37px] px-[18px] py-[13px] rounded-[4px] flex items-center justify-center"
-                disabled={isLoading}
-              >
-                <span className="text-[#f04a4a] text-[14px] font-bold font-['Times_New_Roman']">
-                  Cancel
-                </span>
-              </button>
-              
-              <button
-                type="submit"
-                className="h-[37px] px-[18px] py-[13px] rounded-[4px] flex items-center justify-center disabled:opacity-50"
-                style={{
-                  backgroundImage: "linear-gradient(1.2852950753927956deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
-                }}
-                disabled={isLoading}
-              >
-                <span className="text-black text-[14px] font-bold font-['Times_New_Roman']">
-                  {isLoading ? 'Saving...' : 'Confirm'}
-                </span>
-              </button>
-            </div>
-          </form>
-        </div>
+          {/* Buttons */}
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isLoading}
+              className="px-6 py-2 rounded-lg border border-white/20 text-white hover:bg-white/5 disabled:opacity-50 font-['Times_New_Roman'] text-sm font-bold"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="inline-flex min-w-[100px] items-center justify-center whitespace-nowrap rounded-lg px-6 py-2 font-['Times_New_Roman'] text-sm font-bold leading-none text-black transition-colors disabled:opacity-50"
+              style={{
+                backgroundImage: "linear-gradient(2.1326483653998594deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
+              }}
+            >
+              {isLoading ? "Saving..." : mode === "add" ? "Add" : "Update"}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
