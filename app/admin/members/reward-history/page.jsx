@@ -68,8 +68,8 @@ function RewardHistoryContent() {
       const params = {
         page,
         page_size: PAGE_SIZE,
-        start_datetime: dateFrom || undefined,
-        end_datetime: dateTo || undefined,
+        start_date: dateFrom || undefined,
+        end_date: dateTo || undefined,
         category: catValue || undefined,
         reward_details: detailsSearch || undefined,
         reward_name: nameSearch || undefined
@@ -86,6 +86,12 @@ function RewardHistoryContent() {
   }, [memberId, dateFrom, dateTo, categoryFilter, detailsSearch, nameSearch]);
 
   useEffect(() => {
+    // Only fetch if both dates are filled or both are empty
+    const isDateRangeValid = (!dateFrom && !dateTo) || (dateFrom && dateTo);
+    if (!isDateRangeValid) {
+      return; // Don't fetch if date range is incomplete
+    }
+    
     setCurrentPage(1);
     fetchHistory(1);
   }, [fetchHistory]);

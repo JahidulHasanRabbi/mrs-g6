@@ -68,8 +68,8 @@ function TokenHistoryContent() {
       const params = {
         page,
         page_size: PAGE_SIZE,
-        start_datetime: dateFrom || undefined,
-        end_datetime: dateTo || undefined,
+        start_date: dateFrom || undefined,
+        end_date: dateTo || undefined,
         category: catValue || undefined,
         token_details: detailsSearch || undefined
       };
@@ -85,6 +85,12 @@ function TokenHistoryContent() {
   }, [memberId, dateFrom, dateTo, categoryFilter, detailsSearch]);
 
   useEffect(() => {
+    // Only fetch if both dates are filled or both are empty
+    const isDateRangeValid = (!dateFrom && !dateTo) || (dateFrom && dateTo);
+    if (!isDateRangeValid) {
+      return; // Don't fetch if date range is incomplete
+    }
+    
     setCurrentPage(1);
     fetchHistory(1);
   }, [fetchHistory]);

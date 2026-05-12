@@ -304,7 +304,7 @@ export async function updateMember(memberUuid, data) {
   }, true, 'admin');
 }
 
-// GET /front-end/station-list/ - For station filter dropdowns
+// GET /front-view/station-list/ - For station filter dropdowns
 export async function getStationList() {
   return await apiRequest(ENDPOINTS.ADMIN.STATION_LIST, { method: 'GET' }, true, 'admin');
 }
@@ -312,4 +312,49 @@ export async function getStationList() {
 // GET /member/vip-tier/ - reusable for filter dropdowns
 export async function getVipTierList() {
   return await apiRequest(ENDPOINTS.ADMIN.VIP_TIERS, { method: 'GET' }, true, 'admin');
+}
+
+// Wallet VIP Management
+export async function getWalletVipTiers(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.WALLET_VIP}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+export async function getWalletVipTier(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.WALLET_VIP_SINGLE(uuid), { method: 'GET' }, true, 'admin');
+}
+
+export async function createWalletVipTier(tierData) {
+  return await apiRequest(ENDPOINTS.ADMIN.WALLET_VIP, {
+    method: 'POST',
+    body: tierData
+  }, true, 'admin');
+}
+
+export async function updateWalletVipTier(uuid, tierData) {
+  return await apiRequest(ENDPOINTS.ADMIN.WALLET_VIP_SINGLE(uuid), {
+    method: 'PUT',
+    body: tierData
+  }, true, 'admin');
+}
+
+export async function archiveWalletVipTier(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.WALLET_VIP_ARCHIVE(uuid), {
+    method: 'PATCH'
+  }, true, 'admin');
+}
+
+// GET /settings/check-in-settings/ - for MRS VIP tier dropdown (returns list of check-in tiers)
+// Note: API doc mentions /settings/check-in-tier/ but it doesn't exist. Use check-in-settings instead.
+export async function getCheckinTiers() {
+  const response = await apiRequest(ENDPOINTS.ADMIN.CHECKIN_SETTINGS, { method: 'GET' }, true, 'admin');
+  // Handle paginated response
+  return Array.isArray(response) ? response : (response?.results || []);
+}
+
+// GET /redemption/redemption-tier/ - for MRS VIP tier dropdown (returns list of mart tiers)
+export async function getRedemptionTiers() {
+  const response = await apiRequest(ENDPOINTS.ADMIN.REDEMPTION_TIERS, { method: 'GET' }, true, 'admin');
+  // Handle paginated response
+  return Array.isArray(response) ? response : (response?.results || []);
 }

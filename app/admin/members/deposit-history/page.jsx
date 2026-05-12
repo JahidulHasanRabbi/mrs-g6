@@ -86,6 +86,12 @@ function DepositHistoryContent() {
 
   // Debounced fetch - only trigger when user stops selecting for 500ms
   useEffect(() => {
+    // Only fetch if both dates are filled or both are empty
+    const isDateRangeValid = (!dateFrom && !dateTo) || (dateFrom && dateTo);
+    if (!isDateRangeValid) {
+      return; // Don't fetch if date range is incomplete
+    }
+    
     const timer = setTimeout(() => {
       setCurrentPage(1);
       fetchHistory(1);

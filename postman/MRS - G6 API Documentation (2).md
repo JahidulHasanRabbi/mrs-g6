@@ -88,8 +88,6 @@
 
 [Redemption items / redeem	18](#redemption-items-/-redeem)
 
-[/redemption/redemption-items/ GET	18](#heading=h.zcog2d8bdogh)
-
 [/redemption/redemption-items/available-items/ GET	18](#/redemption/redemption-items/available-items/-get)
 
 [/redemption/redemption-items/{uuid}/redeem/ POST	18](#/redemption/redemption-items/{uuid}/redeem/-post)
@@ -178,35 +176,41 @@
 
 [/member/\<member\_uuid\>/member-deposit/ GET	30](#/member/\<member_uuid\>/member-deposit/-get)
 
-[Report Page	32](#report-page)
+[Report Page	31](#report-page)
 
-[Admin Token Report \- GET	32](#admin-token-report---get)
+[Admin Token Report \- GET	31](#admin-token-report---get)
 
-[Admin Reward Report \- GET	33](#admin-reward-report---get)
+[Admin Reward Report \- GET	32](#admin-reward-report---get)
 
-[Member Report \- Daily / Monthly / Yearly \- GET	34](#member-report---daily-/-monthly-/-yearly---get)
+[Member Report \- Daily / Monthly / Yearly \- GET	33](#member-report---daily-/-monthly-/-yearly---get)
 
-[MART TIER	36](#mart-tier)
+[MART TIER	35](#mart-tier)
 
-[MART TIER \- GET	36](#mart-tier---get)
+[MART TIER \- GET	35](#mart-tier---get)
 
-[MART TIER \- POST/PUT	36](#mart-tier---post/put)
+[MART TIER \- POST/PUT	35](#mart-tier---post/put)
 
-[MART TIER \- ARCHIVED	36](#mart-tier---archived)
+[MART TIER \- ARCHIVED	35](#mart-tier---archived)
 
-[MART ITEMS	37](#mart-items)
+[MART ITEMS	36](#mart-items)
 
-[MART ITEMS \- GET	37](#mart-items---get)
+[MART ITEMS \- GET	36](#mart-items---get)
 
-[MART ITEMS \- POST/PUT	37](#mart-items---post/put)
+[MART ITEMS \- POST/PUT	36](#mart-items---post/put)
 
-[MART ITEMS \- ARCHIVE	38](#mart-items---archive)
+[MART ITEMS \- ARCHIVE	37](#mart-items---archive)
 
-[Checkin \- Settings \- GET	39](#checkin---settings---get)
+[Checkin \- Settings \- GET	38](#checkin---settings---get)
 
-[Checkin \- Settings \- POST/PUT	39](#checkin---settings---post/put)
+[Checkin \- Settings \- POST	38](#checkin---settings---post)
 
-[Checkin \- Settings \- ARCHIVE	40](#checkin---settings---archive)
+[Terms and Conditions \- Settings	39](#terms-and-conditions---settings)
+
+[T\&C \- GET	39](#t&c---get)
+
+[T\&C \- POST	39](#t&c---post)
+
+[T\&C \- PUBLIC \- GET	39](#t&c---public---get)
 
 [Banners \- Settings	41](#banners---settings)
 
@@ -234,13 +238,23 @@
 
 [Wallet Floating Menu \- ARCHIVE	46](#wallet-floating-menu---archive)
 
-[**EXTERNAL	47**](#external)
+[Member Feedback \- GET/POST	47](#member-feedback---get/post)
 
-[Special Code \- GET	47](#special-code---get)
+[Frames	48](#frames)
 
-[Wallet VIP Tiers \- GET	47](#wallet-vip-tiers---get)
+[Frames \- GET	48](#frames---get)
 
-[Wallet Floating Menus \- GET	47](#wallet-floating-menus---get-1)
+[Frames \- POST/PUT	48](#frames---post/put)
+
+[Frames \- Archive	49](#frames---archive)
+
+[**EXTERNAL	50**](#external)
+
+[Special Code \- GET	50](#special-code---get)
+
+[Wallet VIP Tiers \- GET	50](#wallet-vip-tiers---get)
+
+[Wallet Floating Menus \- GET	50](#wallet-floating-menus---get-1)
 
 # Changelog {#changelog}
 
@@ -296,7 +310,7 @@ Output
 | **5** | monthly\_deposit | Str(Decimal) |  |
 | **6** | upgrade\_bonus | int |  |
 | **7** | birthday\_bonus | int |  |
-| **8** | check\_in\_tier | str |  |
+| **8** | check\_in\_token | int |  |
 | **9** | mart\_tier | str |  |
 
 ## MRS VIP TIER \- POST/PUT {#mrs-vip-tier---post/put}
@@ -312,7 +326,7 @@ Input
 | **3** | monthly\_deposit | Str(Decimal) |  |
 | **4** | upgrade\_bonus | Int |  |
 | **5** | birthday\_bonus | Int |  |
-| **6** | check\_in\_tier\_uuid | UUID | Check /settings/check-in-tier/ |
+| **6** | check\_in\_token | Int |  |
 | **7** | mart\_tier\_uuid | UUID | Check/redemption/redemption-tier/ |
 
 ## MRS VIP TIER \- ARCHIVE {#mrs-vip-tier---archive}
@@ -485,8 +499,8 @@ Query Parameters
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | page | Int | No | For Pagination |
 | **2** | page\_size | Int | No | For Pagination |
-| **3** | start\_datetime | datetime | Yes |  |
-| **4** | end\_datetime | datetime | Yes |  |
+| **3** | start\_date | date | Yes |  |
+| **4** | end\_date | date | Yes |  |
 | **5** | category | int | Yes | 1 \= Check-In 2 \= LuckySpin 3 \= VIP-Monthly 4 \= Mart-Redeem 5 \= Top Up 6 \= Welcome 7 \= VIP-Upgrade 8 \= VIP-Birthday 9 \= Finish-Profile |
 | **6** | token\_details | str | Yes | Fuzzy search |
 
@@ -511,8 +525,8 @@ Query Parameters
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | page | Int | No | For Pagination |
 | **2** | page\_size | Int | No | For Pagination |
-| **3** | start\_datetime | datetime | Yes |  |
-| **4** | end\_datetime | datetime | Yes |  |
+| **3** | start\_date | date | Yes |  |
+| **4** | end\_date | date | Yes |  |
 | **5** | category | int | Yes | 1 \= Prize 2 \= Credit |
 | **6** | reward\_details | str | Yes | Fuzzy search |
 | **7** | reward\_name | str | Yes | Fuzzy search |
@@ -695,6 +709,13 @@ If it’s not valid, it returns 401 unauthorized
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
+| **1** | page | Int | No | For Pagination |
+| **2** | page\_size | Int | No | For Pagination |
+
+Output (Is Paginated, has results, previous, next, and count)
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
 | **1** | id | Int | No |  |
 | **2** | uuid | UUID | No |  |
 | **3** | item\_order | Int | No |  |
@@ -757,13 +778,13 @@ Query Parameters
 | **3** | member\_name | str | Yes |  |
 | **4** | phone\_number | str | Yes |  |
 | **5** | vip\_tier\_uuid | uuid | Yes | /member/vip-tier/ GET |
-| **6** | station\_uuid | uuid | Yes | /front-end/station-list/ GET |
-| **7** | registered\_start\_datetime | datetime | Yes |  |
-| **8** | registered\_end\_datetime | datetime | Yes |  |
+| **6** | station\_uuid | uuid | Yes | /front-view/station-list/ GET |
+| **7** | registered\_start\_date | date | Yes |  |
+| **8** | registered\_end\_date | date | Yes |  |
 | **9** | last\_checkin\_start\_date | date | Yes |  |
 | **10** | last\_checkin\_end\_date | date | Yes |  |
-| **11** | last\_login\_start\_datetime | datetime | Yes |  |
-| **12** | last\_login\_end\_datetime | datetime | Yes |  |
+| **11** | last\_login\_start\_date | date | Yes |  |
+| **12** | last\_login\_end\_date | date | Yes |  |
 
 Output (Is paginated, has count, next, previous, and results)
 
@@ -842,12 +863,7 @@ Query Parameters
 | **2** | page\_size | Int | Yes | For Pagination |
 | **3** | start\_datetime | datetime | Yes |  |
 | **4** | end\_datetime | datetime | Yes |  |
-| **5** | category | int | Yes | 1 \= Prize 2 \= Credit |
-| **6** | reward\_details | str | Yes | Fuzzy search |
-| **7** | username | str | Yes | Fuzzy search |
-| **8** | phone\_number | str | Yes | Fuzzy search |
-| **9** | station\_uuid | uuid | Yes | /front-end/station-list/ GET |
-| **10** | reward\_name | str | Yes | Fuzzy search |
+| **5** | station\_uuid | uuid | Yes | /front-view/station-list/ GET |
 
 Output (Is paginated, has count, next, previous, and results)
 
@@ -856,12 +872,8 @@ Output (Is paginated, has count, next, previous, and results)
 | **1** | id | Int | No |  |
 | **2** | uuid | UUID | No |  |
 | **3** | created | datetime | Yes |  |
-| **4** | phone\_number | str | No |  |
-| **5** | username | str | Yes |  |
-| **6** | station | str | Yes |  |
-| **7** | category | str | No |  |
-| **8** | reward\_details | str | No |  |
-| **9** | reward\_name | str | No |  |
+| **4** | station | str | Yes |  |
+| **5** | amount | str (Decimal) | No |  |
 
 ### 
 
@@ -878,13 +890,13 @@ Query Parameters
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | page | Int | Yes | For Pagination |
 | **2** | page\_size | Int | Yes | For Pagination |
-| **3** | start\_datetime | datetime | Yes |  |
-| **4** | end\_datetime | datetime | Yes |  |
+| **3** | start\_date | date | Yes |  |
+| **4** | end\_date | date | Yes |  |
 | **5** | category | int | Yes | 1 \= Check-In 2 \= LuckySpin 3 \= VIP-Monthly 4 \= Mart-Redeem 5 \= Top Up 6 \= Welcome 7 \= VIP-Upgrade 8 \= VIP-Birthday 9 \= Finish-Profile |
 | **6** | token\_details | str | Yes | Fuzzy search |
 | **7** | username | str | Yes | Fuzzy search |
 | **8** | phone\_number | str | Yes | Fuzzy search |
-| **9** | station\_uuid | uuid | Yes | /front-end/station-list/ GET |
+| **9** | station\_uuid | uuid | Yes | /front-view/station-list/ GET |
 
 Output (Is paginated, has count, next, previous, and results)
 
@@ -909,13 +921,13 @@ Query Parameters
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | page | Int | Yes | For Pagination |
 | **2** | page\_size | Int | yes | For Pagination |
-| **3** | start\_datetime | datetime | Yes |  |
-| **4** | end\_datetime | datetime | Yes |  |
+| **3** | start\_date | date | Yes |  |
+| **4** | end\_date | date | Yes |  |
 | **5** | category | int | Yes | 1 \= Prize 2 \= Credit |
 | **6** | reward\_details | str | Yes | Fuzzy search |
 | **7** | username | str | Yes | Fuzzy search |
 | **8** | phone\_number | str | Yes | Fuzzy search |
-| **9** | station\_uuid | uuid | Yes | /front-end/station-list/ GET |
+| **9** | station\_uuid | uuid | Yes | /front-view/station-list/ GET |
 | **10** | reward\_name | str | Yes | Fuzzy search |
 
 Output (Is paginated, has count, next, previous, and results)
@@ -1055,15 +1067,8 @@ Output (Is paginated, has count, next, previous, and results)
 
 ## Checkin \- Settings \- GET {#checkin---settings---get}
 
-/settings/check-in-settings/ GET  
-Query parameters
-
-| \# | Property/Field | Data Type | Description |
-| ----: | :---- | :---- | :---- |
-| **1** | page | List | For Pagination |
-| **2** | page\_size | str | For Pagination |
-
-Output (Is paginated, has count, next, previous, and results)
+/settings/checkin-settings/ GET  
+Output
 
 | \# | Property/Field | Data Type | Description |
 | ----: | :---- | :---- | :---- |
@@ -1072,12 +1077,10 @@ Output (Is paginated, has count, next, previous, and results)
 | **1b** | reward\_minimum | int |  |
 | **1c** | reward\_maximum | int |  |
 | **1d** | display\_text | str |  |
-| **2** | name | str |  |
 
-## Checkin \- Settings \- POST/PUT {#checkin---settings---post/put}
+## Checkin \- Settings \- POST {#checkin---settings---post}
 
-/settings/check-in-settings/ POST  
-/settings/check-in-settings/{uuid}/ PUT
+/settings/checkin-settings/ POST
 
 Input
 
@@ -1088,11 +1091,42 @@ Input
 | **1b** | reward\_minimum | int | False |  |
 | **1c** | reward\_maximum | int | False |  |
 | **1d** | display\_text | str | True |  |
-| **2** | name | str | True |  |
 
-## Checkin \- Settings \- ARCHIVE {#checkin---settings---archive}
+## Terms and Conditions \- Settings {#terms-and-conditions---settings}
 
-/settings/check-in-settings/{uuid}/archive/ PATCH
+### T\&C \- GET {#t&c---get}
+
+/settings/terms-and-conditions/ GET
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | terms\_and\_conditions | Text | No |  |
+| **2** | category | Str | No |  |
+| **3** | category\_number | Int | No |  |
+| **4** | updated | Datetime | No |  |
+
+### T\&C \- POST {#t&c---post}
+
+/settings/terms-and-conditions/ POST  
+Returns 200
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | terms\_and\_conditions | Text | No |  |
+| **2** | category | Int | No | 1 \= Lucky Spin 2 \= Deposit Leaderboard 3 \= Withdraw Leaderboard 4 \= Referrer Leaderboard 5 \= World Cup Leaderboard 6 \= Smash Egg 7 \= Penalty Kick |
+
+### T\&C \- PUBLIC \- GET {#t&c---public---get}
+
+/settings/terms-and-conditions/public/\<category\>/ GET  
+Category is int, doesn’t need authentication
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | terms\_and\_conditions | Text | No |  |
+
+### 
+
+## 
 
 ## Banners \- Settings {#banners---settings}
 
@@ -1166,7 +1200,7 @@ Input
 | **4** | upgrade\_bonus | Str (Decimal) | No |  |
 | **5** | monthly\_loyalty\_bonus | Str (Decimal) | No |  |
 | **6** | birthday\_bonus | Str (Decimal) | No |  |
-| **7** | station\_uuid | UUID | No | /front-end/station-list/ GET |
+| **7** | station\_uuid | UUID | No | /front-view/station-list/ GET |
 
 ### Wallet VIP \- ARCHIVE {#wallet-vip---archive}
 
@@ -1209,7 +1243,7 @@ Input
 | **2** | url\_slug | url | No |  |
 | **3** | icon | image | Yes |  |
 | **4** | display\_order | int | No | Display order is unique in stations |
-| **5** | station\_uuid | UUID | No | /front-end/station-list/ GET |
+| **5** | station\_uuid | UUID | No | /front-view/station-list/ GET |
 
 ### 
 
@@ -1226,6 +1260,74 @@ Input
 ### Wallet Floating Menu \- ARCHIVE {#wallet-floating-menu---archive}
 
 /third-party/floating-menu/{uuid}/archive/ PATCH
+
+## Member Feedback \- GET/POST {#member-feedback---get/post}
+
+/front-view/member-feedback/ GET  
+Query Parameters
+
+| \# | Property/Field | Data Type | Description |
+| ----: | :---- | :---- | :---- |
+| **1** | page | str | For Pagination |
+| **2** | page\_size | str | For Pagination |
+
+Output
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | uuid | uuid | No |  |
+| **2** | created | datetime | No |  |
+| **3** | phone\_number | str | No |  |
+| **4** | feedback | Text | No |  |
+
+/front-view/member-feedback/ POST  
+Input
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | member\_uuid | uuid | No |  |
+| **2** | feedback | text | No |  |
+
+## Frames {#frames}
+
+### Frames \- GET {#frames---get}
+
+/third-party/frame/ GET
+
+Query Parameters
+
+| \# | Property/Field | Data Type | Description |
+| ----: | :---- | :---- | :---- |
+| **1** | page | str | For Pagination |
+| **2** | page\_size | str | For Pagination |
+
+Output (Is paginated, has count, previous, next, and results)
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | uuid | uuid | No |  |
+| **2** | name | str | No |  |
+| **3** | icon | Img | Yes |  |
+| **4** | details | Text | Yes |  |
+| **5** | challenge | str | No |  |
+| **6** | vip\_tier | str | Yes |  |
+
+### Frames \- POST/PUT {#frames---post/put}
+
+/third-party/frame/ POST  
+/third-party/frame/{uuid}/ PUT
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | name | str | No |  |
+| **2** | icon | img | Yes |  |
+| **3** | details | Text | Yes |  |
+| **4** | challenge | int | No | 1 \= VIP |
+| **5** | vip\_tier\_uuid | UUID | Yes | Only if Challenge \= 1 |
+
+### Frames \- Archive {#frames---archive}
+
+/third-party/frame/{uuid}/archive/ Patch
 
 # EXTERNAL {#external}
 

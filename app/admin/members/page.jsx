@@ -524,12 +524,12 @@ function MembersContent() {
         phone_number: phoneQuery || undefined,
         vip_tier_uuid: tierFilter || undefined,
         station_uuid: stationFilter || undefined,
-        registered_start_datetime: regFrom || undefined,
-        registered_end_datetime: regTo || undefined,
+        registered_start_date: regFrom || undefined,
+        registered_end_date: regTo || undefined,
         last_checkin_start_date: checkinFrom || undefined,
         last_checkin_end_date: checkinTo || undefined,
-        last_login_start_datetime: loginFrom || undefined,
-        last_login_end_datetime: loginTo || undefined,
+        last_login_start_date: loginFrom || undefined,
+        last_login_end_date: loginTo || undefined,
       };
       const res = await getMemberList(params);
       setMembers(res.results || []);
@@ -545,6 +545,16 @@ function MembersContent() {
 
   // Debounced fetch - only trigger when user stops typing/selecting for 500ms
   useEffect(() => {
+    // Check if date ranges are valid (both filled or both empty)
+    const isRegDateValid = (!regFrom && !regTo) || (regFrom && regTo);
+    const isCheckinDateValid = (!checkinFrom && !checkinTo) || (checkinFrom && checkinTo);
+    const isLoginDateValid = (!loginFrom && !loginTo) || (loginFrom && loginTo);
+    
+    // Only fetch if all date ranges are valid
+    if (!isRegDateValid || !isCheckinDateValid || !isLoginDateValid) {
+      return; // Don't fetch if any date range is incomplete
+    }
+    
     const timer = setTimeout(() => {
       setCurrentPage(1);
       fetchMembers(1);
@@ -597,18 +607,18 @@ function MembersContent() {
     { key: "current_tokens", label: "Current Tokens", minW: "min-w-[110px]" },
     {
       key: "registered_datetime",
-      label: "Registered Date/Time",
-      minW: "min-w-[165px]",
+      label: "Registered Date",
+      minW: "min-w-[140px]",
     },
     {
       key: "last_check_in_date",
-      label: "Last Check in Date/Time",
-      minW: "min-w-[175px]",
+      label: "Last Check in Date",
+      minW: "min-w-[150px]",
     },
     {
       key: "last_login_datetime",
-      label: "Last Login Date/Time",
-      minW: "min-w-[165px]",
+      label: "Last Login Date",
+      minW: "min-w-[140px]",
     },
   ];
 
@@ -690,21 +700,21 @@ function MembersContent() {
 
             {/* Date range filters */}
             <DateFilter
-              label="Registered Date/Time"
+              label="Registered Date"
               fromDate={regFrom}
               toDate={regTo}
               onFromChange={setRegFrom}
               onToChange={setRegTo}
             />
             <DateFilter
-              label="Last Checkin Date/Time"
+              label="Last Checkin Date"
               fromDate={checkinFrom}
               toDate={checkinTo}
               onFromChange={setCheckinFrom}
               onToChange={setCheckinTo}
             />
             <DateFilter
-              label="Last Login Date/Time"
+              label="Last Login Date"
               fromDate={loginFrom}
               toDate={loginTo}
               onFromChange={setLoginFrom}

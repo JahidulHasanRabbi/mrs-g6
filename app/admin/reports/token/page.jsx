@@ -107,8 +107,8 @@ function TokenReportContent() {
       const params = {
         page,
         page_size: PAGE_SIZE,
-        start_datetime: dateFrom || undefined,
-        end_datetime: dateTo || undefined,
+        start_date: dateFrom || undefined,
+        end_date: dateTo || undefined,
         category: catValue || undefined,
         token_details: detailFilter || undefined,
         username: usernameQuery || undefined,
@@ -126,6 +126,12 @@ function TokenReportContent() {
   }, [dateFrom, dateTo, categoryFilter, detailFilter, usernameQuery, phoneQuery]);
 
   useEffect(() => {
+    // Only fetch if both dates are filled or both are empty
+    const isDateRangeValid = (!dateFrom && !dateTo) || (dateFrom && dateTo);
+    if (!isDateRangeValid) {
+      return; // Don't fetch if date range is incomplete
+    }
+    
     setCurrentPage(1);
     fetchReport(1);
   }, [fetchReport]);
