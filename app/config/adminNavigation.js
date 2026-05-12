@@ -39,10 +39,10 @@ export const ADMIN_NAVIGATION = [
     id: 'lucky-spin'
   },
   {
-    label: 'Redemption',
-    path: '/admin/redemption',
+    label: 'Points Redemption Mall',
+    path: '/admin/redemption-mall',
     enabled: true,
-    id: 'redemption'
+    id: 'redemption-mall'
   },
   {
     label: 'Members',

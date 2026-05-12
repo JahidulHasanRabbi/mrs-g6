@@ -3,52 +3,31 @@
 import { useMemo, useState } from "react";
 
 const COLUMNS = [
-  { id: "name",      label: "Name",       sortable: true,  align: "left",   sortAs: "string" },
-  { id: "quantity",  label: "Quantity",   sortable: true,  align: "left",   sortAs: "string" },
-  { id: "startDate", label: "Start Date", sortable: true,  align: "left",   sortAs: "date" },
-  { id: "endDate",   label: "End Date",   sortable: true,  align: "left",   sortAs: "date" },
-  { id: "prizeType", label: "Prize Type", sortable: true,  align: "left",   sortAs: "number" },
-  { id: "mart",      label: "Mart",       sortable: true,  align: "left",   sortAs: "string" },
-  { id: "tokens",    label: "Tokens",     sortable: true,  align: "left",   sortAs: "number" },
-  { id: "promotion", label: "Promotion",  sortable: true,  align: "left",   sortAs: "number" },
-  { id: "image",     label: "Image",      sortable: false, align: "left" },
-  { id: "action",    label: "Action",     sortable: false, align: "center" },
+  { id: "name",                label: "Name",       sortable: true,  align: "left",   sortAs: "string" },
+  { id: "quantity_available",  label: "Quantity",   sortable: true,  align: "left",   sortAs: "number" },
+  { id: "start_date",          label: "Start Date", sortable: true,  align: "left",   sortAs: "date" },
+  { id: "end_date",            label: "End Date",   sortable: true,  align: "left",   sortAs: "date" },
+  { id: "prize_type",          label: "Prize Type", sortable: true,  align: "left",   sortAs: "string" },
+  { id: "mart_tier",           label: "Mart Tier",  sortable: true,  align: "left",   sortAs: "string" },
+  { id: "tokens_needed",       label: "Tokens",     sortable: true,  align: "left",   sortAs: "number" },
+  { id: "promotion",           label: "Promotion",  sortable: true,  align: "left",   sortAs: "number" },
+  { id: "image",               label: "Image",      sortable: false, align: "left" },
+  { id: "action",              label: "Action",     sortable: false, align: "center" },
 ];
 
-const STATUS_STYLES = {
-  Active:  "bg-[#22c55e] text-white",
-  Archive: "bg-[#22c55e] text-white",
-  Pending: "bg-[#22c55e] text-white",
+const PRIZE_TYPE_LABELS = {
+  1: "ITEM",
+  2: "VOUCHER",
+  3: "CREDIT",
+  4: "OTHERS",
 };
 
 const PAGE_SIZE = 5;
 
-const MONTHS = {
-  january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
-  july: 7, august: 8, september: 9, october: 10, november: 11, december: 12,
-};
-
-// Mock dates come in shapes like "2nd June" / "10th June". Parse to a
-// comparable yyyy-mm-dd number (year is constant since the data has none).
-function parseDateValue(str) {
-  if (!str) return 0;
-  const m = String(str).match(/(\d+)\D*\s+([A-Za-z]+)/);
-  if (!m) return 0;
-  const day = parseInt(m[1], 10) || 0;
-  const month = MONTHS[m[2].toLowerCase()] || 0;
-  return month * 100 + day;
-}
-
-function parseNumberValue(str) {
-  if (str == null) return 0;
-  const n = Number(String(str).replace(/[^0-9.-]/g, ""));
-  return Number.isFinite(n) ? n : 0;
-}
-
 function getSortValue(item, col) {
   const raw = item[col.id];
-  if (col.sortAs === "date") return parseDateValue(raw);
-  if (col.sortAs === "number") return parseNumberValue(raw);
+  if (col.sortAs === "date") return raw || "";
+  if (col.sortAs === "number") return Number(raw) || 0;
   return String(raw ?? "").toLowerCase();
 }
 
@@ -59,7 +38,7 @@ const SortArrow = ({ direction }) => (
   </svg>
 );
 
-export default function RedemptionMallTable({ items, onCreate, onEdit }) {
+export default function RedemptionMallTable({ items, onCreate, onEdit, onArchive }) {
   const [sort, setSort] = useState({ column: null, direction: "asc" });
   const [page, setPage] = useState(1);
 
@@ -157,29 +136,36 @@ export default function RedemptionMallTable({ items, onCreate, onEdit }) {
             ) : (
               pagedItems.map((item) => (
                 <div
-                  key={item.id}
+                  key={item.uuid}
                   className="grid grid-cols-[1.1fr_1fr_1fr_1fr_1.3fr_1fr_1fr_1fr_0.9fr_1.4fr] items-center px-6 py-4 transition-colors hover:bg-white/5"
                 >
                   <div className="font-['Times_New_Roman'] text-[14px] text-white">{item.name}</div>
-                  <div className="font-['Times_New_Roman'] text-[14px] text-white">{item.quantity}</div>
-                  <div className="font-['Times_New_Roman'] text-[14px] text-white">{item.startDate}</div>
-                  <div className="font-['Times_New_Roman'] text-[14px] text-white">{item.endDate}</div>
-                  <div className="font-['Times_New_Roman'] text-[14px] tabular-nums text-white">{item.prizeType}</div>
-                  <div className="font-['Times_New_Roman'] text-[14px] text-white">{item.mart}</div>
-                  <div className="font-['Times_New_Roman'] text-[14px] tabular-nums text-white">{item.tokens}</div>
+                  <div className="font-['Times_New_Roman'] text-[14px] text-white">{item.quantity_available}</div>
+                  <div className="font-['Times_New_Roman'] text-[14px] text-white">{item.start_date}</div>
+                  <div className="font-['Times_New_Roman'] text-[14px] text-white">{item.end_date}</div>
+                  <div className="font-['Times_New_Roman'] text-[14px] text-white">{PRIZE_TYPE_LABELS[item.prize_type] || item.prize_type}</div>
+                  <div className="font-['Times_New_Roman'] text-[14px] text-white">{item.mart_tier || "-"}</div>
+                  <div className="font-['Times_New_Roman'] text-[14px] tabular-nums text-white">{item.tokens_needed}</div>
                   <div className="font-['Times_New_Roman'] text-[14px] tabular-nums text-white">{item.promotion}</div>
                   <div>
-                    <div className="h-[36px] w-[44px] overflow-hidden rounded-[4px] bg-white/5">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={item.image} alt="" className="h-full w-full object-cover" />
-                    </div>
+                    {item.image ? (
+                      <div className="h-[36px] w-[44px] overflow-hidden rounded-[4px] bg-white/5">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={item.image} alt="" className="h-full w-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="h-[36px] w-[44px] rounded-[4px] bg-white/5 flex items-center justify-center text-white/30 text-xs">
+                        No img
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center justify-center gap-2">
-                    <span
-                      className={`inline-flex h-[28px] min-w-[72px] items-center justify-center rounded-[6px] px-3 font-['Times_New_Roman'] text-[13px] font-bold ${STATUS_STYLES[item.status] || "bg-white/10 text-white"}`}
+                    <button
+                      onClick={() => onArchive(item)}
+                      className="inline-flex h-[28px] min-w-[72px] items-center justify-center rounded-[6px] bg-[#22c55e] px-3 font-['Times_New_Roman'] text-[13px] font-bold text-white transition hover:bg-[#16a34a]"
                     >
-                      {item.status}
-                    </span>
+                      Archive
+                    </button>
                     <button
                       onClick={() => onEdit(item)}
                       className="inline-flex h-[28px] min-w-[60px] items-center justify-center rounded-[6px] border border-white/20 px-3 font-['Times_New_Roman'] text-[13px] font-bold text-white/60 transition hover:border-[#e9af41] hover:text-[#e9af41]"

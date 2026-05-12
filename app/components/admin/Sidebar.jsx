@@ -64,22 +64,6 @@ const MENU_ITEMS = [
     hasSubmenu: true,
     disabled: false,
   },
-  {
-    id: "redemption",
-    label: "Points Redemption Gift",
-    icon: "/assets/admin/redemption-gift-icon.png",
-    href: "/admin/redemption",
-    hasSubmenu: true,
-    disabled: false,
-  },
-  {
-    id: "redemption-gift",
-    label: "Points Redemption Gift",
-    icon: "/assets/admin/redemption-gift-icon.png",
-    href: "/admin/redemption-gift",
-    hasSubmenu: true,
-    disabled: true, // No page yet
-  },
 ];
 
 const SECONDARY_MENU = [

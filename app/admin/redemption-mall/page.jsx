@@ -1,17 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
 import RedemptionMallTable from "../../components/admin/redemption-mall/RedemptionMallTable";
 import RedemptionItemDialog from "../../components/admin/redemption-mall/RedemptionItemDialog";
-
-const INITIAL_ITEMS = [
-  { id: 1, name: "John",    quantity: "Bronze", startDate: "2nd June",  endDate: "3rd June",  prizeType: "2,00,000,000", mart: "VIP",     tokens: "2,000", promotion: "2,000", image: "/assets/admin/Tier.png", status: "Archive" },
-  { id: 2, name: "Alice",   quantity: "Silver", startDate: "5th June",  endDate: "6th June",  prizeType: "1,50,000,000", mart: "Premium", tokens: "1,500", promotion: "1,500", image: "/assets/admin/Tier.png", status: "Active"  },
-  { id: 3, name: "John",    quantity: "Bronze", startDate: "2nd June",  endDate: "3rd June",  prizeType: "2,00,000,000", mart: "VIP",     tokens: "2,000", promotion: "2,000", image: "/assets/admin/Tier.png", status: "Archive" },
-  { id: 4, name: "Michael", quantity: "Gold",   startDate: "10th June", endDate: "11th June", prizeType: "3,00,000,000", mart: "Elite",   tokens: "3,000", promotion: "3,000", image: "/assets/admin/Tier.png", status: "Pending" },
-  { id: 5, name: "John",    quantity: "Bronze", startDate: "2nd June",  endDate: "3rd June",  prizeType: "2,00,000,000", mart: "VIP",     tokens: "2,000", promotion: "2,000", image: "/assets/admin/Tier.png", status: "Archive" },
-];
+import { LoadingState } from "../../components/ui/LoadingState";
+import * as adminApi from "../../api/adminApi";
 
 export default function RedemptionMallPage() {
   return (
@@ -22,23 +16,76 @@ export default function RedemptionMallPage() {
 }
 
 function RedemptionMallContent() {
-  const [items, setItems] = useState(INITIAL_ITEMS);
+  const [items, setItems] = useState([]);
+  const [martTiers, setMartTiers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [dialog, setDialog] = useState({ open: false, mode: "create", item: null });
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      // Load redemption items
+      console.log('Loading redemption items...');
+      const itemsData = await adminApi.getRedemptionItems();
+      console.log('Redemption items response:', itemsData);
+      setItems(Array.isArray(itemsData) ? itemsData : (itemsData?.results || []));
+      
+      // Load mart tiers for dropdown
+      try {
+        const tiersData = await adminApi.getRedemptionTiers();
+        setMartTiers(Array.isArray(tiersData) ? tiersData : (tiersData?.results || []));
+      } catch (err) {
+        console.warn('Mart tiers not available:', err);
+        setMartTiers([]);
+      }
+    } catch (err) {
+      console.error('Failed to load redemption items:', err);
+      console.error('Error details:', {
+        message: err.message,
+        status: err.status,
+        data: err.data
+      });
+      // Set empty array so page still renders
+      setItems([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const openCreate = () => setDialog({ open: true, mode: "create", item: null });
   const openEdit = (item) => setDialog({ open: true, mode: "edit", item });
   const close = () => setDialog({ open: false, mode: "create", item: null });
 
-  const handleSubmit = (form) => {
-    if (dialog.mode === "create") {
-      setItems((prev) => [
-        ...prev,
-        { id: Date.now(), status: "Pending", image: "/assets/admin/Tier.png", ...form },
-      ]);
-    } else {
-      setItems((prev) => prev.map((it) => (it.id === dialog.item.id ? { ...it, ...form } : it)));
+  const handleSubmit = async (formData) => {
+    try {
+      if (dialog.mode === "create") {
+        await adminApi.createRedemptionItem(formData);
+      } else {
+        await adminApi.updateRedemptionItem(dialog.item.uuid, formData);
+      }
+      await loadData(); // Reload data after successful operation
+      close();
+    } catch (err) {
+      console.error('Failed to save redemption item:', err);
+      throw err; // Let the dialog handle the error display
     }
-    close();
+  };
+
+  const handleArchive = async (item) => {
+    if (!confirm(`Are you sure you want to archive "${item.name}"?`)) {
+      return;
+    }
+    try {
+      await adminApi.archiveRedemptionItem(item.uuid);
+      await loadData();
+    } catch (err) {
+      console.error('Failed to archive item:', err);
+      alert('Failed to archive item. Please try again.');
+    }
   };
 
   return (
@@ -55,12 +102,15 @@ function RedemptionMallContent() {
         </button>
       </div>
 
-      <RedemptionMallTable items={items} onCreate={openCreate} onEdit={openEdit} />
+      <LoadingState isLoading={isLoading}>
+        <RedemptionMallTable items={items} onCreate={openCreate} onEdit={openEdit} onArchive={handleArchive} />
+      </LoadingState>
 
       <RedemptionItemDialog
         open={dialog.open}
         mode={dialog.mode}
         initial={dialog.item}
+        martTiers={martTiers}
         onClose={close}
         onSubmit={handleSubmit}
       />
