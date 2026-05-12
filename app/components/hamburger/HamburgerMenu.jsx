@@ -32,12 +32,42 @@ function HamburgerMenu({ isOpen, onClose }) {
 
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
-  const handleMenuAction = useCallback((actionType) => {
+  const handleMenuAction = useCallback(async (actionType) => {
     if (actionType === "feedback") {
       // Open the feedback modal AND close the menu drawer; the modal lives
       // outside the drawer so it stays mounted after the drawer animates out.
       setFeedbackOpen(true);
       onClose();
+    } else if (actionType === "livechat") {
+      // Get station URL from login response and redirect to chatroom
+      try {
+        const { tokenStorage } = await import("@/app/api/tokenStorage");
+        
+        const memberUuid = tokenStorage.getMemberUuid();
+        if (!memberUuid) {
+          alert("Please log in to access live chat");
+          return;
+        }
+
+        // Get the station URL from the login response (e.g., "n1gang.net")
+        const stationUrl = tokenStorage.getStationUrl();
+        
+        if (!stationUrl) {
+          alert("Station information not available");
+          return;
+        }
+
+        // Construct chatroom URL with https:// protocol
+        // stationUrl is just the domain (e.g., "n1gang.net")
+        const chatUrl = `https://${stationUrl}/chatroom`;
+        
+        // Open in new tab
+        window.open(chatUrl, '_blank', 'noopener,noreferrer');
+        onClose();
+      } catch (error) {
+        console.error("Error opening live chat:", error);
+        alert("Failed to open live chat. Please try again.");
+      }
     }
   }, [onClose]);
 

@@ -14,10 +14,16 @@ export async function generateMemberToken(id, o) {
     tokenStorage.setMemberTokens(response.access, response.member_uuid);
   }
   
+  // Store station_url if provided by API
+  if (response.station_url) {
+    tokenStorage.setStationUrl(response.station_url);
+  }
+  
   return {
     access: response.access,
     member_uuid: response.member_uuid,
-    tokens_obtained: response.tokens_obtained
+    tokens_obtained: response.tokens_obtained,
+    station_url: response.station_url
   };
 }
 

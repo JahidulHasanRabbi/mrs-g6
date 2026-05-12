@@ -44,10 +44,9 @@ export const FOOTER_CONFIG = {
       id: 'livechat',
       icon: '/assets/images/footer-livechat.png',
       label: 'LIVECHAT',
-      link: '/live-chat',
+      action: 'livechat',
       width: 40,
       height: 40,
-      disabled: true,
     },
   ],
 };

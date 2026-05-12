@@ -6,7 +6,8 @@ export const STORAGE_KEYS = {
   MEMBER_TOKEN_EXPIRY: 'mrs_member_token_expiry',
   ADMIN_ACCESS_TOKEN: 'mrs_admin_access_token',
   ADMIN_TOKEN_EXPIRY: 'mrs_admin_token_expiry',
-  REDIRECT_O: 'mrs_redirect_o'
+  REDIRECT_O: 'mrs_redirect_o',
+  STATION_URL: 'mrs_station_url'
 };
 
 export const tokenStorage = {
@@ -134,6 +135,26 @@ export const tokenStorage = {
   clearRedirectO: () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem(STORAGE_KEYS.REDIRECT_O);
+    }
+  },
+
+  // Station URL methods (for chatroom and other station-specific features)
+  setStationUrl: (stationUrl) => {
+    if (typeof window !== 'undefined' && stationUrl) {
+      localStorage.setItem(STORAGE_KEYS.STATION_URL, stationUrl);
+    }
+  },
+
+  getStationUrl: () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(STORAGE_KEYS.STATION_URL);
+    }
+    return null;
+  },
+
+  clearStationUrl: () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEYS.STATION_URL);
     }
   }
 };

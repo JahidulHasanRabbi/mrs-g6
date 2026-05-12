@@ -11,8 +11,15 @@ import { FOOTER_CONFIG, FOOTER_THEME } from './footerConfig';
  * FooterNavItem Component
  * Individual footer navigation item with icon and label
  */
-const FooterNavItem = memo(({ item, isActive }) => {
-  const { icon, label, link, width, height, isCenter } = item;
+const FooterNavItem = memo(({ item, isActive, onAction }) => {
+  const { icon, label, link, width, height, isCenter, action } = item;
+  
+  const handleClick = async (e) => {
+    if (action && onAction) {
+      e.preventDefault();
+      await onAction(action);
+    }
+  };
   
   const itemContent = (
     <motion.div
@@ -67,6 +74,14 @@ const FooterNavItem = memo(({ item, isActive }) => {
           <div className="cursor-not-allowed opacity-50" aria-label={label}>
             {itemContent}
           </div>
+        ) : action ? (
+          <button
+            onClick={handleClick}
+            className="cursor-pointer"
+            aria-label={label}
+          >
+            {itemContent}
+          </button>
         ) : (
           <Link
             href={link}
@@ -80,10 +95,30 @@ const FooterNavItem = memo(({ item, isActive }) => {
     );
   }
 
+  if (item.disabled) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center pt-4 cursor-not-allowed opacity-50" aria-label={label}>
+        {itemContent}
+      </div>
+    );
+  }
+
+  if (action) {
+    return (
+      <button
+        onClick={handleClick}
+        className="flex-1 flex flex-col items-center justify-center pt-4 cursor-pointer hover:opacity-80 transition-opacity"
+        aria-label={label}
+      >
+        {itemContent}
+      </button>
+    );
+  }
+
   return (
     <Link
       href={link}
-      className={`flex-1 flex flex-col items-center justify-center pt-4 cursor-pointer hover:opacity-80 transition-opacity ${item.disabled ? 'cursor-not-allowed opacity-50 pointer-events-none' : ''}`}
+      className="flex-1 flex flex-col items-center justify-center pt-4 cursor-pointer hover:opacity-80 transition-opacity"
       aria-label={label}
     >
       {itemContent}
@@ -99,6 +134,38 @@ FooterNavItem.displayName = 'FooterNavItem';
  */
 function FooterNav({ showAnimation = false }) {
   const pathname = usePathname();
+
+  const handleAction = async (actionType) => {
+    if (actionType === "livechat") {
+      try {
+        const { tokenStorage } = await import("@/app/api/tokenStorage");
+        
+        const memberUuid = tokenStorage.getMemberUuid();
+        if (!memberUuid) {
+          alert("Please log in to access live chat");
+          return;
+        }
+
+        // Get the station URL from the login response (e.g., "n1gang.net")
+        const stationUrl = tokenStorage.getStationUrl();
+        
+        if (!stationUrl) {
+          alert("Station information not available");
+          return;
+        }
+
+        // Construct chatroom URL with https:// protocol
+        // stationUrl is just the domain (e.g., "n1gang.net")
+        const chatUrl = `https://${stationUrl}/chatroom`;
+        
+        // Open in new tab
+        window.open(chatUrl, '_blank', 'noopener,noreferrer');
+      } catch (error) {
+        console.error("Error opening live chat:", error);
+        alert("Failed to open live chat. Please try again.");
+      }
+    }
+  };
 
   return (
     <motion.footer
@@ -131,7 +198,7 @@ function FooterNav({ showAnimation = false }) {
       >
         {FOOTER_CONFIG.navItems.map((item) => {
           const isActive = pathname === item.link;
-          return <FooterNavItem key={item.id} item={item} isActive={isActive} />;
+          return <FooterNavItem key={item.id} item={item} isActive={isActive} onAction={handleAction} />;
         })}
       </nav>
     </motion.footer>
