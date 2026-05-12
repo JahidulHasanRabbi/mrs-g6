@@ -16,97 +16,73 @@ export default function AdminDashboard() {
 }
 
 function AdminDashboardContent() {
-  const [members, setMembers] = useState([]);
+  const [stats, setStats] = useState({
+    totalMembers: 0,
+    activeToday: 0,
+    newMembers: 0,
+    checkins: [0, 0, 0, 0, 0, 0, 0],
+    totalCheckins: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchMembers();
+    fetchDashboardData();
   }, []);
 
-  const fetchMembers = async () => {
+  const fetchDashboardData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminApi.getMembers();
-      setMembers(data);
+      
+      // Fetch all dashboard data in parallel
+      const [totalUsersData, activeUsersData, dailyCheckInData, membersData] = await Promise.all([
+        adminApi.getTotalUsers(),
+        adminApi.getActiveUsers(),
+        adminApi.getDailyCheckIn(),
+        adminApi.getMembers()
+      ]);
+
+      // Process daily check-in data
+      const checkInArray = [
+        dailyCheckInData['6D'] || 0,
+        dailyCheckInData['5D'] || 0,
+        dailyCheckInData['4D'] || 0,
+        dailyCheckInData['3D'] || 0,
+        dailyCheckInData['2D'] || 0,
+        dailyCheckInData['1D'] || 0,
+        dailyCheckInData['0D'] || 0
+      ];
+      
+      const totalCheckins = checkInArray.reduce((a, b) => a + b, 0);
+
+      // Calculate new members from last 7 days
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const sevenDaysAgo = new Date(today);
+      sevenDaysAgo.setDate(today.getDate() - 6);
+      
+      const newMembers = membersData.filter((member) => {
+        if (!member.registered_date) return false;
+        const registered = new Date(member.registered_date);
+        const registeredDay = new Date(registered.getFullYear(), registered.getMonth(), registered.getDate());
+        return registeredDay >= sevenDaysAgo && registeredDay <= today;
+      }).length;
+
+      setStats({
+        totalMembers: totalUsersData.total_users || 0,
+        activeToday: activeUsersData.active_users || 0,
+        newMembers,
+        checkins: checkInArray,
+        totalCheckins,
+      });
     } catch (err) {
       setError(err);
-      console.error('Error fetching members:', err);
+      console.error('Error fetching dashboard data:', err);
     } finally {
       setLoading(false);
     }
   };
-
-  // Calculate statistics from real member data
-  const stats = useMemo(() => {
-    if (!members.length) {
-      return {
-        totalMembers: 0,
-        activeToday: 0,
-        newMembers: 0,
-        checkins: [0, 0, 0, 0, 0, 0, 0],
-        totalCheckins: 0,
-      };
-    }
-
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    // Count active users today (logged in today OR checked in today)
-    const activeToday = members.filter(member => {
-      // Check if logged in today
-      if (member.last_login_datetime) {
-        const loginDate = new Date(member.last_login_datetime);
-        const loginDay = new Date(loginDate.getFullYear(), loginDate.getMonth(), loginDate.getDate());
-        if (loginDay.getTime() === today.getTime()) return true;
-      }
-      
-      // Check if checked in today
-      if (member.last_check_in_date) {
-        const checkinDate = new Date(member.last_check_in_date);
-        const checkinDay = new Date(checkinDate.getFullYear(), checkinDate.getMonth(), checkinDate.getDate());
-        if (checkinDay.getTime() === today.getTime()) return true;
-      }
-      
-      return false;
-    }).length;
-
-    const checkins = [];
-
-    for (let i = 6; i >= 0; i--) {
-      const targetDate = new Date(today);
-      targetDate.setDate(targetDate.getDate() - i);
-
-      const checkinsThisDay = members.filter(member => {
-        if (!member.last_check_in_date) return false;
-        const checkinDate = new Date(member.last_check_in_date);
-        const checkinDay = new Date(checkinDate.getFullYear(), checkinDate.getMonth(), checkinDate.getDate());
-        return checkinDay.getTime() === targetDate.getTime();
-      }).length;
-
-      checkins.push(checkinsThisDay);
-    }
-
-    const totalCheckins = checkins.reduce((a, b) => a + b, 0);
-
-    const sevenDaysAgo = new Date(today);
-    sevenDaysAgo.setDate(today.getDate() - 6);
-    const newMembers = members.filter((member) => {
-      if (!member.registered_date) return false;
-      const registered = new Date(member.registered_date);
-      const registeredDay = new Date(registered.getFullYear(), registered.getMonth(), registered.getDate());
-      return registeredDay >= sevenDaysAgo && registeredDay <= today;
-    }).length;
-
-    return {
-      totalMembers: members.length,
-      activeToday,
-      newMembers,
-      checkins,
-      totalCheckins,
-    };
-  }, [members]);
 
   const dayLabels = useMemo(() => {
     const labels = [];

@@ -381,3 +381,32 @@ export async function updateTermsAndConditions(data) {
     body: data
   }, true, 'admin');
 }
+
+// Front View Dashboard APIs
+// GET /front-view/total-users/ - Get total users count
+export async function getTotalUsers() {
+  return await apiRequest(ENDPOINTS.FRONT_VIEW.TOTAL_USERS, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+// GET /front-view/active-users/ - Get active users count
+export async function getActiveUsers() {
+  return await apiRequest(ENDPOINTS.FRONT_VIEW.ACTIVE_USERS, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+// GET /front-view/daily-check-in/ - Get daily check-in data for last 7 days
+export async function getDailyCheckIn() {
+  return await apiRequest(ENDPOINTS.FRONT_VIEW.DAILY_CHECK_IN, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+// GET /front-view/winning-list/ - Get winning list
+export async function getWinningList() {
+  return await apiRequest(ENDPOINTS.FRONT_VIEW.WINNING_LIST, {
+    method: 'GET'
+  }, true, 'admin');
+}

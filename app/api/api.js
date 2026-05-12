@@ -20,7 +20,10 @@ export const ENDPOINTS = {
     REDEEM_ITEM: (uuid) => `/redemption/redemption-items/${uuid}/redeem/`
   },
   FRONT_VIEW: {
-    WINNING_LIST: '/front-view/winning-list/'
+    WINNING_LIST: '/front-view/winning-list/',
+    TOTAL_USERS: '/front-view/total-users/',
+    ACTIVE_USERS: '/front-view/active-users/',
+    DAILY_CHECK_IN: '/front-view/daily-check-in/'
   },
   SETTINGS: {
     PUBLIC_BANNERS: '/settings/banners/public/'
