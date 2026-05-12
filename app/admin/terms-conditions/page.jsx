@@ -30,6 +30,8 @@ function TermsConditionsContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [showErrorToast, setShowErrorToast] = useState(false);
 
   useEffect(() => {
     loadTermsData();
@@ -62,7 +64,8 @@ function TermsConditionsContent() {
 
   const handleSave = async () => {
     if (!termsText.trim()) {
-      alert("Please enter terms and conditions text.");
+      setShowErrorToast(true);
+      setTimeout(() => setShowErrorToast(false), 3000);
       return;
     }
 
@@ -75,10 +78,14 @@ function TermsConditionsContent() {
       
       // Reload data to get updated timestamp
       await loadTermsData();
-      alert("Terms and conditions saved successfully!");
+      
+      // Show success toast
+      setShowSuccessToast(true);
+      setTimeout(() => setShowSuccessToast(false), 3000);
     } catch (err) {
       console.error('Failed to save terms and conditions:', err);
-      alert("Failed to save. Please try again.");
+      setShowErrorToast(true);
+      setTimeout(() => setShowErrorToast(false), 3000);
     } finally {
       setIsSaving(false);
     }
@@ -101,6 +108,36 @@ function TermsConditionsContent() {
 
   return (
     <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
+      {/* Success Toast */}
+      {showSuccessToast && (
+        <div className="fixed top-6 right-6 z-50 animate-slide-in-right">
+          <div className="bg-[#06b800] border border-[#06b800]/30 rounded-lg px-6 py-4 shadow-lg flex items-center gap-3 min-w-[300px]">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <div>
+              <p className="text-white font-bold font-['Times_New_Roman']">Success!</p>
+              <p className="text-white/90 text-sm font-['Times_New_Roman']">Terms and conditions saved successfully</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Toast */}
+      {showErrorToast && (
+        <div className="fixed top-6 right-6 z-50 animate-slide-in-right">
+          <div className="bg-red-500 border border-red-500/30 rounded-lg px-6 py-4 shadow-lg flex items-center gap-3 min-w-[300px]">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <div>
+              <p className="text-white font-bold font-['Times_New_Roman']">Error!</p>
+              <p className="text-white/90 text-sm font-['Times_New_Roman']">Please enter terms and conditions text</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="mb-8 flex items-start justify-between">
         <h1 className="text-4xl font-bold leading-[1.05] text-white font-['Times_New_Roman']">
@@ -198,6 +235,22 @@ function TermsConditionsContent() {
           </div>
         </div>
       </LoadingState>
+
+      <style jsx>{`
+        @keyframes slide-in-right {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        .animate-slide-in-right {
+          animation: slide-in-right 0.3s ease-out;
+        }
+      `}</style>
     </main>
   );
 }
