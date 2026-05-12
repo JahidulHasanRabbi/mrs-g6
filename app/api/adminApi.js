@@ -358,3 +358,11 @@ export async function getRedemptionTiers() {
   // Handle paginated response
   return Array.isArray(response) ? response : (response?.results || []);
 }
+
+// GET /front-view/member-feedback/ - Get all member feedback (admin)
+export async function getMemberFeedback(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`/front-view/member-feedback/${qs}`, {
+    method: 'GET'
+  }, true, 'admin');
+}

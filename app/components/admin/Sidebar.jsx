@@ -23,6 +23,7 @@ function pathnameToActiveItem(pathname) {
   if (pathname.startsWith("/admin/members")) return "member-list";
   if (pathname.startsWith("/admin/redemption")) return "redemption";
   if (pathname.startsWith("/admin/checkin-settings")) return "checkin-settings";
+  if (pathname.startsWith("/admin/feedback")) return "feedback";
   if (pathname.startsWith("/admin/banners")) return "banners";
   if (pathname.startsWith("/admin/frame-setting")) return "frame-setting";
   if (pathname.startsWith("/admin/wallet-site-vip")) return "wallet-site-vip";
@@ -98,6 +99,13 @@ const SECONDARY_MENU = [
     label: "Check-In Settings",
     icon: "/assets/admin/home-icon.png", // Using home icon as placeholder
     href: "/admin/checkin-settings",
+    disabled: false,
+  },
+  {
+    id: "feedback",
+    label: "Member Feedback",
+    icon: "/assets/images/feedback-icon.svg",
+    href: "/admin/feedback",
     disabled: false,
   },
   {

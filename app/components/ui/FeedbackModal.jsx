@@ -2,14 +2,11 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useCallback } from "react";
+import { submitFeedback as submitFeedbackApi } from "@/app/api/memberApi";
+import { tokenStorage } from "@/app/api/tokenStorage";
 
 /**
  * FeedbackModal — collects a star rating + free-text message from the player.
- *
- * Backend integration is intentionally a thin async stub right now: the
- * codebase has no /feedback endpoint and we don't want to block shipping
- * the UI on that. When the endpoint exists, replace the stub in
- * `submitFeedback` with a call to `memberApi.submitFeedback({ rating, message })`.
  */
 export default function FeedbackModal({ isOpen, onClose }) {
   const [rating, setRating] = useState(0);
@@ -35,11 +32,32 @@ export default function FeedbackModal({ isOpen, onClose }) {
   }, [onClose, reset]);
 
   const submitFeedback = useCallback(async ({ rating, message }) => {
-    // Stubbed — wire to memberApi.submitFeedback when the backend route lands.
-    await new Promise((r) => setTimeout(r, 600));
-    if (typeof window !== "undefined") {
-      // eslint-disable-next-line no-console
-      console.info("[feedback] submitted", { rating, message });
+    console.log('submitFeedback called with:', { rating, message });
+    
+    // Get member UUID from token storage
+    const memberUuid = tokenStorage.getMemberUuid();
+    
+    console.log('Member UUID:', memberUuid);
+    
+    if (!memberUuid) {
+      throw new Error('Member not logged in');
+    }
+
+    const feedbackData = {
+      member_uuid: memberUuid,
+      feedback: `Rating: ${rating}/5\n\n${message}`
+    };
+    
+    console.log('Submitting feedback data:', feedbackData);
+
+    // Submit to API
+    try {
+      const result = await submitFeedbackApi(feedbackData);
+      console.log('Feedback submitted successfully:', result);
+      return result;
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      throw error;
     }
   }, []);
 
@@ -56,9 +74,17 @@ export default function FeedbackModal({ isOpen, onClose }) {
     setIsSubmitting(true);
     setError(null);
     try {
+      console.log('handleSubmit: Starting submission...');
       await submitFeedback({ rating, message: message.trim() });
+      console.log('handleSubmit: Submission successful');
       setSubmitted(true);
     } catch (err) {
+      console.error('handleSubmit: Error caught:', err);
+      console.error('Error details:', {
+        message: err.message,
+        status: err.status,
+        data: err.data
+      });
       setError("Could not send your feedback right now. Please try again.");
     } finally {
       setIsSubmitting(false);
