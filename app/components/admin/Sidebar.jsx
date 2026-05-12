@@ -136,22 +136,6 @@ const SECONDARY_MENU = [
       { id: "member-report", label: "Member Report", href: "/admin/reports/member" },
     ],
   },
-  {
-    id: "user-management",
-    label: "User Management",
-    icon: "/assets/admin/user-management-icon.png",
-    href: "/admin/user-management",
-    hasSubmenu: true,
-    disabled: true, // No page yet
-  },
-  {
-    id: "notifications",
-    label: "Notification Management",
-    icon: "/assets/admin/notifications-icon.png",
-    href: "/admin/notifications",
-    hasSubmenu: true,
-    disabled: true, // No page yet
-  },
 ];
 
 const MenuItem = ({ item, isActive }) => {

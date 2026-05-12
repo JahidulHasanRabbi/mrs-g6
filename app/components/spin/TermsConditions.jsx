@@ -1,8 +1,10 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { SPIN_ASSETS } from "./spinAssets";
+import { getPublicTermsAndConditions } from "@/app/api/memberApi";
 
 const TermItem = ({ text, index }) => (
   <motion.div 
@@ -39,13 +41,41 @@ const TermItem = ({ text, index }) => (
 );
 
 export default function TermsConditions() {
-  const terms = [
-    "VIP birthday bonus is calculated based on your registration date.",
-    "All bonuses are subject to a rollover requirement of x3.",
-    "All bonuses are subject to rules regarding Minimum/Maximum Withdrawal of the bonus amount.",
-    "Do not mix with other credits or bonuses; otherwise, all credits will be forfeited.",
-    "Bonuses are allowed to be used on event games only (MEGAH52 Slot Game & ACEWIN2 Slot Game).",
-  ];
+  const [terms, setTerms] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadTerms();
+  }, []);
+
+  const loadTerms = async () => {
+    try {
+      // Category 1 = Lucky Spin
+      const response = await getPublicTermsAndConditions(1);
+      
+      if (response?.terms_and_conditions) {
+        // Split by newlines and filter out empty lines
+        const termsArray = response.terms_and_conditions
+          .split('\n')
+          .map(line => line.trim())
+          .filter(line => line.length > 0);
+        
+        setTerms(termsArray);
+      } else {
+        setTerms([]);
+      }
+    } catch (err) {
+      console.error('Failed to load terms and conditions:', err);
+      setTerms([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Don't render if no terms available
+  if (!isLoading && terms.length === 0) {
+    return null;
+  }
 
   return (
     <motion.div 
@@ -69,11 +99,17 @@ export default function TermsConditions() {
         <p className="text-white text-[12px] font-semibold text-center">Terms & Condition</p>
       </motion.div>
       
-      <div className="space-y-2">
-        {terms.map((term, index) => (
-          <TermItem key={index} index={index} text={term} />
-        ))}
-      </div>
+      {isLoading ? (
+        <div className="text-center text-white/60 text-sm py-4">
+          Loading terms...
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {terms.map((term, index) => (
+            <TermItem key={index} index={index} text={term} />
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 }

@@ -178,3 +178,10 @@ export async function submitFeedback(feedbackData) {
     body: feedbackData  // apiClient will handle JSON.stringify
   }, true, 'member');
 }
+
+// GET /settings/terms-and-conditions/public/<category>/ - Get public T&C (no auth required)
+export async function getPublicTermsAndConditions(category) {
+  return await apiRequest(`/settings/terms-and-conditions/public/${category}/`, {
+    method: 'GET'
+  }, false);
+}
