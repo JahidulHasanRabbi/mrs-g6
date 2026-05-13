@@ -43,12 +43,20 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
         }
       }
       
+      // Convert prize_type string to number if needed
+      let prizeTypeValue = initial.prize_type;
+      if (typeof prizeTypeValue === 'string') {
+        // Map string values to numbers: "ITEM" -> 1, "VOUCHER" -> 2, "CREDIT" -> 3, "OTHERS" -> 4
+        const prizeTypeMap = { "ITEM": 1, "VOUCHER": 2, "CREDIT": 3, "OTHERS": 4 };
+        prizeTypeValue = prizeTypeMap[prizeTypeValue.toUpperCase()] || prizeTypeValue;
+      }
+      
       setForm({
         name: initial.name || "",
         quantity_available: initial.quantity_available || "",
         start_date: initial.start_date || "",
         end_date: initial.end_date || "",
-        prize_type: initial.prize_type || "",
+        prize_type: prizeTypeValue || "",
         credit_amount: initial.credit_amount || "",
         tokens_needed: initial.tokens_needed || "",
         promotion: initial.promotion || "",
@@ -97,7 +105,7 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
         end_date: form.end_date,
         prize_type: parseInt(form.prize_type, 10),
         tokens_needed: parseInt(form.tokens_needed, 10),
-        promotion: form.promotion,
+        promotion: form.promotion || "0.00", // Default to "0.00" if empty
       };
 
       // Add credit_amount only if prize_type is CREDIT (3)
@@ -105,22 +113,32 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
         submitData.credit_amount = parseInt(form.credit_amount, 10);
       }
 
-      // Add tier_uuid only if selected
-      if (form.tier_uuid) {
-        submitData.tier_uuid = form.tier_uuid;
+      // Add tier_uuid (required field)
+      if (!form.tier_uuid) {
+        setErrorMessage("Mart Tier is required. Please select a tier.");
+        setIsSubmitting(false);
+        return;
       }
+      submitData.tier_uuid = form.tier_uuid;
 
       // Add image file if uploaded
       if (imageFile) {
         submitData.image = imageFile;
       }
 
+      console.log('Submitting redemption item:', submitData);
+      console.log('Mode:', mode);
+      
       await onSubmit(submitData);
     } catch (err) {
       console.error('Form submission error:', err);
+      console.error('Error type:', typeof err);
+      console.error('Error keys:', Object.keys(err || {}));
+      console.error('Error stringified:', JSON.stringify(err, null, 2));
+      
       // Extract error message from API response
       let message = "Failed to save item. Please try again.";
-      if (err.data) {
+      if (err && err.data) {
         if (typeof err.data === 'string') {
           message = err.data;
         } else if (err.data.detail) {
@@ -138,7 +156,7 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
             .join('; ');
           if (errors) message = errors;
         }
-      } else if (err.message) {
+      } else if (err && err.message) {
         message = err.message;
       }
       setErrorMessage(message);
@@ -204,6 +222,7 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
               type="date"
               value={form.start_date}
               onChange={(e) => handleChange("start_date", e.target.value)}
+              onClick={(e) => e.target.showPicker && e.target.showPicker()}
               className="h-[36px] rounded-[8px] bg-[#5a5a5a] px-3 font-['Times_New_Roman'] text-[14px] text-white outline-none transition focus:border-[#e9af41] border border-transparent cursor-pointer"
               required
               disabled={isSubmitting}
@@ -219,6 +238,7 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
               type="date"
               value={form.end_date}
               onChange={(e) => handleChange("end_date", e.target.value)}
+              onClick={(e) => e.target.showPicker && e.target.showPicker()}
               className="h-[36px] rounded-[8px] bg-[#5a5a5a] px-3 font-['Times_New_Roman'] text-[14px] text-white outline-none transition focus:border-[#e9af41] border border-transparent cursor-pointer"
               required
               disabled={isSubmitting}
@@ -289,7 +309,7 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
               onChange={(e) => handleChange("promotion", e.target.value)}
               className="h-[36px] rounded-[8px] bg-[#5a5a5a] px-3 font-['Times_New_Roman'] text-[14px] text-white outline-none transition focus:border-[#e9af41] border border-transparent"
               step="0.01"
-              required
+              placeholder="0.00"
               disabled={isSubmitting}
             />
           </div>
@@ -297,16 +317,17 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
           {/* Mart Tier */}
           <div className="grid grid-cols-[110px_1fr] items-center gap-4">
             <label className="font-['Times_New_Roman'] text-[14px] text-white">
-              Mart Tier:
+              Mart Tier: <span className="text-red-400">*</span>
             </label>
             <select
               value={form.tier_uuid}
               onChange={(e) => handleChange("tier_uuid", e.target.value)}
               className="h-[36px] rounded-[8px] bg-[#5a5a5a] px-3 font-['Times_New_Roman'] text-[14px] text-white outline-none transition focus:border-[#e9af41] border border-transparent appearance-none cursor-pointer"
+              required
               disabled={isSubmitting}
             >
               <option value="">
-                {martTiers.length === 0 ? 'No tiers available' : 'Select mart tier (optional)'}
+                {martTiers.length === 0 ? 'No tiers available - create one first' : 'Select mart tier'}
               </option>
               {martTiers.map(tier => (
                 <option key={tier.uuid} value={tier.uuid}>

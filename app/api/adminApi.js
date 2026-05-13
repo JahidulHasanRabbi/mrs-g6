@@ -180,6 +180,12 @@ export async function getRedemptionItems() {
   }, true, 'admin');
 }
 
+export async function getRedemptionItem(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.REDEMPTION_ITEM(uuid), {
+    method: 'GET'
+  }, true, 'admin');
+}
+
 export async function createRedemptionItem(itemData) {
   return await apiRequest(ENDPOINTS.ADMIN.REDEMPTION_ITEMS, {
     method: 'POST',
@@ -357,6 +363,36 @@ export async function getRedemptionTiers() {
   const response = await apiRequest(ENDPOINTS.ADMIN.REDEMPTION_TIERS, { method: 'GET' }, true, 'admin');
   // Handle paginated response
   return Array.isArray(response) ? response : (response?.results || []);
+}
+
+// GET /redemption/redemption-tier/{uuid}/ - Get single redemption tier
+export async function getRedemptionTier(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.REDEMPTION_TIER_SINGLE(uuid), {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+// POST /redemption/redemption-tier/ - Create redemption tier
+export async function createRedemptionTier(tierData) {
+  return await apiRequest(ENDPOINTS.ADMIN.REDEMPTION_TIERS, {
+    method: 'POST',
+    body: tierData
+  }, true, 'admin');
+}
+
+// PUT /redemption/redemption-tier/{uuid}/ - Update redemption tier
+export async function updateRedemptionTier(uuid, tierData) {
+  return await apiRequest(ENDPOINTS.ADMIN.REDEMPTION_TIER_SINGLE(uuid), {
+    method: 'PUT',
+    body: tierData
+  }, true, 'admin');
+}
+
+// PATCH /redemption/redemption-tier/{uuid}/archive/ - Archive redemption tier
+export async function archiveRedemptionTier(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.ARCHIVE_REDEMPTION_TIER(uuid), {
+    method: 'PATCH'
+  }, true, 'admin');
 }
 
 // GET /front-view/member-feedback/ - Get all member feedback (admin)

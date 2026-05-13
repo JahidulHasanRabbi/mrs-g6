@@ -61,16 +61,31 @@ function RedemptionMallContent() {
   const close = () => setDialog({ open: false, mode: "create", item: null });
 
   const handleSubmit = async (formData) => {
+    console.log('Page handleSubmit called with:', formData);
+    console.log('Dialog mode:', dialog.mode);
+    console.log('Dialog item:', dialog.item);
+    
     try {
       if (dialog.mode === "create") {
-        await adminApi.createRedemptionItem(formData);
+        console.log('Calling createRedemptionItem...');
+        const result = await adminApi.createRedemptionItem(formData);
+        console.log('Create result:', result);
       } else {
-        await adminApi.updateRedemptionItem(dialog.item.uuid, formData);
+        console.log('Calling updateRedemptionItem with uuid:', dialog.item.uuid);
+        const result = await adminApi.updateRedemptionItem(dialog.item.uuid, formData);
+        console.log('Update result:', result);
       }
       await loadData(); // Reload data after successful operation
       close();
     } catch (err) {
       console.error('Failed to save redemption item:', err);
+      console.error('Error details:', {
+        message: err?.message,
+        status: err?.status,
+        data: err?.data,
+        type: typeof err,
+        keys: Object.keys(err || {})
+      });
       throw err; // Let the dialog handle the error display
     }
   };

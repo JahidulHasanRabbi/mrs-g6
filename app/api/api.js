@@ -60,6 +60,8 @@ export const ENDPOINTS = {
     MEMBER_REPORT_YEARLY: '/member/member-report/yearly/',
     STATION_LIST: '/front-view/station-list/',
     REDEMPTION_TIERS: '/redemption/redemption-tier/',
+    REDEMPTION_TIER_SINGLE: (uuid) => `/redemption/redemption-tier/${uuid}/`,
+    ARCHIVE_REDEMPTION_TIER: (uuid) => `/redemption/redemption-tier/${uuid}/archive/`,
     CHECKIN_TIER: '/settings/check-in-tier/',
     WALLET_VIP: '/third-party/wallet-vip/',
     WALLET_VIP_SINGLE: (uuid) => `/third-party/wallet-vip/${uuid}/`,
