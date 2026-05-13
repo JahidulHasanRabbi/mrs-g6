@@ -289,7 +289,7 @@ function EditMemberModal({ member, onClose, onSave }) {
       };
 
       // Only include personal fields if they are currently empty (can only be set once)
-      // These fields cannot be changed once they have a value
+      // Don't send them at all if they already have values
       if (!member.full_name && form.full_name) {
         updateData.full_name = form.full_name;
       }

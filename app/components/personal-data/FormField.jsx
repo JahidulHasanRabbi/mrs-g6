@@ -13,9 +13,10 @@ export default function FormField({
   placeholder,
   icon,
   options = [],
+  disabled = false,
 }) {
   const renderInput = () => {
-    const commonClasses = "absolute inset-0 bg-transparent px-4 outline-none";
+    const commonClasses = `absolute inset-0 bg-transparent px-4 outline-none ${disabled ? 'cursor-not-allowed opacity-50' : ''}`;
     const commonStyles = {
       fontFamily: '"Times New Roman", serif',
       color: FORM_COLORS.textInput,
@@ -29,6 +30,7 @@ export default function FormField({
               id={id}
               value={value}
               onChange={(e) => onChange(id, e.target.value)}
+              disabled={disabled}
               className={`${commonClasses} pr-12 appearance-none`}
               style={commonStyles}
             >
@@ -43,7 +45,7 @@ export default function FormField({
               ))}
             </select>
             {icon === "arrow" && (
-              <div className="absolute right-[23px] top-1/2 -translate-y-1/2 w-6 h-6 pointer-events-none rotate-90">
+              <div className={`absolute right-[23px] top-1/2 -translate-y-1/2 w-6 h-6 pointer-events-none rotate-90 ${disabled ? 'opacity-50' : ''}`}>
                 <ArrowIcon />
               </div>
             )}
@@ -58,14 +60,15 @@ export default function FormField({
               type="date"
               value={value}
               onChange={(e) => onChange(id, e.target.value)}
-              className={`${commonClasses} pr-12 cursor-pointer`}
+              disabled={disabled}
+              className={`${commonClasses} pr-12 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
               style={commonStyles}
-              onClick={(e) => e.currentTarget.showPicker?.()}
+              onClick={(e) => !disabled && e.currentTarget.showPicker?.()}
             />
             {icon === "calendar" && (
               <div 
-                className="absolute right-[23px] top-1/2 -translate-y-1/2 w-6 h-6 cursor-pointer"
-                onClick={() => document.getElementById(id)?.showPicker?.()}
+                className={`absolute right-[23px] top-1/2 -translate-y-1/2 w-6 h-6 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                onClick={() => !disabled && document.getElementById(id)?.showPicker?.()}
               >
                 <CalendarIcon />
               </div>
@@ -81,6 +84,7 @@ export default function FormField({
             value={value}
             onChange={(e) => onChange(id, e.target.value)}
             placeholder={placeholder}
+            disabled={disabled}
             className={commonClasses}
             style={commonStyles}
           />
@@ -92,7 +96,7 @@ export default function FormField({
     <div className="flex flex-col gap-[6px]">
       <label
         htmlFor={id}
-        className="text-sm tracking-[-0.28px]"
+        className={`text-sm tracking-[-0.28px] ${disabled ? 'opacity-50' : ''}`}
         style={{
           fontFamily: '"Times New Roman", serif',
           fontWeight: "bold",
@@ -100,8 +104,13 @@ export default function FormField({
         }}
       >
         {label}
+        {disabled && (
+          <span className="ml-1 text-[10px]" title="This field cannot be changed once set">
+            🔒
+          </span>
+        )}
       </label>
-      <div className="relative h-[40px] w-full">
+      <div className={`relative h-[40px] w-full ${disabled ? 'opacity-60' : ''}`}>
         <Image
           src="/assets/personal-data/input-bg.png"
           alt=""

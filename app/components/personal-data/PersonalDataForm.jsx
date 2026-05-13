@@ -22,6 +22,7 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
   const [formData, setFormData] = useState(
     FORM_FIELDS.reduce((acc, field) => ({ ...acc, [field.id]: "" }), {})
   );
+  const [originalData, setOriginalData] = useState({}); // Track original values
   const [profileImage, setProfileImage] = useState(null);
   const [profileImageFile, setProfileImageFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,13 +50,16 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
         const mappedData = mapProfileDataToForm(profileData);
         
         // Update form data with API response
-        setFormData({
+        const initialFormData = {
           full_name: mappedData.full_name,
           email: mappedData.email,
           date_of_birth: mappedData.date_of_birth,
           gender: mappedData.gender,
           hobby: mappedData.hobby
-        });
+        };
+        
+        setFormData(initialFormData);
+        setOriginalData(initialFormData); // Store original values
         
         // Set profile image if available
         if (profileData.profile_picture) {
@@ -115,8 +119,25 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
         throw new Error("Member UUID not found");
       }
       
-      // Transform form data to API format (only filled fields, convert enums to integers)
-      const updatePayload = mapFormDataToProfileUpdate(formData);
+      // Only send personal fields if they were originally empty (can only be set once)
+      // Don't send them at all if they already have values
+      const updatePayload = {};
+      
+      if (!originalData.full_name && formData.full_name) {
+        updatePayload.full_name = formData.full_name;
+      }
+      if (!originalData.email && formData.email) {
+        updatePayload.email = formData.email;
+      }
+      if (!originalData.date_of_birth && formData.date_of_birth) {
+        updatePayload.date_of_birth = formData.date_of_birth;
+      }
+      if (!originalData.gender && formData.gender) {
+        updatePayload.gender = parseInt(formData.gender, 10);
+      }
+      if (!originalData.hobby && formData.hobby) {
+        updatePayload.hobby = parseInt(formData.hobby, 10);
+      }
       
       // Add profile picture if a new one was selected
       if (profileImageFile) {
@@ -129,13 +150,16 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
       // Refresh profile data after successful update
       const updatedProfile = await getProfile(memberUuid);
       const mappedData = mapProfileDataToForm(updatedProfile);
-      setFormData({
+      const updatedFormData = {
         full_name: mappedData.full_name,
         email: mappedData.email,
         date_of_birth: mappedData.date_of_birth,
         gender: mappedData.gender,
         hobby: mappedData.hobby
-      });
+      };
+      
+      setFormData(updatedFormData);
+      setOriginalData(updatedFormData); // Update original data
       
       // Set profile image if available
       if (updatedProfile.profile_picture) {
