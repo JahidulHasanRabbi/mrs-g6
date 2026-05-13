@@ -20,8 +20,8 @@ const TABLE_COLUMNS = [
   { key: "lifetime_deposit_required", label: "Lifetime Deposit", minW: "min-w-[140px]" },
   { key: "monthly_deposit",    label: "Monthly Deposit",       minW: "min-w-[160px]" },
   { key: "check_in_token",     label: "Check in Token",       minW: "min-w-[140px]" },
-  { key: "upgrade_bonus",      label: "Upgrade Bonus",        minW: "min-w-[160px]" },
-  { key: "birthday_bonus",     label: "Birthday Bonus",       minW: "min-w-[160px]" },
+  { key: "upgrade_bonus",      label: "Upgrade Bonus",        minW: "min-w-[160px]", hasFreeToken: true },
+  { key: "birthday_bonus",     label: "Birthday Bonus",       minW: "min-w-[160px]", hasFreeToken: true },
   { key: "mart_tier",          label: "Mart Tier",            minW: "min-w-[160px]" },
 ];
 
@@ -148,8 +148,8 @@ function TierFormModal({ tier, onClose, onSave, martTiers }) {
     { key: "lifetime_deposit_required", label: "Lifetime Deposit:", type: "number" },
     { key: "monthly_deposit", label: "Monthly Deposit:", type: "number" },
     { key: "check_in_token", label: "Check in Token:", type: "number" },
-    { key: "upgrade_bonus", label: "Upgrade Bonus:", type: "number" },
-    { key: "birthday_bonus", label: "Birthday Bonus:", type: "number" },
+    { key: "upgrade_bonus", label: "Upgrade Bonus (Free Token):", type: "number" },
+    { key: "birthday_bonus", label: "Birthday Bonus (Free Token):", type: "number" },
     { key: "mart_tier_uuid", label: "Mart Tier:", type: "select", options: martTiers },
   ];
 
@@ -195,7 +195,13 @@ function TierFormModal({ tier, onClose, onSave, martTiers }) {
             <div key={f.key} className="flex items-center gap-[18px]">
               {/* Label */}
               <label className="w-[160px] shrink-0 font-['Times_New_Roman'] text-[16px] text-white">
-                {f.label}
+                {f.key === 'upgrade_bonus' || f.key === 'birthday_bonus' ? (
+                  <>
+                    {f.label.replace(' (Free Token):', ':')} <span className="text-[#e9af41]">(Free Token)</span>
+                  </>
+                ) : (
+                  f.label
+                )}
               </label>
 
               {/* Input */}
@@ -423,6 +429,9 @@ function MrsVipContent() {
                       <div className="flex items-center">
                         <span className="font-['Times_New_Roman'] font-bold text-[14px] sm:text-[16px] text-white whitespace-nowrap">
                           {col.label}
+                          {col.hasFreeToken && (
+                            <span className="text-[#e9af41] ml-1">(Free Token)</span>
+                          )}
                         </span>
                         {col.key !== "rowNum" && (
                           <SortIcon active={sortKey === col.key} direction={sortDir} />
