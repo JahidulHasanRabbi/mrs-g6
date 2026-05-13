@@ -664,94 +664,96 @@ function MembersContent() {
 
         {/* Table card */}
         <div className="rounded-[12px] border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-3 sm:p-4 flex flex-col gap-3 sm:gap-4">
-          {/* Filters row */}
-          <div className="flex items-center flex-wrap gap-2 sm:gap-3">
-            <p className="font-['Times_New_Roman'] font-bold text-[16px] sm:text-[18px] text-white whitespace-nowrap italic">
-              The Member List
-            </p>
-            {activeFilterCount > 0 && (
-              <>
-                <span className="font-['Times_New_Roman'] text-[11px] text-[#e9af41] bg-[rgba(233,175,65,0.15)] rounded-full px-2 py-0.5">
-                  {activeFilterCount} active
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchQuery("");
-                    setPhoneQuery("");
-                    setTierFilter("");
+          {/* Filters row - Fixed height to prevent content jumping */}
+          <div className="min-h-[44px]">
+            <div className="flex items-center flex-wrap gap-2 sm:gap-3">
+              <p className="font-['Times_New_Roman'] font-bold text-[16px] sm:text-[18px] text-white whitespace-nowrap italic">
+                The Member List
+              </p>
+              {activeFilterCount > 0 && (
+                <>
+                  <span className="font-['Times_New_Roman'] text-[11px] text-[#e9af41] bg-[rgba(233,175,65,0.15)] rounded-full px-2 py-0.5">
+                    {activeFilterCount} active
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setPhoneQuery("");
+                      setTierFilter("");
+                      setStationFilter("");
+                      setRegFrom("");
+                      setRegTo("");
+                      setCheckinFrom("");
+                      setCheckinTo("");
+                      setLoginFrom("");
+                      setLoginTo("");
+                    }}
+                    className="font-['Times_New_Roman'] text-[11px] text-red-400 hover:text-red-300 underline"
+                  >
+                    Clear All
+                  </button>
+                </>
+              )}
+              <span className="font-['Times_New_Roman'] text-[13px] text-white/80 ml-auto mr-1 sm:mr-2">
+                Filter By:
+              </span>
+
+              {/* Date range filters */}
+              <DateFilter
+                label="Registered Date"
+                fromDate={regFrom}
+                toDate={regTo}
+                onFromChange={setRegFrom}
+                onToChange={setRegTo}
+              />
+              <DateFilter
+                label="Last Checkin Date"
+                fromDate={checkinFrom}
+                toDate={checkinTo}
+                onFromChange={setCheckinFrom}
+                onToChange={setCheckinTo}
+              />
+              <DateFilter
+                label="Last Login Date"
+                fromDate={loginFrom}
+                toDate={loginTo}
+                onFromChange={setLoginFrom}
+                onToChange={setLoginTo}
+              />
+
+              {/* Dropdown filters */}
+              <FilterDropdown
+                label="Station"
+                options={stations.map(s => s.station_name || s.name || '')}
+                value={stationFilter ? (stations.find(s => s.uuid === stationFilter)?.station_name || stations.find(s => s.uuid === stationFilter)?.name || "") : ""}
+                onChange={(name) => {
+                  if (!name) {
                     setStationFilter("");
-                    setRegFrom("");
-                    setRegTo("");
-                    setCheckinFrom("");
-                    setCheckinTo("");
-                    setLoginFrom("");
-                    setLoginTo("");
-                  }}
-                  className="font-['Times_New_Roman'] text-[11px] text-red-400 hover:text-red-300 underline"
-                >
-                  Clear All
-                </button>
-              </>
-            )}
-            <span className="font-['Times_New_Roman'] text-[13px] text-white/80 ml-auto mr-1 sm:mr-2">
-              Filter By:
-            </span>
+                  } else {
+                    const station = stations.find(s => (s.station_name || s.name) === name);
+                    setStationFilter(station?.uuid || "");
+                  }
+                }}
+              />
+              <FilterDropdown
+                label="MRS VIP Tier"
+                options={vipTiers.map(t => t.name || '')}
+                value={tierFilter ? (vipTiers.find(t => t.uuid === tierFilter)?.name || "") : ""}
+                onChange={(name) => {
+                  if (!name) {
+                    setTierFilter("");
+                  } else {
+                    const tier = vipTiers.find(t => t.name === name);
+                    setTierFilter(tier?.uuid || "");
+                  }
+                }}
+              />
 
-            {/* Date range filters */}
-            <DateFilter
-              label="Registered Date"
-              fromDate={regFrom}
-              toDate={regTo}
-              onFromChange={setRegFrom}
-              onToChange={setRegTo}
-            />
-            <DateFilter
-              label="Last Checkin Date"
-              fromDate={checkinFrom}
-              toDate={checkinTo}
-              onFromChange={setCheckinFrom}
-              onToChange={setCheckinTo}
-            />
-            <DateFilter
-              label="Last Login Date"
-              fromDate={loginFrom}
-              toDate={loginTo}
-              onFromChange={setLoginFrom}
-              onToChange={setLoginTo}
-            />
-
-            {/* Dropdown filters */}
-            <FilterDropdown
-              label="Station"
-              options={stations.map(s => s.station_name || s.name || '')}
-              value={stationFilter ? (stations.find(s => s.uuid === stationFilter)?.station_name || stations.find(s => s.uuid === stationFilter)?.name || "") : ""}
-              onChange={(name) => {
-                if (!name) {
-                  setStationFilter("");
-                } else {
-                  const station = stations.find(s => (s.station_name || s.name) === name);
-                  setStationFilter(station?.uuid || "");
-                }
-              }}
-            />
-            <FilterDropdown
-              label="MRS VIP Tier"
-              options={vipTiers.map(t => t.name || '')}
-              value={tierFilter ? (vipTiers.find(t => t.uuid === tierFilter)?.name || "") : ""}
-              onChange={(name) => {
-                if (!name) {
-                  setTierFilter("");
-                } else {
-                  const tier = vipTiers.find(t => t.name === name);
-                  setTierFilter(tier?.uuid || "");
-                }
-              }}
-            />
-
-            {/* Text search inputs */}
-            <TextSearchInput placeholder="Enter Member" value={searchQuery} onChange={setSearchQuery} />
-            <TextSearchInput placeholder="Enter Phone Number" value={phoneQuery} onChange={setPhoneQuery} />
+              {/* Text search inputs */}
+              <TextSearchInput placeholder="Enter Member" value={searchQuery} onChange={setSearchQuery} />
+              <TextSearchInput placeholder="Enter Phone Number" value={phoneQuery} onChange={setPhoneQuery} />
+            </div>
           </div>
 
           {/* Results count */}
