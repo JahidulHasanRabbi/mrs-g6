@@ -16,6 +16,7 @@ function pathnameToActiveItem(pathname) {
   if (pathname.startsWith("/admin/lucky-spin/user-logs")) return "user-logs";
   if (pathname.startsWith("/admin/lucky-spin/daily-limits")) return "daily-limits";
   if (pathname.startsWith("/admin/lucky-spin")) return "lucky-spin";
+  if (pathname.startsWith("/admin/mart-tiers")) return "mart-tiers";
   if (pathname.startsWith("/admin/redemption-mall")) return "redemption-mall";
   if (pathname.startsWith("/admin/reports/token")) return "token-report";
   if (pathname.startsWith("/admin/reports/reward")) return "reward-report";
@@ -64,6 +65,13 @@ const MENU_ITEMS = [
     icon: "/assets/admin/redemption-mall-icon.png",
     href: "/admin/redemption-mall",
     hasSubmenu: true,
+    disabled: false,
+  },
+  {
+    id: "mart-tiers",
+    label: "Mart Tiers",
+    icon: "/assets/admin/Tier.png",
+    href: "/admin/mart-tiers",
     disabled: false,
   },
 ];
