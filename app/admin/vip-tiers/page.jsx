@@ -290,7 +290,7 @@ function TierFormModal({ title, tier, onSubmit, onClose }) {
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-1">
-                Upgrade Bonus *
+                Upgrade Bonus <span className="text-[#e9af41]">(Free Token)</span> *
               </label>
               <input
                 type="number"
@@ -322,7 +322,7 @@ function TierFormModal({ title, tier, onSubmit, onClose }) {
 
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-1">
-                Birthday Bonus *
+                Birthday Bonus <span className="text-[#e9af41]">(Free Token)</span> *
               </label>
               <input
                 type="number"
