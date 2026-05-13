@@ -340,37 +340,23 @@ export default function Sidebar({ activeItem: activeItemProp }) {
         background: "linear-gradient(180deg, rgba(7, 25, 13, 1) 0%, rgba(10, 30, 15, 1) 100%)",
       }}
     >
-      {/* Breadcrumb Navigation */}
-      <div className="absolute left-1/2 top-[9px] flex -translate-x-1/2 items-center gap-[58px]">
-        <div className="relative h-[42px] w-[29px]">
-         
-          <p className="absolute bottom-[14px] right-[13.5px] translate-x-1/2 translate-y-1/2 text-center text-[7px] font-bold leading-[normal] text-[#e9af41] font-['Times_New_Roman']">
-            Home
-          </p>
-          <div className="absolute bottom-[19px] right-[4px] h-[20px] w-[21px]">
-            <img
-              src="/assets/admin/home-icon.png"
-              alt=""
-              className="w-full h-full object-cover"
-            />
-          </div>
-        </div>
-        <div className="relative h-6 w-6 shrink-0">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M15 18L9 12L15 6"
-              stroke="white"
-              strokeOpacity="0.7"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
+      {/* Logo at the top */}
+      <div className="flex justify-center items-center pt-6 pb-4">
+        <h1 
+          className="text-center font-bold text-[28px]" 
+          style={{
+            fontFamily: '"Times New Roman", serif',
+            color: 'rgb(233, 175, 65)',
+            letterSpacing: '0.06em',
+            textShadow: 'rgba(0, 0, 0, 0.35) 0px 3px 0px'
+          }}
+        >
+          KINGGROUP44
+        </h1>
       </div>
 
       {/* Menu Items */}
-      <div className="pt-[110px] pb-6 px-3 flex w-full flex-col gap-4">
+      <div className="pb-6 px-3 flex w-full flex-col gap-4">
         {/* Primary Menu */}
         <div className="flex flex-col gap-4">
           {MENU_ITEMS.map((item) => {

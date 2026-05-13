@@ -134,11 +134,6 @@ export default function AdminLoginPage() {
             </button>
           </form>
         </div>
-
-        {/* Footer Text */}
-        <p className="mt-6 text-center text-white/40 text-sm font-['Times_New_Roman']">
-          © 2024 Admin Panel. All rights reserved.
-        </p>
       </div>
     </div>
   );
