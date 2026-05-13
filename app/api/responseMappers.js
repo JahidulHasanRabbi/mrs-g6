@@ -92,14 +92,6 @@ export function mapRedemptionItems(apiResponse) {
     // If promotion exists (> 0), use it as discount price
     // Otherwise, use the original price
     const discountPrice = promotionPrice > 0 ? promotionPrice : originalPrice;
-    
-    const rawCategory = (item.category || item.tier_required || item.tier || "")
-      .toString()
-      .trim()
-      .toLowerCase();
-    const category = ["starter", "premium", "exclusive", "vip"].includes(rawCategory)
-      ? rawCategory
-      : "starter";
 
     return {
       uuid: item.uuid,
@@ -114,7 +106,8 @@ export function mapRedemptionItems(apiResponse) {
       prize_type: item.prize_type,
       credit_amount: item.credit_amount,
       promotion: promotionPrice,
-      category
+      mart_tier: item.mart_tier, // Mart tier name from API (used for filtering and locking)
+      tier_uuid: item.tier_uuid // Keep tier_uuid if available
     };
   });
 }

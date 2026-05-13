@@ -3,12 +3,11 @@
 import { useMemo, useState, useEffect } from "react";
 import MartTitleBanner from "../components/mart/MartTitleBanner";
 import MartSortButton from "../components/mart/MartSortButton";
-import MartCategoryPills, { MART_CATEGORIES } from "../components/mart/MartCategoryPills";
+import MartCategoryPills from "../components/mart/MartCategoryPills";
 import MartGrid from "../components/mart/MartGrid";
 import RedeemModal from "../components/mart/RedeemModal";
 import { LoadingState } from "../components/ui/LoadingState";
-import ErrorDisplay from "../components/ui/ErrorDisplay";
-import { getAvailableRedemptionItems, redeemItem } from "../api/memberApi";
+import { getAvailableRedemptionItems, redeemItem, getVipTiers, getPublicRedemptionTiers } from "../api/memberApi";
 import { mapRedemptionItems } from "../api/responseMappers";
 import { tokenStorage } from "../api/tokenStorage";
 import { useUser } from "../contexts/UserContext";
@@ -31,116 +30,110 @@ function resolveUnlockedTierOrder(currentLevel) {
   return TIER_NAME_TO_ORDER[key] || 1;
 }
 
-// Dummy preview data — used when the API returns nothing so designers can
-// preview locked + unlocked card states across all 4 categories.
-const DUMMY_PREVIEW_ITEMS = [
-  {
-    uuid: "dummy-starter-1",
-    title: "Starter Rewards",
-    coins: 6999000,
-    originalPrice: 8999000,
-    discountPrice: 6999000,
-    image: "/assets/mart/prize-iphone.png",
-    category: "starter",
-  },
-  {
-    uuid: "dummy-starter-2",
-    title: "Starter Rewards",
-    coins: 1500000,
-    originalPrice: null,
-    discountPrice: 1500000,
-    image: "/assets/mart/prize-birthday.png",
-    category: "starter",
-  },
-  {
-    uuid: "dummy-premium-1",
-    title: "Premium Rewards",
-    coins: 1223000,
-    originalPrice: null,
-    discountPrice: 1223000,
-    image: "/assets/mart/prize-sex-toy.png",
-    category: "premium",
-  },
-  {
-    uuid: "dummy-premium-2",
-    title: "Premium Rewards",
-    coins: 2000000,
-    originalPrice: null,
-    discountPrice: 2000000,
-    image: "/assets/mart/prize-iphone.png",
-    category: "premium",
-  },
-  {
-    uuid: "dummy-exclusive-1",
-    title: "Exclusive Rewards",
-    coins: 2333000,
-    originalPrice: null,
-    discountPrice: 2333000,
-    image: "/assets/mart/prize-birthday.png",
-    category: "exclusive",
-  },
-  {
-    uuid: "dummy-exclusive-2",
-    title: "Exclusive Rewards",
-    coins: 3000000,
-    originalPrice: null,
-    discountPrice: 3000000,
-    image: "/assets/mart/prize-iphone.png",
-    category: "exclusive",
-  },
-  {
-    uuid: "dummy-vip-1",
-    title: "VIP Privileges",
-    coins: 1223000,
-    originalPrice: null,
-    discountPrice: 1223000,
-    image: "/assets/mart/prize-sex-toy.png",
-    category: "vip",
-  },
-  {
-    uuid: "dummy-vip-2",
-    title: "VIP Privileges",
-    coins: 5000000,
-    originalPrice: null,
-    discountPrice: 5000000,
-    image: "/assets/mart/prize-iphone.png",
-    category: "vip",
-  },
-];
-
 export default function MartPage() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [sortMode, setSortMode] = useState("default");
-  const [selectedCategory, setSelectedCategory] = useState("starter");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [martItems, setMartItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [redeemResult, setRedeemResult] = useState(null);
   const { refreshUserData, userData } = useUser();
   const unlockedTierOrder = resolveUnlockedTierOrder(userData?.currentLevel);
+  const [userMartTierLevel, setUserMartTierLevel] = useState(null);
+  const [martTiers, setMartTiers] = useState([]);
 
-  // Fetch redemption items on mount
+  // Fetch user's mart tier level and all mart tiers on mount
   useEffect(() => {
+    fetchUserMartTierLevel();
+    fetchMartTiers();
     fetchRedemptionItems();
-  }, []);
+  }, [userData?.currentLevel]);
+
+  const fetchUserMartTierLevel = async () => {
+    try {
+      // Get all VIP tiers
+      const vipTiers = await getVipTiers();
+      
+      // Find the user's current VIP tier
+      const userTier = vipTiers.find(
+        tier => tier.name.toLowerCase() === userData?.currentLevel?.toLowerCase()
+      );
+      
+      if (userTier && userTier.mart_tier) {
+        // Store the mart_tier name from user's VIP tier
+        setUserMartTierLevel(userTier.mart_tier);
+      } else {
+        setUserMartTierLevel(null);
+      }
+    } catch (err) {
+      console.error('Error fetching user mart tier level:', err);
+      setUserMartTierLevel(null);
+    }
+  };
+
+  const fetchMartTiers = async () => {
+    try {
+      const tiers = await getPublicRedemptionTiers();
+      // Sort by level ascending
+      const sortedTiers = tiers.sort((a, b) => a.level - b.level);
+      setMartTiers(sortedTiers);
+      
+      // Set first category as default if available
+      if (sortedTiers.length > 0 && !selectedCategory) {
+        setSelectedCategory(sortedTiers[0].name.toLowerCase());
+      }
+    } catch (err) {
+      console.error('Error fetching mart tiers:', err);
+      setMartTiers([]);
+    }
+  };
 
   const fetchRedemptionItems = async () => {
     setIsLoading(true);
-    setError(null);
     
     try {
       const response = await getAvailableRedemptionItems();
       const mappedItems = mapRedemptionItems(response);
-      // Merge dummy preview items into every category so the lock/unlock
-      // design is reviewable while backend category data is still WIP.
-      setMartItems([...mappedItems, ...DUMMY_PREVIEW_ITEMS]);
+      setMartItems(mappedItems);
     } catch (err) {
-      setError(err);
-      setMartItems(DUMMY_PREVIEW_ITEMS);
+      console.error('Error fetching redemption items:', err);
+      setMartItems([]);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Helper function to get mart tier level by name
+  const getMartTierLevel = (tierName) => {
+    if (!tierName || !martTiers.length) return 999; // Unknown tier = highest level (locked)
+    const tier = martTiers.find(t => t.name.toLowerCase() === tierName.toLowerCase());
+    return tier ? tier.level : 999;
+  };
+
+  // Helper function to check if an item is locked for the user
+  const isItemLocked = (item) => {
+    // If item has no mart_tier, it's available to everyone
+    if (!item.mart_tier) {
+      return false;
+    }
+    
+    // If no user mart tier, lock everything that requires a tier
+    if (!userMartTierLevel) {
+      return true;
+    }
+    
+    const userLevel = getMartTierLevel(userMartTierLevel);
+    const itemLevel = getMartTierLevel(item.mart_tier);
+    
+    // Item is LOCKED if its required level is HIGHER than user's level
+    // Item is UNLOCKED if its required level is LOWER or EQUAL to user's level
+    return itemLevel > userLevel;
+  };
+
+  // Helper function to get required tier name for locked items
+  const getRequiredTierName = (item) => {
+    return item.mart_tier || 'Premium';
   };
 
   const parseCoins = (value) => {
@@ -149,10 +142,13 @@ export default function MartPage() {
     return Number.isFinite(n) ? n : 0;
   };
 
-  const filteredItems = useMemo(
-    () => martItems.filter((item) => (item.category || "starter") === selectedCategory),
-    [martItems, selectedCategory]
-  );
+  const filteredItems = useMemo(() => {
+    if (!selectedCategory) return [];
+    return martItems.filter((item) => {
+      const itemCategory = (item.mart_tier || "").toLowerCase();
+      return itemCategory === selectedCategory.toLowerCase();
+    });
+  }, [martItems, selectedCategory]);
 
   const sortedItems = useMemo(() => {
     if (sortMode === "default") return filteredItems;
@@ -170,10 +166,19 @@ export default function MartPage() {
     return itemsCopy;
   }, [filteredItems, sortMode]);
 
-  const selectedCategoryDef = MART_CATEGORIES.find((c) => c.key === selectedCategory);
+  // Generate dynamic categories from mart tiers
+  const dynamicCategories = useMemo(() => {
+    return martTiers.map(tier => ({
+      key: tier.name.toLowerCase(),
+      label: tier.name,
+      fullLabel: `${tier.name} Rewards`,
+      tierOrder: tier.level,
+      tierName: tier.name
+    }));
+  }, [martTiers]);
+
+  const selectedCategoryDef = dynamicCategories.find((c) => c.key === selectedCategory);
   const selectedCategoryFullLabel = selectedCategoryDef?.fullLabel || "Rewards";
-  const isCategoryLocked = (selectedCategoryDef?.tierOrder || 1) > unlockedTierOrder;
-  const requiredTierLabel = selectedCategoryDef?.label;
 
   const sortButtonLabel =
     sortMode === "price-asc"
@@ -186,10 +191,13 @@ export default function MartPage() {
     setSelectedItem(item);
     setRedeemResult(null);
 
-    if (isCategoryLocked) {
+    // Check if this specific item is locked
+    const itemLocked = isItemLocked(item);
+    
+    if (itemLocked) {
       setRedeemResult({
         success: false,
-        message: `Upgrade to ${requiredTierLabel} to unlock this item.`,
+        message: `Upgrade to ${getRequiredTierName(item)} tier to unlock this item.`,
       });
       setIsRedeeming(false);
       return;
@@ -252,6 +260,7 @@ export default function MartPage() {
         selected={selectedCategory}
         onSelect={setSelectedCategory}
         unlockedTierOrder={unlockedTierOrder}
+        categories={dynamicCategories}
       />
 
       <div className="flex justify-end px-8 mt-4">
@@ -274,8 +283,8 @@ export default function MartPage() {
           <MartGrid
             items={sortedItems}
             onRedeem={handleRedeem}
-            isLocked={isCategoryLocked}
-            requiredTierLabel={requiredTierLabel}
+            isItemLocked={isItemLocked}
+            getRequiredTierName={getRequiredTierName}
           />
         )}
       </LoadingState>

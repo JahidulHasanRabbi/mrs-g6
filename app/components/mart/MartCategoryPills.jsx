@@ -11,10 +11,14 @@ export const MART_CATEGORIES = [
 ];
 
 export default function MartCategoryPills({
-  selected = "starter",
+  selected = "",
   onSelect,
   unlockedTierOrder = 1,
+  categories = [],
 }) {
+  // Fallback to hardcoded categories if none provided
+  const displayCategories = categories.length > 0 ? categories : MART_CATEGORIES;
+
   return (
     <motion.div
       className="grid grid-cols-2 gap-x-3 gap-y-3 mt-4 justify-items-center w-fit mx-auto"
@@ -22,7 +26,7 @@ export default function MartCategoryPills({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
     >
-      {MART_CATEGORIES.map((cat, index) => {
+      {displayCategories.map((cat, index) => {
         const isLocked = cat.tierOrder > unlockedTierOrder;
         const isSelected = selected === cat.key;
 

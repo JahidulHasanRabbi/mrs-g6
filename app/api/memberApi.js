@@ -130,6 +130,15 @@ export async function redeemItem(itemUuid, memberUuid) {
   }, true, 'member');
 }
 
+// GET /redemption/redemption-tier/ (using member token)
+export async function getPublicRedemptionTiers() {
+  const response = await apiRequest(ENDPOINTS.ADMIN.REDEMPTION_TIERS, {
+    method: 'GET'
+  }, true, 'member'); // Use member token
+  // Handle paginated response
+  return Array.isArray(response) ? response : (response?.results || []);
+}
+
 // GET /member/vip-tier/
 export async function getVipTiers() {
   return await apiRequest(ENDPOINTS.ADMIN.VIP_TIERS, {
