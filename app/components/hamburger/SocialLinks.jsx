@@ -16,28 +16,35 @@ const socialItemAnimation = {
  * (`action`) — actions bubble up via `onAction` so the parent menu can open
  * a modal, etc.
  */
-function SocialIcon({ icon, url, action, label, disabled, onAction }) {
+function SocialIcon({ icon, url, action, label, showLabel, disabled, onAction }) {
   const content = (
-    <motion.div
-      whileHover={
-        !disabled
-          ? {
-              filter: "brightness(1.2)",
-              transition: { duration: 0.2 },
-            }
-          : {}
-      }
-      style={disabled ? { opacity: 0.4, cursor: "not-allowed" } : { willChange: "filter" }}
-    >
-      <Image
-        src={icon}
-        alt=""
-        width={30}
-        height={30}
-        aria-hidden="true"
-        className="object-contain"
-      />
-    </motion.div>
+    <div className="flex flex-col items-center gap-1">
+      <motion.div
+        whileHover={
+          !disabled
+            ? {
+                filter: "brightness(1.2)",
+                transition: { duration: 0.2 },
+              }
+            : {}
+        }
+        style={disabled ? { opacity: 0.4, cursor: "not-allowed" } : { willChange: "filter" }}
+      >
+        <Image
+          src={icon}
+          alt=""
+          width={30}
+          height={30}
+          aria-hidden="true"
+          className="object-contain"
+        />
+      </motion.div>
+      {showLabel && label && (
+        <span className="text-[9px] leading-tight text-center text-white/80 max-w-[52px] break-words">
+          {label}
+        </span>
+      )}
+    </div>
   );
 
   const sharedMotionProps = {
@@ -104,7 +111,7 @@ function SocialIcon({ icon, url, action, label, disabled, onAction }) {
 function SocialLinks({ links, onAction }) {
   return (
     <motion.div
-      className="flex gap-2 pt-2 justify-start items-center"
+      className="flex gap-2 pt-2 justify-start items-start"
       role="list"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}

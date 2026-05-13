@@ -24,11 +24,10 @@ export const MENU_CONFIG = {
     // Mixed row of social links (`url`) and action triggers (`action`).
     // Action items are rendered as buttons; the parent menu wires `onAction`.
     links: [
-      { icon: "/assets/images/telegram-icon.png", url: process.env.NEXT_PUBLIC_TELEGRAM_URL, label: "Telegram", disabled: !process.env.NEXT_PUBLIC_TELEGRAM_URL },
-      { icon: "/assets/images/feedback-icon.svg", action: "feedback", label: "Feedback" },
+      { icon: "/assets/images/telegram-icon.png", url: process.env.NEXT_PUBLIC_TELEGRAM_URL, label: "Telegram", showLabel: true, disabled: !process.env.NEXT_PUBLIC_TELEGRAM_URL },
+      { icon: "/assets/images/feedback-icon.svg", action: "feedback", label: "Feedback / Complain", showLabel: true },
       // { icon: "/assets/images/facebook-icon.png", url: process.env.NEXT_PUBLIC_FACEBOOK_URL, label: "Facebook", disabled: !process.env.NEXT_PUBLIC_FACEBOOK_URL },
       // { icon: "/assets/images/youtube-icon.png", url: process.env.NEXT_PUBLIC_YOUTUBE_URL, label: "YouTube", disabled: !process.env.NEXT_PUBLIC_YOUTUBE_URL },
-      // { icon: "/assets/images/instagram-icon.png", url: process.env.NEXT_PUBLIC_INSTAGRAM_URL, label: "Instagram", disabled: !process.env.NEXT_PUBLIC_INSTAGRAM_URL },
       // { icon: "/assets/images/twitter-icon.png", url: process.env.NEXT_PUBLIC_TWITTER_URL, label: "Twitter", disabled: !process.env.NEXT_PUBLIC_TWITTER_URL },
     ],
   },

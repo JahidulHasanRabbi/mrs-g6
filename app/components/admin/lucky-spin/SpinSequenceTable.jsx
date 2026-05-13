@@ -99,9 +99,6 @@ export default function SpinSequenceTable({
                 <th className="px-6 py-3 text-left text-sm font-bold text-white/60 font-['Times_New_Roman']">
                   Item Name
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-bold text-white/60 font-['Times_New_Roman']">
-                  Item UUID
-                </th>
                 <th className="px-6 py-3 text-center text-sm font-bold text-white/60 font-['Times_New_Roman']">
                   Actions
                 </th>
@@ -110,13 +107,13 @@ export default function SpinSequenceTable({
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan="4" className="px-6 py-8 text-center text-white/60">
+                  <td colSpan="3" className="px-6 py-8 text-center text-white/60">
                     Loading...
                   </td>
                 </tr>
               ) : sequences.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="px-6 py-8 text-center text-white/60">
+                  <td colSpan="3" className="px-6 py-8 text-center text-white/60">
                     No sequences configured. Click "Add Sequence" to create one.
                   </td>
                 </tr>
@@ -128,9 +125,6 @@ export default function SpinSequenceTable({
                     </td>
                     <td className="px-6 py-4 text-sm text-white font-['Times_New_Roman']">
                       {sequence.item_name}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-white/60 font-['Times_New_Roman'] font-mono text-xs">
-                      {sequence.item_uuid}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-2">
