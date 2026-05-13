@@ -51,7 +51,10 @@ export default function SuccessModal({
           type="button"
           onClick={onClose}
           aria-label="Close modal"
-          className="absolute right-[28px] top-[48px] flex h-[30px] w-[30px] items-center justify-center"
+          // z-20 so the X sits above the centred text/action content div,
+          // which otherwise covers most of the X's hit area and silently
+          // swallows the click.
+          className="absolute right-[28px] top-[48px] z-20 flex h-[34px] w-[34px] items-center justify-center"
           whileHover={{ scale: 1.06 }}
           whileTap={{ scale: 0.94 }}
         >

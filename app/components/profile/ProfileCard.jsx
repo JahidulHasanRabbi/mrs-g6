@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { PROFILE_ASSETS } from "./profileAssets";
+import ProfileFrame from "./ProfileFrame";
 import { getMemberInfo, getProfile, claimWelcomeGift, getVipTiers } from "@/app/api/memberApi";
 import { mapMemberInfoToProfileCard } from "@/app/api/responseMappers";
 import { tokenStorage } from "@/app/api/tokenStorage";
@@ -43,7 +44,7 @@ export default function ProfileCard({
   const [nextTierData, setNextTierData] = useState(null);
   const [tokensToNextTier, setTokensToNextTier] = useState(0);
   const [progressPercentage, setProgressPercentage] = useState(0);
-  const { refreshUserData } = useUser();
+  const { refreshUserData, selectedFrameId } = useUser();
 
   useEffect(() => {
     fetchVipTiers();
@@ -286,9 +287,18 @@ export default function ProfileCard({
             className="object-cover"
           />
 
-          {/* Avatar */}
           <motion.div
-            className="absolute left-[38px] top-[20px] w-[52px] h-[52px] rounded-full overflow-hidden"
+            className="absolute pointer-events-none overflow-hidden rounded-full"
+        
+            aria-hidden="true"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.3 }}
+          />
+
+         
+          <motion.div
+            className="absolute left-[18px] top-[3px]"
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{
@@ -298,16 +308,17 @@ export default function ProfileCard({
               delay: 0.4,
             }}
           >
-            <img
-              alt={displayName}
+            <ProfileFrame
               src={profilePicture || avatarSrc}
-              className="object-cover w-full h-full"
+              frameId={selectedFrameId}
+              size={90}
+              alt={displayName}
             />
           </motion.div>
 
           {/* Name and Tokens */}
           <motion.div
-            className="absolute left-[100px] top-[25px]"
+            className="absolute left-[110px] top-[25px]"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}

@@ -18,7 +18,7 @@ const socialItemAnimation = {
  */
 function SocialIcon({ icon, url, action, label, showLabel, disabled, onAction }) {
   const content = (
-    <div className="flex flex-col items-center gap-1">
+    <div className="flex items-center gap-2">
       <motion.div
         whileHover={
           !disabled
@@ -33,30 +33,37 @@ function SocialIcon({ icon, url, action, label, showLabel, disabled, onAction })
         <Image
           src={icon}
           alt=""
-          width={30}
-          height={30}
+          width={32}
+          height={32}
           aria-hidden="true"
           className="object-contain"
         />
       </motion.div>
       {showLabel && label && (
-        <span className="text-[9px] leading-tight text-center text-white/80 max-w-[52px] break-words">
+        <span
+          className="rounded-full border border-[#e9af41]/70 bg-[#0a1a0a]/80 px-3 py-[3px] text-[11px] font-bold leading-none text-[#fde685] whitespace-nowrap shadow-[0_2px_6px_rgba(0,0,0,0.35)]"
+          style={{ fontFamily: '"Times New Roman", serif' }}
+        >
           {label}
         </span>
       )}
     </div>
   );
 
+  // The previous hover applied scale 1.2 + rotate 10° to the whole button.
+  // That looked fine on a stand-alone round icon but with the new icon +
+  // pill-tag row it tilts the pill and pops it 20 % bigger, which reads
+  // as weird. Drop the rotation and use a small uniform scale instead;
+  // the inner icon already brightens on hover via its own motion.div.
   const sharedMotionProps = {
     initial: socialItemAnimation.initial,
     animate: socialItemAnimation.animate,
     transition: socialItemAnimation.transition,
     whileHover: {
-      scale: 1.2,
-      rotate: 10,
-      transition: { type: "spring", stiffness: 400, damping: 10 },
+      scale: 1.04,
+      transition: { type: "spring", stiffness: 300, damping: 22 },
     },
-    whileTap: { scale: 0.9 },
+    whileTap: { scale: 0.97 },
     style: { willChange: "transform" },
   };
 

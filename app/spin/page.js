@@ -50,13 +50,11 @@ export default function SpinPage() {
   const spinErrorRef = useRef(null);
   const gridSpinTriggerRef = useRef(null);
 
-  const handleSpinComplete = useCallback((_finalGridIndex, opts = {}) => {
+  const handleSpinComplete = useCallback((_finalGridIndex, _opts = {}) => {
     setIsSpinning(false);
 
-    const wasManualStop = !!opts.wasManualStop;
-
-    // Always record errors. If the user manually stopped, surface the error
-    // popup anyway (so they don't lose visibility into a failed spin).
+    // Errors short-circuit straight to the failure dialog regardless of
+    // whether the spin auto-finished or the player tapped Stop.
     if (spinErrorRef.current) {
       setModalTitle("❌ Spin Failed");
       setModalMessage(spinErrorRef.current);
@@ -70,10 +68,9 @@ export default function SpinPage() {
     if (spinResultsRef.current) {
       const results = spinResultsRef.current;
 
-      // Always add the win to the user's session winnings list — the spin
-      // happened on the server, the player paid for it, and the result is
-      // already recorded server-side. We must reflect that in the UI history
-      // regardless of whether the player let it spin out or stopped early.
+      // Record the win in the session winnings list — the spin already
+      // happened on the server and the result is final, so the UI history
+      // must reflect it regardless of how the player ended the animation.
       if (results.length > 0) {
         const newWinnings = results.map(r => ({
           date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }),
@@ -83,13 +80,9 @@ export default function SpinPage() {
         setUserWinnings(prev => [...newWinnings, ...prev]);
       }
 
-      // Manual stop = the player chose to halt early; the highlighted winning
-      // tile is enough feedback. Skip the modal so they aren't interrupted.
-      if (wasManualStop) {
-        spinResultsRef.current = null;
-        return;
-      }
-
+      // Reward dialog fires for both auto-stop and manual stop. The
+      // client wants players who tap Stop to still see the result they
+      // landed on, not just the highlighted tile.
       if (results.length > 0) {
         const rewardCounts = {};
         results.forEach(r => {

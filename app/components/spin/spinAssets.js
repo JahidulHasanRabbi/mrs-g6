@@ -9,6 +9,7 @@ export const SPIN_ASSETS = {
   prize2: "/assets/lucky-spin/lucky-spin-grid/spin-prize-2.png",
   prize3: "/assets/lucky-spin/lucky-spin-grid/spin-prize-3.png",
   centerButton: "/assets/lucky-spin/lucky-spin-grid/spin-center.png",
+  centerButtonStop: "/assets/lucky-spin/lucky-spin-grid/spn-stop.png",
   buttonBackground: "/assets/lucky-spin/buttons/button.png",
   scrollBackground: "/assets/lucky-spin/rewards/scroll-bg.png",
   coinFrame: "/assets/lucky-spin/rewards/coin-frame.png",

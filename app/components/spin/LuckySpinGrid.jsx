@@ -361,22 +361,26 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
           onClick={spinning ? requestManualStop : startSpin}
           aria-label={spinning ? "Stop spin" : "Spin now"}
         >
-          {/* Rotating spin artwork — same image for both states. While
-              spinning, clicking it again triggers a manual stop (slide 8
-              — "Allow users to manually stop the spin after clicking Spin
-              Now"). No visible STOP label is rendered, per UX preference. */}
+          {/* Center button artwork. Swaps to the "SPIN STOP" asset while
+              spinning so the player sees the affordance change (client
+              wanted the literal stop label baked into the artwork rather
+              than a separate overlay). Keeps rotating in both states. */}
           <motion.div
             className="w-full h-full"
             style={{ rotate: centerRotateSpring, willChange: spinning ? "transform" : "auto" }}
           >
-            <Image
+            {/* Plain <img> on purpose. next/image was serving the SSR-rendered
+                initial src and not honouring the swap to spn-stop.png when
+                `spinning` flipped, even with a re-mount key. A regular <img>
+                updates immediately when src changes. */}
+            <img
+              key={spinning ? "stop" : "spin"}
               alt={spinning ? "Stop spin" : "Spin Now Button"}
-              src={SPIN_ASSETS.centerButton}
+              src={spinning ? SPIN_ASSETS.centerButtonStop : SPIN_ASSETS.centerButton}
               width={143}
               height={143}
-              className="object-cover"
-              loading="eager"
-              priority
+              className="w-full h-full object-cover select-none"
+              draggable="false"
             />
           </motion.div>
         </motion.div>
