@@ -28,6 +28,8 @@ function pathnameToActiveItem(pathname) {
   if (pathname.startsWith("/admin/banners")) return "banners";
   if (pathname.startsWith("/admin/terms-conditions")) return "terms-conditions";
   if (pathname.startsWith("/admin/frame-setting")) return "frame-setting";
+  if (pathname.startsWith("/admin/floating-menu")) return "floating-menu";
+  if (pathname.startsWith("/admin/external-api")) return "external-api";
   if (pathname.startsWith("/admin/wallet-site-vip")) return "wallet-site-vip";
   if (pathname.startsWith("/admin/mrs-vip")) return "mrs-vip-level";
   if (pathname.startsWith("/admin/vip-tiers")) return "vip-tiers";
@@ -87,8 +89,22 @@ const SECONDARY_MENU = [
   {
     id: "frame-setting",
     label: "Frame Setting",
-    icon: "/assets/admin/Frame-setting.png", // Using home icon as placeholder
+    icon: "/assets/admin/Frame-setting.png",
     href: "/admin/frame-setting",
+    disabled: false,
+  },
+  {
+    id: "floating-menu",
+    label: "Floating Menu",
+    icon: "/assets/admin/home-icon.png", // Using home icon as placeholder
+    href: "/admin/floating-menu",
+    disabled: false,
+  },
+  {
+    id: "external-api",
+    label: "External API",
+    icon: "/assets/admin/home-icon.png", // Using home icon as placeholder
+    href: "/admin/external-api",
     disabled: false,
   },
   {

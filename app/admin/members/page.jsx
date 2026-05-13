@@ -285,15 +285,28 @@ function EditMemberModal({ member, onClose, onSave }) {
     setSaving(true);
     try {
       const updateData = {
-        full_name: form.full_name || null,
-        email: form.email || null,
-        date_of_birth: form.date_of_birth || null,
-        gender: form.gender || null,
-        hobby: form.hobby || null,
         mrs_vip_tier_uuid: form.mrs_vip_tier_uuid,
       };
 
-      // If there's a new profile picture file, include it
+      // Only include personal fields if they are currently empty (can only be set once)
+      // These fields cannot be changed once they have a value
+      if (!member.full_name && form.full_name) {
+        updateData.full_name = form.full_name;
+      }
+      if (!member.email && form.email) {
+        updateData.email = form.email;
+      }
+      if (!member.date_of_birth && form.date_of_birth) {
+        updateData.date_of_birth = form.date_of_birth;
+      }
+      if (!member.gender && form.gender) {
+        updateData.gender = form.gender;
+      }
+      if (!member.hobby && form.hobby) {
+        updateData.hobby = form.hobby;
+      }
+
+      // Profile picture can always be updated
       if (profilePictureFile) {
         updateData.profile_picture = profilePictureFile;
       }
@@ -303,7 +316,16 @@ function EditMemberModal({ member, onClose, onSave }) {
       onClose();
     } catch (err) {
       console.error("Failed to update member:", err);
-      alert("Failed to update member profile. Please try again.");
+      let errorMsg = "Failed to update member profile. Please try again.";
+      if (err.data?.details) {
+        const details = Object.entries(err.data.details)
+          .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(', ') : msgs}`)
+          .join('\n');
+        errorMsg = `Failed to update:\n${details}`;
+      } else if (err.data?.error) {
+        errorMsg = err.data.error;
+      }
+      alert(errorMsg);
     } finally {
       setSaving(false);
     }

@@ -59,8 +59,8 @@ function FrameFormModal({ frame, onClose, onSave, vipTiers }) {
     details:         frame?.details ?? "",
     challenge:       1, // Always 1 for VIP (API returns "VIP" string but expects 1 integer)
     vip_tier_uuid:   frame?.vip_tier_uuid ?? "",
-    icon:            frame?.icon ?? "",
   });
+  const [iconFile, setIconFile] = useState(null);
   const [iconPreview, setIconPreview] = useState(frame?.icon ?? "");
   const [iconErrored, setIconErrored] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -90,10 +90,13 @@ function FrameFormModal({ frame, onClose, onSave, vipTiers }) {
   const handleIconChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const url = URL.createObjectURL(file);
-    setIconPreview(url);
-    setIconErrored(false);
-    setForm((prev) => ({ ...prev, icon: url }));
+    setIconFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setIconPreview(reader.result);
+      setIconErrored(false);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e) => {
@@ -113,8 +116,9 @@ function FrameFormModal({ frame, onClose, onSave, vipTiers }) {
         submitData.details = form.details;
       }
 
-      if (form.icon) {
-        submitData.icon = form.icon;
+      // Only add icon if user uploaded a new one
+      if (iconFile) {
+        submitData.icon = iconFile;
       }
 
       // Only include vip_tier_uuid if challenge is 1 (VIP) and a tier is selected
@@ -416,6 +420,7 @@ function FrameSettingContent() {
   };
 
   const sortedRows = useMemo(() => {
+    if (!Array.isArray(frames)) return [];
     const list = [...frames];
     if (sortKey && sortKey !== "rowNum" && sortKey !== "icon") {
       list.sort((a, b) => {
