@@ -68,6 +68,14 @@ export const ENDPOINTS = {
     WALLET_VIP_ARCHIVE: (uuid) => `/third-party/wallet-vip/${uuid}/archive/`,
     FLOATING_MENU: '/third-party/floating-menu/',
     FLOATING_MENU_SINGLE: (uuid) => `/third-party/floating-menu/${uuid}/`,
-    FLOATING_MENU_ARCHIVE: (uuid) => `/third-party/floating-menu/${uuid}/archive/`
+    FLOATING_MENU_ARCHIVE: (uuid) => `/third-party/floating-menu/${uuid}/archive/`,
+    FRAMES: '/third-party/frame/',
+    FRAME_SINGLE: (uuid) => `/third-party/frame/${uuid}/`,
+    FRAME_ARCHIVE: (uuid) => `/third-party/frame/${uuid}/archive/`
+  },
+  EXTERNAL: {
+    SPECIAL_CODE: '/external/special-code/',
+    WALLET_VIP_TIERS: '/external/wallet-vip-tiers/',
+    FLOATING_MENUS: '/external/floating-menus/'
   }
 };

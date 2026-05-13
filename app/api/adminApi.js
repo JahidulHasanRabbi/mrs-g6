@@ -446,3 +446,87 @@ export async function getWinningList() {
     method: 'GET'
   }, true, 'admin');
 }
+
+// ============================================================================
+// FLOATING MENU MANAGEMENT
+// ============================================================================
+
+// GET /third-party/floating-menu/ - Get all floating menus
+export async function getFloatingMenus(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.FLOATING_MENU}${qs}`, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+// GET /third-party/floating-menu/{uuid}/ - Get single floating menu
+export async function getFloatingMenu(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.FLOATING_MENU_SINGLE(uuid), {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+// POST /third-party/floating-menu/ - Create floating menu
+export async function createFloatingMenu(menuData) {
+  return await apiRequest(ENDPOINTS.ADMIN.FLOATING_MENU, {
+    method: 'POST',
+    body: menuData
+  }, true, 'admin');
+}
+
+// PUT /third-party/floating-menu/{uuid}/ - Update floating menu
+export async function updateFloatingMenu(uuid, menuData) {
+  return await apiRequest(ENDPOINTS.ADMIN.FLOATING_MENU_SINGLE(uuid), {
+    method: 'PUT',
+    body: menuData
+  }, true, 'admin');
+}
+
+// PATCH /third-party/floating-menu/{uuid}/archive/ - Archive floating menu
+export async function archiveFloatingMenu(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.FLOATING_MENU_ARCHIVE(uuid), {
+    method: 'PATCH'
+  }, true, 'admin');
+}
+
+// ============================================================================
+// FRAMES MANAGEMENT
+// ============================================================================
+
+// GET /settings/frames/ - Get all frames
+export async function getFrames(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.FRAMES}${qs}`, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+// GET /settings/frames/{uuid}/ - Get single frame
+export async function getFrame(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.FRAME_SINGLE(uuid), {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+// POST /settings/frames/ - Create frame
+export async function createFrame(frameData) {
+  return await apiRequest(ENDPOINTS.ADMIN.FRAMES, {
+    method: 'POST',
+    body: frameData
+  }, true, 'admin');
+}
+
+// PUT /settings/frames/{uuid}/ - Update frame
+export async function updateFrame(uuid, frameData) {
+  return await apiRequest(ENDPOINTS.ADMIN.FRAME_SINGLE(uuid), {
+    method: 'PUT',
+    body: frameData
+  }, true, 'admin');
+}
+
+// PATCH /settings/frames/{uuid}/archive/ - Archive frame
+export async function archiveFrame(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.FRAME_ARCHIVE(uuid), {
+    method: 'PATCH'
+  }, true, 'admin');
+}
