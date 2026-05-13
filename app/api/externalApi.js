@@ -6,23 +6,23 @@ import { ENDPOINTS } from './api';
 // These endpoints do not require authentication
 // ============================================================================
 
-// GET /external/special-code/ - Get special promotional code
+// GET /third-party/special-codes/ - Get special codes
 export async function getSpecialCode() {
   return await apiRequest(ENDPOINTS.EXTERNAL.SPECIAL_CODE, {
     method: 'GET'
   }, false); // No auth required
 }
 
-// GET /external/wallet-vip-tiers/ - Get wallet VIP tiers (public)
-export async function getExternalWalletVipTiers() {
-  return await apiRequest(ENDPOINTS.EXTERNAL.WALLET_VIP_TIERS, {
+// GET /third-party/station-wallet-vip/<special_code>/ - Get wallet VIP tiers (public)
+export async function getExternalWalletVipTiers(specialCode) {
+  return await apiRequest(ENDPOINTS.EXTERNAL.WALLET_VIP_TIERS(specialCode), {
     method: 'GET'
   }, false); // No auth required
 }
 
-// GET /external/floating-menus/ - Get floating menus (public)
-export async function getExternalFloatingMenus() {
-  return await apiRequest(ENDPOINTS.EXTERNAL.FLOATING_MENUS, {
+// GET /third-party/station-floating-menu/<special_code>/ - Get floating menus (public)
+export async function getExternalFloatingMenus(specialCode) {
+  return await apiRequest(ENDPOINTS.EXTERNAL.FLOATING_MENUS(specialCode), {
     method: 'GET'
   }, false); // No auth required
 }

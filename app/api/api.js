@@ -74,8 +74,8 @@ export const ENDPOINTS = {
     FRAME_ARCHIVE: (uuid) => `/third-party/frame/${uuid}/archive/`
   },
   EXTERNAL: {
-    SPECIAL_CODE: '/external/special-code/',
-    WALLET_VIP_TIERS: '/external/wallet-vip-tiers/',
-    FLOATING_MENUS: '/external/floating-menus/'
+    SPECIAL_CODE: '/third-party/special-codes/',
+    WALLET_VIP_TIERS: (specialCode) => `/third-party/station-wallet-vip/${specialCode}/`,
+    FLOATING_MENUS: (specialCode) => `/third-party/station-floating-menu/${specialCode}/`
   }
 };
