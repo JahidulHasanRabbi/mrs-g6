@@ -77,7 +77,7 @@ function MartTiersContent() {
   };
 
   return (
-    <main className="min-h-screen px-6 pt-6 pb-10 xl:pl-[388px] xl:pr-10 xl:pt-10">
+    <main className="min-h-screen px-6 pt-6 pb-10 xl:admin-content-pl xl:pr-10 xl:pt-10">
       {/* Page header */}
       <div className="mb-6 flex items-center justify-between">
         <h1 className=" text-[18px] font-bold tracking-[-0.396px] text-white/70">

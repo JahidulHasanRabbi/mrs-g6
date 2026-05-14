@@ -175,7 +175,7 @@ function TermsConditionsContent() {
   };
 
   return (
-    <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
+    <main className="min-h-screen xl:admin-content-pl pr-10 pt-10 pb-10">
       {/* Success Toast */}
       {showSuccessToast && (
         <div className="fixed top-6 right-6 z-50 animate-slide-in-right">

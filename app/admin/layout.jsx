@@ -16,11 +16,10 @@ function AdminLayoutInner({ children }) {
   const width = collapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED;
 
   return (
-    // Expose the current sidebar width as a CSS variable so pages that want to
-    // respond to the collapse (e.g. shifting their left padding) can do so via
-    // `pl-[calc(var(--admin-sidebar-w)+...)]`. Existing pages still use a fixed
-    // xl:pl-[388px] and continue to work — they just keep an empty band when
-    // the sidebar is collapsed.
+    // Expose the current sidebar width as a CSS variable. Admin pages use the
+    // `admin-content-pl` helper class (defined in globals.css) which reads this
+    // variable to keep its left padding in sync with the sidebar — so the
+    // content reflows smoothly when the user toggles collapse/expand.
     <div
       className="min-h-screen bg-[#07190d]"
       style={{ "--admin-sidebar-w": `${width}px` }}
@@ -43,8 +42,8 @@ function AdminLayoutInner({ children }) {
  * Admin layout — renders the persistent sidebar + dark background once,
  * so navigating between admin pages doesn't unmount/remount the sidebar.
  *
- * Each admin page is responsible for its own <main> with the appropriate
- * left padding (xl:pl-[388px]) to clear the fixed sidebar.
+ * Each admin page renders its own <main> with the `admin-content-pl` helper
+ * class to clear the fixed sidebar. The padding animates with the sidebar.
  *
  * The login page (/admin/login) bypasses this chrome — it's a
  * full-bleed centered form.

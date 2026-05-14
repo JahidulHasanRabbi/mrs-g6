@@ -155,7 +155,7 @@ function TokenReportContent() {
   };
 
   return (
-    <main className="min-h-screen pl-[388px] pr-10 pt-8 pb-10">
+    <main className="min-h-screen xl:admin-content-pl pr-10 pt-8 pb-10">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <h1 className=" text-[30px] font-bold leading-none text-white">

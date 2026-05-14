@@ -377,7 +377,7 @@ function MrsVipContent() {
 
   return (
     <>
-    <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:pl-[388px] xl:pr-10 xl:pt-8">
+    <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:admin-content-pl xl:pr-10 xl:pt-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className=" font-bold text-[22px] sm:text-[28px] text-white">

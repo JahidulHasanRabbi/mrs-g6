@@ -103,14 +103,14 @@ function AdminDashboardContent() {
 
   if (loading) {
     return (
-      <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
+      <main className="min-h-screen xl:admin-content-pl pr-10 pt-10 pb-10">
         <LoadingState message="Loading dashboard data..." />
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
+    <main className="min-h-screen xl:admin-content-pl pr-10 pt-10 pb-10">
         {/* Header */}
         <div className="mb-8 flex items-start justify-between">
           <h1 className="text-4xl font-bold leading-[1.05] text-white">

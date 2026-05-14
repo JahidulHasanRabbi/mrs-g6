@@ -48,8 +48,9 @@ function pathnameToActiveItem(pathname) {
   if (pathname.startsWith("/admin/reports/token")) return "token-report";
   if (pathname.startsWith("/admin/reports/reward")) return "reward-report";
   if (pathname.startsWith("/admin/reports/member")) return "member-report";
-  if (pathname.startsWith("/admin/retention/member-retention")) return "retention-member-retention";
+  if (pathname.startsWith("/admin/retention/member-alert")) return "retention-member-alert";
   if (pathname.startsWith("/admin/retention/members")) return "retention-member-list";
+  if (pathname.startsWith("/admin/retention/settings")) return "retention-settings";
   if (pathname.startsWith("/admin/retention/pic-dashboard")) return "retention-pic-dashboard";
   if (pathname.startsWith("/admin/retention")) return "retention-pic-dashboard";
   if (pathname.startsWith("/admin/settings/user-access")) return "settings-user-access";
@@ -179,17 +180,17 @@ const MENU_ITEMS = [
 const RETENTION_MENU = [
   {
     id: "retention-pic-dashboard",
-    label: "PIC Dashboard",
+    label: "Dashboard",
     iconMask: "/assets/admin/sidebar/icons/Home.png",
     href: "/admin/retention/pic-dashboard",
     disabled: false,
   },
   {
-    id: "retention-member-retention",
-    label: "Member Retention",
+    id: "retention-member-alert",
+    label: "Member Alert",
     iconMask: "/assets/admin/sidebar/icons/line-md_brake-alert.png",
-    href: "/admin/retention/member-retention",
-    disabled: false,
+    href: "/admin/retention/member-alert",
+    disabled: true,
   },
   {
     id: "retention-member-list",
@@ -197,6 +198,13 @@ const RETENTION_MENU = [
     iconMask: "/assets/admin/sidebar/icons/si_user-alt-5-line.png",
     href: "/admin/retention/members",
     disabled: false,
+  },
+  {
+    id: "retention-settings",
+    label: "Settings",
+    iconNode: GearIcon,
+    href: "/admin/retention/settings",
+    disabled: true,
   },
 ];
 
@@ -345,109 +353,80 @@ const ItemIcon = ({ item, sizeClass }) => {
   return <img src={item.icon} alt="" className={`${sizeClass} object-contain`} />;
 };
 
+// Spec from Figma 231:3393 — items/nav item:
+//   - rounded-[12px] container, 12px horizontal / 8px vertical padding
+//   - 32px icon container with the actual glyph centered at 18-20px
+//   - label: Inter Semi Bold, 14px, leading-21, tracking-[-1px], color #fbeed2 (Primary 100)
+//   - active: gold gradient background, 2.5px solid #f2cb7a border, dark text #141828
 const MenuItem = ({ item, isActive }) => {
   const { collapsed } = useSidebar();
 
-  const content = collapsed ? (
-    // Collapsed: icon-only square, centered. Active gets a subtle gold ring +
-    // tinted background so the user can still see which page they're on.
-    <div
-      title={item.label}
-      className={`relative mx-auto flex h-10 w-10 items-center justify-center rounded-[10px] border transition-all duration-200 ${
-        isActive
-          ? "border-[#e9af41] bg-[rgba(232,181,88,0.14)] shadow-[0_0_24px_rgba(231,196,87,0.22)]"
-          : "border-transparent hover:border-[rgba(233,175,65,0.35)] hover:bg-white/5"
-      } ${item.disabled ? "opacity-40 cursor-not-allowed" : ""}`}
-    >
+  if (collapsed) {
+    const content = (
       <div
-        className={`relative h-5 w-5 shrink-0 flex items-center justify-center ${
-          item.iconNode || item.iconMask ? (isActive ? "text-white" : "text-[#e9af41]") : ""
-        }`}
-      >
-        <ItemIcon item={item} sizeClass="w-full h-full" />
-      </div>
-    </div>
-  ) : (
-    <div
-      className={`relative overflow-hidden rounded-[10px] border transition-all duration-200 ${
-        isActive
-          ? "border-[#e9af41] bg-[rgba(232,181,88,0.14)] shadow-[0_0_24px_rgba(231,196,87,0.22)]"
-          : "border-transparent"
-      }`}
-    >
-      <div
-        className={`flex min-h-10 items-center gap-1.5 px-2 py-1.5 ${item.disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+        title={item.label}
+        className={`relative mx-auto flex h-10 w-10 items-center justify-center rounded-[12px] transition-all duration-200 ${
+          isActive
+            ? "border-[2.5px] border-[#f2cb7a]"
+            : "border border-transparent hover:border-[#f2cb7a]/40 hover:bg-white/5"
+        } ${item.disabled ? "opacity-40 cursor-not-allowed" : ""}`}
+        style={
+          isActive
+            ? { backgroundImage: "linear-gradient(105deg, #dc9d16 1%, #f2cb7a 98%)" }
+            : undefined
+        }
       >
         <div
           className={`relative h-5 w-5 shrink-0 flex items-center justify-center ${
-            item.iconNode || item.iconMask ? (isActive ? "text-white" : "text-[#e9af41]") : ""
+            item.iconNode || item.iconMask ? (isActive ? "text-[#141828]" : "text-[#fbeed2]") : ""
           }`}
         >
           <ItemIcon item={item} sizeClass="w-full h-full" />
         </div>
-        <p className={`text-[18px] font-bold tracking-[-0.396px] whitespace-nowrap ${isActive ? 'text-white' : 'text-white/70'}`}>
-          {item.label}
-        </p>
       </div>
-    </div>
-  );
-
-  if (item.disabled) {
-    return <div className="cursor-not-allowed">{content}</div>;
+    );
+    if (item.disabled) return <div className="cursor-not-allowed">{content}</div>;
+    return <Link href={item.href}>{content}</Link>;
   }
 
-  return <Link href={item.href}>{content}</Link>;
-};
-
-const HighlightedMenuItem = ({ item }) => {
-  const { collapsed } = useSidebar();
-
-  const content = collapsed ? (
-    // Gold gradient square pill matching the Figma collapsed-active spec.
+  const content = (
     <div
-      title={item.label}
-      className={`relative mx-auto flex h-10 w-10 items-center justify-center overflow-hidden rounded-[10px] border-[0.324px] shadow-[0_0_24px_rgba(231,196,87,0.35)] ${item.disabled ? "opacity-40 cursor-not-allowed" : ""}`}
-      style={{
-        backgroundImage:
-          "linear-gradient(93.5deg, rgb(220, 157, 22) 1%, rgb(242, 203, 122) 98%)",
-      }}
+      className={`relative flex items-center gap-2 rounded-[12px] px-3 py-2 transition-colors ${
+        isActive
+          ? "border-[2.5px] border-[#f2cb7a]"
+          : "border-[2.5px] border-transparent hover:bg-white/5"
+      } ${item.disabled ? "opacity-40 cursor-not-allowed" : ""}`}
+      style={
+        isActive
+          ? { backgroundImage: "linear-gradient(105deg, #dc9d16 1%, #f2cb7a 98%)" }
+          : undefined
+      }
     >
       <div
-        className={`relative h-5 w-5 shrink-0 flex items-center justify-center ${
-          item.iconNode || item.iconMask ? "text-white" : ""
+        className={`relative h-8 w-8 shrink-0 flex items-center justify-center ${
+          item.iconNode || item.iconMask ? (isActive ? "text-[#141828]" : "text-[#fbeed2]") : ""
         }`}
       >
-        <ItemIcon item={item} sizeClass="w-full h-full" />
+        <ItemIcon item={item} sizeClass="w-[20px] h-[20px]" />
       </div>
-    </div>
-  ) : (
-    <div
-      className={`relative h-[51.765px] w-full overflow-hidden rounded-[6.471px] border-[0.324px] shadow-[3.235px_3.235px_48.529px_3.235px_rgba(231,196,87,0.5)] ${item.disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
-      style={{
-        backgroundColor: "#e8b558",
-      }}
-    >
-      <div className="absolute left-[calc(50%+0.6px)] top-[calc(50%-0.24px)] flex -translate-x-1/2 -translate-y-1/2 items-center gap-[25.882px]">
-        <div
-          className={`relative h-[38px] w-[38px] shrink-0 flex items-center justify-center ${
-            item.iconNode || item.iconMask ? "text-white" : ""
-          }`}
-        >
-          <ItemIcon item={item} sizeClass="w-full h-full" />
-        </div>
-        <p className=" text-[16px] font-bold leading-[normal] text-white w-[181.176px] whitespace-pre-wrap">
-          {item.label}
-        </p>
-      </div>
+      <p
+        className={`text-[14px] font-semibold leading-[21px] tracking-[-1px] whitespace-nowrap ${
+          isActive ? "text-[#141828]" : "text-[#fbeed2]"
+        }`}
+      >
+        {item.label}
+      </p>
     </div>
   );
 
-  if (item.disabled) {
-    return <div className="cursor-not-allowed">{content}</div>;
-  }
-
+  if (item.disabled) return <div className="cursor-not-allowed">{content}</div>;
   return <Link href={item.href}>{content}</Link>;
 };
+
+// Active-state item — visually identical to MenuItem but with the gold gradient
+// + light-gold border + dark text from the Figma spec. Kept as a thin wrapper
+// so the renderItem dispatcher stays readable.
+const HighlightedMenuItem = ({ item }) => <MenuItem item={item} isActive={true} />;
 
 const BarChartIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -500,43 +479,46 @@ const ExpandableMenuItem = ({ item, activeItem }) => {
     return item.href ? <Link href={item.href}>{square}</Link> : square;
   }
 
-  // Full gold highlight only when a child page is actually active.
-  // When merely expanded (open) but no child active, use a subtle outline style.
-  const headerClass = isAnyChildActive
-    ? "border-[0.324px] border-[#9f7722] bg-[#e8b558] shadow-[3.235px_3.235px_48.529px_3.235px_rgba(231,196,87,0.5)]"
-    : open
-      ? "border-[rgba(233,175,65,0.35)] bg-white/5"
-      : "border-transparent bg-transparent hover:border-[rgba(233,175,65,0.35)] hover:bg-white/5";
+  // Header background: full gold gradient only when a child page is actually
+  // active. When the menu is merely expanded, fall back to the regular row.
+  const isActiveStyle = isAnyChildActive;
 
   return (
-    <div>
-      {/* Parent header */}
+    <div className="flex flex-col gap-2">
+      {/* Parent header — same row dimensions as a MenuItem */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className={`relative flex h-[51.765px] w-full items-center justify-between overflow-hidden rounded-[6.471px] border px-3 transition-all duration-200 ${headerClass}`}
+        className={`relative flex w-full items-center gap-2 rounded-[12px] px-3 py-2 transition-colors ${
+          isActiveStyle
+            ? "border-[2.5px] border-[#f2cb7a]"
+            : "border-[2.5px] border-transparent hover:bg-white/5"
+        }`}
+        style={
+          isActiveStyle
+            ? { backgroundImage: "linear-gradient(105deg, #dc9d16 1%, #f2cb7a 98%)" }
+            : undefined
+        }
       >
-        <div className="flex items-center gap-[10px]">
-          <div
-            className={`relative h-[22px] w-[22px] shrink-0 flex items-center justify-center ${
-              item.iconNode || item.iconMask ? (isAnyChildActive ? "text-white" : "text-[#e9af41]") : ""
-            }`}
-          >
-            <ItemIcon item={item} sizeClass="w-full h-full" />
-          </div>
-          <span
-            className={` text-[16px] font-bold leading-normal ${
-              isAnyChildActive ? "text-white" : "text-white/80"
-            }`}
-          >
-            {item.label}
-          </span>
+        <div
+          className={`relative h-8 w-8 shrink-0 flex items-center justify-center ${
+            item.iconNode || item.iconMask ? (isActiveStyle ? "text-[#141828]" : "text-[#fbeed2]") : ""
+          }`}
+        >
+          <ItemIcon item={item} sizeClass="w-[20px] h-[20px]" />
         </div>
+        <span
+          className={`flex-1 text-left text-[14px] font-semibold leading-[21px] tracking-[-1px] whitespace-nowrap ${
+            isActiveStyle ? "text-[#141828]" : "text-[#fbeed2]"
+          }`}
+        >
+          {item.label}
+        </span>
         <motion.svg
-          width="16"
-          height="16"
+          width="12"
+          height="12"
           viewBox="0 0 24 24"
           fill="none"
-          stroke={isAnyChildActive ? "white" : "rgba(255,255,255,0.8)"}
+          stroke={isActiveStyle ? "#141828" : "#fbeed2"}
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -559,24 +541,22 @@ const ExpandableMenuItem = ({ item, activeItem }) => {
             transition={collapseTransition}
             style={{ overflow: "hidden" }}
           >
-            <div className="mt-1 flex flex-col gap-1 pl-2">
+            <div className="flex flex-col gap-1 pl-4">
               {item.children.map((child) => {
                 const isActive = child.id === activeItem;
                 return (
                   <Link key={child.id} href={child.href}>
                     <div
-                      className={`flex items-center gap-2 px-3 py-2 rounded-[6px] transition-colors ${
-                        isActive
-                          ? "bg-[rgba(232,181,88,0.18)]"
-                          : "hover:bg-white/5"
+                      className={`flex items-center gap-2 px-3 py-2 rounded-[12px] transition-colors ${
+                        isActive ? "bg-[#f2cb7a]/15" : "hover:bg-white/5"
                       }`}
                     >
-                      <span className={isActive ? "text-[#e9af41]" : "text-white/60"}>
+                      <span className={isActive ? "text-[#f2cb7a]" : "text-[#fbeed2]/60"}>
                         {(() => { const Icon = CHILD_ICONS[item.id] || BarChartIcon; return <Icon />; })()}
                       </span>
                       <span
-                        className={` text-[15px] font-bold ${
-                          isActive ? "text-white" : "text-white/70"
+                        className={`text-[13px] font-semibold leading-[20px] tracking-[-1px] ${
+                          isActive ? "text-[#f2cb7a]" : "text-[#fbeed2]/80"
                         }`}
                       >
                         {child.label}
@@ -593,6 +573,9 @@ const ExpandableMenuItem = ({ item, activeItem }) => {
   );
 };
 
+// Section title gradient — Primary 600 → Primary 300 from the Figma tokens.
+const SECTION_TITLE_GRADIENT = "linear-gradient(102deg, #dc9d16 1%, #f2cb7a 98%)";
+
 // Collapsible section wrapper — renders a header with the section title
 // and a chevron that toggles visibility of the items inside.
 //
@@ -606,29 +589,30 @@ const CollapsibleSection = ({ title, defaultOpen = true, children }) => {
   const shortTitle = title.length > 3 ? `${title.slice(0, 3)}…` : title;
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-2">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className={`flex items-center w-full px-1 py-1 group ${
-          sidebarCollapsed ? "justify-center gap-1" : "justify-between"
+        className={`flex items-center w-full py-1 group ${
+          sidebarCollapsed ? "justify-center gap-1 px-0" : "justify-between gap-2 px-0"
         }`}
         aria-expanded={open}
         title={sidebarCollapsed ? title : undefined}
       >
         <span
-          className={` font-bold tracking-[0.18em] text-[#e9af41] uppercase whitespace-nowrap ${
-            sidebarCollapsed ? "text-[11px]" : "text-[13px]"
+          className={`font-semibold uppercase whitespace-nowrap tracking-[-1px] leading-[24px] bg-clip-text text-transparent ${
+            sidebarCollapsed ? "text-[12px]" : "text-[16px]"
           }`}
+          style={{ backgroundImage: SECTION_TITLE_GRADIENT }}
         >
           {sidebarCollapsed ? shortTitle : title}
         </span>
         <motion.svg
-          width={sidebarCollapsed ? 10 : 14}
-          height={sidebarCollapsed ? 10 : 14}
+          width={sidebarCollapsed ? 10 : 12}
+          height={sidebarCollapsed ? 10 : 12}
           viewBox="0 0 24 24"
           fill="none"
-          stroke="#e9af41"
+          stroke="#f2cb7a"
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -649,7 +633,7 @@ const CollapsibleSection = ({ title, defaultOpen = true, children }) => {
             transition={collapseTransition}
             style={{ overflow: "hidden" }}
           >
-            <div className="flex flex-col gap-4">{children}</div>
+            <div className="flex flex-col gap-2">{children}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -707,12 +691,24 @@ export default function Sidebar({ activeItem: activeItemProp }) {
   };
 
   return (
+    // Sidebar shell — gold border + dark green gradient per Figma 243:6071.
+    // Background uses Como-style deep green (rgb(17,50,14) → rgb(3,17,1)).
     <div
-      className="scrollbar-admin relative h-full w-full overflow-y-auto overflow-x-hidden rounded-[14px] border border-[rgba(255,255,132,0.2)]"
+      className="scrollbar-admin relative h-full w-full overflow-y-auto overflow-x-hidden rounded-[12px] border border-[#f2cb7a]"
       style={{
-        background: "linear-gradient(180deg, rgba(7, 25, 13, 1) 0%, rgba(10, 30, 15, 1) 100%)",
+        background: "linear-gradient(143deg, #11320e 0%, #031101 99.749%)",
       }}
     >
+      {/* Sticky top region — logo, toggle button and search bar stay pinned
+          at the top of the sidebar while the menu list scrolls behind them.
+          Background matches the top of the shell's diagonal gradient so the
+          scrolling content doesn't peek through. */}
+      <div
+        className="sticky top-0 z-10"
+        style={{
+          background: "linear-gradient(143deg, #11320e 0%, #0d2a0b 100%)",
+        }}
+      >
       {/* Header: logo + collapse toggle */}
       <div
         className={`flex items-center pt-6 pb-4 ${
@@ -744,13 +740,8 @@ export default function Sidebar({ activeItem: activeItemProp }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={collapseTransition}
-              className="font-bold text-[24px] whitespace-nowrap"
-              style={{
-                fontFamily: 'var(--font-dm-sans), system-ui, sans-serif',
-                color: 'rgb(233, 175, 65)',
-                letterSpacing: '0.04em',
-                textShadow: 'rgba(0, 0, 0, 0.35) 0px 3px 0px'
-              }}
+              className="font-semibold text-[20px] tracking-[-1px] whitespace-nowrap bg-clip-text text-transparent"
+              style={{ backgroundImage: SECTION_TITLE_GRADIENT }}
             >
               KINGGROUP44
             </motion.h1>
@@ -800,14 +791,16 @@ export default function Sidebar({ activeItem: activeItemProp }) {
           </div>
         )}
       </div>
+      </div>
+      {/* /sticky top region */}
 
-      {/* Menu Items — collapsible sections */}
-      <div className={`pb-6 flex w-full flex-col gap-5 ${collapsed ? "px-2" : "px-3"}`}>
-        <CollapsibleSection title="MRS">
+      {/* Menu Items — three collapsible sections, gap-[24px] per Figma */}
+      <div className={`pb-6 flex w-full flex-col gap-6 ${collapsed ? "px-3" : "px-4"}`}>
+        <CollapsibleSection title="MRS System">
           {[...MENU_ITEMS, ...SECONDARY_MENU].map((item) => renderItem(item, activeItem))}
         </CollapsibleSection>
 
-        <CollapsibleSection title="Retention">
+        <CollapsibleSection title="Retention System">
           {RETENTION_MENU.map((item) => renderItem(item, activeItem))}
         </CollapsibleSection>
 
@@ -820,8 +813,8 @@ export default function Sidebar({ activeItem: activeItemProp }) {
           onClick={handleLogout}
           disabled={isLoggingOut}
           title={collapsed ? "Logout" : undefined}
-          className={`mt-4 flex items-center justify-center gap-2 rounded-md border border-white/20 bg-[#202020] hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-            collapsed ? "mx-auto h-10 w-10" : "w-full px-4 py-3"
+          className={`mt-2 flex items-center justify-center gap-2 rounded-[12px] border border-[#f2cb7a]/30 bg-black/30 hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+            collapsed ? "mx-auto h-10 w-10" : "w-full px-4 py-2"
           }`}
         >
           <svg
@@ -829,7 +822,7 @@ export default function Sidebar({ activeItem: activeItemProp }) {
             height="20"
             viewBox="0 0 24 24"
             fill="none"
-            stroke="white"
+            stroke="#fbeed2"
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -839,7 +832,7 @@ export default function Sidebar({ activeItem: activeItemProp }) {
             <line x1="21" y1="12" x2="9" y2="12" />
           </svg>
           {!collapsed && (
-            <span className="text-[16px] font-bold text-white">
+            <span className="text-[14px] font-semibold leading-[21px] tracking-[-1px] text-[#fbeed2]">
               {isLoggingOut ? 'Logging out...' : 'Logout'}
             </span>
           )}
