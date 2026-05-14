@@ -7,7 +7,6 @@ import { useHamburgerMenu } from "./useHamburgerMenu";
 import { MENU_CONFIG, ANIMATION_CONFIG, THEME_CONFIG } from "./menuConfig";
 import MenuSection from "./MenuSection";
 import MenuItem from "./MenuItem";
-import SocialLinks from "./SocialLinks";
 import FeedbackModal from "../ui/FeedbackModal";
 import { getPublicBanners } from "@/app/api/memberApi";
 
@@ -141,52 +140,53 @@ function HamburgerMenu({ isOpen, onClose }) {
                   <MenuSection
                     title={MENU_CONFIG.miniGames.title}
                     icon={MENU_CONFIG.miniGames.icon}
-                    variants={rowVariants}
                   >
                     {MENU_CONFIG.miniGames.items.map((item, index) => (
                       <MenuItem
                         key={index}
                         {...item}
                         onClose={onClose}
-                        isNested={true}
-                        variants={rowVariants}
                       />
                     ))}
                   </MenuSection>
 
-                  {/* Main Menu Items */}
-                  <div className="space-y-1 mb-3">
+                  {/* Standalone items between Mini Game and Stay Connected */}
+                  <div className="space-y-1 mb-3 pl-2">
                     {MENU_CONFIG.mainItems.map((item, index) => (
                       <MenuItem
                         key={index}
                         {...item}
                         onClose={onClose}
-                        variants={rowVariants}
+                        onAction={handleMenuAction}
                       />
                     ))}
                   </div>
 
-                  {/* Social Section — icon-only row mixing social links + actions (Feedback) */}
+                  {/* Stay Connected Section — only Feedback / Complain lives inside,
+                      so collapsing this section never hides anything else. */}
                   <MenuSection
-                    title={MENU_CONFIG.social.title}
-                    icon={MENU_CONFIG.social.icon}
-                    variants={rowVariants}
+                    title={MENU_CONFIG.stayConnected.title}
+                    icon={MENU_CONFIG.stayConnected.icon}
                   >
-                    <SocialLinks
-                      links={MENU_CONFIG.social.links}
-                      onAction={handleMenuAction}
-                    />
-                  </MenuSection>
-
-                  {/* Bottom Items */}
-                  <div className="space-y-1 mt-3">
-                    {MENU_CONFIG.bottomItems.map((item, index) => (
+                    {MENU_CONFIG.stayConnected.items.map((item, index) => (
                       <MenuItem
                         key={index}
                         {...item}
                         onClose={onClose}
                         onAction={handleMenuAction}
-                        variants={rowVariants}
+                      />
+                    ))}
+                  </MenuSection>
+
+                  {/* Standalone items after Stay Connected — kept outside the section
+                      so collapsing Stay Connected doesn't hide them. */}
+                  <div className="space-y-1 pl-2">
+                    {MENU_CONFIG.extraItems.map((item, index) => (
+                      <MenuItem
+                        key={index}
+                        {...item}
+                        onClose={onClose}
+                        onAction={handleMenuAction}
                       />
                     ))}
                   </div>

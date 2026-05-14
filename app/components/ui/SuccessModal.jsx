@@ -68,8 +68,8 @@ export default function SuccessModal({
         </motion.button>
 
         <div
-          className={`absolute left-1/2 top-1/2 flex w-[228px] -translate-x-1/2 -translate-y-1/2 flex-col items-center ${
-            actions && actions.length > 0 ? "h-[170px] justify-start gap-3 pt-1" : "h-[144px] justify-center gap-6"
+          className={`absolute left-1/2 top-1/2 flex w-[228px] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center ${
+            actions && actions.length > 0 ? "h-[170px] gap-3" : "h-[144px] gap-6"
           }`}
         >
           <motion.p

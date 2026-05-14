@@ -16,7 +16,6 @@ import { tokenStorage } from "../../api/tokenStorage";
  * @param {string} [props.link] - Navigation link
  * @param {string} [props.action] - Action type (e.g. 'logout')
  * @param {() => void} [props.onClose] - Close callback
- * @param {boolean} [props.isNested] - Whether this is a nested item
  * @param {boolean} [props.disabled] - Whether item is disabled
  */
 function MenuItem({
@@ -26,13 +25,11 @@ function MenuItem({
   action,
   onClose,
   onAction,
-  isNested = false,
   disabled = false,
-  variants,
 }) {
-  const iconSize = isNested ? 20 : 28;
-  const textSize = "text-[10px]";
-  const padding = isNested ? "px-2 py-1" : "px-2 py-1";
+  const iconSize = 24;
+  const textSize = "text-[11px]";
+  const padding = "px-2 py-[6px]";
 
   const handleAction = () => {
     if (action === "logout") {
@@ -61,7 +58,6 @@ function MenuItem({
         disabled ? "opacity-30 cursor-not-allowed" : "cursor-pointer"
       }`}
       role="menuitem"
-      variants={variants}
       whileHover={
         !disabled
           ? {
