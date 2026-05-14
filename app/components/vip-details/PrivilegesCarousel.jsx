@@ -27,6 +27,8 @@ export default function PrivilegesCarousel({ tiers = [], activeName, onSelect })
   const [containerW, setContainerW] = useState(0);
   const [isSmall, setIsSmall] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  // Track active index instead of relying solely on name matching
+  const [activeIndex, setActiveIndex] = useState(0);
   // Imperative motion value — lets us snap the carousel back even when
   // the active card hasn't changed (e.g., a small drag past the first
   // or last card that didn't pass the swipe threshold).
@@ -53,10 +55,14 @@ export default function PrivilegesCarousel({ tiers = [], activeName, onSelect })
   const cardW = isSmall ? CARD_W_SM : CARD_W;
   const stride = cardW + GAP;
 
-  const activeIndex = useMemo(() => {
+  // Sync activeIndex when activeName changes from parent
+  useEffect(() => {
     const i = tiers.findIndex(t => t.name === activeName);
-    return i >= 0 ? i : 0;
-  }, [tiers, activeName]);
+    if (i >= 0 && i !== activeIndex) {
+      setActiveIndex(i);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeName, tiers]);
 
   const targetX = useMemo(() => {
     if (!containerW) return 0;
@@ -78,7 +84,7 @@ export default function PrivilegesCarousel({ tiers = [], activeName, onSelect })
     return () => controls.stop();
   }, [targetX, x, springConfig]);
 
-  const handleDragStart = (_, info) => {
+  const handleDragStart = () => {
     draggedRef.current = false;
     setIsDragging(true);
   };
@@ -106,6 +112,7 @@ export default function PrivilegesCarousel({ tiers = [], activeName, onSelect })
 
     const newIndex = Math.max(0, Math.min(tiers.length - 1, activeIndex + delta));
     if (newIndex !== activeIndex) {
+      setActiveIndex(newIndex);
       onSelect?.(tiers[newIndex].name);
       // useEffect above will animate to the new targetX.
     } else {
@@ -159,7 +166,7 @@ export default function PrivilegesCarousel({ tiers = [], activeName, onSelect })
 
           return (
             <motion.div
-              key={tier.name}
+              key={`${tier.name}-${index}`}
               className="shrink-0 cursor-pointer"
               style={{ width: cardW }}
               animate={{ scale, opacity }}
@@ -174,7 +181,10 @@ export default function PrivilegesCarousel({ tiers = [], activeName, onSelect })
                 // dragging horizontally and releasing on a different card
                 // would also "click" the card under the pointer.
                 if (draggedRef.current) return;
-                if (!isActive) onSelect?.(tier.name);
+                if (!isActive) {
+                  setActiveIndex(index);
+                  onSelect?.(tier.name);
+                }
               }}
             >
               <PrivilegesCard
