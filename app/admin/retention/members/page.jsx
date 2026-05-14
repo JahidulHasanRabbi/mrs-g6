@@ -1,24 +1,37 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
 const A = "/assets/admin/pic-dashboard";
 
+function nameToSlug(name) {
+  return name.trim().toLowerCase().replace(/\s+/g, "-");
+}
+
 const GRAD_DARK = "linear-gradient(178deg, #141828 0%, #333333 99.7%)";
+const PAGE_SIZE = 7;
 
 const PRIORITY_OPTIONS = ["High", "Medium", "Low"];
 const VIP_OPTIONS = ["VIP 1", "VIP 2", "VIP 3", "VIP 4", "VIP 5"];
 const PIC_OPTIONS = ["Sarah", "John", "Michael", "Emma", "Linda"];
 
-const ROWS = [
+// Seed rows from the Figma. Cycled below to generate 150 mock entries so the
+// pagination has something to paginate over until the real API is wired.
+const SEED_ROWS = [
   { name: "Ah Chong",     phone: "+64164293333", vip: "VIP 2", sales: "RM 3,770", winloss: "RM 400",  priority: "High",   pic: "Sarah" },
   { name: "Lily Tran",    phone: "+64167891234", vip: "VIP 1", sales: "RM 3,770", winloss: "RM 250",  priority: "Low",    pic: "John" },
   { name: "Sophia Lee",   phone: "+64168901234", vip: "VIP 4", sales: "RM 3,770", winloss: "RM 300",  priority: "Medium", pic: "Michael" },
   { name: "Marcus Henry", phone: "+64164293333", vip: "VIP 2", sales: "RM 3,770", winloss: "RM 400",  priority: "High",   pic: "Sarah" },
   { name: "Aiden Smith",  phone: "+64161234567", vip: "VIP 3", sales: "RM 5,500", winloss: "RM 550",  priority: "Medium", pic: "Emma" },
   { name: "Daniel Kim",   phone: "+64163456789", vip: "VIP 5", sales: "RM 7,000", winloss: "RM 700",  priority: "High",   pic: "Linda" },
-  { name: "Daniel Kim",   phone: "+64163456789", vip: "VIP 5", sales: "RM 7,000", winloss: "RM 700",  priority: "High",   pic: "Linda" },
+  { name: "Nora Park",    phone: "+64162345678", vip: "VIP 2", sales: "RM 4,200", winloss: "RM 450",  priority: "Medium", pic: "Sarah" },
 ];
+
+const ROWS = Array.from({ length: 150 }, (_, i) => {
+  const seed = SEED_ROWS[i % SEED_ROWS.length];
+  return { ...seed, id: i + 1 };
+});
 
 const COLUMNS = [
   { key: "name",     label: "Username",       minW: 180 },
@@ -53,6 +66,21 @@ export default function RetentionMembersPage() {
     });
   }, [priority, vip, pic, query]);
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+
+  useEffect(() => {
+    setPage(1);
+  }, [priority, vip, pic, query]);
+
+  // Clamp page when totalPages shrinks below the current page (e.g. heavy
+  // filter trims results). Prevents an empty page if the user paged deep
+  // before filtering.
+  const safePage = Math.min(page, totalPages);
+  const startIdx = (safePage - 1) * PAGE_SIZE;
+  const visibleRows = filtered.slice(startIdx, startIdx + PAGE_SIZE);
+  const showingFrom = filtered.length === 0 ? 0 : startIdx + 1;
+  const showingTo = Math.min(startIdx + PAGE_SIZE, filtered.length);
+
   return (
     <section className="flex w-full flex-col overflow-hidden rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
       <header className="flex flex-col gap-4 p-6 w-full md:flex-row md:flex-wrap md:items-center">
@@ -79,18 +107,25 @@ export default function RetentionMembersPage() {
         <div style={{ minWidth: TABLE_MIN_WIDTH }}>
           <TableHeader />
           <div className="flex w-full flex-col">
-            {filtered.length === 0 ? (
+            {visibleRows.length === 0 ? (
               <div className="px-6 py-12 text-center text-[12px] text-white/40">
                 No members found.
               </div>
             ) : (
-              filtered.map((row, idx) => <TableRow key={`${row.name}-${idx}`} row={row} />)
+              visibleRows.map((row) => <TableRow key={row.id} row={row} />)
             )}
           </div>
         </div>
       </div>
 
-      <PaginationBar shown={filtered.length} total={150} page={page} onPageChange={setPage} />
+      <PaginationBar
+        from={showingFrom}
+        to={showingTo}
+        total={filtered.length}
+        page={safePage}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
     </section>
   );
 }
@@ -221,14 +256,14 @@ function TableRow({ row }) {
         <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{row.pic}</span>
       </Cell>
       <Cell minW={COLUMNS[7].minW} align="end">
-        <button
-          type="button"
+        <Link
+          href={`/admin/retention/members/${nameToSlug(row.name)}`}
           className="flex items-center justify-center gap-1 rounded-[8px] border border-[#f2cb7a] px-4 py-2 transition hover:brightness-110"
           style={{ backgroundImage: GRAD_DARK }}
         >
           <img src={`${A}/eye.svg`} alt="" className="h-4 w-4" />
           <span className="text-[12px] font-medium text-[#eaad2c] leading-[18px]">View</span>
-        </button>
+        </Link>
       </Cell>
     </div>
   );
@@ -260,25 +295,60 @@ function UserAvatar() {
   );
 }
 
-function PaginationBar({ shown, total, page, onPageChange }) {
-  const totalPages = 7;
-  const visible = [1, 2, 3];
+// Build the page chip list with ellipsis. When there are 7 or fewer pages we
+// just list them all. Otherwise we always show the first and last page, and
+// a 1-page window around the current page, inserting ellipsis where there's a
+// gap so we never render adjacent numbers like "1, 2" with an ellipsis in
+// between.
+function buildPageItems(currentPage, totalPages) {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  const items = [1];
+  const start = Math.max(2, currentPage - 1);
+  const end = Math.min(totalPages - 1, currentPage + 1);
+  if (start > 2) items.push("ellipsis-l");
+  for (let p = start; p <= end; p += 1) items.push(p);
+  if (end < totalPages - 1) items.push("ellipsis-r");
+  items.push(totalPages);
+  return items;
+}
+
+function PaginationBar({ from, to, total, page, totalPages, onPageChange }) {
+  const items = buildPageItems(page, totalPages);
+  const prevDisabled = page <= 1;
+  const nextDisabled = page >= totalPages;
 
   return (
-    <div className="flex h-[44px] w-full items-center justify-between gap-3 flex-wrap px-6 py-3">
+    <div className="flex min-h-[44px] w-full items-center justify-between gap-3 flex-wrap px-6 py-3">
       <span className="text-[8px] text-white leading-[12px]">
-        Showing 1 to {shown} of {total} Results
+        Showing {from} to {to} of {total} Results
       </span>
       <div className="flex items-center gap-[5.5px]">
-        <PageButton onClick={() => onPageChange(Math.max(1, page - 1))} ariaLabel="Previous page">
+        <PageButton
+          onClick={() => onPageChange(Math.max(1, page - 1))}
+          disabled={prevDisabled}
+          ariaLabel="Previous page"
+        >
           <PageChevron direction="left" />
         </PageButton>
-        {visible.map((p) => (
-          <PageNumber key={p} value={p} active={p === page} onClick={() => onPageChange(p)} />
-        ))}
-        <span className="text-[8px] text-white leading-[12px]">....</span>
-        <PageNumber value={totalPages} active={totalPages === page} onClick={() => onPageChange(totalPages)} />
-        <PageButton onClick={() => onPageChange(Math.min(totalPages, page + 1))} ariaLabel="Next page">
+        {items.map((item) =>
+          typeof item === "number" ? (
+            <PageNumber
+              key={item}
+              value={item}
+              active={item === page}
+              onClick={() => onPageChange(item)}
+            />
+          ) : (
+            <span key={item} className="text-[8px] text-white leading-[12px]">....</span>
+          )
+        )}
+        <PageButton
+          onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+          disabled={nextDisabled}
+          ariaLabel="Next page"
+        >
           <PageChevron direction="right" />
         </PageButton>
       </div>
@@ -292,7 +362,7 @@ function PageNumber({ value, active, onClick }) {
       type="button"
       onClick={onClick}
       className={`flex h-[18px] w-[18px] items-center justify-center rounded-[4px] text-[8px] text-white leading-[12px] ${
-        active ? "bg-[#eaad2c]" : "border border-[#eaad2c]"
+        active ? "bg-[#eaad2c]" : "border border-[#eaad2c] hover:bg-[#eaad2c]/20"
       }`}
     >
       {value}
@@ -300,13 +370,16 @@ function PageNumber({ value, active, onClick }) {
   );
 }
 
-function PageButton({ children, onClick, ariaLabel }) {
+function PageButton({ children, onClick, ariaLabel, disabled }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label={ariaLabel}
-      className="flex h-[18px] w-[18px] items-center justify-center rounded-[4px] border border-[#eaad2c]"
+      disabled={disabled}
+      className={`flex h-[18px] w-[18px] items-center justify-center rounded-[4px] border border-[#eaad2c] ${
+        disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-[#eaad2c]/20"
+      }`}
     >
       {children}
     </button>

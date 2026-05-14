@@ -1,11 +1,38 @@
 "use client";
 
-import { ASSETS, GRAD_DARK, GRAD_GOLD, PERIODS } from "./constants";
+import { useCallback } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { GRAD_DARK, GRAD_GOLD, PERIODS } from "./constants";
+import DateRangePicker from "./DateRangePicker";
 
-// Daily / Monthly / Yearly toggle + Select Date button.
-// Controlled component: parent owns the `period` string state.
+// Daily / Monthly / Yearly toggle + Select Date picker.
+// Controlled `period` via props; the date range is URL-driven so it persists
+// across navigation and is shareable. Every retention page that drops this
+// component in gets a working Select Date button without extra wiring.
 
-export default function PeriodToggle({ period, onPeriodChange, onSelectDate }) {
+export default function PeriodToggle({ period, onPeriodChange }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const fromDate = searchParams.get("from");
+  const toDate = searchParams.get("to");
+
+  // Write `from` / `to` to the URL while preserving other params (level, sort, q).
+  // router.replace (not push) — date picks shouldn't bloat history.
+  const handleApply = useCallback(
+    (from, to) => {
+      const next = new URLSearchParams(searchParams.toString());
+      if (from) next.set("from", from);
+      else next.delete("from");
+      if (to) next.set("to", to);
+      else next.delete("to");
+      const qs = next.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams]
+  );
+
   return (
     <div className="flex items-center gap-2">
       {PERIODS.map((p) => (
@@ -16,15 +43,7 @@ export default function PeriodToggle({ period, onPeriodChange, onSelectDate }) {
           onClick={() => onPeriodChange?.(p)}
         />
       ))}
-      <button
-        type="button"
-        onClick={onSelectDate}
-        className="flex items-center justify-center gap-1 rounded-[8px] border border-[#f2cb7a] px-6 py-2 text-[12px] font-medium text-[#edba4d] transition hover:brightness-110"
-        style={{ backgroundImage: GRAD_DARK }}
-      >
-        <img src={`${ASSETS}/calendar.svg`} alt="" className="h-4 w-4" />
-        Select Date
-      </button>
+      <DateRangePicker fromDate={fromDate} toDate={toDate} onApply={handleApply} />
     </div>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { createPortal } from "react-dom";
+import { motion } from "framer-motion";
 import { ASSETS, GRAD_DARK, GRAD_GOLD } from "./constants";
 
 // Two-step date range picker matching Figma nodes 176:7434 (From) / 176:7593 (To).
@@ -108,21 +109,18 @@ export default function DateRangePicker({ fromDate, toDate, onApply }) {
         {triggerLabel}
       </button>
 
-      <AnimatePresence>
-        {isOpen && (
-          <CalendarModal
-            key={step}
-            step={step}
-            initialIso={step === "from" ? tempFrom : tempTo}
-            todayIso={getTodayIso()}
-            onSelect={(iso) => (step === "from" ? setTempFrom(iso) : setTempTo(iso))}
-            onCancel={close}
-            onPrimary={step === "from" ? handleNext : handleApply}
-            primaryLabel={step === "from" ? "Next" : "Apply"}
-            primaryDisabled={step === "from" ? !tempFrom : !tempTo}
-          />
-        )}
-      </AnimatePresence>
+      {isOpen && (
+        <CalendarModal
+          step={step}
+          initialIso={step === "from" ? tempFrom : tempTo}
+          todayIso={getTodayIso()}
+          onSelect={(iso) => (step === "from" ? setTempFrom(iso) : setTempTo(iso))}
+          onCancel={close}
+          onPrimary={step === "from" ? handleNext : handleApply}
+          primaryLabel={step === "from" ? "Next" : "Apply"}
+          primaryDisabled={step === "from" ? !tempFrom : !tempTo}
+        />
+      )}
     </>
   );
 }
@@ -157,12 +155,16 @@ function CalendarModal({
     setView((v) => (v.month === 11 ? { year: v.year + 1, month: 0 } : { year: v.year, month: v.month + 1 }));
   };
 
-  return (
+  // Render at document.body so the modal escapes any parent stacking context
+  // (e.g. the admin layout's <motion.aside>). The check guards SSR where
+  // `document` isn't defined.
+  if (typeof document === "undefined") return null;
+
+  const modal = (
     <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+      className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 px-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
       onClick={onCancel}
     >
@@ -170,7 +172,6 @@ function CalendarModal({
         className="w-full max-w-[334px] rounded-[16px] border border-[#f2cb7a] bg-[#0a0e1d] p-5 shadow-[0_0_24px_rgba(222,162,32,0.25)]"
         initial={{ scale: 0.96, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.96, opacity: 0 }}
         transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
@@ -240,6 +241,8 @@ function CalendarModal({
       </motion.div>
     </motion.div>
   );
+
+  return createPortal(modal, document.body);
 }
 
 function DayCell({ cell, isSelected, isToday, onClick }) {

@@ -181,28 +181,28 @@ const RETENTION_MENU = [
   {
     id: "retention-pic-dashboard",
     label: "Dashboard",
-    iconMask: "/assets/admin/sidebar/icons/Home.png",
+    iconMask: "/assets/admin/sidebar/icons/retention-dashboard.svg",
     href: "/admin/retention/pic-dashboard",
     disabled: false,
   },
   {
     id: "retention-member-alert",
     label: "Member Alert",
-    iconMask: "/assets/admin/sidebar/icons/line-md_brake-alert.png",
+    iconMask: "/assets/admin/sidebar/icons/retention-member-alert.svg",
     href: "/admin/retention/member-alert",
     disabled: true,
   },
   {
     id: "retention-member-list",
     label: "Member List",
-    iconMask: "/assets/admin/sidebar/icons/si_user-alt-5-line.png",
+    iconMask: "/assets/admin/sidebar/icons/retention-member-list.svg",
     href: "/admin/retention/members",
     disabled: false,
   },
   {
     id: "retention-settings",
     label: "Settings",
-    iconNode: GearIcon,
+    iconMask: "/assets/admin/sidebar/icons/retention-settings.svg",
     href: "/admin/retention/settings",
     disabled: true,
   },
@@ -378,7 +378,7 @@ const MenuItem = ({ item, isActive }) => {
       >
         <div
           className={`relative h-5 w-5 shrink-0 flex items-center justify-center ${
-            item.iconNode || item.iconMask ? (isActive ? "text-[#141828]" : "text-[#fbeed2]") : ""
+            item.iconNode || item.iconMask ? (isActive ? "text-[#141828]" : "text-white") : ""
           }`}
         >
           <ItemIcon item={item} sizeClass="w-full h-full" />
@@ -404,14 +404,14 @@ const MenuItem = ({ item, isActive }) => {
     >
       <div
         className={`relative h-8 w-8 shrink-0 flex items-center justify-center ${
-          item.iconNode || item.iconMask ? (isActive ? "text-[#141828]" : "text-[#fbeed2]") : ""
+          item.iconNode || item.iconMask ? (isActive ? "text-[#141828]" : "text-white") : ""
         }`}
       >
         <ItemIcon item={item} sizeClass="w-[20px] h-[20px]" />
       </div>
       <p
         className={`text-[14px] font-semibold leading-[21px] tracking-[-1px] whitespace-nowrap ${
-          isActive ? "text-[#141828]" : "text-[#fbeed2]"
+          isActive ? "text-[#141828]" : "text-white"
         }`}
       >
         {item.label}
@@ -501,14 +501,14 @@ const ExpandableMenuItem = ({ item, activeItem }) => {
       >
         <div
           className={`relative h-8 w-8 shrink-0 flex items-center justify-center ${
-            item.iconNode || item.iconMask ? (isActiveStyle ? "text-[#141828]" : "text-[#fbeed2]") : ""
+            item.iconNode || item.iconMask ? (isActiveStyle ? "text-[#141828]" : "text-white") : ""
           }`}
         >
           <ItemIcon item={item} sizeClass="w-[20px] h-[20px]" />
         </div>
         <span
           className={`flex-1 text-left text-[14px] font-semibold leading-[21px] tracking-[-1px] whitespace-nowrap ${
-            isActiveStyle ? "text-[#141828]" : "text-[#fbeed2]"
+            isActiveStyle ? "text-[#141828]" : "text-white"
           }`}
         >
           {item.label}
@@ -518,7 +518,7 @@ const ExpandableMenuItem = ({ item, activeItem }) => {
           height="12"
           viewBox="0 0 24 24"
           fill="none"
-          stroke={isActiveStyle ? "#141828" : "#fbeed2"}
+          stroke={isActiveStyle ? "#141828" : "#ffffff"}
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -551,12 +551,12 @@ const ExpandableMenuItem = ({ item, activeItem }) => {
                         isActive ? "bg-[#f2cb7a]/15" : "hover:bg-white/5"
                       }`}
                     >
-                      <span className={isActive ? "text-[#f2cb7a]" : "text-[#fbeed2]/60"}>
+                      <span className={isActive ? "text-[#f2cb7a]" : "text-white"}>
                         {(() => { const Icon = CHILD_ICONS[item.id] || BarChartIcon; return <Icon />; })()}
                       </span>
                       <span
                         className={`text-[13px] font-semibold leading-[20px] tracking-[-1px] ${
-                          isActive ? "text-[#f2cb7a]" : "text-[#fbeed2]/80"
+                          isActive ? "text-[#f2cb7a]" : "text-white"
                         }`}
                       >
                         {child.label}
@@ -715,36 +715,37 @@ export default function Sidebar({ activeItem: activeItemProp }) {
           collapsed ? "flex-col gap-3 px-2" : "justify-between gap-2 px-4"
         }`}
       >
-        {/* Logo block. Animates between the small crown-only chip and the full
-            "KINGGROUP44" wordmark. */}
+        {/* Logo block.
+            Expanded: full King Group 44 wordmark (same PNG used on the login page).
+            Collapsed: dedicated crown badge PNG that fits the narrow 56px column. */}
         <AnimatePresence mode="wait" initial={false}>
           {collapsed ? (
-            <motion.div
+            <motion.img
               key="logo-collapsed"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={collapseTransition}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e9af41]/60 bg-black/30 shrink-0"
-              aria-label="King Group 44"
+              src="/assets/admin/sidebar/icons/Logo-collapsed.png"
+              alt="King Group 44"
               title="King Group 44"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="#e9af41" stroke="#e9af41" strokeWidth="1" strokeLinejoin="round">
-                <path d="M3 8l4 3 5-7 5 7 4-3-2 11H5L3 8z" />
-              </svg>
-            </motion.div>
+              className="h-9 w-9 shrink-0 object-contain"
+            />
           ) : (
-            <motion.h1
+            <motion.div
               key="logo-expanded"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={collapseTransition}
-              className="font-semibold text-[20px] tracking-[-1px] whitespace-nowrap bg-clip-text text-transparent"
-              style={{ backgroundImage: SECTION_TITLE_GRADIENT }}
+              className="flex items-center"
             >
-              KINGGROUP44
-            </motion.h1>
+              <img
+                src="/assets/login/KingGroup44.png"
+                alt="King Group 44"
+                className="h-16 w-auto"
+              />
+            </motion.div>
           )}
         </AnimatePresence>
 
@@ -832,7 +833,7 @@ export default function Sidebar({ activeItem: activeItemProp }) {
             <line x1="21" y1="12" x2="9" y2="12" />
           </svg>
           {!collapsed && (
-            <span className="text-[14px] font-semibold leading-[21px] tracking-[-1px] text-[#fbeed2]">
+            <span className="text-[14px] font-semibold leading-[21px] tracking-[-1px] text-white">
               {isLoggingOut ? 'Logging out...' : 'Logout'}
             </span>
           )}
