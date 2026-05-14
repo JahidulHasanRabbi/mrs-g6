@@ -8,20 +8,6 @@ import ErrorDisplay from "../components/ui/ErrorDisplay";
 import { getVipTiers } from "../api/memberApi";
 import { mapVipTiers } from "../api/responseMappers";
 
-// All 9 chain tiers — must match the chain in VipLevelChain.jsx and the rank icons
-// in /public/assets/ranks/ (vip-level-1.png .. vip-level-9.png).
-const ALL_TIER_NAMES = [
-  "Bronze",
-  "Silver",
-  "Gold",
-  "Platinum",
-  "Diamond",
-  "Emerald",
-  "Ruby",
-  "Sapphire",
-  "Amethyst",
-];
-
 export default function VipDetailsPage() {
   const [selectedLevel, setSelectedLevel] = useState("Bronze");
   const [vipTiers, setVipTiers] = useState([]);
@@ -53,10 +39,9 @@ export default function VipDetailsPage() {
     fetchVipTiers();
   }, []);
 
-  // Always expose 9 tiers downstream so the carousel renders one card per chain slot.
-  // API tiers fill positions 0..N; remaining slots get a placeholder name and "—" stats.
+  // Use only the tiers returned from the API
   const displayTiers = useMemo(
-    () => ALL_TIER_NAMES.map((name, i) => vipTiers[i] || { name }),
+    () => vipTiers,
     [vipTiers]
   );
 

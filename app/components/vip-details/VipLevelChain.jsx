@@ -78,14 +78,13 @@ export default function VipLevelChain({ selectedLevel, onLevelSelect, vipTiers =
     return () => window.removeEventListener('resize', update);
   }, []);
 
-  // Always render all 9 chain slots so the slider has something to scroll through.
-  const displayLevels = DEFAULT_VIP_LEVELS.map((defaultLevel, index) => {
-    const apiTier = vipTiers[index];
-    const name = apiTier?.name || defaultLevel.name;
+  // Render only the tiers from the API
+  const displayLevels = vipTiers.map((tier, index) => {
+    const defaultLevel = DEFAULT_VIP_LEVELS[index] || DEFAULT_VIP_LEVELS[0];
     return {
       ...defaultLevel,
-      name,
-      badge: getBadgeForTier(name, index),
+      name: tier.name,
+      badge: getBadgeForTier(tier.name, index),
     };
   });
 
