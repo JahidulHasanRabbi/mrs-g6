@@ -22,7 +22,7 @@ const maskUsername = (name) => {
 const WinningRow = memo(function WinningRow({ date, phone, amount, index }) {
   return (
   <motion.div
-    className="flex items-center justify-between px-4 sm:px-6 py-2.5 h-[45px] overflow-x-auto winning-row-scroll"
+      className="flex items-center justify-between px-4 sm:px-6 py-2.5 h-[45px] overflow-x-auto overflow-y-hidden winning-row-scroll"
     initial={{ opacity: 0, x: -100 }}
     animate={{ opacity: 1, x: 0 }}
     transition={{
