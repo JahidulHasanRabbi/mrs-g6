@@ -162,10 +162,44 @@ export async function deleteLuckySpinSequence(uuid) {
 }
 
 export async function changeSpinSequencesOrder(luckySpins) {
-  return await apiRequest(ENDPOINTS.ADMIN.CHANGE_SPIN_SEQUENCES, {
+  console.log('changeSpinSequencesOrder called with:', luckySpins);
+  const payload = { lucky_spins: luckySpins };
+  console.log('Sending payload:', JSON.stringify(payload, null, 2));
+  
+  const response = await fetch(`${BASE_URL}${ENDPOINTS.ADMIN.CHANGE_SPIN_SEQUENCES}`, {
     method: 'PATCH',
-    body: { lucky_spins: luckySpins }
-  }, true, 'admin');
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${tokenStorage.getAdminAccessToken()}`
+    },
+    body: JSON.stringify(payload)
+  });
+  
+  if (!response.ok) {
+    let errorData = null;
+    try {
+      errorData = await response.json();
+    } catch (e) {
+      errorData = { detail: response.statusText };
+    }
+    throw {
+      message: `HTTP error: ${response.status}`,
+      status: response.status,
+      data: errorData
+    };
+  }
+  
+  // PATCH might return 204 No Content, which has no body
+  if (response.status === 204) {
+    return { success: true };
+  }
+  
+  try {
+    return await response.json();
+  } catch (e) {
+    // If no JSON body, return success
+    return { success: true };
+  }
 }
 
 export async function getMembers() {

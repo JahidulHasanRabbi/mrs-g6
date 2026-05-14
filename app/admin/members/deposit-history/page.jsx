@@ -70,8 +70,8 @@ function DepositHistoryContent() {
       const params = {
         page,
         page_size: PAGE_SIZE,
-        start_datetime: dateFrom || undefined,
-        end_datetime: dateTo || undefined,
+        start_date: dateFrom || undefined,
+        end_date: dateTo || undefined,
       };
       const res = await getMemberDeposit(memberId, params);
       setRows(res.results || []);

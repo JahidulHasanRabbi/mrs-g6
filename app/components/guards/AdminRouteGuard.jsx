@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { tokenStorage } from '../../api/tokenStorage';
+import { verifyToken } from '../../api/adminApi';
 
 export function AdminRouteGuard({ children }) {
   const router = useRouter();
@@ -10,29 +11,50 @@ export function AdminRouteGuard({ children }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = tokenStorage.getAdminAccessToken();
-    if (!token) {
-      router.push('/admin/login');
-    } else {
-      setIsAuthenticated(true);
-    }
-    setIsLoading(false);
+    const checkAuth = async () => {
+      const token = tokenStorage.getAdminAccessToken();
+      
+      if (!token) {
+        // No token at all - redirect to login
+        router.push('/admin/login');
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // Verify token is still valid
+        await verifyToken(token);
+        // Token is valid
+        setIsAuthenticated(true);
+      } catch (error) {
+        // Token is invalid or expired - clear it and redirect
+        console.log('Token verification failed:', error);
+        tokenStorage.clearAdminTokens();
+        router.push('/admin/login');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
   }, [router]);
 
+  // Show loading spinner while checking authentication
   if (isLoading) {
     return (
       <div style={{ 
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center', 
-        minHeight: '100vh' 
+        minHeight: '100vh',
+        backgroundColor: '#1a1a1a'
       }}>
         <div style={{ 
-          border: '4px solid #f3f3f3', 
-          borderTop: '4px solid #3498db', 
+          border: '4px solid rgba(233, 175, 65, 0.2)', 
+          borderTop: '4px solid #e9af41', 
           borderRadius: '50%', 
-          width: '40px', 
-          height: '40px', 
+          width: '50px', 
+          height: '50px', 
           animation: 'spin 1s linear infinite' 
         }} />
         <style jsx>{`
@@ -45,6 +67,7 @@ export function AdminRouteGuard({ children }) {
     );
   }
 
+  // Don't render anything if not authenticated (redirecting to login)
   if (!isAuthenticated) {
     return null;
   }
