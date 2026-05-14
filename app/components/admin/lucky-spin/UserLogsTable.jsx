@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 const USER_LOGS_DATA = [
   {
@@ -75,7 +75,7 @@ export default function UserLogsTable({ selectedYear = "2024" }) {
           <tr className="bg-black border-b border-white/10">
             <th className="px-4 py-3 text-left">
               <div className="flex items-center gap-2">
-                <span className="text-[18px] font-bold text-white font-['Times_New_Roman']">
+                <span className="text-[18px] font-bold text-white">
                   Username
                 </span>
                 <div className="relative h-8 w-8">
@@ -88,7 +88,7 @@ export default function UserLogsTable({ selectedYear = "2024" }) {
             </th>
             <th className="px-4 py-3 text-left">
               <div className="flex items-center gap-2">
-                <span className="text-[18px] font-bold text-white font-['Times_New_Roman']">
+                <span className="text-[18px] font-bold text-white">
                   Date & Time
                 </span>
                 <div className="relative h-8 w-8">
@@ -101,7 +101,7 @@ export default function UserLogsTable({ selectedYear = "2024" }) {
             </th>
             <th className="px-4 py-3 text-left">
               <div className="flex items-center gap-2">
-                <span className="text-[18px] font-bold text-white font-['Times_New_Roman']">
+                <span className="text-[18px] font-bold text-white">
                   Prize
                 </span>
                 <div className="relative h-8 w-8">
@@ -114,7 +114,7 @@ export default function UserLogsTable({ selectedYear = "2024" }) {
             </th>
             <th className="px-4 py-3 text-left">
               <div className="flex items-center gap-2">
-                <span className="text-[18px] font-bold text-white font-['Times_New_Roman']">
+                <span className="text-[18px] font-bold text-white">
                   Device
                 </span>
                 <div className="relative h-8 w-8">
@@ -127,7 +127,7 @@ export default function UserLogsTable({ selectedYear = "2024" }) {
             </th>
             <th className="px-4 py-3 text-left">
               <div className="flex items-center gap-2">
-                <span className="text-[18px] font-bold text-white font-['Times_New_Roman']">
+                <span className="text-[18px] font-bold text-white">
                   IP Address
                 </span>
                 <div className="relative h-8 w-8">
@@ -147,27 +147,27 @@ export default function UserLogsTable({ selectedYear = "2024" }) {
               className="border-b border-white/5 transition-colors hover:bg-white/[0.02]"
             >
               <td className="px-4 py-4">
-                <p className="text-[14px] text-white font-['Times_New_Roman']">
+                <p className="text-[14px] text-white">
                   {log.username}
                 </p>
               </td>
               <td className="px-4 py-4">
-                <p className="text-[14px] text-white/80 font-['Times_New_Roman']">
+                <p className="text-[14px] text-white/80">
                   {log.datetime}
                 </p>
               </td>
               <td className="px-4 py-4">
-                <p className="text-[14px] text-white/80 font-['Times_New_Roman']">
+                <p className="text-[14px] text-white/80">
                   {log.prize}
                 </p>
               </td>
               <td className="px-4 py-4">
-                <p className="text-[14px] text-white/80 font-['Times_New_Roman']">
+                <p className="text-[14px] text-white/80">
                   {log.device}
                 </p>
               </td>
               <td className="px-4 py-4">
-                <p className="text-[14px] text-white/80 font-['Times_New_Roman']">
+                <p className="text-[14px] text-white/80">
                   {log.ipAddress}
                 </p>
               </td>

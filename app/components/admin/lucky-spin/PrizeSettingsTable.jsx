@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 
@@ -16,10 +16,10 @@ const Tooltip = ({ children, content }) => {
         <div className="absolute z-50 left-full ml-2 top-1/2 -translate-y-1/2">
           <div className="backdrop-blur-[25px] bg-[rgba(179,179,179,0.2)] border-[0.5px] border-[rgba(255,255,132,0.2)] rounded-[8px] p-3 w-[258px]">
             <div className="flex flex-col gap-1 leading-[18px] not-italic text-[12px] text-white">
-              <p className="font-bold font-['Times_New_Roman']">
+              <p className="font-bold">
                 {content.value}
               </p>
-              <p className="font-['Times_New_Roman']">
+              <p className="">
                 {content.description}
               </p>
             </div>
@@ -127,7 +127,7 @@ export default function PrizeSettingsTable() {
           <tr className="bg-black border-b border-white/10">
             <th className="px-4 py-3 text-left">
               <div className="flex items-center gap-2">
-                <span className="text-[18px] font-bold text-white font-['Times_New_Roman']">
+                <span className="text-[18px] font-bold text-white">
                   Setting
                 </span>
                 <div className="relative h-8 w-8">
@@ -140,7 +140,7 @@ export default function PrizeSettingsTable() {
             </th>
             <th className="px-4 py-3 text-left">
               <div className="flex items-center gap-2">
-                <span className="text-[18px] font-bold text-white font-['Times_New_Roman']">
+                <span className="text-[18px] font-bold text-white">
                   Value
                 </span>
                 <div className="relative h-8 w-8">
@@ -153,7 +153,7 @@ export default function PrizeSettingsTable() {
             </th>
             <th className="px-4 py-3 text-left">
               <div className="flex items-center gap-2">
-                <span className="text-[18px] font-bold text-white font-['Times_New_Roman']">
+                <span className="text-[18px] font-bold text-white">
                   Edit
                 </span>
                 <div className="relative h-8 w-8">
@@ -166,7 +166,7 @@ export default function PrizeSettingsTable() {
             </th>
             <th className="px-4 py-3 text-left">
               <div className="flex items-center gap-2">
-                <span className="text-[18px] font-bold text-white font-['Times_New_Roman']">
+                <span className="text-[18px] font-bold text-white">
                   Enable/Disable
                 </span>
                 <div className="relative h-8 w-8">
@@ -186,13 +186,13 @@ export default function PrizeSettingsTable() {
               className="border-b border-white/5 transition-colors hover:bg-white/[0.02]"
             >
               <td className="px-4 py-4">
-                <p className="text-[14px] text-white font-['Times_New_Roman']">
+                <p className="text-[14px] text-white">
                   {item.setting}
                 </p>
               </td>
               <td className="px-4 py-4">
                 <Tooltip content={item.tooltip}>
-                  <p className="text-[14px] text-white/80 font-['Times_New_Roman'] cursor-help">
+                  <p className="text-[14px] text-white/80 cursor-help">
                     {item.value}
                   </p>
                 </Tooltip>
@@ -205,7 +205,7 @@ export default function PrizeSettingsTable() {
                     </button>
                   </div>
                 ) : (
-                  <p className="text-[14px] text-white font-['Times_New_Roman'] text-start">
+                  <p className="text-[14px] text-white text-start">
                     No
                   </p>
                 )}

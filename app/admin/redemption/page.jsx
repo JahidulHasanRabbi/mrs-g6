@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import RedemptionItemsTable from "../../components/admin/redemption/RedemptionItemsTable";
@@ -106,7 +106,7 @@ function RedemptionManagementContent() {
     <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
         {/* Header */}
         <div className="mb-8 flex items-start justify-between">
-          <h1 className="text-4xl font-bold leading-[1.05] text-white font-['Times_New_Roman']">
+          <h1 className="text-4xl font-bold leading-[1.05] text-white">
             Redemption Management
           </h1>
           <button className="flex h-[26px] w-[26px] items-center justify-center">
@@ -142,12 +142,12 @@ function RedemptionManagementContent() {
         <div className="rounded-xl border border-white/10 bg-white/[0.03] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
           {/* Table Header */}
           <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-            <h2 className="text-xl font-bold text-white font-['Times_New_Roman']">
+            <h2 className="text-xl font-bold text-white">
               Redemption Items Panel Table
             </h2>
             <button 
               onClick={handleAddClick}
-              className="inline-flex min-w-[72px] items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-center font-['Times_New_Roman'] text-sm font-bold leading-none text-black transition-colors disabled:opacity-50"
+              className="inline-flex min-w-[72px] items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-center text-sm font-bold leading-none text-black transition-colors disabled:opacity-50"
               style={{
                 backgroundImage: "linear-gradient(2.1326483653998594deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
               }}

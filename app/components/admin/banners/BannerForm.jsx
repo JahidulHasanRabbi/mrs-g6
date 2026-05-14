@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import * as adminApi from "../../../api/adminApi";
@@ -133,7 +133,7 @@ export default function BannerForm({ banner, onClose, onSuccess }) {
   return (
     <div className="rounded-xl border border-white/10 bg-white/[0.03] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-white font-['Times_New_Roman']">
+        <h2 className="text-2xl font-bold text-white">
           {banner ? 'Edit Banner' : 'Create New Banner'}
         </h2>
         <button

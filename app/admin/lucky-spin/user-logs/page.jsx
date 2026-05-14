@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import NavigationCards from "../../../components/admin/lucky-spin/NavigationCards";
@@ -22,7 +22,7 @@ function UserLogsPageContent() {
     <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
         {/* Header */}
         <div className="mb-8 flex items-start justify-between">
-          <h1 className="text-4xl font-bold leading-[1.05] text-white font-['Times_New_Roman']">
+          <h1 className="text-4xl font-bold leading-[1.05] text-white">
             User Logs
           </h1>
           <button className="flex h-[26px] w-[26px] items-center justify-center">
@@ -56,18 +56,18 @@ function UserLogsPageContent() {
         <div className="rounded-xl border border-white/10 bg-white/[0.03] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
           {/* Table Header */}
           <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-            <h2 className="text-xl font-bold text-white font-['Times_New_Roman']">
+            <h2 className="text-xl font-bold text-white">
               User Logs 
             </h2>
             <div className="flex items-center gap-3">
-              <label className="text-[14px] text-white font-['Times_New_Roman']">
+              <label className="text-[14px] text-white">
                 Filter by Year:
               </label>
               <div className="relative">
                 <select
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(e.target.value)}
-                  className="appearance-none bg-transparent border-none h-[36px] rounded-[4px] px-3 text-black text-[16px] font-['Times_New_Roman'] focus:outline-none cursor-pointer pr-10"
+                  className="appearance-none bg-transparent border-none h-[36px] rounded-[4px] px-3 text-black text-[16px] focus:outline-none cursor-pointer pr-10"
                   style={{
                     backgroundImage: "linear-gradient(1.1194924757333382deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
                   }}

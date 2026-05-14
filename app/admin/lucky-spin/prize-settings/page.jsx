@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import NavigationCards from "../../../components/admin/lucky-spin/NavigationCards";
 import PrizeSettingsTable from "../../../components/admin/lucky-spin/PrizeSettingsTable";
@@ -17,7 +17,7 @@ function PrizeSettingsPageContent() {
     <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
         {/* Header */}
         <div className="mb-8 flex items-start justify-between">
-          <h1 className="text-4xl font-bold leading-[1.05] text-white font-['Times_New_Roman']">
+          <h1 className="text-4xl font-bold leading-[1.05] text-white">
             Prize Settings
           </h1>
           <button className="flex h-[26px] w-[26px] items-center justify-center">
@@ -51,7 +51,7 @@ function PrizeSettingsPageContent() {
         <div className="rounded-xl border border-white/10 bg-white/[0.03] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
           {/* Table Header */}
           <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-            <h2 className="text-xl font-bold text-white font-['Times_New_Roman']">
+            <h2 className="text-xl font-bold text-white">
               Prize Settings Table
             </h2>
           </div>

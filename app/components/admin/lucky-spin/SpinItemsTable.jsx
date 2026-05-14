@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { getOptionLabel } from "../../../api/apiOptions";
 
@@ -40,17 +40,17 @@ export default function SpinItemsTable({ items = [], onEditClick, onDeleteClick 
               className="border-b border-white/5 transition-colors hover:bg-white/[0.02]"
             >
               <td className="px-4 py-4">
-                <p className="text-sm text-white font-['Times_New_Roman']">
+                <p className="text-sm text-white">
                   {item.reward_name}
                 </p>
               </td>
               <td className="px-4 py-4">
-                <p className="text-sm text-white/80 font-['Times_New_Roman']">
+                <p className="text-sm text-white/80">
                   {item.unlimited ? 'Unlimited' : item.quantity}
                 </p>
               </td>
               <td className="px-4 py-4">
-                <p className="text-sm text-white/80 font-['Times_New_Roman']">
+                <p className="text-sm text-white/80">
                   {getOptionLabel('ITEM_TYPE', item.item_type)}
                 </p>
               </td>
@@ -64,7 +64,7 @@ export default function SpinItemsTable({ items = [], onEditClick, onDeleteClick 
                     />
                   </div>
                 ) : (
-                  <p className="text-sm text-white/40 font-['Times_New_Roman']">
+                  <p className="text-sm text-white/40">
                     No image
                   </p>
                 )}

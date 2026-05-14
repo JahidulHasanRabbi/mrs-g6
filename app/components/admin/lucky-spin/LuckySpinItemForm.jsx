@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
@@ -180,7 +180,7 @@ export default function LuckySpinItemForm({
           </div>
 
           {/* Modal Title */}
-          <h2 className="text-center text-[28px] font-bold text-white capitalize font-['Times_New_Roman'] mb-8">
+          <h2 className="text-center text-[28px] font-bold text-white capitalize mb-8">
             {mode === "add" ? "Add New Spin Item" : "Edit Spin Item"}
           </h2>
 
@@ -195,7 +195,7 @@ export default function LuckySpinItemForm({
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Reward Name */}
             <div className="flex items-center gap-[18px]">
-              <label className="text-[18px] text-white font-['Times_New_Roman'] w-[135px]">
+              <label className="text-[18px] text-white w-[135px]">
                 Reward Name:
               </label>
               <input
@@ -211,7 +211,7 @@ export default function LuckySpinItemForm({
 
             {/* Item Type */}
             <div className="flex items-center gap-[18px]">
-              <label className="text-[18px] text-white font-['Times_New_Roman'] w-[136px]">
+              <label className="text-[18px] text-white w-[136px]">
                 Item Type:
               </label>
               <select
@@ -236,7 +236,7 @@ export default function LuckySpinItemForm({
             {/* Conditional Fields for Free Credit */}
             {visibleFields.min_withdraw && (
               <div className="flex items-center gap-[18px]">
-                <label className="text-[18px] text-white font-['Times_New_Roman'] w-[136px]">
+                <label className="text-[18px] text-white w-[136px]">
                   Min Withdraw:
                 </label>
                 <input
@@ -254,7 +254,7 @@ export default function LuckySpinItemForm({
 
             {visibleFields.max_withdraw && (
               <div className="flex items-center gap-[18px]">
-                <label className="text-[18px] text-white font-['Times_New_Roman'] w-[136px]">
+                <label className="text-[18px] text-white w-[136px]">
                   Max Withdraw:
                 </label>
                 <input
@@ -272,7 +272,7 @@ export default function LuckySpinItemForm({
 
             {visibleFields.token_amount && (
               <div className="flex items-center gap-[18px]">
-                <label className="text-[18px] text-white font-['Times_New_Roman'] w-[136px]">
+                <label className="text-[18px] text-white w-[136px]">
                   Token Amount:
                 </label>
                 <input
@@ -290,7 +290,7 @@ export default function LuckySpinItemForm({
 
             {/* Unlimited Checkbox */}
             <div className="flex items-center gap-[18px]">
-              <label className="text-[18px] text-white font-['Times_New_Roman'] w-[136px]">
+              <label className="text-[18px] text-white w-[136px]">
                 Unlimited:
               </label>
               <input
@@ -305,7 +305,7 @@ export default function LuckySpinItemForm({
             {/* Quantity - conditional based on unlimited */}
             {visibleFields.quantity !== false && !fieldValues.unlimited && (
               <div className="flex items-center gap-[18px]">
-                <label className="text-[18px] text-white font-['Times_New_Roman'] w-[136px]">
+                <label className="text-[18px] text-white w-[136px]">
                   Quantity:
                 </label>
                 <input
@@ -324,7 +324,7 @@ export default function LuckySpinItemForm({
             {/* Image Upload */}
             <div className="space-y-4">
               <div className="flex justify-start">
-                <label className="text-[18px] text-white font-['Times_New_Roman']">
+                <label className="text-[18px] text-white">
                   Image
                 </label>
               </div>
@@ -369,7 +369,7 @@ export default function LuckySpinItemForm({
                 className="bg-white border border-[#e5e6e6] h-[37px] px-[18px] py-[13px] rounded-[4px] flex items-center justify-center"
                 disabled={isLoading}
               >
-                <span className="text-[#f04a4a] text-[14px] font-bold font-['Times_New_Roman']">
+                <span className="text-[#f04a4a] text-[14px] font-bold">
                   Cancel
                 </span>
               </button>
@@ -382,7 +382,7 @@ export default function LuckySpinItemForm({
                 }}
                 disabled={isLoading}
               >
-                <span className="text-black text-[14px] font-bold font-['Times_New_Roman']">
+                <span className="text-black text-[14px] font-bold">
                   {isLoading ? 'Saving...' : 'Confirm'}
                 </span>
               </button>

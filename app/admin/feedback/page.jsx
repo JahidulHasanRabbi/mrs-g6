@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useMemo } from "react";
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
@@ -92,7 +92,7 @@ function FeedbackContent() {
     <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:pl-[388px] xl:pr-10 xl:pt-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="font-['Times_New_Roman'] font-bold text-[22px] sm:text-[28px] text-white">
+        <h1 className=" font-bold text-[22px] sm:text-[28px] text-white">
           Member Feedback
         </h1>
         <svg
@@ -114,7 +114,7 @@ function FeedbackContent() {
         {/* Table card */}
         <div className="rounded-[12px] border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-3 sm:p-4 flex flex-col gap-4">
           {/* Title */}
-          <p className="font-['Times_New_Roman'] font-bold text-[18px] sm:text-[20px] text-white capitalize">
+          <p className=" font-bold text-[18px] sm:text-[20px] text-white capitalize">
             All Member Feedback
           </p>
 
@@ -128,7 +128,7 @@ function FeedbackContent() {
                     onClick={() => handleSort("rowNum")}
                   >
                     <div className="flex items-center">
-                      <span className="font-['Times_New_Roman'] font-bold text-[14px] sm:text-[16px] text-white whitespace-nowrap">
+                      <span className=" font-bold text-[14px] sm:text-[16px] text-white whitespace-nowrap">
                         No
                       </span>
                     </div>
@@ -138,7 +138,7 @@ function FeedbackContent() {
                     onClick={() => handleSort("phone_number")}
                   >
                     <div className="flex items-center">
-                      <span className="font-['Times_New_Roman'] font-bold text-[14px] sm:text-[16px] text-white whitespace-nowrap">
+                      <span className=" font-bold text-[14px] sm:text-[16px] text-white whitespace-nowrap">
                         Phone Number
                       </span>
                       <SortIcon active={sortKey === "phone_number"} direction={sortDir} />
@@ -149,14 +149,14 @@ function FeedbackContent() {
                     onClick={() => handleSort("created")}
                   >
                     <div className="flex items-center">
-                      <span className="font-['Times_New_Roman'] font-bold text-[14px] sm:text-[16px] text-white whitespace-nowrap">
+                      <span className=" font-bold text-[14px] sm:text-[16px] text-white whitespace-nowrap">
                         Date & Time
                       </span>
                       <SortIcon active={sortKey === "created"} direction={sortDir} />
                     </div>
                   </th>
                   <th className="min-w-[400px] px-3 py-3 text-left">
-                    <span className="font-['Times_New_Roman'] font-bold text-[14px] sm:text-[16px] text-white">
+                    <span className=" font-bold text-[14px] sm:text-[16px] text-white">
                       Feedback
                     </span>
                   </th>
@@ -168,7 +168,7 @@ function FeedbackContent() {
                   <tr>
                     <td
                       colSpan={4}
-                      className="px-5 py-12 text-center font-['Times_New_Roman'] text-white/40"
+                      className="px-5 py-12 text-center text-white/40"
                     >
                       No feedback received yet.
                     </td>
@@ -180,19 +180,19 @@ function FeedbackContent() {
                       className="border-b border-[rgba(240,240,240,0.2)] hover:bg-white/[0.03] transition-colors"
                     >
                       {/* Row number */}
-                      <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white whitespace-nowrap">
+                      <td className="px-3 py-3 text-[14px] text-white whitespace-nowrap">
                         {(currentPage - 1) * PAGE_SIZE + idx + 1}
                       </td>
                       {/* Phone Number */}
-                      <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80 whitespace-nowrap">
+                      <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                         {row.phone_number}
                       </td>
                       {/* Date & Time */}
-                      <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80 whitespace-nowrap">
+                      <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                         {formatDateTime(row.created)}
                       </td>
                       {/* Feedback */}
-                      <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80">
+                      <td className="px-3 py-3 text-[14px] text-white/80">
                         <div className="max-w-[400px] whitespace-pre-wrap break-words">
                           {row.feedback}
                         </div>
@@ -209,17 +209,17 @@ function FeedbackContent() {
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="px-3 py-1 rounded bg-white/10 text-white/70 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed font-['Times_New_Roman'] text-[14px]"
+              className="px-3 py-1 rounded bg-white/10 text-white/70 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-[14px]"
             >
               Previous
             </button>
-            <span className="px-4 font-['Times_New_Roman'] text-[14px] text-white">
+            <span className="px-4 text-[14px] text-white">
               Page {currentPage} of {totalPages}
             </span>
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="px-3 py-1 rounded bg-white/10 text-white/70 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed font-['Times_New_Roman'] text-[14px]"
+              className="px-3 py-1 rounded bg-white/10 text-white/70 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-[14px]"
             >
               Next
             </button>

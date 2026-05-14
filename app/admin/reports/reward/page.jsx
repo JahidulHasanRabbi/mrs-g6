@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState, useCallback, Suspense } from "react";
 import { AdminRouteGuard } from "../../../components/guards/AdminRouteGuard";
@@ -146,10 +146,10 @@ function RewardReportContent() {
     <main className="min-h-screen pl-[388px] pr-10 pt-8 pb-10">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
-            <h1 className="font-['Times_New_Roman'] text-[30px] font-bold leading-none text-white">
+            <h1 className=" text-[30px] font-bold leading-none text-white">
               Reward Report
             </h1>
-            <p className="mt-2 font-['Times_New_Roman'] text-[14px] text-white/55">
+            <p className="mt-2 text-[14px] text-white/55">
               Frontend-only report layout based on the approved Phase 1 enhancement spec.
             </p>
           </div>
@@ -165,11 +165,11 @@ function RewardReportContent() {
         <section className="overflow-hidden rounded-[12px] border border-[rgba(255,255,132,0.18)] bg-[linear-gradient(180deg,rgba(28,48,31,0.98)_0%,rgba(24,44,28,0.98)_100%)] shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
           <div className="border-b border-white/5 px-4 pt-4 pb-3">
             <div className="flex flex-wrap items-center gap-3">
-              <h2 className="mr-auto whitespace-nowrap font-['Times_New_Roman'] text-[15px] font-bold text-[#f4efe0] sm:text-[16px] lg:text-[17px]">
+              <h2 className="mr-auto whitespace-nowrap text-[15px] font-bold text-[#f4efe0] sm:text-[16px] lg:text-[17px]">
                 The Reward Reports Are Given
               </h2>
 
-              <span className="whitespace-nowrap font-['Times_New_Roman'] text-[13px] text-[#d6d6d6]">
+              <span className="whitespace-nowrap text-[13px] text-[#d6d6d6]">
                 Filter By:
               </span>
 
@@ -196,7 +196,7 @@ function RewardReportContent() {
                           onClick={() => handleSort(column.key)}
                           className="flex w-full items-center justify-start"
                         >
-                          <span className="font-['Times_New_Roman'] text-[14px] font-bold text-white whitespace-nowrap">
+                          <span className=" text-[14px] font-bold text-white whitespace-nowrap">
                             {column.label}
                           </span>
                           <SortIcon active={active} direction={sortConfig.direction} />
@@ -210,32 +210,32 @@ function RewardReportContent() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={TABLE_COLUMNS.length} className="px-5 py-12 text-center font-['Times_New_Roman'] text-[14px] text-white/60">
+                    <td colSpan={TABLE_COLUMNS.length} className="px-5 py-12 text-center text-[14px] text-white/60">
                       Loading...
                     </td>
                   </tr>
                 ) : sortedRows.length > 0 ? (
                   sortedRows.map((row) => (
                     <tr key={row.id} className="border-b border-[rgba(255,255,255,0.08)] transition-colors hover:bg-white/[0.03]">
-                      <td className="px-4 py-[14px] first:pl-5 font-['Times_New_Roman'] text-[13px] text-[#f1f1f1] whitespace-nowrap">
+                      <td className="px-4 py-[14px] first:pl-5 text-[13px] text-[#f1f1f1] whitespace-nowrap">
                         {row.phone_number || "—"}
                       </td>
-                      <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#f1f1f1] whitespace-nowrap">
+                      <td className="px-4 py-[14px] text-[13px] text-[#f1f1f1] whitespace-nowrap">
                         {row.username || "—"}
                       </td>
-                      <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#e8e8e8] whitespace-nowrap">
+                      <td className="px-4 py-[14px] text-[13px] text-[#e8e8e8] whitespace-nowrap">
                         {row.station || "—"}
                       </td>
-                      <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#e8e8e8] whitespace-nowrap">
+                      <td className="px-4 py-[14px] text-[13px] text-[#e8e8e8] whitespace-nowrap">
                         {formatDateTime(row.created)}
                       </td>
-                      <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#ece9dc] whitespace-nowrap">
+                      <td className="px-4 py-[14px] text-[13px] text-[#ece9dc] whitespace-nowrap">
                         {row.category || "—"}
                       </td>
-                      <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#dadada] whitespace-nowrap">
+                      <td className="px-4 py-[14px] text-[13px] text-[#dadada] whitespace-nowrap">
                         {row.reward_details || "—"}
                       </td>
-                      <td className="px-4 py-[14px] pr-5 font-['Times_New_Roman'] text-[13px] text-[#f1f1f1] whitespace-nowrap">
+                      <td className="px-4 py-[14px] pr-5 text-[13px] text-[#f1f1f1] whitespace-nowrap">
                         {row.reward_name || "—"}
                       </td>
                     </tr>
@@ -244,7 +244,7 @@ function RewardReportContent() {
                   <tr>
                     <td
                       colSpan={TABLE_COLUMNS.length}
-                      className="px-5 py-12 text-center font-['Times_New_Roman'] text-[14px] text-white/60"
+                      className="px-5 py-12 text-center text-[14px] text-white/60"
                     >
                       {loading ? "Loading reports..." : "No reward report rows match the current filters."}
                     </td>

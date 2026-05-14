@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
@@ -184,8 +184,8 @@ function TermsConditionsContent() {
               <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             <div>
-              <p className="text-white font-bold font-['Times_New_Roman']">Success!</p>
-              <p className="text-white/90 text-sm font-['Times_New_Roman']">Terms and conditions saved successfully</p>
+              <p className="text-white font-bold">Success!</p>
+              <p className="text-white/90 text-sm">Terms and conditions saved successfully</p>
             </div>
           </div>
         </div>
@@ -199,8 +199,8 @@ function TermsConditionsContent() {
               <path d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             <div>
-              <p className="text-white font-bold font-['Times_New_Roman']">Error!</p>
-              <p className="text-white/90 text-sm font-['Times_New_Roman']">{errorMessage}</p>
+              <p className="text-white font-bold">Error!</p>
+              <p className="text-white/90 text-sm">{errorMessage}</p>
             </div>
           </div>
         </div>
@@ -208,7 +208,7 @@ function TermsConditionsContent() {
 
       {/* Header */}
       <div className="mb-8 flex items-start justify-between">
-        <h1 className="text-4xl font-bold leading-[1.05] text-white font-['Times_New_Roman']">
+        <h1 className="text-4xl font-bold leading-[1.05] text-white">
           Terms & Conditions Management
         </h1>
         <button className="flex h-[26px] w-[26px] items-center justify-center">
@@ -225,7 +225,7 @@ function TermsConditionsContent() {
         <div className="space-y-6">
           {/* Category Selector */}
           <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
-            <h2 className="text-xl font-bold text-white font-['Times_New_Roman'] mb-4">
+            <h2 className="text-xl font-bold text-white mb-4">
               Select Category
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -234,7 +234,7 @@ function TermsConditionsContent() {
                   key={category.id}
                   onClick={() => setSelectedCategory(category.id)}
                   disabled={isSaving}
-                  className={`px-4 py-3 rounded-lg font-['Times_New_Roman'] text-sm font-bold transition-colors ${
+                  className={`px-4 py-3 rounded-lg text-sm font-bold transition-colors ${
                     selectedCategory === category.id
                       ? "bg-[#e9af41] text-black"
                       : "bg-white/10 text-white hover:bg-white/20"
@@ -249,11 +249,11 @@ function TermsConditionsContent() {
           {/* Editor */}
           <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-white font-['Times_New_Roman']">
+              <h2 className="text-xl font-bold text-white">
                 {CATEGORIES.find(c => c.id === selectedCategory)?.name} - Terms & Conditions
               </h2>
               {lastUpdated && (
-                <span className="text-sm text-white/60 font-['Times_New_Roman']">
+                <span className="text-sm text-white/60">
                   Last updated: {formatDateTime(lastUpdated)}
                 </span>
               )}
@@ -263,7 +263,7 @@ function TermsConditionsContent() {
               /* Section Builder for Main Page */
               <div className="space-y-4">
                 {sections.length === 0 && (
-                  <div className="text-center py-10 text-white/40 font-['Times_New_Roman'] text-sm border border-dashed border-white/10 rounded-lg">
+                  <div className="text-center py-10 text-white/40 text-sm border border-dashed border-white/10 rounded-lg">
                     No sections yet. Click &quot;Add Section&quot; to get started.
                   </div>
                 )}
@@ -284,12 +284,12 @@ function TermsConditionsContent() {
                         >
                           {index + 1}
                         </div>
-                        <span className="text-white/60 text-sm font-['Times_New_Roman']">Section {index + 1}</span>
+                        <span className="text-white/60 text-sm">Section {index + 1}</span>
                       </div>
                       <button
                         onClick={() => removeSection(section.id)}
                         disabled={isSaving}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-['Times_New_Roman'] font-bold transition-colors disabled:opacity-50"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold transition-colors disabled:opacity-50"
                       >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
                           <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
@@ -300,7 +300,7 @@ function TermsConditionsContent() {
 
                     {/* Title field */}
                     <div className="mb-3">
-                      <label className="block text-xs font-bold text-[#e9af41] font-['Times_New_Roman'] mb-1.5 uppercase tracking-wider">
+                      <label className="block text-xs font-bold text-[#e9af41] mb-1.5 uppercase tracking-wider">
                         Title
                       </label>
                       <input
@@ -309,13 +309,13 @@ function TermsConditionsContent() {
                         onChange={(e) => updateSection(section.id, "title", e.target.value)}
                         disabled={isSaving}
                         placeholder="Enter section title..."
-                        className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white font-['Times_New_Roman'] text-sm focus:outline-none focus:border-[#f2c36b] disabled:opacity-50 placeholder:text-white/30"
+                        className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#f2c36b] disabled:opacity-50 placeholder:text-white/30"
                       />
                     </div>
 
                     {/* Description field */}
                     <div>
-                      <label className="block text-xs font-bold text-[#e9af41] font-['Times_New_Roman'] mb-1.5 uppercase tracking-wider">
+                      <label className="block text-xs font-bold text-[#e9af41] mb-1.5 uppercase tracking-wider">
                         Description
                       </label>
                       <textarea
@@ -324,7 +324,7 @@ function TermsConditionsContent() {
                         disabled={isSaving}
                         placeholder="Enter section description..."
                         rows={4}
-                        className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white font-['Times_New_Roman'] text-sm focus:outline-none focus:border-[#f2c36b] disabled:opacity-50 resize-y placeholder:text-white/30"
+                        className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-[#f2c36b] disabled:opacity-50 resize-y placeholder:text-white/30"
                         style={{ lineHeight: "1.6" }}
                       />
                     </div>
@@ -335,7 +335,7 @@ function TermsConditionsContent() {
                 <button
                   onClick={addSection}
                   disabled={isSaving}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-dashed border-[#e9af41]/40 text-[#e9af41] hover:bg-[#e9af41]/5 font-['Times_New_Roman'] text-sm font-bold transition-colors disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border border-dashed border-[#e9af41]/40 text-[#e9af41] hover:bg-[#e9af41]/5 text-sm font-bold transition-colors disabled:opacity-50"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                     <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
@@ -350,7 +350,7 @@ function TermsConditionsContent() {
                 onChange={(e) => setTermsText(e.target.value)}
                 disabled={isSaving}
                 placeholder="Enter terms and conditions text here..."
-                className="w-full min-h-[400px] bg-white/10 border border-white/20 rounded-lg p-4 text-white font-['Times_New_Roman'] text-sm focus:outline-none focus:border-[#f2c36b] disabled:opacity-50 resize-y"
+                className="w-full min-h-[400px] bg-white/10 border border-white/20 rounded-lg p-4 text-white text-sm focus:outline-none focus:border-[#f2c36b] disabled:opacity-50 resize-y"
                 style={{ lineHeight: "1.6" }}
               />
             )}
@@ -359,7 +359,7 @@ function TermsConditionsContent() {
               <button
                 onClick={handleSave}
                 disabled={isSaving || (isMainPage ? sections.length === 0 : !termsText.trim())}
-                className="inline-flex min-w-[164px] items-center justify-center whitespace-nowrap rounded-lg px-6 py-3 font-['Times_New_Roman'] text-sm font-bold leading-none text-black transition-colors disabled:opacity-50"
+                className="inline-flex min-w-[164px] items-center justify-center whitespace-nowrap rounded-lg px-6 py-3 text-sm font-bold leading-none text-black transition-colors disabled:opacity-50"
                 style={{
                   backgroundImage: "linear-gradient(2.1326483653998594deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
                 }}
@@ -371,7 +371,7 @@ function TermsConditionsContent() {
 
           {/* Info Box */}
           <div className="rounded-lg border border-[#e9af41]/30 bg-[#e9af41]/10 p-4">
-            <p className="text-white/80 text-sm font-['Times_New_Roman']">
+            <p className="text-white/80 text-sm">
               <strong>Note:</strong> {isMainPage
                 ? "Main Page terms use sections with a title and description. Each section will appear as a collapsible item on the member site."
                 : "These terms and conditions will be displayed to users on the member site. Make sure to review the content carefully before saving."

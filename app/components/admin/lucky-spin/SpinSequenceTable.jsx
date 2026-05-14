@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import SpinSequenceModal from "./SpinSequenceModal";
@@ -79,7 +79,7 @@ export default function SpinSequenceTable({
           <button
             onClick={handleAddClick}
             disabled={isLoading}
-            className="inline-flex min-w-[120px] items-center justify-center whitespace-nowrap rounded-lg px-6 py-3 font-['Times_New_Roman'] text-sm font-bold leading-none text-black transition-colors disabled:opacity-50"
+            className="inline-flex min-w-[120px] items-center justify-center whitespace-nowrap rounded-lg px-6 py-3 text-sm font-bold leading-none text-black transition-colors disabled:opacity-50"
             style={{
               backgroundImage: "linear-gradient(2.1326483653998594deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
             }}
@@ -93,13 +93,13 @@ export default function SpinSequenceTable({
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/10">
-                <th className="px-6 py-3 text-left text-sm font-bold text-white/60 font-['Times_New_Roman']">
+                <th className="px-6 py-3 text-left text-sm font-bold text-white/60">
                   Item Order
                 </th>
-                <th className="px-6 py-3 text-left text-sm font-bold text-white/60 font-['Times_New_Roman']">
+                <th className="px-6 py-3 text-left text-sm font-bold text-white/60">
                   Item Name
                 </th>
-                <th className="px-6 py-3 text-center text-sm font-bold text-white/60 font-['Times_New_Roman']">
+                <th className="px-6 py-3 text-center text-sm font-bold text-white/60">
                   Actions
                 </th>
               </tr>
@@ -120,10 +120,10 @@ export default function SpinSequenceTable({
               ) : (
                 sequences.map((sequence, index) => (
                   <tr key={sequence.uuid} className="border-b border-white/5 hover:bg-white/5">
-                    <td className="px-6 py-4 text-sm text-white font-['Times_New_Roman']">
+                    <td className="px-6 py-4 text-sm text-white">
                       {sequence.item_order}
                     </td>
-                    <td className="px-6 py-4 text-sm text-white font-['Times_New_Roman']">
+                    <td className="px-6 py-4 text-sm text-white">
                       {sequence.item_name}
                     </td>
                     <td className="px-6 py-4">

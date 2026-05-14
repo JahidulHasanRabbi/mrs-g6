@@ -1,10 +1,37 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import { adminLogout } from "../../api/adminApi";
 import { tokenStorage } from "../../api/tokenStorage";
+import { useSidebar } from "../../contexts/SidebarContext";
+
+// Panel-left icon used by the collapse/expand toggle (Radix-style).
+const PanelLeftIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.2">
+    <rect x="1.5" y="2" width="12" height="11" rx="1" />
+    <line x1="6" y1="2" x2="6" y2="13" />
+  </svg>
+);
+
+// Magnifying-glass for the search button when the sidebar is collapsed.
+const SearchIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="7" />
+    <line x1="20" y1="20" x2="16.65" y2="16.65" />
+  </svg>
+);
+
+// Shared expand/collapse animation for nested menus and section bodies.
+// Animating height: 0 ↔ "auto" plus opacity gives a smooth slide-fade without
+// the snappy display:none hop.
+const collapseTransition = { duration: 0.28, ease: [0.4, 0, 0.2, 1] };
+const collapseVariants = {
+  collapsed: { height: 0, opacity: 0 },
+  open: { height: "auto", opacity: 1 },
+};
 
 // Map a pathname → sidebar item id. Keeps the sidebar a single source of truth
 // so it doesn't depend on a per-page `activeItem` prop (which would force a
@@ -21,6 +48,14 @@ function pathnameToActiveItem(pathname) {
   if (pathname.startsWith("/admin/reports/token")) return "token-report";
   if (pathname.startsWith("/admin/reports/reward")) return "reward-report";
   if (pathname.startsWith("/admin/reports/member")) return "member-report";
+  if (pathname.startsWith("/admin/retention/member-retention")) return "retention-member-retention";
+  if (pathname.startsWith("/admin/retention/members")) return "retention-member-list";
+  if (pathname.startsWith("/admin/retention/pic-dashboard")) return "retention-pic-dashboard";
+  if (pathname.startsWith("/admin/retention")) return "retention-pic-dashboard";
+  if (pathname.startsWith("/admin/settings/user-access")) return "settings-user-access";
+  if (pathname.startsWith("/admin/settings/role-management")) return "settings-role-management";
+  if (pathname.startsWith("/admin/settings/user-activity-log")) return "settings-user-activity-log";
+  if (pathname.startsWith("/admin/settings/login-requests")) return "settings-login-requests";
   if (pathname.startsWith("/admin/members")) return "member-list";
   if (pathname.startsWith("/admin/redemption")) return "redemption";
   if (pathname.startsWith("/admin/checkin-settings")) return "checkin-settings";
@@ -37,11 +72,74 @@ function pathnameToActiveItem(pathname) {
   return "home";
 }
 
+// Inline SVG icons for the Retention System section
+const DashboardIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="7" height="7" rx="1.5" />
+    <rect x="14" y="3" width="7" height="7" rx="1.5" />
+    <rect x="3" y="14" width="7" height="7" rx="1.5" />
+    <rect x="14" y="14" width="7" height="7" rx="1.5" />
+  </svg>
+);
+
+const AlertIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="9" />
+    <line x1="12" y1="8" x2="12" y2="13" />
+    <line x1="12" y1="16" x2="12.01" y2="16" />
+  </svg>
+);
+
+const PersonIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+    <circle cx="12" cy="7" r="4" />
+  </svg>
+);
+
+const GearIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+  </svg>
+);
+
+// User with a small key/check — represents "role management"
+const RoleIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="10" cy="7" r="4" />
+    <path d="M2 21v-2a4 4 0 0 1 4-4h7a4 4 0 0 1 4 4v2" />
+    <polyline points="17 11 19 13 23 9" />
+  </svg>
+);
+
+// ID-badge with lines — represents "activity log"
+const ActivityLogIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <circle cx="8" cy="10" r="2" />
+    <path d="M6 17c0-1.5 1.5-3 4-3" />
+    <line x1="14" y1="9" x2="18" y2="9" />
+    <line x1="14" y1="13" x2="18" y2="13" />
+    <line x1="14" y1="17" x2="18" y2="17" />
+  </svg>
+);
+
+// Person with arrow — represents "login request"
+const LoginRequestIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="9" cy="7" r="4" />
+    <path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
+    <polyline points="17 8 21 12 17 16" />
+    <line x1="13" y1="12" x2="21" y2="12" />
+  </svg>
+);
+
 const MENU_ITEMS = [
   {
     id: "home",
     label: "Home Dashboard",
-    icon: "/assets/admin/home-icon.png",
+    iconMask: "/assets/admin/sidebar/icons/bitcoin-icons-home-outline.svg",
     href: "/admin",
     isHighlighted: true,
     disabled: false,
@@ -49,14 +147,14 @@ const MENU_ITEMS = [
   {
     id: "member-list",
     label: "Member List",
-    icon: "/assets/admin/member-list.png",
+    iconMask: "/assets/admin/sidebar/icons/si-user-alt-5-line.svg",
     href: "/admin/members",
     disabled: false,
   },
   {
     id: "lucky-spin",
     label: "Lucky Spin Management",
-    icon: "/assets/admin/lucky-spin-icon.png",
+    iconMask: "/assets/admin/sidebar/icons/cil-casino.svg",
     href: "/admin/lucky-spin",
     hasSubmenu: true,
     disabled: false,
@@ -64,7 +162,7 @@ const MENU_ITEMS = [
   {
     id: "redemption-mall",
     label: "Points Redemption Mall",
-    icon: "/assets/admin/redemption-mall-icon.png",
+    iconMask: "/assets/admin/sidebar/icons/iconoir-coins.svg",
     href: "/admin/redemption-mall",
     hasSubmenu: true,
     disabled: false,
@@ -72,8 +170,63 @@ const MENU_ITEMS = [
   {
     id: "mart-tiers",
     label: "Mart Tiers",
-    icon: "/assets/admin/Tier.png",
+    iconMask: "/assets/admin/sidebar/icons/mynaui-gift.svg",
     href: "/admin/mart-tiers",
+    disabled: false,
+  },
+];
+
+const RETENTION_MENU = [
+  {
+    id: "retention-pic-dashboard",
+    label: "PIC Dashboard",
+    iconMask: "/assets/admin/sidebar/icons/Home.png",
+    href: "/admin/retention/pic-dashboard",
+    disabled: false,
+  },
+  {
+    id: "retention-member-retention",
+    label: "Member Retention",
+    iconMask: "/assets/admin/sidebar/icons/line-md_brake-alert.png",
+    href: "/admin/retention/member-retention",
+    disabled: false,
+  },
+  {
+    id: "retention-member-list",
+    label: "Member List",
+    iconMask: "/assets/admin/sidebar/icons/si_user-alt-5-line.png",
+    href: "/admin/retention/members",
+    disabled: false,
+  },
+];
+
+const SETTINGS_MENU = [
+  {
+    id: "settings-user-access",
+    label: "User Access Management",
+    iconMask: "/assets/admin/sidebar/icons/la-user-check.svg",
+    href: "/admin/settings/user-access",
+    disabled: false,
+  },
+  {
+    id: "settings-role-management",
+    label: "Role Management",
+    iconNode: RoleIcon,
+    href: "/admin/settings/role-management",
+    disabled: false,
+  },
+  {
+    id: "settings-user-activity-log",
+    label: "User Activity Log",
+    iconNode: ActivityLogIcon,
+    href: "/admin/settings/user-activity-log",
+    disabled: false,
+  },
+  {
+    id: "settings-login-requests",
+    label: "Login Requests",
+    iconNode: LoginRequestIcon,
+    href: "/admin/settings/login-requests",
     disabled: false,
   },
 ];
@@ -82,14 +235,14 @@ const SECONDARY_MENU = [
   {
     id: "tournament",
     label: "Tournament",
-    icon: "/assets/admin/tournament-icon.png",
+    iconMask: "/assets/admin/sidebar/icons/cil-casino-2.svg",
     href: "/admin/tournament",
     disabled: true, // No page yet
   },
   {
     id: "frame-setting",
     label: "Frame Setting",
-    icon: "/assets/admin/Frame-setting.png",
+    iconMask: "/assets/admin/sidebar/icons/iconamoon-frame-fill.svg",
     href: "/admin/frame-setting",
     disabled: false,
   },
@@ -110,7 +263,7 @@ const SECONDARY_MENU = [
   {
     id: "vip",
     label: "VIP Membership Panel",
-    icon: "/assets/admin/vip-icon.png",
+    iconMask: "/assets/admin/sidebar/icons/tabler-crown.svg",
     href: "/admin/vip-tiers",
     hasSubmenu: true,
     disabled: false,
@@ -122,7 +275,7 @@ const SECONDARY_MENU = [
   {
     id: "checkin-settings",
     label: "Check-In Settings",
-    icon: "/assets/admin/home-icon.png", // Using home icon as placeholder
+    iconMask: "/assets/admin/sidebar/icons/lsicon-batch-check-outline.svg",
     href: "/admin/checkin-settings",
     disabled: false,
   },
@@ -136,7 +289,7 @@ const SECONDARY_MENU = [
   {
     id: "banners",
     label: "Banners Management",
-    icon: "/assets/admin/home-icon.png", // Using home icon as placeholder
+    iconMask: "/assets/admin/sidebar/icons/material-symbols-planner-banner-ad-pt-outline-rounded.svg",
     href: "/admin/banners",
     disabled: false,
   },
@@ -150,7 +303,7 @@ const SECONDARY_MENU = [
   {
     id: "reports",
     label: "Reports",
-    icon: "/assets/admin/reports-icon.png",
+    iconMask: "/assets/admin/sidebar/icons/icon-park-outline-sales-report.svg",
     href: "/admin/reports",
     hasSubmenu: true,
     disabled: false,
@@ -162,8 +315,59 @@ const SECONDARY_MENU = [
   },
 ];
 
+// Renders one of:
+//   item.iconNode  → inline React SVG component, colored via currentColor
+//   item.iconMask  → PNG used as a CSS mask so we can tint it via currentColor too
+//   item.icon      → plain <img> (color is whatever the source asset has baked in)
+const ItemIcon = ({ item, sizeClass }) => {
+  if (item.iconNode) {
+    const Icon = item.iconNode;
+    return <Icon className={sizeClass} />;
+  }
+  if (item.iconMask) {
+    return (
+      <span
+        aria-hidden="true"
+        className={`${sizeClass} block bg-current`}
+        style={{
+          WebkitMaskImage: `url(${item.iconMask})`,
+          WebkitMaskRepeat: "no-repeat",
+          WebkitMaskPosition: "center",
+          WebkitMaskSize: "contain",
+          maskImage: `url(${item.iconMask})`,
+          maskRepeat: "no-repeat",
+          maskPosition: "center",
+          maskSize: "contain",
+        }}
+      />
+    );
+  }
+  return <img src={item.icon} alt="" className={`${sizeClass} object-contain`} />;
+};
+
 const MenuItem = ({ item, isActive }) => {
-  const content = (
+  const { collapsed } = useSidebar();
+
+  const content = collapsed ? (
+    // Collapsed: icon-only square, centered. Active gets a subtle gold ring +
+    // tinted background so the user can still see which page they're on.
+    <div
+      title={item.label}
+      className={`relative mx-auto flex h-10 w-10 items-center justify-center rounded-[10px] border transition-all duration-200 ${
+        isActive
+          ? "border-[#e9af41] bg-[rgba(232,181,88,0.14)] shadow-[0_0_24px_rgba(231,196,87,0.22)]"
+          : "border-transparent hover:border-[rgba(233,175,65,0.35)] hover:bg-white/5"
+      } ${item.disabled ? "opacity-40 cursor-not-allowed" : ""}`}
+    >
+      <div
+        className={`relative h-5 w-5 shrink-0 flex items-center justify-center ${
+          item.iconNode || item.iconMask ? (isActive ? "text-white" : "text-[#e9af41]") : ""
+        }`}
+      >
+        <ItemIcon item={item} sizeClass="w-full h-full" />
+      </div>
+    </div>
+  ) : (
     <div
       className={`relative overflow-hidden rounded-[10px] border transition-all duration-200 ${
         isActive
@@ -174,14 +378,14 @@ const MenuItem = ({ item, isActive }) => {
       <div
         className={`flex min-h-10 items-center gap-1.5 px-2 py-1.5 ${item.disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
       >
-        <div className="relative h-5 w-5 shrink-0">
-          <img
-            src={item.icon}
-            alt=""
-            className="w-full h-full object-cover"
-          />
+        <div
+          className={`relative h-5 w-5 shrink-0 flex items-center justify-center ${
+            item.iconNode || item.iconMask ? (isActive ? "text-white" : "text-[#e9af41]") : ""
+          }`}
+        >
+          <ItemIcon item={item} sizeClass="w-full h-full" />
         </div>
-        <p className={`text-[18px] font-bold tracking-[-0.396px] font-['Times_New_Roman'] ${isActive ? 'text-white' : 'text-white/70'}`}>
+        <p className={`text-[18px] font-bold tracking-[-0.396px] whitespace-nowrap ${isActive ? 'text-white' : 'text-white/70'}`}>
           {item.label}
         </p>
       </div>
@@ -196,7 +400,27 @@ const MenuItem = ({ item, isActive }) => {
 };
 
 const HighlightedMenuItem = ({ item }) => {
-  const content = (
+  const { collapsed } = useSidebar();
+
+  const content = collapsed ? (
+    // Gold gradient square pill matching the Figma collapsed-active spec.
+    <div
+      title={item.label}
+      className={`relative mx-auto flex h-10 w-10 items-center justify-center overflow-hidden rounded-[10px] border-[0.324px] shadow-[0_0_24px_rgba(231,196,87,0.35)] ${item.disabled ? "opacity-40 cursor-not-allowed" : ""}`}
+      style={{
+        backgroundImage:
+          "linear-gradient(93.5deg, rgb(220, 157, 22) 1%, rgb(242, 203, 122) 98%)",
+      }}
+    >
+      <div
+        className={`relative h-5 w-5 shrink-0 flex items-center justify-center ${
+          item.iconNode || item.iconMask ? "text-white" : ""
+        }`}
+      >
+        <ItemIcon item={item} sizeClass="w-full h-full" />
+      </div>
+    </div>
+  ) : (
     <div
       className={`relative h-[51.765px] w-full overflow-hidden rounded-[6.471px] border-[0.324px] shadow-[3.235px_3.235px_48.529px_3.235px_rgba(231,196,87,0.5)] ${item.disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
       style={{
@@ -204,14 +428,14 @@ const HighlightedMenuItem = ({ item }) => {
       }}
     >
       <div className="absolute left-[calc(50%+0.6px)] top-[calc(50%-0.24px)] flex -translate-x-1/2 -translate-y-1/2 items-center gap-[25.882px]">
-        <div className="relative h-[38px] w-[38px] shrink-0">
-          <img
-            src={item.icon}
-            alt=""
-            className="w-full h-full object-cover"
-          />
+        <div
+          className={`relative h-[38px] w-[38px] shrink-0 flex items-center justify-center ${
+            item.iconNode || item.iconMask ? "text-white" : ""
+          }`}
+        >
+          <ItemIcon item={item} sizeClass="w-full h-full" />
         </div>
-        <p className="font-['Times_New_Roman'] text-[16px] font-bold leading-[normal] text-white w-[181.176px] whitespace-pre-wrap">
+        <p className=" text-[16px] font-bold leading-[normal] text-white w-[181.176px] whitespace-pre-wrap">
           {item.label}
         </p>
       </div>
@@ -247,8 +471,34 @@ const CHILD_ICONS = {
 };
 
 const ExpandableMenuItem = ({ item, activeItem }) => {
+  const { collapsed } = useSidebar();
   const isAnyChildActive = item.children?.some((c) => c.id === activeItem);
   const [open, setOpen] = useState(isAnyChildActive);
+
+  // When the sidebar is collapsed, render the parent as a plain icon-only
+  // button and hide the children entirely — the nested label list has nowhere
+  // to live in 56px of width. Clicking it still routes to the parent href.
+  if (collapsed) {
+    const square = (
+      <div
+        title={item.label}
+        className={`relative mx-auto flex h-10 w-10 items-center justify-center rounded-[10px] border transition-all duration-200 ${
+          isAnyChildActive
+            ? "border-[#e9af41] bg-[rgba(232,181,88,0.14)] shadow-[0_0_24px_rgba(231,196,87,0.22)]"
+            : "border-transparent hover:border-[rgba(233,175,65,0.35)] hover:bg-white/5"
+        }`}
+      >
+        <div
+          className={`relative h-5 w-5 shrink-0 flex items-center justify-center ${
+            item.iconNode || item.iconMask ? (isAnyChildActive ? "text-white" : "text-[#e9af41]") : ""
+          }`}
+        >
+          <ItemIcon item={item} sizeClass="w-full h-full" />
+        </div>
+      </div>
+    );
+    return item.href ? <Link href={item.href}>{square}</Link> : square;
+  }
 
   // Full gold highlight only when a child page is actually active.
   // When merely expanded (open) but no child active, use a subtle outline style.
@@ -266,18 +516,22 @@ const ExpandableMenuItem = ({ item, activeItem }) => {
         className={`relative flex h-[51.765px] w-full items-center justify-between overflow-hidden rounded-[6.471px] border px-3 transition-all duration-200 ${headerClass}`}
       >
         <div className="flex items-center gap-[10px]">
-          <div className="relative h-[22px] w-[22px] shrink-0">
-            <img src={item.icon} alt="" className="w-full h-full object-cover" />
+          <div
+            className={`relative h-[22px] w-[22px] shrink-0 flex items-center justify-center ${
+              item.iconNode || item.iconMask ? (isAnyChildActive ? "text-white" : "text-[#e9af41]") : ""
+            }`}
+          >
+            <ItemIcon item={item} sizeClass="w-full h-full" />
           </div>
           <span
-            className={`font-['Times_New_Roman'] text-[16px] font-bold leading-normal ${
+            className={` text-[16px] font-bold leading-normal ${
               isAnyChildActive ? "text-white" : "text-white/80"
             }`}
           >
             {item.label}
           </span>
         </div>
-        <svg
+        <motion.svg
           width="16"
           height="16"
           viewBox="0 0 24 24"
@@ -286,56 +540,159 @@ const ExpandableMenuItem = ({ item, activeItem }) => {
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="transition-transform duration-200"
-          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={collapseTransition}
         >
           <polyline points="6 9 12 15 18 9" />
-        </svg>
+        </motion.svg>
       </button>
 
       {/* Sub-items */}
-      {open && (
-        <div className="mt-1 flex flex-col gap-1 pl-2">
-          {item.children.map((child) => {
-            const isActive = child.id === activeItem;
-            return (
-              <Link key={child.id} href={child.href}>
-                <div
-                  className={`flex items-center gap-2 px-3 py-2 rounded-[6px] transition-colors ${
-                    isActive
-                      ? "bg-[rgba(232,181,88,0.18)]"
-                      : "hover:bg-white/5"
-                  }`}
-                >
-                  <span className={isActive ? "text-[#e9af41]" : "text-white/60"}>
-                    {(() => { const Icon = CHILD_ICONS[item.id] || BarChartIcon; return <Icon />; })()}
-                  </span>
-                  <span
-                    className={`font-['Times_New_Roman'] text-[15px] font-bold ${
-                      isActive ? "text-white" : "text-white/70"
-                    }`}
-                  >
-                    {child.label}
-                  </span>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="children"
+            initial="collapsed"
+            animate="open"
+            exit="collapsed"
+            variants={collapseVariants}
+            transition={collapseTransition}
+            style={{ overflow: "hidden" }}
+          >
+            <div className="mt-1 flex flex-col gap-1 pl-2">
+              {item.children.map((child) => {
+                const isActive = child.id === activeItem;
+                return (
+                  <Link key={child.id} href={child.href}>
+                    <div
+                      className={`flex items-center gap-2 px-3 py-2 rounded-[6px] transition-colors ${
+                        isActive
+                          ? "bg-[rgba(232,181,88,0.18)]"
+                          : "hover:bg-white/5"
+                      }`}
+                    >
+                      <span className={isActive ? "text-[#e9af41]" : "text-white/60"}>
+                        {(() => { const Icon = CHILD_ICONS[item.id] || BarChartIcon; return <Icon />; })()}
+                      </span>
+                      <span
+                        className={` text-[15px] font-bold ${
+                          isActive ? "text-white" : "text-white/70"
+                        }`}
+                      >
+                        {child.label}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
+
+// Collapsible section wrapper — renders a header with the section title
+// and a chevron that toggles visibility of the items inside.
+//
+// When the sidebar is collapsed, the title shows a short prefix (~3 chars +
+// ellipsis) so the section is still distinguishable in the narrow track.
+const CollapsibleSection = ({ title, defaultOpen = true, children }) => {
+  const { collapsed: sidebarCollapsed } = useSidebar();
+  const [open, setOpen] = useState(defaultOpen);
+
+  // First 3 chars + ellipsis when the whole sidebar is squeezed
+  const shortTitle = title.length > 3 ? `${title.slice(0, 3)}…` : title;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={`flex items-center w-full px-1 py-1 group ${
+          sidebarCollapsed ? "justify-center gap-1" : "justify-between"
+        }`}
+        aria-expanded={open}
+        title={sidebarCollapsed ? title : undefined}
+      >
+        <span
+          className={` font-bold tracking-[0.18em] text-[#e9af41] uppercase whitespace-nowrap ${
+            sidebarCollapsed ? "text-[11px]" : "text-[13px]"
+          }`}
+        >
+          {sidebarCollapsed ? shortTitle : title}
+        </span>
+        <motion.svg
+          width={sidebarCollapsed ? 10 : 14}
+          height={sidebarCollapsed ? 10 : 14}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#e9af41"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={collapseTransition}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </motion.svg>
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="section-body"
+            initial="collapsed"
+            animate="open"
+            exit="collapsed"
+            variants={collapseVariants}
+            transition={collapseTransition}
+            style={{ overflow: "hidden" }}
+          >
+            <div className="flex flex-col gap-4">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// Per-item highlight rules carried over from the original primary-menu logic.
+// Aliases let a single sidebar item stay active across child routes.
+const PRIMARY_HIGHLIGHT_ALIASES = {
+  "lucky-spin": ["lucky-spin", "prize-settings", "user-logs", "daily-limits"],
+};
+
+function isPrimaryActive(itemId, activeItem) {
+  const aliases = PRIMARY_HIGHLIGHT_ALIASES[itemId];
+  if (aliases) return aliases.includes(activeItem);
+  return itemId === activeItem;
+}
+
+// Centralized render for a single sidebar entry. Handles three cases:
+// 1. Item has children → ExpandableMenuItem (its own collapsible)
+// 2. Item is active for the current route → HighlightedMenuItem (gold pill)
+// 3. Otherwise → regular MenuItem
+function renderItem(item, activeItem) {
+  if (item.children) {
+    return <ExpandableMenuItem key={item.id} item={item} activeItem={activeItem} />;
+  }
+  if (isPrimaryActive(item.id, activeItem)) {
+    return <HighlightedMenuItem key={item.id} item={item} />;
+  }
+  return <MenuItem key={item.id} item={item} isActive={false} />;
+}
 
 export default function Sidebar({ activeItem: activeItemProp }) {
   const pathname = usePathname();
   const activeItem = activeItemProp ?? pathnameToActiveItem(pathname);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const router = useRouter();
+  const { collapsed, toggle } = useSidebar();
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
-    
+
     try {
       // Call logout API
       await adminLogout();
@@ -350,74 +707,122 @@ export default function Sidebar({ activeItem: activeItemProp }) {
   };
 
   return (
-    <div 
+    <div
       className="scrollbar-admin relative h-full w-full overflow-y-auto overflow-x-hidden rounded-[14px] border border-[rgba(255,255,132,0.2)]"
       style={{
         background: "linear-gradient(180deg, rgba(7, 25, 13, 1) 0%, rgba(10, 30, 15, 1) 100%)",
       }}
     >
-      {/* Logo at the top */}
-      <div className="flex justify-center items-center pt-6 pb-4">
-        <h1 
-          className="text-center font-bold text-[28px]" 
-          style={{
-            fontFamily: '"Times New Roman", serif',
-            color: 'rgb(233, 175, 65)',
-            letterSpacing: '0.06em',
-            textShadow: 'rgba(0, 0, 0, 0.35) 0px 3px 0px'
-          }}
+      {/* Header: logo + collapse toggle */}
+      <div
+        className={`flex items-center pt-6 pb-4 ${
+          collapsed ? "flex-col gap-3 px-2" : "justify-between gap-2 px-4"
+        }`}
+      >
+        {/* Logo block. Animates between the small crown-only chip and the full
+            "KINGGROUP44" wordmark. */}
+        <AnimatePresence mode="wait" initial={false}>
+          {collapsed ? (
+            <motion.div
+              key="logo-collapsed"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={collapseTransition}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e9af41]/60 bg-black/30 shrink-0"
+              aria-label="King Group 44"
+              title="King Group 44"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="#e9af41" stroke="#e9af41" strokeWidth="1" strokeLinejoin="round">
+                <path d="M3 8l4 3 5-7 5 7 4-3-2 11H5L3 8z" />
+              </svg>
+            </motion.div>
+          ) : (
+            <motion.h1
+              key="logo-expanded"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={collapseTransition}
+              className="font-bold text-[24px] whitespace-nowrap"
+              style={{
+                fontFamily: 'var(--font-dm-sans), system-ui, sans-serif',
+                color: 'rgb(233, 175, 65)',
+                letterSpacing: '0.04em',
+                textShadow: 'rgba(0, 0, 0, 0.35) 0px 3px 0px'
+              }}
+            >
+              KINGGROUP44
+            </motion.h1>
+          )}
+        </AnimatePresence>
+
+        {/* Toggle button. The icon mirrors when collapsed so it always points
+            in the direction the button would expand. */}
+        <button
+          type="button"
+          onClick={toggle}
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-pressed={collapsed}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-white/15 text-[#e9af41] hover:border-[#e9af41]/60 hover:bg-white/5 transition-colors"
         >
-          KINGGROUP44
-        </h1>
+          <motion.span
+            className="block"
+            animate={{ scaleX: collapsed ? -1 : 1 }}
+            transition={collapseTransition}
+          >
+            <PanelLeftIcon className="h-4 w-4" />
+          </motion.span>
+        </button>
       </div>
 
-      {/* Menu Items */}
-      <div className="pb-6 px-3 flex w-full flex-col gap-4">
-        {/* Primary Menu */}
-        <div className="flex flex-col gap-4">
-          {MENU_ITEMS.map((item) => {
-            // Check if this item should be highlighted
-            const shouldHighlight =
-              (item.id === "lucky-spin" && (activeItem === "lucky-spin" || activeItem === "prize-settings" || activeItem === "user-logs" || activeItem === "daily-limits")) ||
-              (item.id === "redemption" && activeItem === "redemption") ||
-              (item.id === "redemption-mall" && activeItem === "redemption-mall") ||
-              (item.id === "home" && activeItem === "home") ||
-              (item.id === "member-list" && activeItem === "member-list");
+      {/* Search — full input when expanded, icon-only button when collapsed.
+          Wiring of the search itself is left to a future step; this matches
+          the design and reserves the slot. */}
+      <div className={`pb-4 ${collapsed ? "px-2" : "px-4"}`}>
+        {collapsed ? (
+          <button
+            type="button"
+            title="Search"
+            aria-label="Search"
+            className="mx-auto flex h-10 w-10 items-center justify-center rounded-md border border-[#e9af41]/40 bg-black/40 text-[#e9af41] hover:bg-white/5 transition-colors"
+          >
+            <SearchIcon className="h-4 w-4" />
+          </button>
+        ) : (
+          <div className="flex items-center gap-2 rounded-md border border-[#e9af41]/40 bg-black/40 px-3 py-2">
+            <SearchIcon className="h-4 w-4 text-[#e9af41] shrink-0" />
+            <input
+              type="search"
+              placeholder="Search"
+              className="flex-1 min-w-0 bg-transparent text-[14px] text-white placeholder-white/40 focus:outline-none"
+            />
+          </div>
+        )}
+      </div>
 
-            if (shouldHighlight) {
-              return <HighlightedMenuItem key={item.id} item={item} />;
-            }
+      {/* Menu Items — collapsible sections */}
+      <div className={`pb-6 flex w-full flex-col gap-5 ${collapsed ? "px-2" : "px-3"}`}>
+        <CollapsibleSection title="MRS">
+          {[...MENU_ITEMS, ...SECONDARY_MENU].map((item) => renderItem(item, activeItem))}
+        </CollapsibleSection>
 
-            // Regular menu item with proper active state
-            const isActive = item.id === activeItem;
-            return <MenuItem key={item.id} item={item} isActive={isActive} />;
-          })}
-        </div>
+        <CollapsibleSection title="Retention">
+          {RETENTION_MENU.map((item) => renderItem(item, activeItem))}
+        </CollapsibleSection>
 
-        {/* Secondary Menu */}
-        <div className="flex flex-col gap-4">
-          {SECONDARY_MENU.map((item) => {
-            if (item.children) {
-              return <ExpandableMenuItem key={item.id} item={item} activeItem={activeItem} />;
-            }
+        <CollapsibleSection title="Settings">
+          {SETTINGS_MENU.map((item) => renderItem(item, activeItem))}
+        </CollapsibleSection>
 
-            const shouldHighlight =
-              (item.id === "vip" && (activeItem === "vip" || activeItem === "vip-tiers")) ||
-              item.id === activeItem;
-
-            if (shouldHighlight) {
-              return <HighlightedMenuItem key={item.id} item={item} />;
-            }
-
-            return <MenuItem key={item.id} item={item} isActive={false} />;
-          })}
-        </div>
-
-        {/* Logout Button */}
+        {/* Logout Button — icon-only when the sidebar is collapsed */}
         <button
           onClick={handleLogout}
           disabled={isLoggingOut}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-md border border-white/20 bg-[#202020] px-4 py-3 hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          title={collapsed ? "Logout" : undefined}
+          className={`mt-4 flex items-center justify-center gap-2 rounded-md border border-white/20 bg-[#202020] hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+            collapsed ? "mx-auto h-10 w-10" : "w-full px-4 py-3"
+          }`}
         >
           <svg
             width="20"
@@ -433,9 +838,11 @@ export default function Sidebar({ activeItem: activeItemProp }) {
             <polyline points="16 17 21 12 16 7" />
             <line x1="21" y1="12" x2="9" y2="12" />
           </svg>
-          <span className="text-[16px] font-bold text-white font-['Times_New_Roman']">
-            {isLoggingOut ? 'Logging out...' : 'Logout'}
-          </span>
+          {!collapsed && (
+            <span className="text-[16px] font-bold text-white">
+              {isLoggingOut ? 'Logging out...' : 'Logout'}
+            </span>
+          )}
         </button>
       </div>
     </div>

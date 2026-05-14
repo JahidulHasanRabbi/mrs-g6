@@ -1,4 +1,4 @@
-import { Inter, Geist, Geist_Mono } from "next/font/google";
+import { Inter, Geist, Geist_Mono, Montserrat, DM_Sans } from "next/font/google";
 import "./globals.css";
 
 /**
@@ -34,6 +34,18 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
+  subsets: ["latin"],
+  weight: ["400", "500"],
+});
+
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
+  subsets: ["latin"],
+  weight: ["700"],
+});
+
 export const metadata = {
   title: "VIP Access | Claim Your Elite Benefits & Rewards",
   description: "Access your exclusive member dashboard. Log in now to claim your daily benefits, unlock rewards, and compete in our latest mini-games!",
@@ -54,7 +66,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} antialiased bg-black`}
+        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${montserrat.variable} ${dmSans.variable} antialiased bg-black`}
         style={{ fontFamily: '"Times New Roman", serif' }}
       >
         <UserProvider>

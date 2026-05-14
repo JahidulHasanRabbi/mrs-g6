@@ -1,4 +1,4 @@
-import Image from "next/image";
+﻿import Image from "next/image";
 import Link from "next/link";
 
 const NAVIGATION_CARDS = [
@@ -65,7 +65,7 @@ export default function NavigationCards({ activeCard = "spin-items" }) {
                 />
               </div>
               <h3
-                className={`text-2xl font-bold leading-[1.5] font-['Times_New_Roman'] ${
+                className={`text-2xl font-bold leading-[1.5] ${
                   isCardActive ? "text-black" : "text-white"
                 }`}
               >

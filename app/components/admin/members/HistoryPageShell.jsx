@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 
@@ -21,7 +21,7 @@ export default function HistoryPageShell({ title, memberName, memberId, children
     <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:pl-[388px] xl:pr-10 xl:pt-8">
         {/* Header row */}
         <div className="flex items-center justify-between mb-1">
-          <h1 className="font-['Times_New_Roman'] font-bold text-[22px] sm:text-[28px] text-white">
+          <h1 className=" font-bold text-[22px] sm:text-[28px] text-white">
             {title}
           </h1>
           {/* Bell icon */}
@@ -43,14 +43,14 @@ export default function HistoryPageShell({ title, memberName, memberId, children
         {/* Back link */}
         <Link
           href="/admin/members"
-          className="inline-flex items-center gap-1 font-['Times_New_Roman'] text-[13px] text-white/60 hover:text-white transition-colors mb-1"
+          className="inline-flex items-center gap-1 text-[13px] text-white/60 hover:text-white transition-colors mb-1"
         >
           <span>&#8249;</span> Back to Member List
         </Link>
 
         {/* Subtitle */}
         {memberName && (
-          <p className="font-['Times_New_Roman'] text-[14px] text-[#e9af41] mb-4">
+          <p className=" text-[14px] text-[#e9af41] mb-4">
             Viewing history for: <span className="font-bold">{memberName}</span>
             {memberId && (
               <span className="text-white/40 ml-2 text-[12px]">(ID: {memberId})</span>

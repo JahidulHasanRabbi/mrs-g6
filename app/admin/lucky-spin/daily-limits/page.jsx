@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import NavigationCards from "../../../components/admin/lucky-spin/NavigationCards";
@@ -21,7 +21,7 @@ function DailyLimitsPageContent() {
     <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
         {/* Header */}
         <div className="mb-8 flex items-start justify-between">
-          <h1 className="text-4xl font-bold leading-[1.05] text-white font-['Times_New_Roman']">
+          <h1 className="text-4xl font-bold leading-[1.05] text-white">
             Daily Limits
           </h1>
           <button className="flex h-[26px] w-[26px] items-center justify-center" type="button">
@@ -65,7 +65,7 @@ function DailyLimitsPageContent() {
                     className="absolute inset-0 h-full w-full object-contain"
                   />
                 </div>
-                <p className="flex-1 text-[12px] text-white font-['Times_New_Roman'] leading-[1.3]">
+                <p className="flex-1 text-[12px] text-white leading-[1.3]">
                   Search..
                 </p>
               </div>
@@ -89,7 +89,7 @@ function DailyLimitsPageContent() {
               <button
                 type="button"
                 onClick={() => setActiveTab("member-activity")}
-                className={`capitalize font-['Times_New_Roman'] text-[20px] font-bold leading-[1.2] p-[5px] border-b ${
+                className={`capitalize text-[20px] font-bold leading-[1.2] p-[5px] border-b ${
                   activeTab === "member-activity"
                     ? "border-[#f2c36b] text-white"
                     : "border-transparent text-white"
@@ -100,7 +100,7 @@ function DailyLimitsPageContent() {
               <button
                 type="button"
                 onClick={() => setActiveTab("daily-limits")}
-                className={`capitalize font-['Times_New_Roman'] text-[20px] font-bold leading-[1.2] p-[5px] ${
+                className={`capitalize text-[20px] font-bold leading-[1.2] p-[5px] ${
                   activeTab === "daily-limits"
                     ? "border-b border-[#f2c36b] text-white"
                     : "text-white"
@@ -120,7 +120,7 @@ function DailyLimitsPageContent() {
 
           {/* Pagination */}
           <div className="flex items-center justify-between border-t border-white/10 px-6 py-4">
-            <p className="text-[12px] text-white font-bold font-['Times_New_Roman'] leading-[1.3]">
+            <p className="text-[12px] text-white font-bold leading-[1.3]">
               1 -10 of {activeTab === "member-activity" ? "5" : "120"}
             </p>
             <div className="flex items-center">

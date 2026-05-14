@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useMemo } from "react";
 import BarChart from "../components/admin/charts/BarChart";
@@ -113,7 +113,7 @@ function AdminDashboardContent() {
     <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
         {/* Header */}
         <div className="mb-8 flex items-start justify-between">
-          <h1 className="text-4xl font-bold leading-[1.05] text-white font-['Times_New_Roman']">
+          <h1 className="text-4xl font-bold leading-[1.05] text-white">
             Home Dashboard
           </h1>
           <button className="flex h-[26px] w-[26px] items-center justify-center">
@@ -149,16 +149,16 @@ function AdminDashboardContent() {
           {/* Daily Check-In */}
           <div className="rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-[20px] font-bold text-white font-['Times_New_Roman'] capitalize leading-[1.2]">
+                <h2 className="text-[20px] font-bold text-white capitalize leading-[1.2]">
                   Daily Check-In
                 </h2>
                 <div className="rounded-[4px] px-[15px] py-[9px]" style={{ backgroundImage: "linear-gradient(1.0746108354373831deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)" }}>
-                  <span className="text-[16px] font-bold text-black font-['Times_New_Roman'] leading-none">
+                  <span className="text-[16px] font-bold text-black leading-none">
                     last 7 days
                   </span>
                 </div>
               </div>
-              <p className="mb-4 text-[16px] text-[#5c5c5c] font-['Times_New_Roman'] capitalize leading-[1.2]">
+              <p className="mb-4 text-[16px] text-[#5c5c5c] capitalize leading-[1.2]">
                 Active Counts : {stats.totalCheckins}
               </p>
               <BarChart
@@ -186,10 +186,10 @@ function AdminDashboardContent() {
 function SnapshotStat({ label, value }) {
   return (
     <div className="flex flex-col items-center gap-3 text-center">
-      <span className="font-['Times_New_Roman'] text-[18px] font-bold leading-none text-[#f4bf55]">
+      <span className=" text-[18px] font-bold leading-none text-[#f4bf55]">
         {label}
       </span>
-      <span className="font-['Times_New_Roman'] text-[44px] font-bold leading-none text-white">
+      <span className=" text-[44px] font-bold leading-none text-white">
         {value.toLocaleString()}
       </span>
     </div>
@@ -206,7 +206,7 @@ function TotalActiveUsersCard({ activeToday, totalMembers }) {
 
   return (
     <div className="flex h-full flex-col items-center justify-between rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
-      <h2 className="mb-2 text-center font-['Times_New_Roman'] text-[20px] font-bold leading-[1.2] text-white capitalize">
+      <h2 className="mb-2 text-center text-[20px] font-bold leading-[1.2] text-white capitalize">
         Total Active Users
       </h2>
 
@@ -233,16 +233,16 @@ function TotalActiveUsersCard({ activeToday, totalMembers }) {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-          <span className="font-['Times_New_Roman'] text-[14px] font-bold leading-tight text-[#06b800]">
+          <span className=" text-[14px] font-bold leading-tight text-[#06b800]">
             Active Users Today
           </span>
-          <span className="font-['Times_New_Roman'] text-[30px] font-bold leading-none text-white">
+          <span className=" text-[30px] font-bold leading-none text-white">
             {activeToday.toLocaleString()}
           </span>
         </div>
       </div>
 
-      <p className="mt-2 text-center font-['Times_New_Roman'] text-[14px] text-[#9f9f9f]">
+      <p className="mt-2 text-center text-[14px] text-[#9f9f9f]">
         Setup Active Users
       </p>
     </div>

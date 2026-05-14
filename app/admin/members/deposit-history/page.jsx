@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
@@ -146,10 +146,10 @@ function DepositHistoryContent() {
       <div className="rounded-[12px] border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-3 sm:p-4 flex flex-col gap-3">
         {/* Filters */}
         <div className="flex items-center flex-wrap gap-2 sm:gap-3">
-          <p className="font-['Times_New_Roman'] font-bold text-[16px] sm:text-[18px] text-white whitespace-nowrap italic">
+          <p className=" font-bold text-[16px] sm:text-[18px] text-white whitespace-nowrap italic">
             The Deposit Are Given
           </p>
-          <span className="font-['Times_New_Roman'] text-[13px] text-white/80 ml-auto mr-1">Filter By:</span>
+          <span className=" text-[13px] text-white/80 ml-auto mr-1">Filter By:</span>
           <DateFilter label="Date/Time" fromDate={dateFrom} toDate={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} align="right" />
         </div>
 

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRouter, usePathname } from "next/navigation";
 import { ADMIN_NAVIGATION } from "../../config/adminNavigation";
@@ -17,7 +17,7 @@ function NavItem({ label, path, enabled, active, onClick }) {
       disabled={!enabled}
       title={!enabled ? 'Coming soon' : ''}
     >
-      <span className="text-[18px] font-['Times_New_Roman'] tracking-[-0.396px]">
+      <span className="text-[18px] tracking-[-0.396px]">
         {label}
       </span>
       {!enabled && (

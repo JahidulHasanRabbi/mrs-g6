@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import Image from "next/image";
@@ -161,14 +161,14 @@ function MenuFormModal({ menu, onClose, onSave, stations }) {
         </div>
 
         {/* Title */}
-        <h2 className="font-['Times_New_Roman'] font-bold text-[28px] text-white text-center mb-8">
+        <h2 className=" font-bold text-[28px] text-white text-center mb-8">
           {isEdit ? "Edit Floating Menu" : "Create New Floating Menu"}
         </h2>
 
         {/* Error Message */}
         {errorMessage && (
           <div className="mb-4 p-3 rounded bg-red-500/20 border border-red-500/50">
-            <p className="text-red-200 text-sm font-['Times_New_Roman']">{errorMessage}</p>
+            <p className="text-red-200 text-sm">{errorMessage}</p>
           </div>
         )}
 
@@ -176,7 +176,7 @@ function MenuFormModal({ menu, onClose, onSave, stations }) {
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           {/* Display Text */}
           <div className="flex items-center gap-[18px]">
-            <label className="w-[120px] shrink-0 font-['Times_New_Roman'] text-[16px] text-white">
+            <label className="w-[120px] shrink-0 text-[16px] text-white">
               Display Text:
             </label>
             <input
@@ -184,13 +184,13 @@ function MenuFormModal({ menu, onClose, onSave, stations }) {
               value={form.display_text}
               onChange={(e) => handleChange("display_text", e.target.value)}
               required
-              className="h-[36px] flex-1 rounded-[4px] px-3 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] font-['Times_New_Roman'] text-[14px] text-white outline-none focus:border-[#f2c36b]"
+              className="h-[36px] flex-1 rounded-[4px] px-3 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] text-[14px] text-white outline-none focus:border-[#f2c36b]"
             />
           </div>
 
           {/* URL Slug */}
           <div className="flex items-center gap-[18px]">
-            <label className="w-[120px] shrink-0 font-['Times_New_Roman'] text-[16px] text-white">
+            <label className="w-[120px] shrink-0 text-[16px] text-white">
               URL:
             </label>
             <input
@@ -199,13 +199,13 @@ function MenuFormModal({ menu, onClose, onSave, stations }) {
               onChange={(e) => handleChange("url_slug", e.target.value)}
               required
               placeholder="https://example.com"
-              className="h-[36px] flex-1 rounded-[4px] px-3 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] font-['Times_New_Roman'] text-[14px] text-white outline-none focus:border-[#f2c36b]"
+              className="h-[36px] flex-1 rounded-[4px] px-3 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] text-[14px] text-white outline-none focus:border-[#f2c36b]"
             />
           </div>
 
           {/* Display Order */}
           <div className="flex items-center gap-[18px]">
-            <label className="w-[120px] shrink-0 font-['Times_New_Roman'] text-[16px] text-white">
+            <label className="w-[120px] shrink-0 text-[16px] text-white">
               Display Order:
             </label>
             <input
@@ -214,13 +214,13 @@ function MenuFormModal({ menu, onClose, onSave, stations }) {
               onChange={(e) => handleChange("display_order", e.target.value)}
               required
               min={0}
-              className="h-[36px] flex-1 rounded-[4px] px-3 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] font-['Times_New_Roman'] text-[14px] text-white outline-none focus:border-[#f2c36b]"
+              className="h-[36px] flex-1 rounded-[4px] px-3 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] text-[14px] text-white outline-none focus:border-[#f2c36b]"
             />
           </div>
 
           {/* Station */}
           <div className="flex items-center gap-[18px]">
-            <label className="w-[120px] shrink-0 font-['Times_New_Roman'] text-[16px] text-white">
+            <label className="w-[120px] shrink-0 text-[16px] text-white">
               Station:
             </label>
             <div className="relative flex-1">
@@ -228,7 +228,7 @@ function MenuFormModal({ menu, onClose, onSave, stations }) {
                 value={form.station_uuid}
                 onChange={(e) => handleChange("station_uuid", e.target.value)}
                 required
-                className="h-[36px] w-full rounded-[4px] px-3 pr-8 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] font-['Times_New_Roman'] text-[14px] text-white outline-none focus:border-[#f2c36b] appearance-none cursor-pointer"
+                className="h-[36px] w-full rounded-[4px] px-3 pr-8 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] text-[14px] text-white outline-none focus:border-[#f2c36b] appearance-none cursor-pointer"
               >
                 <option value="" disabled className="bg-[#4d4d4d] text-white">
                   Select station
@@ -257,7 +257,7 @@ function MenuFormModal({ menu, onClose, onSave, stations }) {
 
           {/* Icon upload */}
           <div className="flex flex-col gap-2 pt-2">
-            <span className="font-['Times_New_Roman'] text-[16px] text-white">
+            <span className=" text-[16px] text-white">
               Icon
             </span>
             <button
@@ -296,14 +296,14 @@ function MenuFormModal({ menu, onClose, onSave, stations }) {
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="h-[37px] px-7 rounded border border-[#e5e6e6] bg-white font-['Times_New_Roman'] font-bold text-[14px] text-[#f04a4a] hover:bg-gray-100 transition-colors disabled:opacity-50"
+              className="h-[37px] px-7 rounded border border-[#e5e6e6] bg-white font-bold text-[14px] text-[#f04a4a] hover:bg-gray-100 transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="h-[37px] px-7 rounded font-['Times_New_Roman'] font-bold text-[14px] text-black hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="h-[37px] px-7 rounded font-bold text-[14px] text-black hover:opacity-90 transition-opacity disabled:opacity-50"
               style={{ background: GOLD_BG }}
             >
               {isSubmitting ? "Saving..." : (isEdit ? "Save" : "Create")}
@@ -411,7 +411,7 @@ function FloatingMenuContent() {
     <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:pl-[388px] xl:pr-10 xl:pt-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="font-['Times_New_Roman'] font-bold text-[22px] sm:text-[28px] text-white">
+        <h1 className=" font-bold text-[22px] sm:text-[28px] text-white">
           Floating Menu
         </h1>
         <svg
@@ -434,12 +434,12 @@ function FloatingMenuContent() {
         <div className="rounded-[12px] border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-3 sm:p-4 flex flex-col gap-4">
           {/* Title row + Create button */}
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <p className="font-['Times_New_Roman'] font-bold text-[18px] sm:text-[20px] text-white">
+            <p className=" font-bold text-[18px] sm:text-[20px] text-white">
               The Floating Menu Options Are Given Below
             </p>
             <button
               onClick={() => setShowCreateForm(true)}
-              className="h-[36px] rounded px-4 font-['Times_New_Roman'] text-[16px] text-black hover:opacity-90 transition-opacity"
+              className="h-[36px] rounded px-4 text-[16px] text-black hover:opacity-90 transition-opacity"
               style={{ background: GOLD_BG }}
             >
               Create New Menu <span className="font-bold">+</span>
@@ -458,7 +458,7 @@ function FloatingMenuContent() {
                       onClick={() => handleSort(col.key)}
                     >
                       <div className="flex items-center">
-                        <span className="font-['Times_New_Roman'] font-bold text-[14px] sm:text-[16px] text-white whitespace-nowrap">
+                        <span className=" font-bold text-[14px] sm:text-[16px] text-white whitespace-nowrap">
                           {col.label}
                         </span>
                         {col.key !== "rowNum" && col.key !== "icon" && (
@@ -468,7 +468,7 @@ function FloatingMenuContent() {
                     </th>
                   ))}
                   <th className="min-w-[180px] px-3 py-3 text-center">
-                    <span className="font-['Times_New_Roman'] font-bold text-[14px] sm:text-[16px] text-white">
+                    <span className=" font-bold text-[14px] sm:text-[16px] text-white">
                       Action
                     </span>
                   </th>
@@ -480,7 +480,7 @@ function FloatingMenuContent() {
                   <tr>
                     <td
                       colSpan={TABLE_COLUMNS.length + 1}
-                      className="px-5 py-12 text-center font-['Times_New_Roman'] text-white/40"
+                      className="px-5 py-12 text-center text-white/40"
                     >
                       No floating menus found.
                     </td>
@@ -492,15 +492,15 @@ function FloatingMenuContent() {
                       className="border-b border-[rgba(240,240,240,0.2)] hover:bg-white/[0.03] transition-colors"
                     >
                       {/* Row number */}
-                      <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white whitespace-nowrap">
+                      <td className="px-3 py-3 text-[14px] text-white whitespace-nowrap">
                         {(currentPage - 1) * PAGE_SIZE + idx + 1}
                       </td>
                       {/* Display Text */}
-                      <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80 whitespace-nowrap">
+                      <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                         {row.display_text}
                       </td>
                       {/* URL */}
-                      <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80">
+                      <td className="px-3 py-3 text-[14px] text-white/80">
                         <a 
                           href={row.url_slug} 
                           target="_blank" 
@@ -511,11 +511,11 @@ function FloatingMenuContent() {
                         </a>
                       </td>
                       {/* Display Order */}
-                      <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80 whitespace-nowrap">
+                      <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                         {row.display_order}
                       </td>
                       {/* Station */}
-                      <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80 whitespace-nowrap">
+                      <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                         {row.station_name || "-"}
                       </td>
                       {/* Icon */}
@@ -527,13 +527,13 @@ function FloatingMenuContent() {
                         <div className="flex gap-2 justify-center">
                           <button
                             onClick={() => handleArchive(row)}
-                            className="h-[31px] rounded px-3 bg-[#06b800] font-['Times_New_Roman'] font-bold text-[14px] text-white hover:bg-[#05a000] transition-colors"
+                            className="h-[31px] rounded px-3 bg-[#06b800] font-bold text-[14px] text-white hover:bg-[#05a000] transition-colors"
                           >
                             Archive
                           </button>
                           <button
                             onClick={() => setEditingMenu(row)}
-                            className="h-[31px] w-[70px] rounded border border-[#00a63e] font-['Times_New_Roman'] text-[14px] text-[#00a63e] hover:bg-[#00a63e]/10 transition-colors"
+                            className="h-[31px] w-[70px] rounded border border-[#00a63e] text-[14px] text-[#00a63e] hover:bg-[#00a63e]/10 transition-colors"
                           >
                             Edit
                           </button>

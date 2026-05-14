@@ -62,7 +62,6 @@ export default function LineChart({ labels, values, stroke = "#f6c75c", height =
               textAnchor="middle"
               fontSize="3"
               fill="#757575"
-              fontFamily="Times New Roman"
             >
               {l}
             </text>

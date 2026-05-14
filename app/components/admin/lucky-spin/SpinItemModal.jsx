@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import Image from "next/image";
@@ -66,7 +66,7 @@ export default function SpinItemModal({
           </div>
 
           {/* Modal Title */}
-          <h2 className="text-center text-[28px] font-bold text-white capitalize font-['Times_New_Roman'] mb-16">
+          <h2 className="text-center text-[28px] font-bold text-white capitalize mb-16">
             {mode === "add" ? "Add New Spin Items" : "Edit Spin Item"}
           </h2>
 
@@ -76,7 +76,7 @@ export default function SpinItemModal({
             <div className="space-y-4">
               {/* Reward Name */}
               <div className="flex items-center gap-[18px]">
-                <label className="text-[18px] text-white font-['Times_New_Roman'] w-[135px]">
+                <label className="text-[18px] text-white w-[135px]">
                   Reward Name:
                 </label>
                 <input
@@ -91,7 +91,7 @@ export default function SpinItemModal({
 
               {/* Probability */}
               <div className="flex items-center gap-[18px]">
-                <label className="text-[18px] text-white font-['Times_New_Roman'] w-[136px]">
+                <label className="text-[18px] text-white w-[136px]">
                   Probability (%):
                 </label>
                 <input
@@ -109,7 +109,7 @@ export default function SpinItemModal({
 
               {/* Quantity */}
               <div className="flex items-center gap-[18px]">
-                <label className="text-[18px] text-white font-['Times_New_Roman'] w-[136px]">
+                <label className="text-[18px] text-white w-[136px]">
                   Quantity:
                 </label>
                 <input
@@ -127,7 +127,7 @@ export default function SpinItemModal({
             {/* Image Upload */}
             <div className="space-y-4">
               <div className="flex justify-start">
-                <label className="text-[18px] text-white font-['Times_New_Roman']">
+                <label className="text-[18px] text-white">
                   Image
                 </label>
               </div>
@@ -171,7 +171,7 @@ export default function SpinItemModal({
                 onClick={onClose}
                 className="bg-white border border-[#e5e6e6] h-[37px] px-[18px] py-[13px] rounded-[4px] flex items-center justify-center"
               >
-                <span className="text-[#f04a4a] text-[14px] font-bold font-['Times_New_Roman']">
+                <span className="text-[#f04a4a] text-[14px] font-bold">
                   Cancel
                 </span>
               </button>
@@ -183,7 +183,7 @@ export default function SpinItemModal({
                   backgroundImage: "linear-gradient(1.2852950753927956deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
                 }}
               >
-                <span className="text-black text-[14px] font-bold font-['Times_New_Roman']">
+                <span className="text-black text-[14px] font-bold">
                   Confirm
                 </span>
               </button>

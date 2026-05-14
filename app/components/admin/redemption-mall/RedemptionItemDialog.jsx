@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
@@ -171,13 +171,13 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
         {/* Logo + title */}
         <div className="mb-6 flex flex-col items-center">
           <FlameLogo />
-          <h2 className="font-['Times_New_Roman'] text-[22px] font-bold text-white">{title}</h2>
+          <h2 className=" text-[22px] font-bold text-white">{title}</h2>
         </div>
 
         {/* Error Message */}
         {errorMessage && (
           <div className="mb-4 p-3 rounded bg-red-500/20 border border-red-500/50">
-            <p className="text-red-200 text-sm font-['Times_New_Roman']">{errorMessage}</p>
+            <p className="text-red-200 text-sm">{errorMessage}</p>
           </div>
         )}
 
@@ -185,13 +185,13 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           {/* Name */}
           <div className="grid grid-cols-[110px_1fr] items-center gap-4">
-            <label className="font-['Times_New_Roman'] text-[14px] text-white">
+            <label className=" text-[14px] text-white">
               Name:
             </label>
             <input
               value={form.name}
               onChange={(e) => handleChange("name", e.target.value)}
-              className="h-[36px] rounded-[8px] bg-[#5a5a5a] px-3 font-['Times_New_Roman'] text-[14px] text-white outline-none transition focus:border-[#e9af41] border border-[#e9af41]"
+              className="h-[36px] rounded-[8px] bg-[#5a5a5a] px-3 text-[14px] text-white outline-none transition focus:border-[#e9af41] border border-[#e9af41]"
               required
               disabled={isSubmitting}
             />
@@ -199,14 +199,14 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
 
           {/* Quantity */}
           <div className="grid grid-cols-[110px_1fr] items-center gap-4">
-            <label className="font-['Times_New_Roman'] text-[14px] text-white">
+            <label className=" text-[14px] text-white">
               Quantity:
             </label>
             <input
               type="number"
               value={form.quantity_available}
               onChange={(e) => handleChange("quantity_available", e.target.value)}
-              className="h-[36px] rounded-[8px] bg-[#5a5a5a] px-3 font-['Times_New_Roman'] text-[14px] text-white outline-none transition focus:border-[#e9af41] border border-transparent"
+              className="h-[36px] rounded-[8px] bg-[#5a5a5a] px-3 text-[14px] text-white outline-none transition focus:border-[#e9af41] border border-transparent"
               min="0"
               required
               disabled={isSubmitting}
@@ -215,7 +215,7 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
 
           {/* Start Date */}
           <div className="grid grid-cols-[110px_1fr] items-center gap-4">
-            <label className="font-['Times_New_Roman'] text-[14px] text-white">
+            <label className=" text-[14px] text-white">
               Start Date:
             </label>
             <input
@@ -223,7 +223,7 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
               value={form.start_date}
               onChange={(e) => handleChange("start_date", e.target.value)}
               onClick={(e) => e.target.showPicker && e.target.showPicker()}
-              className="h-[36px] rounded-[8px] bg-[#5a5a5a] px-3 font-['Times_New_Roman'] text-[14px] text-white outline-none transition focus:border-[#e9af41] border border-transparent cursor-pointer"
+              className="h-[36px] rounded-[8px] bg-[#5a5a5a] px-3 text-[14px] text-white outline-none transition focus:border-[#e9af41] border border-transparent cursor-pointer"
               required
               disabled={isSubmitting}
             />
@@ -231,7 +231,7 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
 
           {/* End Date */}
           <div className="grid grid-cols-[110px_1fr] items-center gap-4">
-            <label className="font-['Times_New_Roman'] text-[14px] text-white">
+            <label className=" text-[14px] text-white">
               End Date:
             </label>
             <input
@@ -239,7 +239,7 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
               value={form.end_date}
               onChange={(e) => handleChange("end_date", e.target.value)}
               onClick={(e) => e.target.showPicker && e.target.showPicker()}
-              className="h-[36px] rounded-[8px] bg-[#5a5a5a] px-3 font-['Times_New_Roman'] text-[14px] text-white outline-none transition focus:border-[#e9af41] border border-transparent cursor-pointer"
+              className="h-[36px] rounded-[8px] bg-[#5a5a5a] px-3 text-[14px] text-white outline-none transition focus:border-[#e9af41] border border-transparent cursor-pointer"
               required
               disabled={isSubmitting}
             />
@@ -247,13 +247,13 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
 
           {/* Prize Type */}
           <div className="grid grid-cols-[110px_1fr] items-center gap-4">
-            <label className="font-['Times_New_Roman'] text-[14px] text-white">
+            <label className=" text-[14px] text-white">
               Prize Type:
             </label>
             <select
               value={form.prize_type}
               onChange={(e) => handleChange("prize_type", parseInt(e.target.value, 10))}
-              className="h-[36px] rounded-[8px] bg-[#5a5a5a] px-3 font-['Times_New_Roman'] text-[14px] text-white outline-none transition focus:border-[#e9af41] border border-transparent appearance-none cursor-pointer"
+              className="h-[36px] rounded-[8px] bg-[#5a5a5a] px-3 text-[14px] text-white outline-none transition focus:border-[#e9af41] border border-transparent appearance-none cursor-pointer"
               required
               disabled={isSubmitting}
             >
@@ -267,14 +267,14 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
           {/* Credit Amount (conditional - only show when prize_type is CREDIT) */}
           {showCreditAmount && (
             <div className="grid grid-cols-[110px_1fr] items-center gap-4">
-              <label className="font-['Times_New_Roman'] text-[14px] text-white">
+              <label className=" text-[14px] text-white">
                 Credit Amount:
               </label>
               <input
                 type="number"
                 value={form.credit_amount}
                 onChange={(e) => handleChange("credit_amount", e.target.value)}
-                className="h-[36px] rounded-[8px] bg-[#5a5a5a] px-3 font-['Times_New_Roman'] text-[14px] text-white outline-none transition focus:border-[#e9af41] border border-transparent"
+                className="h-[36px] rounded-[8px] bg-[#5a5a5a] px-3 text-[14px] text-white outline-none transition focus:border-[#e9af41] border border-transparent"
                 min="0"
                 required
                 disabled={isSubmitting}
@@ -284,14 +284,14 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
 
           {/* Tokens Needed */}
           <div className="grid grid-cols-[110px_1fr] items-center gap-4">
-            <label className="font-['Times_New_Roman'] text-[14px] text-white">
+            <label className=" text-[14px] text-white">
               Tokens Needed:
             </label>
             <input
               type="number"
               value={form.tokens_needed}
               onChange={(e) => handleChange("tokens_needed", e.target.value)}
-              className="h-[36px] rounded-[8px] bg-[#5a5a5a] px-3 font-['Times_New_Roman'] text-[14px] text-white outline-none transition focus:border-[#e9af41] border border-transparent"
+              className="h-[36px] rounded-[8px] bg-[#5a5a5a] px-3 text-[14px] text-white outline-none transition focus:border-[#e9af41] border border-transparent"
               min="0"
               required
               disabled={isSubmitting}
@@ -300,14 +300,14 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
 
           {/* Promotion */}
           <div className="grid grid-cols-[110px_1fr] items-center gap-4">
-            <label className="font-['Times_New_Roman'] text-[14px] text-white">
+            <label className=" text-[14px] text-white">
               Promotion:
             </label>
             <input
               type="number"
               value={form.promotion}
               onChange={(e) => handleChange("promotion", e.target.value)}
-              className="h-[36px] rounded-[8px] bg-[#5a5a5a] px-3 font-['Times_New_Roman'] text-[14px] text-white outline-none transition focus:border-[#e9af41] border border-transparent"
+              className="h-[36px] rounded-[8px] bg-[#5a5a5a] px-3 text-[14px] text-white outline-none transition focus:border-[#e9af41] border border-transparent"
               step="0.01"
               placeholder="0.00"
               disabled={isSubmitting}
@@ -316,13 +316,13 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
 
           {/* Mart Tier */}
           <div className="grid grid-cols-[110px_1fr] items-center gap-4">
-            <label className="font-['Times_New_Roman'] text-[14px] text-white">
+            <label className=" text-[14px] text-white">
               Mart Tier: <span className="text-red-400">*</span>
             </label>
             <select
               value={form.tier_uuid}
               onChange={(e) => handleChange("tier_uuid", e.target.value)}
-              className="h-[36px] rounded-[8px] bg-[#5a5a5a] px-3 font-['Times_New_Roman'] text-[14px] text-white outline-none transition focus:border-[#e9af41] border border-transparent appearance-none cursor-pointer"
+              className="h-[36px] rounded-[8px] bg-[#5a5a5a] px-3 text-[14px] text-white outline-none transition focus:border-[#e9af41] border border-transparent appearance-none cursor-pointer"
               required
               disabled={isSubmitting}
             >
@@ -339,7 +339,7 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
 
           {/* Image upload */}
           <div className="mt-2">
-            <label className="font-['Times_New_Roman'] text-[14px] text-white">Image</label>
+            <label className=" text-[14px] text-white">Image</label>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -368,14 +368,14 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
             <button
               type="button"
               onClick={onClose}
-              className="h-[40px] min-w-[90px] rounded-[8px] bg-white px-5 font-['Times_New_Roman'] text-[14px] font-bold text-[#b91c1c] transition hover:bg-white/90"
+              className="h-[40px] min-w-[90px] rounded-[8px] bg-white px-5 text-[14px] font-bold text-[#b91c1c] transition hover:bg-white/90"
               disabled={isSubmitting}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="h-[40px] min-w-[90px] rounded-[8px] bg-[#e8b558] px-5 font-['Times_New_Roman'] text-[14px] font-bold text-[#7a3a00] shadow-[0_2px_8px_rgba(231,196,87,0.35)] transition hover:brightness-110 disabled:opacity-50"
+              className="h-[40px] min-w-[90px] rounded-[8px] bg-[#e8b558] px-5 text-[14px] font-bold text-[#7a3a00] shadow-[0_2px_8px_rgba(231,196,87,0.35)] transition hover:brightness-110 disabled:opacity-50"
               disabled={isSubmitting}
             >
               {isSubmitting ? 'Saving...' : submitLabel}

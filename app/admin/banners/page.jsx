@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
@@ -87,7 +87,7 @@ function BannersPageContent() {
   return (
     <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
         <div className="mb-8 flex items-start justify-between">
-          <h1 className="text-4xl font-bold leading-[1.05] text-white font-['Times_New_Roman']">
+          <h1 className="text-4xl font-bold leading-[1.05] text-white">
             Banners Management
           </h1>
           <button

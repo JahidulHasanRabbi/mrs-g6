@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 
@@ -85,12 +85,12 @@ export default function RedemptionMallTable({ items, onCreate, onEdit, onArchive
     >
       {/* Card header */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
-        <h2 className="font-['Times_New_Roman'] text-[18px] font-bold text-white">
+        <h2 className=" text-[18px] font-bold text-white">
           Redemption Item Panel Table
         </h2>
         <button
           onClick={onCreate}
-          className="inline-flex min-w-[190px] items-center justify-center gap-2 whitespace-nowrap rounded-[6px] bg-[#e8b558] px-4 py-2 font-['Times_New_Roman'] text-[14px] font-bold leading-none text-black shadow-[0_2px_8px_rgba(231,196,87,0.35)] transition hover:brightness-110"
+          className="inline-flex min-w-[190px] items-center justify-center gap-2 whitespace-nowrap rounded-[6px] bg-[#e8b558] px-4 py-2 text-[14px] font-bold leading-none text-black shadow-[0_2px_8px_rgba(231,196,87,0.35)] transition hover:brightness-110"
         >
           <span>Create Redemption Item</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -114,7 +114,7 @@ export default function RedemptionMallTable({ items, onCreate, onEdit, onArchive
                   key={col.id}
                   type={col.sortable ? "button" : undefined}
                   onClick={col.sortable ? () => handleSort(col) : undefined}
-                  className={`flex items-center font-['Times_New_Roman'] text-[14px] font-bold ${
+                  className={`flex items-center text-[14px] font-bold ${
                     col.align === "center" ? "justify-center" : "justify-start"
                   } ${col.sortable ? "cursor-pointer select-none transition hover:text-[#e9af41]" : ""} ${
                     isActive ? "text-[#e9af41]" : "text-white"
@@ -130,7 +130,7 @@ export default function RedemptionMallTable({ items, onCreate, onEdit, onArchive
           {/* Rows */}
           <div className="divide-y divide-white/10">
             {pagedItems.length === 0 ? (
-              <div className="px-6 py-10 text-center font-['Times_New_Roman'] text-white/60">
+              <div className="px-6 py-10 text-center text-white/60">
                 No redemption items yet.
               </div>
             ) : (
@@ -139,14 +139,14 @@ export default function RedemptionMallTable({ items, onCreate, onEdit, onArchive
                   key={item.uuid}
                   className="grid grid-cols-[1.1fr_1fr_1fr_1fr_1.3fr_1fr_1fr_1fr_0.9fr_1.4fr] items-center px-6 py-4 transition-colors hover:bg-white/5"
                 >
-                  <div className="font-['Times_New_Roman'] text-[14px] text-white">{item.name}</div>
-                  <div className="font-['Times_New_Roman'] text-[14px] text-white">{item.quantity_available}</div>
-                  <div className="font-['Times_New_Roman'] text-[14px] text-white">{item.start_date}</div>
-                  <div className="font-['Times_New_Roman'] text-[14px] text-white">{item.end_date}</div>
-                  <div className="font-['Times_New_Roman'] text-[14px] text-white">{PRIZE_TYPE_LABELS[item.prize_type] || item.prize_type}</div>
-                  <div className="font-['Times_New_Roman'] text-[14px] text-white">{item.mart_tier || "-"}</div>
-                  <div className="font-['Times_New_Roman'] text-[14px] tabular-nums text-white">{item.tokens_needed}</div>
-                  <div className="font-['Times_New_Roman'] text-[14px] tabular-nums text-white">{item.promotion}</div>
+                  <div className=" text-[14px] text-white">{item.name}</div>
+                  <div className=" text-[14px] text-white">{item.quantity_available}</div>
+                  <div className=" text-[14px] text-white">{item.start_date}</div>
+                  <div className=" text-[14px] text-white">{item.end_date}</div>
+                  <div className=" text-[14px] text-white">{PRIZE_TYPE_LABELS[item.prize_type] || item.prize_type}</div>
+                  <div className=" text-[14px] text-white">{item.mart_tier || "-"}</div>
+                  <div className=" text-[14px] tabular-nums text-white">{item.tokens_needed}</div>
+                  <div className=" text-[14px] tabular-nums text-white">{item.promotion}</div>
                   <div>
                     {item.image ? (
                       <div className="h-[36px] w-[44px] overflow-hidden rounded-[4px] bg-white/5">
@@ -162,13 +162,13 @@ export default function RedemptionMallTable({ items, onCreate, onEdit, onArchive
                   <div className="flex items-center justify-center gap-2">
                     <button
                       onClick={() => onArchive(item)}
-                      className="inline-flex h-[28px] min-w-[72px] items-center justify-center rounded-[6px] bg-[#22c55e] px-3 font-['Times_New_Roman'] text-[13px] font-bold text-white transition hover:bg-[#16a34a]"
+                      className="inline-flex h-[28px] min-w-[72px] items-center justify-center rounded-[6px] bg-[#22c55e] px-3 text-[13px] font-bold text-white transition hover:bg-[#16a34a]"
                     >
                       Archive
                     </button>
                     <button
                       onClick={() => onEdit(item)}
-                      className="inline-flex h-[28px] min-w-[60px] items-center justify-center rounded-[6px] border border-white/20 px-3 font-['Times_New_Roman'] text-[13px] font-bold text-white/60 transition hover:border-[#e9af41] hover:text-[#e9af41]"
+                      className="inline-flex h-[28px] min-w-[60px] items-center justify-center rounded-[6px] border border-white/20 px-3 text-[13px] font-bold text-white/60 transition hover:border-[#e9af41] hover:text-[#e9af41]"
                     >
                       Edit
                     </button>
@@ -181,7 +181,7 @@ export default function RedemptionMallTable({ items, onCreate, onEdit, onArchive
       </div>
 
       {/* Pagination */}
-      <div className="flex flex-wrap items-center justify-end gap-3 px-6 py-4 font-['Times_New_Roman'] text-[13px] text-white/70">
+      <div className="flex flex-wrap items-center justify-end gap-3 px-6 py-4 text-[13px] text-white/70">
         <span className="text-white/50">
           Showing {pagedItems.length} of {sortedItems.length}
         </span>

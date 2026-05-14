@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import ErrorDisplay from "../../ui/ErrorDisplay";
@@ -88,7 +88,7 @@ export default function SpinSequenceManager({
             className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-3"
           >
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-white font-['Times_New_Roman']">
+              <h3 className="text-lg font-bold text-white">
                 Position {pos.position}
               </h3>
               {pos.sequence_uuid && (
@@ -99,7 +99,7 @@ export default function SpinSequenceManager({
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm text-white/60 font-['Times_New_Roman']">
+              <label className="text-sm text-white/60">
                 Select Item:
               </label>
               <select
@@ -119,11 +119,11 @@ export default function SpinSequenceManager({
             </div>
 
             {pos.item_uuid ? (
-              <div className="text-xs text-white/40 font-['Times_New_Roman']">
+              <div className="text-xs text-white/40">
                 Selected: {getItemName(pos.item_uuid)}
               </div>
             ) : (
-              <div className="text-xs text-white/30 font-['Times_New_Roman'] italic">
+              <div className="text-xs text-white/30 italic">
                 Empty - will not appear on wheel
               </div>
             )}
@@ -136,7 +136,7 @@ export default function SpinSequenceManager({
         <button
           onClick={handleSave}
           disabled={isLoading}
-          className="inline-flex min-w-[164px] items-center justify-center whitespace-nowrap rounded-lg px-6 py-3 font-['Times_New_Roman'] text-sm font-bold leading-none text-black transition-colors disabled:opacity-50"
+          className="inline-flex min-w-[164px] items-center justify-center whitespace-nowrap rounded-lg px-6 py-3 text-sm font-bold leading-none text-black transition-colors disabled:opacity-50"
           style={{
             backgroundImage: "linear-gradient(2.1326483653998594deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
           }}

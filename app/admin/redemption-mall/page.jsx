@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
@@ -107,7 +107,7 @@ function RedemptionMallContent() {
     <main className="min-h-screen px-6 pt-6 pb-10 xl:pl-[388px] xl:pr-10 xl:pt-10">
       {/* Page header */}
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="font-['Times_New_Roman'] text-[18px] font-bold tracking-[-0.396px] text-white/70">
+        <h1 className=" text-[18px] font-bold tracking-[-0.396px] text-white/70">
           Redemption Management
         </h1>
         <button className="flex h-[26px] w-[26px] items-center justify-center text-[#e9af41]" aria-label="Notifications">

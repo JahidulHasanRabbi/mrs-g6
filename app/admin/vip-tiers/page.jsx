@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
@@ -79,7 +79,7 @@ function VipTiersContent() {
     <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
         {/* Header */}
         <div className="mb-8 flex items-start justify-between">
-          <h1 className="text-4xl font-bold leading-[1.05] text-white font-['Times_New_Roman']">
+          <h1 className="text-4xl font-bold leading-[1.05] text-white">
             VIP Tier Management
           </h1>
           <button
@@ -89,7 +89,7 @@ function VipTiersContent() {
               backgroundImage: "linear-gradient(1.0746108354373831deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
             }}
           >
-            <span className="text-[16px] font-bold text-black font-['Times_New_Roman'] leading-none">
+            <span className="text-[16px] font-bold text-black leading-none">
               Create New Tier
             </span>
           </button>
@@ -221,7 +221,7 @@ function TierFormModal({ title, tier, onSubmit, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-full max-w-2xl rounded-xl border border-[rgba(255,255,132,0.2)] bg-[#07190d] p-6 shadow-xl">
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-white font-['Times_New_Roman']">
+          <h2 className="text-2xl font-bold text-white">
             {title}
           </h2>
           <button
@@ -354,7 +354,7 @@ function TierFormModal({ title, tier, onSubmit, onClose }) {
                 backgroundImage: "linear-gradient(1.0746108354373831deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
               }}
             >
-              <span className="text-[16px] font-bold text-black font-['Times_New_Roman'] leading-none">
+              <span className="text-[16px] font-bold text-black leading-none">
                 {tier ? 'Update Tier' : 'Create Tier'}
               </span>
             </LoadingButton>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 
@@ -149,14 +149,14 @@ function TierFormModal({ tier, onClose, onSave, stations }) {
         </div>
 
         {/* Title */}
-        <h2 className="font-['Times_New_Roman'] font-bold text-[28px] text-white text-center capitalize mb-6">
+        <h2 className=" font-bold text-[28px] text-white text-center capitalize mb-6">
           {isEdit ? "Edit Tier" : "Create Tier"}
         </h2>
 
         {/* Error Message */}
         {errorMessage && (
           <div className="mb-4 p-3 rounded bg-red-500/20 border border-red-500/50">
-            <p className="text-red-200 text-sm font-['Times_New_Roman']">{errorMessage}</p>
+            <p className="text-red-200 text-sm">{errorMessage}</p>
           </div>
         )}
 
@@ -165,7 +165,7 @@ function TierFormModal({ tier, onClose, onSave, stations }) {
           {fields.map((f) => (
             <div key={f.key} className="flex items-center gap-[18px]">
               {/* Label */}
-              <label className="w-[136px] shrink-0 font-['Times_New_Roman'] text-[18px] text-white">
+              <label className="w-[136px] shrink-0 text-[18px] text-white">
                 {f.label}
               </label>
 
@@ -176,7 +176,7 @@ function TierFormModal({ tier, onClose, onSave, stations }) {
                     value={form[f.key]}
                     onChange={(e) => handleChange(f.key, e.target.value)}
                     required
-                    className="h-[36px] w-full rounded-[4px] px-3 pr-8 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.08)] font-['Times_New_Roman'] text-[14px] text-white outline-none focus:border-[#f2c36b] appearance-none cursor-pointer"
+                    className="h-[36px] w-full rounded-[4px] px-3 pr-8 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.08)] text-[14px] text-white outline-none focus:border-[#f2c36b] appearance-none cursor-pointer"
                   >
                     <option value="" disabled className="bg-[#4d4d4d] text-white">
                       Select station
@@ -210,7 +210,7 @@ function TierFormModal({ tier, onClose, onSave, stations }) {
                   required
                   min={f.type === "number" ? 0 : undefined}
                   step={f.type === "number" ? "0.01" : undefined}
-                  className={`h-[36px] flex-1 rounded-[4px] px-3 bg-[rgba(255,255,255,0.1)] border-[0.5px] font-['Times_New_Roman'] text-[14px] text-white outline-none focus:border-[#f2c36b] ${f.key === "name"
+                  className={`h-[36px] flex-1 rounded-[4px] px-3 bg-[rgba(255,255,255,0.1)] border-[0.5px] text-[14px] text-white outline-none focus:border-[#f2c36b] ${f.key === "name"
                     ? "border-[#f2c36b]"
                     : "border-[rgba(255,255,255,0.08)]"
                     }`}
@@ -225,14 +225,14 @@ function TierFormModal({ tier, onClose, onSave, stations }) {
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="h-[37px] px-6 rounded border border-[#e5e6e6] bg-white font-['Times_New_Roman'] font-bold text-[14px] text-[#f04a4a] hover:bg-gray-100 transition-colors disabled:opacity-50"
+              className="h-[37px] px-6 rounded border border-[#e5e6e6] bg-white font-bold text-[14px] text-[#f04a4a] hover:bg-gray-100 transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="h-[37px] px-6 rounded font-['Times_New_Roman'] font-bold text-[14px] text-black hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="h-[37px] px-6 rounded font-bold text-[14px] text-black hover:opacity-90 transition-opacity disabled:opacity-50"
               style={{ background: GOLD_BG }}
             >
               {isSubmitting ? "Saving..." : (isEdit ? "Confirm" : "Create")}
@@ -338,7 +338,7 @@ function WalletSiteVipContent() {
     <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:pl-[388px] xl:pr-10 xl:pt-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="font-['Times_New_Roman'] font-bold text-[22px] sm:text-[28px] text-white">
+          <h1 className=" font-bold text-[22px] sm:text-[28px] text-white">
             Wallet Side VIP
           </h1>
           <svg
@@ -361,12 +361,12 @@ function WalletSiteVipContent() {
           <div className="rounded-[12px] border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-3 sm:p-4 flex flex-col gap-4">
             {/* Title row + Create button */}
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <p className="font-['Times_New_Roman'] font-bold text-[18px] sm:text-[20px] text-white capitalize">
+              <p className=" font-bold text-[18px] sm:text-[20px] text-white capitalize">
                 Wallet Site VIP Is Given Below
               </p>
               <button
                 onClick={() => setShowCreateForm(true)}
-                className="h-[36px] rounded px-4 font-['Times_New_Roman'] text-[16px] text-black hover:opacity-90 transition-opacity"
+                className="h-[36px] rounded px-4 text-[16px] text-black hover:opacity-90 transition-opacity"
                 style={{ background: GOLD_BG }}
               >
                 Create new tier <span className="font-bold">+</span>
@@ -385,7 +385,7 @@ function WalletSiteVipContent() {
                         onClick={() => handleSort(col.key)}
                       >
                         <div className="flex items-center">
-                          <span className="font-['Times_New_Roman'] font-bold text-[14px] sm:text-[16px] text-white whitespace-nowrap">
+                          <span className=" font-bold text-[14px] sm:text-[16px] text-white whitespace-nowrap">
                             {col.label}
                           </span>
                           {col.key !== "rowNum" && (
@@ -395,7 +395,7 @@ function WalletSiteVipContent() {
                       </th>
                     ))}
                     <th className="min-w-[166px] px-3 py-3 text-left">
-                      <span className="font-['Times_New_Roman'] font-bold text-[14px] sm:text-[16px] text-white">
+                      <span className=" font-bold text-[14px] sm:text-[16px] text-white">
                         Action
                       </span>
                     </th>
@@ -407,7 +407,7 @@ function WalletSiteVipContent() {
                     <tr>
                       <td
                         colSpan={TABLE_COLUMNS.length + 1}
-                        className="px-5 py-12 text-center font-['Times_New_Roman'] text-white/40"
+                        className="px-5 py-12 text-center text-white/40"
                       >
                         No VIP tiers found.
                       </td>
@@ -419,35 +419,35 @@ function WalletSiteVipContent() {
                         className="border-b border-[rgba(240,240,240,0.2)] hover:bg-white/[0.03] transition-colors"
                       >
                         {/* Row number */}
-                        <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white whitespace-nowrap">
+                        <td className="px-3 py-3 text-[14px] text-white whitespace-nowrap">
                           {(currentPage - 1) * PAGE_SIZE + idx + 1}
                         </td>
                         {/* Tier Name */}
-                        <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80 whitespace-nowrap font-bold">
+                        <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap font-bold">
                           {row.name}
                         </td>
                         {/* Lifetime Deposit */}
-                        <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80 whitespace-nowrap">
+                        <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                           {formatRM(row.lifetime_deposit_required)}
                         </td>
                         {/* Monthly Deposit */}
-                        <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80 whitespace-nowrap">
+                        <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                           {formatRM(row.monthly_deposit)}
                         </td>
                         {/* Upgrade Bonus */}
-                        <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80 whitespace-nowrap">
+                        <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                           {formatRM(row.upgrade_bonus)}
                         </td>
                         {/* Monthly Loyalty */}
-                        <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80 whitespace-nowrap">
+                        <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                           {formatRM(row.monthly_loyalty_bonus)}
                         </td>
                         {/* Birthday Bonus */}
-                        <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80 whitespace-nowrap">
+                        <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                           {formatRM(row.birthday_bonus)}
                         </td>
                         {/* Station */}
-                        <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80 whitespace-nowrap">
+                        <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                           {row.station_name || "-"}
                         </td>
                         {/* Action */}
@@ -455,13 +455,13 @@ function WalletSiteVipContent() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleArchive(row)}
-                              className="h-[31px] rounded px-3 bg-[#06b800] font-['Times_New_Roman'] font-bold text-[14px] text-white hover:bg-[#05a000] transition-colors"
+                              className="h-[31px] rounded px-3 bg-[#06b800] font-bold text-[14px] text-white hover:bg-[#05a000] transition-colors"
                             >
                               Archive
                             </button>
                             <button
                               onClick={() => setEditingTier(row)}
-                              className="h-[31px] w-[70px] rounded border border-[#00a63e] font-['Times_New_Roman'] text-[14px] text-[#00a63e] hover:bg-[#00a63e]/10 transition-colors"
+                              className="h-[31px] w-[70px] rounded border border-[#00a63e] text-[14px] text-[#00a63e] hover:bg-[#00a63e]/10 transition-colors"
                             >
                               Edit
                             </button>

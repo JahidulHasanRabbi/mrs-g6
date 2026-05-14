@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
@@ -151,7 +151,7 @@ export default function RedemptionItemForm({
           </div>
 
           {/* Modal Title */}
-          <h2 className="text-center text-[28px] font-bold text-white capitalize font-['Times_New_Roman'] mb-8">
+          <h2 className="text-center text-[28px] font-bold text-white capitalize mb-8">
             {mode === "add" ? "Add New Redemption Item" : "Edit Redemption Item"}
           </h2>
 
@@ -166,7 +166,7 @@ export default function RedemptionItemForm({
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Name */}
             <div className="flex items-center gap-[18px]">
-              <label className="text-[18px] text-white font-['Times_New_Roman'] w-[135px]">
+              <label className="text-[18px] text-white w-[135px]">
                 Name:
               </label>
               <input
@@ -182,7 +182,7 @@ export default function RedemptionItemForm({
 
             {/* Quantity */}
             <div className="flex items-center gap-[18px]">
-              <label className="text-[18px] text-white font-['Times_New_Roman'] w-[136px]">
+              <label className="text-[18px] text-white w-[136px]">
                 Quantity:
               </label>
               <input
@@ -199,7 +199,7 @@ export default function RedemptionItemForm({
 
             {/* Start Date */}
             <div className="flex items-center gap-[18px]">
-              <label className="text-[18px] text-white font-['Times_New_Roman'] w-[136px]">
+              <label className="text-[18px] text-white w-[136px]">
                 Start Date:
               </label>
               <input
@@ -214,7 +214,7 @@ export default function RedemptionItemForm({
 
             {/* End Date */}
             <div className="flex items-center gap-[18px]">
-              <label className="text-[18px] text-white font-['Times_New_Roman'] w-[136px]">
+              <label className="text-[18px] text-white w-[136px]">
                 End Date:
               </label>
               <input
@@ -229,7 +229,7 @@ export default function RedemptionItemForm({
 
             {/* Prize Type */}
             <div className="flex items-center gap-[18px]">
-              <label className="text-[18px] text-white font-['Times_New_Roman'] w-[136px]">
+              <label className="text-[18px] text-white w-[136px]">
                 Prize Type:
               </label>
               <select
@@ -251,7 +251,7 @@ export default function RedemptionItemForm({
             {/* Conditional Field for CREDIT */}
             {visibleFields.credit_amount && (
               <div className="flex items-center gap-[18px]">
-                <label className="text-[18px] text-white font-['Times_New_Roman'] w-[136px]">
+                <label className="text-[18px] text-white w-[136px]">
                   Credit Amount:
                 </label>
                 <input
@@ -269,7 +269,7 @@ export default function RedemptionItemForm({
 
             {/* Tokens Needed */}
             <div className="flex items-center gap-[18px]">
-              <label className="text-[18px] text-white font-['Times_New_Roman'] w-[136px]">
+              <label className="text-[18px] text-white w-[136px]">
                 Tokens Needed:
               </label>
               <input
@@ -286,7 +286,7 @@ export default function RedemptionItemForm({
 
             {/* Promotion */}
             <div className="flex items-center gap-[18px]">
-              <label className="text-[18px] text-white font-['Times_New_Roman'] w-[136px]">
+              <label className="text-[18px] text-white w-[136px]">
                 Promotion:
               </label>
               <input
@@ -304,7 +304,7 @@ export default function RedemptionItemForm({
             {/* Image Upload */}
             <div className="space-y-4">
               <div className="flex justify-start">
-                <label className="text-[18px] text-white font-['Times_New_Roman']">
+                <label className="text-[18px] text-white">
                   Image
                 </label>
               </div>
@@ -349,7 +349,7 @@ export default function RedemptionItemForm({
                 className="bg-white border border-[#e5e6e6] h-[37px] px-[18px] py-[13px] rounded-[4px] flex items-center justify-center"
                 disabled={isLoading}
               >
-                <span className="text-[#f04a4a] text-[14px] font-bold font-['Times_New_Roman']">
+                <span className="text-[#f04a4a] text-[14px] font-bold">
                   Cancel
                 </span>
               </button>
@@ -362,7 +362,7 @@ export default function RedemptionItemForm({
                 }}
                 disabled={isLoading}
               >
-                <span className="text-black text-[14px] font-bold font-['Times_New_Roman']">
+                <span className="text-black text-[14px] font-bold">
                   {isLoading ? 'Saving...' : 'Confirm'}
                 </span>
               </button>
