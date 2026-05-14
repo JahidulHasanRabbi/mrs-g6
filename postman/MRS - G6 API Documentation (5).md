@@ -861,8 +861,8 @@ Query Parameters
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | page | Int | Yes | For Pagination |
 | **2** | page\_size | Int | Yes | For Pagination |
-| **3** | start\_datetime | datetime | Yes |  |
-| **4** | end\_datetime | datetime | Yes |  |
+| **3** | start\_date | date | Yes |  |
+| **4** | end\_date | date | Yes |  |
 | **5** | station\_uuid | uuid | Yes | /front-view/station-list/ GET |
 
 Output (Is paginated, has count, next, previous, and results)
@@ -1039,7 +1039,7 @@ Output (Is paginated, has count, next, previous, and results)
 | **6** | prize\_type | str | No |  |
 | **7** | credit\_amount | int | Yes | Required if prize\_type is Credit, else not required |
 | **8** | tokens\_needed | int | No |  |
-| **9** | promotion | str(Decimal) | No |  |
+| **9** | promotion | int  | No |  |
 | **10** | image | Image | Yes |  |
 | **11** | mart\_tier | str | Yes |  |
 
@@ -1057,7 +1057,7 @@ Output (Is paginated, has count, next, previous, and results)
 | **5** | prize\_type | Int (Enum) | No | 1 \= ITEM 2 \= VOUCHER 3 \= CREDIT 4 \= OTHERS |
 | **6** | credit\_amount | int | Yes | Required if prize\_type is 3, else not required |
 | **7** | tokens\_needed | int | No |  |
-| **8** | promotion | str(Decimal) | No |  |
+| **8** | promotion | int | No |  |
 | **9** | image | Image | Yes |  |
 | **10** | tier\_uuid | UUID | No | /redemption/redemption-tier/ GET |
 
@@ -1113,7 +1113,7 @@ Returns 200
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | terms\_and\_conditions | Text | No |  |
-| **2** | category | Int | No | 1 \= Lucky Spin 2 \= Deposit Leaderboard 3 \= Withdraw Leaderboard 4 \= Referrer Leaderboard 5 \= World Cup Leaderboard 6 \= Smash Egg 7 \= Penalty Kick |
+| **2** | category | Int | No | 1 \= Lucky Spin 2 \= Deposit Leaderboard 3 \= Withdraw Leaderboard 4 \= Referrer Leaderboard 5 \= World Cup Leaderboard 6 \= Smash Egg 7 \= Penalty Kick 8 \= Main Page 9 \= Wallet VIP |
 
 ### T\&C \- PUBLIC \- GET {#t&c---public---get}
 
@@ -1183,6 +1183,7 @@ Output
 | **7** | monthly\_loyalty\_bonus | Str (Decimal) | No |  |
 | **8** | birthday\_bonus | Str (Decimal) | No |  |
 | **9** | station\_name | str | No |  |
+| **10** | icon | Image | Yes |  |
 
 ### 
 
@@ -1201,10 +1202,13 @@ Input
 | **5** | monthly\_loyalty\_bonus | Str (Decimal) | No |  |
 | **6** | birthday\_bonus | Str (Decimal) | No |  |
 | **7** | station\_uuid | UUID | No | /front-view/station-list/ GET |
+| **8** | icon | Image | Yes |  |
 
 ### Wallet VIP \- ARCHIVE {#wallet-vip---archive}
 
 /third-party/wallet-vip/{uuid}/archive/ PATCH
+
+## Wallet Floating Menus
 
 ### Wallet Floating Menus \- GET {#wallet-floating-menus---get}
 
@@ -1260,6 +1264,33 @@ Input
 ### Wallet Floating Menu \- ARCHIVE {#wallet-floating-menu---archive}
 
 /third-party/floating-menu/{uuid}/archive/ PATCH
+
+## Wallet Floating Menu Root Icon
+
+### Wallet Floating Menu Root Icon \- GET
+
+/third-party/floating-menu-root-icon/ GET  
+Output
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | uuid | uuid | No |  |
+| **2** | station\_name | str | No |  |
+| **3** | icon | image | No |  |
+
+### Wallet Floating Menu Root Icon \- POST
+
+/third-party/floating-menu-root-icon/ POST  
+Input
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | station\_uuid | uuid | No |  |
+| **2** | icon | image | No |  |
+
+Returns 200, overwrites previous icon
+
+## 
 
 ## Member Feedback \- GET/POST {#member-feedback---get/post}
 
@@ -1361,6 +1392,13 @@ Output
 
 /third-party/station-floating-menu/\<special\_code\>/ GET  
 Output
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | root\_icon | Image | Yes |  |
+| **2** | data | List | \- | See data output below |
+
+Data output
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |

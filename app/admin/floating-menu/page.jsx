@@ -323,6 +323,10 @@ function FloatingMenuContent() {
   const [editingMenu, setEditingMenu] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
 
+  // Search filters
+  const [stationSearch, setStationSearch] = useState("");
+  const [displayTextSearch, setDisplayTextSearch] = useState("");
+
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState("asc");
   const [currentPage, setCurrentPage] = useState(1);
@@ -331,11 +335,23 @@ function FloatingMenuContent() {
     loadData();
   }, []);
 
+  // Debounced search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadData();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [stationSearch, displayTextSearch]);
+
   const loadData = async () => {
     setIsLoading(true);
     try {
+      const params = {};
+      if (stationSearch) params.station_name = stationSearch;
+      if (displayTextSearch) params.display_text = displayTextSearch;
+
       const [menusData, stationsData] = await Promise.all([
-        adminApi.getFloatingMenus(),
+        adminApi.getFloatingMenus(params),
         adminApi.getStationList(),
       ]);
       console.log('Floating Menus:', menusData);
@@ -345,6 +361,7 @@ function FloatingMenuContent() {
       const menusArray = Array.isArray(menusData) ? menusData : (menusData?.results || []);
       setMenus(menusArray);
       setStations(stationsData);
+      setCurrentPage(1); // Reset to first page on search
     } catch (err) {
       console.error('Failed to load data:', err);
     } finally {
@@ -444,6 +461,38 @@ function FloatingMenuContent() {
             >
               Create New Menu <span className="font-bold">+</span>
             </button>
+          </div>
+
+          {/* Search filters */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="font-['Times_New_Roman'] text-[14px] text-white/80">
+              Search:
+            </span>
+            <input
+              type="text"
+              placeholder="Station name..."
+              value={stationSearch}
+              onChange={(e) => setStationSearch(e.target.value)}
+              className="h-[36px] w-[180px] rounded px-3 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.2)] font-['Times_New_Roman'] text-[14px] text-white placeholder:text-white/40 outline-none focus:border-[#e9af41]"
+            />
+            <input
+              type="text"
+              placeholder="Display text..."
+              value={displayTextSearch}
+              onChange={(e) => setDisplayTextSearch(e.target.value)}
+              className="h-[36px] w-[180px] rounded px-3 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.2)] font-['Times_New_Roman'] text-[14px] text-white placeholder:text-white/40 outline-none focus:border-[#e9af41]"
+            />
+            {(stationSearch || displayTextSearch) && (
+              <button
+                onClick={() => {
+                  setStationSearch("");
+                  setDisplayTextSearch("");
+                }}
+                className="font-['Times_New_Roman'] text-[12px] text-red-400 hover:text-red-300 underline"
+              >
+                Clear
+              </button>
+            )}
           </div>
 
           {/* Table */}
