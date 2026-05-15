@@ -13,7 +13,8 @@ const CATEGORIES = [
   { id: 5, name: "World Cup Leaderboard" },
   { id: 6, name: "Smash Egg" },
   { id: 7, name: "Penalty Kick" },
-  { id: 8, name: "Main Page", usesSections: true }
+  { id: 8, name: "Main Page", usesSections: true },
+  { id: 9, name: "Wallet VIP" }
 ];
 
 // Parse "title: X\ndescription: Y" format into sections array
