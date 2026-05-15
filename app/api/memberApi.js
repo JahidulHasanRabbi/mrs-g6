@@ -200,3 +200,11 @@ export async function getPublicTermsAndConditions(category) {
     method: 'GET'
   }, false);
 }
+
+// GET /third-party/frame/ - Get all frames (requires member token)
+export async function getPublicFrames(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.FRAMES}${qs}`, {
+    method: 'GET'
+  }, true, 'member'); // Requires member authentication
+}
