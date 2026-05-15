@@ -524,6 +524,27 @@ export async function archiveFloatingMenu(uuid) {
 }
 
 // ============================================================================
+// FLOATING MENU ROOT ICON MANAGEMENT
+// ============================================================================
+
+// GET /third-party/floating-menu-root-icon/ - Get all root icons
+export async function getFloatingMenuRootIcons(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.FLOATING_MENU_ROOT_ICON}${qs}`, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+// POST /third-party/floating-menu-root-icon/ - Create/Update root icon
+// Note: This endpoint overwrites the previous icon for the station
+export async function createOrUpdateRootIcon(rootIconData) {
+  return await apiRequest(ENDPOINTS.ADMIN.FLOATING_MENU_ROOT_ICON, {
+    method: 'POST',
+    body: rootIconData
+  }, true, 'admin');
+}
+
+// ============================================================================
 // FRAMES MANAGEMENT
 // ============================================================================
 

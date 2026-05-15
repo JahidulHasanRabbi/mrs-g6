@@ -315,13 +315,250 @@ function MenuFormModal({ menu, onClose, onSave, stations }) {
   );
 }
 
+// ── Root Icon Form Modal ─────────────────────────────────────────────────
+function RootIconFormModal({ rootIcon, onClose, onSave, stations }) {
+  const isEdit = !!rootIcon;
+
+  const [form, setForm] = useState({
+    station_uuid: rootIcon?.station_uuid ?? "",
+  });
+  const [iconFile, setIconFile] = useState(null);
+  const [iconPreview, setIconPreview] = useState(rootIcon?.icon ?? "");
+  const [iconErrored, setIconErrored] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const fileInputRef = useRef(null);
+
+  // When editing, ensure we have the station_uuid
+  useEffect(() => {
+    if (rootIcon && stations.length > 0) {
+      if (rootIcon.station_uuid) {
+        setForm(prev => ({ ...prev, station_uuid: rootIcon.station_uuid }));
+      } else if (rootIcon.station_name) {
+        const matchingStation = stations.find(s => 
+          s.station_name === rootIcon.station_name || s.name === rootIcon.station_name
+        );
+        if (matchingStation) {
+          setForm(prev => ({ ...prev, station_uuid: matchingStation.uuid }));
+        }
+      }
+    }
+  }, [rootIcon, stations]);
+
+  const handleChange = (key, value) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleIconChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIconFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setIconPreview(reader.result);
+      setIconErrored(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!iconFile && !isEdit) {
+      setErrorMessage("Please upload an icon image");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    try {
+      const submitData = { ...form };
+      
+      // Icon is required for create, optional for edit
+      if (iconFile) {
+        submitData.icon = iconFile;
+      }
+      
+      await onSave(submitData);
+      onClose();
+    } catch (err) {
+      console.error('Form submission error:', err);
+      let message = "Failed to save root icon. Please try again.";
+      if (err.data) {
+        if (typeof err.data === 'string') {
+          message = err.data;
+        } else if (err.data.detail) {
+          message = err.data.detail;
+        } else if (err.data.message) {
+          message = err.data.message;
+        } else {
+          const errors = Object.entries(err.data)
+            .map(([field, msgs]) => {
+              const fieldName = field.replace(/_/g, ' ');
+              const errorMsgs = Array.isArray(msgs) ? msgs.join(', ') : msgs;
+              return `${fieldName}: ${errorMsgs}`;
+            })
+            .join('; ');
+          if (errors) message = errors;
+        }
+      } else if (err.message) {
+        message = err.message;
+      }
+      setErrorMessage(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-[2px] px-4"
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-[560px] rounded-[14px] border border-[rgba(255,255,255,0.5)] p-6 sm:p-8 max-h-[90vh] overflow-y-auto scrollbar-admin"
+        style={{
+          backgroundColor: "#4d4d4d",
+          boxShadow: "1px 4px 75px 9px rgba(174,174,174,0.15)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Icon badge */}
+        <div className="flex justify-center mb-2">
+          <Image
+            src="/assets/admin/Tier.png"
+            alt="Root Icon"
+            width={70}
+            height={70}
+            priority
+          />
+        </div>
+
+        {/* Title */}
+        <h2 className="font-['Times_New_Roman'] font-bold text-[28px] text-white text-center mb-4">
+          {isEdit ? "Edit Root Icon" : "Create Root Icon"}
+        </h2>
+        
+        <p className="text-white/70 text-[14px] font-['Times_New_Roman'] text-center mb-6">
+          The root icon is the main floating button that opens the menu
+        </p>
+
+        {/* Error Message */}
+        {errorMessage && (
+          <div className="mb-4 p-3 rounded bg-red-500/20 border border-red-500/50">
+            <p className="text-red-200 text-sm font-['Times_New_Roman']">{errorMessage}</p>
+          </div>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          {/* Station */}
+          <div className="flex items-center gap-[18px]">
+            <label className="w-[120px] shrink-0 font-['Times_New_Roman'] text-[16px] text-white">
+              Station:
+            </label>
+            <div className="relative flex-1">
+              <select
+                value={form.station_uuid}
+                onChange={(e) => handleChange("station_uuid", e.target.value)}
+                required
+                className="h-[36px] w-full rounded-[4px] px-3 pr-8 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] font-['Times_New_Roman'] text-[14px] text-white outline-none focus:border-[#f2c36b] appearance-none cursor-pointer"
+              >
+                <option value="" disabled className="bg-[#4d4d4d] text-white">
+                  Select station
+                </option>
+                {stations?.map((station) => (
+                  <option key={station.uuid} value={station.uuid} className="bg-[#4d4d4d] text-white">
+                    {station.station_name || station.name}
+                  </option>
+                ))}
+              </select>
+              <svg
+                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="rgba(255,255,255,0.6)"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
+          </div>
+
+          {/* Icon upload */}
+          <div className="flex flex-col gap-2 pt-2">
+            <span className="font-['Times_New_Roman'] text-[16px] text-white">
+              Root Icon {!isEdit && <span className="text-red-400">*</span>}
+            </span>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex h-[110px] w-full items-center justify-center rounded-[6px] border border-dashed border-white/40 hover:border-[#f2c36b] transition-colors bg-transparent"
+            >
+              {iconPreview && !iconErrored ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={iconPreview}
+                  alt="Root icon preview"
+                  onError={() => setIconErrored(true)}
+                  className="h-[80px] w-[80px] object-contain"
+                />
+              ) : (
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="3" width="18" height="18" rx="2" stroke="#e9af41" strokeWidth="1.5" />
+                  <circle cx="9" cy="9" r="1.5" fill="#e9af41" />
+                  <path d="M21 15l-5-5L5 21" stroke="#e9af41" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleIconChange}
+              className="hidden"
+            />
+          </div>
+
+          {/* Buttons */}
+          <div className="flex items-center justify-end gap-[21px] pt-6">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="h-[37px] px-7 rounded border border-[#e5e6e6] bg-white font-['Times_New_Roman'] font-bold text-[14px] text-[#f04a4a] hover:bg-gray-100 transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="h-[37px] px-7 rounded font-['Times_New_Roman'] font-bold text-[14px] text-black hover:opacity-90 transition-opacity disabled:opacity-50"
+              style={{ background: GOLD_BG }}
+            >
+              {isSubmitting ? "Saving..." : "Save"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 // ── Page content ─────────────────────────────────────────────────────────
 function FloatingMenuContent() {
   const [menus, setMenus] = useState([]);
+  const [rootIcons, setRootIcons] = useState([]);
   const [stations, setStations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [editingMenu, setEditingMenu] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [activeTab, setActiveTab] = useState("menu-items"); // "menu-items" or "root-icons"
 
   // Search filters
   const [stationSearch, setStationSearch] = useState("");
@@ -350,16 +587,21 @@ function FloatingMenuContent() {
       if (stationSearch) params.station_name = stationSearch;
       if (displayTextSearch) params.display_text = displayTextSearch;
 
-      const [menusData, stationsData] = await Promise.all([
+      const [menusData, rootIconsData, stationsData] = await Promise.all([
         adminApi.getFloatingMenus(params),
+        adminApi.getFloatingMenuRootIcons(),
         adminApi.getStationList(),
       ]);
       console.log('Floating Menus:', menusData);
+      console.log('Root Icons:', rootIconsData);
       console.log('Stations:', stationsData);
       
       // Handle paginated response
       const menusArray = Array.isArray(menusData) ? menusData : (menusData?.results || []);
+      const rootIconsArray = Array.isArray(rootIconsData) ? rootIconsData : (rootIconsData?.results || []);
+      
       setMenus(menusArray);
+      setRootIcons(rootIconsArray);
       setStations(stationsData);
       setCurrentPage(1); // Reset to first page on search
     } catch (err) {
@@ -423,6 +665,14 @@ function FloatingMenuContent() {
     }
   }, []);
 
+  const handleSaveRootIcon = useCallback(async (rootIconData) => {
+    await adminApi.createOrUpdateRootIcon(rootIconData);
+    await loadData();
+  }, []);
+
+  const [editingRootIcon, setEditingRootIcon] = useState(null);
+  const [showRootIconForm, setShowRootIconForm] = useState(false);
+
   return (
     <>
     <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:pl-[388px] xl:pr-10 xl:pt-8">
@@ -447,7 +697,34 @@ function FloatingMenuContent() {
       </div>
 
       <LoadingState isLoading={isLoading}>
-        {/* Table card */}
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => setActiveTab("menu-items")}
+            className={`h-[40px] px-6 rounded font-['Times_New_Roman'] text-[16px] transition-all ${
+              activeTab === "menu-items"
+                ? "text-black"
+                : "text-white/70 bg-white/5 hover:bg-white/10"
+            }`}
+            style={activeTab === "menu-items" ? { background: GOLD_BG } : {}}
+          >
+            Menu Items
+          </button>
+          <button
+            onClick={() => setActiveTab("root-icons")}
+            className={`h-[40px] px-6 rounded font-['Times_New_Roman'] text-[16px] transition-all ${
+              activeTab === "root-icons"
+                ? "text-black"
+                : "text-white/70 bg-white/5 hover:bg-white/10"
+            }`}
+            style={activeTab === "root-icons" ? { background: GOLD_BG } : {}}
+          >
+            Root Icons
+          </button>
+        </div>
+
+        {/* Menu Items Tab */}
+        {activeTab === "menu-items" && (
         <div className="rounded-[12px] border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-3 sm:p-4 flex flex-col gap-4">
           {/* Title row + Create button */}
           <div className="flex items-center justify-between flex-wrap gap-2">
@@ -597,6 +874,64 @@ function FloatingMenuContent() {
 
           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
         </div>
+        )}
+
+        {/* Root Icons Tab */}
+        {activeTab === "root-icons" && (
+        <div className="rounded-[12px] border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-3 sm:p-4 flex flex-col gap-4">
+          {/* Title row + Create button */}
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <p className="font-['Times_New_Roman'] font-bold text-[18px] sm:text-[20px] text-white">
+              Root Icons (Main Floating Button)
+            </p>
+            <button
+              onClick={() => setShowRootIconForm(true)}
+              className="h-[36px] rounded px-4 font-['Times_New_Roman'] text-[16px] text-black hover:opacity-90 transition-opacity"
+              style={{ background: GOLD_BG }}
+            >
+              Create Root Icon <span className="font-bold">+</span>
+            </button>
+          </div>
+
+          {/* Root Icons Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {rootIcons.length === 0 ? (
+              <div className="col-span-full py-12 text-center font-['Times_New_Roman'] text-white/40">
+                No root icons found. Create one to get started.
+              </div>
+            ) : (
+              rootIcons.map((rootIcon) => (
+                <div
+                  key={rootIcon.uuid}
+                  className="relative rounded-lg border border-[rgba(255,255,255,0.2)] bg-[rgba(0,0,0,0.3)] p-4 hover:bg-[rgba(255,255,255,0.05)] transition-colors"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="flex-shrink-0">
+                      <MenuIconCell src={rootIcon.icon} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-['Times_New_Roman'] font-bold text-[16px] text-white truncate">
+                        {rootIcon.station_name || "Unknown Station"}
+                      </h3>
+                      <p className="font-['Times_New_Roman'] text-[12px] text-white/60">
+                        Station Root Icon
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={() => setEditingRootIcon(rootIcon)}
+                      className="flex-1 h-[32px] rounded border border-[#00a63e] font-['Times_New_Roman'] text-[14px] text-[#00a63e] hover:bg-[#00a63e]/10 transition-colors"
+                    >
+                      Edit
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+        )}
       </LoadingState>
     </main>
 
@@ -616,6 +951,26 @@ function FloatingMenuContent() {
         menu={null}
         onClose={() => setShowCreateForm(false)}
         onSave={handleCreateMenu}
+        stations={stations}
+      />
+    )}
+
+    {/* Root Icon Edit Modal */}
+    {editingRootIcon && (
+      <RootIconFormModal
+        rootIcon={editingRootIcon}
+        onClose={() => setEditingRootIcon(null)}
+        onSave={handleSaveRootIcon}
+        stations={stations}
+      />
+    )}
+
+    {/* Root Icon Create Modal */}
+    {showRootIconForm && (
+      <RootIconFormModal
+        rootIcon={null}
+        onClose={() => setShowRootIconForm(false)}
+        onSave={handleSaveRootIcon}
         stations={stations}
       />
     )}
