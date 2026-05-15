@@ -190,7 +190,7 @@ const RETENTION_MENU = [
     label: "Member Alert",
     iconMask: "/assets/admin/sidebar/icons/retention-member-alert.svg",
     href: "/admin/retention/member-alert",
-    disabled: true,
+    disabled: false,
   },
   {
     id: "retention-member-list",
@@ -204,7 +204,7 @@ const RETENTION_MENU = [
     label: "Settings",
     iconMask: "/assets/admin/sidebar/icons/retention-settings.svg",
     href: "/admin/retention/settings",
-    disabled: true,
+    disabled: false,
   },
 ];
 
