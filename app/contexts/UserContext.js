@@ -51,7 +51,7 @@ export function UserProvider({ children }) {
         
         // Fetch frames and VIP tiers in parallel
         const [framesResponse, tiersResponse] = await Promise.all([
-          getPublicFrames(),
+          getPublicFrames({ page_size: 100 }), // Get up to 100 frames
           getVipTiers()
         ]);
 
@@ -63,6 +63,8 @@ export function UserProvider({ children }) {
         const tiersData = Array.isArray(tiersResponse)
           ? tiersResponse
           : (tiersResponse?.results || []);
+
+        console.log('API returned frames:', framesData.length, framesData);
 
         // Map API frames to internal structure
         const mappedFrames = framesData.map((apiFrame, index) => 
