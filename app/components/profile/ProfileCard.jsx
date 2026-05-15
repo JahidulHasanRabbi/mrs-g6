@@ -332,18 +332,20 @@ export default function ProfileCard({
             </p>
           </motion.div>
 
-          {/* VIP Details Button */}
+          {/* VIP Details Button — sits in the dark-green band between the
+              Total Token line (~y=55) and the inner gold panel top (~y=96),
+              right-aligned to clear the corner gem ornament (~30px deep). */}
           <motion.button
             onClick={handleVipDetailsClick}
-            className="absolute left-[239px] top-[37px] text-[#e9af41] font-bold font-['Times_New_Roman'] whitespace-nowrap cursor-pointer"
+            className="absolute right-[55px] top-[60px] text-[#e9af41] font-bold font-['Times_New_Roman'] whitespace-nowrap cursor-pointer"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.6 }}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
           >
-            <span className="text-[10px]">VIP Details </span>
-            <span className="text-[12px]">&gt;</span>
+            <span className="text-[10px] leading-none align-middle">VIP Details</span>
+            <span className="text-[10px] leading-none align-middle ml-[3px]">&rsaquo;</span>
           </motion.button>
 
           {/* VIP Progress — flex container mapped to the inner gold panel area
