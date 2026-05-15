@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { adminLogin } from '../../api/adminApi';
+import { adminLogin, verifyToken } from '../../api/adminApi';
+import { tokenStorage } from '../../api/tokenStorage';
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
 
 export default function AdminLoginPage() {
@@ -13,6 +14,32 @@ export default function AdminLoginPage() {
   });
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // Check if user is already logged in when component mounts
+  useEffect(() => {
+    const checkExistingAuth = async () => {
+      const token = tokenStorage.getAdminAccessToken();
+      
+      if (token) {
+        try {
+          // Verify the token is still valid
+          await verifyToken(token);
+          // If valid, redirect to admin dashboard
+          router.push('/admin');
+        } catch (err) {
+          // Token is invalid or expired, clear it and show login form
+          tokenStorage.clearAdminTokens();
+          setIsCheckingAuth(false);
+        }
+      } else {
+        // No token, show login form
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkExistingAuth();
+  }, [router]);
 
   const validateInput = (value) => {
     return value && value.trim().length > 0;
@@ -54,6 +81,20 @@ export default function AdminLoginPage() {
       setIsLoading(false);
     }
   };
+
+  // Show loading screen while checking if user is already authenticated
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-[#07190d] flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-[#e9af41] border-t-transparent mb-4"></div>
+          <p className="text-white/60 font-['Times_New_Roman'] text-sm">
+            Checking authentication...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#07190d] flex items-center justify-center p-6">
