@@ -159,13 +159,16 @@ function MemberReportContent() {
   const [loading, setLoading] = useState(false);
   const [apiResults, setApiResults] = useState([]);
   
+  // Column widths sized so the total (≈960px) fits inside the admin content
+  // area on a 1280px viewport with the expanded sidebar. Numeric cells are
+  // short, so we can be tight without sacrificing readability.
   const TABLE_COLUMNS = [
-    { key: "no", label: "No", className: "w-[88px]" },
-    { key: "date", label: "Date", className: "w-[300px]" },
-    { key: "new_members", label: "New Member", className: "w-[220px]" },
-    { key: "total_members", label: "Total Member", className: "w-[260px]" },
-    { key: "active_members", label: "Active Members", className: "w-[260px]" },
-    { key: "total_tokens_issued", label: "Token Issued", className: "w-[260px] text-right" },
+    { key: "no",                  label: "No",             className: "w-[80px]" },
+    { key: "date",                label: "Date",           className: "w-[180px]" },
+    { key: "new_members",         label: "New Member",     className: "w-[140px]" },
+    { key: "total_members",       label: "Total Member",   className: "w-[140px]" },
+    { key: "active_members",      label: "Active Members", className: "w-[150px]" },
+    { key: "total_tokens_issued", label: "Token Issued",   className: "w-[170px] text-right" },
   ];
 
   const fetchReport = useCallback(async () => {
@@ -291,8 +294,8 @@ function MemberReportContent() {
             </div>
           </div>
 
-          <div className="overflow-x-auto border-t border-white/5">
-            <table className="min-w-[1472px] w-full border-separate border-spacing-0">
+          <div className="overflow-x-auto overflow-y-hidden scrollbar-admin border-t border-white/5">
+            <table className="min-w-[960px] w-full table-fixed border-separate border-spacing-0">
               <thead>
                 <tr className="bg-black">
                   {TABLE_COLUMNS.map((column) => {

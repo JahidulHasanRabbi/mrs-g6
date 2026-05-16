@@ -11,9 +11,10 @@ import {
 } from "../../../components/admin/retention/constants";
 
 // Retention Settings — Member Assignment.
-// Two views toggled by ?view=add:
-//   - default → assignment table + actions (Retention Set Target / Add Member level)
-//   - ?view=add → inline "Add Member Level" form with Back/Save
+// Three views toggled by ?view=:
+//   - default       → assignment table + actions (Retention Set Target / Add Member level)
+//   - ?view=add     → inline "Add Member Level" form with Back/Save
+//   - ?view=edit&id=X → same form, prefilled from row X, saves back to it
 // The Set Target action opens a portal-rendered modal.
 
 const PICS = [
@@ -29,7 +30,7 @@ const PICS = [
 const LEVELS = ["Elite", "Premium", "Standard"];
 const STATUSES = ["Active", "Inactive"];
 
-const ASSIGNMENTS = [
+const INITIAL_ASSIGNMENTS = [
   { id: 1, name: "Sarah Jenkins",  vip: "VIP 1", avatar: `${ASSETS}/avatar-1.jpg`, level: "Elite",    members: "34,053", retain: "RM 75,000", upgrade: "34,053", target: "100,000", status: "Active"   },
   { id: 2, name: "Marcus Henry",   vip: "VIP 2", avatar: `${ASSETS}/avatar-2.jpg`, level: "Premium",  members: "28,764", retain: "RM 50,000", upgrade: "28,764", target: "100,000", status: "Active"   },
   { id: 3, name: "David Chen",     vip: "VIP 3", avatar: `${ASSETS}/avatar-3.jpg`, level: "Standard", members: "15,432", retain: "RM 30,000", upgrade: "15,432", target: "100,000", status: "Active"   },
@@ -39,14 +40,75 @@ const ASSIGNMENTS = [
   { id: 7, name: "Samantha",       vip: "VIP 1", avatar: `${ASSETS}/avatar-5.jpg`, level: "Elite",    members: "22,678", retain: "RM 55,000", upgrade: "22,678", target: "100,000", status: "Active"   },
 ];
 
+// Bridge between table row shape and the form field shape. The form models a
+// "member level" (name = level label, pic = assigned PIC) so we map column
+// values in/out at the parent rather than letting the form know about row
+// internals like avatars/VIP badge.
+function rowToFormValues(row) {
+  return {
+    name: row.level,
+    status: row.status,
+    retain: row.retain.replace(/^RM\s*/i, ""),
+    upgrade: row.upgrade,
+    pic: row.name,
+  };
+}
+
+function applyFormToRow(row, values) {
+  return {
+    ...row,
+    level: values.name,
+    status: values.status,
+    retain: `RM ${values.retain.replace(/^RM\s*/i, "")}`,
+    upgrade: values.upgrade,
+    name: values.pic,
+  };
+}
+
 export default function RetentionSettingsPage() {
   const searchParams = useSearchParams();
-  const view = searchParams.get("view") === "add" ? "add" : "list";
+  const [rows, setRows] = useState(INITIAL_ASSIGNMENTS);
+
+  const viewParam = searchParams.get("view");
+  const editIdParam = searchParams.get("id");
+  const editingRow =
+    viewParam === "edit" && editIdParam
+      ? rows.find((r) => String(r.id) === editIdParam)
+      : null;
+
+  const mode = viewParam === "add" ? "add" : editingRow ? "edit" : "list";
+
+  const handleSave = useCallback(
+    (values) => {
+      if (editingRow) {
+        setRows((prev) =>
+          prev.map((r) => (r.id === editingRow.id ? applyFormToRow(r, values) : r))
+        );
+      }
+      // For "add" we'd push a new row here once the schema is finalized. The
+      // current row shape needs avatar/VIP/member count which the form doesn't
+      // capture, so leave it as a console-log placeholder for now.
+      // eslint-disable-next-line no-console
+      else console.log("[member-level] add", values);
+    },
+    [editingRow]
+  );
 
   return (
     <>
       <PageHeader />
-      {view === "list" ? <AssignmentListSection /> : <AddMemberLevelForm />}
+      {mode === "list" ? (
+        <AssignmentListSection rows={rows} />
+      ) : (
+        // Key on the row id (or "add") forces a remount when switching between
+        // edit targets so useState's lazy init re-reads from the new row.
+        <MemberLevelForm
+          key={editingRow ? `edit-${editingRow.id}` : "add"}
+          mode={mode}
+          initialValues={editingRow ? rowToFormValues(editingRow) : null}
+          onSave={handleSave}
+        />
+      )}
     </>
   );
 }
@@ -65,7 +127,7 @@ function PageHeader() {
   );
 }
 
-function AssignmentListSection() {
+function AssignmentListSection({ rows }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -74,8 +136,19 @@ function AssignmentListSection() {
   const goToAddView = useCallback(() => {
     const next = new URLSearchParams(searchParams.toString());
     next.set("view", "add");
+    next.delete("id");
     router.push(`${pathname}?${next.toString()}`);
   }, [pathname, router, searchParams]);
+
+  const goToEditView = useCallback(
+    (id) => {
+      const next = new URLSearchParams(searchParams.toString());
+      next.set("view", "edit");
+      next.set("id", String(id));
+      router.push(`${pathname}?${next.toString()}`);
+    },
+    [pathname, router, searchParams]
+  );
 
   const handleSaveTarget = useCallback((payload) => {
     // Hook for backend; for now just log so the dev can see it.
@@ -112,11 +185,15 @@ function AssignmentListSection() {
       <div className="flex w-full flex-col overflow-clip">
         <TableHeader />
         <div className="flex w-full flex-col">
-          {ASSIGNMENTS.map((row) => (
-            <AssignmentRow key={row.id} row={row} />
+          {rows.map((row) => (
+            <AssignmentRow
+              key={row.id}
+              row={row}
+              onEdit={() => goToEditView(row.id)}
+            />
           ))}
         </div>
-        <Pagination from={1} to={ASSIGNMENTS.length} total={150} />
+        <Pagination from={1} to={rows.length} total={150} />
       </div>
 
       <SetTargetModal
@@ -153,7 +230,7 @@ function HeaderCell({ label, widthClass = "flex-1 min-w-0", align = "start" }) {
   );
 }
 
-function AssignmentRow({ row }) {
+function AssignmentRow({ row, onEdit }) {
   const statusActive = row.status === "Active";
   return (
     <div className="flex w-full items-center -mb-px border-b border-white/5">
@@ -191,6 +268,8 @@ function AssignmentRow({ row }) {
       <div className="flex h-full w-[110px] shrink-0 items-center justify-end p-6">
         <button
           type="button"
+          onClick={onEdit}
+          aria-label={`Edit ${row.name}'s level`}
           className="flex items-center justify-center gap-2 rounded-[8px] border border-[#f2cb7a] px-4 py-2 text-[12px] font-semibold text-[#152044] transition hover:brightness-110"
           style={{ backgroundImage: GRAD_GOLD }}
         >
@@ -212,30 +291,33 @@ function DataCell({ value }) {
   );
 }
 
-function AddMemberLevelForm() {
+function MemberLevelForm({ mode, initialValues, onSave }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const isEdit = mode === "edit";
 
-  const [name, setName] = useState("Level 2");
-  const [status, setStatus] = useState("Active");
-  const [retain, setRetain] = useState("10,000");
-  const [upgrade, setUpgrade] = useState("1,000");
-  const [pic, setPic] = useState(PICS[0]);
+  // useState lazy initializers run once at mount — fine here because the
+  // parent unmounts/remounts the form via URL changes when switching between
+  // add/edit/list, so we never need to re-sync from props mid-life.
+  const [name, setName] = useState(() => initialValues?.name ?? "Level 2");
+  const [status, setStatus] = useState(() => initialValues?.status ?? "Active");
+  const [retain, setRetain] = useState(() => initialValues?.retain ?? "10,000");
+  const [upgrade, setUpgrade] = useState(() => initialValues?.upgrade ?? "1,000");
+  const [pic, setPic] = useState(() => initialValues?.pic ?? PICS[0]);
 
   const goBack = useCallback(() => {
     const next = new URLSearchParams(searchParams.toString());
     next.delete("view");
+    next.delete("id");
     const qs = next.toString();
     router.push(qs ? `${pathname}?${qs}` : pathname);
   }, [pathname, router, searchParams]);
 
   const handleSave = useCallback(() => {
-    // Mock for now; replace with API call.
-    // eslint-disable-next-line no-console
-    console.log("[member-level] save", { name, status, retain, upgrade, pic });
+    onSave({ name, status, retain, upgrade, pic });
     goBack();
-  }, [name, status, retain, upgrade, pic, goBack]);
+  }, [name, status, retain, upgrade, pic, onSave, goBack]);
 
   return (
     <section className="flex w-full flex-col gap-6 rounded-[16px] bg-[#041502] p-8 shadow-[0_-4px_12px_-2px_#dea220]">
@@ -249,7 +331,7 @@ function AddMemberLevelForm() {
           lineHeight: "39px",
         }}
       >
-        Add Member Level
+        {isEdit ? "Edit Member Level" : "Add Member Level"}
       </h2>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -286,7 +368,7 @@ function AddMemberLevelForm() {
           style={{ backgroundImage: GRAD_GOLD }}
         >
           <CheckGlyph />
-          Save
+          {isEdit ? "Save Changes" : "Save"}
         </button>
       </div>
     </section>

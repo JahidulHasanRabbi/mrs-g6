@@ -103,7 +103,7 @@ export default function RetentionMembersPage() {
         </div>
       </header>
 
-      <div className="overflow-x-auto scrollbar-admin">
+      <div className="overflow-x-auto overflow-y-hidden scrollbar-admin">
         <div style={{ minWidth: TABLE_MIN_WIDTH }}>
           <TableHeader />
           <div className="flex w-full flex-col">

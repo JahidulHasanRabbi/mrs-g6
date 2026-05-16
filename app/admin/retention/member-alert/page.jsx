@@ -30,15 +30,18 @@ const ROWS = Array.from({ length: 150 }, (_, i) => {
   return { ...seed, id: i + 1 };
 });
 
+// Column widths from Figma 69:340 (frame ids 87:6604 etc). Username and
+// Action are wider to accommodate the avatar+name and the View + more-menu
+// button pair respectively; everything else is uniform at 124px.
 const COLUMNS = [
-  { key: "name",     label: "Username",       minW: 180 },
-  { key: "phone",    label: "Phone Number",   minW: 140 },
-  { key: "vip",      label: "VIP Level",      minW: 100 },
-  { key: "sales",    label: "Daily Sales",    minW: 120 },
-  { key: "winloss",  label: "Daily Win/Loss", minW: 130 },
-  { key: "priority", label: "Priority",       minW: 100 },
-  { key: "pic",      label: "Retention",      minW: 110 },
-  { key: "action",   label: "Action",         minW: 110, align: "end" },
+  { key: "name",     label: "Username",       minW: 197 },
+  { key: "phone",    label: "Phone Number",   minW: 124 },
+  { key: "vip",      label: "VIP Level",      minW: 124 },
+  { key: "sales",    label: "Daily Sales",    minW: 124 },
+  { key: "winloss",  label: "Daily Win/Loss", minW: 124 },
+  { key: "priority", label: "Priority",       minW: 124 },
+  { key: "pic",      label: "Retention",      minW: 124 },
+  { key: "action",   label: "Action",         minW: 171, align: "end" },
 ];
 
 const TABLE_MIN_WIDTH = COLUMNS.reduce((sum, c) => sum + c.minW, 0);
@@ -176,7 +179,6 @@ function FollowUpList() {
   const [retention, setRetention] = useState("");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
-  const [doneIds, setDoneIds] = useState(() => new Set());
 
   const filtered = useMemo(() => {
     return ROWS.filter((r) => {
@@ -202,14 +204,6 @@ function FollowUpList() {
   const startIdx = (safePage - 1) * PAGE_SIZE;
   const visibleRows = filtered.slice(startIdx, startIdx + PAGE_SIZE);
 
-  const markDone = (id) => {
-    setDoneIds((prev) => {
-      const next = new Set(prev);
-      next.add(id);
-      return next;
-    });
-  };
-
   return (
     <section className="flex w-full flex-col overflow-hidden rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
       <header className="flex flex-col gap-4 p-6 w-full md:flex-row md:flex-wrap md:items-center">
@@ -232,7 +226,7 @@ function FollowUpList() {
         </div>
       </header>
 
-      <div className="overflow-x-auto scrollbar-admin">
+      <div className="overflow-x-auto overflow-y-hidden scrollbar-admin">
         <div style={{ minWidth: TABLE_MIN_WIDTH }}>
           <TableHeader />
           <div className="flex w-full flex-col">
@@ -240,12 +234,7 @@ function FollowUpList() {
               <EmptyRow />
             ) : (
               visibleRows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  row={row}
-                  done={doneIds.has(row.id)}
-                  onDone={() => markDone(row.id)}
-                />
+                <TableRow key={row.id} row={row} />
               ))
             )}
           </div>
@@ -367,12 +356,13 @@ function TableHeader() {
   );
 }
 
-function TableRow({ row, done, onDone }) {
+function TableRow({ row }) {
+  const memberSlug = nameToSlug(row.name);
   return (
     <div className="flex w-full items-stretch -mb-px border-b border-white/5">
       <Cell minW={COLUMNS[0].minW}>
         <Link
-          href={`/admin/retention/members/${nameToSlug(row.name)}`}
+          href={`/admin/retention/members/${memberSlug}`}
           className="flex items-center gap-3 hover:opacity-80"
         >
           <UserAvatar />
@@ -388,40 +378,143 @@ function TableRow({ row, done, onDone }) {
       <DataCell value={row.priority} minW={COLUMNS[5].minW} />
       <DataCell value={row.pic} minW={COLUMNS[6].minW} />
       <Cell minW={COLUMNS[7].minW} align="end">
-        <DoneButton done={done} onClick={onDone} />
+        <div className="flex items-center gap-2">
+          <ViewButton href={`/admin/retention/members/${memberSlug}`} />
+          <MoreButton ariaLabel={`More actions for ${row.name}`} />
+        </div>
       </Cell>
     </div>
   );
 }
 
-function DoneButton({ done, onClick }) {
+// View link — dark gradient pill with gold border and gold text/eye icon.
+// Matches Figma 20:1735 (the shared "button" component used across the table).
+function ViewButton({ href }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={done}
-      className={`flex items-center justify-center gap-1 rounded-[8px] border px-4 py-2 transition ${
-        done
-          ? "border-[#84ebb4]/40 bg-[#84ebb4]/10 cursor-default"
-          : "border-[#84ebb4] hover:brightness-110"
-      }`}
-      style={!done ? { backgroundImage: "linear-gradient(178deg, #00813c 0%, #179451 99.7%)" } : undefined}
+    <Link
+      href={href}
+      className="flex items-center justify-center gap-1 rounded-[8px] border border-[#f2cb7a] px-4 py-2 transition hover:brightness-110"
+      style={{ backgroundImage: GRAD_DARK }}
     >
-      <CheckIcon color={done ? "#84ebb4" : "#ffffff"} />
-      <span
-        className="text-[12px] font-medium leading-[18px]"
-        style={{ color: done ? "#84ebb4" : "#ffffff" }}
-      >
-        {done ? "Done" : "Done"}
-      </span>
-    </button>
+      <EyeIcon />
+      <span className="text-[12px] font-medium text-[#eaad2c] leading-[18px]">View</span>
+    </Link>
   );
 }
 
-function CheckIcon({ color }) {
+// Square 34×34 icon button — gold gradient, dark three-dots glyph. Opens a
+// cream-colored status dropdown (In Progress / Resolve / Snooze / Remark)
+// per the design. Status is local to each row; eventually this hooks into
+// adminApi.updateMemberAlertStatus(id, status).
+const STATUS_OPTIONS = ["In Progress", "Resolve", "Snooze", "Remark"];
+
+function MoreButton({ ariaLabel }) {
+  const [open, setOpen] = useState(false);
+  const [status, setStatus] = useState("Snooze");
+
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 6 9 17 4 12" />
+    <div className="relative">
+      <button
+        type="button"
+        aria-label={ariaLabel}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="flex h-[34px] w-[34px] items-center justify-center rounded-[8px] border-2 border-[#f2cb7a] transition hover:brightness-110"
+        style={{ backgroundImage: GRAD_GOLD }}
+      >
+        <ThreeDotsIcon />
+      </button>
+      {open && (
+        <StatusMenu
+          status={status}
+          onSelect={(next) => {
+            setStatus(next);
+            setOpen(false);
+          }}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// Cream popup with a small triangular notch pointing up at the more button.
+// Backdrop swallows outside clicks to dismiss. Aligned to the right edge so
+// the menu doesn't clip when the action cell is hard against the table edge.
+function StatusMenu({ status, onSelect, onClose }) {
+  return (
+    <>
+      <div className="fixed inset-0 z-30" onClick={onClose} />
+      <div
+        role="menu"
+        className="absolute right-0 top-full z-40 mt-3 w-[180px] rounded-[16px] bg-[#fbeed2] shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
+      >
+        {/* Notch — a 12px diamond rotated 45deg, half tucked under the menu
+            top edge so only the upper triangle peeks above. Right-aligned to
+            sit directly under the more button. */}
+        <span
+          aria-hidden="true"
+          className="absolute -top-[6px] right-[10px] h-3 w-3 rotate-45 bg-[#fbeed2]"
+        />
+        <ul className="relative flex flex-col py-1">
+          {STATUS_OPTIONS.map((opt, idx) => {
+            const active = opt === status;
+            return (
+              <li key={opt}>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => onSelect(opt)}
+                  className={`block w-full px-5 py-3 text-left text-[14px] font-semibold leading-[21px] transition ${
+                    active
+                      ? "text-[#eaad2c]"
+                      : "text-[#141828] hover:bg-[#141828]/5"
+                  } ${idx < STATUS_OPTIONS.length - 1 ? "border-b border-[#141828]/10" : ""}`}
+                  style={{ letterSpacing: "-0.5px" }}
+                >
+                  {opt}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#eaad2c"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function ThreeDotsIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="#141828"
+      aria-hidden="true"
+    >
+      <circle cx="3" cy="8" r="1.6" />
+      <circle cx="8" cy="8" r="1.6" />
+      <circle cx="13" cy="8" r="1.6" />
     </svg>
   );
 }

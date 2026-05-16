@@ -9,14 +9,18 @@ import { getCategoryOptions } from "../../../api/queryParams";
 
 const PAGE_SIZE = 8;
 
+// Column widths are tuned so the total (≈1040px) fits inside the admin
+// content area on a 1440px viewport with the expanded sidebar. Below that
+// the wrapper still allows horizontal scroll, but most desktops won't see
+// it. Long cell values are truncated with title fallbacks (see <td>s).
 const TABLE_COLUMNS = [
-  { key: "phone_number", label: "Phone Number", className: "w-[170px]" },
-  { key: "username", label: "Username", className: "w-[180px]" },
-  { key: "station", label: "Station", className: "w-[180px]" },
-  { key: "created", label: "Date/Time", className: "w-[240px]" },
-  { key: "category", label: "Category", className: "w-[280px]" },
-  { key: "reward_details", label: "Reward Details", className: "w-[290px]" },
-  { key: "reward_name", label: "Reward Name", className: "w-[180px]" },
+  { key: "phone_number",   label: "Phone Number",   className: "w-[140px]" },
+  { key: "username",       label: "Username",       className: "w-[140px]" },
+  { key: "station",        label: "Station",        className: "w-[130px]" },
+  { key: "created",        label: "Date/Time",      className: "w-[170px]" },
+  { key: "category",       label: "Category",       className: "w-[110px]" },
+  { key: "reward_details", label: "Reward Details", className: "w-[180px]" },
+  { key: "reward_name",    label: "Reward Name",    className: "w-[170px]" },
 ];
 
 function formatDateTime(isoStr) {
@@ -182,8 +186,8 @@ function RewardReportContent() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-[1472px] w-full border-separate border-spacing-0">
+          <div className="overflow-x-auto overflow-y-hidden scrollbar-admin">
+            <table className="min-w-[1040px] w-full table-fixed border-separate border-spacing-0">
               <thead>
                 <tr className="bg-black">
                   {TABLE_COLUMNS.map((column) => {
@@ -217,25 +221,25 @@ function RewardReportContent() {
                 ) : sortedRows.length > 0 ? (
                   sortedRows.map((row) => (
                     <tr key={row.id} className="border-b border-[rgba(255,255,255,0.08)] transition-colors hover:bg-white/[0.03]">
-                      <td className="px-4 py-[14px] first:pl-5 text-[13px] text-[#f1f1f1] whitespace-nowrap">
+                      <td className="px-4 py-[14px] first:pl-5 text-[13px] text-[#f1f1f1] truncate" title={row.phone_number || ""}>
                         {row.phone_number || "—"}
                       </td>
-                      <td className="px-4 py-[14px] text-[13px] text-[#f1f1f1] whitespace-nowrap">
+                      <td className="px-4 py-[14px] text-[13px] text-[#f1f1f1] truncate" title={row.username || ""}>
                         {row.username || "—"}
                       </td>
-                      <td className="px-4 py-[14px] text-[13px] text-[#e8e8e8] whitespace-nowrap">
+                      <td className="px-4 py-[14px] text-[13px] text-[#e8e8e8] truncate" title={row.station || ""}>
                         {row.station || "—"}
                       </td>
                       <td className="px-4 py-[14px] text-[13px] text-[#e8e8e8] whitespace-nowrap">
                         {formatDateTime(row.created)}
                       </td>
-                      <td className="px-4 py-[14px] text-[13px] text-[#ece9dc] whitespace-nowrap">
+                      <td className="px-4 py-[14px] text-[13px] text-[#ece9dc] truncate" title={row.category || ""}>
                         {row.category || "—"}
                       </td>
-                      <td className="px-4 py-[14px] text-[13px] text-[#dadada] whitespace-nowrap">
+                      <td className="px-4 py-[14px] text-[13px] text-[#dadada] truncate" title={row.reward_details || ""}>
                         {row.reward_details || "—"}
                       </td>
-                      <td className="px-4 py-[14px] pr-5 text-[13px] text-[#f1f1f1] whitespace-nowrap">
+                      <td className="px-4 py-[14px] pr-5 text-[13px] text-[#f1f1f1] truncate" title={row.reward_name || ""}>
                         {row.reward_name || "—"}
                       </td>
                     </tr>
