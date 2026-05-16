@@ -10,7 +10,16 @@
 // like comet trails, embers, planet orbits, etc.) are applied at runtime
 // via ProfileFrame.module.css using the `tierKey` field below.
 
-export const PROFILE_FRAMES = [
+// Default frame metadata for positioning and effects
+// These are fallback values when API frames don't specify them
+const DEFAULT_FRAME_METADATA = {
+  picRect: { left: 50, top: 49, size: 52 },
+  glow: "#9bb8ff",
+  tierKey: "t1",
+};
+
+// Legacy hardcoded frames (kept as fallback)
+export const LEGACY_PROFILE_FRAMES = [
   {
     id: "starlight",
     name: "Starlight",
@@ -96,16 +105,94 @@ export const PROFILE_FRAMES = [
 
 export const DEFAULT_FRAME_ID = "starlight";
 
-export const getFrameById = (id) =>
-  PROFILE_FRAMES.find((f) => f.id === id) ||
-  PROFILE_FRAMES.find((f) => f.id === DEFAULT_FRAME_ID);
+// Active frames list (will be populated from API or fallback to legacy)
+let ACTIVE_FRAMES = [...LEGACY_PROFILE_FRAMES];
+
+// Set active frames (called from UserContext after API fetch)
+export const setActiveFrames = (frames) => {
+  if (Array.isArray(frames) && frames.length > 0) {
+    ACTIVE_FRAMES = frames;
+  }
+};
+
+// Get all active frames
+export const getActiveFrames = () => ACTIVE_FRAMES;
+
+// Map API frame data to internal frame structure
+export const mapApiFrameToInternal = (apiFrame, index) => {
+  // Try to find matching legacy frame by name for metadata
+  const legacyMatch = LEGACY_PROFILE_FRAMES.find(
+    (f) => f.name.toLowerCase() === apiFrame.name.toLowerCase()
+  );
+
+  return {
+    id: apiFrame.uuid || `frame-${index}`,
+    uuid: apiFrame.uuid,
+    name: apiFrame.name,
+    tierIndex: index + 1,
+    tierKey: legacyMatch?.tierKey || `t${index + 1}`,
+    src: apiFrame.icon || legacyMatch?.src || "/assets/profile/frames/01-starlight.png",
+    picRect: legacyMatch?.picRect || DEFAULT_FRAME_METADATA.picRect,
+    glow: legacyMatch?.glow || DEFAULT_FRAME_METADATA.glow,
+    details: apiFrame.details,
+    challenge: apiFrame.challenge,
+    vip_tier: apiFrame.vip_tier,
+    vip_tier_uuid: apiFrame.vip_tier_uuid,
+  };
+};
+
+export const getFrameById = (id) => {
+  const frame = ACTIVE_FRAMES.find((f) => f.id === id || f.uuid === id);
+  if (frame) return frame;
+  
+  // Fallback to default
+  return ACTIVE_FRAMES.find((f) => f.id === DEFAULT_FRAME_ID) || ACTIVE_FRAMES[0];
+};
 
 // Map a member's VIP tier (1-based ordinal among sorted tiers) to a frame.
 // Used as a fallback when the member hasn't picked a frame manually.
 export const getFrameForTier = (tierIndex) => {
   if (!tierIndex) return getFrameById(DEFAULT_FRAME_ID);
   return (
-    PROFILE_FRAMES.find((f) => f.tierIndex === tierIndex) ||
+    ACTIVE_FRAMES.find((f) => f.tierIndex === tierIndex) ||
     getFrameById(DEFAULT_FRAME_ID)
   );
+};
+
+// Filter frames based on user's VIP tier
+export const getAvailableFramesForUser = (userVipTierName, allVipTiers) => {
+  if (!userVipTierName || !allVipTiers || allVipTiers.length === 0) {
+    return ACTIVE_FRAMES;
+  }
+
+  // Find user's tier index
+  const userTier = allVipTiers.find((t) => t.name === userVipTierName);
+  if (!userTier) return ACTIVE_FRAMES;
+
+  // Sort tiers by lifetime_deposit_required to get tier hierarchy
+  const sortedTiers = [...allVipTiers].sort(
+    (a, b) => parseFloat(a.lifetime_deposit_required || 0) - parseFloat(b.lifetime_deposit_required || 0)
+  );
+  const userTierIndex = sortedTiers.findIndex((t) => t.uuid === userTier.uuid);
+
+  // Filter frames: user can access frames for their tier and below
+  return ACTIVE_FRAMES.filter((frame) => {
+    // If frame has no VIP requirement, it's available to everyone
+    if (!frame.vip_tier && !frame.vip_tier_uuid) return true;
+
+    // If frame requires a specific VIP tier
+    if (frame.vip_tier_uuid) {
+      const frameTierIndex = sortedTiers.findIndex((t) => t.uuid === frame.vip_tier_uuid);
+      // User can access if their tier is >= frame's required tier
+      return frameTierIndex !== -1 && userTierIndex >= frameTierIndex;
+    }
+
+    // If only vip_tier name is provided (legacy)
+    if (frame.vip_tier) {
+      const frameTierIndex = sortedTiers.findIndex((t) => t.name === frame.vip_tier);
+      return frameTierIndex !== -1 && userTierIndex >= frameTierIndex;
+    }
+
+    return true;
+  });
 };

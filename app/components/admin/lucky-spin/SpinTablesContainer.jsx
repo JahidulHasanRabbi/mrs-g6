@@ -156,11 +156,33 @@ export default function SpinTablesContainer() {
     setError(null);
     
     try {
+      console.log('Reordering sequences with payload:', luckySpins);
       await adminApi.changeSpinSequencesOrder(luckySpins);
       await loadSpinSequences();
     } catch (err) {
       console.error('Failed to reorder sequences:', err);
-      setError(err);
+      console.error('Error details:', err.data);
+      console.error('Full error object:', JSON.stringify(err, null, 2));
+      
+      // Extract detailed error message
+      let errorMessage = 'Unknown error';
+      if (err.data) {
+        if (err.data.details) {
+          errorMessage = JSON.stringify(err.data.details);
+        } else if (err.data.error) {
+          errorMessage = err.data.error;
+        } else if (err.data.detail) {
+          errorMessage = err.data.detail;
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      // Show user-friendly error message
+      alert(`Failed to reorder sequences: ${errorMessage}`);
+      
+      // Don't set error state to avoid React rendering issues
+      // setError(err);
     } finally {
       setIsSubmitting(false);
     }

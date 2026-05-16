@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
 import ProfileFrame from "./ProfileFrame";
-import { PROFILE_FRAMES } from "./profileFrames";
+import { useUser } from "../../contexts/UserContext";
 
 export default function FrameSelectionModal({
   isOpen,
@@ -12,6 +12,8 @@ export default function FrameSelectionModal({
   onSelect,
   profilePicture,
 }) {
+  const { availableFrames, isLoadingFrames } = useUser();
+
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -66,49 +68,64 @@ export default function FrameSelectionModal({
               with tournaments, events &amp; festivals.
             </p>
 
-            <div className="grid grid-cols-3 gap-3 px-5 py-4 max-h-[60vh] overflow-y-auto">
-              {PROFILE_FRAMES.map((frame) => {
-                const isActive = frame.id === currentFrameId;
-                return (
-                  <button
-                    key={frame.id}
-                    type="button"
-                    onClick={() => {
-                      onSelect(frame.id);
-                      onClose();
-                    }}
-                    className={`group relative flex flex-col items-center rounded-xl p-2 transition-colors ${
-                      isActive
-                        ? "bg-[#e9af41]/20 ring-2 ring-[#e9af41]"
-                        : "bg-black/30 hover:bg-[#e9af41]/10"
-                    }`}
-                  >
-                    <ProfileFrame
-                      frameId={frame.id}
-                      src={profilePicture}
-                      size={96}
-                      animate={isActive}
-                    />
-                    <span className="mt-1 text-[11px] font-bold text-[#e9af41] font-['Times_New_Roman'] text-center leading-tight">
-                      {frame.name}
-                    </span>
-                    {isActive && (
-                      <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#3a8a2a]">
-                        <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
-                          <path
-                            d="M2.5 6.2 L4.9 8.6 L9.5 3.6"
-                            stroke="#fff"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
+            {isLoadingFrames ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-[#e9af41] text-sm">Loading frames...</div>
+              </div>
+            ) : availableFrames.length === 0 ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-[#a8c08a] text-sm">No frames available</div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-3 px-5 py-4 max-h-[60vh] overflow-y-auto">
+                {availableFrames.map((frame) => {
+                  const isActive = frame.id === currentFrameId || frame.uuid === currentFrameId;
+                  return (
+                    <button
+                      key={frame.id || frame.uuid}
+                      type="button"
+                      onClick={() => {
+                        onSelect(frame.id || frame.uuid);
+                        onClose();
+                      }}
+                      className={`group relative flex flex-col items-center rounded-xl p-2 transition-colors ${
+                        isActive
+                          ? "bg-[#e9af41]/20 ring-2 ring-[#e9af41]"
+                          : "bg-black/30 hover:bg-[#e9af41]/10"
+                      }`}
+                    >
+                      <ProfileFrame
+                        frameId={frame.id || frame.uuid}
+                        src={profilePicture}
+                        size={96}
+                        animate={isActive}
+                      />
+                      <span className="mt-1 text-[11px] font-bold text-[#e9af41] font-['Times_New_Roman'] text-center leading-tight">
+                        {frame.name}
                       </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+                      {frame.vip_tier && (
+                        <span className="text-[9px] text-[#a8c08a] font-['Times_New_Roman'] text-center">
+                          {frame.vip_tier}
+                        </span>
+                      )}
+                      {isActive && (
+                        <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#3a8a2a]">
+                          <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
+                            <path
+                              d="M2.5 6.2 L4.9 8.6 L9.5 3.6"
+                              stroke="#fff"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </motion.div>
         </motion.div>
       )}

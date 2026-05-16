@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
 import { SortIcon, Pagination } from "../../components/admin/members/DataTable";
@@ -14,6 +14,8 @@ const PAGE_SIZE = 10;
 const GOLD_BG =
   "linear-gradient(1deg, rgba(242,195,107,0) 74%, #dd8f1f 94%), linear-gradient(90deg, #ffff84, #ffff84)";
 
+const FALLBACK_ICON = "/assets/admin/Tier.png";
+
 const TABLE_COLUMNS = [
   { key: "rowNum", label: "No", minW: "min-w-[60px]" },
   { key: "name", label: "Tier Name", minW: "min-w-[140px]" },
@@ -23,12 +25,28 @@ const TABLE_COLUMNS = [
   { key: "monthly_loyalty_bonus", label: "Monthly Loyalty", minW: "min-w-[120px]" },
   { key: "birthday_bonus", label: "Birthday Bonus", minW: "min-w-[120px]" },
   { key: "station_name", label: "Station", minW: "min-w-[100px]" },
+  { key: "icon", label: "Icon", minW: "min-w-[80px]" },
 ];
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 function formatRM(val) {
   if (!val || val === 0) return "RM 0";
   return `RM ${Number(val).toLocaleString("en-MY")}`;
+}
+
+// ── Tier Icon cell (with onError fallback) ──────────────────────────────
+function TierIconCell({ src }) {
+  const [errored, setErrored] = useState(false);
+  const finalSrc = errored || !src ? FALLBACK_ICON : src;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={finalSrc}
+      alt="Tier icon"
+      onError={() => setErrored(true)}
+      className="h-[40px] w-[40px] object-cover rounded-[4px]"
+    />
+  );
 }
 
 // ── Tier Form Modal (Create / Edit) ─────────────────────────────────────
@@ -45,8 +63,12 @@ function TierFormModal({ tier, onClose, onSave, stations }) {
     station_uuid: "",
   });
 
+  const [iconFile, setIconFile] = useState(null);
+  const [iconPreview, setIconPreview] = useState(tier?.icon ?? "");
+  const [iconErrored, setIconErrored] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const fileInputRef = useRef(null);
 
   // When editing, find the station_uuid from station_name
   useEffect(() => {
@@ -74,13 +96,32 @@ function TierFormModal({ tier, onClose, onSave, stations }) {
     }));
   };
 
+  const handleIconChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIconFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setIconPreview(reader.result);
+      setIconErrored(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMessage("");
 
     try {
-      await onSave(form);
+      const submitData = { ...form };
+      
+      // Only add icon if user uploaded a new one
+      if (iconFile) {
+        submitData.icon = iconFile;
+      }
+      
+      await onSave(submitData);
       onClose();
     } catch (err) {
       console.error('Form submission error:', err);
@@ -219,6 +260,41 @@ function TierFormModal({ tier, onClose, onSave, stations }) {
             </div>
           ))}
 
+          {/* Icon upload */}
+          <div className="flex flex-col gap-2 pt-2">
+            <span className="font-['Times_New_Roman'] text-[16px] text-white">
+              Icon (Optional)
+            </span>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex h-[110px] w-full items-center justify-center rounded-[6px] border border-dashed border-white/40 hover:border-[#f2c36b] transition-colors bg-transparent"
+            >
+              {iconPreview && !iconErrored ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={iconPreview}
+                  alt="Tier icon preview"
+                  onError={() => setIconErrored(true)}
+                  className="h-[80px] w-[80px] object-contain"
+                />
+              ) : (
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="3" width="18" height="18" rx="2" stroke="#e9af41" strokeWidth="1.5" />
+                  <circle cx="9" cy="9" r="1.5" fill="#e9af41" />
+                  <path d="M21 15l-5-5L5 21" stroke="#e9af41" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleIconChange}
+              className="hidden"
+            />
+          </div>
+
           {/* Buttons */}
           <div className="flex items-center justify-end gap-[21px] pt-5">
             <button
@@ -252,6 +328,10 @@ function WalletSiteVipContent() {
   const [editingTier, setEditingTier] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
 
+  // Search filters
+  const [stationSearch, setStationSearch] = useState("");
+  const [tierSearch, setTierSearch] = useState("");
+
   // Table state
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState("asc");
@@ -261,17 +341,30 @@ function WalletSiteVipContent() {
     loadData();
   }, []);
 
+  // Debounced search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadData();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [stationSearch, tierSearch]);
+
   const loadData = async () => {
     setIsLoading(true);
     try {
+      const params = {};
+      if (stationSearch) params.station_name = stationSearch;
+      if (tierSearch) params.tier_name = tierSearch;
+
       const [tiersData, stationsData] = await Promise.all([
-        adminApi.getWalletVipTiers(),
+        adminApi.getWalletVipTiers(params),
         adminApi.getStationList(),
       ]);
       console.log('Wallet VIP Tiers:', tiersData);
       console.log('Stations Data:', stationsData);
       setTiers(tiersData);
       setStations(stationsData);
+      setCurrentPage(1); // Reset to first page on search
     } catch (err) {
       console.error('Failed to load data:', err);
     } finally {
@@ -297,7 +390,7 @@ function WalletSiteVipContent() {
   const pageRows = sortedRows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const handleSort = useCallback((key) => {
-    if (key === "rowNum") return;
+    if (key === "rowNum" || key === "icon") return;
     setSortKey((prev) => {
       if (prev === key) {
         setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -373,6 +466,38 @@ function WalletSiteVipContent() {
               </button>
             </div>
 
+            {/* Search filters */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="font-['Times_New_Roman'] text-[14px] text-white/80">
+                Search:
+              </span>
+              <input
+                type="text"
+                placeholder="Station name..."
+                value={stationSearch}
+                onChange={(e) => setStationSearch(e.target.value)}
+                className="h-[36px] w-[180px] rounded px-3 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.2)] font-['Times_New_Roman'] text-[14px] text-white placeholder:text-white/40 outline-none focus:border-[#e9af41]"
+              />
+              <input
+                type="text"
+                placeholder="Tier name..."
+                value={tierSearch}
+                onChange={(e) => setTierSearch(e.target.value)}
+                className="h-[36px] w-[180px] rounded px-3 bg-[rgba(255,255,255,0.1)] border border-[rgba(255,255,255,0.2)] font-['Times_New_Roman'] text-[14px] text-white placeholder:text-white/40 outline-none focus:border-[#e9af41]"
+              />
+              {(stationSearch || tierSearch) && (
+                <button
+                  onClick={() => {
+                    setStationSearch("");
+                    setTierSearch("");
+                  }}
+                  className="font-['Times_New_Roman'] text-[12px] text-red-400 hover:text-red-300 underline"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
             {/* Table */}
             <div className="overflow-x-auto scrollbar-admin rounded-lg">
               <table className="w-full min-w-[1100px]">
@@ -388,7 +513,7 @@ function WalletSiteVipContent() {
                           <span className=" font-bold text-[14px] sm:text-[16px] text-white whitespace-nowrap">
                             {col.label}
                           </span>
-                          {col.key !== "rowNum" && (
+                          {col.key !== "rowNum" && col.key !== "icon" && (
                             <SortIcon active={sortKey === col.key} direction={sortDir} />
                           )}
                         </div>
@@ -449,6 +574,10 @@ function WalletSiteVipContent() {
                         {/* Station */}
                         <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                           {row.station_name || "-"}
+                        </td>
+                        {/* Icon */}
+                        <td className="px-3 py-3">
+                          <TierIconCell src={row.icon} />
                         </td>
                         {/* Action */}
                         <td className="px-3 py-3">

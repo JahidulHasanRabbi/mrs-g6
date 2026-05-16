@@ -20,7 +20,7 @@ const RewardItem = memo(function RewardItem({ icon, title, index }) {
   };
 
   return (
-  <motion.div 
+  <motion.div
     className="relative w-[80%] sm:w-full mx-auto h-[62px] rounded-[6px] border border-white overflow-hidden"
     style={{
       background: "linear-gradient(0.57deg, rgba(242, 195, 107, 0) 74.37%, rgb(221, 143, 31) 94%), linear-gradient(90deg, rgba(7, 25, 13, 0.44) 0%, rgba(7, 25, 13, 0.44) 100%)",
@@ -28,8 +28,8 @@ const RewardItem = memo(function RewardItem({ icon, title, index }) {
     }}
     initial={{ opacity: 0, x: -50 }}
     animate={{ opacity: 1, x: 0 }}
-    transition={{ 
-      duration: 0.5, 
+    transition={{
+      duration: 0.5,
       delay: index * 0.2,
       ease: "easeOut"
     }}
@@ -37,12 +37,12 @@ const RewardItem = memo(function RewardItem({ icon, title, index }) {
   >
     <div className="absolute inset-0 flex items-center justify-between px-2 sm:px-4 gap-2 sm:gap-3">
       {icon && (
-        <motion.div 
+        <motion.div
           className="relative w-[45px] h-[45px] sm:w-[50px] sm:h-[51px] shrink-0"
           initial={{ opacity: 0, scale: 0 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ 
-            duration: 0.4, 
+          transition={{
+            duration: 0.4,
             delay: index * 0.2 + 0.1,
             ease: "easeOut"
           }}
@@ -55,7 +55,7 @@ const RewardItem = memo(function RewardItem({ icon, title, index }) {
         </motion.div>
       )}
       <div className="flex-1 flex items-center justify-center min-w-0">
-        <p 
+        <p
           className={`text-white ${getFontSizeClass(title)} font-bold text-center drop-shadow-lg px-1 leading-[1.1]`}
           style={{
             display: '-webkit-box',
@@ -77,12 +77,12 @@ const RewardItem = memo(function RewardItem({ icon, title, index }) {
 
 const CreditCard = memo(function CreditCard({ range, index }) {
   return (
-  <motion.div 
+  <motion.div
     className="relative w-[100px] h-[100px] sm:w-[130px] sm:h-[96px]"
     initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
     animate={{ opacity: 1, scale: 1, rotate: 0 }}
-    transition={{ 
-      duration: 0.6, 
+    transition={{
+      duration: 0.6,
       delay: index * 0.15,
       ease: "easeOut"
     }}
@@ -95,12 +95,12 @@ const CreditCard = memo(function CreditCard({ range, index }) {
       className="object-cover"
       sizes="130px"
     />
-    <motion.div 
-      className="absolute left-[-60px] bottom-[6px] w-[130px] h-[50px]"
+    <motion.div
+      className="absolute left-[-60px] bottom-[6px] w-[130px] h-[30px]"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ 
-        duration: 0.4, 
+      transition={{
+        duration: 0.4,
         delay: index * 0.15 + 0.3,
         ease: "easeOut"
       }}
@@ -159,7 +159,7 @@ const RewardsList = memo(function RewardsList() {
 
   if (isLoading) {
     return (
-      <div className="relative w-[400px] h-[750px] sm:w-[520px] sm:h-[950px] mx-auto flex items-center justify-center">
+      <div className="relative w-[400px] min-h-[820px] sm:w-[520px] sm:min-h-[1020px] mx-auto flex items-center justify-center">
         <LoadingState />
       </div>
     );
@@ -167,15 +167,15 @@ const RewardsList = memo(function RewardsList() {
 
   if (error) {
     return (
-      <div className="relative w-[400px] h-[750px] sm:w-[520px] sm:h-[950px] mx-auto flex items-center justify-center">
+      <div className="relative w-[400px] min-h-[820px] sm:w-[520px] sm:min-h-[1020px] mx-auto flex items-center justify-center">
         <ErrorDisplay message={error} />
       </div>
     );
   }
 
   return (
-    <motion.div 
-      className="relative w-[400px] h-[750px] sm:w-[520px] sm:h-[950px] mx-auto"
+    <motion.div
+      className="relative w-[400px] sm:w-[520px] min-h-[820px] sm:min-h-[1020px] mx-auto"
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
@@ -187,9 +187,9 @@ const RewardsList = memo(function RewardsList() {
         fill
         className="object-cover"
       />
-      
-      <div className="absolute inset-0 flex flex-col items-center pt-20 px-10 pb-16">
-        <motion.h2 
+
+      <div className="relative flex flex-col items-center pt-32 px-10 pb-20">
+        <motion.h2
           className="text-[36px] font-bold text-center mb-4"
           style={{ color: '#8B6914' }}
           initial={{ opacity: 0, y: -20 }}
@@ -198,7 +198,7 @@ const RewardsList = memo(function RewardsList() {
         >
           Rewards List
         </motion.h2>
-        
+
         <div className="flex flex-col gap-3 w-full max-w-[300px]">
           {itemRewards.map((reward, index) => (
             <RewardItem 
@@ -230,8 +230,8 @@ const RewardsList = memo(function RewardsList() {
           <>
             <div className="flex justify-center gap-8 mt-2">
               {creditRewards.slice(0, 2).map((credit, index) => (
-                <CreditCard 
-                  key={credit.uuid} 
+                <CreditCard
+                  key={credit.uuid}
                   range={`RM${credit.min_withdraw} ~ RM${credit.max_withdraw}`}
                   index={index}
                 />
@@ -240,8 +240,8 @@ const RewardsList = memo(function RewardsList() {
             {creditRewards.length > 2 && (
               <div className="flex justify-center gap-8">
                 {creditRewards.slice(2, 4).map((credit, index) => (
-                  <CreditCard 
-                    key={credit.uuid} 
+                  <CreditCard
+                    key={credit.uuid}
                     range={`RM${credit.min_withdraw} ~ RM${credit.max_withdraw}`}
                     index={index + 2}
                   />
@@ -251,8 +251,8 @@ const RewardsList = memo(function RewardsList() {
             {creditRewards.length > 4 && (
               <div className="flex justify-center gap-8">
                 {creditRewards.slice(4, 6).map((credit, index) => (
-                  <CreditCard 
-                    key={credit.uuid} 
+                  <CreditCard
+                    key={credit.uuid}
                     range={`RM${credit.min_withdraw} ~ RM${credit.max_withdraw}`}
                     index={index + 4}
                   />

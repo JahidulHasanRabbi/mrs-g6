@@ -201,6 +201,7 @@ function ViewMemberModal({ member, onClose, onNavigate }) {
 // ── Edit Member Profile Modal ──────────────────────────────────────────
 function EditMemberModal({ member, onClose, onSave }) {
   const [form, setForm] = useState(null);
+  const [profileData, setProfileData] = useState(null); // Store original profile data
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [vipTiers, setVipTiers] = useState([]);
@@ -238,24 +239,27 @@ function EditMemberModal({ member, onClose, onSave }) {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [profileData, tiersData] = await Promise.all([
+        const [fetchedProfile, tiersData] = await Promise.all([
           getMemberListSingle(member.uuid),
           getVipTierList()
         ]);
         
+        // Store the original profile data
+        setProfileData(fetchedProfile);
+        
         // Find gender value from label
-        const genderOption = GENDER_OPTIONS.find(g => g.label === profileData.gender);
+        const genderOption = GENDER_OPTIONS.find(g => g.label === fetchedProfile.gender);
         // Find hobby value from label
-        const hobbyOption = HOBBY_OPTIONS.find(h => h.label === profileData.hobby);
+        const hobbyOption = HOBBY_OPTIONS.find(h => h.label === fetchedProfile.hobby);
         
         setForm({
-          full_name: profileData.full_name || "",
-          email: profileData.email || "",
+          full_name: fetchedProfile.full_name || "",
+          email: fetchedProfile.email || "",
           gender: genderOption?.value || "",
-          date_of_birth: profileData.date_of_birth || "",
+          date_of_birth: fetchedProfile.date_of_birth || "",
           hobby: hobbyOption?.value || "",
-          mrs_vip_tier_uuid: tiersData.find(t => t.name === profileData.vip_tier)?.uuid || "",
-          profile_picture: profileData.profile_picture || null
+          mrs_vip_tier_uuid: tiersData.find(t => t.name === fetchedProfile.vip_tier)?.uuid || "",
+          profile_picture: fetchedProfile.profile_picture || null
         });
         setVipTiers(tiersData);
       } catch (err) {
@@ -284,32 +288,23 @@ function EditMemberModal({ member, onClose, onSave }) {
   const handleConfirm = async () => {
     setSaving(true);
     try {
+      // According to API doc: mrs_vip_tier_uuid is required, all other fields are optional
+      // Send all fields from the form (admin can update everything)
       const updateData = {
         mrs_vip_tier_uuid: form.mrs_vip_tier_uuid,
+        full_name: form.full_name || null,
+        email: form.email || null,
+        date_of_birth: form.date_of_birth || null,
+        gender: form.gender || null,
+        hobby: form.hobby || null,
       };
 
-      // Only include personal fields if they are currently empty (can only be set once)
-      // Don't send them at all if they already have values
-      if (!member.full_name && form.full_name) {
-        updateData.full_name = form.full_name;
-      }
-      if (!member.email && form.email) {
-        updateData.email = form.email;
-      }
-      if (!member.date_of_birth && form.date_of_birth) {
-        updateData.date_of_birth = form.date_of_birth;
-      }
-      if (!member.gender && form.gender) {
-        updateData.gender = form.gender;
-      }
-      if (!member.hobby && form.hobby) {
-        updateData.hobby = form.hobby;
-      }
-
-      // Profile picture can always be updated
+      // Profile picture - only send if user uploaded a new one
       if (profilePictureFile) {
         updateData.profile_picture = profilePictureFile;
       }
+
+      console.log('Sending update data:', updateData);
 
       await updateMember(member.uuid, updateData);
       onSave?.(updateData);

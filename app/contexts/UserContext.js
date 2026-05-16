@@ -1,10 +1,17 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect } from 'react';
-import { getMemberInfo, getProfile } from '../api/memberApi';
+import { getMemberInfo, getProfile, getPublicFrames, getVipTiers } from '../api/memberApi';
 import { tokenStorage } from '../api/tokenStorage';
 import { onAuthChanged } from '../api/authEvents';
-import { DEFAULT_FRAME_ID, getFrameById } from '../components/profile/profileFrames';
+import { 
+  DEFAULT_FRAME_ID, 
+  getFrameById, 
+  setActiveFrames, 
+  mapApiFrameToInternal,
+  getAvailableFramesForUser,
+  getActiveFrames
+} from '../components/profile/profileFrames';
 
 const FRAME_STORAGE_KEY = 'mrs_member_profile_frame';
 
@@ -24,6 +31,66 @@ export function UserProvider({ children }) {
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [memberUuid, setMemberUuid] = useState(null);
   const [selectedFrameId, setSelectedFrameId] = useState(DEFAULT_FRAME_ID);
+  const [availableFrames, setAvailableFrames] = useState([]);
+  const [allVipTiers, setAllVipTiers] = useState([]);
+  const [isLoadingFrames, setIsLoadingFrames] = useState(true);
+
+  // Load frames from API when user logs in
+  useEffect(() => {
+    const loadFrames = async () => {
+      // Only load frames if user is logged in
+      if (!memberUuid) {
+        // Use legacy frames when not logged in
+        setAvailableFrames(getActiveFrames());
+        setIsLoadingFrames(false);
+        return;
+      }
+
+      try {
+        setIsLoadingFrames(true);
+        
+        // Fetch frames and VIP tiers in parallel
+        const [framesResponse, tiersResponse] = await Promise.all([
+          getPublicFrames({ page_size: 100 }), // Get up to 100 frames
+          getVipTiers()
+        ]);
+
+        // Handle paginated responses
+        const framesData = Array.isArray(framesResponse) 
+          ? framesResponse 
+          : (framesResponse?.results || []);
+        
+        const tiersData = Array.isArray(tiersResponse)
+          ? tiersResponse
+          : (tiersResponse?.results || []);
+
+        console.log('API returned frames:', framesData.length, framesData);
+
+        // Map API frames to internal structure
+        const mappedFrames = framesData.map((apiFrame, index) => 
+          mapApiFrameToInternal(apiFrame, index)
+        );
+
+        // Update active frames globally
+        if (mappedFrames.length > 0) {
+          setActiveFrames(mappedFrames);
+          setAvailableFrames(mappedFrames);
+        }
+
+        setAllVipTiers(tiersData);
+        
+        console.log('Loaded frames from API:', mappedFrames.length);
+      } catch (error) {
+        console.error('Failed to load frames from API, using legacy frames:', error);
+        // Fallback to legacy frames is already set in profileFrames.js
+        setAvailableFrames(getActiveFrames());
+      } finally {
+        setIsLoadingFrames(false);
+      }
+    };
+
+    loadFrames();
+  }, [memberUuid]); // Load frames when user logs in
 
   // Load persisted frame choice on mount
   useEffect(() => {
@@ -83,6 +150,8 @@ export function UserProvider({ children }) {
         setProfilePicture(null);
         setProfileData(null);
         setIsLoadingProfile(false);
+        // Reset to all frames when logged out
+        setAvailableFrames(getActiveFrames());
         return;
       }
 
@@ -101,6 +170,13 @@ export function UserProvider({ children }) {
           balance: formattedBalance,
           currentLevel: memberInfo.tier || prev.currentLevel,
         }));
+
+        // Filter available frames based on user's VIP tier
+        const userAvailableFrames = getAvailableFramesForUser(
+          memberInfo.tier,
+          allVipTiers
+        );
+        setAvailableFrames(userAvailableFrames);
 
         // Fetch profile data for profile picture and field-completion checks
         try {
@@ -125,7 +201,7 @@ export function UserProvider({ children }) {
     };
 
     loadUserData();
-  }, [memberUuid]);
+  }, [memberUuid, allVipTiers]);
 
   const refreshUserData = async () => {
     const uuid = tokenStorage.getMemberUuid();
@@ -182,7 +258,10 @@ export function UserProvider({ children }) {
       refreshUserData,
       selectedFrame,
       selectedFrameId,
-      updateSelectedFrame
+      updateSelectedFrame,
+      availableFrames,
+      allVipTiers,
+      isLoadingFrames
     }}>
       {children}
     </UserContext.Provider>

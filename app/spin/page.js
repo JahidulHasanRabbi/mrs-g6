@@ -205,12 +205,17 @@ export default function SpinPage() {
     setModalShowSpinActions(false);
   }, []);
 
-  // "Return To Website" sends the player back to the external host saved
-  // during member auth (kinggroup44.com etc). Falls back to "/" when missing.
+  // "Return To Website" sends the player to the /promotion page on the
+  // external host saved during member auth (e.g. https://n1gang.net/promotion).
+  // Falls back to the local /promotion route when no host is saved.
   const handleReturnToWebsite = useCallback(() => {
     const savedO = tokenStorage.getRedirectO();
-    const url = savedO ? (savedO.startsWith("http") ? savedO : `https://${savedO}`) : "/";
-    window.location.href = url;
+    if (!savedO) {
+      window.location.href = "/promotion";
+      return;
+    }
+    const base = savedO.startsWith("http") ? savedO : `https://${savedO}`;
+    window.location.href = `${base.replace(/\/$/, "")}/promotion`;
   }, []);
 
   // Two action buttons attached to the win modal (slide 8). Null otherwise so

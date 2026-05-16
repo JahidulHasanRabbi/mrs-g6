@@ -279,12 +279,13 @@ export default function ProfileCard({
         }}
       >
         <div className="absolute left-1/2 top-0 -translate-x-1/2 origin-top w-[366px] h-[224px] scale-[1] min-[465px]:scale-[1.1]">
-          {/* Card Background */}
+          {/* Card Background — use object-contain so the corner gem ornaments
+              aren't cropped by aspect-ratio mismatch. */}
           <Image
             alt="Profile Card"
             src={PROFILE_ASSETS.profileCardBg}
             fill
-            className="object-cover"
+            className="object-contain"
           />
 
           <motion.div
@@ -298,7 +299,7 @@ export default function ProfileCard({
 
          
           <motion.div
-            className="absolute left-[18px] top-[3px]"
+            className="absolute left-[36px] top-[18px]"
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{
@@ -311,7 +312,7 @@ export default function ProfileCard({
             <ProfileFrame
               src={profilePicture || avatarSrc}
               frameId={selectedFrameId}
-              size={90}
+              size={66}
               alt={displayName}
             />
           </motion.div>
@@ -331,79 +332,66 @@ export default function ProfileCard({
             </p>
           </motion.div>
 
-          {/* VIP Details Button */}
+          {/* VIP Details Button — sits in the dark-green band between the
+              Total Token line (~y=55) and the inner gold panel top (~y=96),
+              right-aligned to clear the corner gem ornament (~30px deep). */}
           <motion.button
             onClick={handleVipDetailsClick}
-            className="absolute left-[239px] top-[37px] text-[#e9af41] font-bold font-['Times_New_Roman'] whitespace-nowrap cursor-pointer"
+            className="absolute right-[55px] top-[60px] text-[#e9af41] font-bold font-['Times_New_Roman'] whitespace-nowrap cursor-pointer"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.6 }}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
           >
-            <span className="text-[10px]">VIP Details </span>
-            <span className="text-[12px]">&gt;</span>
+            <span className="text-[10px] leading-none align-middle">VIP Details</span>
+            <span className="text-[10px] leading-none align-middle ml-[3px]">&rsaquo;</span>
           </motion.button>
 
-          {/* Coming Soon Overlay - Blurred VIP Box */}
-          <div className="absolute left-[38px] top-[90px] w-[290px] h-[120px] flex items-center justify-center backdrop-blur-md bg-black/30 rounded-lg z-10">
-            <p className="text-[#e9af41] text-[24px] font-bold font-['Times_New_Roman'] animate-pulse drop-shadow-lg">
-              COMING SOON
-            </p>
-          </div>
-
-          {/* Progress Section - COMMENTED OUT FOR LATER USE */}
-          {/* <motion.div
-            className="absolute left-[51px] top-[100px] w-[236px]"
+          {/* VIP Progress — flex container mapped to the inner gold panel area
+              of profileboard-1.png. Source image is 612×408; pixel-detection
+              of the panel's gold borders puts the interior at source x=30–590,
+              y=175–360. With object-contain inside the 366×224 card div (image
+              displayed at 336×224 with 15px horizontal letterbox), the panel
+              interior lands at left=32, right=27, top=100, bottom=30. */}
+          <motion.div
+            className="absolute left-[62px] right-[58px] top-[118px] bottom-[42px] flex flex-col justify-around gap-1"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.7 }}
-          > */}
-            {/* Current Tier with Star - Reduced Size */}
-            {/* <div className="mb-2">
-              <p className="text-[#e9af41] text-[18px] font-bold font-['Times_New_Roman'] leading-none uppercase">
-                {currentTierData ? currentTierData.name : currentLevel} ⭐
-              </p>
-            </div> */}
+          >
+            {/* Current Tier */}
+            <p className="text-[#e9af41] text-[15px] font-bold font-['Times_New_Roman'] leading-none uppercase truncate">
+              {currentTierData ? currentTierData.name : currentLevel} ⭐
+            </p>
 
             {/* Progress Text */}
-            {/* {nextTierData ? (
-              <p className="text-[#e9af41] text-[11px] font-bold font-['Times_New_Roman'] mb-2">
-                Get {tokensToNextTier.toLocaleString()} more to go {nextTierData.name.toUpperCase()}
-              </p>
-            ) : (
-              <p className="text-[#e9af41] text-[11px] font-bold font-['Times_New_Roman'] mb-2">
-                Maximum tier reached! 🎉
-              </p>
-            )} */}
+            <p className="text-[#e9af41] text-[10px] font-bold font-['Times_New_Roman'] leading-tight">
+              {nextTierData
+                ? `Get ${tokensToNextTier.toLocaleString()} more to go ${nextTierData.name.toUpperCase()}`
+                : "Maximum tier reached! 🎉"}
+            </p>
 
-            {/* Progress Bar Container */}
-            {/* <div className="relative w-full h-[8px] bg-[#51340c] border border-[#e9af41] rounded-[20px] shadow-[inset_0px_4px_4px_0px_rgba(0,0,0,0.25)]"> */}
-              {/* Progress Bar Fill */}
-              {/* <motion.div
-                className="absolute left-0 top-0 h-full bg-[#e9af41] rounded-[20px] shadow-[inset_0px_4px_4px_0px_rgba(0,0,0,0.25)]"
+            {/* Progress Bar */}
+            <div className="relative w-full h-[6px] bg-[#51340c] border border-[#e9af41] rounded-full overflow-hidden shadow-[inset_0px_2px_2px_0px_rgba(0,0,0,0.25)]">
+              <motion.div
+                className="absolute inset-y-0 left-0 bg-[#e9af41]"
                 initial={{ width: 0 }}
                 animate={{ width: `${progressPercentage}%` }}
-                transition={{
-                  duration: 1,
-                  delay: 0.9,
-                  ease: "easeOut",
-                }}
+                transition={{ duration: 1, delay: 0.9, ease: "easeOut" }}
               />
-            </div> */}
+            </div>
 
-            {/* Level Labels */}
-            {/* <div className="flex justify-between mt-2">
-              <p className="text-[#e9af41] text-[10px] font-bold font-['Times_New_Roman'] uppercase">
+            {/* Tier labels — truncate so long names don't push against the gold border */}
+            <div className="flex justify-between gap-2 text-[#e9af41] text-[9px] font-bold font-['Times_New_Roman'] uppercase leading-none">
+              <span className="truncate">
                 {currentTierData ? currentTierData.name : currentLevel}
-              </p>
+              </span>
               {nextTierData && (
-                <p className="text-[#e9af41] text-[10px] font-bold font-['Times_New_Roman'] uppercase">
-                  {nextTierData.name}
-                </p>
+                <span className="truncate text-right">{nextTierData.name}</span>
               )}
             </div>
-          </motion.div> */}
+          </motion.div>
         </div>
       </motion.div>
 

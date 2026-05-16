@@ -40,10 +40,13 @@ export default function SpinSequenceTable({
     const prevSequence = sequences[index - 1];
     
     // Swap item_order values
-    await onReorder([
-      { item_order: prevSequence.item_order, sequence_UUID: sequence.uuid },
-      { item_order: sequence.item_order, sequence_UUID: prevSequence.uuid }
-    ]);
+    const payload = [
+      { item_order: prevSequence.item_order, sequence_uuid: sequence.uuid },
+      { item_order: sequence.item_order, sequence_uuid: prevSequence.uuid }
+    ];
+    
+    console.log('Move Up payload:', payload);
+    await onReorder(payload);
   };
 
   const handleMoveDown = async (sequence, index) => {
@@ -51,10 +54,13 @@ export default function SpinSequenceTable({
     const nextSequence = sequences[index + 1];
     
     // Swap item_order values
-    await onReorder([
-      { item_order: nextSequence.item_order, sequence_UUID: sequence.uuid },
-      { item_order: sequence.item_order, sequence_UUID: nextSequence.uuid }
-    ]);
+    const payload = [
+      { item_order: nextSequence.item_order, sequence_uuid: sequence.uuid },
+      { item_order: sequence.item_order, sequence_uuid: nextSequence.uuid }
+    ];
+    
+    console.log('Move Down payload:', payload);
+    await onReorder(payload);
   };
 
   const handleModalSubmit = async (formData) => {

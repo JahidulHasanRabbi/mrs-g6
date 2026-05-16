@@ -136,7 +136,7 @@ export default function VipLevelChain({ selectedLevel, onLevelSelect, vipTiers =
 
           return (
             <motion.div
-              key={level.name}
+              key={`${level.name}-${index}`}
               className="absolute top-0 left-0 cursor-pointer flex flex-col items-center -translate-x-1/2"
               style={{ zIndex: isSelected ? 10 : 1 }}
               onClick={() => onLevelSelect(level.name)}

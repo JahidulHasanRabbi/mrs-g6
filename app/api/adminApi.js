@@ -162,10 +162,44 @@ export async function deleteLuckySpinSequence(uuid) {
 }
 
 export async function changeSpinSequencesOrder(luckySpins) {
-  return await apiRequest(ENDPOINTS.ADMIN.CHANGE_SPIN_SEQUENCES, {
+  console.log('changeSpinSequencesOrder called with:', luckySpins);
+  const payload = { lucky_spins: luckySpins };
+  console.log('Sending payload:', JSON.stringify(payload, null, 2));
+  
+  const response = await fetch(`${BASE_URL}${ENDPOINTS.ADMIN.CHANGE_SPIN_SEQUENCES}`, {
     method: 'PATCH',
-    body: { lucky_spins: luckySpins }
-  }, true, 'admin');
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${tokenStorage.getAdminAccessToken()}`
+    },
+    body: JSON.stringify(payload)
+  });
+  
+  if (!response.ok) {
+    let errorData = null;
+    try {
+      errorData = await response.json();
+    } catch (e) {
+      errorData = { detail: response.statusText };
+    }
+    throw {
+      message: `HTTP error: ${response.status}`,
+      status: response.status,
+      data: errorData
+    };
+  }
+  
+  // PATCH might return 204 No Content, which has no body
+  if (response.status === 204) {
+    return { success: true };
+  }
+  
+  try {
+    return await response.json();
+  } catch (e) {
+    // If no JSON body, return success
+    return { success: true };
+  }
 }
 
 export async function getMembers() {
@@ -486,6 +520,27 @@ export async function updateFloatingMenu(uuid, menuData) {
 export async function archiveFloatingMenu(uuid) {
   return await apiRequest(ENDPOINTS.ADMIN.FLOATING_MENU_ARCHIVE(uuid), {
     method: 'PATCH'
+  }, true, 'admin');
+}
+
+// ============================================================================
+// FLOATING MENU ROOT ICON MANAGEMENT
+// ============================================================================
+
+// GET /third-party/floating-menu-root-icon/ - Get all root icons
+export async function getFloatingMenuRootIcons(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.FLOATING_MENU_ROOT_ICON}${qs}`, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+// POST /third-party/floating-menu-root-icon/ - Create/Update root icon
+// Note: This endpoint overwrites the previous icon for the station
+export async function createOrUpdateRootIcon(rootIconData) {
+  return await apiRequest(ENDPOINTS.ADMIN.FLOATING_MENU_ROOT_ICON, {
+    method: 'POST',
+    body: rootIconData
   }, true, 'admin');
 }
 

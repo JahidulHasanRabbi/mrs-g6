@@ -18,24 +18,18 @@ export const MENU_CONFIG = {
     { icon: "/assets/images/vip-membership-icon.png", label: "VIP Membership", link: "/vip-details" },
     { icon: "/assets/images/pagcor-mart-icon.png", label: "Mart", link: "/mart" },
   ],
-  social: {
+  stayConnected: {
     title: "Stay Connected",
     icon: "/assets/images/mini-game-icon.png",
-    // Mixed row of social links (`url`) and action triggers (`action`).
-    // Action items are rendered as buttons; the parent menu wires `onAction`.
-    // Instagram/Telegram entry was removed per client request — only the
-    // Feedback / Complain action remains.
-    links: [
-      { icon: "/assets/images/feedback-icon.svg", action: "feedback", label: "Feedback / Complain", showLabel: true },
-      // { icon: "/assets/images/facebook-icon.png", url: process.env.NEXT_PUBLIC_FACEBOOK_URL, label: "Facebook", disabled: !process.env.NEXT_PUBLIC_FACEBOOK_URL },
-      // { icon: "/assets/images/youtube-icon.png", url: process.env.NEXT_PUBLIC_YOUTUBE_URL, label: "YouTube", disabled: !process.env.NEXT_PUBLIC_YOUTUBE_URL },
-      // { icon: "/assets/images/twitter-icon.png", url: process.env.NEXT_PUBLIC_TWITTER_URL, label: "Twitter", disabled: !process.env.NEXT_PUBLIC_TWITTER_URL },
+    items: [
+      { icon: "/assets/images/feedback-icon.svg", label: "Feedback / Complain", action: "feedback" },
     ],
   },
-  bottomItems: [
+  // Standalone items rendered after Stay Connected — kept outside any section so
+  // they remain visible when sections collapse.
+  extraItems: [
     { icon: "/assets/images/live-chat-icon.png", label: "Live Chat", action: "livechat" },
     { icon: "/assets/images/terms-icon.png", label: "Term & Condition", link: "/terms-and-conditions" },
-    { icon: "/assets/images/logout-icon.png", label: "Log out", action: "logout" },
   ],
 };
 
