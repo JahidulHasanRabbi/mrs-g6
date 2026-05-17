@@ -151,20 +151,76 @@ function ProfileHeader({ profile, slug, period, onPeriodChange }) {
               <EditIcon />
               <span className="text-[12px] font-medium leading-[18px] text-[#141828]">Edit Profile</span>
             </Link>
-            <button
-              type="button"
-              aria-label="More options"
-              className="flex h-[34px] w-[34px] items-center justify-center rounded-[8px] border-2 border-[#f2cb7a] transition hover:brightness-110"
-              style={{ backgroundImage: GRAD_GOLD }}
-            >
-              <DotsIcon />
-            </button>
+            <MoreOptionsMenu />
           </div>
         </div>
       </div>
       <div className="flex items-center gap-2">
         <PeriodToggle period={period} onPeriodChange={onPeriodChange} />
       </div>
+    </div>
+  );
+}
+
+// Cream popover triggered by the dots button next to Edit Profile. Items
+// are placeholders until the corresponding admin endpoints are wired up.
+const MORE_OPTIONS = [
+  { key: "send-bonus",      label: "Send Bonus" },
+  { key: "add-note",        label: "Add Note" },
+  { key: "change-vip-level", label: "Change VIP Level" },
+  { key: "add-tag",         label: "Add Tag" },
+  { key: "block-customer",  label: "Block Customer", danger: true },
+  { key: "alert",           label: "Alert",          danger: true },
+];
+
+function MoreOptionsMenu() {
+  const [open, setOpen] = useState(false);
+
+  const handleSelect = (key) => {
+    setOpen(false);
+    // TODO: wire each action to its admin endpoint.
+    if (process.env.NODE_ENV !== "production") {
+      console.log(`[member-profile] more-options action: ${key}`);
+    }
+  };
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        aria-label="More options"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="flex h-[34px] w-[34px] items-center justify-center rounded-[8px] border-2 border-[#f2cb7a] transition hover:brightness-110"
+        style={{ backgroundImage: GRAD_GOLD }}
+      >
+        <DotsIcon />
+      </button>
+      {open ? (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <ul
+            role="menu"
+            className="absolute left-0 top-full z-20 mt-2 min-w-[220px] overflow-hidden rounded-[12px] bg-[#fbeed2] py-2 shadow-[0_12px_32px_rgba(0,0,0,0.45)]"
+          >
+            {MORE_OPTIONS.map((opt) => (
+              <li key={opt.key} role="none">
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => handleSelect(opt.key)}
+                  className={`block w-full px-5 py-2 text-left text-[14px] font-medium leading-[21px] transition hover:bg-[#f2cb7a]/30 ${
+                    opt.danger ? "text-[#d00416]" : "text-[#141828]"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
     </div>
   );
 }

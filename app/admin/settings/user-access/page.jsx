@@ -3,11 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  ASSETS,
   GRAD_CARD,
   GRAD_DARK,
   GRAD_GOLD,
 } from "../../../components/admin/retention/constants";
+import { ROLE_OPTIONS, STATUS_OPTIONS, USERS } from "./_data";
 
 // User Access management — Figma 94:11764. Four KPI cards (Total Users,
 // Active Users, Suspended, Login Pending) and a User List table with
@@ -15,33 +15,6 @@ import {
 // topbar, padding) is provided by app/admin/retention/layout.jsx.
 
 const PAGE_SIZE = 7;
-
-const ROLE_OPTIONS = [
-  "Retention",
-  "Prize Moderator",
-  "Game Master",
-  "Lucky Spin Manager",
-  "Supervisor Retention",
-];
-
-const STATUS_OPTIONS = ["Active", "Suspended"];
-
-// Seed users, cycled to 150 rows so the pagination has something to flip
-// through until the backend is wired up.
-const SEED_USERS = [
-  { name: "Sarah Jenkins",  vip: "VIP 1", avatar: `${ASSETS}/avatar-1.jpg`, role: "Retention",            status: "Active"    },
-  { name: "Marcus Henry",   vip: "VIP 2", avatar: `${ASSETS}/avatar-2.jpg`, role: "Prize Moderator",      status: "Active"    },
-  { name: "David Chen",     vip: "VIP 3", avatar: `${ASSETS}/avatar-3.jpg`, role: "Game Master",          status: "Suspended" },
-  { name: "Elena Rody",     vip: "VIP 2", avatar: `${ASSETS}/avatar-3.jpg`, role: "Lucky Spin Manager",   status: "Active"    },
-  { name: "Adam Ron",       vip: "VIP 3", avatar: `${ASSETS}/avatar-4.jpg`, role: "Retention",            status: "Active"    },
-  { name: "Omar Al-Farsi",  vip: "VIP 1", avatar: `${ASSETS}/avatar-4.jpg`, role: "Supervisor Retention", status: "Active"    },
-  { name: "Samantha",       vip: "VIP 1", avatar: `${ASSETS}/avatar-5.jpg`, role: "Game Master",          status: "Suspended" },
-];
-
-const USERS = Array.from({ length: 150 }, (_, i) => {
-  const seed = SEED_USERS[i % SEED_USERS.length];
-  return { ...seed, id: i + 1 };
-});
 
 const COLUMNS = [
   { key: "username", label: "Username",  minW: 240 },
@@ -386,7 +359,7 @@ function UserRow({ user }) {
         <StatusBadge status={user.status} />
       </Cell>
       <Cell minW={COLUMNS[4].minW} align="end">
-        <EditButton />
+        <EditButton href={`/admin/settings/user-access/edit/${user.id}`} />
       </Cell>
     </div>
   );
@@ -434,16 +407,16 @@ function StatusBadge({ status }) {
   );
 }
 
-function EditButton() {
+function EditButton({ href }) {
   return (
-    <button
-      type="button"
+    <Link
+      href={href}
       className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#f2cb7a] px-4 py-2 text-[12px] font-medium text-[#141828] transition hover:brightness-110"
       style={{ backgroundImage: GRAD_GOLD }}
     >
       <EditIcon />
       <span>Edit</span>
-    </button>
+    </Link>
   );
 }
 
