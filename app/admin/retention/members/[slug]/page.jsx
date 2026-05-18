@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import PeriodToggle from "../../../../components/admin/retention/PeriodToggle";
 import { ASSETS, GRAD_DARK, GRAD_GOLD } from "../../../../components/admin/retention/constants";
+import { getCrmMemberSingle } from "../../../../api/crmApi";
 
 // Member profile detail — mirrors Figma node 34:316.
-// Routes: /admin/retention/members/[slug] where slug is the member name
-// kebab-cased (e.g. "ah-chong"). Falls back to a generic stub when the slug
-// isn't recognized so the page still renders for unknown members.
+// Route: /admin/retention/members/[slug] where slug is the member UUID coming
+// from the list pages. The page hits GET /crm-members/members/<uuid>/ and
+// renders three info sections (basic / financial / gaming) plus the header
+// stats. Fields the API doesn't return are shown as "—" so the UI stays intact.
 
 const TAG_STYLES = {
   vip:    { bg: "#d9acff", color: "#8800fb" },
@@ -19,89 +21,139 @@ const TAG_STYLES = {
   weekly: { bg: "#a4a4a4", color: "#141828" },
 };
 
-const MEMBER_PROFILES = {
-  "ah-chong": {
-    name: "Ah Chong",
-    dateJoined: "July 2nd, 2025",
-    tags: [
-      { label: "VIP 1", kind: "vip" },
-      { label: "Slots", kind: "game" },
-      { label: "Low", kind: "low" },
-      { label: "Active", kind: "active" },
-      { label: "Weekly", kind: "weekly" },
-    ],
-    stats: { mrsLevel: "Ruby", nsLevel: "Gold III", totalSales: "RM 20,655", totalWinLose: "RM 15,098" },
-    basicInfo: {
-      Username: "kettle_man21",
-      Phone: "+026646464654",
-      Gender: "Male",
-      "Date of Birth": "22.06.97",
-      Age: "28",
-      Nationality: "South Korean",
-      "Home Address": "3b- South Side, Seoul",
-      "Marital Status": "Married",
-      Job: "UX Designer",
-      Hobby: "Gaming",
-    },
-    financialInfo: {
-      "Total Sales": "50",
-      "Total Withdrawal": "50",
-      "Total Win/lose": "50",
-      "Total Bonus": "50",
-      "Total Sales Ticket": "50",
-      "Total Withdrawal Ticket": "50",
-      ARPU: "50",
-      "Average Deposit": "50",
-      "Last Deposit Date": "50",
-      "Payment Method": "50",
-    },
-    gamingInfo: {
-      "Game Preference": "Slot - Great Blue",
-      "Provider Preference": "Pragmatic Play",
-      "Play Time Pattern": "Night ( 8pm - 2am )",
-      "Average Bet Size": "RM 50 - RM 200",
-      "Player Type": "VIP",
-      "Risk Style": "High Risk",
-      "Deposit Frequency Style": "Weekly",
-      "Deposit Trigger": "Bonus",
-      "Churn Risk Reason": "Any",
-      "Re-activation Trigger": "Any",
-    },
-    notes:
-      "Player behavior refers to the actions, attitudes, and interactions of individuals during sports or games. Good player behavior includes teamwork, respect, discipline, honesty, and fair play. Players should follow rules, respect referees, coaches, teammates, and opponents, and maintain self-control even during difficult situations. Positive behavior encourages healthy competition and creates a friendly environment for everyone. Bad behavior, such as cheating, arguing, or using offensive language, can negatively affect the game and team spirit. Responsible players also show dedication through regular practice and sportsmanship. Good player behavior not only improves performance but also teaches valuable life skills like leadership, cooperation, patience, and respect for others.",
-  },
-};
-
-function slugToName(slug) {
-  if (!slug) return "Unknown Member";
-  return slug
-    .split("-")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
+function formatCurrency(value) {
+  if (value === null || value === undefined || value === "") return "—";
+  const num = parseFloat(value);
+  if (Number.isNaN(num)) return String(value);
+  return `RM ${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
-function getProfileBySlug(slug) {
-  if (MEMBER_PROFILES[slug]) return MEMBER_PROFILES[slug];
-  return { ...MEMBER_PROFILES["ah-chong"], name: slugToName(slug) };
+function show(value, fallback = "—") {
+  return value === null || value === undefined || value === "" ? fallback : String(value);
+}
+
+// Heuristic for tag kind/colors: pick chips based on field content so it
+// resembles the Figma without inventing data the API doesn't provide.
+function inferTags(data) {
+  const tags = [];
+  const vip = data?.customer_data?.vip_level || data?.vip_level;
+  if (vip) tags.push({ label: vip, kind: "vip" });
+  const game = data?.gaming_info?.game_preference;
+  if (game) tags.push({ label: game, kind: "game" });
+  const priority = data?.priority;
+  if (priority) tags.push({ label: priority, kind: priority === "Low" ? "low" : "active" });
+  return tags;
 }
 
 export default function MemberProfilePage() {
   const params = useParams();
-  const slug = typeof params?.slug === "string" ? params.slug : Array.isArray(params?.slug) ? params.slug[0] : "";
-  const profile = getProfileBySlug(slug);
+  const memberUuid = typeof params?.slug === "string" ? params.slug : Array.isArray(params?.slug) ? params.slug[0] : "";
   const [period, setPeriod] = useState("Daily");
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!memberUuid) return;
+    let cancelled = false;
+    const fetchMember = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await getCrmMemberSingle(memberUuid);
+        if (!cancelled) setData(res);
+      } catch (err) {
+        if (cancelled) return;
+        console.error("[member-profile] fetch failed", err);
+        setError(err);
+        setData(null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    fetchMember();
+    return () => {
+      cancelled = true;
+    };
+  }, [memberUuid]);
+
+  if (loading) {
+    return (
+      <div className="px-2 py-12 text-center text-[14px] text-white/60">
+        Loading member profile...
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div className="px-2 py-12 text-center text-[14px] text-white/60">
+        Failed to load member profile.
+      </div>
+    );
+  }
+
+  const basicInfo = {
+    Username: show(data?.customer_data?.username),
+    Phone: show(data?.customer_data?.phone_number),
+    Gender: show(data?.customer_data?.gender),
+    "Date of Birth": show(data?.customer_data?.date_of_birth),
+    Age: show(data?.customer_data?.age),
+    Nationality: show(data?.customer_data?.nationality),
+    "Home Address": show(data?.customer_data?.home_address),
+    "Marital Status": show(data?.customer_data?.marital_status),
+    Job: show(data?.customer_data?.job),
+    Hobby: show(data?.customer_data?.hobby),
+  };
+
+  const financialInfo = {
+    "Total Sales": formatCurrency(data?.financial_info?.total_sales),
+    "Total Win/lose": formatCurrency(data?.financial_info?.total_win_lose),
+    "Total Sales Ticket": show(data?.financial_info?.total_sales_ticket),
+    ARPU: formatCurrency(data?.financial_info?.arpu),
+    "Average Deposit": formatCurrency(data?.financial_info?.average_deposit),
+    "Last Deposit Date": show(data?.financial_info?.last_deposit_date),
+    "Payment Method": show(data?.financial_info?.payment_method),
+  };
+
+  const gamingInfo = {
+    "Game Preference": show(data?.gaming_info?.game_preference),
+    "Provider Preference": show(data?.gaming_info?.provider_preference),
+    "Play Time Pattern": show(data?.gaming_info?.play_time_pattern),
+    "Average Bet Size": show(data?.gaming_info?.average_bet_size),
+    "Player Type": show(data?.gaming_info?.player_type),
+    "Risk Style": show(data?.gaming_info?.risk_style),
+    "Deposit Frequency Style": show(data?.gaming_info?.deposit_frequency_style),
+    "Deposit Trigger": show(data?.gaming_info?.deposit_trigger),
+    "Churn Risk Reason": show(data?.gaming_info?.churn_risk_reason),
+    "Re-activation Trigger": show(data?.gaming_info?.reactivation_trigger),
+  };
+
+  const stats = {
+    mrsLevel: show(data?.customer_data?.vip_level),
+    nsLevel: show(data?.customer_data?.ns_level, "—"),
+    totalSales: formatCurrency(data?.financial_info?.total_sales),
+    totalWinLose: formatCurrency(data?.financial_info?.total_win_lose),
+  };
 
   return (
     <>
-      <ProfileHeader profile={profile} slug={slug} period={period} onPeriodChange={setPeriod} />
-      <StatsRow stats={profile.stats} />
-      <InfoGrid profile={profile} />
-      <NotesCard notes={profile.notes} />
+      <ProfileHeader
+        name={data?.full_name || data?.customer_data?.username || "Member"}
+        tags={inferTags(data)}
+        dateJoined={show(data?.date_joined)}
+        slug={memberUuid}
+        period={period}
+        onPeriodChange={setPeriod}
+      />
+      <StatsRow stats={stats} />
+      <InfoGrid basicInfo={basicInfo} financialInfo={financialInfo} gamingInfo={gamingInfo} />
+      <NotesCard notes={show(data?.notes, "No notes available.")} />
     </>
   );
 }
 
-function ProfileHeader({ profile, slug, period, onPeriodChange }) {
+function ProfileHeader({ name, tags, dateJoined, slug, period, onPeriodChange }) {
   return (
     <div className="flex flex-col gap-4 px-2 md:flex-row md:items-start md:justify-between md:gap-4">
       <div className="flex flex-col gap-3">
@@ -128,10 +180,10 @@ function ProfileHeader({ profile, slug, period, onPeriodChange }) {
                   letterSpacing: "-2px",
                 }}
               >
-                {profile.name}
+                {name}
               </h1>
               <div className="flex flex-wrap items-center gap-2">
-                {profile.tags.map((tag) => (
+                {tags.map((tag) => (
                   <Tag key={tag.label} label={tag.label} kind={tag.kind} />
                 ))}
               </div>
@@ -140,7 +192,7 @@ function ProfileHeader({ profile, slug, period, onPeriodChange }) {
         </div>
         <div className="flex flex-col gap-2">
           <p className="text-[10px] font-normal leading-[15px] text-white capitalize">
-            Date Joined: {profile.dateJoined}
+            Date Joined: {dateJoined}
           </p>
           <div className="flex items-center gap-2">
             <Link
@@ -178,7 +230,6 @@ function MoreOptionsMenu() {
 
   const handleSelect = (key) => {
     setOpen(false);
-    // TODO: wire each action to its admin endpoint.
     if (process.env.NODE_ENV !== "production") {
       console.log(`[member-profile] more-options action: ${key}`);
     }
@@ -294,12 +345,12 @@ function StatCard({ label, value }) {
   );
 }
 
-function InfoGrid({ profile }) {
+function InfoGrid({ basicInfo, financialInfo, gamingInfo }) {
   return (
     <div className="grid w-full gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-      <InfoCard title="Basic Info" data={profile.basicInfo} />
-      <InfoCard title="Financial Info" data={profile.financialInfo} />
-      <InfoCard title="Gaming Info" data={profile.gamingInfo} />
+      <InfoCard title="Basic Info" data={basicInfo} />
+      <InfoCard title="Financial Info" data={financialInfo} />
+      <InfoCard title="Gaming Info" data={gamingInfo} />
     </div>
   );
 }

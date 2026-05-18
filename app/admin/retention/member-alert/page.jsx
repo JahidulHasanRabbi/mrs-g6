@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import RefreshControl from "../../../components/admin/retention/RefreshControl";
 import { ASSETS, GRAD_DARK, GRAD_GOLD } from "../../../components/admin/retention/constants";
+import {
+  getCrmMembers,
+  getPrioritySummary,
+  refreshCrmMembers,
+} from "../../../api/crmApi";
 
 // Member Alert page — Figma 69:340. "Overview" KPI strip + Member Follow Up
 // list. The list is the same shape as /admin/retention/members but with a
@@ -15,20 +20,15 @@ const PRIORITY_OPTIONS = ["High", "Medium", "Low"];
 const VIP_OPTIONS = ["VIP 1", "VIP 2", "VIP 3", "VIP 4", "VIP 5"];
 const RETENTION_OPTIONS = ["Sarah", "John", "Michael", "Emma", "Linda"];
 
-const SEED_ROWS = [
-  { name: "Ah Chong",     phone: "+64164293333", vip: "VIP 2", sales: "RM 3,770", winloss: "RM 400",  priority: "High",   pic: "Sarah" },
-  { name: "Lily Tran",    phone: "+64167891234", vip: "VIP 1", sales: "RM 3,770", winloss: "RM 250",  priority: "Low",    pic: "John" },
-  { name: "Sophia Lee",   phone: "+64168901234", vip: "VIP 4", sales: "RM 3,770", winloss: "RM 300",  priority: "Medium", pic: "Michael" },
-  { name: "Marcus Henry", phone: "+64164293333", vip: "VIP 2", sales: "RM 3,770", winloss: "RM 400",  priority: "High",   pic: "Sarah" },
-  { name: "Aiden Smith",  phone: "+64161234567", vip: "VIP 3", sales: "RM 5,500", winloss: "RM 550",  priority: "Medium", pic: "Emma" },
-  { name: "Daniel Kim",   phone: "+64163456789", vip: "VIP 5", sales: "RM 7,000", winloss: "RM 700",  priority: "High",   pic: "Linda" },
-  { name: "Nora Park",    phone: "+64162345678", vip: "VIP 2", sales: "RM 4,200", winloss: "RM 450",  priority: "Medium", pic: "Sarah" },
-];
-
-const ROWS = Array.from({ length: 150 }, (_, i) => {
-  const seed = SEED_ROWS[i % SEED_ROWS.length];
-  return { ...seed, id: i + 1 };
-});
+// Map UI label → API integer code. The backend hasn't published the priority
+// enum yet; doc just lists `priority: int`. Send 1/2/3 in High→Low order until
+// the backend confirms — easy to swap if it differs.
+const PRIORITY_TO_INT = { High: 1, Medium: 2, Low: 3 };
+// VIP filter likewise sent as int (VIP 1 → 1).
+const VIP_TO_INT = (label) => {
+  const n = parseInt(String(label).replace(/[^0-9]/g, ""), 10);
+  return Number.isFinite(n) ? n : "";
+};
 
 // Column widths from Figma 69:340 (frame ids 87:6604 etc). Username and
 // Action are wider to accommodate the avatar+name and the View + more-menu
@@ -49,28 +49,71 @@ const TABLE_MIN_WIDTH = COLUMNS.reduce((sum, c) => sum + c.minW, 0);
 // KPI tiles — all render with the gold gradient. Each tile pairs the label
 // with a dark icon-tile whose glyph is tinted per priority (red → white →
 // green → blue) so the row scans left-to-right from most to least urgent.
-const KPI_CARDS = [
-  { id: "high",     label: "High Priority",    value: "281",   icon: "user-times", iconColor: "#fb3748" },
-  { id: "medium",   label: "Medium Priority",  value: "4,281", icon: "user-minus", iconColor: "#fbeed2" },
-  { id: "low",      label: "Low Priority",     value: "1,281", icon: "user-check", iconColor: "#84ebb4" },
-  { id: "inactive", label: "Inactive Members", value: "281",   icon: "user-clock", iconColor: "#4188ff" },
+const KPI_META = [
+  { id: "high",     label: "High Priority",    key: "high_priority",    icon: "user-times", iconColor: "#fb3748" },
+  { id: "medium",   label: "Medium Priority",  key: "medium_priority",  icon: "user-minus", iconColor: "#fbeed2" },
+  { id: "low",      label: "Low Priority",     key: "low_priority",     icon: "user-check", iconColor: "#84ebb4" },
+  { id: "inactive", label: "Inactive Members", key: "inactive_members", icon: "user-clock", iconColor: "#4188ff" },
 ];
 
-function nameToSlug(name) {
-  return name.trim().toLowerCase().replace(/\s+/g, "-");
+function formatNumber(value) {
+  if (value === null || value === undefined || value === "") return "0";
+  return Number(value).toLocaleString("en-US");
+}
+
+function formatCurrency(value) {
+  if (value === null || value === undefined || value === "") return "RM 0";
+  const num = parseFloat(value);
+  if (Number.isNaN(num)) return `RM ${value}`;
+  return `RM ${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
 export default function MemberAlertPage() {
+  const [summary, setSummary] = useState(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadSummary = useCallback(async () => {
+    setSummaryLoading(true);
+    try {
+      const res = await getPrioritySummary();
+      setSummary(res || {});
+    } catch (err) {
+      console.error("[member-alert] priority-summary failed", err);
+      setSummary({});
+    } finally {
+      setSummaryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadSummary();
+  }, [loadSummary]);
+
+  // POST refresh-members, then refresh the summary so KPIs reflect new state.
+  const handleRefresh = useCallback(async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await refreshCrmMembers();
+      await loadSummary();
+    } catch (err) {
+      console.error("[member-alert] refresh failed", err);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refreshing, loadSummary]);
+
   return (
     <>
-      <OverviewHeader />
-      <KpiRow />
-      <FollowUpList />
+      <OverviewHeader onRefresh={handleRefresh} />
+      <KpiRow summary={summary} loading={summaryLoading} />
+      <FollowUpList onRefresh={handleRefresh} />
     </>
   );
 }
 
-function OverviewHeader() {
+function OverviewHeader({ onRefresh }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-4 px-2">
       <div className="flex flex-col gap-1">
@@ -88,16 +131,20 @@ function OverviewHeader() {
           Overview
         </h1>
       </div>
-      <RefreshControl />
+      <RefreshControl onRefresh={onRefresh} />
     </div>
   );
 }
 
-function KpiRow() {
+function KpiRow({ summary, loading }) {
   return (
     <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
-      {KPI_CARDS.map((kpi) => (
-        <KpiCard key={kpi.id} kpi={kpi} />
+      {KPI_META.map((kpi) => (
+        <KpiCard
+          key={kpi.id}
+          kpi={kpi}
+          value={loading ? "—" : formatNumber(summary?.[kpi.key])}
+        />
       ))}
     </div>
   );
@@ -105,7 +152,7 @@ function KpiRow() {
 
 // Gold-gradient card with a dark icon-tile + per-priority colored glyph.
 // Matches Figma 69:340.
-function KpiCard({ kpi }) {
+function KpiCard({ kpi, value }) {
   return (
     <div
       className="flex items-center gap-4 rounded-[16px] border-[3px] border-[#f2cb7a] p-6"
@@ -132,7 +179,7 @@ function KpiCard({ kpi }) {
             lineHeight: "44px",
           }}
         >
-          {kpi.value}
+          {value}
         </p>
       </div>
     </div>
@@ -180,29 +227,63 @@ function FollowUpList() {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
 
-  const filtered = useMemo(() => {
-    return ROWS.filter((r) => {
-      if (priority && r.priority !== priority) return false;
-      if (vip && r.vip !== vip) return false;
-      if (retention && r.pic !== retention) return false;
-      if (query) {
-        const q = query.toLowerCase();
-        if (!r.name.toLowerCase().includes(q) && !r.phone.includes(query)) return false;
-      }
-      return true;
-    });
-  }, [priority, vip, retention, query]);
+  const [rows, setRows] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   // Reset to page 1 whenever filters change so the user isn't stranded on a
   // page that no longer exists after the result set shrinks.
   useEffect(() => {
     setPage(1);
   }, [priority, vip, retention, query]);
 
+  // Debounce the search query so we don't fire a request on every keystroke.
+  const [debouncedQuery, setDebouncedQuery] = useState(query);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchRows = async () => {
+      setLoading(true);
+      try {
+        const res = await getCrmMembers({
+          page,
+          page_size: PAGE_SIZE,
+          priority: priority ? PRIORITY_TO_INT[priority] : undefined,
+          vip_level: vip ? VIP_TO_INT(vip) : undefined,
+          // `retention` here is filter by PIC name in the design; backend
+          // accepts int. Until we have a PIC list endpoint, leave as-is and
+          // let the user-typed search field do the heavy lifting.
+          retention: undefined,
+          search: debouncedQuery || undefined,
+        });
+        if (cancelled) return;
+        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        setRows(results);
+        setTotal(Number.isFinite(res?.count) ? res.count : results.length);
+      } catch (err) {
+        if (cancelled) return;
+        console.error("[member-alert] members fetch failed", err);
+        setRows([]);
+        setTotal(0);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    fetchRows();
+    return () => {
+      cancelled = true;
+    };
+  }, [page, priority, vip, retention, debouncedQuery]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const startIdx = (safePage - 1) * PAGE_SIZE;
-  const visibleRows = filtered.slice(startIdx, startIdx + PAGE_SIZE);
+  const showingFrom = total === 0 ? 0 : startIdx + 1;
+  const showingTo = Math.min(startIdx + rows.length, total);
 
   return (
     <section className="flex w-full flex-col overflow-hidden rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
@@ -230,11 +311,13 @@ function FollowUpList() {
         <div style={{ minWidth: TABLE_MIN_WIDTH }}>
           <TableHeader />
           <div className="flex w-full flex-col">
-            {visibleRows.length === 0 ? (
+            {loading ? (
+              <LoadingRow />
+            ) : rows.length === 0 ? (
               <EmptyRow />
             ) : (
-              visibleRows.map((row) => (
-                <TableRow key={row.id} row={row} />
+              rows.map((row) => (
+                <TableRow key={row.uuid} row={row} />
               ))
             )}
           </div>
@@ -242,14 +325,22 @@ function FollowUpList() {
       </div>
 
       <PaginationBar
-        from={filtered.length === 0 ? 0 : startIdx + 1}
-        to={Math.min(startIdx + PAGE_SIZE, filtered.length)}
-        total={filtered.length}
+        from={showingFrom}
+        to={showingTo}
+        total={total}
         page={safePage}
         totalPages={totalPages}
         onPageChange={setPage}
       />
     </section>
+  );
+}
+
+function LoadingRow() {
+  return (
+    <div className="px-6 py-12 text-center text-[12px] text-white/60">
+      Loading...
+    </div>
   );
 }
 
@@ -357,30 +448,28 @@ function TableHeader() {
 }
 
 function TableRow({ row }) {
-  const memberSlug = nameToSlug(row.name);
+  // Route by the member's real UUID — the [slug] page accepts it transparently.
+  const href = `/admin/retention/members/${row.uuid}`;
   return (
     <div className="flex w-full items-stretch -mb-px border-b border-white/5">
       <Cell minW={COLUMNS[0].minW}>
-        <Link
-          href={`/admin/retention/members/${memberSlug}`}
-          className="flex items-center gap-3 hover:opacity-80"
-        >
+        <Link href={href} className="flex items-center gap-3 hover:opacity-80">
           <UserAvatar />
           <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">
-            {row.name}
+            {row.full_name || row.username}
           </span>
         </Link>
       </Cell>
-      <DataCell value={row.phone} minW={COLUMNS[1].minW} />
-      <DataCell value={row.vip} minW={COLUMNS[2].minW} />
-      <DataCell value={row.sales} minW={COLUMNS[3].minW} />
-      <DataCell value={row.winloss} minW={COLUMNS[4].minW} />
+      <DataCell value={row.phone_number} minW={COLUMNS[1].minW} />
+      <DataCell value={row.vip_level} minW={COLUMNS[2].minW} />
+      <DataCell value={formatCurrency(row.daily_sales)} minW={COLUMNS[3].minW} />
+      <DataCell value={formatCurrency(row.daily_win_loss)} minW={COLUMNS[4].minW} />
       <DataCell value={row.priority} minW={COLUMNS[5].minW} />
-      <DataCell value={row.pic} minW={COLUMNS[6].minW} />
+      <DataCell value={row.retention} minW={COLUMNS[6].minW} />
       <Cell minW={COLUMNS[7].minW} align="end">
         <div className="flex items-center gap-2">
-          <ViewButton href={`/admin/retention/members/${memberSlug}`} />
-          <MoreButton ariaLabel={`More actions for ${row.name}`} />
+          <ViewButton href={href} />
+          <MoreButton ariaLabel={`More actions for ${row.full_name || row.username}`} />
         </div>
       </Cell>
     </div>
@@ -523,7 +612,7 @@ function DataCell({ value, minW }) {
   return (
     <Cell minW={minW}>
       <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">
-        {value}
+        {value ?? "—"}
       </span>
     </Cell>
   );

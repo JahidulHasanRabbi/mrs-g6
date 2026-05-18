@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import PeriodToggle from "../../../components/admin/retention/PeriodToggle";
 import RefreshControl from "../../../components/admin/retention/RefreshControl";
@@ -11,67 +11,73 @@ import {
   GRAD_GOLD,
   GRAD_CARD,
 } from "../../../components/admin/retention/constants";
+import {
+  getCrmDashboardSummary,
+  getCrmDashboardDetails,
+  periodLabelToType,
+  refreshCrmMembers,
+} from "../../../api/crmApi";
 
-// Static data mirroring the Figma mock. Replace with backend data when the
-// API is wired in — shape is intentionally close to what an endpoint would return.
-const KPIS = [
-  {
-    id: "members",
-    label: "Total Members",
-    value: "1,281",
-    icon: `${ASSETS}/kpi-members.svg`,
-    iconSize: 24,
-    delta: { pct: "12%", text: "increase from last month", direction: "down", color: "#fb3748" },
-  },
-  {
-    id: "active",
-    label: "Active Members",
-    value: "281",
-    icon: `${ASSETS}/kpi-active.svg`,
-    iconSize: 24,
-    delta: { pct: "12%", text: " increase from last month", direction: "down", color: "#fb3748" },
-  },
-  {
-    id: "sales",
-    label: "Total Sales",
-    value: "4,281",
-    valuePrefix: "RM",
-    icon: `${ASSETS}/kpi-sales.svg`,
-    iconSize: 24,
-    delta: { pct: "12%", text: " increase from last month", direction: "up", color: "#84ebb4" },
-  },
-  {
-    id: "winlose",
-    label: "Total Win/Lose",
-    value: "281",
-    valuePrefix: "RM",
-    icon: `${ASSETS}/kpi-winlose.svg`,
-    iconSize: 28,
-    delta: { pct: "12%", text: " increase from last month", direction: "up", color: "#84ebb4" },
-  },
+// PIC Dashboard — overview KPIs + paginated PIC performance table.
+// KPI tiles come from /crm-admins/dashboard-summary/.
+// The table comes from /crm-admins/dashboard-details/ keyed by the selected
+// period (Daily/Monthly/Yearly → type=1/2/3).
+
+const PAGE_SIZE = 7;
+
+const KPI_META = [
+  { id: "members",  label: "Total Members",   key: "total_members",  icon: `${ASSETS}/kpi-members.svg`, iconSize: 24, isCurrency: false },
+  { id: "active",   label: "Active Members",  key: "active_members", icon: `${ASSETS}/kpi-active.svg`,  iconSize: 24, isCurrency: false },
+  { id: "sales",    label: "Total Sales",     key: "total_sales",    icon: `${ASSETS}/kpi-sales.svg`,   iconSize: 24, isCurrency: true  },
+  { id: "winlose",  label: "Total Win/Lose",  key: "daily_win_lose", icon: `${ASSETS}/kpi-winlose.svg`, iconSize: 28, isCurrency: true  },
 ];
 
-// PIC rows. Each row's `slug` drives the View → /admin/retention/pic-dashboard/[slug] route.
-const ROWS = [
-  { slug: "sarah-jenkins", name: "Sarah Jenkins",  vip: "VIP 1", avatar: `${ASSETS}/avatar-1.jpg`, members: 400, sales: "RM 400", winlose: "3,770", target: "RM 8,900", achievement: 40 },
-  { slug: "marcus-henry",  name: "Marcus Henry",   vip: "VIP 2", avatar: `${ASSETS}/avatar-2.jpg`, members: 400, sales: "RM 400", winlose: "3,770", target: "RM 8,900", achievement: 40 },
-  { slug: "david-chen",    name: "David Chen",     vip: "VIP 3", avatar: `${ASSETS}/avatar-3.jpg`, members: 400, sales: "RM 400", winlose: "3,770", target: "RM 8,900", achievement: 40 },
-  { slug: "elena-rody",    name: "Elena Rody",     vip: "VIP 2", avatar: `${ASSETS}/avatar-3.jpg`, members: 400, sales: "RM 400", winlose: "3,770", target: "RM 8,900", achievement: 40 },
-  { slug: "adam-ron",      name: "Adam Ron",       vip: "VIP 3", avatar: `${ASSETS}/avatar-4.jpg`, members: 400, sales: "RM 400", winlose: "3,770", target: "RM 8,900", achievement: 40 },
-  { slug: "omar-al-farsi", name: "Omar Al-Farsi",  vip: "VIP 1", avatar: `${ASSETS}/avatar-4.jpg`, members: 400, sales: "RM 400", winlose: "3,770", target: "RM 8,900", achievement: 40 },
-  { slug: "samantha",      name: "Samantha",       vip: "VIP 1", avatar: `${ASSETS}/avatar-5.jpg`, members: 400, sales: "RM 400", winlose: "3,770", target: "RM 8,900", achievement: 40 },
-];
+function formatNumber(value) {
+  if (value === null || value === undefined || value === "") return "0";
+  return Number(value).toLocaleString("en-US");
+}
+
+function formatCurrency(value) {
+  if (value === null || value === undefined || value === "") return "0";
+  const num = parseFloat(value);
+  if (Number.isNaN(num)) return String(value);
+  return num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+
+function formatRmCurrency(value) {
+  if (value === null || value === undefined || value === "") return "RM 0";
+  return `RM ${formatCurrency(value)}`;
+}
 
 // Chrome (auth guard, main wrapper, topbar) lives in
 // app/admin/retention/layout.jsx — pages here only render their own content.
 export default function PicDashboardPage() {
   const [period, setPeriod] = useState("Daily");
+  const [summary, setSummary] = useState(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+
+  const loadSummary = useCallback(async () => {
+    setSummaryLoading(true);
+    try {
+      const res = await getCrmDashboardSummary();
+      setSummary(res || {});
+    } catch (err) {
+      console.error("[pic-dashboard] summary failed", err);
+      setSummary({});
+    } finally {
+      setSummaryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadSummary();
+  }, [loadSummary]);
 
   return (
     <>
       <HeaderRow period={period} onPeriodChange={setPeriod} />
-      <KpiGrid />
-      <PerformanceSummary />
+      <KpiGrid summary={summary} loading={summaryLoading} />
+      <PerformanceSummary period={period} onRefreshSummary={loadSummary} />
     </>
   );
 }
@@ -93,12 +99,27 @@ function HeaderRow({ period, onPeriodChange }) {
   );
 }
 
-function KpiGrid() {
+function KpiGrid({ summary, loading }) {
   return (
     <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
-      {KPIS.map((k) => (
-        <KpiCard key={k.id} kpi={k} />
-      ))}
+      {KPI_META.map((meta) => {
+        const raw = summary?.[meta.key];
+        const value = loading
+          ? "—"
+          : meta.isCurrency
+            ? formatCurrency(raw)
+            : formatNumber(raw);
+        return (
+          <KpiCard
+            key={meta.id}
+            kpi={{
+              ...meta,
+              value,
+              valuePrefix: meta.isCurrency ? "RM" : undefined,
+            }}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -144,39 +165,92 @@ function KpiCard({ kpi }) {
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-1 pt-3 w-full">
-        <img
-          src={kpi.delta.direction === "down" ? `${ASSETS}/arrow-decrease.svg` : `${ASSETS}/arrow-increase.svg`}
-          alt=""
-          className="h-[7px] w-[11.667px]"
-          style={kpi.delta.direction === "down" ? { transform: "scaleY(-1)" } : undefined}
-        />
-        <p className="b-5 capitalize whitespace-nowrap">
-          <span style={{ color: kpi.delta.color }}>{kpi.delta.pct}</span>
-          <span className="text-white">{kpi.delta.text}</span>
-        </p>
-      </div>
     </div>
   );
 }
 
-function PerformanceSummary() {
+function PerformanceSummary({ period, onRefreshSummary }) {
+  const [page, setPage] = useState(1);
+  const [rows, setRows] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Reset to page 1 when the period changes so users don't land on an empty
+  // tail page after the dataset changes shape.
+  useEffect(() => {
+    setPage(1);
+  }, [period]);
+
+  const fetchDetails = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await getCrmDashboardDetails({
+        page,
+        page_size: PAGE_SIZE,
+        type: periodLabelToType(period),
+      });
+      const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+      setRows(results);
+      setTotal(Number.isFinite(res?.count) ? res.count : results.length);
+    } catch (err) {
+      console.error("[pic-dashboard] details failed", err);
+      setRows([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, period]);
+
+  useEffect(() => {
+    fetchDetails();
+  }, [fetchDetails]);
+
+  const handleRefresh = useCallback(async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await refreshCrmMembers();
+      await Promise.all([fetchDetails(), onRefreshSummary?.()]);
+    } catch (err) {
+      console.error("[pic-dashboard] refresh failed", err);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refreshing, fetchDetails, onRefreshSummary]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const startIdx = (safePage - 1) * PAGE_SIZE;
+  const showingFrom = total === 0 ? 0 : startIdx + 1;
+  const showingTo = Math.min(startIdx + rows.length, total);
+
   return (
     <section className="flex w-full flex-col overflow-clip rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
       <header className="flex items-center justify-between p-6 w-full">
         <h2 className="h-7 text-white" style={{ letterSpacing: "-2px" }}>
           Performance Summary
         </h2>
-        <RefreshControl />
+        <RefreshControl onRefresh={handleRefresh} />
       </header>
       <div className="flex w-full flex-col overflow-clip">
         <TableHeader />
         <div className="flex w-full flex-col">
-          {ROWS.map((row) => (
-            <TableRow key={row.slug} row={row} />
-          ))}
+          {loading ? (
+            <div className="px-6 py-10 text-center b-4 text-white/60">Loading...</div>
+          ) : rows.length === 0 ? (
+            <div className="px-6 py-10 text-center b-4 text-white/60">No data available.</div>
+          ) : (
+            rows.map((row) => <TableRow key={row.uuid} row={row} />)
+          )}
         </div>
-        <Pagination from={1} to={ROWS.length} total={150} />
+        <Pagination
+          from={showingFrom}
+          to={showingTo}
+          total={total}
+          currentPage={safePage}
+          pageCount={totalPages}
+        />
       </div>
     </section>
   );
@@ -209,37 +283,48 @@ function HeaderCell({ label, widthClass = "flex-1 min-w-0", align = "start" }) {
 }
 
 function TableRow({ row }) {
+  const target = row.monthly_target;
+  const achievementRaw = row.achievements;
+  // Backend returns `achievements` as a decimal; the design renders it as a
+  // percentage (0–100). Coerce safely so a string like "40.5" still works.
+  const achievementNum = parseFloat(achievementRaw);
+  const achievementPct = Number.isFinite(achievementNum) ? achievementNum : 0;
+
   return (
     <div className="flex w-full items-center -mb-px border-b border-white/5">
-      {/* PIC */}
       <div className="flex h-full w-[269px] shrink-0 items-center gap-3 p-6">
-        <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-[#f1f5f9]">
-          <img src={row.avatar} alt="" className="h-full w-full object-cover" />
+        <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-[#3a4255]">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f6dda6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
         </div>
         <div className="flex min-w-0 flex-1 items-start gap-2">
-          <span className="b-4 text-white whitespace-nowrap">{row.name}</span>
-          <span
-            className="flex items-center rounded-[12px] px-3 py-1 b-6 text-[#05060a] whitespace-nowrap"
-            style={{ backgroundImage: GRAD_GOLD }}
-          >
-            {row.vip}
-          </span>
+          <span className="b-4 text-white whitespace-nowrap">{row.full_name || "—"}</span>
+          {row.vip_level ? (
+            <span
+              className="flex items-center rounded-[12px] px-3 py-1 b-6 text-[#05060a] whitespace-nowrap"
+              style={{ backgroundImage: GRAD_GOLD }}
+            >
+              {row.vip_level}
+            </span>
+          ) : null}
         </div>
       </div>
-      <DataCell value={row.members} />
-      <DataCell value={row.sales} />
-      <DataCell value={row.winlose} />
-      <DataCell value={row.target} />
+      <DataCell value={formatNumber(row.total_members)} />
+      <DataCell value={formatRmCurrency(row.total_sales)} />
+      <DataCell value={formatRmCurrency(row.total_win_lose)} />
+      <DataCell value={formatRmCurrency(target)} />
       <div className="flex flex-1 min-w-0 items-center self-stretch">
         <div className="flex h-full flex-1 flex-col items-center justify-center gap-2 p-6">
-          <span className="b-5 capitalize text-white">{row.achievement}%</span>
-          <ProgressBar pct={row.achievement} />
+          <span className="b-5 capitalize text-white">{achievementPct}%</span>
+          <ProgressBar pct={achievementPct} />
         </div>
       </div>
       <div className="flex flex-1 min-w-0 items-center self-stretch justify-end">
         <div className="flex h-full flex-col items-end justify-center p-6">
           <Link
-            href={`/admin/retention/pic-dashboard/${row.slug}`}
+            href={`/admin/retention/pic-dashboard/${row.uuid}`}
             className="flex items-center justify-center gap-1 rounded-[8px] border border-[#f2cb7a] px-4 py-2 text-[12px] font-medium text-[#eaad2c] transition hover:brightness-110"
             style={{ backgroundImage: GRAD_DARK }}
           >

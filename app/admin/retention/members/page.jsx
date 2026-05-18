@@ -1,13 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { getCrmMembers } from "../../../api/crmApi";
 
 const A = "/assets/admin/pic-dashboard";
-
-function nameToSlug(name) {
-  return name.trim().toLowerCase().replace(/\s+/g, "-");
-}
 
 const GRAD_DARK = "linear-gradient(178deg, #141828 0%, #333333 99.7%)";
 const PAGE_SIZE = 7;
@@ -16,22 +13,12 @@ const PRIORITY_OPTIONS = ["High", "Medium", "Low"];
 const VIP_OPTIONS = ["VIP 1", "VIP 2", "VIP 3", "VIP 4", "VIP 5"];
 const PIC_OPTIONS = ["Sarah", "John", "Michael", "Emma", "Linda"];
 
-// Seed rows from the Figma. Cycled below to generate 150 mock entries so the
-// pagination has something to paginate over until the real API is wired.
-const SEED_ROWS = [
-  { name: "Ah Chong",     phone: "+64164293333", vip: "VIP 2", sales: "RM 3,770", winloss: "RM 400",  priority: "High",   pic: "Sarah" },
-  { name: "Lily Tran",    phone: "+64167891234", vip: "VIP 1", sales: "RM 3,770", winloss: "RM 250",  priority: "Low",    pic: "John" },
-  { name: "Sophia Lee",   phone: "+64168901234", vip: "VIP 4", sales: "RM 3,770", winloss: "RM 300",  priority: "Medium", pic: "Michael" },
-  { name: "Marcus Henry", phone: "+64164293333", vip: "VIP 2", sales: "RM 3,770", winloss: "RM 400",  priority: "High",   pic: "Sarah" },
-  { name: "Aiden Smith",  phone: "+64161234567", vip: "VIP 3", sales: "RM 5,500", winloss: "RM 550",  priority: "Medium", pic: "Emma" },
-  { name: "Daniel Kim",   phone: "+64163456789", vip: "VIP 5", sales: "RM 7,000", winloss: "RM 700",  priority: "High",   pic: "Linda" },
-  { name: "Nora Park",    phone: "+64162345678", vip: "VIP 2", sales: "RM 4,200", winloss: "RM 450",  priority: "Medium", pic: "Sarah" },
-];
-
-const ROWS = Array.from({ length: 150 }, (_, i) => {
-  const seed = SEED_ROWS[i % SEED_ROWS.length];
-  return { ...seed, id: i + 1 };
-});
+// UI label → API integer.
+const PRIORITY_TO_INT = { High: 1, Medium: 2, Low: 3 };
+const VIP_TO_INT = (label) => {
+  const n = parseInt(String(label).replace(/[^0-9]/g, ""), 10);
+  return Number.isFinite(n) ? n : "";
+};
 
 const COLUMNS = [
   { key: "name",     label: "Username",       minW: 180 },
@@ -46,6 +33,13 @@ const COLUMNS = [
 
 const TABLE_MIN_WIDTH = COLUMNS.reduce((sum, c) => sum + c.minW, 0);
 
+function formatCurrency(value) {
+  if (value === null || value === undefined || value === "") return "RM 0";
+  const num = parseFloat(value);
+  if (Number.isNaN(num)) return `RM ${value}`;
+  return `RM ${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+}
+
 export default function RetentionMembersPage() {
   const [priority, setPriority] = useState("");
   const [vip, setVip] = useState("");
@@ -53,33 +47,62 @@ export default function RetentionMembersPage() {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
 
-  const filtered = useMemo(() => {
-    return ROWS.filter((r) => {
-      if (priority && r.priority !== priority) return false;
-      if (vip && r.vip !== vip) return false;
-      if (pic && r.pic !== pic) return false;
-      if (query) {
-        const q = query.toLowerCase();
-        if (!r.name.toLowerCase().includes(q) && !r.phone.includes(query)) return false;
-      }
-      return true;
-    });
-  }, [priority, vip, pic, query]);
+  const [rows, setRows] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-
+  // Reset to page 1 when any filter changes.
   useEffect(() => {
     setPage(1);
   }, [priority, vip, pic, query]);
 
-  // Clamp page when totalPages shrinks below the current page (e.g. heavy
-  // filter trims results). Prevents an empty page if the user paged deep
-  // before filtering.
+  // Debounce search to avoid hammering the API on every keystroke.
+  const [debouncedQuery, setDebouncedQuery] = useState(query);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchRows = async () => {
+      setLoading(true);
+      try {
+        const res = await getCrmMembers({
+          page,
+          page_size: PAGE_SIZE,
+          priority: priority ? PRIORITY_TO_INT[priority] : undefined,
+          vip_level: vip ? VIP_TO_INT(vip) : undefined,
+          // `retention` is an int the backend expects (likely a PIC id). The
+          // current filter only knows names; leave unsent until we expose a
+          // PIC list endpoint.
+          retention: undefined,
+          search: debouncedQuery || undefined,
+        });
+        if (cancelled) return;
+        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        setRows(results);
+        setTotal(Number.isFinite(res?.count) ? res.count : results.length);
+      } catch (err) {
+        if (cancelled) return;
+        console.error("[retention-members] fetch failed", err);
+        setRows([]);
+        setTotal(0);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    fetchRows();
+    return () => {
+      cancelled = true;
+    };
+  }, [page, priority, vip, pic, debouncedQuery]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const startIdx = (safePage - 1) * PAGE_SIZE;
-  const visibleRows = filtered.slice(startIdx, startIdx + PAGE_SIZE);
-  const showingFrom = filtered.length === 0 ? 0 : startIdx + 1;
-  const showingTo = Math.min(startIdx + PAGE_SIZE, filtered.length);
+  const showingFrom = total === 0 ? 0 : startIdx + 1;
+  const showingTo = Math.min(startIdx + rows.length, total);
 
   return (
     <section className="flex w-full flex-col overflow-hidden rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
@@ -107,12 +130,14 @@ export default function RetentionMembersPage() {
         <div style={{ minWidth: TABLE_MIN_WIDTH }}>
           <TableHeader />
           <div className="flex w-full flex-col">
-            {visibleRows.length === 0 ? (
+            {loading ? (
+              <div className="px-6 py-12 text-center text-[12px] text-white/60">Loading...</div>
+            ) : rows.length === 0 ? (
               <div className="px-6 py-12 text-center text-[12px] text-white/40">
                 No members found.
               </div>
             ) : (
-              visibleRows.map((row) => <TableRow key={row.id} row={row} />)
+              rows.map((row) => <TableRow key={row.uuid} row={row} />)
             )}
           </div>
         </div>
@@ -121,7 +146,7 @@ export default function RetentionMembersPage() {
       <PaginationBar
         from={showingFrom}
         to={showingTo}
-        total={filtered.length}
+        total={total}
         page={safePage}
         totalPages={totalPages}
         onPageChange={setPage}
@@ -227,37 +252,39 @@ function TableHeader() {
 }
 
 function TableRow({ row }) {
+  const href = `/admin/retention/members/${row.uuid}`;
+  const name = row.full_name || row.username || "—";
   return (
     <div className="flex w-full items-stretch -mb-px border-b border-white/5">
       <Cell minW={COLUMNS[0].minW}>
         <div className="flex items-center gap-3">
           <UserAvatar />
           <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">
-            {row.name}
+            {name}
           </span>
         </div>
       </Cell>
       <Cell minW={COLUMNS[1].minW}>
-        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{row.phone}</span>
+        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{row.phone_number ?? "—"}</span>
       </Cell>
       <Cell minW={COLUMNS[2].minW}>
-        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{row.vip}</span>
+        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{row.vip_level ?? "—"}</span>
       </Cell>
       <Cell minW={COLUMNS[3].minW}>
-        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{row.sales}</span>
+        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{formatCurrency(row.daily_sales)}</span>
       </Cell>
       <Cell minW={COLUMNS[4].minW}>
-        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{row.winloss}</span>
+        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{formatCurrency(row.daily_win_loss)}</span>
       </Cell>
       <Cell minW={COLUMNS[5].minW}>
-        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{row.priority}</span>
+        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{row.priority ?? "—"}</span>
       </Cell>
       <Cell minW={COLUMNS[6].minW}>
-        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{row.pic}</span>
+        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{row.retention ?? "—"}</span>
       </Cell>
       <Cell minW={COLUMNS[7].minW} align="end">
         <Link
-          href={`/admin/retention/members/${nameToSlug(row.name)}`}
+          href={href}
           className="flex items-center justify-center gap-1 rounded-[8px] border border-[#f2cb7a] px-4 py-2 transition hover:brightness-110"
           style={{ backgroundImage: GRAD_DARK }}
         >

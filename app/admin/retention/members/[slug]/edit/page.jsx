@@ -3,14 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { GRAD_GOLD } from "../../../../../components/admin/retention/constants";
+import { getCrmMemberSingle, updateCrmMember } from "../../../../../api/crmApi";
 
 // Member edit form — Figma 87:7291. 3-step wizard:
 //   01 Basic Info   (Profile Data + Basic Info shown in the Figma)
 //   02 Financial Info  (stub fields until Figma is available)
 //   03 Game Info       (stub fields until Figma is available)
 //
-// Persists state in component memory only; wire to API later via
-// PATCH /members/:slug.
+// Initial values are loaded from GET /crm-members/members/<uuid>/ and saved
+// via PUT /crm-members/members/<uuid>/ split into the three payload sections
+// the API expects (profile_data / basic_info / game_info).
 
 const STEPS = ["Basic Info", "Financial Info", "Game Info"];
 
@@ -47,34 +49,229 @@ const SELECT_OPTIONS = {
   depositFreqStyle: ["Daily", "Weekly", "Bi-Weekly", "Monthly", "Quarterly"],
 };
 
-function slugToName(slug) {
-  if (!slug) return "Unknown Member";
-  return slug
-    .split("-")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
+// Order matters — the index + 1 is the integer the API expects ("Will have
+// choices later" per the doc, so we own the mapping locally for now). Always
+// keep this aligned with the corresponding TAG_OPTIONS list.
+const ENUM_INDEX = {
+  vip: TAG_OPTIONS.vip.options,
+  playerType: TAG_OPTIONS.playerType.options,
+  risk: TAG_OPTIONS.risk.options,
+  depositFreq: TAG_OPTIONS.depositFreq.options,
+  status: TAG_OPTIONS.status.options,
+  hobby: TAG_OPTIONS.hobby.options,
+  providerPref: TAG_OPTIONS.providerPref.options,
+  depositTrigger: TAG_OPTIONS.depositTrigger.options,
+  churnRiskReason: TAG_OPTIONS.churnRiskReason.options,
+  reactivationTrigger: TAG_OPTIONS.reactivationTrigger.options,
+  gender: SELECT_OPTIONS.gender,
+  nationality: SELECT_OPTIONS.nationality,
+  marital: SELECT_OPTIONS.marital,
+  playerSegment: SELECT_OPTIONS.playerSegment,
+  riskStyle: SELECT_OPTIONS.riskStyle,
+  depositFreqStyle: SELECT_OPTIONS.depositFreqStyle,
+};
+
+function labelToInt(enumKey, label) {
+  if (!label) return undefined;
+  const list = ENUM_INDEX[enumKey];
+  if (!list) return undefined;
+  const idx = list.findIndex((opt) => opt.toLowerCase() === String(label).toLowerCase());
+  return idx >= 0 ? idx + 1 : undefined;
+}
+
+function emptyForm() {
+  return {
+    image: null,
+    vip: null,
+    playerType: null,
+    risk: null,
+    depositFreq: null,
+    status: null,
+
+    fullName: "",
+    phone: "",
+    gender: "",
+    dob: "",
+    age: "",
+    nationality: "",
+    homeAddress: "",
+    marital: "",
+    job: "",
+    hobby: null,
+
+    totalSales: "",
+    totalWithdrawal: "",
+    totalWinLoss: "",
+    totalBonus: "",
+    totalTicketSales: "",
+    totalWithdrawalTicket: "",
+    arpu: "",
+    avgDeposit: "",
+    lastDepositDate: "",
+    paymentMethod: "",
+
+    gamePreference: "",
+    providerPref: null,
+    playTimePattern: "",
+    avgBetMin: "",
+    avgBetMax: "",
+    playerSegment: "",
+    riskStyle: "",
+    depositFreqStyle: "",
+    depositTrigger: null,
+    churnRiskReason: null,
+    reactivationTrigger: null,
+    note: "",
+  };
+}
+
+// Hydrate the form from the GET response. Tag-style fields wrap the label in
+// `{ kind, label }` to match TagSelectField; selects/inputs are plain strings.
+function apiToForm(data) {
+  const form = emptyForm();
+  if (!data) return form;
+  const c = data.customer_data || {};
+  const f = data.financial_info || {};
+  const g = data.gaming_info || {};
+
+  const tagFor = (kind, label) => (label ? { kind, label } : null);
+
+  return {
+    ...form,
+    vip: tagFor("vip", c.vip_level),
+    playerType: tagFor("game", g.player_type),
+    risk: tagFor("risk", g.risk_style),
+    depositFreq: tagFor("weekly", g.deposit_frequency_style),
+    status: tagFor("active", data.status),
+
+    fullName: data.full_name || c.username || "",
+    phone: c.phone_number || "",
+    gender: c.gender || "",
+    dob: c.date_of_birth || "",
+    age: c.age ?? "",
+    nationality: c.nationality || "",
+    homeAddress: c.home_address || "",
+    marital: c.marital_status || "",
+    job: c.job || "",
+    hobby: tagFor("hobby", c.hobby),
+
+    totalSales: f.total_sales ?? "",
+    totalWinLoss: f.total_win_lose ?? "",
+    totalTicketSales: f.total_sales_ticket ?? "",
+    arpu: f.arpu ?? "",
+    avgDeposit: f.average_deposit ?? "",
+    lastDepositDate: f.last_deposit_date || "",
+    paymentMethod: f.payment_method || "",
+
+    gamePreference: g.game_preference || "",
+    providerPref: tagFor("hobby", g.provider_preference),
+    playTimePattern: g.play_time_pattern || "",
+    playerSegment: g.player_type || "",
+    riskStyle: g.risk_style || "",
+    depositFreqStyle: g.deposit_frequency_style || "",
+    depositTrigger: tagFor("hobby", g.deposit_trigger),
+    churnRiskReason: tagFor("hobby", g.churn_risk_reason),
+    reactivationTrigger: tagFor("hobby", g.reactivation_trigger),
+  };
+}
+
+// Build the PUT payload split into the three top-level objects the API
+// expects. Values still kept as strings/labels are mapped to ints where the
+// doc says "Int / Will have choices later".
+function formToApi(form) {
+  return {
+    profile_data: {
+      vip_level_uuid: form.vipUuid || undefined,
+      player_type: labelToInt("playerType", form.playerType?.label),
+      risk: labelToInt("risk", form.risk?.label),
+      deposit_frequency: labelToInt("depositFreq", form.depositFreq?.label),
+      status: labelToInt("status", form.status?.label),
+    },
+    basic_info: {
+      gender: labelToInt("gender", form.gender),
+      date_of_birth: form.dob || undefined,
+      nationality: labelToInt("nationality", form.nationality),
+      home_address: form.homeAddress || undefined,
+      marital_status: labelToInt("marital", form.marital),
+      job: form.job || undefined,
+      hobby: labelToInt("hobby", form.hobby?.label),
+      payment_method: form.paymentMethod || undefined,
+    },
+    game_info: {
+      game_preference: form.gamePreference || undefined,
+      provider_Preference: labelToInt("providerPref", form.providerPref?.label),
+      play_type_pattern: form.playTimePattern || undefined,
+      average_bet_size: form.avgBetMax || form.avgBetMin || undefined,
+      player_type: labelToInt("playerSegment", form.playerSegment),
+      risk_style: labelToInt("riskStyle", form.riskStyle),
+      deposit_frequency_style: labelToInt("depositFreqStyle", form.depositFreqStyle),
+      deposit_trigger: labelToInt("depositTrigger", form.depositTrigger?.label),
+      churn_risk_reason: labelToInt("churnRiskReason", form.churnRiskReason?.label),
+      reactivation_trigger: labelToInt("reactivationTrigger", form.reactivationTrigger?.label),
+    },
+  };
 }
 
 export default function MemberEditPage() {
   const router = useRouter();
   const params = useParams();
-  const slug = typeof params?.slug === "string" ? params.slug : Array.isArray(params?.slug) ? params.slug[0] : "";
+  const memberUuid = typeof params?.slug === "string" ? params.slug : Array.isArray(params?.slug) ? params.slug[0] : "";
 
-  const memberName = slugToName(slug);
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState(() => initialFormFor(memberName));
+  const [form, setForm] = useState(emptyForm());
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [memberName, setMemberName] = useState("Member");
+
+  useEffect(() => {
+    if (!memberUuid) return;
+    let cancelled = false;
+    const fetchMember = async () => {
+      setLoading(true);
+      try {
+        const res = await getCrmMemberSingle(memberUuid);
+        if (cancelled) return;
+        setForm(apiToForm(res));
+        setMemberName(res?.full_name || res?.customer_data?.username || "Member");
+      } catch (err) {
+        if (cancelled) return;
+        console.error("[member-edit] load failed", err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    fetchMember();
+    return () => {
+      cancelled = true;
+    };
+  }, [memberUuid]);
 
   const setField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
-  const goBack = () => router.push(`/admin/retention/members/${slug}`);
+  const goBack = () => router.push(`/admin/retention/members/${memberUuid}`);
   const goPrev = () => setStep((s) => Math.max(0, s - 1));
   const goNext = () => setStep((s) => Math.min(STEPS.length - 1, s + 1));
   const goToStep = (idx) => setStep(Math.max(0, Math.min(STEPS.length - 1, idx)));
 
-  const onSave = () => {
-    // TODO: PATCH /members/:slug with the form payload.
-    router.push(`/admin/retention/members/${slug}`);
+  const onSave = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      await updateCrmMember(memberUuid, formToApi(form));
+      router.push(`/admin/retention/members/${memberUuid}`);
+    } catch (err) {
+      console.error("[member-edit] save failed", err);
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="px-2 py-12 text-center text-[14px] text-white/60">
+        Loading member...
+      </div>
+    );
+  }
 
   return (
     <>
@@ -88,58 +285,11 @@ export default function MemberEditPage() {
           mode={step === 0 ? "cancel" : "back"}
           onSecondary={step === 0 ? goBack : goPrev}
           onSave={onSave}
+          saving={saving}
         />
       </Card>
     </>
   );
-}
-
-function initialFormFor(name) {
-  return {
-    image: null,
-    vip: { kind: "vip", label: "VIP 1" },
-    playerType: { kind: "game", label: "Slots" },
-    risk: { kind: "risk", label: "Low" },
-    depositFreq: { kind: "weekly", label: "Weekly" },
-    status: { kind: "active", label: "Active" },
-
-    fullName: name,
-    phone: "+026646464654",
-    gender: "Male",
-    dob: "03.02.1997",
-    age: "28",
-    nationality: "South Korean",
-    homeAddress: "12 - AC Lane, Seoul, South Korea",
-    marital: "Divorced",
-    job: "Manager",
-    hobby: { kind: "hobby", label: "Gaming" },
-
-    // Financial
-    totalSales: "50",
-    totalWithdrawal: "67",
-    totalWinLoss: "67",
-    totalBonus: "50",
-    totalTicketSales: "102",
-    totalWithdrawalTicket: "67",
-    arpu: "233",
-    avgDeposit: "233",
-    lastDepositDate: "2026-04-23",
-    paymentMethod: "Stripe",
-
-    // Game
-    gamePreference: "Slot- Great Blue",
-    providerPref: { kind: "hobby", label: "Pragmatic" },
-    playTimePattern: "Night",
-    avgBetMin: "50",
-    avgBetMax: "150",
-    playerSegment: "VIP",
-    riskStyle: "Balanced",
-    depositFreqStyle: "Weekly",
-    depositTrigger: { kind: "hobby", label: "Bonus" },
-    churnRiskReason: { kind: "hobby", label: "Any" },
-    reactivationTrigger: { kind: "hobby", label: "Any" },
-    note: "",
-  };
 }
 
 function EditHeader({ name }) {
@@ -307,7 +457,7 @@ function TextInput({ value, onChange, leftIcon, type = "text" }) {
       {leftIcon}
       <input
         type={type}
-        value={value}
+        value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
         className="flex-1 bg-transparent text-[12px] font-medium leading-[18px] text-white outline-none placeholder:text-white/40 [color-scheme:dark]"
       />
@@ -326,7 +476,7 @@ function CurrencyInput({ value, onChange }) {
       <input
         type="text"
         inputMode="decimal"
-        value={value}
+        value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
         className="flex-1 bg-transparent text-[12px] font-medium leading-[18px] text-white outline-none placeholder:text-white/40"
       />
@@ -344,7 +494,7 @@ function BetRangeInput({ min, max, onMinChange, onMaxChange }) {
       <input
         type="text"
         inputMode="decimal"
-        value={min}
+        value={min ?? ""}
         onChange={(e) => onMinChange(e.target.value)}
         className="w-full min-w-0 bg-transparent text-[12px] font-medium leading-[18px] text-white outline-none placeholder:text-white/40"
       />
@@ -352,7 +502,7 @@ function BetRangeInput({ min, max, onMinChange, onMaxChange }) {
       <input
         type="text"
         inputMode="decimal"
-        value={max}
+        value={max ?? ""}
         onChange={(e) => onMaxChange(e.target.value)}
         className="w-full min-w-0 bg-transparent text-[12px] font-medium leading-[18px] text-white outline-none placeholder:text-white/40"
       />
@@ -365,7 +515,7 @@ function TextArea({ value, onChange, placeholder, rows = 6 }) {
     <div className="rounded-[8px] border border-[#fbeed2] px-4 py-3">
       <textarea
         rows={rows}
-        value={value}
+        value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className="block w-full resize-none bg-transparent text-[12px] font-medium leading-[18px] text-white outline-none placeholder:text-white/40"
@@ -378,10 +528,11 @@ function SelectInput({ value, onChange, options }) {
   return (
     <div className="flex items-center gap-3 rounded-[8px] border border-[#fbeed2] px-4 py-3">
       <select
-        value={value}
+        value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
         className="flex-1 appearance-none bg-transparent text-[12px] font-medium leading-[18px] text-white outline-none [color-scheme:dark]"
       >
+        <option value="" className="bg-[#05060a] text-white/60">Select...</option>
         {options.map((opt) => (
           <option key={opt} value={opt} className="bg-[#05060a] text-white">
             {opt}
@@ -564,7 +715,7 @@ function BasicInfoStep({ form, setField }) {
           <SelectInput value={form.gender} onChange={(v) => setField("gender", v)} options={SELECT_OPTIONS.gender} />
         </FieldWrapper>
         <FieldWrapper label="Date of Birth">
-          <TextInput value={form.dob} onChange={(v) => setField("dob", v)} leftIcon={<CalendarIcon />} />
+          <TextInput type="date" value={form.dob} onChange={(v) => setField("dob", v)} leftIcon={<CalendarIcon />} />
         </FieldWrapper>
         <FieldWrapper label="Age">
           <TextInput value={form.age} onChange={(v) => setField("age", v)} />
@@ -686,14 +837,15 @@ function GameInfoStep({ form, setField }) {
 
 // mode: "cancel" on the first step (X icon → exit the wizard) or "back" on
 // later steps (left-arrow icon → previous step). Save is identical in both.
-function ActionRow({ mode, onSecondary, onSave }) {
+function ActionRow({ mode, onSecondary, onSave, saving }) {
   const isBack = mode === "back";
   return (
     <div className="flex justify-end gap-4">
       <button
         type="button"
         onClick={onSecondary}
-        className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold text-[#fbeed2] leading-[21px] transition hover:brightness-110"
+        disabled={saving}
+        className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold text-[#fbeed2] leading-[21px] transition hover:brightness-110 disabled:opacity-50"
         style={{ letterSpacing: "-1px" }}
       >
         {isBack ? (
@@ -712,13 +864,14 @@ function ActionRow({ mode, onSecondary, onSave }) {
       <button
         type="button"
         onClick={onSave}
-        className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold text-[#141828] leading-[21px] transition hover:brightness-110"
+        disabled={saving}
+        className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold text-[#141828] leading-[21px] transition hover:brightness-110 disabled:opacity-60"
         style={{ backgroundImage: GRAD_GOLD, letterSpacing: "-1px" }}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#141828" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="20 6 9 17 4 12" />
         </svg>
-        Save
+        {saving ? "Saving..." : "Save"}
       </button>
     </div>
   );
