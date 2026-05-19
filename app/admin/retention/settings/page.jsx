@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Pagination from "../../../components/admin/retention/Pagination";
 import SetTargetModal from "../../../components/admin/retention/SetTargetModal";
@@ -9,6 +9,13 @@ import {
   GRAD_DARK,
   GRAD_GOLD,
 } from "../../../components/admin/retention/constants";
+import {
+  createCrmAssignment,
+  getCrmAssignments,
+  setCrmAssignmentTarget,
+  statusLabelToInt,
+  updateCrmAssignment,
+} from "../../../api/crmApi";
 
 // Retention Settings — Member Assignment.
 // Three views toggled by ?view=:
@@ -17,28 +24,47 @@ import {
 //   - ?view=edit&id=X → same form, prefilled from row X, saves back to it
 // The Set Target action opens a portal-rendered modal.
 
-const PICS = [
-  "Sarah Jenkins",
-  "Marcus Henry",
-  "David Chen",
-  "Elena Rody",
-  "Adam Ron",
-  "Omar Al-Farsi",
-  "Samantha",
-];
-
-const LEVELS = ["Elite", "Premium", "Standard"];
 const STATUSES = ["Active", "Inactive"];
 
-const INITIAL_ASSIGNMENTS = [
-  { id: 1, name: "Sarah Jenkins",  vip: "VIP 1", avatar: `${ASSETS}/avatar-1.jpg`, level: "Elite",    members: "34,053", retain: "RM 75,000", upgrade: "34,053", target: "100,000", status: "Active"   },
-  { id: 2, name: "Marcus Henry",   vip: "VIP 2", avatar: `${ASSETS}/avatar-2.jpg`, level: "Premium",  members: "28,764", retain: "RM 50,000", upgrade: "28,764", target: "100,000", status: "Active"   },
-  { id: 3, name: "David Chen",     vip: "VIP 3", avatar: `${ASSETS}/avatar-3.jpg`, level: "Standard", members: "15,432", retain: "RM 30,000", upgrade: "15,432", target: "100,000", status: "Active"   },
-  { id: 4, name: "Elena Rody",     vip: "VIP 2", avatar: `${ASSETS}/avatar-3.jpg`, level: "Elite",    members: "20,156", retain: "RM 45,000", upgrade: "20,156", target: "100,000", status: "Inactive" },
-  { id: 5, name: "Adam Ron",       vip: "VIP 3", avatar: `${ASSETS}/avatar-4.jpg`, level: "Premium",  members: "18,900", retain: "RM 35,000", upgrade: "18,900", target: "100,000", status: "Active"   },
-  { id: 6, name: "Omar Al-Farsi",  vip: "VIP 1", avatar: `${ASSETS}/avatar-4.jpg`, level: "Standard", members: "12,345", retain: "RM 20,000", upgrade: "12,345", target: "100,000", status: "Inactive" },
-  { id: 7, name: "Samantha",       vip: "VIP 1", avatar: `${ASSETS}/avatar-5.jpg`, level: "Elite",    members: "22,678", retain: "RM 55,000", upgrade: "22,678", target: "100,000", status: "Active"   },
-];
+const PAGE_SIZE = 7;
+
+function formatNumber(value) {
+  if (value === null || value === undefined || value === "") return "0";
+  const num = Number(value);
+  return Number.isFinite(num) ? num.toLocaleString("en-US") : String(value);
+}
+
+function formatCurrency(value) {
+  if (value === null || value === undefined || value === "") return "RM 0";
+  const num = parseFloat(value);
+  if (Number.isNaN(num)) return `RM ${value}`;
+  return `RM ${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+}
+
+function stripCurrency(value) {
+  return String(value ?? "").replace(/^RM\s*/i, "").replace(/,/g, "");
+}
+
+function isUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ""));
+}
+
+function mapAssignment(row, idx = 0) {
+  return {
+    id: row.uuid || row.id || idx + 1,
+    uuid: row.uuid,
+    name: row.full_name || row.name || "—",
+    picUuid: row.pic_uuid || row.admin_uuid || row.user_uuid || row.pic?.uuid || row.admin?.uuid || "",
+    vip: row.vip_level || "",
+    avatar: `${ASSETS}/avatar-${(idx % 5) + 1}.jpg`,
+    level: row.level || row.name || "—",
+    members: formatNumber(row.target_members),
+    retain: formatCurrency(row.retain_criteria),
+    upgrade: formatCurrency(row.upgrade_criteria),
+    target: formatCurrency(row.retention_target),
+    status: row.status || "Inactive",
+  };
+}
 
 // Bridge between table row shape and the form field shape. The form models a
 // "member level" (name = level label, pic = assigned PIC) so we map column
@@ -48,8 +74,8 @@ function rowToFormValues(row) {
   return {
     name: row.level,
     status: row.status,
-    retain: row.retain.replace(/^RM\s*/i, ""),
-    upgrade: row.upgrade,
+    retain: stripCurrency(row.retain),
+    upgrade: stripCurrency(row.upgrade),
     pic: row.name,
   };
 }
@@ -67,7 +93,31 @@ function applyFormToRow(row, values) {
 
 export default function RetentionSettingsPage() {
   const searchParams = useSearchParams();
-  const [rows, setRows] = useState(INITIAL_ASSIGNMENTS);
+  const pageParam = parseInt(searchParams.get("page") || "1", 10);
+  const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
+  const [rows, setRows] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  const loadAssignments = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await getCrmAssignments({ page, page_size: PAGE_SIZE });
+      const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+      setRows(results.map(mapAssignment));
+      setTotal(Number.isFinite(res?.count) ? res.count : results.length);
+    } catch (err) {
+      console.error("[retention-settings] assignments failed", err);
+      setRows([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [page]);
+
+  useEffect(() => {
+    loadAssignments();
+  }, [loadAssignments]);
 
   const viewParam = searchParams.get("view");
   const editIdParam = searchParams.get("id");
@@ -79,26 +129,36 @@ export default function RetentionSettingsPage() {
   const mode = viewParam === "add" ? "add" : editingRow ? "edit" : "list";
 
   const handleSave = useCallback(
-    (values) => {
-      if (editingRow) {
-        setRows((prev) =>
-          prev.map((r) => (r.id === editingRow.id ? applyFormToRow(r, values) : r))
-        );
+    async (values) => {
+      const selectedPic = rows.find((row) => row.name === values.pic);
+      const picUuid = selectedPic?.picUuid || editingRow?.picUuid;
+      if (!isUuid(picUuid)) {
+        alert("Cannot save assignment: the API response does not include a valid PIC UUID for the selected PIC.");
+        return;
       }
-      // For "add" we'd push a new row here once the schema is finalized. The
-      // current row shape needs avatar/VIP/member count which the form doesn't
-      // capture, so leave it as a console-log placeholder for now.
-      // eslint-disable-next-line no-console
-      else console.log("[member-level] add", values);
+      const payload = {
+        name: values.name,
+        status: statusLabelToInt(values.status),
+        retain_criteria: stripCurrency(values.retain),
+        upgrade_criteria: stripCurrency(values.upgrade),
+        pic_uuid: picUuid,
+      };
+      try {
+        if (editingRow?.uuid) await updateCrmAssignment(editingRow.uuid, payload);
+        else await createCrmAssignment(payload);
+        await loadAssignments();
+      } catch (err) {
+        console.error("[retention-settings] save failed", err);
+      }
     },
-    [editingRow]
+    [editingRow, loadAssignments, rows]
   );
 
   return (
     <>
       <PageHeader />
       {mode === "list" ? (
-        <AssignmentListSection rows={rows} />
+        <AssignmentListSection rows={rows} total={total} page={page} loading={loading} />
       ) : (
         // Key on the row id (or "add") forces a remount when switching between
         // edit targets so useState's lazy init re-reads from the new row.
@@ -107,6 +167,7 @@ export default function RetentionSettingsPage() {
           mode={mode}
           initialValues={editingRow ? rowToFormValues(editingRow) : null}
           onSave={handleSave}
+          pics={rows.map((row) => row.name).filter(Boolean)}
         />
       )}
     </>
@@ -127,7 +188,7 @@ function PageHeader() {
   );
 }
 
-function AssignmentListSection({ rows }) {
+function AssignmentListSection({ rows, total, page, loading }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -150,11 +211,27 @@ function AssignmentListSection({ rows }) {
     [pathname, router, searchParams]
   );
 
-  const handleSaveTarget = useCallback((payload) => {
-    // Hook for backend; for now just log so the dev can see it.
-    // eslint-disable-next-line no-console
-    console.log("[set-target] saved", payload);
-  }, []);
+  const handleSaveTarget = useCallback(async (payload) => {
+    const selectedPic = rows.find((row) => row.name === payload.pic);
+    if (!isUuid(selectedPic?.picUuid)) {
+      alert("Cannot set target: the API response does not include a valid PIC UUID for the selected PIC.");
+      return;
+    }
+    try {
+      await setCrmAssignmentTarget({
+        pic_uuid: selectedPic?.picUuid,
+        deposit: stripCurrency(payload.target),
+      });
+    } catch (err) {
+      console.error("[retention-settings] set target failed", err);
+    }
+  }, [rows]);
+
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount);
+  const startIdx = (safePage - 1) * PAGE_SIZE;
+  const showingFrom = total === 0 ? 0 : startIdx + 1;
+  const showingTo = Math.min(startIdx + rows.length, total);
 
   return (
     <section className="flex w-full flex-col overflow-clip rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
@@ -185,22 +262,38 @@ function AssignmentListSection({ rows }) {
       <div className="flex w-full flex-col overflow-clip">
         <TableHeader />
         <div className="flex w-full flex-col">
-          {rows.map((row) => (
+          {loading ? (
+            <div className="px-6 py-10 text-center b-4 text-white/60">Loading...</div>
+          ) : rows.length === 0 ? (
+            <div className="px-6 py-10 text-center b-4 text-white/60">No assignments found.</div>
+          ) : rows.map((row, idx) => (
             <AssignmentRow
-              key={row.id}
+              key={`${row.id || "assignment"}-${idx}`}
               row={row}
               onEdit={() => goToEditView(row.id)}
             />
           ))}
         </div>
-        <Pagination from={1} to={rows.length} total={150} />
+        <Pagination
+          from={showingFrom}
+          to={showingTo}
+          total={total}
+          currentPage={safePage}
+          pageCount={pageCount}
+          onPageChange={(nextPage) => {
+            const next = new URLSearchParams(searchParams.toString());
+            if (nextPage > 1) next.set("page", String(nextPage));
+            else next.delete("page");
+            router.push(next.toString() ? `${pathname}?${next.toString()}` : pathname);
+          }}
+        />
       </div>
 
       <SetTargetModal
         isOpen={targetOpen}
         onClose={() => setTargetOpen(false)}
         onSave={handleSaveTarget}
-        pics={PICS}
+        pics={rows.map((row) => row.name).filter(Boolean)}
       />
     </section>
   );
@@ -291,7 +384,7 @@ function DataCell({ value }) {
   );
 }
 
-function MemberLevelForm({ mode, initialValues, onSave }) {
+function MemberLevelForm({ mode, initialValues, onSave, pics }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -304,7 +397,8 @@ function MemberLevelForm({ mode, initialValues, onSave }) {
   const [status, setStatus] = useState(() => initialValues?.status ?? "Active");
   const [retain, setRetain] = useState(() => initialValues?.retain ?? "10,000");
   const [upgrade, setUpgrade] = useState(() => initialValues?.upgrade ?? "1,000");
-  const [pic, setPic] = useState(() => initialValues?.pic ?? PICS[0]);
+  const picOptions = pics?.length ? pics : [];
+  const [pic, setPic] = useState(() => initialValues?.pic ?? picOptions[0] ?? "");
 
   const goBack = useCallback(() => {
     const next = new URLSearchParams(searchParams.toString());
@@ -314,8 +408,8 @@ function MemberLevelForm({ mode, initialValues, onSave }) {
     router.push(qs ? `${pathname}?${qs}` : pathname);
   }, [pathname, router, searchParams]);
 
-  const handleSave = useCallback(() => {
-    onSave({ name, status, retain, upgrade, pic });
+  const handleSave = useCallback(async () => {
+    await onSave({ name, status, retain, upgrade, pic });
     goBack();
   }, [name, status, retain, upgrade, pic, onSave, goBack]);
 
@@ -348,7 +442,7 @@ function MemberLevelForm({ mode, initialValues, onSave }) {
           <RmInput value={upgrade} onChange={setUpgrade} />
         </FormField>
         <FormField label="Choose PIC">
-          <Select value={pic} onChange={setPic} options={PICS} />
+          <Select value={pic} onChange={setPic} options={picOptions} />
         </FormField>
       </div>
 

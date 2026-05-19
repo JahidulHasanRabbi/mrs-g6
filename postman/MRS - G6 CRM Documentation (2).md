@@ -66,6 +66,32 @@ Password: Qwerabcd\!
 
 # User Access Panel {#user-access-panel}
 
+## User List
+
+### User List \- GET
+
+/admins/users/ GET  
+Query parameters
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | page | Int | No | For Pagination |
+| **2** | page\_size | Int | No | For Pagination |
+
+Output (Is Paginated)
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | uuid | UUID | No |  |
+| **2** | username | Str | No |  |
+| **3** | full\_name | Str | No |  |
+| **4** | role | Str | No |  |
+| **5** | status | Str | No | Active or Inactive |
+
+### 
+
+# 
+
 # Member Profile {#member-profile}
 
 ## Member List {#member-list}
@@ -383,7 +409,7 @@ Input
 | **2** | status | int | No | 1 \= Active 2 \= Inactive |
 | **3** | retain\_criteria | Str (Decimal) | No |  |
 | **4** | upgrade\_criteria | Str (Decimal) | No |  |
-| **5** | pic\_uuid | uuid | No |  |
+| **5** | pic\_uuid | uuid | No | /admins/users/ GET |
 
 ### Member Assignment \- Set Deposit \- Patch
 
@@ -392,7 +418,7 @@ Input
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | pic\_uuid | uuid | No |  |
+| **1** | pic\_uuid | uuid | No | /admins/users/ GET |
 | **2** | deposit | Str (Decimal) | No |  |
 
 ### 

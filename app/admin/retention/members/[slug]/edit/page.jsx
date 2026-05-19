@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { GRAD_GOLD } from "../../../../../components/admin/retention/constants";
 import { getCrmMemberSingle, updateCrmMember } from "../../../../../api/crmApi";
+import { getVipTiers } from "../../../../../api/adminApi";
 
 // Member edit form — Figma 87:7291. 3-step wizard:
 //   01 Basic Info   (Profile Data + Basic Info shown in the Figma)
@@ -29,7 +30,7 @@ const TAG_PALETTE = {
 // color via TAG_PALETTE above.
 const TAG_OPTIONS = {
   vip:                 { kind: "vip",    options: ["VIP 1", "VIP 2", "VIP 3", "VIP 4", "VIP 5"] },
-  playerType:          { kind: "game",   options: ["Slots", "Live Casino", "Sports", "Poker", "Table Games"] },
+  playerType:          { kind: "game",   options: ["VIP", "Regular", "New", "Dormant"] },
   risk:                { kind: "risk",   options: ["Low", "Medium", "High"] },
   depositFreq:         { kind: "weekly", options: ["Daily", "Weekly", "Bi-Weekly", "Monthly", "Quarterly"] },
   status:              { kind: "active", options: ["Active", "Inactive", "Dormant", "Suspended"] },
@@ -47,6 +48,8 @@ const SELECT_OPTIONS = {
   playerSegment: ["VIP", "Regular", "New", "Dormant"],
   riskStyle: ["Conservative", "Balanced", "Aggressive", "High Risk"],
   depositFreqStyle: ["Daily", "Weekly", "Bi-Weekly", "Monthly", "Quarterly"],
+  paymentMethod: ["Bank Transfer", "Credit Card", "Debit Card", "E-Wallet", "Crypto", "Other"],
+  playTimePattern: ["Morning (6am-12pm)", "Afternoon (12pm-6pm)", "Evening (6pm-8pm)", "Night (8pm-2am)", "Late Night (2am-6am)"],
 };
 
 // Order matters — the index + 1 is the integer the API expects ("Will have
@@ -69,14 +72,88 @@ const ENUM_INDEX = {
   playerSegment: SELECT_OPTIONS.playerSegment,
   riskStyle: SELECT_OPTIONS.riskStyle,
   depositFreqStyle: SELECT_OPTIONS.depositFreqStyle,
+  paymentMethod: SELECT_OPTIONS.paymentMethod,
+  playTimePattern: SELECT_OPTIONS.playTimePattern,
 };
 
 function labelToInt(enumKey, label) {
   if (!label) return undefined;
   const list = ENUM_INDEX[enumKey];
   if (!list) return undefined;
-  const idx = list.findIndex((opt) => opt.toLowerCase() === String(label).toLowerCase());
+  const normalized = normalizeLabel(label);
+  const idx = list.findIndex((opt) => normalizeLabel(opt) === normalized);
   return idx >= 0 ? idx + 1 : undefined;
+}
+
+function normalizeLabel(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function riskLabelToInt(label) {
+  const normalized = normalizeLabel(label).replace(" risk", "");
+  return labelToInt("risk", normalized);
+}
+
+function oneItemList(value) {
+  return value === undefined || value === null ? [] : [value];
+}
+
+function findVipUuid(vipTiers, label) {
+  const normalized = normalizeLabel(label);
+  const match = (vipTiers || []).find((tier) => {
+    const candidates = [
+      tier.name,
+      tier.tier_name,
+      tier.vip_tier,
+      tier.level,
+      tier.title,
+    ].map(normalizeLabel);
+    return candidates.includes(normalized);
+  });
+  return match?.uuid || match?.id;
+}
+
+function getExistingVipUuid(data) {
+  return (
+    data?.profile_data?.vip_level_uuid ||
+    data?.customer_data?.vip_level_uuid ||
+    data?.customer_data?.mrs_level_uuid ||
+    data?.customer_data?.vip_uuid ||
+    data?.vip_level_uuid ||
+    data?.mrs_level_uuid ||
+    data?.vip_uuid ||
+    undefined
+  );
+}
+
+function normalizeListResponse(response) {
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response?.results)) return response.results;
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.data?.results)) return response.data.results;
+  return [];
+}
+
+function dateToInput(value) {
+  if (!value) return "";
+  const raw = String(value);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  const match = raw.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  if (!match) return raw;
+  return `${match[3]}-${match[2]}-${match[1]}`;
+}
+
+function parseBetSize(value) {
+  if (!value) return { min: "", max: "" };
+  const parts = String(value).match(/\d+(?:\.\d+)?/g) || [];
+  return {
+    min: parts[0] || "",
+    max: parts[1] || parts[0] || "",
+  };
 }
 
 function emptyForm() {
@@ -127,35 +204,39 @@ function emptyForm() {
 
 // Hydrate the form from the GET response. Tag-style fields wrap the label in
 // `{ kind, label }` to match TagSelectField; selects/inputs are plain strings.
-function apiToForm(data) {
+function apiToForm(data, vipTiers = []) {
   const form = emptyForm();
   if (!data) return form;
   const c = data.customer_data || {};
+  const b = data.basic_info || {};
   const f = data.financial_info || {};
   const g = data.gaming_info || {};
 
   const tagFor = (kind, label) => (label ? { kind, label } : null);
+  const betSize = parseBetSize(g.average_bet_size);
 
   return {
     ...form,
-    vip: tagFor("vip", c.vip_level),
+    vip: tagFor("vip", c.mrs_level || c.vip_level),
+    vipUuid: getExistingVipUuid(data) || findVipUuid(vipTiers, c.mrs_level || c.vip_level),
     playerType: tagFor("game", g.player_type),
     risk: tagFor("risk", g.risk_style),
     depositFreq: tagFor("weekly", g.deposit_frequency_style),
-    status: tagFor("active", data.status),
+    status: tagFor("active", data.status || "Active"),
 
-    fullName: data.full_name || c.username || "",
-    phone: c.phone_number || "",
-    gender: c.gender || "",
-    dob: c.date_of_birth || "",
-    age: c.age ?? "",
-    nationality: c.nationality || "",
-    homeAddress: c.home_address || "",
-    marital: c.marital_status || "",
-    job: c.job || "",
-    hobby: tagFor("hobby", c.hobby),
+    fullName: data.full_name || b.username || "",
+    phone: b.phone_number || "",
+    gender: b.gender || "",
+    dob: dateToInput(b.date_of_birth),
+    age: b.age ?? "",
+    nationality: b.nationality || "",
+    homeAddress: b.home_address || "",
+    marital: b.marital_status || "",
+    job: b.job || "",
+    hobby: tagFor("hobby", b.hobby),
 
     totalSales: f.total_sales ?? "",
+    totalWithdrawal: c.total_withdrawal ?? "",
     totalWinLoss: f.total_win_lose ?? "",
     totalTicketSales: f.total_sales_ticket ?? "",
     arpu: f.arpu ?? "",
@@ -166,6 +247,8 @@ function apiToForm(data) {
     gamePreference: g.game_preference || "",
     providerPref: tagFor("hobby", g.provider_preference),
     playTimePattern: g.play_time_pattern || "",
+    avgBetMin: betSize.min,
+    avgBetMax: betSize.max,
     playerSegment: g.player_type || "",
     riskStyle: g.risk_style || "",
     depositFreqStyle: g.deposit_frequency_style || "",
@@ -178,14 +261,25 @@ function apiToForm(data) {
 // Build the PUT payload split into the three top-level objects the API
 // expects. Values still kept as strings/labels are mapped to ints where the
 // doc says "Int / Will have choices later".
-function formToApi(form) {
+function formToApi(form, vipTiers = []) {
+  const vipUuid = form.vipUuid || findVipUuid(vipTiers, form.vip?.label);
+  const playerType = labelToInt("playerType", form.playerType?.label) || labelToInt("playerSegment", form.playerSegment);
+  const risk = riskLabelToInt(form.risk?.label) || riskLabelToInt(form.riskStyle);
+  const status = labelToInt("status", form.status?.label) || 1;
+  const paymentMethod = labelToInt("paymentMethod", form.paymentMethod);
+  const playTimePattern = labelToInt("playTimePattern", form.playTimePattern);
+  const providerPref = labelToInt("providerPref", form.providerPref?.label);
+  const depositTrigger = labelToInt("depositTrigger", form.depositTrigger?.label);
+  const churnRiskReason = labelToInt("churnRiskReason", form.churnRiskReason?.label);
+  const reactivationTrigger = labelToInt("reactivationTrigger", form.reactivationTrigger?.label);
+
   return {
     profile_data: {
-      vip_level_uuid: form.vipUuid || undefined,
-      player_type: labelToInt("playerType", form.playerType?.label),
-      risk: labelToInt("risk", form.risk?.label),
+      vip_level_uuid: vipUuid,
+      player_type: playerType,
+      risk,
       deposit_frequency: labelToInt("depositFreq", form.depositFreq?.label),
-      status: labelToInt("status", form.status?.label),
+      status,
     },
     basic_info: {
       gender: labelToInt("gender", form.gender),
@@ -194,20 +288,20 @@ function formToApi(form) {
       home_address: form.homeAddress || undefined,
       marital_status: labelToInt("marital", form.marital),
       job: form.job || undefined,
-      hobby: labelToInt("hobby", form.hobby?.label),
-      payment_method: form.paymentMethod || undefined,
+      hobby: oneItemList(labelToInt("hobby", form.hobby?.label)),
+      payment_method: paymentMethod,
     },
     game_info: {
       game_preference: form.gamePreference || undefined,
-      provider_Preference: labelToInt("providerPref", form.providerPref?.label),
-      play_type_pattern: form.playTimePattern || undefined,
-      average_bet_size: form.avgBetMax || form.avgBetMin || undefined,
+      provider_Preference: oneItemList(providerPref),
+      play_type_pattern: playTimePattern,
+      average_bet_size: Number(form.avgBetMax || form.avgBetMin) || undefined,
       player_type: labelToInt("playerSegment", form.playerSegment),
       risk_style: labelToInt("riskStyle", form.riskStyle),
       deposit_frequency_style: labelToInt("depositFreqStyle", form.depositFreqStyle),
-      deposit_trigger: labelToInt("depositTrigger", form.depositTrigger?.label),
-      churn_risk_reason: labelToInt("churnRiskReason", form.churnRiskReason?.label),
-      reactivation_trigger: labelToInt("reactivationTrigger", form.reactivationTrigger?.label),
+      deposit_trigger: oneItemList(depositTrigger),
+      churn_risk_reason: oneItemList(churnRiskReason),
+      reactivation_trigger: oneItemList(reactivationTrigger),
     },
   };
 }
@@ -222,6 +316,8 @@ export default function MemberEditPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [memberName, setMemberName] = useState("Member");
+  const [vipTiers, setVipTiers] = useState([]);
+  const [originalMember, setOriginalMember] = useState(null);
 
   useEffect(() => {
     if (!memberUuid) return;
@@ -229,10 +325,19 @@ export default function MemberEditPage() {
     const fetchMember = async () => {
       setLoading(true);
       try {
-        const res = await getCrmMemberSingle(memberUuid);
+        const [res, tiersRes] = await Promise.all([
+          getCrmMemberSingle(memberUuid),
+          getVipTiers().catch((err) => {
+            console.error("[member-edit] vip tiers load failed", err);
+            return [];
+          }),
+        ]);
         if (cancelled) return;
-        setForm(apiToForm(res));
-        setMemberName(res?.full_name || res?.customer_data?.username || "Member");
+        const tiers = normalizeListResponse(tiersRes);
+        setVipTiers(tiers);
+        setOriginalMember(res);
+        setForm(apiToForm(res, tiers));
+        setMemberName(res?.full_name || res?.basic_info?.username || "Member");
       } catch (err) {
         if (cancelled) return;
         console.error("[member-edit] load failed", err);
@@ -255,9 +360,14 @@ export default function MemberEditPage() {
 
   const onSave = async () => {
     if (saving) return;
+    const vipUuid = form.vipUuid || getExistingVipUuid(originalMember) || findVipUuid(vipTiers, form.vip?.label);
+    if (!vipUuid) {
+      alert("Please select a valid VIP Level before saving.");
+      return;
+    }
     setSaving(true);
     try {
-      await updateCrmMember(memberUuid, formToApi(form));
+      await updateCrmMember(memberUuid, formToApi({ ...form, vipUuid }, vipTiers));
       router.push(`/admin/retention/members/${memberUuid}`);
     } catch (err) {
       console.error("[member-edit] save failed", err);
@@ -278,7 +388,7 @@ export default function MemberEditPage() {
       <EditHeader name={memberName} />
       <Card>
         <Stepper step={step} onPrev={goPrev} onNext={goNext} onStepClick={goToStep} />
-        {step === 0 && <BasicInfoStep form={form} setField={setField} />}
+        {step === 0 && <BasicInfoStep form={form} setField={setField} vipTiers={vipTiers} />}
         {step === 1 && <FinancialInfoStep form={form} setField={setField} />}
         {step === 2 && <GameInfoStep form={form} setField={setField} />}
         <ActionRow
@@ -680,14 +790,27 @@ function UserImage({ value, onChange }) {
   );
 }
 
-function BasicInfoStep({ form, setField }) {
+function BasicInfoStep({ form, setField, vipTiers = [] }) {
+  const vipOptionsFromApi = vipTiers.length
+    ? vipTiers
+        .map((tier) => tier.name || tier.tier_name || tier.vip_tier || tier.level || tier.title)
+        .filter(Boolean)
+    : TAG_OPTIONS.vip.options;
+  const vipOptions = form.vip?.label && !vipOptionsFromApi.includes(form.vip.label)
+    ? [form.vip.label, ...vipOptionsFromApi]
+    : vipOptionsFromApi;
+  const handleVipChange = (next) => {
+    setField("vip", next);
+    setField("vipUuid", next ? findVipUuid(vipTiers, next.label) : undefined);
+  };
+
   return (
     <>
       <SectionTitle>Profile Data</SectionTitle>
       <UserImage value={form.image} onChange={(file) => setField("image", file)} />
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-10 gap-y-6">
         <FieldWrapper label="VIP Level">
-          <TagSelectField value={form.vip} onChange={(v) => setField("vip", v)} {...TAG_OPTIONS.vip} />
+          <TagSelectField value={form.vip} onChange={handleVipChange} kind={TAG_OPTIONS.vip.kind} options={vipOptions} />
         </FieldWrapper>
         <FieldWrapper label="Player Type">
           <TagSelectField value={form.playerType} onChange={(v) => setField("playerType", v)} {...TAG_OPTIONS.playerType} />

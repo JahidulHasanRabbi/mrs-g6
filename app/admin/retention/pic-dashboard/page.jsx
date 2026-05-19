@@ -241,7 +241,7 @@ function PerformanceSummary({ period, onRefreshSummary }) {
           ) : rows.length === 0 ? (
             <div className="px-6 py-10 text-center b-4 text-white/60">No data available.</div>
           ) : (
-            rows.map((row) => <TableRow key={row.uuid} row={row} />)
+            rows.map((row, idx) => <TableRow key={`${row.uuid || "pic"}-${idx}`} row={row} />)
           )}
         </div>
         <Pagination
@@ -324,7 +324,7 @@ function TableRow({ row }) {
       <div className="flex flex-1 min-w-0 items-center self-stretch justify-end">
         <div className="flex h-full flex-col items-end justify-center p-6">
           <Link
-            href={`/admin/retention/pic-dashboard/${row.uuid}`}
+            href={`/admin/retention/pic-dashboard/${row.uuid}?name=${encodeURIComponent(row.full_name || "")}`}
             className="flex items-center justify-center gap-1 rounded-[8px] border border-[#f2cb7a] px-4 py-2 text-[12px] font-medium text-[#eaad2c] transition hover:brightness-110"
             style={{ backgroundImage: GRAD_DARK }}
           >

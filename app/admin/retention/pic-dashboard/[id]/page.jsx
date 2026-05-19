@@ -1,12 +1,9 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 
-function nameToSlug(name) {
-  return name.trim().toLowerCase().replace(/\s+/g, "-");
-}
 import PeriodToggle from "../../../../components/admin/retention/PeriodToggle";
 import RefreshControl from "../../../../components/admin/retention/RefreshControl";
 import Pagination from "../../../../components/admin/retention/Pagination";
@@ -18,9 +15,14 @@ import {
   GRAD_DARK,
   GRAD_GOLD,
 } from "../../../../components/admin/retention/constants";
+import {
+  getRetentionMembers,
+  getRetentionSummary,
+  periodLabelToType,
+  refreshCrmMembers,
+} from "../../../../api/crmApi";
 
 // PIC detail view — shows per-PIC breakdown of members + a member list.
-// Mock data is hardcoded for the Figma reference; swap to API by slug later.
 
 // VIP-level rows shown inside every KPI card.
 const VIP_LEVELS = ["KG", "LV", "EP", "AB", "UB", "N1"];
@@ -29,40 +31,22 @@ const KPIS = [
   {
     id: "members",
     label: "Total Members",
-    total: "50,654",
-    values: ["770", "800", "766", "590", "33", "931"],
   },
   {
     id: "active",
     label: "Active Members",
-    total: "1,890",
-    values: ["421", "100", "45", "45", "89", "23"],
   },
   {
     id: "sales",
     label: "Total Sales",
-    total: "RM 223,766",
-    values: ["RM 766", "RM 565", "RM 303", "RM 276", "RM 681", "RM 65"],
   },
   {
     id: "winlose",
     label: "Total Win/Lose",
-    total: "RM 2,455",
-    values: ["RM 81", "RM 76", "RM 59", "RM 45", "RM 38", "RM 26"],
   },
 ];
 
-// Members managed by this PIC.  `lastDepositIso` is the canonical ISO date
-// used for filtering against ?from / ?to; `lastDeposit` is just the display.
-const MEMBERS = [
-  { username: "Ah Chong",      phone: "+64164293333", vip: "VIP 2", sales: 3770, salesText: "RM 3,770", winlose: "RM 400",  lastDeposit: "04-05-2026", lastDepositIso: "2026-05-04" },
-  { username: "Lily Tran",     phone: "+64167891234", vip: "VIP 1", sales: 250,  salesText: "RM 250",   winlose: "RM 1,500", lastDeposit: "15-06-2026", lastDepositIso: "2026-06-15" },
-  { username: "Sophia Lee",    phone: "+64168901234", vip: "VIP 4", sales: 300,  salesText: "RM 300",   winlose: "RM 2,900", lastDeposit: "12-08-2026", lastDepositIso: "2026-08-12" },
-  { username: "Marcus Henry",  phone: "+64164293333", vip: "VIP 2", sales: 400,  salesText: "RM 400",   winlose: "RM 3,770", lastDeposit: "04-05-2026", lastDepositIso: "2026-05-04" },
-  { username: "Aiden Smith",   phone: "+64161234567", vip: "VIP 3", sales: 550,  salesText: "RM 550",   winlose: "RM 5,500", lastDeposit: "20-07-2026", lastDepositIso: "2026-07-20" },
-  { username: "Daniel Kim",    phone: "+64163456789", vip: "VIP 5", sales: 700,  salesText: "RM 700",   winlose: "RM 7,000", lastDeposit: "25-09-2026", lastDepositIso: "2026-09-25" },
-  { username: "Nora Park",     phone: "+64162345678", vip: "VIP 2", sales: 450,  salesText: "RM 450",   winlose: "RM 4,200", lastDeposit: "08-06-2026", lastDepositIso: "2026-06-08" },
-];
+const PAGE_SIZE = 7;
 
 const LEVEL_OPTIONS = [
   { value: "all",   label: "All level" },
@@ -78,35 +62,104 @@ const SORT_OPTIONS = [
   { value: "lh", label: "Sales (L-H)" },
 ];
 
-const SLUG_DISPLAY = {
-  "sarah-jenkins": "Sarah Jenkins",
-  "marcus-henry": "Marcus Henry",
-  "david-chen": "David Chen",
-  "elena-rody": "Elena Rody",
-  "adam-ron": "Adam Ron",
-  "omar-al-farsi": "Omar Al-Farsi",
-  "samantha": "Samantha",
-};
+function formatNumber(value) {
+  if (value === null || value === undefined || value === "") return "0";
+  const num = Number(value);
+  return Number.isFinite(num) ? num.toLocaleString("en-US") : String(value);
+}
 
-function slugToName(slug) {
-  if (!slug) return "Unknown PIC";
-  if (SLUG_DISPLAY[slug]) return SLUG_DISPLAY[slug];
-  return slug
-    .split("-")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
+function formatCurrency(value) {
+  if (value === null || value === undefined || value === "") return "RM 0";
+  const num = parseFloat(value);
+  if (Number.isNaN(num)) return `RM ${value}`;
+  return `RM ${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+}
+
+function vipLabelToInt(label) {
+  const n = parseInt(String(label).replace(/[^0-9]/g, ""), 10);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+function formatDate(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleDateString("en-GB").replace(/\//g, "-");
+}
+
+function rowsByStation(rows, valueKey) {
+  return (Array.isArray(rows) ? rows : []).reduce((acc, row) => {
+    acc[row.station] = row[valueKey];
+    return acc;
+  }, {});
+}
+
+function buildKpis(summary) {
+  const members = rowsByStation(summary?.total_members, "members");
+  const active = rowsByStation(summary?.active_members, "members");
+  const sales = rowsByStation(summary?.total_sales, "amount");
+  const winlose = rowsByStation(summary?.total_win_lose, "amount");
+
+  return [
+    {
+      id: "members",
+      label: "Total Members",
+      total: formatNumber(summary?.total_members__total),
+      values: VIP_LEVELS.map((level) => formatNumber(members[level])),
+    },
+    {
+      id: "active",
+      label: "Active Members",
+      total: formatNumber(summary?.active_members__total),
+      values: VIP_LEVELS.map((level) => formatNumber(active[level])),
+    },
+    {
+      id: "sales",
+      label: "Total Sales",
+      total: formatCurrency(summary?.total_sales__total),
+      values: VIP_LEVELS.map((level) => formatCurrency(sales[level])),
+    },
+    {
+      id: "winlose",
+      label: "Total Win/Lose",
+      total: formatCurrency(summary?.total_win_lose__total),
+      values: VIP_LEVELS.map((level) => formatCurrency(winlose[level])),
+    },
+  ];
 }
 
 export default function PicDetailPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const slug = typeof params?.id === "string" ? params.id : Array.isArray(params?.id) ? params.id[0] : "";
+  const picName = searchParams.get("name") || "Unknown PIC";
   const [period, setPeriod] = useState("Daily");
+  const [summary, setSummary] = useState(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
+
+  const loadSummary = useCallback(async () => {
+    if (!slug) return;
+    setSummaryLoading(true);
+    try {
+      const res = await getRetentionSummary(slug, { type: periodLabelToType(period) });
+      setSummary(res || {});
+    } catch (err) {
+      console.error("[pic-detail] summary failed", err);
+      setSummary({});
+    } finally {
+      setSummaryLoading(false);
+    }
+  }, [period, slug]);
+
+  useEffect(() => {
+    loadSummary();
+  }, [loadSummary]);
 
   return (
     <>
-      <PicProfileHeader name={slugToName(slug)} period={period} onPeriodChange={setPeriod} />
-      <KpiGrid />
-      <MemberListSection />
+      <PicProfileHeader name={picName} period={period} onPeriodChange={setPeriod} />
+      <KpiGrid summary={summary} loading={summaryLoading} />
+      <MemberListSection onRefreshSummary={loadSummary} />
     </>
   );
 }
@@ -133,10 +186,11 @@ function PicProfileHeader({ name, period, onPeriodChange }) {
   );
 }
 
-function KpiGrid() {
+function KpiGrid({ summary, loading }) {
+  const items = loading ? KPIS.map((k) => ({ ...k, total: "—", values: VIP_LEVELS.map(() => "—") })) : buildKpis(summary);
   return (
     <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
-      {KPIS.map((k) => (
+      {items.map((k) => (
         <DetailKpiCard key={k.id} kpi={k} />
       ))}
     </div>
@@ -182,7 +236,7 @@ function VipLevelRow({ level, value }) {
   );
 }
 
-function MemberListSection() {
+function MemberListSection({ onRefreshSummary }) {
   // URL state ------------------------------------------------------------
   // All filter values live in the query string so the view is shareable and
   // browser-back / forward work as expected.  router.replace (not push) keeps
@@ -196,6 +250,12 @@ function MemberListSection() {
   const level = searchParams.get("level") ?? "all";
   const sort = searchParams.get("sort") ?? "";
   const q = searchParams.get("q") ?? "";
+  const pageParam = parseInt(searchParams.get("page") || "1", 10);
+  const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
+  const [rows, setRows] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Single helper for swapping any param while preserving the rest.
   const updateParams = useCallback(
@@ -211,31 +271,55 @@ function MemberListSection() {
     [pathname, router, searchParams]
   );
 
-  const onApplyDates = useCallback(
-    (from, to) => updateParams({ from, to }),
-    [updateParams]
-  );
+  const apiParams = useMemo(() => ({
+    page,
+    page_size: PAGE_SIZE,
+    from_date: fromDate || undefined,
+    to_date: toDate || undefined,
+    vip_level: level !== "all" ? vipLabelToInt(level) : undefined,
+    search: q || undefined,
+  }), [fromDate, level, page, q, toDate]);
 
-  // Filter + sort the member list. useMemo so we only recompute when an input
-  // actually changes — typing in unrelated state doesn't trigger this work.
-  const filteredMembers = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    let rows = MEMBERS.filter((m) => {
-      if (level !== "all" && m.vip !== level) return false;
-      if (fromDate && m.lastDepositIso < fromDate) return false;
-      if (toDate && m.lastDepositIso > toDate) return false;
-      if (needle) {
-        const haystack = `${m.username} ${m.phone}`.toLowerCase();
-        if (!haystack.includes(needle)) return false;
-      }
-      return true;
-    });
+  const fetchMembers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await getRetentionMembers(apiParams);
+      let results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+      if (sort === "hl") results = [...results].sort((a, b) => parseFloat(b.total_sales || 0) - parseFloat(a.total_sales || 0));
+      else if (sort === "lh") results = [...results].sort((a, b) => parseFloat(a.total_sales || 0) - parseFloat(b.total_sales || 0));
+      setRows(results);
+      setTotal(Number.isFinite(res?.count) ? res.count : results.length);
+    } catch (err) {
+      console.error("[pic-detail] retention members failed", err);
+      setRows([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [apiParams, sort]);
 
-    if (sort === "hl") rows = [...rows].sort((a, b) => b.sales - a.sales);
-    else if (sort === "lh") rows = [...rows].sort((a, b) => a.sales - b.sales);
+  useEffect(() => {
+    fetchMembers();
+  }, [fetchMembers]);
 
-    return rows;
-  }, [level, fromDate, toDate, q, sort]);
+  const handleRefresh = useCallback(async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await refreshCrmMembers();
+      await Promise.all([fetchMembers(), onRefreshSummary?.()]);
+    } catch (err) {
+      console.error("[pic-detail] refresh failed", err);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchMembers, onRefreshSummary, refreshing]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const startIdx = (safePage - 1) * PAGE_SIZE;
+  const showingFrom = total === 0 ? 0 : startIdx + 1;
+  const showingTo = Math.min(startIdx + rows.length, total);
 
   return (
     <section className="flex w-full flex-col overflow-clip rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
@@ -247,42 +331,53 @@ function MemberListSection() {
           <DateRangePicker
             fromDate={fromDate}
             toDate={toDate}
-            onApply={onApplyDates}
+            onApply={(from, to) => updateParams({ from, to, page: null })}
           />
           <FilterDropdown
             value={level}
             options={LEVEL_OPTIONS}
             placeholder="All level"
-            onChange={(v) => updateParams({ level: v === "all" ? null : v })}
+            onChange={(v) => updateParams({ level: v === "all" ? null : v, page: null })}
           />
           <FilterDropdown
             value={sort}
             options={SORT_OPTIONS}
             placeholder="Sales (H-L)"
-            onChange={(v) => updateParams({ sort: v })}
+            onChange={(v) => updateParams({ sort: v, page: null })}
           />
           <SearchInput
             value={q}
             placeholder="Enter Name/Phone Number"
-            onChange={(v) => updateParams({ q: v })}
+            onChange={(v) => updateParams({ q: v, page: null })}
           />
         </div>
-        <RefreshControl />
+        <RefreshControl onRefresh={handleRefresh} disabled={refreshing} />
       </header>
       <div className="flex w-full flex-col overflow-clip">
         <MemberTableHeader />
         <div className="flex w-full flex-col">
-          {filteredMembers.length === 0 ? (
+          {loading ? (
+            <div className="px-6 py-10 text-center b-4 text-white/60">
+              Loading...
+            </div>
+          ) : rows.length === 0 ? (
             <div className="px-6 py-10 text-center b-4 text-white/60">
               No members match the current filters.
             </div>
           ) : (
-            filteredMembers.map((m, idx) => (
-              <MemberTableRow key={`${m.username}-${idx}`} member={m} />
+            rows.map((m, idx) => (
+              <MemberTableRow key={`${m.uuid || m.username || "member"}-${idx}`} member={m} />
             ))
           )}
         </div>
-        <Pagination from={filteredMembers.length === 0 ? 0 : 1} to={filteredMembers.length} total={150} />
+        <Pagination
+          from={showingFrom}
+          to={showingTo}
+          total={total}
+          currentPage={safePage}
+          pageCount={totalPages}
+          onPageChange={(nextPage) => updateParams({ page: nextPage > 1 ? nextPage : null })}
+        />
       </div>
     </section>
   );
@@ -312,29 +407,30 @@ function HeaderCell({ label, widthClass = "flex-1 min-w-0", align = "start" }) {
 }
 
 function MemberTableRow({ member }) {
+  const href = member.uuid ? `/admin/retention/members/${member.uuid}` : "#";
   return (
     <div className="flex w-full items-center -mb-px border-b border-white/5">
       <div className="flex h-full w-[197px] shrink-0 items-center gap-3 p-6">
         <img src={`${ASSETS}/member-avatar.svg`} alt="" className="h-8 w-8 shrink-0" />
-        <span className="b-4 text-white whitespace-nowrap">{member.username}</span>
+        <span className="b-4 text-white whitespace-nowrap">{member.username || "—"}</span>
       </div>
-      <DataCell value={member.phone} />
+      <DataCell value={member.phone_number || "—"} />
       <div className="flex flex-1 min-w-0 items-center self-stretch">
         <div className="flex h-full flex-1 flex-col justify-center p-6">
           <span
             className="inline-flex w-fit items-center rounded-[12px] px-3 py-1 b-6 text-[#05060a] whitespace-nowrap"
             style={{ backgroundImage: GRAD_GOLD }}
           >
-            {member.vip}
+            {member.level || "—"}
           </span>
         </div>
       </div>
-      <DataCell value={member.salesText} />
-      <DataCell value={member.winlose} />
-      <DataCell value={member.lastDeposit} />
+      <DataCell value={formatCurrency(member.total_sales)} />
+      <DataCell value={formatCurrency(member.total_winlose)} />
+      <DataCell value={formatDate(member.last_deposit)} />
       <div className="flex h-full w-[130px] shrink-0 items-center justify-end p-6">
         <Link
-          href={`/admin/retention/members/${nameToSlug(member.username)}`}
+          href={href}
           className="flex items-center justify-center gap-1 rounded-[8px] border border-[#f2cb7a] px-4 py-2 text-[12px] font-medium text-[#eaad2c] transition hover:brightness-110"
           style={{ backgroundImage: GRAD_DARK }}
         >

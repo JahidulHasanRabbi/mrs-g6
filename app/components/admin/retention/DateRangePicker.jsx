@@ -114,7 +114,14 @@ export default function DateRangePicker({ fromDate, toDate, onApply }) {
           step={step}
           initialIso={step === "from" ? tempFrom : tempTo}
           todayIso={getTodayIso()}
-          onSelect={(iso) => (step === "from" ? setTempFrom(iso) : setTempTo(iso))}
+          onSelect={(iso) => {
+            if (step === "from") {
+              setTempFrom(iso);
+              setStep("to");
+            } else {
+              setTempTo(iso);
+            }
+          }}
           onCancel={close}
           onPrimary={step === "from" ? handleNext : handleApply}
           primaryLabel={step === "from" ? "Next" : "Apply"}

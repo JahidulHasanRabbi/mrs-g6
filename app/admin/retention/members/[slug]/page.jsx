@@ -36,7 +36,7 @@ function show(value, fallback = "—") {
 // resembles the Figma without inventing data the API doesn't provide.
 function inferTags(data) {
   const tags = [];
-  const vip = data?.customer_data?.vip_level || data?.vip_level;
+  const vip = data?.customer_data?.mrs_level || data?.customer_data?.vip_level || data?.vip_level;
   if (vip) tags.push({ label: vip, kind: "vip" });
   const game = data?.gaming_info?.game_preference;
   if (game) tags.push({ label: game, kind: "game" });
@@ -93,17 +93,20 @@ export default function MemberProfilePage() {
     );
   }
 
+  const basic = data?.basic_info || data?.customer_data || {};
+  const customer = data?.customer_data || {};
+
   const basicInfo = {
-    Username: show(data?.customer_data?.username),
-    Phone: show(data?.customer_data?.phone_number),
-    Gender: show(data?.customer_data?.gender),
-    "Date of Birth": show(data?.customer_data?.date_of_birth),
-    Age: show(data?.customer_data?.age),
-    Nationality: show(data?.customer_data?.nationality),
-    "Home Address": show(data?.customer_data?.home_address),
-    "Marital Status": show(data?.customer_data?.marital_status),
-    Job: show(data?.customer_data?.job),
-    Hobby: show(data?.customer_data?.hobby),
+    Username: show(basic?.username),
+    Phone: show(basic?.phone_number),
+    Gender: show(basic?.gender),
+    "Date of Birth": show(basic?.date_of_birth),
+    Age: show(basic?.age),
+    Nationality: show(basic?.nationality),
+    "Home Address": show(basic?.home_address),
+    "Marital Status": show(basic?.marital_status),
+    Job: show(basic?.job),
+    Hobby: show(basic?.hobby),
   };
 
   const financialInfo = {
@@ -130,16 +133,16 @@ export default function MemberProfilePage() {
   };
 
   const stats = {
-    mrsLevel: show(data?.customer_data?.vip_level),
-    nsLevel: show(data?.customer_data?.ns_level, "—"),
-    totalSales: formatCurrency(data?.financial_info?.total_sales),
-    totalWinLose: formatCurrency(data?.financial_info?.total_win_lose),
+    mrsLevel: show(customer?.mrs_level || customer?.vip_level),
+    nsLevel: show(customer?.ns_level, "—"),
+    totalSales: formatCurrency(customer?.total_sales),
+    totalWinLose: formatCurrency(customer?.total_withdrawal),
   };
 
   return (
     <>
       <ProfileHeader
-        name={data?.full_name || data?.customer_data?.username || "Member"}
+        name={data?.full_name || basic?.username || "Member"}
         tags={inferTags(data)}
         dateJoined={show(data?.date_joined)}
         slug={memberUuid}
@@ -312,7 +315,7 @@ function StatsRow({ stats }) {
     { label: "MRS Level", value: stats.mrsLevel },
     { label: "NS Level", value: stats.nsLevel },
     { label: "Total Sales", value: stats.totalSales },
-    { label: "Total Win/lose", value: stats.totalWinLose },
+    { label: "Total Withdrawal", value: stats.totalWinLose },
   ];
   return (
     <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">

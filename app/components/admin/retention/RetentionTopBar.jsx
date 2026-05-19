@@ -23,18 +23,11 @@ const AVATAR = `${ASSETS}/topbar-avatar.jpg`;
 const GRADIENT = "linear-gradient(178deg, #141828 0%, #333333 99.7%)";
 
 // ── Notification model ──────────────────────────────────────────────────
-// Static sample list matching Figma 140:5826. Each item has an icon variant
-// (alert / user), a title, body line, a date label and a viewed/new state.
+// No notification endpoint is defined in the CRM doc yet, so this stays empty.
 const ALERT_ICON = "alert";
 const USER_ICON = "user";
 
-const NOTIFICATIONS = [
-  { id: 1, icon: ALERT_ICON, title: "Player Alert",   body: "Earnings below threshold",  date: "Jun 23", unread: true  },
-  { id: 2, icon: USER_ICON,  title: "Token Redeemed", body: "Token #340g",                date: "Aug 15", unread: false },
-  { id: 3, icon: ALERT_ICON, title: "PIC Suspended",  body: "Below Rating",               date: "Apr 11", unread: false },
-  { id: 4, icon: USER_ICON,  title: "PIC Alert",      body: "Retention below average",    date: "Nov 10", unread: true  },
-  { id: 5, icon: USER_ICON,  title: "PIC Alert",      body: "Retention below average",    date: "Jun 23", unread: true  },
-];
+const NOTIFICATIONS = [];
 
 // ── Visual primitives ───────────────────────────────────────────────────
 
@@ -133,7 +126,7 @@ function PopupCard({ width, caretRight, children }) {
 
 // ── Top bar ─────────────────────────────────────────────────────────────
 
-export default function RetentionTopBar({ userName = "Sarah", role = "PIC" }) {
+export default function RetentionTopBar({ userName = "Admin", role = "PIC" }) {
   // null | "profile" | "notifications" — only one popup is open at a time.
   const [openMenu, setOpenMenu] = useState(null);
   const rootRef = useRef(null);
@@ -282,7 +275,11 @@ export default function RetentionTopBar({ userName = "Sarah", role = "PIC" }) {
               Notifications
             </h3>
             <div className="flex flex-col">
-              {NOTIFICATIONS.map((item, i) => (
+              {NOTIFICATIONS.length === 0 ? (
+                <p className="px-3 py-4 text-[12px] font-medium leading-[18px] text-[#4a4a4a]">
+                  No notifications.
+                </p>
+              ) : NOTIFICATIONS.map((item, i) => (
                 <NotificationItem
                   key={item.id}
                   item={item}

@@ -3,23 +3,40 @@
 // Pagination bar: "Showing X to Y of Z" + numeric chips + prev/next chevrons.
 // Caller supplies the data — the component does no fetching.
 
-export default function Pagination({ from, to, total, pageCount = 7, currentPage = 1 }) {
+export default function Pagination({ from, to, total, pageCount = 7, currentPage = 1, onPageChange }) {
   const visible = buildPageList(currentPage, pageCount);
+  const canGoPrev = currentPage > 1;
+  const canGoNext = currentPage < pageCount;
   return (
     <div className="flex w-full items-center justify-between px-6 py-3">
       <span className="b-6 text-white">
         Showing {from} to {to} of {total} Results
       </span>
       <div className="flex items-center gap-[5.5px]">
-        <ChevronButton ariaLabel="Previous page" direction="left" />
+        <ChevronButton
+          ariaLabel="Previous page"
+          direction="left"
+          disabled={!canGoPrev}
+          onClick={() => onPageChange?.(Math.max(1, currentPage - 1))}
+        />
         {visible.map((item) =>
           item === "ellipsis" ? (
             <span key={`e-${item}`} className="b-6 text-white">....</span>
           ) : (
-            <PageChip key={item} page={item} active={item === currentPage} />
+            <PageChip
+              key={item}
+              page={item}
+              active={item === currentPage}
+              onClick={() => onPageChange?.(item)}
+            />
           )
         )}
-        <ChevronButton ariaLabel="Next page" direction="right" />
+        <ChevronButton
+          ariaLabel="Next page"
+          direction="right"
+          disabled={!canGoNext}
+          onClick={() => onPageChange?.(Math.min(pageCount, currentPage + 1))}
+        />
       </div>
     </div>
   );
@@ -32,10 +49,11 @@ function buildPageList(currentPage, total) {
   return [1, 2, 3, "ellipsis", total];
 }
 
-function PageChip({ page, active }) {
+function PageChip({ page, active, onClick }) {
   return (
     <button
       type="button"
+      onClick={onClick}
       className={
         active
           ? "flex h-[18px] w-[18px] items-center justify-center rounded-[4px] bg-[#eaad2c] b-6 text-white"
@@ -47,13 +65,17 @@ function PageChip({ page, active }) {
   );
 }
 
-function ChevronButton({ ariaLabel, direction }) {
+function ChevronButton({ ariaLabel, direction, disabled, onClick }) {
   const transform = direction === "left" ? "rotate(180deg)" : "rotate(0deg)";
   return (
     <button
       type="button"
       aria-label={ariaLabel}
-      className="flex h-[18px] w-[18px] items-center justify-center rounded-[4px] border border-[#eaad2c]"
+      disabled={disabled}
+      onClick={onClick}
+      className={`flex h-[18px] w-[18px] items-center justify-center rounded-[4px] border border-[#eaad2c] ${
+        disabled ? "opacity-40 cursor-not-allowed" : ""
+      }`}
     >
       <svg width="6" height="10" viewBox="0 0 6 10" fill="none" style={{ transform }}>
         <path

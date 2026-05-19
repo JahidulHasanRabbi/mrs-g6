@@ -137,7 +137,7 @@ export default function RetentionMembersPage() {
                 No members found.
               </div>
             ) : (
-              rows.map((row) => <TableRow key={row.uuid} row={row} />)
+              rows.map((row, idx) => <TableRow key={`${row.uuid || row.username || "member"}-${idx}`} row={row} />)
             )}
           </div>
         </div>
