@@ -253,7 +253,7 @@ export default function MartPage() {
   };
 
   return (
-    <>
+    <div className="relative min-h-screen">
       <MartTitleBanner />
 
       <MartCategoryPills
@@ -296,6 +296,15 @@ export default function MartPage() {
         isRedeeming={isRedeeming}
         redeemResult={redeemResult}
       />
-    </>
+
+      {/* Coming Soon Overlay - Covers entire page content */}
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-40 flex items-center justify-center">
+        <div className="text-center px-8">
+          <h1 className="text-white text-[48px] md:text-[72px] font-bold font-['Times_New_Roman'] animate-pulse">
+            COMING SOON
+          </h1>
+        </div>
+      </div>
+    </div>
   );
 }
