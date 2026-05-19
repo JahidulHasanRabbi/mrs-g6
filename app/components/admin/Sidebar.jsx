@@ -2,10 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { adminLogout } from "../../api/adminApi";
-import { tokenStorage } from "../../api/tokenStorage";
 import { useSidebar } from "../../contexts/SidebarContext";
 
 // Panel-left icon used by the collapse/expand toggle (Radix-style).
@@ -449,10 +447,11 @@ const CHILD_ICONS = {
   vip: CoinIcon,
 };
 
-const ExpandableMenuItem = ({ item, activeItem }) => {
+const ExpandableMenuItem = ({ item, activeItem, forceOpen = false }) => {
   const { collapsed } = useSidebar();
   const isAnyChildActive = item.children?.some((c) => c.id === activeItem);
   const [open, setOpen] = useState(isAnyChildActive);
+  const effectivelyOpen = forceOpen || open;
 
   // When the sidebar is collapsed, render the parent as a plain icon-only
   // button and hide the children entirely — the nested label list has nowhere
@@ -522,7 +521,7 @@ const ExpandableMenuItem = ({ item, activeItem }) => {
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
-          animate={{ rotate: open ? 180 : 0 }}
+          animate={{ rotate: effectivelyOpen ? 180 : 0 }}
           transition={collapseTransition}
         >
           <polyline points="6 9 12 15 18 9" />
@@ -531,7 +530,7 @@ const ExpandableMenuItem = ({ item, activeItem }) => {
 
       {/* Sub-items */}
       <AnimatePresence initial={false}>
-        {open && (
+        {effectivelyOpen && (
           <motion.div
             key="children"
             initial="collapsed"
@@ -581,9 +580,10 @@ const SECTION_TITLE_GRADIENT = "linear-gradient(102deg, #dc9d16 1%, #f2cb7a 98%)
 //
 // When the sidebar is collapsed, the title shows a short prefix (~3 chars +
 // ellipsis) so the section is still distinguishable in the narrow track.
-const CollapsibleSection = ({ title, defaultOpen = true, children }) => {
+const CollapsibleSection = ({ title, defaultOpen = true, forceOpen = false, children }) => {
   const { collapsed: sidebarCollapsed } = useSidebar();
   const [open, setOpen] = useState(defaultOpen);
+  const effectivelyOpen = forceOpen || open;
 
   // First 3 chars + ellipsis when the whole sidebar is squeezed
   const shortTitle = title.length > 3 ? `${title.slice(0, 3)}…` : title;
@@ -593,10 +593,11 @@ const CollapsibleSection = ({ title, defaultOpen = true, children }) => {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
+        disabled={forceOpen}
         className={`flex items-center w-full py-1 group ${
           sidebarCollapsed ? "justify-center gap-1 px-0" : "justify-between gap-2 px-0"
         }`}
-        aria-expanded={open}
+        aria-expanded={effectivelyOpen}
         title={sidebarCollapsed ? title : undefined}
       >
         <span
@@ -616,14 +617,14 @@ const CollapsibleSection = ({ title, defaultOpen = true, children }) => {
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
-          animate={{ rotate: open ? 180 : 0 }}
+          animate={{ rotate: effectivelyOpen ? 180 : 0 }}
           transition={collapseTransition}
         >
           <polyline points="6 9 12 15 18 9" />
         </motion.svg>
       </button>
       <AnimatePresence initial={false}>
-        {open && (
+        {effectivelyOpen && (
           <motion.div
             key="section-body"
             initial="collapsed"
@@ -657,9 +658,12 @@ function isPrimaryActive(itemId, activeItem) {
 // 1. Item has children → ExpandableMenuItem (its own collapsible)
 // 2. Item is active for the current route → HighlightedMenuItem (gold pill)
 // 3. Otherwise → regular MenuItem
-function renderItem(item, activeItem) {
+//
+// `forceOpen` is set when the sidebar search has matched a child of an
+// expandable parent — we open the parent so the match is visible.
+function renderItem(item, activeItem, forceOpen = false) {
   if (item.children) {
-    return <ExpandableMenuItem key={item.id} item={item} activeItem={activeItem} />;
+    return <ExpandableMenuItem key={item.id} item={item} activeItem={activeItem} forceOpen={forceOpen} />;
   }
   if (isPrimaryActive(item.id, activeItem)) {
     return <HighlightedMenuItem key={item.id} item={item} />;
@@ -667,28 +671,44 @@ function renderItem(item, activeItem) {
   return <MenuItem key={item.id} item={item} isActive={false} />;
 }
 
+// Filter sidebar items by label substring (case-insensitive). For parents
+// with children: include the whole parent if its own label matches, otherwise
+// include with only the matching children (and mark `_forceOpen` so the
+// expandable opens automatically). Returns the items list unchanged when
+// the query is empty.
+function filterMenuItems(items, query) {
+  const q = query.trim().toLowerCase();
+  if (!q) return items;
+  const result = [];
+  for (const item of items) {
+    const labelMatches = (item.label || "").toLowerCase().includes(q);
+    if (item.children) {
+      if (labelMatches) {
+        result.push(item);
+        continue;
+      }
+      const matchedChildren = item.children.filter((c) => (c.label || "").toLowerCase().includes(q));
+      if (matchedChildren.length) {
+        result.push({ ...item, children: matchedChildren, _forceOpen: true });
+      }
+    } else if (labelMatches) {
+      result.push(item);
+    }
+  }
+  return result;
+}
+
 export default function Sidebar({ activeItem: activeItemProp }) {
   const pathname = usePathname();
   const activeItem = activeItemProp ?? pathnameToActiveItem(pathname);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const router = useRouter();
   const { collapsed, toggle } = useSidebar();
+  const [search, setSearch] = useState("");
+  const hasQuery = search.trim().length > 0;
 
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-
-    try {
-      // Call logout API
-      await adminLogout();
-    } catch (error) {
-      // Continue with logout even if API call fails
-      console.error('Logout API error:', error);
-    } finally {
-      // Always clear tokens and redirect, regardless of API success
-      tokenStorage.clearAdminTokens();
-      router.push('/admin/login');
-    }
-  };
+  const mrsItems = filterMenuItems([...MENU_ITEMS, ...SECONDARY_MENU], search);
+  const retentionItems = filterMenuItems(RETENTION_MENU, search);
+  const settingsItems = filterMenuItems(SETTINGS_MENU, search);
+  const noResults = hasQuery && !mrsItems.length && !retentionItems.length && !settingsItems.length;
 
   return (
     // Sidebar shell — gold border + dark green gradient per Figma 243:6071.
@@ -786,7 +806,9 @@ export default function Sidebar({ activeItem: activeItemProp }) {
             <SearchIcon className="h-4 w-4 text-[#e9af41] shrink-0" />
             <input
               type="search"
-              placeholder="Search"
+              placeholder="Search menu"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               className="flex-1 min-w-0 bg-transparent text-[14px] text-white placeholder-white/40 focus:outline-none"
             />
           </div>
@@ -795,49 +817,33 @@ export default function Sidebar({ activeItem: activeItemProp }) {
       </div>
       {/* /sticky top region */}
 
-      {/* Menu Items — three collapsible sections, gap-[24px] per Figma */}
+      {/* Menu Items — three collapsible sections, gap-[24px] per Figma.
+          When the search has a query, empty sections collapse out of view and
+          a "No matches" hint appears if every section is empty. */}
       <div className={`pb-6 flex w-full flex-col gap-6 ${collapsed ? "px-3" : "px-4"}`}>
-        <CollapsibleSection title="MRS System">
-          {[...MENU_ITEMS, ...SECONDARY_MENU].map((item) => renderItem(item, activeItem))}
-        </CollapsibleSection>
+        {mrsItems.length > 0 && (
+          <CollapsibleSection title="MRS System" forceOpen={hasQuery}>
+            {mrsItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
+          </CollapsibleSection>
+        )}
 
-        <CollapsibleSection title="Retention System">
-          {RETENTION_MENU.map((item) => renderItem(item, activeItem))}
-        </CollapsibleSection>
+        {retentionItems.length > 0 && (
+          <CollapsibleSection title="Retention System" forceOpen={hasQuery}>
+            {retentionItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
+          </CollapsibleSection>
+        )}
 
-        <CollapsibleSection title="Settings">
-          {SETTINGS_MENU.map((item) => renderItem(item, activeItem))}
-        </CollapsibleSection>
+        {settingsItems.length > 0 && (
+          <CollapsibleSection title="Settings" forceOpen={hasQuery}>
+            {settingsItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
+          </CollapsibleSection>
+        )}
 
-        {/* Logout Button — icon-only when the sidebar is collapsed */}
-        <button
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          title={collapsed ? "Logout" : undefined}
-          className={`mt-2 flex items-center justify-center gap-2 rounded-[12px] border border-[#f2cb7a]/30 bg-black/30 hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-            collapsed ? "mx-auto h-10 w-10" : "w-full px-4 py-2"
-          }`}
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#fbeed2"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
-          {!collapsed && (
-            <span className="text-[14px] font-semibold leading-[21px] tracking-[-1px] text-white">
-              {isLoggingOut ? 'Logging out...' : 'Logout'}
-            </span>
-          )}
-        </button>
+        {noResults && !collapsed && (
+          <p className="px-2 py-3 text-center text-[12px] text-white/50">
+            No matching menu items.
+          </p>
+        )}
       </div>
     </div>
   );

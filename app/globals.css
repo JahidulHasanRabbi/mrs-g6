@@ -125,3 +125,24 @@
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* Interactive elements show a pointer cursor on hover.
+ * Tailwind v4's preflight no longer sets this — adding it back broadly so
+ * buttons, links, and other clickable elements feel clickable by default.
+ * Disabled / aria-disabled states are excluded so existing
+ * `disabled:cursor-not-allowed` classes still win. */
+@layer base {
+  button:not(:disabled):not([aria-disabled="true"]),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  summary,
+  label[for],
+  select:not(:disabled),
+  input[type="submit"]:not(:disabled),
+  input[type="button"]:not(:disabled),
+  input[type="reset"]:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled) {
+    cursor: pointer;
+  }
+}

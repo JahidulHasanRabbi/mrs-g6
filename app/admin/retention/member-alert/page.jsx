@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import RefreshControl from "../../../components/admin/retention/RefreshControl";
+import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
 import { ASSETS, GRAD_DARK, GRAD_GOLD } from "../../../components/admin/retention/constants";
 import {
   getCrmMembers,
@@ -464,7 +465,9 @@ function TableRow({ row }) {
       <DataCell value={row.vip_level} minW={COLUMNS[2].minW} />
       <DataCell value={formatCurrency(row.daily_sales)} minW={COLUMNS[3].minW} />
       <DataCell value={formatCurrency(row.daily_win_loss)} minW={COLUMNS[4].minW} />
-      <DataCell value={row.priority} minW={COLUMNS[5].minW} />
+      <Cell minW={COLUMNS[5].minW}>
+        <PriorityBadge value={row.priority} />
+      </Cell>
       <DataCell value={row.retention} minW={COLUMNS[6].minW} />
       <Cell minW={COLUMNS[7].minW} align="end">
         <div className="flex items-center gap-2">

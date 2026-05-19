@@ -24,7 +24,16 @@ const TAG_PALETTE = {
   weekly:  { bg: "#a4a4a4", color: "#141828" },
   active:  { bg: "#84ebb4", color: "#179451" },
   hobby:   { bg: "#9a6e10", color: "#ffffff" },
+  // Per-status colors so each status reads at a glance.
+  "status:Active":    { bg: "#84ebb4", color: "#179451" },
+  "status:Inactive":  { bg: "#d4d4d4", color: "#3a3a3a" },
+  "status:Dormant":   { bg: "#ffe9bc", color: "#a86b00" },
+  "status:Suspended": { bg: "#fb3748", color: "#ffffff" },
 };
+
+// Status label → palette key. Centralised so the chip color stays consistent
+// whether it's rendered in the closed pill or in the dropdown options.
+const statusKind = (label) => `status:${label}`;
 
 // Available options for each tag-pill field. The `kind` controls the chip
 // color via TAG_PALETTE above.
@@ -96,10 +105,6 @@ function normalizeLabel(value) {
 function riskLabelToInt(label) {
   const normalized = normalizeLabel(label).replace(" risk", "");
   return labelToInt("risk", normalized);
-}
-
-function oneItemList(value) {
-  return value === undefined || value === null ? [] : [value];
 }
 
 function findVipUuid(vipTiers, label) {
@@ -174,7 +179,8 @@ function emptyForm() {
     homeAddress: "",
     marital: "",
     job: "",
-    hobby: null,
+    // Multi-tag fields hold an array of { kind, label } objects.
+    hobby: [],
 
     totalSales: "",
     totalWithdrawal: "",
@@ -188,18 +194,38 @@ function emptyForm() {
     paymentMethod: "",
 
     gamePreference: "",
-    providerPref: null,
+    providerPref: [],
     playTimePattern: "",
     avgBetMin: "",
     avgBetMax: "",
     playerSegment: "",
     riskStyle: "",
     depositFreqStyle: "",
-    depositTrigger: null,
-    churnRiskReason: null,
-    reactivationTrigger: null,
+    depositTrigger: [],
+    churnRiskReason: [],
+    reactivationTrigger: [],
     note: "",
   };
+}
+
+// Convert the raw API value for a multi-select field into the `[{kind,label}]`
+// shape MultiTagSelectField expects. Accepts an array of labels, a single
+// label, or a comma-separated string. Empty/nullish values become [].
+function tagListFor(kind, value) {
+  if (!value && value !== 0) return [];
+  const labels = Array.isArray(value)
+    ? value
+    : String(value).split(",").map((s) => s.trim());
+  return labels.filter(Boolean).map((label) => ({ kind, label }));
+}
+
+// Map a list of selected tag objects back to the integer enum codes the API
+// expects. Drops entries that fail enum lookup so partial data doesn't break
+// the save.
+function labelsToInts(enumKey, list) {
+  return (list || [])
+    .map((item) => labelToInt(enumKey, item.label))
+    .filter((v) => v !== undefined);
 }
 
 // Hydrate the form from the GET response. Tag-style fields wrap the label in
@@ -222,7 +248,10 @@ function apiToForm(data, vipTiers = []) {
     playerType: tagFor("game", g.player_type),
     risk: tagFor("risk", g.risk_style),
     depositFreq: tagFor("weekly", g.deposit_frequency_style),
-    status: tagFor("active", data.status || "Active"),
+    status: (() => {
+      const label = data.status || "Active";
+      return { kind: statusKind(label), label };
+    })(),
 
     fullName: data.full_name || b.username || "",
     phone: b.phone_number || "",
@@ -233,7 +262,7 @@ function apiToForm(data, vipTiers = []) {
     homeAddress: b.home_address || "",
     marital: b.marital_status || "",
     job: b.job || "",
-    hobby: tagFor("hobby", b.hobby),
+    hobby: tagListFor("hobby", b.hobby),
 
     totalSales: f.total_sales ?? "",
     totalWithdrawal: c.total_withdrawal ?? "",
@@ -245,16 +274,16 @@ function apiToForm(data, vipTiers = []) {
     paymentMethod: f.payment_method || "",
 
     gamePreference: g.game_preference || "",
-    providerPref: tagFor("hobby", g.provider_preference),
+    providerPref: tagListFor("hobby", g.provider_preference),
     playTimePattern: g.play_time_pattern || "",
     avgBetMin: betSize.min,
     avgBetMax: betSize.max,
     playerSegment: g.player_type || "",
     riskStyle: g.risk_style || "",
     depositFreqStyle: g.deposit_frequency_style || "",
-    depositTrigger: tagFor("hobby", g.deposit_trigger),
-    churnRiskReason: tagFor("hobby", g.churn_risk_reason),
-    reactivationTrigger: tagFor("hobby", g.reactivation_trigger),
+    depositTrigger: tagListFor("hobby", g.deposit_trigger),
+    churnRiskReason: tagListFor("hobby", g.churn_risk_reason),
+    reactivationTrigger: tagListFor("hobby", g.reactivation_trigger),
   };
 }
 
@@ -268,10 +297,6 @@ function formToApi(form, vipTiers = []) {
   const status = labelToInt("status", form.status?.label) || 1;
   const paymentMethod = labelToInt("paymentMethod", form.paymentMethod);
   const playTimePattern = labelToInt("playTimePattern", form.playTimePattern);
-  const providerPref = labelToInt("providerPref", form.providerPref?.label);
-  const depositTrigger = labelToInt("depositTrigger", form.depositTrigger?.label);
-  const churnRiskReason = labelToInt("churnRiskReason", form.churnRiskReason?.label);
-  const reactivationTrigger = labelToInt("reactivationTrigger", form.reactivationTrigger?.label);
 
   return {
     profile_data: {
@@ -288,20 +313,20 @@ function formToApi(form, vipTiers = []) {
       home_address: form.homeAddress || undefined,
       marital_status: labelToInt("marital", form.marital),
       job: form.job || undefined,
-      hobby: oneItemList(labelToInt("hobby", form.hobby?.label)),
+      hobby: labelsToInts("hobby", form.hobby),
       payment_method: paymentMethod,
     },
     game_info: {
       game_preference: form.gamePreference || undefined,
-      provider_Preference: oneItemList(providerPref),
+      provider_Preference: labelsToInts("providerPref", form.providerPref),
       play_type_pattern: playTimePattern,
       average_bet_size: Number(form.avgBetMax || form.avgBetMin) || undefined,
       player_type: labelToInt("playerSegment", form.playerSegment),
       risk_style: labelToInt("riskStyle", form.riskStyle),
       deposit_frequency_style: labelToInt("depositFreqStyle", form.depositFreqStyle),
-      deposit_trigger: oneItemList(depositTrigger),
-      churn_risk_reason: oneItemList(churnRiskReason),
-      reactivation_trigger: oneItemList(reactivationTrigger),
+      deposit_trigger: labelsToInts("depositTrigger", form.depositTrigger),
+      churn_risk_reason: labelsToInts("churnRiskReason", form.churnRiskReason),
+      reactivation_trigger: labelsToInts("reactivationTrigger", form.reactivationTrigger),
     },
   };
 }
@@ -670,7 +695,10 @@ function CalendarIcon() {
 // Editable tag-pill field. Click anywhere on the closed pill to open the
 // dropdown; pick an option to set the value; the in-chip X clears it back to
 // "No value" without re-opening. Outside-clicks dismiss the menu.
-function TagSelectField({ value, onChange, kind, options }) {
+//
+// `kindFor(label)` overrides `kind` when present — used for fields like
+// Status where the chip color varies per option label.
+function TagSelectField({ value, onChange, kind, options, kindFor }) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef(null);
 
@@ -685,7 +713,9 @@ function TagSelectField({ value, onChange, kind, options }) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
-  const palette = TAG_PALETTE[kind] || TAG_PALETTE.weekly;
+  const resolveKind = (label) => (kindFor ? kindFor(label) : kind);
+  const paletteFor = (label) => TAG_PALETTE[resolveKind(label)] || TAG_PALETTE.weekly;
+  const selectedPalette = value ? paletteFor(value.label) : null;
 
   return (
     <div ref={wrapperRef} className="relative">
@@ -697,7 +727,7 @@ function TagSelectField({ value, onChange, kind, options }) {
         {value ? (
           <span
             className="inline-flex items-center gap-1 rounded-[4px] px-1 text-[12px] font-medium leading-[18px]"
-            style={{ backgroundColor: palette.bg, color: palette.color }}
+            style={{ backgroundColor: selectedPalette.bg, color: selectedPalette.color }}
           >
             {value.label}
             <span
@@ -739,21 +769,155 @@ function TagSelectField({ value, onChange, kind, options }) {
       </button>
       {open && (
         <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-[220px] overflow-y-auto rounded-[8px] border border-[#f2cb7a] bg-[#05060a] shadow-lg">
-          {options.map((opt) => (
-            <button
-              key={opt}
-              type="button"
-              onClick={() => { onChange({ kind, label: opt }); setOpen(false); }}
-              className="flex w-full items-center px-3 py-2 text-left text-[12px] font-medium text-[#f6dda6] hover:bg-white/5"
-            >
-              <span
-                className="inline-flex items-center rounded-[4px] px-1 text-[12px] font-medium leading-[18px]"
-                style={{ backgroundColor: palette.bg, color: palette.color }}
+          {options.map((opt) => {
+            const optPalette = paletteFor(opt);
+            return (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => { onChange({ kind: resolveKind(opt), label: opt }); setOpen(false); }}
+                className="flex w-full items-center px-3 py-2 text-left text-[12px] font-medium text-[#f6dda6] hover:bg-white/5"
               >
-                {opt}
-              </span>
-            </button>
-          ))}
+                <span
+                  className="inline-flex items-center rounded-[4px] px-1 text-[12px] font-medium leading-[18px]"
+                  style={{ backgroundColor: optPalette.bg, color: optPalette.color }}
+                >
+                  {opt}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Multi-select tag field. Selected values render as removable chips inside the
+// closed control; the dropdown shows every option with a checkbox indicator.
+// Clicking an option toggles it; the menu stays open so you can pick several
+// in a row. Outside-clicks dismiss the menu.
+//
+// `value` is an array of `{ kind, label }`. Empty array renders the "Select…"
+// placeholder, matching the single-select TagSelectField visual.
+function MultiTagSelectField({ value = [], onChange, kind, options, kindFor }) {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  const selectedLabels = value.map((v) => v.label);
+  const resolveKind = (label) => (kindFor ? kindFor(label) : kind);
+  const paletteFor = (label) => TAG_PALETTE[resolveKind(label)] || TAG_PALETTE.weekly;
+
+  const toggle = (label) => {
+    if (selectedLabels.includes(label)) {
+      onChange(value.filter((v) => v.label !== label));
+    } else {
+      onChange([...value, { kind: resolveKind(label), label }]);
+    }
+  };
+  const remove = (label) => onChange(value.filter((v) => v.label !== label));
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full min-h-[44px] items-center justify-between gap-2 rounded-[8px] border border-[#fbeed2] px-4 py-2 text-left transition hover:border-[#f2cb7a]"
+      >
+        {value.length > 0 ? (
+          <span className="flex flex-wrap items-center gap-1">
+            {value.map((v) => {
+              const p = paletteFor(v.label);
+              return (
+                <span
+                  key={v.label}
+                  className="inline-flex items-center gap-1 rounded-[4px] px-1 text-[12px] font-medium leading-[18px]"
+                  style={{ backgroundColor: p.bg, color: p.color }}
+                >
+                  {v.label}
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Remove ${v.label}`}
+                    onClick={(e) => { e.stopPropagation(); remove(v.label); }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        remove(v.label);
+                      }
+                    }}
+                    className="flex h-3 w-3 items-center justify-center"
+                  >
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </span>
+                </span>
+              );
+            })}
+          </span>
+        ) : (
+          <span className="text-[12px] text-white/40">Select...</span>
+        )}
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#fbeed2"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ transform: open ? "rotate(180deg)" : undefined, transition: "transform 0.15s" }}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-[220px] overflow-y-auto rounded-[8px] border border-[#f2cb7a] bg-[#05060a] shadow-lg">
+          {options.map((opt) => {
+            const checked = selectedLabels.includes(opt);
+            const optPalette = paletteFor(opt);
+            return (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => toggle(opt)}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] font-medium hover:bg-white/5"
+              >
+                <span
+                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[3px] border ${
+                    checked ? "border-[#eaad2c] bg-[#eaad2c]" : "border-white/40"
+                  }`}
+                >
+                  {checked && (
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#141828" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </span>
+                <span
+                  className="inline-flex items-center rounded-[4px] px-1 text-[12px] font-medium leading-[18px]"
+                  style={{ backgroundColor: optPalette.bg, color: optPalette.color }}
+                >
+                  {opt}
+                </span>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
@@ -822,7 +986,12 @@ function BasicInfoStep({ form, setField, vipTiers = [] }) {
           <TagSelectField value={form.depositFreq} onChange={(v) => setField("depositFreq", v)} {...TAG_OPTIONS.depositFreq} />
         </FieldWrapper>
         <FieldWrapper label="Status">
-          <TagSelectField value={form.status} onChange={(v) => setField("status", v)} {...TAG_OPTIONS.status} />
+          <TagSelectField
+            value={form.status}
+            onChange={(v) => setField("status", v)}
+            options={TAG_OPTIONS.status.options}
+            kindFor={statusKind}
+          />
         </FieldWrapper>
       </div>
 
@@ -856,7 +1025,7 @@ function BasicInfoStep({ form, setField, vipTiers = [] }) {
           <TextInput value={form.job} onChange={(v) => setField("job", v)} />
         </FieldWrapper>
         <FieldWrapper label="Hobby">
-          <TagSelectField value={form.hobby} onChange={(v) => setField("hobby", v)} {...TAG_OPTIONS.hobby} />
+          <MultiTagSelectField value={form.hobby} onChange={(v) => setField("hobby", v)} {...TAG_OPTIONS.hobby} />
         </FieldWrapper>
       </div>
     </>
@@ -917,7 +1086,7 @@ function GameInfoStep({ form, setField }) {
           <TextInput value={form.gamePreference} onChange={(v) => setField("gamePreference", v)} />
         </FieldWrapper>
         <FieldWrapper label="Provider Preference">
-          <TagSelectField value={form.providerPref} onChange={(v) => setField("providerPref", v)} {...TAG_OPTIONS.providerPref} />
+          <MultiTagSelectField value={form.providerPref} onChange={(v) => setField("providerPref", v)} {...TAG_OPTIONS.providerPref} />
         </FieldWrapper>
         <FieldWrapper label="Play Time Pattern">
           <TextInput value={form.playTimePattern} onChange={(v) => setField("playTimePattern", v)} />
@@ -940,13 +1109,13 @@ function GameInfoStep({ form, setField }) {
           <SelectInput value={form.depositFreqStyle} onChange={(v) => setField("depositFreqStyle", v)} options={SELECT_OPTIONS.depositFreqStyle} />
         </FieldWrapper>
         <FieldWrapper label="Deposit Trigger">
-          <TagSelectField value={form.depositTrigger} onChange={(v) => setField("depositTrigger", v)} {...TAG_OPTIONS.depositTrigger} />
+          <MultiTagSelectField value={form.depositTrigger} onChange={(v) => setField("depositTrigger", v)} {...TAG_OPTIONS.depositTrigger} />
         </FieldWrapper>
         <FieldWrapper label="Churn Risk Reason">
-          <TagSelectField value={form.churnRiskReason} onChange={(v) => setField("churnRiskReason", v)} {...TAG_OPTIONS.churnRiskReason} />
+          <MultiTagSelectField value={form.churnRiskReason} onChange={(v) => setField("churnRiskReason", v)} {...TAG_OPTIONS.churnRiskReason} />
         </FieldWrapper>
         <FieldWrapper label="Re-activation Trigger">
-          <TagSelectField value={form.reactivationTrigger} onChange={(v) => setField("reactivationTrigger", v)} {...TAG_OPTIONS.reactivationTrigger} />
+          <MultiTagSelectField value={form.reactivationTrigger} onChange={(v) => setField("reactivationTrigger", v)} {...TAG_OPTIONS.reactivationTrigger} />
         </FieldWrapper>
       </div>
 

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getCrmMembers } from "../../../api/crmApi";
+import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
 
 const A = "/assets/admin/pic-dashboard";
 
@@ -277,7 +278,7 @@ function TableRow({ row }) {
         <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{formatCurrency(row.daily_win_loss)}</span>
       </Cell>
       <Cell minW={COLUMNS[5].minW}>
-        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{row.priority ?? "—"}</span>
+        <PriorityBadge value={row.priority} />
       </Cell>
       <Cell minW={COLUMNS[6].minW}>
         <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{row.retention ?? "—"}</span>
