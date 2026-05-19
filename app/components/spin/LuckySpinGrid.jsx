@@ -196,6 +196,13 @@ const SpinItem = memo(function SpinItem({
 
 const ORDER = [0, 1, 2, 4, 7, 6, 5, 3];
 
+// Rotation (degrees, clockwise) needed to point the center button's upward
+// arrow toward each grid position.
+// Grid layout:  [0][1][2]
+//               [3][ ][4]
+//               [5][6][7]
+const GRID_WIN_ANGLE = [315, 0, 45, 270, 90, 225, 180, 135];
+
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
 export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinning, onSpinComplete, spinTriggerRef, items = [], winningUuid = null }) {
@@ -273,9 +280,15 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
       setActiveGridIndex(finalGridIndex);
       setWinnerGridIndex(finalGridIndex);
 
-      // Keep the center button rotation reset
+      // Rotate the center button arrow to point at the winning tile.
+      // Find the numerically nearest equivalent of the target angle so the
+      // spring only travels a short arc rather than unwinding from a large
+      // accumulated value.
       setTimeout(() => {
-        centerRotate.set(0);
+        const target = GRID_WIN_ANGLE[finalGridIndex] ?? 0;
+        const current = centerRotate.get();
+        const turns = Math.round((current - target) / 360);
+        centerRotate.set(target + turns * 360);
       }, 300);
 
       // Brief pause so the player sees the winning-tile highlight ring
