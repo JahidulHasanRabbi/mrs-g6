@@ -17,85 +17,241 @@ const GRID_AREA = [
   "col-start-3 row-start-3",
 ];
 
+const SPARKLE_POSITIONS = [
+  { top: "-8%", left: "50%", delay: 0 },
+  { top: "20%", left: "108%", delay: 0.15 },
+  { top: "75%", left: "108%", delay: 0.3 },
+  { top: "108%", left: "50%", delay: 0.45 },
+  { top: "75%", left: "-8%", delay: 0.6 },
+  { top: "20%", left: "-8%", delay: 0.75 },
+];
+
+const IDLE_ANIMATE = { scale: 1, boxShadow: "none" };
+
+const ACTIVE_ANIMATE_LOW = {
+  scale: 1.08,
+  boxShadow: "0 0 15px rgba(253, 230, 133, 0.8), 0 0 30px rgba(253, 230, 133, 0.4)",
+};
+const ACTIVE_ANIMATE_HIGH = {
+  scale: 1.12,
+  boxShadow: "0 0 20px rgba(253, 230, 133, 1), 0 0 40px rgba(253, 230, 133, 0.6)",
+};
+
+const WINNER_BOXSHADOW_LOW = [
+  "0 0 25px rgba(253, 230, 133, 1), 0 0 50px rgba(255, 215, 0, 0.7)",
+  "0 0 40px rgba(253, 230, 133, 1), 0 0 70px rgba(255, 215, 0, 0.9)",
+  "0 0 25px rgba(253, 230, 133, 1), 0 0 50px rgba(255, 215, 0, 0.7)",
+];
+const WINNER_BOXSHADOW_HIGH = [
+  "0 0 30px rgba(253, 230, 133, 1), 0 0 60px rgba(255, 215, 0, 0.8), 0 0 100px rgba(255, 215, 0, 0.4)",
+  "0 0 50px rgba(253, 230, 133, 1), 0 0 90px rgba(255, 215, 0, 1), 0 0 140px rgba(255, 215, 0, 0.6)",
+  "0 0 30px rgba(253, 230, 133, 1), 0 0 60px rgba(255, 215, 0, 0.8), 0 0 100px rgba(255, 215, 0, 0.4)",
+];
+
+const TRANS_IDLE_LOW = { duration: 0.4, ease: "easeOut" };
+const TRANS_IDLE_HIGH = { duration: 0.3, ease: "easeOut" };
+const TRANS_WINNER = {
+  scale: { duration: 0.35, ease: "backOut" },
+  boxShadow: { duration: 1.2, repeat: Infinity, ease: "easeInOut" },
+};
+
+const HALO_TRANSITION = {
+  opacity: { duration: 1.4, repeat: Infinity, ease: "easeInOut" },
+  rotate: { duration: 3, repeat: Infinity, ease: "linear" },
+};
+const HALO_ANIMATE = { opacity: [0.7, 1, 0.7], rotate: 360 };
+const HALO_INITIAL = { opacity: 0, rotate: 0 };
+
+const WINNER_BORDER_ANIMATE = {
+  opacity: [1, 0.7, 1],
+  borderWidth: ["3px", "5px", "3px"],
+};
+const WINNER_BORDER_TRANSITION = { duration: 0.6, repeat: Infinity, ease: "easeInOut" };
+
+const ACTIVE_BORDER_ANIMATE = {
+  opacity: [1, 0.6, 1],
+  borderWidth: ["2px", "3px", "2px"],
+};
+const ACTIVE_BORDER_TRANSITION = { duration: 0.8, repeat: Infinity, ease: "easeInOut" };
+
+const PRIZE_WINNER_ANIMATE = { opacity: 1, scale: [1, 1.12, 1] };
+const PRIZE_WINNER_TRANSITION = {
+  scale: { duration: 0.9, repeat: Infinity, ease: "easeInOut" },
+};
+const PRIZE_IDLE_ANIMATE = { opacity: 1, scale: 1 };
+const PRIZE_INITIAL = { opacity: 0, scale: 0 };
+
+const SPARKLE_ANIMATE = { opacity: [0, 1, 0], scale: [0.4, 1.3, 0.4] };
+
 const SpinItem = memo(function SpinItem({
   background,
   prize,
   index,
   isActive,
+  isWinner,
   isSpinning,
   isLowEnd,
   isMidEnd,
 }) {
+  // Winner takes z-index priority so its halo/sparkles render above
+  // neighbouring tiles. The spin-cycle highlight still gets z-10 so the
+  // flashing tile reads cleanly during the animation.
+  const elevated = isWinner || isActive;
   return (
-  <motion.div
-    className={`relative ${GRID_AREA[index]} w-full h-full ${isActive ? "z-10" : ""}`}
-    initial={{ opacity: 0, scale: 0, rotate: -180 }}
-    animate={{ opacity: 1, scale: 1, rotate: 0 }}
-    transition={{
-      duration: 0.6,
-      delay: index * 0.1,
-      ease: "easeOut"
-    }}
-    whileHover={!isSpinning ? { scale: 1.05 } : undefined}
-  >
     <motion.div
-      className="relative w-full h-full"
-      animate={
-        isActive
-          ? {
-              scale: isLowEnd ? 1.08 : 1.12,
-              boxShadow: isLowEnd
-                ? "0 0 15px rgba(253, 230, 133, 0.8), 0 0 30px rgba(253, 230, 133, 0.4)"
-                : "0 0 20px rgba(253, 230, 133, 1), 0 0 40px rgba(253, 230, 133, 0.6)"
-            }
-          : { scale: 1, boxShadow: "none" }
-      }
+      className={`relative ${GRID_AREA[index]} w-full h-full ${isWinner ? "z-20" : elevated ? "z-10" : ""}`}
+      initial={{ opacity: 0, scale: 0, rotate: -180 }}
+      animate={{ opacity: 1, scale: 1, rotate: 0 }}
       transition={{
-        duration: isLowEnd ? 0.4 : 0.3,
+        duration: 0.6,
+        delay: index * 0.1,
         ease: "easeOut"
       }}
+      whileHover={!isSpinning ? { scale: 1.05 } : undefined}
     >
-      <Image
-        alt=""
-        src={background}
-        width={114}
-        height={112}
-        className="w-full h-full object-fill pointer-events-none"
-      />
-      {isActive && (
+      {/* Rotating conic-gradient halo behind the winning tile. Mid/high-end
+        only — `filter: blur()` is the heaviest operation here, and the
+        low-end branch already gets a strong box-shadow + pulsing border. */}
+      {isWinner && !isLowEnd && (
         <motion.div
-          className="absolute inset-[6px] rounded-[14px] border-2 border-[#fde685] pointer-events-none"
-          animate={{
-            opacity: [1, 0.6, 1],
-            borderWidth: ["2px", "3px", "2px"]
+          className="absolute -inset-3 rounded-[20px] pointer-events-none"
+          style={{
+            background:
+              "conic-gradient(from 0deg, rgba(255,215,0,0) 0deg, rgba(255,215,0,0.9) 60deg, rgba(253,230,133,1) 90deg, rgba(255,215,0,0.9) 120deg, rgba(255,215,0,0) 180deg, rgba(255,215,0,0) 240deg, rgba(253,230,133,0.9) 300deg, rgba(255,215,0,0) 360deg)",
+            filter: isMidEnd ? "blur(6px)" : "blur(10px)",
           }}
+          initial={{ opacity: 0, rotate: 0 }}
+          animate={{ opacity: [0.7, 1, 0.7], rotate: 360 }}
           transition={{
-            duration: 0.8,
-            repeat: Infinity,
-            ease: "easeInOut"
+            opacity: { duration: 1.4, repeat: Infinity, ease: "easeInOut" },
+            rotate: { duration: 3, repeat: Infinity, ease: "linear" },
           }}
         />
       )}
-    </motion.div>
-    {prize && (
       <motion.div
-        initial={{ opacity: 0, scale: 0 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{
-          duration: 0.4,
-          delay: index * 0.1 + 0.3,
-          ease: "easeOut"
-        }}
-        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[60px] h-[57px] flex items-center justify-center"
+        className="relative w-full h-full"
+        animate={
+          isWinner
+            ? {
+              scale: isLowEnd ? 1.14 : isMidEnd ? 1.18 : 1.2,
+              boxShadow: isLowEnd
+                ? [
+                  "0 0 25px rgba(253, 230, 133, 1), 0 0 50px rgba(255, 215, 0, 0.7)",
+                  "0 0 40px rgba(253, 230, 133, 1), 0 0 70px rgba(255, 215, 0, 0.9)",
+                  "0 0 25px rgba(253, 230, 133, 1), 0 0 50px rgba(255, 215, 0, 0.7)",
+                ]
+                : [
+                  "0 0 30px rgba(253, 230, 133, 1), 0 0 60px rgba(255, 215, 0, 0.8), 0 0 100px rgba(255, 215, 0, 0.4)",
+                  "0 0 50px rgba(253, 230, 133, 1), 0 0 90px rgba(255, 215, 0, 1), 0 0 140px rgba(255, 215, 0, 0.6)",
+                  "0 0 30px rgba(253, 230, 133, 1), 0 0 60px rgba(255, 215, 0, 0.8), 0 0 100px rgba(255, 215, 0, 0.4)",
+                ],
+            }
+            : isActive
+              ? {
+                scale: isLowEnd ? 1.08 : 1.12,
+                boxShadow: isLowEnd
+                  ? "0 0 15px rgba(253, 230, 133, 0.8), 0 0 30px rgba(253, 230, 133, 0.4)"
+                  : "0 0 20px rgba(253, 230, 133, 1), 0 0 40px rgba(253, 230, 133, 0.6)",
+              }
+              : { scale: 1, boxShadow: "none" }
+        }
+        transition={
+          isWinner
+            ? {
+              scale: { duration: 0.35, ease: "backOut" },
+              boxShadow: { duration: 1.2, repeat: Infinity, ease: "easeInOut" },
+            }
+            : { duration: isLowEnd ? 0.4 : 0.3, ease: "easeOut" }
+        }
       >
-        <img
+        <Image
           alt=""
-          src={prize}
-          className="max-w-full max-h-full object-contain pointer-events-none"
+          src={background}
+          width={114}
+          height={112}
+          className="w-full h-full object-fill pointer-events-none"
         />
+        {isWinner ? (
+          <motion.div
+            className="absolute inset-[4px] rounded-[14px] border-[3px] border-[#fde685] pointer-events-none"
+            animate={{
+              opacity: [1, 0.7, 1],
+              borderWidth: ["3px", "5px", "3px"],
+            }}
+            transition={{
+              duration: 0.6,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+        ) : isActive ? (
+          <motion.div
+            className="absolute inset-[6px] rounded-[14px] border-2 border-[#fde685] pointer-events-none"
+            animate={{
+              opacity: [1, 0.6, 1],
+              borderWidth: ["2px", "3px", "2px"]
+            }}
+            transition={{
+              duration: 0.8,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+        ) : null}
       </motion.div>
-    )}
-  </motion.div>
+      {prize && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0 }}
+          animate={
+            isWinner
+              ? { opacity: 1, scale: [1, 1.12, 1] }
+              : { opacity: 1, scale: 1 }
+          }
+          transition={
+            isWinner
+              ? {
+                scale: { duration: 0.9, repeat: Infinity, ease: "easeInOut" },
+              }
+              : {
+                duration: 0.4,
+                delay: index * 0.1 + 0.3,
+                ease: "easeOut",
+              }
+          }
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[60px] h-[57px] flex items-center justify-center"
+        >
+          <img
+            alt=""
+            src={prize}
+            className="max-w-full max-h-full object-contain pointer-events-none"
+          />
+        </motion.div>
+      )}
+      {/* Sparkle burst around the winning tile. Skipped on low-end devices
+        — sparkles add 6 animated DOM nodes per winning tile. */}
+      {isWinner && !isLowEnd && SPARKLE_POSITIONS.map((s, i) => (
+        <motion.span
+          key={i}
+          className="absolute w-2 h-2 rounded-full bg-[#fff6c2] pointer-events-none"
+          style={{
+            top: s.top,
+            left: s.left,
+            transform: "translate(-50%, -50%)",
+            boxShadow: "0 0 8px rgba(255, 215, 0, 1), 0 0 14px rgba(255, 215, 0, 0.7)",
+          }}
+          animate={{
+            opacity: [0, 1, 0],
+            scale: [0.4, 1.3, 0.4],
+          }}
+          transition={{
+            duration: 1.2,
+            repeat: Infinity,
+            delay: s.delay,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+    </motion.div>
   );
 });
 
@@ -105,6 +261,10 @@ const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
 export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinning, onSpinComplete, spinTriggerRef, items = [], winningUuid = null }) {
   const [activeGridIndex, setActiveGridIndex] = useState(null);
+  // Separate from `activeGridIndex` so the dramatic winner highlight kicks
+  // in *immediately* when the spinner lands — not 700ms later when the
+  // parent flips `isSpinning` off. Cleared at the start of each new spin.
+  const [winnerGridIndex, setWinnerGridIndex] = useState(null);
   const [isSpinning, setIsSpinning] = useState(false);
   const { isLowEnd, isMidEnd } = usePerformanceOptimization();
 
@@ -136,12 +296,12 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
   // Store items with UUIDs in fixed positions (no random shuffling)
   const itemRewards = useMemo(() => {
     const filtered = items.filter(item => item.image || item.reward_name || item.text || item.content);
-    
+
     if (filtered.length === 0) return [];
-    
+
     // Create an array of 8 positions with full item data including UUID
     const positions = Array(8).fill(null);
-    
+
     // Assign items to positions in order (up to 8 items)
     filtered.slice(0, 8).forEach((item, index) => {
       positions[index] = {
@@ -149,7 +309,7 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
         uuid: item.uuid
       };
     });
-    
+
     return positions;
   }, [items]);
 
@@ -172,6 +332,7 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
       }
       setIsSpinning(false);
       setActiveGridIndex(finalGridIndex);
+      setWinnerGridIndex(finalGridIndex);
 
       // Keep the center button rotation reset
       setTimeout(() => {
@@ -224,6 +385,7 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
     orderPosRef.current = 0;
     manualStopRef.current = false;
     targetGridIndexRef.current = targetGridIndex;
+    setWinnerGridIndex(null);
     setIsSpinning(true);
 
     const now = performance.now();
@@ -320,7 +482,7 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
   }, []);
 
   return (
-    <motion.div 
+    <motion.div
       className="relative w-[376px] h-[348px] mx-auto"
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -340,6 +502,7 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
             key={index}
             index={index}
             isActive={activeGridIndex === index}
+            isWinner={winnerGridIndex === index}
             isSpinning={spinning}
             isLowEnd={isLowEnd}
             isMidEnd={isMidEnd}
@@ -348,7 +511,7 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
         ))}
 
         <motion.div
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[143px] h-[143px] z-10 cursor-pointer"
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[143px] h-[143px] z-30 cursor-pointer"
           initial={{ opacity: 0, scale: 0, rotate: 360 }}
           animate={{ opacity: 1, scale: 1, rotate: 0 }}
           transition={{
