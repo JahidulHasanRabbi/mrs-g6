@@ -2,6 +2,15 @@ import { apiRequest } from './apiClient';
 import { ENDPOINTS } from './api';
 import { buildQueryParams } from './queryParams';
 
+// ───────────────────────── User Access Panel ──────────────────────
+
+// GET /admins/users/  (paginated)
+// params: { page, page_size }
+export async function getCrmUsers(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.CRM.USERS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
 // ───────────────────────── Member Profile ─────────────────────────
 
 // GET /crm-members/members/  (paginated)

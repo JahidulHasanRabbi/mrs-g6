@@ -7,7 +7,8 @@ import {
   GRAD_DARK,
   GRAD_GOLD,
 } from "../../../components/admin/retention/constants";
-import { ROLE_OPTIONS, STATUS_OPTIONS, USERS } from "./_data";
+import { ROLE_OPTIONS, STATUS_OPTIONS } from "./_data";
+import { getCrmUsers } from "../../../api/crmApi";
 
 // User Access management — Figma 94:11764. Four KPI cards (Total Users,
 // Active Users, Suspended, Login Pending) and a User List table with
@@ -26,20 +27,43 @@ const COLUMNS = [
 
 const TABLE_MIN_WIDTH = COLUMNS.reduce((sum, c) => sum + c.minW, 0);
 
-const KPIS = [
-  { id: "total",     label: "Total Users",   value: "224", icon: "user"   },
-  { id: "active",    label: "Active Users",  value: "181", icon: "users"  },
-  { id: "suspended", label: "Suspended",     value: "23",  icon: "alert"  },
-];
-
-const PENDING_VALUE = "12";
-
 export default function UserAccessPage() {
+  const [allUsers, setAllUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getCrmUsers({ page: 1, page_size: 100 })
+      .then((res) => {
+        if (cancelled) return;
+        setAllUsers(Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : []);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("[user-access] fetch failed", err);
+        setError(err);
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const kpis = useMemo(() => {
+    const total = allUsers.length;
+    const active = allUsers.filter((u) => u.status === "Active").length;
+    const suspended = allUsers.filter((u) => u.status !== "Active").length;
+    return [
+      { id: "total",     label: "Total Users",  value: String(total),     icon: "user"   },
+      { id: "active",    label: "Active Users", value: String(active),    icon: "users"  },
+      { id: "suspended", label: "Suspended",    value: String(suspended), icon: "alert"  },
+    ];
+  }, [allUsers]);
+
   return (
     <>
       <OverviewHeader />
-      <KpiRow />
-      <UserList />
+      <KpiRow kpis={kpis} />
+      <UserList allUsers={allUsers} loading={loading} error={error} />
     </>
   );
 }
@@ -68,10 +92,10 @@ function OverviewHeader() {
   );
 }
 
-function KpiRow() {
+function KpiRow({ kpis }) {
   return (
     <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
-      {KPIS.map((kpi) => (
+      {kpis.map((kpi) => (
         <KpiCard key={kpi.id} kpi={kpi} />
       ))}
       <LoginPendingCard />
@@ -139,7 +163,7 @@ function LoginPendingCard() {
               lineHeight: "44px",
             }}
           >
-            {PENDING_VALUE}
+            —
           </p>
         </div>
         <button
@@ -155,23 +179,24 @@ function LoginPendingCard() {
   );
 }
 
-function UserList() {
+function UserList({ allUsers, loading, error }) {
   const [role, setRole] = useState("");
   const [status, setStatus] = useState("");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
-    return USERS.filter((u) => {
+    return allUsers.filter((u) => {
       if (role && u.role !== role) return false;
       if (status && u.status !== status) return false;
       if (query) {
         const q = query.toLowerCase();
-        if (!u.name.toLowerCase().includes(q)) return false;
+        const name = (u.full_name || u.username || "").toLowerCase();
+        if (!name.includes(q)) return false;
       }
       return true;
     });
-  }, [role, status, query]);
+  }, [allUsers, role, status, query]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
 
@@ -213,10 +238,14 @@ function UserList() {
         <div style={{ minWidth: TABLE_MIN_WIDTH }}>
           <TableHeader />
           <div className="flex w-full flex-col">
-            {visibleRows.length === 0 ? (
+            {loading ? (
+              <div className="px-6 py-12 text-center text-[12px] text-white/40">Loading...</div>
+            ) : error ? (
+              <div className="px-6 py-12 text-center text-[12px] text-red-400">Failed to load users.</div>
+            ) : visibleRows.length === 0 ? (
               <EmptyRow />
             ) : (
-              visibleRows.map((user) => <UserRow key={user.id} user={user} />)
+              visibleRows.map((user, idx) => <UserRow key={user.uuid || `${user.username}-${idx}`} user={user} />)
             )}
           </div>
         </div>
@@ -336,18 +365,15 @@ function UserRow({ user }) {
     <div className="flex w-full items-stretch -mb-px border-b border-white/5">
       <Cell minW={COLUMNS[0].minW}>
         <div className="flex items-center gap-3 min-w-0">
-          <Avatar src={user.avatar} alt={user.name} />
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">
-              {user.name}
-            </span>
-            <VipBadge tier={user.vip} />
-          </div>
+          <UserAvatar />
+          <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">
+            {user.username}
+          </span>
         </div>
       </Cell>
       <Cell minW={COLUMNS[1].minW}>
         <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">
-          {user.name}
+          {user.full_name}
         </span>
       </Cell>
       <Cell minW={COLUMNS[2].minW}>
@@ -359,7 +385,7 @@ function UserRow({ user }) {
         <StatusBadge status={user.status} />
       </Cell>
       <Cell minW={COLUMNS[4].minW} align="end">
-        <EditButton href={`/admin/settings/user-access/edit/${user.id}`} />
+        <EditButton href={`/admin/settings/user-access/edit/${user.uuid}`} />
       </Cell>
     </div>
   );
@@ -375,22 +401,14 @@ function Cell({ children, minW, align = "start" }) {
   );
 }
 
-function Avatar({ src, alt }) {
+function UserAvatar() {
   return (
-    <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-[#f1f5f9]">
-      <img src={src} alt={alt} className="h-full w-full object-cover" />
+    <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[12px] bg-[#3a4255]">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f6dda6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
+      </svg>
     </div>
-  );
-}
-
-function VipBadge({ tier }) {
-  return (
-    <span
-      className="flex items-center rounded-[12px] px-3 py-1 text-[8px] leading-[12px] text-[#05060a] whitespace-nowrap"
-      style={{ backgroundImage: GRAD_GOLD }}
-    >
-      {tier}
-    </span>
   );
 }
 

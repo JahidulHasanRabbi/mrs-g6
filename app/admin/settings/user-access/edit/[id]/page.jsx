@@ -1,29 +1,50 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { GRAD_GOLD } from "../../../../../components/admin/retention/constants";
-import { ROLE_OPTIONS, STATUS_OPTIONS, findUserById } from "../../_data";
-
-// Edit User — mirrors app/admin/settings/user-access/add/page.jsx in
-// layout and field set, but pre-fills from the seed row identified by the
-// :id URL segment. Until the backend is wired, submitting just returns to
-// the list page.
+import { ROLE_OPTIONS, STATUS_OPTIONS } from "../../_data";
+import { getCrmUsers } from "../../../../../api/crmApi";
 
 export default function EditUserPage() {
   const router = useRouter();
   const params = useParams();
-  const user = useMemo(() => findUserById(params?.id), [params?.id]);
+  const uuid = params?.id;
 
-  const [form, setForm] = useState(() => ({
-    username: user?.name || "",
-    fullName: user?.name || "",
-    role: user?.role || "",
-    status: user?.status || "",
+  const [user, setUser] = useState(null);
+  const [userLoading, setUserLoading] = useState(true);
+
+  const [form, setForm] = useState({
+    username: "",
+    fullName: "",
+    role: "",
+    status: "",
     password: "",
     confirmPassword: "",
-  }));
+  });
+
+  useEffect(() => {
+    if (!uuid) { setUserLoading(false); return; }
+    getCrmUsers({ page: 1, page_size: 100 })
+      .then((res) => {
+        const users = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        const found = users.find((u) => u.uuid === uuid) || null;
+        setUser(found);
+        if (found) {
+          setForm({
+            username: found.username || "",
+            fullName: found.full_name || "",
+            role: found.role || "",
+            status: found.status || "",
+            password: "",
+            confirmPassword: "",
+          });
+        }
+      })
+      .catch(() => setUser(null))
+      .finally(() => setUserLoading(false));
+  }, [uuid]);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
@@ -34,6 +55,17 @@ export default function EditUserPage() {
     // TODO: wire to admin user-update endpoint. For now just navigate back.
     router.push("/admin/settings/user-access");
   };
+
+  if (userLoading) {
+    return (
+      <>
+        <PageHeader />
+        <div className="rounded-[16px] bg-[#05060a] p-6 md:p-10 text-[14px] text-white/40" style={{ filter: "drop-shadow(0 0 1.5px #dea220)" }}>
+          Loading...
+        </div>
+      </>
+    );
+  }
 
   if (!user) {
     return (

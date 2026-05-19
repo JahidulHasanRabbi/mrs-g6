@@ -80,6 +80,8 @@ export const ENDPOINTS = {
     FLOATING_MENUS: (specialCode) => `/third-party/station-floating-menu/${specialCode}/`
   },
   CRM: {
+    // User Access Panel
+    USERS: '/admins/users/',
     // Member Profile
     MEMBERS: '/crm-members/members/',
     MEMBER_SINGLE: (uuid) => `/crm-members/members/${uuid}/`,

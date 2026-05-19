@@ -250,6 +250,7 @@ function PerformanceSummary({ period, onRefreshSummary }) {
           total={total}
           currentPage={safePage}
           pageCount={totalPages}
+          onPageChange={setPage}
         />
       </div>
     </section>
