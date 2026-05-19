@@ -93,13 +93,18 @@ const SpinItem = memo(function SpinItem({
   isLowEnd,
   isMidEnd,
 }) {
-  // Winner takes z-index priority so its halo/sparkles render above
-  // neighbouring tiles. The spin-cycle highlight still gets z-10 so the
-  // flashing tile reads cleanly during the animation.
-  const elevated = isWinner || isActive;
+  const winnerScale = isLowEnd ? 1.14 : isMidEnd ? 1.18 : 1.2;
+  const animate = isWinner
+    ? { scale: winnerScale, boxShadow: isLowEnd ? WINNER_BOXSHADOW_LOW : WINNER_BOXSHADOW_HIGH }
+    : isActive
+      ? (isLowEnd ? ACTIVE_ANIMATE_LOW : ACTIVE_ANIMATE_HIGH)
+      : IDLE_ANIMATE;
+  const transition = isWinner
+    ? TRANS_WINNER
+    : (isLowEnd ? TRANS_IDLE_LOW : TRANS_IDLE_HIGH);
   return (
     <motion.div
-      className={`relative ${GRID_AREA[index]} w-full h-full ${isWinner ? "z-20" : elevated ? "z-10" : ""}`}
+      className={`relative ${GRID_AREA[index]} w-full h-full ${isWinner ? "z-20" : isActive ? "z-10" : ""}`}
       initial={{ opacity: 0, scale: 0, rotate: -180 }}
       animate={{ opacity: 1, scale: 1, rotate: 0 }}
       transition={{
@@ -109,9 +114,6 @@ const SpinItem = memo(function SpinItem({
       }}
       whileHover={!isSpinning ? { scale: 1.05 } : undefined}
     >
-      {/* Rotating conic-gradient halo behind the winning tile. Mid/high-end
-        only — `filter: blur()` is the heaviest operation here, and the
-        low-end branch already gets a strong box-shadow + pulsing border. */}
       {isWinner && !isLowEnd && (
         <motion.div
           className="absolute -inset-3 rounded-[20px] pointer-events-none"
@@ -120,49 +122,15 @@ const SpinItem = memo(function SpinItem({
               "conic-gradient(from 0deg, rgba(255,215,0,0) 0deg, rgba(255,215,0,0.9) 60deg, rgba(253,230,133,1) 90deg, rgba(255,215,0,0.9) 120deg, rgba(255,215,0,0) 180deg, rgba(255,215,0,0) 240deg, rgba(253,230,133,0.9) 300deg, rgba(255,215,0,0) 360deg)",
             filter: isMidEnd ? "blur(6px)" : "blur(10px)",
           }}
-          initial={{ opacity: 0, rotate: 0 }}
-          animate={{ opacity: [0.7, 1, 0.7], rotate: 360 }}
-          transition={{
-            opacity: { duration: 1.4, repeat: Infinity, ease: "easeInOut" },
-            rotate: { duration: 3, repeat: Infinity, ease: "linear" },
-          }}
+          initial={HALO_INITIAL}
+          animate={HALO_ANIMATE}
+          transition={HALO_TRANSITION}
         />
       )}
       <motion.div
         className="relative w-full h-full"
-        animate={
-          isWinner
-            ? {
-              scale: isLowEnd ? 1.14 : isMidEnd ? 1.18 : 1.2,
-              boxShadow: isLowEnd
-                ? [
-                  "0 0 25px rgba(253, 230, 133, 1), 0 0 50px rgba(255, 215, 0, 0.7)",
-                  "0 0 40px rgba(253, 230, 133, 1), 0 0 70px rgba(255, 215, 0, 0.9)",
-                  "0 0 25px rgba(253, 230, 133, 1), 0 0 50px rgba(255, 215, 0, 0.7)",
-                ]
-                : [
-                  "0 0 30px rgba(253, 230, 133, 1), 0 0 60px rgba(255, 215, 0, 0.8), 0 0 100px rgba(255, 215, 0, 0.4)",
-                  "0 0 50px rgba(253, 230, 133, 1), 0 0 90px rgba(255, 215, 0, 1), 0 0 140px rgba(255, 215, 0, 0.6)",
-                  "0 0 30px rgba(253, 230, 133, 1), 0 0 60px rgba(255, 215, 0, 0.8), 0 0 100px rgba(255, 215, 0, 0.4)",
-                ],
-            }
-            : isActive
-              ? {
-                scale: isLowEnd ? 1.08 : 1.12,
-                boxShadow: isLowEnd
-                  ? "0 0 15px rgba(253, 230, 133, 0.8), 0 0 30px rgba(253, 230, 133, 0.4)"
-                  : "0 0 20px rgba(253, 230, 133, 1), 0 0 40px rgba(253, 230, 133, 0.6)",
-              }
-              : { scale: 1, boxShadow: "none" }
-        }
-        transition={
-          isWinner
-            ? {
-              scale: { duration: 0.35, ease: "backOut" },
-              boxShadow: { duration: 1.2, repeat: Infinity, ease: "easeInOut" },
-            }
-            : { duration: isLowEnd ? 0.4 : 0.3, ease: "easeOut" }
-        }
+        animate={animate}
+        transition={transition}
       >
         <Image
           alt=""
@@ -174,49 +142,25 @@ const SpinItem = memo(function SpinItem({
         {isWinner ? (
           <motion.div
             className="absolute inset-[4px] rounded-[14px] border-[3px] border-[#fde685] pointer-events-none"
-            animate={{
-              opacity: [1, 0.7, 1],
-              borderWidth: ["3px", "5px", "3px"],
-            }}
-            transition={{
-              duration: 0.6,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
+            animate={WINNER_BORDER_ANIMATE}
+            transition={WINNER_BORDER_TRANSITION}
           />
         ) : isActive ? (
           <motion.div
             className="absolute inset-[6px] rounded-[14px] border-2 border-[#fde685] pointer-events-none"
-            animate={{
-              opacity: [1, 0.6, 1],
-              borderWidth: ["2px", "3px", "2px"]
-            }}
-            transition={{
-              duration: 0.8,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
+            animate={ACTIVE_BORDER_ANIMATE}
+            transition={ACTIVE_BORDER_TRANSITION}
           />
         ) : null}
       </motion.div>
       {prize && (
         <motion.div
-          initial={{ opacity: 0, scale: 0 }}
-          animate={
-            isWinner
-              ? { opacity: 1, scale: [1, 1.12, 1] }
-              : { opacity: 1, scale: 1 }
-          }
+          initial={PRIZE_INITIAL}
+          animate={isWinner ? PRIZE_WINNER_ANIMATE : PRIZE_IDLE_ANIMATE}
           transition={
             isWinner
-              ? {
-                scale: { duration: 0.9, repeat: Infinity, ease: "easeInOut" },
-              }
-              : {
-                duration: 0.4,
-                delay: index * 0.1 + 0.3,
-                ease: "easeOut",
-              }
+              ? PRIZE_WINNER_TRANSITION
+              : { duration: 0.4, delay: index * 0.1 + 0.3, ease: "easeOut" }
           }
           className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[60px] h-[57px] flex items-center justify-center"
         >
@@ -227,8 +171,6 @@ const SpinItem = memo(function SpinItem({
           />
         </motion.div>
       )}
-      {/* Sparkle burst around the winning tile. Skipped on low-end devices
-        — sparkles add 6 animated DOM nodes per winning tile. */}
       {isWinner && !isLowEnd && SPARKLE_POSITIONS.map((s, i) => (
         <motion.span
           key={i}
@@ -239,10 +181,7 @@ const SpinItem = memo(function SpinItem({
             transform: "translate(-50%, -50%)",
             boxShadow: "0 0 8px rgba(255, 215, 0, 1), 0 0 14px rgba(255, 215, 0, 0.7)",
           }}
-          animate={{
-            opacity: [0, 1, 0],
-            scale: [0.4, 1.3, 0.4],
-          }}
+          animate={SPARKLE_ANIMATE}
           transition={{
             duration: 1.2,
             repeat: Infinity,
