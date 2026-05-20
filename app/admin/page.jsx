@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import BarChart from "../components/admin/charts/BarChart";
 import { AdminRouteGuard } from "../components/guards/AdminRouteGuard";
 import LoadingState from "../components/ui/LoadingState";
-import Skeleton from "../components/admin/ui/Skeleton";
+import { SHIMMER } from "../components/admin/ui/Skeleton";
 import ErrorDisplay from "../components/ui/ErrorDisplay";
 import * as adminApi from "../api/adminApi";
 
@@ -139,7 +139,7 @@ function AdminDashboardContent() {
 
         {/* Stats Grid */}
         {loading ? (
-          <Skeleton.Dashboard cards={3} withChart withHeader={false} bare />
+          <DashboardSkeleton />
         ) : (
           <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr_1fr]">
             {/* Daily Check-In */}
@@ -177,6 +177,47 @@ function AdminDashboardContent() {
           </div>
         )}
     </main>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr_1fr]">
+      <div className="rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
+        <div className="mb-4 flex items-center justify-between">
+          <div className={`h-6 w-40 rounded ${SHIMMER}`} />
+          <div className={`h-9 w-24 rounded-md ${SHIMMER}`} />
+        </div>
+        <div className={`mb-4 h-4 w-32 rounded ${SHIMMER}`} />
+        <div className="flex h-[260px] items-end justify-between gap-3 px-2">
+          {[60, 70, 55, 80, 50, 65, 45].map((h, i) => (
+            <div
+              key={i}
+              className={`flex-1 rounded-t ${SHIMMER}`}
+              style={{ height: `${h}%` }}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-col items-center justify-between rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
+        <div className={`mb-2 h-6 w-44 rounded ${SHIMMER}`} />
+        <div
+          className="rounded-full border-[22px] border-white/[0.08]"
+          style={{ width: 200, height: 200 }}
+        />
+        <div className={`mt-2 h-3 w-28 rounded ${SHIMMER}`} />
+      </div>
+
+      <div className="flex flex-col justify-around gap-4 rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] px-8 py-8 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="flex flex-col items-center gap-3">
+            <div className={`h-5 w-28 rounded ${SHIMMER}`} />
+            <div className={`h-10 w-24 rounded ${SHIMMER}`} />
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
