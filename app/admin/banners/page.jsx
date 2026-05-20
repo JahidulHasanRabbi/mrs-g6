@@ -111,10 +111,6 @@ function BannersPageContent() {
     }
   };
 
-  if (loading) {
-    return <BannersSkeleton />;
-  }
-
   return (
     <main className="min-h-screen xl:admin-content-pl pr-10 pt-10 pb-10">
         <div className="mb-8 flex items-start justify-between">
@@ -137,6 +133,14 @@ function BannersPageContent() {
             banner={editingBanner}
             onClose={handleFormClose}
             onSuccess={handleFormSuccess}
+          />
+        ) : loading ? (
+          <Skeleton.TablePage
+            columns={BANNERS_SKELETON_COLUMNS}
+            rows={4}
+            withHeader={false}
+            withFilters={false}
+            bare
           />
         ) : (
           <BannersTable

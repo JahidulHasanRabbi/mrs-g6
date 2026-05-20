@@ -102,10 +102,6 @@ function AdminDashboardContent() {
     return labels;
   }, []);
 
-  if (loading) {
-    return <Skeleton.Dashboard cards={3} withChart />;
-  }
-
   return (
     <main className="min-h-screen xl:admin-content-pl pr-10 pt-10 pb-10">
         {/* Header */}
@@ -142,40 +138,44 @@ function AdminDashboardContent() {
         )}
 
         {/* Stats Grid */}
-        <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr_1fr]">
-          {/* Daily Check-In */}
-          <div className="rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-[20px] font-bold text-white capitalize leading-[1.2]">
-                  Daily Check-In
-                </h2>
-                <div className="rounded-[4px] px-[15px] py-[9px]" style={{ backgroundImage: "linear-gradient(1.0746108354373831deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)" }}>
-                  <span className="text-[16px] font-bold text-black leading-none">
-                    last 7 days
-                  </span>
+        {loading ? (
+          <Skeleton.Dashboard cards={3} withChart withHeader={false} bare />
+        ) : (
+          <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr_1fr]">
+            {/* Daily Check-In */}
+            <div className="rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-[20px] font-bold text-white capitalize leading-[1.2]">
+                    Daily Check-In
+                  </h2>
+                  <div className="rounded-[4px] px-[15px] py-[9px]" style={{ backgroundImage: "linear-gradient(1.0746108354373831deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)" }}>
+                    <span className="text-[16px] font-bold text-black leading-none">
+                      last 7 days
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <p className="mb-4 text-[16px] text-[#5c5c5c] capitalize leading-[1.2]">
-                Active Counts : {stats.totalCheckins}
-              </p>
-              <BarChart
-                labels={dayLabels}
-                values={stats.checkins}
-                positiveColor="#f6c75c"
-                baseColor="rgba(255,255,255,0.15)"
-              />
-          </div>
+                <p className="mb-4 text-[16px] text-[#5c5c5c] capitalize leading-[1.2]">
+                  Active Counts : {stats.totalCheckins}
+                </p>
+                <BarChart
+                  labels={dayLabels}
+                  values={stats.checkins}
+                  positiveColor="#f6c75c"
+                  baseColor="rgba(255,255,255,0.15)"
+                />
+            </div>
 
-          {/* Total Active Users */}
-          <TotalActiveUsersCard activeToday={stats.activeToday} totalMembers={stats.totalMembers} />
+            {/* Total Active Users */}
+            <TotalActiveUsersCard activeToday={stats.activeToday} totalMembers={stats.totalMembers} />
 
-          {/* Members Snapshot */}
-          <div className="flex flex-col justify-around gap-4 rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] px-8 py-8 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
-            <SnapshotStat label="Total Users" value={stats.totalMembers} />
-            <SnapshotStat label="New Members" value={stats.newMembers} />
-            <SnapshotStat label="Active Members" value={stats.activeToday} />
+            {/* Members Snapshot */}
+            <div className="flex flex-col justify-around gap-4 rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] px-8 py-8 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
+              <SnapshotStat label="Total Users" value={stats.totalMembers} />
+              <SnapshotStat label="New Members" value={stats.newMembers} />
+              <SnapshotStat label="Active Members" value={stats.activeToday} />
+            </div>
           </div>
-        </div>
+        )}
     </main>
   );
 }

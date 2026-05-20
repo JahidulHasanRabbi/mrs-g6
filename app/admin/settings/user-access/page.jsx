@@ -142,9 +142,11 @@ function KpiCard({ kpi }) {
 
 function LoginPendingCard() {
   return (
-    <div
-      className="flex flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-6"
+    <Link
+      href="/admin/settings/login-requests"
+      className="flex flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-6 transition hover:brightness-110"
       style={{ backgroundImage: GRAD_CARD }}
+      aria-label="View pending login requests"
     >
       <div className="flex w-full items-end gap-4">
         <div className="flex min-w-0 flex-1 flex-col">
@@ -166,16 +168,15 @@ function LoginPendingCard() {
             —
           </p>
         </div>
-        <button
-          type="button"
-          aria-label="View pending login requests"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[8px] border-2 border-[#f2cb7a] transition hover:brightness-110"
+        <span
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[8px] border-2 border-[#f2cb7a]"
           style={{ backgroundImage: GRAD_DARK }}
+          aria-hidden="true"
         >
           <ArrowRightIcon />
-        </button>
+        </span>
       </div>
-    </div>
+    </Link>
   );
 }
 

@@ -501,7 +501,21 @@ function FrameSettingContent() {
       <LoadingState
         isLoading={isLoading}
         skeleton={
-          <Skeleton.CardGrid cards={8} columns={4} withHeader={false} bare />
+          <Skeleton.TablePage
+            columns={[
+              { label: "No",         type: "number" },
+              { label: "Frame Name", type: "text" },
+              { label: "Details",    type: "text" },
+              { label: "Challenge",  type: "badge" },
+              { label: "VIP Tier",   type: "badge" },
+              { label: "Frame Icon", type: "image" },
+              { label: "Action",     type: "actions", count: 2 },
+            ]}
+            rows={6}
+            withHeader={false}
+            withFilters={false}
+            bare
+          />
         }
       >
         {/* Table card */}
