@@ -16,7 +16,6 @@ import "./globals.css";
  * ---------------------------------------------------------------------------
  */
 
-import { UserProvider } from "./contexts/UserContext";
 import LayoutShell from "./LayoutShell";
 
 const inter = Inter({
@@ -57,9 +56,7 @@ export default function RootLayout({
         className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} antialiased bg-black`}
         style={{ fontFamily: '"Times New Roman", serif' }}
       >
-        <UserProvider>
-          <LayoutShell>{children}</LayoutShell>
-        </UserProvider>
+        <LayoutShell>{children}</LayoutShell>
       </body>
     </html>
   );
