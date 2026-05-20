@@ -159,6 +159,24 @@ export const getFrameForTier = (tierIndex) => {
   );
 };
 
+// Returns only frames assigned to the user's exact VIP tier
+export const getFramesForExactTier = (userVipTierName, allVipTiers) => {
+  if (!userVipTierName || !allVipTiers || allVipTiers.length === 0) {
+    return ACTIVE_FRAMES;
+  }
+  const userTier = allVipTiers.find((t) => t.name === userVipTierName);
+  if (!userTier) return ACTIVE_FRAMES;
+
+  const tierFrames = ACTIVE_FRAMES.filter((frame) => {
+    if (frame.vip_tier_uuid) return frame.vip_tier_uuid === userTier.uuid;
+    if (frame.vip_tier) return frame.vip_tier === userVipTierName;
+    return false;
+  });
+
+  // Fallback: if no frames are tied to this tier, show all frames
+  return tierFrames.length > 0 ? tierFrames : ACTIVE_FRAMES;
+};
+
 // Filter frames based on user's VIP tier
 export const getAvailableFramesForUser = (userVipTierName, allVipTiers) => {
   if (!userVipTierName || !allVipTiers || allVipTiers.length === 0) {

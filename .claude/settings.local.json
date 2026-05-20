@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git reset *)",
+      "Bash(git stash *)",
+      "Bash(git pull *)",
+      "Bash(findstr /r /s \"vip_tier\\\\|vip.*frame\\\\|frame.*vip\" app\\\\components\\\\profile\\\\*.jsx app\\\\components\\\\header\\\\*.jsx app\\\\admin\\\\frame*)"
+    ]
+  }
+}

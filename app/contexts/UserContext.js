@@ -4,12 +4,12 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { getMemberInfo, getProfile, getPublicFrames, getVipTiers } from '../api/memberApi';
 import { tokenStorage } from '../api/tokenStorage';
 import { onAuthChanged } from '../api/authEvents';
-import { 
-  DEFAULT_FRAME_ID, 
-  getFrameById, 
-  setActiveFrames, 
+import {
+  DEFAULT_FRAME_ID,
+  getFrameById,
+  setActiveFrames,
   mapApiFrameToInternal,
-  getAvailableFramesForUser,
+  getFramesForExactTier,
   getActiveFrames
 } from '../components/profile/profileFrames';
 
@@ -171,12 +171,15 @@ export function UserProvider({ children }) {
           currentLevel: memberInfo.tier || prev.currentLevel,
         }));
 
-        // Filter available frames based on user's VIP tier
-        const userAvailableFrames = getAvailableFramesForUser(
-          memberInfo.tier,
-          allVipTiers
-        );
-        setAvailableFrames(userAvailableFrames);
+        // Only show frames belonging to the user's exact VIP tier
+        const tierFrames = getFramesForExactTier(memberInfo.tier, allVipTiers);
+        setAvailableFrames(tierFrames);
+
+        // Validate the stored frame: if it doesn't belong to the current tier, reset to first tier frame
+        const storedFrame = tierFrames.find((f) => f.id === selectedFrameId || f.uuid === selectedFrameId);
+        if (!storedFrame && tierFrames.length > 0) {
+          setSelectedFrameId(tierFrames[0].id);
+        }
 
         // Fetch profile data for profile picture and field-completion checks
         try {

@@ -31,7 +31,6 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [freeTokenFlag, setFreeTokenFlag] = useState(false);
   const [isFrameModalOpen, setIsFrameModalOpen] = useState(false);
-
   const currentFrame = getFrameById(selectedFrameId);
 
   // Fetch profile data on mount
@@ -258,7 +257,7 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
           <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
         </svg>
         Change Frame
-        <span className="text-[#a8c08a] text-[11px] font-normal">· {currentFrame.name}</span>
+        <span className="text-[#a8c08a] text-[11px] font-normal">· {currentFrame?.name}</span>
       </button>
 
       <div className="flex flex-col gap-[14px] w-full">
@@ -294,7 +293,7 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
         backgroundColor="rgba(96, 128, 60, 1)"
       />
 
-      {/* Profile Frame Picker */}
+      {/* Frame picker — only shows frames for the user's current VIP tier */}
       <FrameSelectionModal
         isOpen={isFrameModalOpen}
         onClose={() => setIsFrameModalOpen(false)}
@@ -302,6 +301,7 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
         onSelect={updateSelectedFrame}
         profilePicture={profileImage || "/android-chrome-512x512.png"}
       />
+
     </motion.div>
   );
 }

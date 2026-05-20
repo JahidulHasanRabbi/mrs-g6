@@ -204,7 +204,7 @@ export async function changeSpinSequencesOrder(luckySpins) {
 }
 
 export async function getMembers() {
-  return await apiRequest(ENDPOINTS.ADMIN.MEMBERS, {
+  return await apiRequest(`${ENDPOINTS.ADMIN.MEMBERS}?page_size=1000`, {
     method: 'GET'
   }, true, 'admin');
 }
