@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo } from "react";
 import BarChart from "../components/admin/charts/BarChart";
 import { AdminRouteGuard } from "../components/guards/AdminRouteGuard";
-import LoadingState from "../components/ui/LoadingState";
 import ErrorDisplay from "../components/ui/ErrorDisplay";
 import * as adminApi from "../api/adminApi";
 
@@ -102,11 +101,7 @@ function AdminDashboardContent() {
   }, []);
 
   if (loading) {
-    return (
-      <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
-        <LoadingState message="Loading dashboard data..." />
-      </main>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (
@@ -179,6 +174,50 @@ function AdminDashboardContent() {
             <SnapshotStat label="Active Members" value={stats.activeToday} />
           </div>
         </div>
+    </main>
+  );
+}
+
+function DashboardSkeleton() {
+  return (
+    <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
+      <div className="mb-8 flex items-start justify-between">
+        <div className="h-10 w-56 animate-pulse rounded-lg bg-white/10" />
+        <div className="h-[26px] w-[26px] animate-pulse rounded-full bg-white/10" />
+      </div>
+      <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr_1fr]">
+        {/* Daily Check-In card */}
+        <div className="rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
+          <div className="mb-4 flex items-center justify-between">
+            <div className="h-6 w-36 animate-pulse rounded bg-white/10" />
+            <div className="h-9 w-28 animate-pulse rounded-[4px] bg-white/10" />
+          </div>
+          <div className="mb-6 h-4 w-44 animate-pulse rounded bg-white/10" />
+          <div className="flex h-[160px] items-end gap-2">
+            {[55, 80, 45, 90, 65, 75, 85].map((h, i) => (
+              <div key={i} className="flex flex-1 flex-col items-center gap-2">
+                <div className="w-full animate-pulse rounded-t bg-white/10" style={{ height: `${h}%` }} />
+                <div className="h-3 w-8 animate-pulse rounded bg-white/10" />
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* Total Active Users card */}
+        <div className="flex h-full flex-col items-center justify-between rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
+          <div className="mb-2 h-6 w-40 animate-pulse rounded bg-white/10" />
+          <div className="h-[200px] w-[200px] animate-pulse rounded-full bg-white/10" />
+          <div className="mt-2 h-4 w-32 animate-pulse rounded bg-white/10" />
+        </div>
+        {/* Members Snapshot card */}
+        <div className="flex flex-col justify-around gap-4 rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] px-8 py-8 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex flex-col items-center gap-3">
+              <div className="h-5 w-28 animate-pulse rounded bg-white/10" />
+              <div className="h-11 w-24 animate-pulse rounded bg-white/10" />
+            </div>
+          ))}
+        </div>
+      </div>
     </main>
   );
 }
