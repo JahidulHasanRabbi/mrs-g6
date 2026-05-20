@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, Suspense } from "react";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 
@@ -129,6 +129,14 @@ function buildKpis(summary) {
 }
 
 export default function PicDetailPage() {
+  return (
+    <Suspense>
+      <PicDetailContent />
+    </Suspense>
+  );
+}
+
+function PicDetailContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const slug = typeof params?.id === "string" ? params.id : Array.isArray(params?.id) ? params.id[0] : "";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import PeriodToggle from "../../../components/admin/retention/PeriodToggle";
 import RefreshControl from "../../../components/admin/retention/RefreshControl";
@@ -52,6 +52,14 @@ function formatRmCurrency(value) {
 // Chrome (auth guard, main wrapper, topbar) lives in
 // app/admin/retention/layout.jsx — pages here only render their own content.
 export default function PicDashboardPage() {
+  return (
+    <Suspense>
+      <PicDashboardContent />
+    </Suspense>
+  );
+}
+
+function PicDashboardContent() {
   const [period, setPeriod] = useState("Daily");
   const [summary, setSummary] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
