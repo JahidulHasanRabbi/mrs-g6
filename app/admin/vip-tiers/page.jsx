@@ -4,11 +4,29 @@ import { useState, useEffect } from "react";
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
 import ErrorDisplay from "../../components/ui/ErrorDisplay";
 import { LoadingState, LoadingButton } from "../../components/ui/LoadingState";
+import Skeleton from "../../components/admin/ui/Skeleton";
 import * as adminApi from "../../api/adminApi";
+
+const SKELETON_COLUMNS = [
+  { label: "Tier Name",        type: "text" },
+  { label: "Lifetime Deposit", type: "number" },
+  { label: "Monthly Deposit",  type: "number" },
+  { label: "Upgrade Bonus",    type: "number" },
+  { label: "Monthly Loyalty",  type: "number" },
+  { label: "Birthday Bonus",   type: "number" },
+  { label: "Actions",          type: "actions", count: 2 },
+];
+
+const FULL_SKELETON = (
+  <Skeleton.TablePage columns={SKELETON_COLUMNS} rows={5} withFilters={false} titleWidth={300} />
+);
+const BARE_SKELETON = (
+  <Skeleton.TablePage columns={SKELETON_COLUMNS} rows={5} withHeader={false} withFilters={false} bare />
+);
 
 export default function VipTiersPage() {
   return (
-    <AdminRouteGuard>
+    <AdminRouteGuard skeleton={FULL_SKELETON}>
       <VipTiersContent />
     </AdminRouteGuard>
   );
@@ -122,7 +140,7 @@ function VipTiersContent() {
         )}
 
         {/* Tiers List */}
-        <LoadingState isLoading={isLoading}>
+        <LoadingState isLoading={isLoading} skeleton={BARE_SKELETON}>
           <div className="rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
             <div className="overflow-x-auto">
               <table className="w-full">

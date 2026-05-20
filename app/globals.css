@@ -146,3 +146,11 @@
     cursor: pointer;
   }
 }
+
+/* Skeleton shimmer — used by app/components/admin/ui/Skeleton.jsx */
+@keyframes skeleton-shimmer {
+  100% { transform: translateX(100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [class*="animate-[skeleton-shimmer"] { animation: none !important; }
+}

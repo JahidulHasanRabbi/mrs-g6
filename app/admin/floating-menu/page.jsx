@@ -6,6 +6,7 @@ import Image from "next/image";
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
 import { SortIcon, Pagination } from "../../components/admin/members/DataTable";
 import { LoadingState } from "../../components/ui/LoadingState";
+import Skeleton from "../../components/admin/ui/Skeleton";
 import * as adminApi from "../../api/adminApi";
 
 // ── Constants ────────────────────────────────────────────────────────────
@@ -678,7 +679,7 @@ function FloatingMenuContent() {
     <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:admin-content-pl xl:pr-10 xl:pt-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className=" font-bold text-[22px] sm:text-[28px] text-white">
+        <h1 className="text-4xl font-bold leading-[1.05] text-white">
           Floating Menu
         </h1>
         <svg
@@ -696,7 +697,12 @@ function FloatingMenuContent() {
         </svg>
       </div>
 
-      <LoadingState isLoading={isLoading}>
+      <LoadingState
+        isLoading={isLoading}
+        skeleton={
+          <Skeleton.TabbedPage tabs={2} columnLabels={["Menu Item", "Display Text", "Icon", "Order", "Action"]} rows={6} withHeader={false} bare />
+        }
+      >
         {/* Tabs */}
         <div className="flex gap-2 mb-6">
           <button

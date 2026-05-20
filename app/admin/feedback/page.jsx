@@ -3,7 +3,24 @@
 import { useState, useEffect, useMemo } from "react";
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
 import { LoadingState } from "../../components/ui/LoadingState";
+import Skeleton from "../../components/admin/ui/Skeleton";
 import * as adminApi from "../../api/adminApi";
+
+const SKELETON_COLUMNS = [
+  { label: "No",           type: "number" },
+  { label: "Phone Number", type: "text" },
+  { label: "Subject",      type: "text" },
+  { label: "Message",      type: "longText" },
+  { label: "Date",         type: "datetime" },
+  { label: "Status",       type: "status" },
+];
+
+const FULL_SKELETON = (
+  <Skeleton.TablePage columns={SKELETON_COLUMNS} rows={6} withFilters titleWidth={260} />
+);
+const BARE_SKELETON = (
+  <Skeleton.TablePage columns={SKELETON_COLUMNS} rows={6} withHeader={false} withFilters bare />
+);
 
 const PAGE_SIZE = 10;
 
@@ -28,7 +45,7 @@ const SortIcon = ({ active, direction }) => (
 
 export default function FeedbackPage() {
   return (
-    <AdminRouteGuard>
+    <AdminRouteGuard skeleton={FULL_SKELETON}>
       <FeedbackContent />
     </AdminRouteGuard>
   );
@@ -92,7 +109,7 @@ function FeedbackContent() {
     <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:admin-content-pl xl:pr-10 xl:pt-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className=" font-bold text-[22px] sm:text-[28px] text-white">
+        <h1 className="text-4xl font-bold leading-[1.05] text-white">
           Member Feedback
         </h1>
         <svg
@@ -110,7 +127,7 @@ function FeedbackContent() {
         </svg>
       </div>
 
-      <LoadingState isLoading={isLoading}>
+      <LoadingState isLoading={isLoading} skeleton={BARE_SKELETON}>
         {/* Table card */}
         <div className="rounded-[12px] border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-3 sm:p-4 flex flex-col gap-4">
           {/* Title */}

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
 import { SortIcon, Pagination } from "../../components/admin/members/DataTable";
 import { LoadingState } from "../../components/ui/LoadingState";
+import Skeleton from "../../components/admin/ui/Skeleton";
 import * as adminApi from "../../api/adminApi";
 
 // ── Constants ────────────────────────────────────────────────────────────
@@ -479,7 +480,7 @@ function FrameSettingContent() {
     <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:admin-content-pl xl:pr-10 xl:pt-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className=" font-bold text-[22px] sm:text-[28px] text-white">
+        <h1 className="text-4xl font-bold leading-[1.05] text-white">
           Frame Setting
         </h1>
         <svg
@@ -497,7 +498,12 @@ function FrameSettingContent() {
         </svg>
       </div>
 
-      <LoadingState isLoading={isLoading}>
+      <LoadingState
+        isLoading={isLoading}
+        skeleton={
+          <Skeleton.CardGrid cards={8} columns={4} withHeader={false} bare />
+        }
+      >
         {/* Table card */}
         <div className="rounded-[12px] border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-3 sm:p-4 flex flex-col gap-4">
         {/* Title row + Create button */}

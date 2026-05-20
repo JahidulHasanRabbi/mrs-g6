@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { tokenStorage } from '../../api/tokenStorage';
 import { verifyToken } from '../../api/adminApi';
+import Skeleton from '../admin/ui/Skeleton';
 
-export function AdminRouteGuard({ children }) {
+export function AdminRouteGuard({ children, skeleton }) {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -39,32 +40,11 @@ export function AdminRouteGuard({ children }) {
     checkAuth();
   }, [router]);
 
-  // Show loading spinner while checking authentication
+  // During token verification, render the page's own skeleton if supplied
+  // (so the first paint already mirrors the destination page's layout).
+  // Falls back to a neutral table-shaped skeleton.
   if (isLoading) {
-    return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        minHeight: '100vh',
-        backgroundColor: '#1a1a1a'
-      }}>
-        <div style={{ 
-          border: '4px solid rgba(233, 175, 65, 0.2)', 
-          borderTop: '4px solid #e9af41', 
-          borderRadius: '50%', 
-          width: '50px', 
-          height: '50px', 
-          animation: 'spin 1s linear infinite' 
-        }} />
-        <style jsx>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-      </div>
-    );
+    return skeleton ?? <Skeleton.TablePage rows={6} withFilters={false} withCta />;
   }
 
   // Don't render anything if not authenticated (redirecting to login)

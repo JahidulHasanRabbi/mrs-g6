@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
 import { LoadingState } from "../../components/ui/LoadingState";
+import Skeleton from "../../components/admin/ui/Skeleton";
 import * as adminApi from "../../api/adminApi";
 
 const CATEGORIES = [
@@ -222,7 +223,10 @@ function TermsConditionsContent() {
         </button>
       </div>
 
-      <LoadingState isLoading={isLoading}>
+      <LoadingState
+        isLoading={isLoading}
+        skeleton={<Skeleton.FormPage fields={3} withHeader={false} bare />}
+      >
         <div className="space-y-6">
           {/* Category Selector */}
           <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">

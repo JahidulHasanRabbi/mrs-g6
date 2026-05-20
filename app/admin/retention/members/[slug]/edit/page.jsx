@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { GRAD_GOLD } from "../../../../../components/admin/retention/constants";
 import { getCrmMemberSingle, updateCrmMember } from "../../../../../api/crmApi";
 import { getVipTiers } from "../../../../../api/adminApi";
+import Skeleton from "../../../../../components/admin/ui/Skeleton";
 
 // Member edit form — Figma 87:7291. 3-step wizard:
 //   01 Basic Info   (Profile Data + Basic Info shown in the Figma)
@@ -401,11 +402,7 @@ export default function MemberEditPage() {
   };
 
   if (loading) {
-    return (
-      <div className="px-2 py-12 text-center text-[14px] text-white/60">
-        Loading member...
-      </div>
-    );
+    return <Skeleton.FormPage fields={8} withHeader bare />;
   }
 
   return (

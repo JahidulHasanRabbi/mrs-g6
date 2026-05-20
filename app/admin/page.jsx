@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import BarChart from "../components/admin/charts/BarChart";
 import { AdminRouteGuard } from "../components/guards/AdminRouteGuard";
 import LoadingState from "../components/ui/LoadingState";
+import Skeleton from "../components/admin/ui/Skeleton";
 import ErrorDisplay from "../components/ui/ErrorDisplay";
 import * as adminApi from "../api/adminApi";
 
@@ -102,11 +103,7 @@ function AdminDashboardContent() {
   }, []);
 
   if (loading) {
-    return (
-      <main className="min-h-screen xl:admin-content-pl pr-10 pt-10 pb-10">
-        <LoadingState message="Loading dashboard data..." />
-      </main>
-    );
+    return <Skeleton.Dashboard cards={3} withChart />;
   }
 
   return (

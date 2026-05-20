@@ -5,11 +5,44 @@ import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
 import RedemptionMallTable from "../../components/admin/redemption-mall/RedemptionMallTable";
 import RedemptionItemDialog from "../../components/admin/redemption-mall/RedemptionItemDialog";
 import { LoadingState } from "../../components/ui/LoadingState";
+import Skeleton from "../../components/admin/ui/Skeleton";
 import * as adminApi from "../../api/adminApi";
+
+const SKELETON_COLUMNS = [
+  { label: "Name",       type: "text" },
+  { label: "Quantity",   type: "number" },
+  { label: "Start Date", type: "datetime" },
+  { label: "End Date",   type: "datetime" },
+  { label: "Prize Type", type: "badge" },
+  { label: "Mart Tier",  type: "badge" },
+  { label: "Tokens",     type: "number" },
+  { label: "Promotion",  type: "number" },
+  { label: "Image",      type: "image" },
+  { label: "Action",     type: "actions", count: 2 },
+];
+
+const FULL_SKELETON = (
+  <Skeleton.TablePage
+    columns={SKELETON_COLUMNS}
+    rows={5}
+    withFilters={false}
+    titleWidth={360}
+  />
+);
+
+const BARE_SKELETON = (
+  <Skeleton.TablePage
+    columns={SKELETON_COLUMNS}
+    rows={5}
+    withHeader={false}
+    withFilters={false}
+    bare
+  />
+);
 
 export default function RedemptionMallPage() {
   return (
-    <AdminRouteGuard>
+    <AdminRouteGuard skeleton={FULL_SKELETON}>
       <RedemptionMallContent />
     </AdminRouteGuard>
   );
@@ -107,7 +140,7 @@ function RedemptionMallContent() {
     <main className="min-h-screen px-6 pt-6 pb-10 xl:admin-content-pl xl:pr-10 xl:pt-10">
       {/* Page header */}
       <div className="mb-6 flex items-center justify-between">
-        <h1 className=" text-[18px] font-bold tracking-[-0.396px] text-white/70">
+        <h1 className="text-4xl font-bold leading-[1.05] text-white">
           Redemption Management
         </h1>
         <button className="flex h-[26px] w-[26px] items-center justify-center text-[#e9af41]" aria-label="Notifications">
@@ -117,7 +150,7 @@ function RedemptionMallContent() {
         </button>
       </div>
 
-      <LoadingState isLoading={isLoading}>
+      <LoadingState isLoading={isLoading} skeleton={BARE_SKELETON}>
         <RedemptionMallTable items={items} onCreate={openCreate} onEdit={openEdit} onArchive={handleArchive} />
       </LoadingState>
 

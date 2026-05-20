@@ -1,6 +1,6 @@
 "use client";
 
-// Loading spinner component
+// Loading spinner component (kept for legacy callers that haven't migrated to skeletons yet)
 function LoadingSpinner({ size = "medium" }) {
   const sizeClasses = {
     small: "w-4 h-4 border-2",
@@ -9,7 +9,7 @@ function LoadingSpinner({ size = "medium" }) {
   };
 
   return (
-    <div 
+    <div
       className={`${sizeClasses[size]} border-t-transparent rounded-full animate-spin`}
       style={{
         borderColor: 'rgba(233, 175, 65, 0.3)',
@@ -19,12 +19,22 @@ function LoadingSpinner({ size = "medium" }) {
   );
 }
 
-// Wrapper component that shows spinner while loading
-export function LoadingState({ isLoading, children }) {
+/**
+ * Wrapper that shows a loading state while data is fetching.
+ *
+ * Pass `skeleton={<Skeleton.TablePage .../>}` (or any page-shaped skeleton)
+ * to render a structural preview instead of the legacy spinner — much better
+ * perceived performance and signals what's about to load.
+ *
+ * If `skeleton` is omitted, falls back to the spinner so existing callers keep working.
+ */
+export function LoadingState({ isLoading, children, skeleton, message }) {
   if (isLoading) {
+    if (skeleton) return skeleton;
     return (
-      <div className="flex items-center justify-center p-8">
+      <div className="flex flex-col items-center justify-center p-8 gap-3">
         <LoadingSpinner size="large" />
+        {message && <span className="text-white/60 text-sm">{message}</span>}
       </div>
     );
   }

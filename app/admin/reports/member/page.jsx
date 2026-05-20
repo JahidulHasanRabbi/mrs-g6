@@ -255,7 +255,7 @@ function MemberReportContent() {
   return (
     <main className="min-h-screen xl:admin-content-pl pr-10 pt-8 pb-10">
         <div className="mb-6 flex items-center justify-between gap-4">
-          <h1 className=" text-[34px] font-bold leading-none text-[#f4efe0]">
+          <h1 className="text-4xl font-bold leading-[1.05] text-white">
             Member Report
           </h1>
 

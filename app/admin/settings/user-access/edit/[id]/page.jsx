@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { GRAD_GOLD } from "../../../../../components/admin/retention/constants";
 import { ROLE_OPTIONS, STATUS_OPTIONS } from "../../_data";
 import { getCrmUsers } from "../../../../../api/crmApi";
+import Skeleton from "../../../../../components/admin/ui/Skeleton";
 
 export default function EditUserPage() {
   const router = useRouter();
@@ -60,9 +61,7 @@ export default function EditUserPage() {
     return (
       <>
         <PageHeader />
-        <div className="rounded-[16px] bg-[#05060a] p-6 md:p-10 text-[14px] text-white/40" style={{ filter: "drop-shadow(0 0 1.5px #dea220)" }}>
-          Loading...
-        </div>
+        <Skeleton.FormPage fields={5} withHeader={false} bare />
       </>
     );
   }

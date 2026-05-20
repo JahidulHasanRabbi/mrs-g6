@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
-import LoadingState from "../../components/ui/LoadingState";
 import ErrorDisplay from "../../components/ui/ErrorDisplay";
+import Skeleton from "../../components/admin/ui/Skeleton";
 import BannersTable from "../../components/admin/banners/BannersTable";
 import BannerForm from "../../components/admin/banners/BannerForm";
 import Button from "../../components/admin/ui/Button";
@@ -11,9 +11,31 @@ import ConfirmDialog from "../../components/admin/ui/ConfirmDialog";
 import { useToast } from "../../components/admin/ui/Toast";
 import * as adminApi from "../../api/adminApi";
 
+const BANNERS_SKELETON_COLUMNS = [
+  { label: "Preview",      type: "image" },
+  { label: "Name",         type: "text" },
+  { label: "Location",     type: "badge" },
+  { label: "Link (Slug)",  type: "link" },
+  { label: "Active Until", type: "datetime" },
+  { label: "Status",       type: "status" },
+  { label: "Actions",      type: "actions", count: 2 },
+];
+
+function BannersSkeleton() {
+  return (
+    <Skeleton.TablePage
+      titleWidth={360}
+      ctaWidth={170}
+      columns={BANNERS_SKELETON_COLUMNS}
+      rows={4}
+      withFilters={false}
+    />
+  );
+}
+
 export default function BannersPage() {
   return (
-    <AdminRouteGuard>
+    <AdminRouteGuard skeleton={<BannersSkeleton />}>
       <BannersPageContent />
     </AdminRouteGuard>
   );
@@ -90,11 +112,7 @@ function BannersPageContent() {
   };
 
   if (loading) {
-    return (
-      <main className="min-h-screen xl:admin-content-pl pr-10 pt-10 pb-10">
-        <LoadingState message="Loading banners..." />
-      </main>
-    );
+    return <BannersSkeleton />;
   }
 
   return (
