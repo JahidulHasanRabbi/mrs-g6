@@ -5,6 +5,7 @@ import Image from "next/image";
 
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
 import { LoadingState } from "../../components/ui/LoadingState";
+import { useToast } from "../../components/admin/ui/Toast";
 import * as externalApi from "../../api/externalApi";
 
 const GOLD_BG =
@@ -12,6 +13,7 @@ const GOLD_BG =
 
 // ── Page content ─────────────────────────────────────────────────────────
 function ExternalApiContent() {
+  const toast = useToast();
   const [specialCodes, setSpecialCodes] = useState([]);
   const [selectedCode, setSelectedCode] = useState("");
   const [walletVipTiers, setWalletVipTiers] = useState([]);
@@ -73,9 +75,13 @@ function ExternalApiContent() {
     loadDataForCode(code);
   };
 
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);
-    alert('Copied to clipboard!');
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Copied to clipboard");
+    } catch {
+      toast.error("Failed to copy", { description: "Clipboard access was blocked." });
+    }
   };
 
   return (

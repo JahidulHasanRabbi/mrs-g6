@@ -18,6 +18,7 @@ import "./globals.css";
 
 import { UserProvider } from "./contexts/UserContext";
 import LayoutShell from "./LayoutShell";
+import { ToastProvider } from "./components/admin/ui/Toast";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -70,7 +71,9 @@ export default function RootLayout({
         style={{ fontFamily: '"Times New Roman", serif' }}
       >
         <UserProvider>
-          <LayoutShell>{children}</LayoutShell>
+          <ToastProvider>
+            <LayoutShell>{children}</LayoutShell>
+          </ToastProvider>
         </UserProvider>
       </body>
     </html>

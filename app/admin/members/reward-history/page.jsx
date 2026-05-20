@@ -155,7 +155,8 @@ function RewardHistoryContent() {
           sortDir={sortDir}
           onSort={handleSort}
           renderCell={renderCell}
-          emptyMessage={loading ? "Loading..." : "No reward history records found."}
+          isLoading={loading}
+          emptyMessage="No reward history records found."
         />
 
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />

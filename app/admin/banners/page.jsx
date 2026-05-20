@@ -6,6 +6,9 @@ import LoadingState from "../../components/ui/LoadingState";
 import ErrorDisplay from "../../components/ui/ErrorDisplay";
 import BannersTable from "../../components/admin/banners/BannersTable";
 import BannerForm from "../../components/admin/banners/BannerForm";
+import Button from "../../components/admin/ui/Button";
+import ConfirmDialog from "../../components/admin/ui/ConfirmDialog";
+import { useToast } from "../../components/admin/ui/Toast";
 import * as adminApi from "../../api/adminApi";
 
 export default function BannersPage() {
@@ -17,11 +20,14 @@ export default function BannersPage() {
 }
 
 function BannersPageContent() {
+  const toast = useToast();
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingBanner, setEditingBanner] = useState(null);
+  const [archiveTarget, setArchiveTarget] = useState(null); // banner pending archive
+  const [archiving, setArchiving] = useState(false);
 
   useEffect(() => {
     fetchBanners();
@@ -56,23 +62,30 @@ function BannersPageContent() {
     setEditingBanner(null);
   };
 
-  const handleFormSuccess = () => {
+  const handleFormSuccess = (mode) => {
     setShowForm(false);
     setEditingBanner(null);
+    toast.success(mode === "update" ? "Banner updated" : "Banner created");
     fetchBanners();
   };
 
-  const handleArchive = async (uuid) => {
-    if (!confirm('Are you sure you want to archive this banner?')) {
-      return;
-    }
+  const handleArchive = (banner) => {
+    setArchiveTarget(banner);
+  };
 
+  const confirmArchive = async () => {
+    if (!archiveTarget) return;
+    setArchiving(true);
     try {
-      await adminApi.archiveBanner(uuid);
+      await adminApi.archiveBanner(archiveTarget.uuid);
+      toast.success(`"${archiveTarget.name}" archived`);
+      setArchiveTarget(null);
       fetchBanners();
     } catch (err) {
       console.error('Error archiving banner:', err);
-      alert('Failed to archive banner');
+      toast.error("Failed to archive banner", { description: err?.message });
+    } finally {
+      setArchiving(false);
     }
   };
 
@@ -90,12 +103,9 @@ function BannersPageContent() {
           <h1 className="text-4xl font-bold leading-[1.05] text-white">
             Banners Management
           </h1>
-          <button
-            onClick={handleCreate}
-            className="px-6 py-2 bg-[#e9af41] text-black font-bold rounded hover:bg-[#d19a35] transition-colors"
-          >
+          <Button onClick={handleCreate} variant="primary" size="md">
             + Create Banner
-          </button>
+          </Button>
         </div>
 
         {error && (
@@ -117,6 +127,30 @@ function BannersPageContent() {
             onArchive={handleArchive}
           />
       )}
+
+      <ConfirmDialog
+        open={!!archiveTarget}
+        title="Archive banner?"
+        message={
+          archiveTarget
+            ? `"${archiveTarget.name}" will be archived and stop showing to members. You can restore it later if needed.`
+            : ""
+        }
+        confirmLabel="Archive"
+        tone="destructive"
+        loading={archiving}
+        preview={
+          archiveTarget?.image && (
+            <img
+              src={archiveTarget.image}
+              alt=""
+              className="w-full h-32 object-cover rounded border border-white/10"
+            />
+          )
+        }
+        onConfirm={confirmArchive}
+        onCancel={() => !archiving && setArchiveTarget(null)}
+      />
     </main>
   );
 }

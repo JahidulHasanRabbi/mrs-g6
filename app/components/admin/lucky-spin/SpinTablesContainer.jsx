@@ -278,17 +278,12 @@ export default function SpinTablesContainer() {
 
         {/* Loading State or Conditional Table Rendering */}
         {activeTab === "items" ? (
-          isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-white/60">Loading...</div>
-            </div>
-          ) : (
-            <SpinItemsTable
-              items={spinItems}
-              onEditClick={handleEditClick}
-              onDeleteClick={handleDeleteClick}
-            />
-          )
+          <SpinItemsTable
+            items={spinItems}
+            isLoading={isLoading}
+            onEditClick={handleEditClick}
+            onDeleteClick={handleDeleteClick}
+          />
         ) : (
           <div className="p-6">
             <SpinSequenceTable

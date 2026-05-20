@@ -95,24 +95,16 @@ function StationContent() {
         </div>
 
         {/* Table */}
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#e9af41] border-t-transparent" />
-            <span className="ml-3 text-white/60">
-              Loading stations...
-            </span>
-          </div>
-        ) : (
-          <DataTable
-            columns={TABLE_COLUMNS}
-            rows={sortedRows}
-            sortKey={sortKey}
-            sortDir={sortDir}
-            onSort={handleSort}
-            renderCell={renderCell}
-            emptyMessage="No station records found for this member."
-          />
-        )}
+        <DataTable
+          columns={TABLE_COLUMNS}
+          rows={sortedRows}
+          sortKey={sortKey}
+          sortDir={sortDir}
+          onSort={handleSort}
+          renderCell={renderCell}
+          isLoading={loading}
+          emptyMessage="No station records found for this member."
+        />
       </div>
     </HistoryPageShell>
   );

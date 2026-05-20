@@ -144,7 +144,8 @@ function TokenHistoryContent() {
           sortKey={sortKey}
           sortDir={sortDir}
           onSort={handleSort}
-          emptyMessage={loading ? "Loading..." : "No token history records found."}
+          isLoading={loading}
+          emptyMessage="No token history records found."
           renderCell={(row, col) => {
             if (col.key === "created") return formatDateTime(row.created);
             if (col.key === "token_details") return row.token_details || "—";

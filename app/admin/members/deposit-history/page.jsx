@@ -161,7 +161,8 @@ function DepositHistoryContent() {
           sortDir={sortDir}
           onSort={handleSort}
           renderCell={renderCell}
-          emptyMessage={loading ? "Loading..." : "No deposit records found."}
+          isLoading={loading}
+          emptyMessage="No deposit records found."
         />
 
         {totalPages > 1 && (

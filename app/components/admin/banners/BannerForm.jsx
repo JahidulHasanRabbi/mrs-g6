@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import * as adminApi from "../../../api/adminApi";
+import Button from "../ui/Button";
+import FormField, { BASE_INPUT, stateClasses } from "../ui/FormField";
 
 export default function BannerForm({ banner, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
@@ -14,6 +16,28 @@ export default function BannerForm({ banner, onClose, onSuccess }) {
   const [imagePreview, setImagePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [touched, setTouched] = useState({});
+
+  const validateField = (name, value) => {
+    if (name === "name" && !value?.trim()) return "Banner name is required";
+    if (name === "slug") {
+      if (!value?.trim()) return "Link URL is required";
+      const url = value.startsWith("http://") || value.startsWith("https://") ? value : `https://${value}`;
+      try { new URL(url); } catch { return "Enter a valid URL"; }
+    }
+    if (name === "active_until") {
+      if (!value) return "Active-until date is required";
+      if (new Date(value) <= new Date()) return "Active-until must be in the future";
+    }
+    return null;
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched((t) => ({ ...t, [name]: true }));
+    setFieldErrors((errs) => ({ ...errs, [name]: validateField(name, value) }));
+  };
 
   useEffect(() => {
     const fetchBannerDetails = async () => {
@@ -58,6 +82,9 @@ export default function BannerForm({ banner, onClose, onSuccess }) {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    if (touched[name]) {
+      setFieldErrors((errs) => ({ ...errs, [name]: validateField(name, value) }));
+    }
   };
 
   const handleImageChange = (e) => {
@@ -74,6 +101,17 @@ export default function BannerForm({ banner, onClose, onSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Pre-submit: mark all fields touched and surface validation errors.
+    const errs = {
+      name: validateField("name", formData.name),
+      slug: validateField("slug", formData.slug),
+      active_until: validateField("active_until", formData.active_until),
+    };
+    setFieldErrors(errs);
+    setTouched({ name: true, slug: true, active_until: true });
+    if (Object.values(errs).some(Boolean)) return;
+
     setIsSubmitting(true);
     setError(null);
 
@@ -97,12 +135,12 @@ export default function BannerForm({ banner, onClose, onSuccess }) {
       if (banner) {
         // Update existing banner
         await adminApi.updateBanner(banner.uuid, payload);
+        onSuccess("update");
       } else {
         // Create new banner
         await adminApi.createBanner(payload);
+        onSuccess("create");
       }
-
-      onSuccess();
     } catch (err) {
       console.error('Error saving banner:', err);
       console.error('Error details:', {
@@ -150,67 +188,54 @@ export default function BannerForm({ banner, onClose, onSuccess }) {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-400 mb-2">
-            Banner Name *
-          </label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleInputChange}
-            required
-            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#e9af41]"
-            placeholder="Enter banner name"
-          />
-        </div>
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <FormField
+          label="Banner Name"
+          name="name"
+          required
+          value={formData.name}
+          onChange={handleInputChange}
+          onBlur={handleBlur}
+          error={touched.name ? fieldErrors.name : undefined}
+          placeholder="Enter banner name"
+        />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-400 mb-2">
-            Link URL (Slug) *
-          </label>
-          <input
-            type="text"
-            name="slug"
-            value={formData.slug}
-            onChange={handleInputChange}
-            required
-            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#e9af41]"
-            placeholder="https://example.com"
-          />
-        </div>
+        <FormField
+          label="Link URL (Slug)"
+          name="slug"
+          required
+          value={formData.slug}
+          onChange={handleInputChange}
+          onBlur={handleBlur}
+          error={touched.slug ? fieldErrors.slug : undefined}
+          placeholder="https://example.com"
+        />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-400 mb-2">
-            Location *
-          </label>
+        <FormField.Group label="Location" required>
           <select
             name="location"
             value={formData.location}
             onChange={handleInputChange}
             required
-            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded text-white focus:outline-none focus:ring-2 focus:ring-[#e9af41] cursor-pointer"
+            className={`${BASE_INPUT} ${stateClasses(null)} cursor-pointer`}
           >
             <option value={1}>Main Page</option>
             <option value={2}>Side Panel</option>
           </select>
-        </div>
+        </FormField.Group>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-400 mb-2">
-            Active Until *
-          </label>
+        <FormField.Group label="Active Until" required error={touched.active_until ? fieldErrors.active_until : undefined}>
           <input
             type="datetime-local"
             name="active_until"
             value={formData.active_until}
             onChange={handleInputChange}
+            onBlur={handleBlur}
             required
-            className="w-full px-4 py-2 bg-white/5 border border-white/10 rounded text-white focus:outline-none focus:ring-2 focus:ring-[#e9af41] cursor-pointer"
+            className={`${BASE_INPUT} ${stateClasses(touched.active_until && fieldErrors.active_until)} cursor-pointer`}
             onClick={(e) => e.currentTarget.showPicker?.()}
           />
-        </div>
+        </FormField.Group>
 
         <div>
           <label className="block text-sm font-medium text-gray-400 mb-2">
@@ -234,21 +259,13 @@ export default function BannerForm({ banner, onClose, onSuccess }) {
           )}
         </div>
 
-        <div className="flex gap-4 pt-4">
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="px-6 py-2 bg-[#e9af41] text-black font-bold rounded hover:bg-[#d19a35] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? 'Saving...' : banner ? 'Update Banner' : 'Create Banner'}
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-6 py-2 bg-white/5 text-white font-bold rounded hover:bg-white/10 transition-colors"
-          >
+        <div className="flex gap-3 pt-4">
+          <Button type="submit" variant="primary" size="md" loading={isSubmitting}>
+            {banner ? 'Update Banner' : 'Create Banner'}
+          </Button>
+          <Button type="button" variant="secondary" size="md" onClick={onClose}>
             Cancel
-          </button>
+          </Button>
         </div>
       </form>
     </div>

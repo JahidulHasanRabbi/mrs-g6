@@ -98,16 +98,38 @@ export function Pagination({ currentPage, totalPages, onPageChange }) {
 }
 
 /**
+ * Skeleton placeholder row — shown while data is loading.
+ * Mimics row geometry so layout doesn't jump when real data arrives (checklist #12).
+ */
+function SkeletonRow({ columns }) {
+  return (
+    <tr className="border-b border-[rgba(240,240,240,0.2)]">
+      {columns.map((col) => (
+        <td key={col.key} className="px-3 py-3">
+          <div
+            className={`h-3 rounded bg-white/10 animate-pulse ${col.align === "right" ? "ml-auto" : ""}`}
+            style={{ width: `${40 + ((col.key?.length ?? 6) * 7) % 50}%` }}
+          />
+        </td>
+      ))}
+    </tr>
+  );
+}
+
+/**
  * Generic sortable data table.
  *
  * @param {Object}   props
- * @param {Array}    props.columns      - { key, label, minW?, align? }
- * @param {Array}    props.rows         - data rows
- * @param {string}   props.sortKey      - currently sorted column key
- * @param {string}   props.sortDir      - "asc" | "desc"
- * @param {Function} props.onSort       - (key) => void
- * @param {Function} props.renderCell   - (row, column) => ReactNode
- * @param {string}   props.emptyMessage - shown when rows is empty
+ * @param {Array}    props.columns       - { key, label, minW?, align? }
+ * @param {Array}    props.rows          - data rows
+ * @param {string}   props.sortKey       - currently sorted column key
+ * @param {string}   props.sortDir       - "asc" | "desc"
+ * @param {Function} props.onSort        - (key) => void
+ * @param {Function} props.renderCell    - (row, column) => ReactNode
+ * @param {string}   props.emptyMessage  - shown when rows is empty
+ * @param {boolean}  props.isLoading     - render skeleton rows instead of data
+ * @param {number}   props.skeletonRows  - how many skeleton rows to show (default 6)
+ * @param {string}   props.maxHeight     - sets a max-height + sticky header (e.g. "60vh", "480px")
  */
 export function DataTable({
   columns,
@@ -117,17 +139,24 @@ export function DataTable({
   onSort,
   renderCell,
   emptyMessage = "No records found.",
+  isLoading = false,
+  skeletonRows = 6,
+  maxHeight,
 }) {
+  const sticky = !!maxHeight;
   return (
-    <div className="overflow-x-auto scrollbar-admin rounded-lg">
+    <div
+      className="overflow-auto scrollbar-admin rounded-lg"
+      style={maxHeight ? { maxHeight } : undefined}
+    >
       <table className="w-full min-w-[700px]">
-        <thead>
+        <thead className={sticky ? "sticky top-0 z-10" : ""}>
           <tr className="bg-black">
             {columns.map((col) => (
               <th
                 key={col.key}
-                className={`${col.minW || ""} px-3 py-3 text-left cursor-pointer select-none hover:bg-white/5 transition-colors`}
-                onClick={() => onSort(col.key)}
+                className={`${col.minW || ""} px-3 py-3 text-left cursor-pointer select-none bg-black hover:bg-white/5 transition-colors`}
+                onClick={() => onSort?.(col.key)}
               >
                 <div className={`flex items-center ${col.align === "right" ? "justify-end" : "justify-start"}`}>
                   <span className=" font-bold text-[13px] sm:text-[14px] text-white whitespace-nowrap">
@@ -141,7 +170,11 @@ export function DataTable({
         </thead>
 
         <tbody>
-          {rows.length === 0 ? (
+          {isLoading ? (
+            Array.from({ length: skeletonRows }).map((_, i) => (
+              <SkeletonRow key={`sk-${i}`} columns={columns} />
+            ))
+          ) : rows.length === 0 ? (
             <tr>
               <td
                 colSpan={columns.length}
