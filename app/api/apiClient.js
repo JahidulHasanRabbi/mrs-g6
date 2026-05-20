@@ -1,8 +1,34 @@
-import { BASE_URL } from './api';
+import { BASE_URL, ENDPOINTS } from './api';
 import { tokenStorage } from './tokenStorage';
 import { handleApiError } from './errorHandler';
 
 export const REQUEST_TIMEOUT = 30000;
+
+async function tryAdminRefresh() {
+  const storedRefresh = tokenStorage.getAdminRefreshToken();
+  if (!storedRefresh) return false;
+  try {
+    const res = await fetch(`${BASE_URL}${ENDPOINTS.ADMIN.REFRESH_TOKEN}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh: storedRefresh })
+    });
+    if (!res.ok) {
+      tokenStorage.clearAdminTokens();
+      return false;
+    }
+    const data = await res.json();
+    if (data.access) {
+      tokenStorage.setAdminTokens(data.access, data.refresh || null);
+      return true;
+    }
+    tokenStorage.clearAdminTokens();
+    return false;
+  } catch {
+    tokenStorage.clearAdminTokens();
+    return false;
+  }
+}
 
 function detectContentType(data) {
   if (!data || typeof data !== 'object') {
@@ -37,7 +63,7 @@ function convertToFormData(data) {
   return formData;
 }
 
-export async function apiRequest(endpoint, options = {}, requiresAuth = false, tokenType = 'member') {
+export async function apiRequest(endpoint, options = {}, requiresAuth = false, tokenType = 'member', _isRetry = false) {
   const url = `${BASE_URL}${endpoint}`;
   
   const headers = {
@@ -107,10 +133,21 @@ export async function apiRequest(endpoint, options = {}, requiresAuth = false, t
         status: response.status,
         data: errorData
       };
-      
+
+      // For admin 401, try to refresh the access token and retry once
+      if (response.status === 401 && tokenType === 'admin' && !_isRetry) {
+        const refreshed = await tryAdminRefresh();
+        if (refreshed) {
+          return apiRequest(endpoint, options, requiresAuth, tokenType, true);
+        }
+        if (typeof window !== 'undefined') {
+          window.location.href = '/admin/login';
+        }
+      }
+
       // Use centralized error handler
-      handleApiError(error, endpoint);
-      
+      handleApiError(error, endpoint, tokenType);
+
       throw error;
     }
     

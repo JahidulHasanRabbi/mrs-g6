@@ -8,32 +8,35 @@ import { tokenStorage } from './tokenStorage';
  * @param {string} context - Context where error occurred (for logging)
  * @returns {Object} Formatted error object with type, message, and retry info
  */
-export function handleApiError(error, context = 'api-call') {
+export function handleApiError(error, context = 'api-call', tokenType = 'member') {
   const { status, data, message } = error;
-  
+
   // 401: Authentication failure
   if (status === 401) {
     if (typeof window !== 'undefined') {
-      tokenStorage.clearMemberTokens();
-      tokenStorage.clearAdminTokens();
-      
-      const authGuard = process.env.NEXT_PUBLIC_AUTHGUARD === 'true';
-      
-      // Use saved o or fallback to /
-      const savedO = tokenStorage.getRedirectO();
-      
-      // Ensure savedO is a full URL
-      let redirectUrl = '/';
-      if (savedO) {
-        redirectUrl = savedO.startsWith('http') ? savedO : `https://${savedO}`;
-      }
-      
-      // Only redirect if authGuard is enabled and we're not already at the redirect URL
-      if (authGuard && window.location.pathname !== redirectUrl) {
-        window.location.href = redirectUrl;
+      if (tokenType === 'admin') {
+        // Admin 401 — apiClient already attempted refresh; just redirect to login
+        tokenStorage.clearAdminTokens();
+        if (window.location.pathname !== '/admin/login') {
+          window.location.href = '/admin/login';
+        }
+      } else {
+        // Member 401 — clear auth tokens only; preserve station_url and redirect_o
+        tokenStorage.clearMemberTokens();
+
+        const authGuard = process.env.NEXT_PUBLIC_AUTHGUARD === 'true';
+        const savedO = tokenStorage.getRedirectO();
+        let redirectUrl = '/';
+        if (savedO) {
+          redirectUrl = savedO.startsWith('http') ? savedO : `https://${savedO}`;
+        }
+
+        if (authGuard && window.location.pathname !== redirectUrl) {
+          window.location.href = redirectUrl;
+        }
       }
     }
-    
+
     return {
       type: 'auth',
       message: 'Authentication failed. Redirecting to login...',

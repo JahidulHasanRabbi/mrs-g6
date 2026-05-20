@@ -31,11 +31,12 @@ export async function refreshToken(refreshToken) {
     method: 'POST',
     body: { refresh: refreshToken }
   }, false);
-  
-  if (response.access && response.refresh) {
-    tokenStorage.setAdminTokens(response.access, response.refresh);
+
+  if (response.access) {
+    // Some servers only return a new access token on refresh
+    tokenStorage.setAdminTokens(response.access, response.refresh || null);
   }
-  
+
   return {
     access: response.access,
     refresh: response.refresh

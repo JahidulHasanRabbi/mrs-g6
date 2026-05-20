@@ -1,10 +1,21 @@
 import { dispatchAuthChanged } from './authEvents';
 
+function decodeJwtExpiry(token) {
+  try {
+    const payload = token.split('.')[1];
+    const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+    return decoded.exp ? decoded.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
 export const STORAGE_KEYS = {
   MEMBER_ACCESS_TOKEN: 'mrs_member_access_token',
   MEMBER_UUID: 'mrs_member_uuid',
   MEMBER_TOKEN_EXPIRY: 'mrs_member_token_expiry',
   ADMIN_ACCESS_TOKEN: 'mrs_admin_access_token',
+  ADMIN_REFRESH_TOKEN: 'mrs_admin_refresh_token',
   ADMIN_TOKEN_EXPIRY: 'mrs_admin_token_expiry',
   REDIRECT_O: 'mrs_redirect_o',
   STATION_URL: 'mrs_station_url'
@@ -16,17 +27,15 @@ export const tokenStorage = {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem(STORAGE_KEYS.MEMBER_ACCESS_TOKEN);
       const expiry = localStorage.getItem(STORAGE_KEYS.MEMBER_TOKEN_EXPIRY);
-      
-      // Check if token is expired
+
       if (token && expiry) {
         const expiryTime = parseInt(expiry, 10);
         if (Date.now() >= expiryTime) {
-          // Token expired, clear it
           tokenStorage.clearMemberTokens();
           return null;
         }
       }
-      
+
       return token;
     }
     return null;
@@ -39,9 +48,9 @@ export const tokenStorage = {
     return null;
   },
 
-  setMemberTokens: (access, memberUuid, expiresIn = 3600) => {
+  setMemberTokens: (access, memberUuid, expiresIn = 7200) => {
     if (typeof window !== 'undefined') {
-      // Calculate expiry time (default 1 hour, subtract 5 minutes as buffer)
+      // 2-hour default, subtract 5 minutes as buffer
       const expiryTime = Date.now() + ((expiresIn - 300) * 1000);
       
       localStorage.setItem(STORAGE_KEYS.MEMBER_ACCESS_TOKEN, access);
@@ -75,45 +84,56 @@ export const tokenStorage = {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem(STORAGE_KEYS.ADMIN_ACCESS_TOKEN);
       const expiry = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN_EXPIRY);
-      
-      // Check if token is expired
+
       if (token && expiry) {
         const expiryTime = parseInt(expiry, 10);
-        if (Date.now() >= expiryTime) {
-          // Token expired, clear it
-          tokenStorage.clearAdminTokens();
+        if (!isNaN(expiryTime) && Date.now() >= expiryTime) {
+          // Expired — return null without clearing so the guard can attempt refresh
           return null;
         }
       }
-      
+
       return token;
     }
     return null;
   },
 
-  setAdminTokens: (access, expiresIn = 3600) => {
+  getAdminRefreshToken: () => {
     if (typeof window !== 'undefined') {
-      // Calculate expiry time (default 1 hour, subtract 5 minutes as buffer)
-      const expiryTime = Date.now() + ((expiresIn - 300) * 1000);
-      
+      return localStorage.getItem(STORAGE_KEYS.ADMIN_REFRESH_TOKEN);
+    }
+    return null;
+  },
+
+  setAdminTokens: (access, refresh) => {
+    if (typeof window !== 'undefined') {
+      // Use the JWT's own exp claim as the expiry; fall back to 1 hour
+      const jwtExpiry = decodeJwtExpiry(access);
+      const expiryTime = jwtExpiry || (Date.now() + 3600 * 1000);
+
       localStorage.setItem(STORAGE_KEYS.ADMIN_ACCESS_TOKEN, access);
       localStorage.setItem(STORAGE_KEYS.ADMIN_TOKEN_EXPIRY, expiryTime.toString());
+
+      if (refresh) {
+        localStorage.setItem(STORAGE_KEYS.ADMIN_REFRESH_TOKEN, refresh);
+      }
     }
   },
 
   clearAdminTokens: () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem(STORAGE_KEYS.ADMIN_ACCESS_TOKEN);
+      localStorage.removeItem(STORAGE_KEYS.ADMIN_REFRESH_TOKEN);
       localStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN_EXPIRY);
     }
   },
-  
+
   isAdminTokenExpired: () => {
     if (typeof window !== 'undefined') {
       const expiry = localStorage.getItem(STORAGE_KEYS.ADMIN_TOKEN_EXPIRY);
       if (!expiry) return true;
-      
-      return Date.now() >= parseInt(expiry, 10);
+      const expiryTime = parseInt(expiry, 10);
+      return isNaN(expiryTime) || Date.now() >= expiryTime;
     }
     return true;
   },

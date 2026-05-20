@@ -3,7 +3,19 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { tokenStorage } from '../../api/tokenStorage';
-import { verifyToken } from '../../api/adminApi';
+import { verifyToken, refreshToken } from '../../api/adminApi';
+
+async function attemptRefresh() {
+  const storedRefresh = tokenStorage.getAdminRefreshToken();
+  if (!storedRefresh) return false;
+  try {
+    await refreshToken(storedRefresh);
+    return true;
+  } catch {
+    tokenStorage.clearAdminTokens();
+    return false;
+  }
+}
 
 export function AdminRouteGuard({ children }) {
   const router = useRouter();
@@ -13,24 +25,30 @@ export function AdminRouteGuard({ children }) {
   useEffect(() => {
     const checkAuth = async () => {
       const token = tokenStorage.getAdminAccessToken();
-      
+
       if (!token) {
-        // No token at all - redirect to login
-        router.push('/admin/login');
+        // Access token missing or expired — try refresh before giving up
+        const refreshed = await attemptRefresh();
+        if (refreshed) {
+          setIsAuthenticated(true);
+        } else {
+          router.push('/admin/login');
+        }
         setIsLoading(false);
         return;
       }
 
       try {
-        // Verify token is still valid
         await verifyToken(token);
-        // Token is valid
         setIsAuthenticated(true);
-      } catch (error) {
-        // Token is invalid or expired - clear it and redirect
-        console.log('Token verification failed:', error);
-        tokenStorage.clearAdminTokens();
-        router.push('/admin/login');
+      } catch {
+        // Server rejected the token — try refresh once
+        const refreshed = await attemptRefresh();
+        if (refreshed) {
+          setIsAuthenticated(true);
+        } else {
+          router.push('/admin/login');
+        }
       } finally {
         setIsLoading(false);
       }
