@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
 import { LoadingState } from "../../components/ui/LoadingState";
-import Skeleton from "../../components/admin/ui/Skeleton";
+import { SHIMMER, GOLD_SHIMMER } from "../../components/admin/ui/Skeleton";
 import * as adminApi from "../../api/adminApi";
 
 const CATEGORIES = [
@@ -45,6 +45,42 @@ function sectionsToText(sections) {
   return sections
     .map(s => `title: ${s.title}\ndescription: ${s.description}`)
     .join("\n\n");
+}
+
+function TermsConditionsSkeleton() {
+  return (
+    <div className="space-y-6">
+      {/* Category Selector card */}
+      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
+        <div className={`h-5 w-40 mb-4 rounded ${SHIMMER}`} />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {Array.from({ length: 9 }).map((_, i) => (
+            <div
+              key={i}
+              className={`h-[46px] rounded-lg ${i === 0 ? GOLD_SHIMMER : SHIMMER}`}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Editor card */}
+      <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
+        <div className="flex items-center justify-between mb-6">
+          <div className={`h-5 w-72 rounded ${SHIMMER}`} />
+          <div className={`h-3 w-56 rounded ${SHIMMER}`} />
+        </div>
+        <div className={`w-full min-h-[400px] rounded-lg ${SHIMMER}`} />
+        <div className="flex justify-end mt-6">
+          <div className={`h-11 w-[164px] rounded-lg ${GOLD_SHIMMER}`} />
+        </div>
+      </div>
+
+      {/* Info box */}
+      <div className="rounded-lg border border-[#e9af41]/30 bg-[#e9af41]/10 p-4">
+        <div className={`h-3 w-3/4 rounded ${SHIMMER}`} />
+      </div>
+    </div>
+  );
 }
 
 export default function TermsConditionsPage() {
@@ -225,7 +261,7 @@ function TermsConditionsContent() {
 
       <LoadingState
         isLoading={isLoading}
-        skeleton={<Skeleton.FormPage fields={3} withHeader={false} bare />}
+        skeleton={<TermsConditionsSkeleton />}
       >
         <div className="space-y-6">
           {/* Category Selector */}
