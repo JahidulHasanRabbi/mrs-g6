@@ -38,6 +38,7 @@ export const ENDPOINTS = {
     LOGIN_REQUESTS: '/admins/login-requests/',
     LOGIN_REQUEST_APPROVE: (uuid) => `/admins/login-requests/${uuid}/approve/`,
     LOGIN_REQUEST_REJECT: (uuid) => `/admins/login-requests/${uuid}/reject/`,
+    ACTIVITY_LOG: '/admins/activity-log/',
     ROLES: '/admins/roles/',
     VIP_TIERS: '/member/vip-tier/',
     VIP_TIER: (uuid) => `/member/vip-tier/${uuid}/`,
@@ -92,6 +93,7 @@ export const ENDPOINTS = {
     LOGIN_REQUESTS: '/admins/login-requests/',
     LOGIN_REQUEST_APPROVE: (uuid) => `/admins/login-requests/${uuid}/approve/`,
     LOGIN_REQUEST_REJECT: (uuid) => `/admins/login-requests/${uuid}/reject/`,
+    ACTIVITY_LOG: '/admins/activity-log/',
     ROLES: '/admins/roles/',
     // Member Profile
     MEMBERS: '/crm-members/members/',

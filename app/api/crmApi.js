@@ -43,6 +43,11 @@ export async function rejectCrmLoginRequest(uuid) {
   return await apiRequest(ENDPOINTS.CRM.LOGIN_REQUEST_REJECT(uuid), { method: 'PATCH' }, true, 'admin');
 }
 
+export async function getCrmActivityLog(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.CRM.ACTIVITY_LOG}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
 // ───────────────────────── Member Profile ─────────────────────────
 
 // GET /crm-members/members/  (paginated)
