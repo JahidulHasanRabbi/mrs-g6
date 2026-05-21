@@ -46,17 +46,25 @@
 }
 
 /* Admin page content padding — follows the live sidebar width set by the
- * admin layout (--admin-sidebar-w). Pages apply this utility on the <main>
+ * admin layout (--admin-sidebar-w). Pages apply this class on the <main>
  * so the content reflows smoothly when the sidebar collapses.
  *
  * 62px = aside left offset (24px) + gap between aside and content (~38px).
  * The transition keeps the reflow synced with the sidebar's width animation.
  *
- * Defined with Tailwind v4 `@utility` so it composes with responsive prefixes
- * (`xl:admin-content-pl`) and lands in the generated stylesheet. */
-@utility admin-content-pl {
+ * Defined as a raw class (not a Tailwind `@utility`) because the v4 utility
+ * generator was not emitting `.xl\:admin-content-pl` from JSX usage, leaving
+ * the sidebar overlapping the content on every admin page at xl widths. */
+.admin-content-pl {
   padding-left: calc(var(--admin-sidebar-w, 326px) + 62px);
   transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (min-width: 1280px) {
+  .xl\:admin-content-pl {
+    padding-left: calc(var(--admin-sidebar-w, 326px) + 62px);
+    transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
 }
 
 /* Admin sidebar scrollbar — thin gold-themed */
