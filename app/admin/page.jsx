@@ -63,7 +63,8 @@ function AdminDashboardContent() {
       const sevenDaysAgo = new Date(today);
       sevenDaysAgo.setDate(today.getDate() - 6);
       
-      const newMembers = membersData.filter((member) => {
+      const membersArray = Array.isArray(membersData) ? membersData : (membersData?.results || []);
+      const newMembers = membersArray.filter((member) => {
         if (!member.registered_date) return false;
         const registered = new Date(member.registered_date);
         const registeredDay = new Date(registered.getFullYear(), registered.getMonth(), registered.getDate());

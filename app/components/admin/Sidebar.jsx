@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSidebar } from "../../contexts/SidebarContext";
+import { tokenStorage } from "../../api/tokenStorage";
 
 // Panel-left icon used by the collapse/expand toggle (Radix-style).
 const PanelLeftIcon = ({ className }) => (
@@ -698,11 +699,25 @@ function filterMenuItems(items, query) {
   return result;
 }
 
+const LogoutIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+    <polyline points="16 17 21 12 16 7" />
+    <line x1="21" y1="12" x2="9" y2="12" />
+  </svg>
+);
+
 export default function Sidebar({ activeItem: activeItemProp }) {
   const pathname = usePathname();
+  const router = useRouter();
   const activeItem = activeItemProp ?? pathnameToActiveItem(pathname);
   const { collapsed, toggle } = useSidebar();
   const [search, setSearch] = useState("");
+
+  const handleLogout = () => {
+    tokenStorage.clearAdminTokens();
+    router.push("/admin/login");
+  };
   const hasQuery = search.trim().length > 0;
 
   const mrsItems = filterMenuItems([...MENU_ITEMS, ...SECONDARY_MENU], search);
@@ -844,6 +859,25 @@ export default function Sidebar({ activeItem: activeItemProp }) {
             No matching menu items.
           </p>
         )}
+
+        {/* Logout */}
+        <button
+          type="button"
+          onClick={handleLogout}
+          title="Logout"
+          className={`mt-2 flex w-full items-center gap-2 rounded-[12px] border-[2.5px] border-transparent px-3 py-2 text-red-400 transition-colors hover:border-red-400/40 hover:bg-red-400/10 ${
+            collapsed ? "justify-center" : ""
+          }`}
+        >
+          <div className="relative h-8 w-8 shrink-0 flex items-center justify-center">
+            <LogoutIcon className="w-[20px] h-[20px]" />
+          </div>
+          {!collapsed && (
+            <span className="text-[14px] font-semibold leading-[21px] tracking-[-1px] whitespace-nowrap">
+              Logout
+            </span>
+          )}
+        </button>
       </div>
     </div>
   );

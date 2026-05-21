@@ -88,9 +88,77 @@ Output (Is Paginated)
 | **4** | role | Str | No |  |
 | **5** | status | Str | No | Active or Inactive |
 
-### 
+### User List \- Create
 
-# 
+/admins/users/ POST  
+Input
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | username | str | No |  |
+| **2** | full\_name | str | No |  |
+| **3** | role\_uuid | uuid | No |  |
+| **4** | status | int | No | 1 \= Active2 \= Inactive |
+| **5** | password | str | No |  |
+| **6** | confirm\_password | str | No |  |
+
+## Login Requests
+
+### Login Requests \- GET
+
+/admins/login-requests/ GET  
+Query parameters
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | page | Int | No | For Pagination |
+| **2** | page\_size | Int | No | For Pagination |
+
+Output (Is Paginated)
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | uuid | UUID | No |  |
+| **2** | ip\_address | Str | No |  |
+| **3** | device | Str | No |  |
+| **4** | request\_time | datetime | No |  |
+| **5** | status | Str | No | Pending, Approved, Rejected |
+
+### Login Requests \- Approve/Reject
+
+/admins/login-requests/\<uuid\>/approve/ PATCH  
+/admins/login-requests/\<uuid\>/reject/ PATCH  
+Output
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | message | str | No | “Approved”“Rejected” |
+
+## Activity Log
+
+### Activity Log \- GET
+
+Query parameters
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | page | Int | No | For Pagination |
+| **2** | page\_size | Int | No | For Pagination |
+
+Output (Is Paginated)
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | uuid | UUID | No |  |
+| **2** | datetime | datetime | No |  |
+| **3** | user | Str | No |  |
+| **4** | activity | Str | No |  |
+
+## Roles
+
+### Roles \- GET
+
+### 
 
 # Member Profile {#member-profile}
 

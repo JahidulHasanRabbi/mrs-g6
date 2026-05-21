@@ -298,26 +298,6 @@ export default function SpinTablesContainer() {
           </div>
         )}
 
-        {/* Pagination */}
-        <div className="flex items-center justify-center border-t border-white/10 px-6 py-4">
-          <div className="flex items-center gap-2">
-            <button className="flex h-8 w-8 items-center justify-center rounded border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10">
-              ‹
-            </button>
-            <div className="flex items-center gap-1 px-2 text-sm text-white/70">
-              <span className="font-bold text-white">
-                {activeTab === "items" ? spinItems.length : spinSequences.length}
-              </span>
-              <span>/</span>
-              <span>
-                {activeTab === "items" ? spinItems.length : spinSequences.length}
-              </span>
-            </div>
-            <button className="flex h-8 w-8 items-center justify-center rounded border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10">
-              ›
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* Modal - Only for Items */}
