@@ -138,6 +138,8 @@ export default function PicDetailPage() {
 
 function PicDetailContent() {
   const params = useParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const slug = typeof params?.id === "string" ? params.id : Array.isArray(params?.id) ? params.id[0] : "";
   const picName = searchParams.get("name") || "Unknown PIC";
@@ -145,11 +147,28 @@ function PicDetailContent() {
   const [summary, setSummary] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
 
+  const fromDate = searchParams.get("from") || "";
+  const toDate = searchParams.get("to") || "";
+  const hasDateRange = !!fromDate && !!toDate;
+
+  // Switching to a predefined period clears any active date range from the URL.
+  const handlePeriodChange = useCallback((newPeriod) => {
+    setPeriod(newPeriod);
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete("from");
+    next.delete("to");
+    const qs = next.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [pathname, router, searchParams]);
+
   const loadSummary = useCallback(async () => {
     if (!slug) return;
     setSummaryLoading(true);
     try {
-      const res = await getRetentionSummary(slug, { type: periodLabelToType(period) });
+      const apiParams = hasDateRange
+        ? { type: 4, from_date: fromDate, to_date: toDate }
+        : { type: periodLabelToType(period) };
+      const res = await getRetentionSummary(slug, apiParams);
       setSummary(res || {});
     } catch (err) {
       console.error("[pic-detail] summary failed", err);
@@ -157,7 +176,7 @@ function PicDetailContent() {
     } finally {
       setSummaryLoading(false);
     }
-  }, [period, slug]);
+  }, [period, slug, fromDate, toDate, hasDateRange]);
 
   useEffect(() => {
     loadSummary();
@@ -165,14 +184,20 @@ function PicDetailContent() {
 
   return (
     <>
-      <PicProfileHeader name={picName} period={period} onPeriodChange={setPeriod} />
+      <PicProfileHeader
+        name={picName}
+        period={period}
+        onPeriodChange={handlePeriodChange}
+        fromDate={fromDate}
+        toDate={toDate}
+      />
       <KpiGrid summary={summary} loading={summaryLoading} />
       <MemberListSection onRefreshSummary={loadSummary} />
     </>
   );
 }
 
-function PicProfileHeader({ name, period, onPeriodChange }) {
+function PicProfileHeader({ name, period, onPeriodChange, fromDate, toDate }) {
   return (
     <div className="flex items-end justify-between gap-2 px-2">
       <div className="flex items-center gap-2">
@@ -189,7 +214,7 @@ function PicProfileHeader({ name, period, onPeriodChange }) {
           </h1>
         </div>
       </div>
-      <PeriodToggle period={period} onPeriodChange={onPeriodChange} />
+      <PeriodToggle period={period} onPeriodChange={onPeriodChange} fromDate={fromDate} toDate={toDate} />
     </div>
   );
 }

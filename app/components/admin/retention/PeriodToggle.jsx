@@ -9,14 +9,17 @@ import DateRangePicker from "./DateRangePicker";
 // Controlled `period` via props; the date range is URL-driven so it persists
 // across navigation and is shareable. Every retention page that drops this
 // component in gets a working Select Date button without extra wiring.
+//
+// When a date range is active (type=4), predefined period buttons appear
+// inactive — clearing happens in the parent via onPeriodChange which also
+// strips the URL params.
 
-export default function PeriodToggle({ period, onPeriodChange }) {
+export default function PeriodToggle({ period, onPeriodChange, fromDate, toDate }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const fromDate = searchParams.get("from");
-  const toDate = searchParams.get("to");
+  const hasDateRange = !!fromDate && !!toDate;
 
   // Write `from` / `to` to the URL while preserving other params (level, sort, q).
   // router.replace (not push) — date picks shouldn't bloat history.
@@ -39,7 +42,7 @@ export default function PeriodToggle({ period, onPeriodChange }) {
         <PeriodButton
           key={p}
           label={p}
-          active={period === p}
+          active={!hasDateRange && period === p}
           onClick={() => onPeriodChange?.(p)}
         />
       ))}

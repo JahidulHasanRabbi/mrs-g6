@@ -182,10 +182,9 @@ function buildCells(year, month) {
 
 // ── Component ───────────────────────────────────────────────────────────
 
-// Approximate panel width — matches the `w-[640px]` (and `sm:w-[640px]`)
-// rule on the popover. Used by the auto-flip logic to decide whether the
-// panel would overflow the right edge.
+// Approximate panel dimensions — used by auto-flip logic to avoid overflow.
 const PANEL_WIDTH = 640;
+const PANEL_HEIGHT = 380;
 
 export default function RangePicker({
   fromDate,
@@ -199,22 +198,25 @@ export default function RangePicker({
 
   const triggerLabel = formatTrigger(fromDate, toDate) || placeholder;
   const wrapperRef = useRef(null);
-  const [position, setPosition] = useState({ top: 0, left: 0, align: "left" });
+  const [position, setPosition] = useState({ top: 0, bottom: undefined, left: 0, align: "left" });
 
   const reposition = useCallback(() => {
     const el = wrapperRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    // Auto-flip to right-alignment when a left-aligned panel would spill off
-    // the right edge of the viewport. Keeps explicit `align="right"` callers
-    // honest by skipping the flip when they've opted in deliberately.
+    // Auto-flip to right-alignment when panel would spill off the right edge.
     let resolvedAlign = align;
     if (align === "left" && r.left + PANEL_WIDTH > window.innerWidth - 16) {
       resolvedAlign = "right";
     }
+    // Auto-flip upward when panel would spill off the bottom of the viewport.
+    // Coordinates are viewport-relative (no scrollY adjustment) because the
+    // popover is rendered inside a `fixed inset-0` container.
+    const openUpward = r.bottom + PANEL_HEIGHT > window.innerHeight - 8;
     setPosition({
-      top: r.bottom + window.scrollY + 8,
-      left: resolvedAlign === "right" ? r.right + window.scrollX : r.left + window.scrollX,
+      top: openUpward ? undefined : r.bottom + 8,
+      bottom: openUpward ? window.innerHeight - r.top + 8 : undefined,
+      left: resolvedAlign === "right" ? r.right : r.left,
       align: resolvedAlign,
     });
   }, [align]);
@@ -337,11 +339,12 @@ function RangePickerPopover({ fromIso, toIso, onClose, onApply, position }) {
       onMouseDown={onClose}
     >
       <div
-        // Position the popover anchored to the trigger; flip to right-align
-        // when requested so it doesn't fall off-screen.
+        // Anchored to trigger in viewport space (fixed container = no scrollY offset).
+        // Flips right/left and up/down automatically via reposition().
         className="absolute"
         style={{
           top: position.top,
+          bottom: position.bottom,
           left: align === "right" ? undefined : position.left,
           right: align === "right" ? `calc(100vw - ${position.left}px)` : undefined,
         }}

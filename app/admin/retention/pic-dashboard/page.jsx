@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, Suspense } from "react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import PeriodToggle from "../../../components/admin/retention/PeriodToggle";
 import RefreshControl from "../../../components/admin/retention/RefreshControl";
 import Pagination from "../../../components/admin/retention/Pagination";
@@ -60,9 +61,26 @@ export default function PicDashboardPage() {
 }
 
 function PicDashboardContent() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
   const [period, setPeriod] = useState("Daily");
   const [summary, setSummary] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
+
+  const fromDate = searchParams.get("from") || "";
+  const toDate = searchParams.get("to") || "";
+
+  // When a predefined period is selected, clear any active date range
+  const handlePeriodChange = useCallback((newPeriod) => {
+    setPeriod(newPeriod);
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete("from");
+    next.delete("to");
+    const qs = next.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [pathname, router, searchParams]);
 
   const loadSummary = useCallback(async () => {
     setSummaryLoading(true);
@@ -83,14 +101,14 @@ function PicDashboardContent() {
 
   return (
     <>
-      <HeaderRow period={period} onPeriodChange={setPeriod} />
+      <HeaderRow period={period} onPeriodChange={handlePeriodChange} fromDate={fromDate} toDate={toDate} />
       <KpiGrid summary={summary} loading={summaryLoading} />
-      <PerformanceSummary period={period} onRefreshSummary={loadSummary} />
+      <PerformanceSummary period={period} fromDate={fromDate} toDate={toDate} onRefreshSummary={loadSummary} />
     </>
   );
 }
 
-function HeaderRow({ period, onPeriodChange }) {
+function HeaderRow({ period, onPeriodChange, fromDate, toDate }) {
   return (
     <div className="flex items-end justify-between gap-2 px-2">
       <div className="flex flex-col gap-1">
@@ -102,7 +120,7 @@ function HeaderRow({ period, onPeriodChange }) {
           Dashboard
         </h1>
       </div>
-      <PeriodToggle period={period} onPeriodChange={onPeriodChange} />
+      <PeriodToggle period={period} onPeriodChange={onPeriodChange} fromDate={fromDate} toDate={toDate} />
     </div>
   );
 }
@@ -177,27 +195,32 @@ function KpiCard({ kpi }) {
   );
 }
 
-function PerformanceSummary({ period, onRefreshSummary }) {
+function PerformanceSummary({ period, fromDate, toDate, onRefreshSummary }) {
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Reset to page 1 when the period changes so users don't land on an empty
-  // tail page after the dataset changes shape.
+  const hasDateRange = !!fromDate && !!toDate;
+
+  // Reset to page 1 when the period or date range changes
   useEffect(() => {
     setPage(1);
-  }, [period]);
+  }, [period, fromDate, toDate]);
 
   const fetchDetails = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getCrmDashboardDetails({
-        page,
-        page_size: PAGE_SIZE,
-        type: periodLabelToType(period),
-      });
+      const params = { page, page_size: PAGE_SIZE };
+      if (hasDateRange) {
+        params.type = 4;
+        params.from_date = fromDate;
+        params.to_date = toDate;
+      } else {
+        params.type = periodLabelToType(period);
+      }
+      const res = await getCrmDashboardDetails(params);
       const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
       setRows(results);
       setTotal(Number.isFinite(res?.count) ? res.count : results.length);
@@ -208,7 +231,7 @@ function PerformanceSummary({ period, onRefreshSummary }) {
     } finally {
       setLoading(false);
     }
-  }, [page, period]);
+  }, [page, period, fromDate, toDate, hasDateRange]);
 
   useEffect(() => {
     fetchDetails();
