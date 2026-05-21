@@ -18,7 +18,7 @@ import RetentionTopBar from "../../components/admin/retention/RetentionTopBar";
 export default function RetentionLayout({ children }) {
   return (
     <AdminRouteGuard>
-      <main className="xl:admin-content-pl min-h-screen px-6 py-6 xl:pr-12">
+      <main className="min-h-screen px-4 py-4 sm:px-6 sm:py-6 xl:admin-content-pl xl:pr-12">
         <div className="flex flex-col gap-4">
           <RetentionTopBar />
           {children}

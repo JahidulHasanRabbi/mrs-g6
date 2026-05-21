@@ -110,7 +110,7 @@ function PicDashboardContent() {
 
 function HeaderRow({ period, onPeriodChange, fromDate, toDate }) {
   return (
-    <div className="flex items-end justify-between gap-2 px-2">
+    <div className="flex flex-wrap items-end justify-between gap-3 px-1 sm:px-2">
       <div className="flex flex-col gap-1">
         <span className="b-4 text-white leading-[18px]">OVERVIEW</span>
         <h1
@@ -127,7 +127,7 @@ function HeaderRow({ period, onPeriodChange, fromDate, toDate }) {
 
 function KpiGrid({ summary, loading }) {
   return (
-    <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
       {KPI_META.map((meta) => {
         const raw = summary?.[meta.key];
         const value = loading
@@ -154,39 +154,48 @@ function KpiCard({ kpi }) {
   const isCurrency = !!kpi.valuePrefix;
   return (
     <div
-      className="flex flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-6"
+      className="flex flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-3 sm:p-5 xl:p-3 2xl:p-5 [@media(min-width:1700px)]:p-6"
       style={{ backgroundImage: GRAD_CARD }}
     >
-      <div className="flex w-full items-start gap-4">
+      <div className="flex w-full items-start gap-2 sm:gap-4 xl:gap-2 2xl:gap-4">
         <div
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[4px] drop-shadow-[0_0_3px_rgba(222,162,32,0.5)]"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px] drop-shadow-[0_0_3px_rgba(222,162,32,0.5)] sm:h-12 sm:w-12 xl:h-9 xl:w-9 2xl:h-11 2xl:w-11 [@media(min-width:1700px)]:h-12 [@media(min-width:1700px)]:w-12"
           style={{ backgroundImage: GRAD_DARK }}
         >
-          <img src={kpi.icon} alt="" style={{ width: kpi.iconSize, height: kpi.iconSize }} />
+          <img
+            src={kpi.icon}
+            alt=""
+            className="h-5 w-5 sm:h-6 sm:w-6 xl:h-5 xl:w-5 2xl:h-6 2xl:w-6"
+            style={{ maxWidth: kpi.iconSize, maxHeight: kpi.iconSize }}
+          />
         </div>
         <div className="flex min-w-0 flex-1 flex-col">
           <p
-            className="b-2 font-semibold uppercase text-[#f6dda6]"
-            style={{ letterSpacing: "-1px" }}
+            className="b-2 text-[11px] sm:text-[13px] xl:text-[11px] 2xl:text-[13px] font-semibold uppercase leading-[1.15] text-[#f6dda6]"
+            style={{ letterSpacing: "-0.5px" }}
           >
             {kpi.label}
           </p>
           <p
-            className="bg-clip-text text-transparent font-bold"
+            className="bg-clip-text font-bold text-transparent leading-[1.2]"
             style={{
               backgroundImage: GRAD_GOLD,
               fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-              fontSize: isCurrency ? "26px" : "38px",
-              lineHeight: isCurrency ? "44px" : "57px",
             }}
           >
             {isCurrency ? (
-              <>
-                <span style={{ fontSize: "26px", lineHeight: "39px" }}>{kpi.valuePrefix}</span>
-                <span style={{ fontSize: "38px", lineHeight: "44px" }}> {kpi.value}</span>
-              </>
+              <span className="flex items-baseline gap-1 whitespace-nowrap tabular-nums">
+                <span className="text-[14px] sm:text-[20px] xl:text-[14px] 2xl:text-[20px] [@media(min-width:1700px)]:text-[26px]">
+                  {kpi.valuePrefix}
+                </span>
+                <span className="text-[20px] sm:text-[28px] xl:text-[20px] 2xl:text-[26px] [@media(min-width:1700px)]:text-[34px]">
+                  {kpi.value}
+                </span>
+              </span>
             ) : (
-              kpi.value
+              <span className="block text-[26px] sm:text-[34px] xl:text-[26px] 2xl:text-[32px] [@media(min-width:1700px)]:text-[38px] tabular-nums">
+                {kpi.value}
+              </span>
             )}
           </p>
         </div>
@@ -258,32 +267,34 @@ function PerformanceSummary({ period, fromDate, toDate, onRefreshSummary }) {
 
   return (
     <section className="flex w-full flex-col overflow-clip rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
-      <header className="flex items-center justify-between p-6 w-full">
+      <header className="flex flex-wrap items-center justify-between gap-3 p-4 sm:p-6 w-full">
         <h2 className="h-7 text-white" style={{ letterSpacing: "-2px" }}>
           Performance Summary
         </h2>
         <RefreshControl onRefresh={handleRefresh} />
       </header>
-      <div className="flex w-full flex-col overflow-clip">
-        <TableHeader />
-        <div className="flex w-full flex-col">
-          {loading ? (
-            <div className="px-6 py-10 text-center b-4 text-white/60">Loading...</div>
-          ) : rows.length === 0 ? (
-            <div className="px-6 py-10 text-center b-4 text-white/60">No data available.</div>
-          ) : (
-            rows.map((row, idx) => <TableRow key={`${row.uuid || "pic"}-${idx}`} row={row} />)
-          )}
+      <div className="w-full overflow-x-auto">
+        <div className="flex min-w-[960px] w-full flex-col">
+          <TableHeader />
+          <div className="flex w-full flex-col">
+            {loading ? (
+              <div className="px-6 py-10 text-center b-4 text-white/60">Loading...</div>
+            ) : rows.length === 0 ? (
+              <div className="px-6 py-10 text-center b-4 text-white/60">No data available.</div>
+            ) : (
+              rows.map((row, idx) => <TableRow key={`${row.uuid || "pic"}-${idx}`} row={row} />)
+            )}
+          </div>
         </div>
-        <Pagination
-          from={showingFrom}
-          to={showingTo}
-          total={total}
-          currentPage={safePage}
-          pageCount={totalPages}
-          onPageChange={setPage}
-        />
       </div>
+      <Pagination
+        from={showingFrom}
+        to={showingTo}
+        total={total}
+        currentPage={safePage}
+        pageCount={totalPages}
+        onPageChange={setPage}
+      />
     </section>
   );
 }

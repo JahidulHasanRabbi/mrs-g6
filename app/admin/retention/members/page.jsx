@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { getCrmMembers } from "../../../api/crmApi";
+import { getStationList } from "../../../api/adminApi";
 import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
 
 const A = "/assets/admin/pic-dashboard";
@@ -42,20 +43,47 @@ function formatCurrency(value) {
 }
 
 export default function RetentionMembersPage() {
+  const [brand, setBrand] = useState("");
+  // Single sort key. Sales and Win/Lose dropdowns are mutually exclusive —
+  // they share this one slot so the table only ever has one active order.
+  const [sort, setSort] = useState("");
   const [priority, setPriority] = useState("");
   const [vip, setVip] = useState("");
   const [pic, setPic] = useState("");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
 
+  const [stations, setStations] = useState([]);
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    let cancelled = false;
+    getStationList()
+      .then((res) => {
+        if (cancelled) return;
+        const list = Array.isArray(res) ? res : res?.results || [];
+        setStations(list);
+      })
+      .catch((err) => {
+        console.error("[retention-members] station list failed", err);
+        if (!cancelled) setStations([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const brandOptions = useMemo(
+    () => stations.map((s) => s.station_name || s.name).filter(Boolean),
+    [stations]
+  );
+
   // Reset to page 1 when any filter changes.
   useEffect(() => {
     setPage(1);
-  }, [priority, vip, pic, query]);
+  }, [brand, sort, priority, vip, pic, query]);
 
   // Debounce search to avoid hammering the API on every keystroke.
   const [debouncedQuery, setDebouncedQuery] = useState(query);
@@ -69,9 +97,13 @@ export default function RetentionMembersPage() {
     const fetchRows = async () => {
       setLoading(true);
       try {
+        const stationUuid = brand
+          ? stations.find((s) => (s.station_name || s.name) === brand)?.uuid
+          : undefined;
         const res = await getCrmMembers({
           page,
           page_size: PAGE_SIZE,
+          station_uuid: stationUuid,
           priority: priority ? PRIORITY_TO_INT[priority] : undefined,
           vip_level: vip ? VIP_TO_INT(vip) : undefined,
           // `retention` is an int the backend expects (likely a PIC id). The
@@ -81,7 +113,11 @@ export default function RetentionMembersPage() {
           search: debouncedQuery || undefined,
         });
         if (cancelled) return;
-        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        let results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        if (sort === "sales-hl") results = [...results].sort((a, b) => parseFloat(b.daily_sales || 0) - parseFloat(a.daily_sales || 0));
+        else if (sort === "sales-lh") results = [...results].sort((a, b) => parseFloat(a.daily_sales || 0) - parseFloat(b.daily_sales || 0));
+        else if (sort === "winlose-hl") results = [...results].sort((a, b) => parseFloat(b.daily_win_loss || 0) - parseFloat(a.daily_win_loss || 0));
+        else if (sort === "winlose-lh") results = [...results].sort((a, b) => parseFloat(a.daily_win_loss || 0) - parseFloat(b.daily_win_loss || 0));
         setRows(results);
         setTotal(Number.isFinite(res?.count) ? res.count : results.length);
       } catch (err) {
@@ -97,7 +133,7 @@ export default function RetentionMembersPage() {
     return () => {
       cancelled = true;
     };
-  }, [page, priority, vip, pic, debouncedQuery]);
+  }, [page, brand, stations, sort, priority, vip, pic, debouncedQuery]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -106,7 +142,7 @@ export default function RetentionMembersPage() {
   const showingTo = Math.min(startIdx + rows.length, total);
 
   return (
-    <section className="flex w-full flex-col overflow-hidden rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
+    <section className="relative flex w-full flex-col rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
       <header className="flex flex-col gap-4 p-6 w-full md:flex-row md:flex-wrap md:items-center">
         <h1
           className="text-white font-bold whitespace-nowrap md:flex-1 md:min-w-0"
@@ -120,6 +156,32 @@ export default function RetentionMembersPage() {
           Member List
         </h1>
         <div className="flex flex-wrap items-center gap-3">
+          <FilterDropdown
+            label="Brand"
+            value={brand}
+            onChange={setBrand}
+            options={brandOptions}
+          />
+          <FilterDropdown
+            label="Sales (H-L)"
+            value={sort === "sales-hl" ? "Sales (H-L)" : sort === "sales-lh" ? "Sales (L-H)" : ""}
+            onChange={(v) => {
+              if (v === "Sales (H-L)") setSort("sales-hl");
+              else if (v === "Sales (L-H)") setSort("sales-lh");
+              else if (sort.startsWith("sales")) setSort("");
+            }}
+            options={["Sales (H-L)", "Sales (L-H)"]}
+          />
+          <FilterDropdown
+            label="Winlose (H-L)"
+            value={sort === "winlose-hl" ? "Winlose (H-L)" : sort === "winlose-lh" ? "Winlose (L-H)" : ""}
+            onChange={(v) => {
+              if (v === "Winlose (H-L)") setSort("winlose-hl");
+              else if (v === "Winlose (L-H)") setSort("winlose-lh");
+              else if (sort.startsWith("winlose")) setSort("");
+            }}
+            options={["Winlose (H-L)", "Winlose (L-H)"]}
+          />
           <FilterDropdown label="Priority" value={priority} onChange={setPriority} options={PRIORITY_OPTIONS} />
           <FilterDropdown label="VIP Level" value={vip} onChange={setVip} options={VIP_OPTIONS} />
           <FilterDropdown label="All PIC" value={pic} onChange={setPic} options={PIC_OPTIONS} />

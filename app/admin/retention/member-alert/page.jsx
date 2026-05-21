@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import RefreshControl from "../../../components/admin/retention/RefreshControl";
 import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
@@ -20,6 +21,7 @@ const PAGE_SIZE = 7;
 const PRIORITY_OPTIONS = ["High", "Medium", "Low"];
 const VIP_OPTIONS = ["VIP 1", "VIP 2", "VIP 3", "VIP 4", "VIP 5"];
 const RETENTION_OPTIONS = ["Sarah", "John", "Michael", "Emma", "Linda"];
+const BRAND_OPTIONS = ["AB", "EP", "KG", "LV", "UB", "N1"];
 
 // Map UI label → API integer code. The backend hasn't published the priority
 // enum yet; doc just lists `priority: int`. Send 1/2/3 in High→Low order until
@@ -36,6 +38,7 @@ const VIP_TO_INT = (label) => {
 // button pair respectively; everything else is uniform at 124px.
 const COLUMNS = [
   { key: "name",     label: "Username",       minW: 197 },
+  { key: "brand",    label: "Brand",          minW: 100 },
   { key: "phone",    label: "Phone Number",   minW: 124 },
   { key: "vip",      label: "VIP Level",      minW: 124 },
   { key: "sales",    label: "Daily Sales",    minW: 124 },
@@ -222,6 +225,7 @@ function KpiIcon({ name }) {
 }
 
 function FollowUpList() {
+  const [brand, setBrand] = useState("");
   const [priority, setPriority] = useState("");
   const [vip, setVip] = useState("");
   const [retention, setRetention] = useState("");
@@ -236,7 +240,7 @@ function FollowUpList() {
   // page that no longer exists after the result set shrinks.
   useEffect(() => {
     setPage(1);
-  }, [priority, vip, retention, query]);
+  }, [brand, priority, vip, retention, query]);
 
   // Debounce the search query so we don't fire a request on every keystroke.
   const [debouncedQuery, setDebouncedQuery] = useState(query);
@@ -253,6 +257,7 @@ function FollowUpList() {
         const res = await getCrmMembers({
           page,
           page_size: PAGE_SIZE,
+          brand: brand || undefined,
           priority: priority ? PRIORITY_TO_INT[priority] : undefined,
           vip_level: vip ? VIP_TO_INT(vip) : undefined,
           // `retention` here is filter by PIC name in the design; backend
@@ -278,7 +283,7 @@ function FollowUpList() {
     return () => {
       cancelled = true;
     };
-  }, [page, priority, vip, retention, debouncedQuery]);
+  }, [page, brand, priority, vip, retention, debouncedQuery]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -301,6 +306,7 @@ function FollowUpList() {
           Member Follow Up List
         </h2>
         <div className="flex flex-wrap items-center gap-3">
+          <FilterPill label="Brand" value={brand} onChange={setBrand} options={BRAND_OPTIONS} />
           <FilterPill label="Priority" value={priority} onChange={setPriority} options={PRIORITY_OPTIONS} />
           <FilterPill label="VIP Level" value={vip} onChange={setVip} options={VIP_OPTIONS} />
           <FilterPill label="All Retention" value={retention} onChange={setRetention} options={RETENTION_OPTIONS} />
@@ -461,15 +467,16 @@ function TableRow({ row }) {
           </span>
         </Link>
       </Cell>
-      <DataCell value={row.phone_number} minW={COLUMNS[1].minW} />
-      <DataCell value={row.vip_level} minW={COLUMNS[2].minW} />
-      <DataCell value={formatCurrency(row.daily_sales)} minW={COLUMNS[3].minW} />
-      <DataCell value={formatCurrency(row.daily_win_loss)} minW={COLUMNS[4].minW} />
-      <Cell minW={COLUMNS[5].minW}>
+      <DataCell value={row.brand} minW={COLUMNS[1].minW} />
+      <DataCell value={row.phone_number} minW={COLUMNS[2].minW} />
+      <DataCell value={row.vip_level} minW={COLUMNS[3].minW} />
+      <DataCell value={formatCurrency(row.daily_sales)} minW={COLUMNS[4].minW} />
+      <DataCell value={formatCurrency(row.daily_win_loss)} minW={COLUMNS[5].minW} />
+      <Cell minW={COLUMNS[6].minW}>
         <PriorityBadge value={row.priority} />
       </Cell>
-      <DataCell value={row.retention} minW={COLUMNS[6].minW} />
-      <Cell minW={COLUMNS[7].minW} align="end">
+      <DataCell value={row.retention} minW={COLUMNS[7].minW} />
+      <Cell minW={COLUMNS[8].minW} align="end">
         <div className="flex items-center gap-2">
           <ViewButton href={href} />
           <MoreButton ariaLabel={`More actions for ${row.full_name || row.username}`} />
@@ -503,10 +510,12 @@ const STATUS_OPTIONS = ["In Progress", "Resolve", "Snooze", "Remark"];
 function MoreButton({ ariaLabel }) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState("Snooze");
+  const buttonRef = useRef(null);
 
   return (
     <div className="relative">
       <button
+        ref={buttonRef}
         type="button"
         aria-label={ariaLabel}
         aria-haspopup="menu"
@@ -519,6 +528,7 @@ function MoreButton({ ariaLabel }) {
       </button>
       {open && (
         <StatusMenu
+          anchorRef={buttonRef}
           status={status}
           onSelect={(next) => {
             setStatus(next);
@@ -531,23 +541,59 @@ function MoreButton({ ariaLabel }) {
   );
 }
 
-// Cream popup with a small triangular notch pointing up at the more button.
-// Backdrop swallows outside clicks to dismiss. Aligned to the right edge so
-// the menu doesn't clip when the action cell is hard against the table edge.
-function StatusMenu({ status, onSelect, onClose }) {
-  return (
+// Cream popup rendered through a portal so it escapes the table's
+// `overflow-hidden` / `overflow-x-auto` ancestors. Positioned with
+// `position: fixed` from the anchor button's bounding rect, with a small
+// triangular notch pointing up at the button. Backdrop swallows outside
+// clicks to dismiss.
+function StatusMenu({ anchorRef, status, onSelect, onClose }) {
+  const MENU_WIDTH = 180;
+  const GAP = 12;
+  const [coords, setCoords] = useState(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  useLayoutEffect(() => {
+    const update = () => {
+      const el = anchorRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      // Right-align the menu under the button: button's right edge becomes
+      // the menu's right edge, then clamp to viewport with an 8px margin.
+      const desiredRight = window.innerWidth - rect.right;
+      const right = Math.max(8, desiredRight);
+      const top = rect.bottom + GAP;
+      // Notch sits below the button's horizontal center, measured from the
+      // menu's right edge.
+      const buttonCenterX = rect.left + rect.width / 2;
+      const menuRightX = window.innerWidth - right;
+      const notchRight = Math.max(10, menuRightX - buttonCenterX - 6);
+      setCoords({ top, right, notchRight });
+    };
+    update();
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update, true);
+      window.removeEventListener("resize", update);
+    };
+  }, [anchorRef]);
+
+  if (!mounted || !coords) return null;
+
+  return createPortal(
     <>
-      <div className="fixed inset-0 z-30" onClick={onClose} />
+      <div className="fixed inset-0 z-[60]" onClick={onClose} />
       <div
         role="menu"
-        className="absolute right-0 top-full z-40 mt-3 w-[180px] rounded-[16px] bg-[#fbeed2] shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
+        className="fixed z-[61] rounded-[16px] bg-[#fbeed2] shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
+        style={{ top: coords.top, right: coords.right, width: MENU_WIDTH }}
       >
-        {/* Notch — a 12px diamond rotated 45deg, half tucked under the menu
-            top edge so only the upper triangle peeks above. Right-aligned to
-            sit directly under the more button. */}
         <span
           aria-hidden="true"
-          className="absolute -top-[6px] right-[10px] h-3 w-3 rotate-45 bg-[#fbeed2]"
+          className="absolute -top-[6px] h-3 w-3 rotate-45 bg-[#fbeed2]"
+          style={{ right: coords.notchRight }}
         />
         <ul className="relative flex flex-col py-1">
           {STATUS_OPTIONS.map((opt, idx) => {
@@ -572,7 +618,8 @@ function StatusMenu({ status, onSelect, onClose }) {
           })}
         </ul>
       </div>
-    </>
+    </>,
+    document.body,
   );
 }
 

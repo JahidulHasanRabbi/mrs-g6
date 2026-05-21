@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import PeriodToggle from "../../../../components/admin/retention/PeriodToggle";
 import { ASSETS, GRAD_DARK, GRAD_GOLD } from "../../../../components/admin/retention/constants";
 import { getCrmMemberSingle } from "../../../../api/crmApi";
 
@@ -19,6 +20,17 @@ const TAG_STYLES = {
   active: { bg: "#84ebb4", color: "#00813c" },
   weekly: { bg: "#a4a4a4", color: "#141828" },
 };
+
+// Canonical brand list displayed in the "Active on" row. Each chip is either
+// active (gold-filled) or inactive (outlined) based on whether the brand code
+// appears in the member's played-brands list. Codes are matched case-insensitively.
+const ACTIVE_BRANDS = ["KG", "AB", "EP", "LV", "UB", "N1"];
+
+function normalizeBrandList(raw) {
+  if (!raw) return [];
+  const arr = Array.isArray(raw) ? raw : String(raw).split(/[,\s]+/);
+  return arr.map((b) => String(b).trim().toUpperCase()).filter(Boolean);
+}
 
 function formatCurrency(value) {
   if (value === null || value === undefined || value === "") return "—";
@@ -47,6 +59,7 @@ function inferTags(data) {
 export default function MemberProfilePage() {
   const params = useParams();
   const memberUuid = typeof params?.slug === "string" ? params.slug : Array.isArray(params?.slug) ? params.slug[0] : "";
+  const [period, setPeriod] = useState("Daily");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -112,7 +125,9 @@ export default function MemberProfilePage() {
 
   const financialInfo = {
     "Total Sales": formatCurrency(data?.financial_info?.total_sales),
+    "Total Withdrawal": formatCurrency(data?.financial_info?.total_withdrawal),
     "Total Win/lose": formatCurrency(data?.financial_info?.total_win_lose),
+    "Total Bonus": formatCurrency(data?.financial_info?.total_bonus),
     "Total Sales Ticket": show(data?.financial_info?.total_sales_ticket),
     ARPU: formatCurrency(data?.financial_info?.arpu),
     "Average Deposit": formatCurrency(data?.financial_info?.average_deposit),
@@ -140,6 +155,10 @@ export default function MemberProfilePage() {
     totalWinLose: formatCurrency(data?.financial_info?.total_win_lose),
   };
 
+  const activeBrands = normalizeBrandList(
+    data?.active_brands ?? data?.brands ?? data?.brands_played ?? customer?.active_brands,
+  );
+
   return (
     <>
       <ProfileHeader
@@ -147,6 +166,9 @@ export default function MemberProfilePage() {
         tags={inferTags(data)}
         dateJoined={show(data?.date_joined)}
         slug={memberUuid}
+        period={period}
+        onPeriodChange={setPeriod}
+        activeBrands={activeBrands}
       />
       <StatsRow stats={stats} />
       <InfoGrid basicInfo={basicInfo} financialInfo={financialInfo} gamingInfo={gamingInfo} />
@@ -155,9 +177,9 @@ export default function MemberProfilePage() {
   );
 }
 
-function ProfileHeader({ name, tags, dateJoined, slug }) {
+function ProfileHeader({ name, tags, dateJoined, slug, period, onPeriodChange, activeBrands }) {
   return (
-    <div className="flex flex-col gap-4 px-2 md:flex-row md:items-start md:justify-between md:gap-4">
+    <div className="flex flex-col gap-4 px-2 md:flex-row md:flex-wrap md:items-start md:justify-between md:gap-6">
       <div className="flex flex-col gap-3">
         <div className="flex items-start gap-2">
           <div
@@ -208,6 +230,42 @@ function ProfileHeader({ name, tags, dateJoined, slug }) {
             <MoreOptionsMenu />
           </div>
         </div>
+      </div>
+      <ActiveBrandsRow active={activeBrands} />
+      <div className="flex items-center gap-2">
+        <PeriodToggle period={period} onPeriodChange={onPeriodChange} />
+      </div>
+    </div>
+  );
+}
+
+// Shows the canonical brand list with each chip filled (gold) when the
+// member has played that brand, outlined when not. The backend field name
+// is still TBD — we accept `active_brands`, `brands`, or `brands_played`
+// (see normalizeBrandList caller). All chips render as outlined until the
+// backend supplies one of those keys.
+function ActiveBrandsRow({ active }) {
+  const activeSet = new Set(active || []);
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-[12px] font-medium leading-[18px] text-white whitespace-nowrap">
+        Active on:
+      </span>
+      <div className="flex flex-wrap items-center gap-2">
+        {ACTIVE_BRANDS.map((code) => {
+          const isActive = activeSet.has(code);
+          return (
+            <span
+              key={code}
+              className={`flex h-[34px] min-w-[44px] items-center justify-center rounded-[8px] border-2 px-3 text-[12px] font-semibold leading-[18px] ${
+                isActive ? "border-[#f2cb7a] text-[#141828]" : "border-[#f2cb7a]/40 text-[#f6dda6]/60"
+              }`}
+              style={isActive ? { backgroundImage: GRAD_GOLD } : undefined}
+            >
+              {code}
+            </span>
+          );
+        })}
       </div>
     </div>
   );
