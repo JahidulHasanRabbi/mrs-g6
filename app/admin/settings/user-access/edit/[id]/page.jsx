@@ -5,8 +5,10 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { GRAD_GOLD } from "../../../../../components/admin/retention/constants";
 import { ROLE_OPTIONS, STATUS_OPTIONS } from "../../_data";
-import { getCrmUsers } from "../../../../../api/crmApi";
+import { getCrmRoles, getCrmUsers, updateCrmUser } from "../../../../../api/crmApi";
 import Skeleton from "../../../../../components/admin/ui/Skeleton";
+
+const STATUS_TO_INT = { Active: 1, Inactive: 2 };
 
 export default function EditUserPage() {
   const router = useRouter();
@@ -15,6 +17,9 @@ export default function EditUserPage() {
 
   const [user, setUser] = useState(null);
   const [userLoading, setUserLoading] = useState(true);
+  const [roles, setRoles] = useState([]);
+  const [rolesError, setRolesError] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const [form, setForm] = useState({
     username: "",
@@ -27,9 +32,18 @@ export default function EditUserPage() {
 
   useEffect(() => {
     if (!uuid) { setUserLoading(false); return; }
-    getCrmUsers({ page: 1, page_size: 100 })
-      .then((res) => {
-        const users = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+    Promise.all([
+      getCrmUsers({ page: 1, page_size: 100 }),
+      getCrmRoles({ page: 1, page_size: 100 }).catch(() => {
+        setRolesError(true);
+        return { results: [] };
+      }),
+    ])
+      .then(([usersRes, rolesRes]) => {
+        const users = Array.isArray(usersRes?.results) ? usersRes.results : Array.isArray(usersRes) ? usersRes : [];
+        const roleResults = Array.isArray(rolesRes?.results) ? rolesRes.results : Array.isArray(rolesRes) ? rolesRes : [];
+        setRoles(roleResults);
+        if (roleResults.length) setRolesError(false);
         const found = users.find((u) => u.uuid === uuid) || null;
         setUser(found);
         if (found) {
@@ -51,10 +65,44 @@ export default function EditUserPage() {
 
   const update = (key) => (value) => setForm((prev) => ({ ...prev, [key]: value }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: wire to admin user-update endpoint. For now just navigate back.
-    router.push("/admin/settings/user-access");
+    const role = roles.find((item) => item.name === form.role);
+    if (rolesError) {
+      alert("Cannot save: roles could not be loaded from /admins/roles/.");
+      return;
+    }
+    if (!role?.uuid) {
+      alert("Cannot save: please select a valid role.");
+      return;
+    }
+    if (!STATUS_TO_INT[form.status]) {
+      alert("Cannot save: please select a valid status.");
+      return;
+    }
+    if (form.password !== form.confirmPassword) {
+      alert("Password and confirm password must match.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload = {
+        username: form.username,
+        full_name: form.fullName,
+        role_uuid: role.uuid,
+        status: STATUS_TO_INT[form.status],
+      };
+      if (form.password || form.confirmPassword) {
+        payload.password = form.password;
+        payload.confirm_password = form.confirmPassword;
+      }
+      await updateCrmUser(uuid, payload);
+      router.push("/admin/settings/user-access");
+    } catch (err) {
+      console.error("[user-access-edit] save failed", err);
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (userLoading) {
@@ -109,7 +157,7 @@ export default function EditUserPage() {
               label="Assign Role"
               value={form.role}
               onChange={update("role")}
-              options={ROLE_OPTIONS}
+              options={roles.length ? roles.map((role) => role.name) : ROLE_OPTIONS}
               placeholder="Select role"
             />
           </div>
@@ -147,7 +195,7 @@ export default function EditUserPage() {
 
           <div className="flex flex-wrap items-center justify-end gap-4 pt-2">
             <BackButton />
-            <SaveButton />
+            <SaveButton disabled={saving} />
           </div>
         </div>
       </form>
@@ -318,10 +366,11 @@ function BackButton() {
   );
 }
 
-function SaveButton() {
+function SaveButton({ disabled = false }) {
   return (
     <button
       type="submit"
+      disabled={disabled}
       className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold text-[#141828] transition hover:brightness-110"
       style={{ backgroundImage: GRAD_GOLD, letterSpacing: "-1px" }}
     >

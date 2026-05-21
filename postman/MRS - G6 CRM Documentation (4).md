@@ -2,43 +2,87 @@
 
 [**Table of Contents	1**](#table-of-contents)
 
-[**Initial Notes	2**](#initial-notes)
+[**Initial Notes	3**](#initial-notes)
 
-[Base Domain	2](#base-domain)
+[Base Domain	3](#base-domain)
 
-[Developer Access	2](#developer-access)
+[Developer Access	3](#developer-access)
 
-[Link to main document:	2](#link-to-main-document:)
+[Link to main document:	3](#link-to-main-document:)
 
-[Paginated Results	2](#paginated-results)
+[Paginated Results	3](#paginated-results)
 
-[**User Access Panel	3**](#user-access-panel)
+[**User Access Panel	4**](#user-access-panel)
 
-[**Member Profile	4**](#member-profile)
+[User List	4](#user-list)
 
-[Member List	4](#member-list)
+[User List \- GET	4](#user-list---get)
 
-[Member List \- GET	4](#member-list---get)
+[User List \- POST/PUT	4](#user-list---post/put)
 
-[Member Single \- GET	5](#member-single---get)
+[Login Requests	5](#login-requests)
 
-[Member Single \- PUT	7](#member-single---put)
+[Login Requests \- GET	5](#login-requests---get)
 
-[**Retention Alert System	9**](#retention-alert-system)
+[Login Requests \- PATCH	5](#login-requests---patch)
 
-[Priority Summary \- GET	9](#priority-summary---get)
+[Activity Log	6](#activity-log)
 
-[Refresh Members \- POST	9](#refresh-members---post)
+[Activity Log \- GET	6](#activity-log---get)
 
-[**Individual Sales Report	10**](#individual-sales-report)
+[Permissions	6](#permissions)
 
-[**Dashboard View	11**](#dashboard-view)
+[Permissions \- GET	6](#permissions---get)
 
-[Dashboard Summary	11](#dashboard-summary)
+[Roles	7](#roles)
 
-[Dashboard Summary \- GET	11](#dashboard-summary---get)
+[Roles \- GET	7](#roles---get)
 
-[Dashboard Details \- GET	11](#dashboard-details---get)
+[Roles \- POST / PUT	7](#roles---post-/-put)
+
+[Roles \- Archive	8](#roles---archive)
+
+[**Member Profile	9**](#member-profile)
+
+[Member List	9](#member-list)
+
+[Member List \- GET	9](#member-list---get)
+
+[Member Single \- GET	10](#member-single---get)
+
+[Member Single \- PUT	12](#member-single---put)
+
+[**Retention Alert System	14**](#retention-alert-system)
+
+[Priority Summary \- GET	14](#priority-summary---get)
+
+[Refresh Members \- POST	14](#refresh-members---post)
+
+[**Individual Sales Report	15**](#individual-sales-report)
+
+[**Dashboard View	16**](#dashboard-view)
+
+[Dashboard Summary	16](#dashboard-summary)
+
+[Dashboard Summary \- GET	16](#dashboard-summary---get)
+
+[Dashboard Details \- GET	16](#dashboard-details---get)
+
+[**Retention Profile	18**](#retention-profile)
+
+[Retention Summary	18](#retention-summary)
+
+[Retention Member List \- GET	19](#retention-member-list---get)
+
+[**Settings	21**](#settings)
+
+[Member Assignment	21](#member-assignment)
+
+[Member Assignment \- GET	21](#member-assignment---get)
+
+[Member Assignment \- POST/PUT	21](#member-assignment---post/put)
+
+[Member Assignment \- Set Deposit \- Patch	22](#member-assignment---set-deposit---patch)
 
 # Initial Notes {#initial-notes}
 
@@ -66,9 +110,9 @@ Password: Qwerabcd\!
 
 # User Access Panel {#user-access-panel}
 
-## User List
+## User List {#user-list}
 
-### User List \- GET
+### User List \- GET {#user-list---get}
 
 /admins/users/ GET  
 Query parameters
@@ -88,9 +132,10 @@ Output (Is Paginated)
 | **4** | role | Str | No |  |
 | **5** | status | Str | No | Active or Inactive |
 
-### User List \- Create
+### User List \- POST/PUT {#user-list---post/put}
 
 /admins/users/ POST  
+/admins/users/\<uuid\>/ PUT  
 Input
 
 | \# | Property/Field | Data Type | Nullable | Description |
@@ -102,9 +147,9 @@ Input
 | **5** | password | str | No |  |
 | **6** | confirm\_password | str | No |  |
 
-## Login Requests
+## Login Requests {#login-requests}
 
-### Login Requests \- GET
+### Login Requests \- GET {#login-requests---get}
 
 /admins/login-requests/ GET  
 Query parameters
@@ -124,7 +169,7 @@ Output (Is Paginated)
 | **4** | request\_time | datetime | No |  |
 | **5** | status | Str | No | Pending, Approved, Rejected |
 
-### Login Requests \- Approve/Reject
+### Login Requests \- PATCH {#login-requests---patch}
 
 /admins/login-requests/\<uuid\>/approve/ PATCH  
 /admins/login-requests/\<uuid\>/reject/ PATCH  
@@ -134,10 +179,11 @@ Output
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | message | str | No | “Approved”“Rejected” |
 
-## Activity Log
+## Activity Log {#activity-log}
 
-### Activity Log \- GET
+### Activity Log \- GET {#activity-log---get}
 
+/admins/activity-log/ GET  
 Query parameters
 
 | \# | Property/Field | Data Type | Nullable | Description |
@@ -154,9 +200,65 @@ Output (Is Paginated)
 | **3** | user | Str | No |  |
 | **4** | activity | Str | No |  |
 
-## Roles
+## Permissions {#permissions}
 
-### Roles \- GET
+### Permissions \- GET {#permissions---get}
+
+/admins/permissions/ GET  
+Response example:  
+{  
+    "Members": \[  
+        {  
+            "key": "view\_members",  
+            "label": "View Members"  
+        },  
+        {  
+             "key": "edit\_members",  
+             "label": "Edit Members"  
+      }  
+  \],  
+ "Admins": \[  
+   {  
+     "key": "view\_admins",  
+     "label": "View Admins"  
+   }  
+ \]  
+}
+
+## Roles {#roles}
+
+### Roles \- GET {#roles---get}
+
+/admins/roles/ GET  
+Query parameters
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | page | Int | No | For Pagination |
+| **2** | page\_size | Int | No | For Pagination |
+
+Output (Is Paginated)
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | uuid | UUID | No |  |
+| **2** | name | str | No |  |
+| **3** | permissions | List | No | List of strings |
+
+### Roles \- POST / PUT {#roles---post-/-put}
+
+/admins/roles/ POST  
+/admins/roles/\<uuid\>/ PUT  
+Input
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | name | str | No |  |
+| **2** | permissions | List | No | List of keys from /permissions/ |
+
+### Roles \- Archive {#roles---archive}
+
+/admins/roles/\<uuid\>/archive/ PATCH
 
 ### 
 
@@ -367,9 +469,9 @@ Output (Is Paginated)
 
 # 
 
-# Retention Profile
+# Retention Profile {#retention-profile}
 
-## Retention Summary
+## Retention Summary {#retention-summary}
 
 /crm-members/retention-summary/\<admin\_uuid\>/ GET  
 Query parameters
@@ -407,7 +509,7 @@ Amount output
 | **1** | station | str |  |  |
 | **2** | amount | Str (Decimal) |  |  |
 
-## Retention Member List \- GET
+## Retention Member List \- GET {#retention-member-list---get}
 
 /crm-members/retention-members/ GET  
 Query parameters
@@ -438,11 +540,11 @@ Output (Is Paginated)
 For single get, use Member Single \- GET  
 For refresh, use Refresh Members \- POST
 
-# Settings
+# Settings {#settings}
 
-## Member Assignment
+## Member Assignment {#member-assignment}
 
-### Member Assignment \- GET
+### Member Assignment \- GET {#member-assignment---get}
 
 /crm-admins/assignments/ GET  
 Query parameters
@@ -465,7 +567,7 @@ Output (Is Paginated)
 | **7** | retention\_target | Int | No |  |
 | **8** | status | str |  |  |
 
-### Member Assignment \- POST/PUT
+### Member Assignment \- POST/PUT {#member-assignment---post/put}
 
 /crm-admins/assignments/ POST  
 /crm-admins/assignments/\<uuid\>/ PUT  
@@ -479,7 +581,7 @@ Input
 | **4** | upgrade\_criteria | Str (Decimal) | No |  |
 | **5** | pic\_uuid | uuid | No | /admins/users/ GET |
 
-### Member Assignment \- Set Deposit \- Patch
+### Member Assignment \- Set Deposit \- Patch {#member-assignment---set-deposit---patch}
 
 /crm-admins/assignments/set-target/ PATCH  
 Input

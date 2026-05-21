@@ -11,6 +11,38 @@ export async function getCrmUsers(params = {}) {
   return await apiRequest(`${ENDPOINTS.CRM.USERS}${qs}`, { method: 'GET' }, true, 'admin');
 }
 
+export async function createCrmUser(data) {
+  return await apiRequest(ENDPOINTS.CRM.USERS, {
+    method: 'POST',
+    body: data
+  }, true, 'admin');
+}
+
+export async function updateCrmUser(uuid, data) {
+  return await apiRequest(ENDPOINTS.CRM.USER_SINGLE(uuid), {
+    method: 'PUT',
+    body: data
+  }, true, 'admin');
+}
+
+export async function getCrmRoles(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.CRM.ROLES}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+export async function getCrmLoginRequests(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.CRM.LOGIN_REQUESTS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+export async function approveCrmLoginRequest(uuid) {
+  return await apiRequest(ENDPOINTS.CRM.LOGIN_REQUEST_APPROVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
+export async function rejectCrmLoginRequest(uuid) {
+  return await apiRequest(ENDPOINTS.CRM.LOGIN_REQUEST_REJECT(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
 // ───────────────────────── Member Profile ─────────────────────────
 
 // GET /crm-members/members/  (paginated)

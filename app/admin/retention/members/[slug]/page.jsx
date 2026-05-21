@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import PeriodToggle from "../../../../components/admin/retention/PeriodToggle";
 import { ASSETS, GRAD_DARK, GRAD_GOLD } from "../../../../components/admin/retention/constants";
 import { getCrmMemberSingle } from "../../../../api/crmApi";
 
@@ -48,7 +47,6 @@ function inferTags(data) {
 export default function MemberProfilePage() {
   const params = useParams();
   const memberUuid = typeof params?.slug === "string" ? params.slug : Array.isArray(params?.slug) ? params.slug[0] : "";
-  const [period, setPeriod] = useState("Daily");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -93,20 +91,23 @@ export default function MemberProfilePage() {
     );
   }
 
-  const basic = data?.basic_info || data?.customer_data || {};
+  // customer_data is fully documented and returns human-readable strings.
+  // basic_info exists in the GET output but its fields are undocumented —
+  // prefer customer_data so display values are always readable strings.
   const customer = data?.customer_data || {};
+  const basic = data?.basic_info || {};
 
   const basicInfo = {
-    Username: show(basic?.username),
-    Phone: show(basic?.phone_number),
-    Gender: show(basic?.gender),
-    "Date of Birth": show(basic?.date_of_birth),
-    Age: show(basic?.age),
-    Nationality: show(basic?.nationality),
-    "Home Address": show(basic?.home_address),
-    "Marital Status": show(basic?.marital_status),
-    Job: show(basic?.job),
-    Hobby: show(basic?.hobby),
+    Username: show(customer?.username || basic?.username),
+    Phone: show(customer?.phone_number || basic?.phone_number),
+    Gender: show(customer?.gender || basic?.gender),
+    "Date of Birth": show(customer?.date_of_birth || basic?.date_of_birth),
+    Age: show(customer?.age ?? basic?.age),
+    Nationality: show(customer?.nationality || basic?.nationality),
+    "Home Address": show(customer?.home_address || basic?.home_address),
+    "Marital Status": show(customer?.marital_status || basic?.marital_status),
+    Job: show(customer?.job || basic?.job),
+    Hobby: show(customer?.hobby || basic?.hobby),
   };
 
   const financialInfo = {
@@ -133,10 +134,10 @@ export default function MemberProfilePage() {
   };
 
   const stats = {
-    mrsLevel: show(customer?.mrs_level || customer?.vip_level),
+    mrsLevel: show(customer?.mrs_level || customer?.vip_level || data?.vip_level),
     nsLevel: show(customer?.ns_level, "—"),
-    totalSales: formatCurrency(customer?.total_sales),
-    totalWinLose: formatCurrency(customer?.total_withdrawal),
+    totalSales: formatCurrency(data?.financial_info?.total_sales),
+    totalWinLose: formatCurrency(data?.financial_info?.total_win_lose),
   };
 
   return (
@@ -146,8 +147,6 @@ export default function MemberProfilePage() {
         tags={inferTags(data)}
         dateJoined={show(data?.date_joined)}
         slug={memberUuid}
-        period={period}
-        onPeriodChange={setPeriod}
       />
       <StatsRow stats={stats} />
       <InfoGrid basicInfo={basicInfo} financialInfo={financialInfo} gamingInfo={gamingInfo} />
@@ -156,7 +155,7 @@ export default function MemberProfilePage() {
   );
 }
 
-function ProfileHeader({ name, tags, dateJoined, slug, period, onPeriodChange }) {
+function ProfileHeader({ name, tags, dateJoined, slug }) {
   return (
     <div className="flex flex-col gap-4 px-2 md:flex-row md:items-start md:justify-between md:gap-4">
       <div className="flex flex-col gap-3">
@@ -209,9 +208,6 @@ function ProfileHeader({ name, tags, dateJoined, slug, period, onPeriodChange })
             <MoreOptionsMenu />
           </div>
         </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <PeriodToggle period={period} onPeriodChange={onPeriodChange} />
       </div>
     </div>
   );
@@ -315,7 +311,7 @@ function StatsRow({ stats }) {
     { label: "MRS Level", value: stats.mrsLevel },
     { label: "NS Level", value: stats.nsLevel },
     { label: "Total Sales", value: stats.totalSales },
-    { label: "Total Withdrawal", value: stats.totalWinLose },
+    { label: "Total Win/Lose", value: stats.totalWinLose },
   ];
   return (
     <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">

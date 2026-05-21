@@ -126,6 +126,9 @@ function findVipUuid(vipTiers, label) {
 function getExistingVipUuid(data) {
   return (
     data?.profile_data?.vip_level_uuid ||
+    data?.basic_info?.vip_level_uuid ||
+    data?.basic_info?.mrs_level_uuid ||
+    data?.basic_info?.vip_uuid ||
     data?.customer_data?.vip_level_uuid ||
     data?.customer_data?.mrs_level_uuid ||
     data?.customer_data?.vip_uuid ||
@@ -184,11 +187,8 @@ function emptyForm() {
     hobby: [],
 
     totalSales: "",
-    totalWithdrawal: "",
     totalWinLoss: "",
-    totalBonus: "",
     totalTicketSales: "",
-    totalWithdrawalTicket: "",
     arpu: "",
     avgDeposit: "",
     lastDepositDate: "",
@@ -244,29 +244,47 @@ function apiToForm(data, vipTiers = []) {
 
   return {
     ...form,
-    vip: tagFor("vip", c.mrs_level || c.vip_level),
-    vipUuid: getExistingVipUuid(data) || findVipUuid(vipTiers, c.mrs_level || c.vip_level),
+    // vip_level and status are not in the documented GET fields. Try every
+    // plausible path since basic_info GET output is undocumented — the API
+    // may return them there even though the doc doesn't list the fields.
+    ...(() => {
+      const vipLabel =
+        c.mrs_level || c.vip_level ||
+        b.mrs_level || b.vip_level || b.vip_level_name ||
+        data?.profile_data?.vip_level || data?.profile_data?.vip_level_name ||
+        data?.vip_level || null;
+      const vipUuid = getExistingVipUuid(data) || findVipUuid(vipTiers, vipLabel);
+      const statusLabel =
+        data?.status ||
+        data?.profile_data?.status ||
+        b.status || b.status_display ||
+        "Active";
+      return {
+        vip: tagFor("vip", vipLabel),
+        vipUuid,
+        status: { kind: statusKind(statusLabel), label: statusLabel },
+      };
+    })(),
     playerType: tagFor("game", g.player_type),
     risk: tagFor("risk", g.risk_style),
     depositFreq: tagFor("weekly", g.deposit_frequency_style),
-    status: (() => {
-      const label = data.status || "Active";
-      return { kind: statusKind(label), label };
-    })(),
 
-    fullName: data.full_name || b.username || "",
-    phone: b.phone_number || "",
-    gender: b.gender || "",
-    dob: dateToInput(b.date_of_birth),
-    age: b.age ?? "",
-    nationality: b.nationality || "",
-    homeAddress: b.home_address || "",
-    marital: b.marital_status || "",
-    job: b.job || "",
-    hobby: tagListFor("hobby", b.hobby),
+    // customer_data returns documented string values (e.g. gender="Male").
+    // basic_info GET fields are undocumented and likely return the same
+    // integer enum codes used in the PUT, which won't match select options.
+    // Prefer customer_data strings; fall back to basic_info as a safety net.
+    fullName: data.full_name || c.username || b.username || "",
+    phone: c.phone_number || b.phone_number || "",
+    gender: c.gender || b.gender || "",
+    dob: dateToInput(c.date_of_birth || b.date_of_birth),
+    age: c.age ?? b.age ?? "",
+    nationality: c.nationality || b.nationality || "",
+    homeAddress: c.home_address || b.home_address || "",
+    marital: c.marital_status || b.marital_status || "",
+    job: c.job || b.job || "",
+    hobby: tagListFor("hobby", c.hobby || b.hobby),
 
     totalSales: f.total_sales ?? "",
-    totalWithdrawal: c.total_withdrawal ?? "",
     totalWinLoss: f.total_win_lose ?? "",
     totalTicketSales: f.total_sales_ticket ?? "",
     arpu: f.arpu ?? "",
@@ -1029,45 +1047,47 @@ function BasicInfoStep({ form, setField, vipTiers = [] }) {
   );
 }
 
+// Read-only display for computed financial values that the API doesn't accept
+// as input (they're calculated server-side and returned via GET).
+function ReadOnlyValue({ value, prefix }) {
+  const display = value === null || value === undefined || value === "" ? "—" : String(value);
+  return (
+    <div className="flex items-center gap-3 rounded-[8px] border border-[#fbeed2]/30 bg-white/5 px-4 py-3">
+      {prefix && <span className="text-[12px] font-bold leading-[18px] text-white/50">{prefix}</span>}
+      <span className="flex-1 text-[12px] font-medium leading-[18px] text-white/50">{display}</span>
+    </div>
+  );
+}
+
 function FinancialInfoStep({ form, setField }) {
   return (
     <>
       <SectionTitle>Financial Info</SectionTitle>
+      <p className="text-[12px] text-white/50 -mt-4">
+        These values are calculated by the server and are shown for reference only.
+        Only Payment Method can be edited.
+      </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-10 gap-y-6">
         <FieldWrapper label="Total Sales">
-          <CurrencyInput value={form.totalSales} onChange={(v) => setField("totalSales", v)} />
-        </FieldWrapper>
-        <FieldWrapper label="Total Withdrawal">
-          <CurrencyInput value={form.totalWithdrawal} onChange={(v) => setField("totalWithdrawal", v)} />
+          <ReadOnlyValue value={form.totalSales ? `RM ${form.totalSales}` : undefined} />
         </FieldWrapper>
         <FieldWrapper label="Total Win/Loss">
-          <CurrencyInput value={form.totalWinLoss} onChange={(v) => setField("totalWinLoss", v)} />
-        </FieldWrapper>
-        <FieldWrapper label="Total Bonus">
-          <CurrencyInput value={form.totalBonus} onChange={(v) => setField("totalBonus", v)} />
+          <ReadOnlyValue value={form.totalWinLoss ? `RM ${form.totalWinLoss}` : undefined} />
         </FieldWrapper>
         <FieldWrapper label="Total Ticket Sales">
-          <TextInput value={form.totalTicketSales} onChange={(v) => setField("totalTicketSales", v)} />
-        </FieldWrapper>
-        <FieldWrapper label="Total Withdrawal Ticket">
-          <CurrencyInput value={form.totalWithdrawalTicket} onChange={(v) => setField("totalWithdrawalTicket", v)} />
+          <ReadOnlyValue value={form.totalTicketSales} />
         </FieldWrapper>
         <FieldWrapper label="ARPU">
-          <CurrencyInput value={form.arpu} onChange={(v) => setField("arpu", v)} />
+          <ReadOnlyValue value={form.arpu ? `RM ${form.arpu}` : undefined} />
         </FieldWrapper>
         <FieldWrapper label="Average Deposit">
-          <CurrencyInput value={form.avgDeposit} onChange={(v) => setField("avgDeposit", v)} />
+          <ReadOnlyValue value={form.avgDeposit ? `RM ${form.avgDeposit}` : undefined} />
         </FieldWrapper>
         <FieldWrapper label="Last Deposit Date">
-          <TextInput
-            type="date"
-            value={form.lastDepositDate}
-            onChange={(v) => setField("lastDepositDate", v)}
-            leftIcon={<CalendarIcon />}
-          />
+          <ReadOnlyValue value={form.lastDepositDate} />
         </FieldWrapper>
         <FieldWrapper label="Payment Method">
-          <TextInput value={form.paymentMethod} onChange={(v) => setField("paymentMethod", v)} />
+          <SelectInput value={form.paymentMethod} onChange={(v) => setField("paymentMethod", v)} options={SELECT_OPTIONS.paymentMethod} />
         </FieldWrapper>
       </div>
     </>
@@ -1086,7 +1106,7 @@ function GameInfoStep({ form, setField }) {
           <MultiTagSelectField value={form.providerPref} onChange={(v) => setField("providerPref", v)} {...TAG_OPTIONS.providerPref} />
         </FieldWrapper>
         <FieldWrapper label="Play Time Pattern">
-          <TextInput value={form.playTimePattern} onChange={(v) => setField("playTimePattern", v)} />
+          <SelectInput value={form.playTimePattern} onChange={(v) => setField("playTimePattern", v)} options={SELECT_OPTIONS.playTimePattern} />
         </FieldWrapper>
         <FieldWrapper label="Average Bet Size">
           <BetRangeInput

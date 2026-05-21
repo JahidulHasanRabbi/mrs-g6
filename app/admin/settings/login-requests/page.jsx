@@ -1,7 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { GRAD_DARK, GRAD_GOLD } from "../../../components/admin/retention/constants";
+import {
+  approveCrmLoginRequest,
+  getCrmLoginRequests,
+  rejectCrmLoginRequest,
+} from "../../../api/crmApi";
 
 // Login Requests — Figma 175:3738. Table of inbound login attempts; admin
 // can Approve/Reject pending rows. Already-resolved rows show their final
@@ -14,22 +19,6 @@ const STATUS_PENDING = "Pending";
 const STATUS_APPROVED = "Approved";
 const STATUS_REJECTED = "Rejected";
 
-const SEED_ROWS = [
-  { username: "Sarah Jenkins", ip: "192.168.2.1", device: "PC: Google Chrome", time: "12.05.26 - 03.45pm", status: STATUS_PENDING  },
-  { username: "Samira Khan",   ip: "192.168.2.3", device: "Windows Device",    time: "12.07.26 - 01.30pm", status: STATUS_PENDING  },
-  { username: "Marcus Henry",  ip: "192.168.2.1", device: "Mac: Safari",       time: "12.05.26 - 03.45pm", status: STATUS_APPROVED },
-  { username: "Linda Carter",  ip: "192.168.2.2", device: "Windows: Chrome",   time: "12.05.26 - 03.50pm", status: STATUS_APPROVED },
-  { username: "James Smith",   ip: "192.168.2.3", device: "Linux: Firefox",    time: "12.05.26 - 03.55pm", status: STATUS_APPROVED },
-  { username: "Elena Rody",    ip: "192.168.2.1", device: "Android Device",    time: "12.05.26 - 03.45pm", status: STATUS_REJECTED },
-  { username: "Jordan Lee",    ip: "192.168.2.2", device: "iOS Device",        time: "12.06.26 - 09.15am", status: STATUS_REJECTED },
-];
-
-// Cycle the seed rows to 150 so pagination has range until the API is wired.
-const ROWS = Array.from({ length: 150 }, (_, i) => {
-  const seed = SEED_ROWS[i % SEED_ROWS.length];
-  return { ...seed, id: i + 1 };
-});
-
 const COLUMNS = [
   { key: "username", label: "Username",   minW: 232, flex: false                },
   { key: "ip",       label: "IP Address", minW: 140, flex: true                 },
@@ -40,6 +29,30 @@ const COLUMNS = [
 ];
 
 const TABLE_MIN_WIDTH = COLUMNS.reduce((sum, c) => sum + c.minW, 0);
+
+function formatRequestTime(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleString("en-US", {
+    year: "2-digit",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function mapLoginRequest(row) {
+  return {
+    id: row.uuid,
+    username: row.user || row.username || "—",
+    ip: row.ip_address || "—",
+    device: row.device || "—",
+    time: formatRequestTime(row.request_time),
+    status: row.status || STATUS_PENDING,
+  };
+}
 
 export default function LoginRequestsPage() {
   return (
@@ -75,33 +88,48 @@ function PageHeader() {
 }
 
 function LoginListSection() {
-  // Row decisions made in this session, keyed by row id. Defaults to the
-  // seed status when an id isn't present. Using a Map keeps lookup O(1) and
-  // re-renders cheap since we only swap the Map reference when something
-  // actually changes.
-  const [decisions, setDecisions] = useState(() => new Map());
+  const [rows, setRows] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
 
-  const decidedRows = useMemo(() => {
-    return ROWS.map((row) => ({
-      ...row,
-      status: decisions.get(row.id) ?? row.status,
-    }));
-  }, [decisions]);
+  const loadRows = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await getCrmLoginRequests({ page, page_size: PAGE_SIZE });
+      const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+      setRows(results.map(mapLoginRequest));
+      setTotal(Number.isFinite(res?.count) ? res.count : results.length);
+    } catch (err) {
+      console.error("[login-requests] fetch failed", err);
+      setError(err);
+      setRows([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [page]);
 
-  const totalPages = Math.max(1, Math.ceil(decidedRows.length / PAGE_SIZE));
+  useEffect(() => {
+    loadRows();
+  }, [loadRows]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const startIdx = (safePage - 1) * PAGE_SIZE;
-  const visibleRows = decidedRows.slice(startIdx, startIdx + PAGE_SIZE);
-  const showingFrom = decidedRows.length === 0 ? 0 : startIdx + 1;
-  const showingTo = Math.min(startIdx + PAGE_SIZE, decidedRows.length);
+  const showingFrom = total === 0 ? 0 : startIdx + 1;
+  const showingTo = Math.min(startIdx + rows.length, total);
 
-  const decide = (id, status) => {
-    setDecisions((prev) => {
-      const next = new Map(prev);
-      next.set(id, status);
-      return next;
-    });
+  const decide = async (row, action) => {
+    try {
+      if (action === STATUS_APPROVED) await approveCrmLoginRequest(row.id);
+      else await rejectCrmLoginRequest(row.id);
+      await loadRows();
+    } catch (err) {
+      console.error("[login-requests] decision failed", err);
+    }
   };
 
   return (
@@ -124,15 +152,19 @@ function LoginListSection() {
         <div style={{ minWidth: TABLE_MIN_WIDTH }}>
           <TableHeader />
           <div className="flex w-full flex-col">
-            {visibleRows.length === 0 ? (
+            {loading ? (
+              <div className="px-6 py-12 text-center text-[12px] text-white/40">Loading...</div>
+            ) : error ? (
+              <div className="px-6 py-12 text-center text-[12px] text-red-400">Failed to load login requests.</div>
+            ) : rows.length === 0 ? (
               <EmptyRow />
             ) : (
-              visibleRows.map((row) => (
+              rows.map((row) => (
                 <LoginRow
                   key={row.id}
                   row={row}
-                  onApprove={() => decide(row.id, STATUS_APPROVED)}
-                  onReject={() => decide(row.id, STATUS_REJECTED)}
+                  onApprove={() => decide(row, STATUS_APPROVED)}
+                  onReject={() => decide(row, STATUS_REJECTED)}
                 />
               ))
             )}
@@ -143,7 +175,7 @@ function LoginListSection() {
       <PaginationBar
         from={showingFrom}
         to={showingTo}
-        total={decidedRows.length}
+        total={total}
         page={safePage}
         totalPages={totalPages}
         onPageChange={setPage}

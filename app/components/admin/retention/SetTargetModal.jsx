@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { GRAD_GOLD } from "./constants";
@@ -8,18 +8,27 @@ import { GRAD_GOLD } from "./constants";
 // Set Target Deposit modal (Figma 175:7319).  Portal-rendered so it escapes
 // any parent stacking context, matching the same pattern as DateRangePicker.
 
+function getPicUuid(pic) {
+  return pic?.uuid || "";
+}
+
+function getPicLabel(pic) {
+  return pic?.label || pic?.full_name || pic?.name || pic?.username || pic?.uuid || "Unknown PIC";
+}
+
 export default function SetTargetModal({ isOpen, onClose, onSave, pics }) {
-  const [pic, setPic] = useState(pics?.[0] ?? "");
+  const picOptions = useMemo(() => (pics ?? []).filter((pic) => getPicUuid(pic)), [pics]);
+  const [picUuid, setPicUuid] = useState(getPicUuid(picOptions[0]));
   const [target, setTarget] = useState("");
 
   // Reset form whenever the modal re-opens so stale values don't leak between
   // sessions.
   useEffect(() => {
     if (isOpen) {
-      setPic(pics?.[0] ?? "");
+      setPicUuid(getPicUuid(picOptions[0]));
       setTarget("");
     }
-  }, [isOpen, pics]);
+  }, [isOpen, picOptions]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -33,7 +42,7 @@ export default function SetTargetModal({ isOpen, onClose, onSave, pics }) {
   if (!isOpen || typeof document === "undefined") return null;
 
   const handleSave = () => {
-    onSave?.({ pic, target });
+    onSave?.({ picUuid, target });
     onClose?.();
   };
 
@@ -72,8 +81,8 @@ export default function SetTargetModal({ isOpen, onClose, onSave, pics }) {
           <div className="flex flex-col gap-2">
             <label className="b-3 font-semibold text-white">Choose PIC</label>
             <select
-              value={pic}
-              onChange={(e) => setPic(e.target.value)}
+              value={picUuid}
+              onChange={(e) => setPicUuid(e.target.value)}
               className="h-10 rounded-[8px] border border-[#f2cb7a] bg-transparent px-3 text-[14px] text-white focus:outline-none appearance-none"
               style={{
                 backgroundImage:
@@ -83,9 +92,9 @@ export default function SetTargetModal({ isOpen, onClose, onSave, pics }) {
                 paddingRight: "30px",
               }}
             >
-              {(pics ?? []).map((p) => (
-                <option key={p} value={p} className="bg-[#0a0e0a]">
-                  {p}
+              {picOptions.map((p) => (
+                <option key={getPicUuid(p)} value={getPicUuid(p)} className="bg-[#0a0e0a]">
+                  {getPicLabel(p)}
                 </option>
               ))}
             </select>

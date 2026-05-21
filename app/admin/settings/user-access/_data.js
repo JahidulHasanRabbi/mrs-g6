@@ -13,7 +13,7 @@ export const ROLE_OPTIONS = [
   "Supervisor Retention",
 ];
 
-export const STATUS_OPTIONS = ["Active", "Suspended"];
+export const STATUS_OPTIONS = ["Active", "Inactive"];
 
 const SEED_USERS = [
   { name: "Sarah Jenkins",  vip: "VIP 1", avatar: `${ASSETS}/avatar-1.jpg`, role: "Retention",            status: "Active"    },

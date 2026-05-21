@@ -15,6 +15,7 @@ import {
   setCrmAssignmentTarget,
   statusLabelToInt,
   updateCrmAssignment,
+  getCrmUsers,
 } from "../../../api/crmApi";
 
 // Retention Settings — Member Assignment.
@@ -49,12 +50,41 @@ function isUuid(value) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ""));
 }
 
+function firstPresent(...values) {
+  return values.find((value) => value !== null && value !== undefined && String(value) !== "") || "";
+}
+
+function normalizePic(user) {
+  const uuid = firstPresent(
+    user?.uuid,
+    user?.id,
+    user?.admin_uuid,
+    user?.user_uuid,
+    user?.pic_uuid,
+    user?.admin?.uuid,
+    user?.user?.uuid
+  );
+
+  return {
+    ...user,
+    uuid,
+    isValidUuid: isUuid(uuid),
+    label: user?.full_name || user?.name || user?.username || uuid || "Unknown PIC",
+  };
+}
+
+function invalidPicMessage(pic) {
+  const label = pic?.label || "selected PIC";
+  const uuid = pic?.uuid || "empty";
+  return `Cannot save: ${label} has invalid pic_uuid "${uuid}". The assignment API requires a real UUID, but /admins/users/ returned this value.`;
+}
+
 function mapAssignment(row, idx = 0) {
   return {
     id: row.uuid || row.id || idx + 1,
     uuid: row.uuid,
     name: row.full_name || row.name || "—",
-    picUuid: row.pic_uuid || row.admin_uuid || row.user_uuid || row.pic?.uuid || row.admin?.uuid || "",
+    picUuid: firstPresent(row.pic_uuid, row.admin_uuid, row.user_uuid, row.pic?.uuid, row.admin?.uuid),
     vip: row.vip_level || "",
     avatar: `${ASSETS}/avatar-${(idx % 5) + 1}.jpg`,
     level: row.level || row.name || "—",
@@ -76,6 +106,7 @@ function rowToFormValues(row) {
     status: row.status,
     retain: stripCurrency(row.retain),
     upgrade: stripCurrency(row.upgrade),
+    picUuid: row.picUuid,
     pic: row.name,
   };
 }
@@ -106,6 +137,17 @@ function RetentionSettingsContent() {
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  // PIC list from GET /admins/users/ — each entry has { uuid, full_name, ... }
+  const [pics, setPics] = useState([]);
+
+  useEffect(() => {
+    getCrmUsers({ page: 1, page_size: 100 })
+      .then((res) => {
+        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        setPics(results.map(normalizePic).filter((pic) => pic.uuid));
+      })
+      .catch((err) => console.error("[retention-settings] users load failed", err));
+  }, []);
 
   const loadAssignments = useCallback(async () => {
     setLoading(true);
@@ -138,10 +180,15 @@ function RetentionSettingsContent() {
 
   const handleSave = useCallback(
     async (values) => {
-      const selectedPic = rows.find((row) => row.name === values.pic);
-      const picUuid = selectedPic?.picUuid || editingRow?.picUuid;
+      // Look up PIC UUID from the real users list (GET /admins/users/)
+      const selectedPic = pics.find((u) => u.uuid === values.picUuid);
+      const picUuid = selectedPic?.uuid || values.picUuid;
+      if (!picUuid) {
+        alert("Cannot save: please select a valid PIC from the list.");
+        return;
+      }
       if (!isUuid(picUuid)) {
-        alert("Cannot save assignment: the API response does not include a valid PIC UUID for the selected PIC.");
+        alert(invalidPicMessage(selectedPic || { uuid: picUuid }));
         return;
       }
       const payload = {
@@ -159,23 +206,21 @@ function RetentionSettingsContent() {
         console.error("[retention-settings] save failed", err);
       }
     },
-    [editingRow, loadAssignments, rows]
+    [editingRow, loadAssignments, pics]
   );
 
   return (
     <>
       <PageHeader />
       {mode === "list" ? (
-        <AssignmentListSection rows={rows} total={total} page={page} loading={loading} />
+        <AssignmentListSection rows={rows} total={total} page={page} loading={loading} pics={pics} />
       ) : (
-        // Key on the row id (or "add") forces a remount when switching between
-        // edit targets so useState's lazy init re-reads from the new row.
         <MemberLevelForm
           key={editingRow ? `edit-${editingRow.id}` : "add"}
           mode={mode}
           initialValues={editingRow ? rowToFormValues(editingRow) : null}
           onSave={handleSave}
-          pics={rows.map((row) => row.name).filter(Boolean)}
+          pics={pics}
         />
       )}
     </>
@@ -196,7 +241,7 @@ function PageHeader() {
   );
 }
 
-function AssignmentListSection({ rows, total, page, loading }) {
+function AssignmentListSection({ rows, total, page, loading, pics = [] }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -220,20 +265,27 @@ function AssignmentListSection({ rows, total, page, loading }) {
   );
 
   const handleSaveTarget = useCallback(async (payload) => {
-    const selectedPic = rows.find((row) => row.name === payload.pic);
-    if (!isUuid(selectedPic?.picUuid)) {
-      alert("Cannot set target: the API response does not include a valid PIC UUID for the selected PIC.");
+    const selectedPic = pics.find(
+      (u) => u.uuid === payload.picUuid || u.label === payload.pic
+    );
+    const picUuid = payload.picUuid || selectedPic?.uuid;
+    if (!picUuid) {
+      alert("Cannot set target: please select a valid PIC from the list.");
+      return;
+    }
+    if (!isUuid(picUuid)) {
+      alert(invalidPicMessage(selectedPic || { uuid: picUuid }));
       return;
     }
     try {
       await setCrmAssignmentTarget({
-        pic_uuid: selectedPic?.picUuid,
+        pic_uuid: picUuid,
         deposit: stripCurrency(payload.target),
       });
     } catch (err) {
       console.error("[retention-settings] set target failed", err);
     }
-  }, [rows]);
+  }, [pics]);
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
@@ -301,7 +353,7 @@ function AssignmentListSection({ rows, total, page, loading }) {
         isOpen={targetOpen}
         onClose={() => setTargetOpen(false)}
         onSave={handleSaveTarget}
-        pics={rows.map((row) => row.name).filter(Boolean)}
+        pics={pics}
       />
     </section>
   );
@@ -406,7 +458,11 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
   const [retain, setRetain] = useState(() => initialValues?.retain ?? "10,000");
   const [upgrade, setUpgrade] = useState(() => initialValues?.upgrade ?? "1,000");
   const picOptions = pics?.length ? pics : [];
-  const [pic, setPic] = useState(() => initialValues?.pic ?? picOptions[0] ?? "");
+  const [picUuid, setPicUuid] = useState(() => initialValues?.picUuid ?? picOptions[0]?.uuid ?? "");
+
+  useEffect(() => {
+    if (!picUuid && picOptions[0]?.uuid) setPicUuid(picOptions[0].uuid);
+  }, [picOptions, picUuid]);
 
   const goBack = useCallback(() => {
     const next = new URLSearchParams(searchParams.toString());
@@ -417,9 +473,9 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
   }, [pathname, router, searchParams]);
 
   const handleSave = useCallback(async () => {
-    await onSave({ name, status, retain, upgrade, pic });
+    await onSave({ name, status, retain, upgrade, picUuid });
     goBack();
-  }, [name, status, retain, upgrade, pic, onSave, goBack]);
+  }, [name, status, retain, upgrade, picUuid, onSave, goBack]);
 
   return (
     <section className="flex w-full flex-col gap-6 rounded-[16px] bg-[#041502] p-8 shadow-[0_-4px_12px_-2px_#dea220]">
@@ -450,7 +506,7 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
           <RmInput value={upgrade} onChange={setUpgrade} />
         </FormField>
         <FormField label="Choose PIC">
-          <Select value={pic} onChange={setPic} options={picOptions} />
+          <PicSelect value={picUuid} onChange={setPicUuid} options={picOptions} />
         </FormField>
       </div>
 
@@ -474,6 +530,29 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
         </button>
       </div>
     </section>
+  );
+}
+
+function PicSelect({ value, onChange, options }) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="h-10 rounded-[8px] border border-[#f2cb7a] bg-transparent px-3 text-[14px] text-white focus:outline-none appearance-none"
+      style={{
+        backgroundImage:
+          "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M4 6l4 4 4-4' stroke='%23eaad2c' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>\")",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "right 10px center",
+        paddingRight: "30px",
+      }}
+    >
+      {options.map((pic) => (
+        <option key={pic.uuid} value={pic.uuid} className="bg-[#041502]">
+          {pic.label}
+        </option>
+      ))}
+    </select>
   );
 }
 

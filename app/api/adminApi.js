@@ -49,6 +49,11 @@ export async function verifyToken(accessToken) {
   }, false);
 }
 
+export async function getAdminUsers(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.USERS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
 export async function getVipTiers() {
   return await apiRequest(ENDPOINTS.ADMIN.VIP_TIERS, {
     method: 'GET'

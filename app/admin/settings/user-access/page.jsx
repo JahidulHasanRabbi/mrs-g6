@@ -8,7 +8,7 @@ import {
   GRAD_GOLD,
 } from "../../../components/admin/retention/constants";
 import { ROLE_OPTIONS, STATUS_OPTIONS } from "./_data";
-import { getCrmUsers } from "../../../api/crmApi";
+import { getCrmLoginRequests, getCrmUsers } from "../../../api/crmApi";
 
 // User Access management — Figma 94:11764. Four KPI cards (Total Users,
 // Active Users, Suspended, Login Pending) and a User List table with
@@ -16,6 +16,7 @@ import { getCrmUsers } from "../../../api/crmApi";
 // topbar, padding) is provided by app/admin/retention/layout.jsx.
 
 const PAGE_SIZE = 7;
+const API_PAGE_SIZE = 100;
 
 const COLUMNS = [
   { key: "username", label: "Username",  minW: 240 },
@@ -31,13 +32,14 @@ export default function UserAccessPage() {
   const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [pendingLogins, setPendingLogins] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
-    getCrmUsers({ page: 1, page_size: 100 })
-      .then((res) => {
+    fetchAllPages(getCrmUsers)
+      .then((users) => {
         if (cancelled) return;
-        setAllUsers(Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : []);
+        setAllUsers(users);
       })
       .catch((err) => {
         if (cancelled) return;
@@ -48,21 +50,36 @@ export default function UserAccessPage() {
     return () => { cancelled = true; };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    fetchAllPages(getCrmLoginRequests)
+      .then((results) => {
+        if (cancelled) return;
+        setPendingLogins(results.filter((row) => row.status === "Pending").length);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("[user-access] login requests fetch failed", err);
+        setPendingLogins(null);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
   const kpis = useMemo(() => {
     const total = allUsers.length;
     const active = allUsers.filter((u) => u.status === "Active").length;
-    const suspended = allUsers.filter((u) => u.status !== "Active").length;
+    const inactive = allUsers.filter((u) => u.status !== "Active").length;
     return [
       { id: "total",     label: "Total Users",  value: String(total),     icon: "user"   },
       { id: "active",    label: "Active Users", value: String(active),    icon: "users"  },
-      { id: "suspended", label: "Suspended",    value: String(suspended), icon: "alert"  },
+      { id: "inactive",  label: "Inactive",     value: String(inactive),  icon: "alert"  },
     ];
   }, [allUsers]);
 
   return (
     <>
       <OverviewHeader />
-      <KpiRow kpis={kpis} />
+      <KpiRow kpis={kpis} pendingLogins={pendingLogins} />
       <UserList allUsers={allUsers} loading={loading} error={error} />
     </>
   );
@@ -92,13 +109,29 @@ function OverviewHeader() {
   );
 }
 
-function KpiRow({ kpis }) {
+async function fetchAllPages(fetcher) {
+  const rows = [];
+  let page = 1;
+  let hasNext = true;
+
+  while (hasNext) {
+    const res = await fetcher({ page, page_size: API_PAGE_SIZE });
+    const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+    rows.push(...results);
+    hasNext = Boolean(res?.next) && results.length > 0;
+    page += 1;
+  }
+
+  return rows;
+}
+
+function KpiRow({ kpis, pendingLogins }) {
   return (
     <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
       {kpis.map((kpi) => (
         <KpiCard key={kpi.id} kpi={kpi} />
       ))}
-      <LoginPendingCard />
+      <LoginPendingCard count={pendingLogins} />
     </div>
   );
 }
@@ -140,7 +173,8 @@ function KpiCard({ kpi }) {
   );
 }
 
-function LoginPendingCard() {
+function LoginPendingCard({ count }) {
+  const value = count === null ? "-" : String(count);
   return (
     <Link
       href="/admin/settings/login-requests"
@@ -165,7 +199,7 @@ function LoginPendingCard() {
               lineHeight: "44px",
             }}
           >
-            —
+            {value}
           </p>
         </div>
         <span
@@ -185,6 +219,10 @@ function UserList({ allUsers, loading, error }) {
   const [status, setStatus] = useState("");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
+  const roleOptions = useMemo(
+    () => Array.from(new Set(allUsers.map((user) => user.role).filter(Boolean))),
+    [allUsers]
+  );
 
   const filtered = useMemo(() => {
     return allUsers.filter((u) => {
@@ -228,7 +266,7 @@ function UserList({ allUsers, loading, error }) {
           User List
         </h2>
         <div className="flex flex-wrap items-center gap-3">
-          <FilterPill label="Role" value={role} onChange={setRole} options={ROLE_OPTIONS} />
+          <FilterPill label="Role" value={role} onChange={setRole} options={roleOptions.length ? roleOptions : ROLE_OPTIONS} />
           <FilterPill label="Status" value={status} onChange={setStatus} options={STATUS_OPTIONS} />
           <SearchInput value={query} onChange={setQuery} />
           <AddUserButton />

@@ -33,6 +33,12 @@ export const ENDPOINTS = {
     LOGOUT: '/login/logout/',
     REFRESH_TOKEN: '/login/refresh-token/',
     VERIFY_TOKEN: '/login/verify-token/',
+    USERS: '/admins/users/',
+    USER_SINGLE: (uuid) => `/admins/users/${uuid}/`,
+    LOGIN_REQUESTS: '/admins/login-requests/',
+    LOGIN_REQUEST_APPROVE: (uuid) => `/admins/login-requests/${uuid}/approve/`,
+    LOGIN_REQUEST_REJECT: (uuid) => `/admins/login-requests/${uuid}/reject/`,
+    ROLES: '/admins/roles/',
     VIP_TIERS: '/member/vip-tier/',
     VIP_TIER: (uuid) => `/member/vip-tier/${uuid}/`,
     ARCHIVE_VIP_TIER: (uuid) => `/member/vip-tier/${uuid}/archive/`,
@@ -82,6 +88,11 @@ export const ENDPOINTS = {
   CRM: {
     // User Access Panel
     USERS: '/admins/users/',
+    USER_SINGLE: (uuid) => `/admins/users/${uuid}/`,
+    LOGIN_REQUESTS: '/admins/login-requests/',
+    LOGIN_REQUEST_APPROVE: (uuid) => `/admins/login-requests/${uuid}/approve/`,
+    LOGIN_REQUEST_REJECT: (uuid) => `/admins/login-requests/${uuid}/reject/`,
+    ROLES: '/admins/roles/',
     // Member Profile
     MEMBERS: '/crm-members/members/',
     MEMBER_SINGLE: (uuid) => `/crm-members/members/${uuid}/`,

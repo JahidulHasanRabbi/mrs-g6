@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GRAD_GOLD } from "../../../../components/admin/retention/constants";
+import { createCrmUser, getCrmRoles } from "../../../../api/crmApi";
 
 // Add User — Figma 168:3047. Two-section form (User Info, Account
 // Credentials) inside a dark card with a thin gold glow. Chrome (auth
@@ -17,7 +18,8 @@ const ROLE_OPTIONS = [
   "Supervisor Retention",
 ];
 
-const STATUS_OPTIONS = ["Active", "Suspended"];
+const STATUS_OPTIONS = ["Active", "Inactive"];
+const STATUS_TO_INT = { Active: 1, Inactive: 2 };
 
 const INITIAL_FORM = {
   username: "",
@@ -33,13 +35,60 @@ export default function AddUserPage() {
   const [form, setForm] = useState(INITIAL_FORM);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [roles, setRoles] = useState([]);
+  const [rolesError, setRolesError] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    getCrmRoles({ page: 1, page_size: 100 })
+      .then((res) => {
+        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        setRoles(results);
+        setRolesError(false);
+      })
+      .catch(() => {
+        setRoles([]);
+        setRolesError(true);
+      });
+  }, []);
 
   const update = (key) => (value) => setForm((prev) => ({ ...prev, [key]: value }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: wire to admin user-create endpoint. For now just navigate back.
-    router.push("/admin/settings/user-access");
+    const role = roles.find((item) => item.name === form.role);
+    if (rolesError) {
+      alert("Cannot save: roles could not be loaded from /admins/roles/.");
+      return;
+    }
+    if (!role?.uuid) {
+      alert("Cannot save: please select a valid role.");
+      return;
+    }
+    if (!STATUS_TO_INT[form.status]) {
+      alert("Cannot save: please select a valid status.");
+      return;
+    }
+    if (form.password !== form.confirmPassword) {
+      alert("Password and confirm password must match.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await createCrmUser({
+        username: form.username,
+        full_name: form.fullName,
+        role_uuid: role.uuid,
+        status: STATUS_TO_INT[form.status],
+        password: form.password,
+        confirm_password: form.confirmPassword,
+      });
+      router.push("/admin/settings/user-access");
+    } catch (err) {
+      console.error("[user-access-add] save failed", err);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -71,7 +120,7 @@ export default function AddUserPage() {
               label="Assign Role"
               value={form.role}
               onChange={update("role")}
-              options={ROLE_OPTIONS}
+              options={roles.length ? roles.map((role) => role.name) : ROLE_OPTIONS}
               placeholder="Select role"
             />
           </div>
@@ -109,7 +158,7 @@ export default function AddUserPage() {
 
           <div className="flex flex-wrap items-center justify-end gap-4 pt-2">
             <BackButton />
-            <SaveButton />
+            <SaveButton disabled={saving} />
           </div>
         </div>
       </form>
@@ -280,10 +329,11 @@ function BackButton() {
   );
 }
 
-function SaveButton() {
+function SaveButton({ disabled = false }) {
   return (
     <button
       type="submit"
+      disabled={disabled}
       className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold text-[#141828] transition hover:brightness-110"
       style={{ backgroundImage: GRAD_GOLD, letterSpacing: "-1px" }}
     >
