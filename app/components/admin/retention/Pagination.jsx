@@ -20,8 +20,8 @@ export default function Pagination({ from, to, total, pageCount = 7, currentPage
           onClick={() => onPageChange?.(Math.max(1, currentPage - 1))}
         />
         {visible.map((item) =>
-          item === "ellipsis" ? (
-            <span key={`e-${item}`} className="b-6 text-white">....</span>
+          typeof item === "string" ? (
+            <span key={item} className="b-6 text-white px-0.5">…</span>
           ) : (
             <PageChip
               key={item}
@@ -42,11 +42,24 @@ export default function Pagination({ from, to, total, pageCount = 7, currentPage
   );
 }
 
-// Decide which page numbers / ellipsis to render. Pure function, no allocation
-// inside render-hot paths (the result is small and memoization isn't worth it).
+// Sliding-window page list. Always shows first + last page and a 3-page
+// window centred on currentPage, with ellipses where gaps exist.
+// Examples (total=10):  page 1 → [1 2 3 4 … 10]
+//                        page 5 → [1 … 4 5 6 … 10]
+//                        page 9 → [1 … 7 8 9 10]
 function buildPageList(currentPage, total) {
-  if (total <= 4) return Array.from({ length: total }, (_, i) => i + 1);
-  return [1, 2, 3, "ellipsis", total];
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+
+  // Clamp the 3-page window so it stays anchored at the start/end near edges.
+  const windowStart = Math.max(2, Math.min(currentPage - 1, total - 3));
+  const windowEnd   = Math.min(total - 1, Math.max(currentPage + 1, 4));
+
+  const pages = [1];
+  if (windowStart > 2) pages.push("ellipsis-left");
+  for (let i = windowStart; i <= windowEnd; i++) pages.push(i);
+  if (windowEnd < total - 1) pages.push("ellipsis-right");
+  pages.push(total);
+  return pages;
 }
 
 function PageChip({ page, active, onClick }) {
