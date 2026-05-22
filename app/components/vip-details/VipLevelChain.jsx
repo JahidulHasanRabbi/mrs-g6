@@ -103,10 +103,10 @@ export default function VipLevelChain({ selectedLevel, onLevelSelect, vipTiers =
   );
 
   return (
-    <div className="relative w-full h-[160px] flex justify-center items-start">
+    <div className="relative w-full h-[130px] flex justify-center items-start">
       <motion.div
         ref={viewportRef}
-        className="relative w-full h-[160px] shrink-0 overflow-hidden"
+        className="relative w-full h-[130px] shrink-0 overflow-hidden"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.3 }}
@@ -168,7 +168,12 @@ export default function VipLevelChain({ selectedLevel, onLevelSelect, vipTiers =
                 />
               </motion.div>
               <p
-                className={`text-center text-[#e9af41] text-[12px] font-bold font-['Times_New_Roman'] mt-2 transition-all leading-tight max-w-[80px] ${isSelected ? "scale-110" : ""}`}
+                className={`text-center text-[#e9af41] font-bold font-['Times_New_Roman'] mt-2 transition-all leading-tight uppercase ${isSelected ? "scale-110" : ""}`}
+                style={{
+                  fontSize: "clamp(8px, 2.4vw, 12px)",
+                  maxWidth: "clamp(52px, 16vw, 80px)",
+                  wordBreak: "break-word",
+                }}
               >
                 {level.name}
               </p>

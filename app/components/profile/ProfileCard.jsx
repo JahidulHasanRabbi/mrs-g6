@@ -13,6 +13,7 @@ import { handleApiError, formatErrorMessage } from "@/app/api/errorHandler";
 import { LoadingState } from "@/app/components/ui/LoadingState";
 import ErrorDisplay from "@/app/components/ui/ErrorDisplay";
 import SuccessModal from "@/app/components/ui/SuccessModal";
+import FluidFrame from "@/app/components/ui/FluidFrame";
 import { useUser } from "@/app/contexts/UserContext";
 
 export default function ProfileCard({ 
@@ -241,7 +242,7 @@ export default function ProfileCard({
   // Show loading state
   if (isLoading) {
     return (
-      <div className="relative mx-auto w-[336px] h-[224px] min-[465px]:w-[370px] min-[465px]:h-[246px]">
+      <div className="relative mx-auto w-full max-w-[336px] h-[224px] min-[465px]:max-w-[370px] min-[465px]:h-[246px]">
         <LoadingState isLoading={true} />
       </div>
     );
@@ -250,7 +251,7 @@ export default function ProfileCard({
   // Show error state with retry option
   if (error) {
     return (
-      <div className="relative mx-auto w-[336px] min-[465px]:w-[370px] p-4">
+      <div className="relative mx-auto w-full max-w-[336px] min-[465px]:max-w-[370px] p-4">
         <ErrorDisplay error={error} />
         <button
           onClick={() => {
@@ -268,7 +269,7 @@ export default function ProfileCard({
   return (
     <>
       <motion.div
-        className="relative mx-auto w-[336px] h-[224px] min-[465px]:w-[370px] min-[465px]:h-[246px]"
+        className="mx-auto w-full"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{
@@ -278,7 +279,8 @@ export default function ProfileCard({
           delay: 0.2,
         }}
       >
-        <div className="absolute left-1/2 top-0 -translate-x-1/2 origin-top w-[366px] h-[224px] scale-[1] min-[465px]:scale-[1.1]">
+        <FluidFrame designWidth={402} designHeight={246}>
+        <div className="absolute left-1/2 top-0 -translate-x-1/2 origin-top w-[366px] h-[224px] scale-[1.1]">
           {/* Card Background — use object-contain so the corner gem ornaments
               aren't cropped by aspect-ratio mismatch. */}
           <Image
@@ -393,12 +395,13 @@ export default function ProfileCard({
             </div>
           </motion.div>
         </div>
+        </FluidFrame>
       </motion.div>
 
       {/* Welcome Gift Section - Only show if unclaimed (welcome_flag is false) */}
       {welcomeFlag === false && (
         <motion.div
-          className="mt-4 w-[336px] min-[465px]:w-[370px] mx-auto"
+          className="mt-4 w-full max-w-[336px] min-[465px]:max-w-[370px] mx-auto"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}

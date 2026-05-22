@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { memo } from "react";
 
-const AssetBlock = memo(function AssetBlock({ src, alt, className }) {
+const AssetBlock = memo(function AssetBlock({ src, alt, className, fill }) {
   if (!src) {
     return (
       <div
@@ -17,14 +17,25 @@ const AssetBlock = memo(function AssetBlock({ src, alt, className }) {
     );
   }
 
+  if (fill) {
+    return (
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        className={className}
+        sizes="(max-width: 475px) 100vw, 475px"
+        priority
+      />
+    );
+  }
+
   return (
-    <Image
+    <img
       src={src}
       alt={alt}
-      fill
-      className={className}
-      sizes="(max-width: 475px) 100vw, 475px"
-      priority
+      className={`block w-full h-auto ${className || ""}`}
+      loading="eager"
     />
   );
 });
@@ -33,7 +44,7 @@ const AnimatedSection = memo(function AnimatedSection({
   title,
   imageSrc,
   imageAlt,
-  imageHeight = 120,
+  imageHeight = null,
   titleSize = 44,
   letterSpacing = "0.06em",
   children,
@@ -61,13 +72,23 @@ const AnimatedSection = memo(function AnimatedSection({
         </h1>
 
         {imageSrc && (
-          <div className="relative w-full mt-2" style={{ height: imageHeight }}>
-            <AssetBlock
-              src={imageSrc}
-              alt={imageAlt}
-              className="object-contain"
-            />
-          </div>
+          imageHeight ? (
+            <div className="relative w-full mt-2" style={{ height: imageHeight }}>
+              <AssetBlock
+                src={imageSrc}
+                alt={imageAlt}
+                className="object-contain"
+                fill
+              />
+            </div>
+          ) : (
+            <div className="relative w-full mt-2">
+              <AssetBlock
+                src={imageSrc}
+                alt={imageAlt}
+              />
+            </div>
+          )
         )}
 
         {children}

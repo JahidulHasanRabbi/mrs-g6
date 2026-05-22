@@ -278,7 +278,7 @@ export default function CheckInBoard() {
   if (isLoading) {
     return (
       <section className="relative w-full px-2 sm:px-4">
-        <div className="relative w-full mx-auto" style={{ maxWidth: 475, minHeight: 400 }}>
+        <div className="relative w-full mx-auto" style={{ maxWidth: 380, minHeight: 400 }}>
           <div className="flex items-center justify-center h-full">
             <div className="text-[#60803C] text-lg">Loading check-in board...</div>
           </div>
@@ -300,12 +300,15 @@ export default function CheckInBoard() {
           delay: 0.08,
         }}
         style={{
-          maxWidth: 475,
+          maxWidth: 380,
           willChange: "transform, opacity",
         }}
       >
         <div className="relative w-full mt-2 sm:mt-4">
-          {/* Frame Background */}
+          {/* Frame Background — square aspect matches the day-card y%
+              positions so cards don't overlap at narrow widths. The parent
+              maxWidth cap (above) prevents the gap from inflating at wider
+              viewports. */}
           <div
             className="relative w-full"
             style={{
@@ -332,7 +335,7 @@ export default function CheckInBoard() {
                       key={d.day}
                       type="button"
                       onClick={() => onDayClick(d)}
-                      className={`absolute w-[35%] h-[30%] sm:w-[36%] sm:h-[30%] ${isChecked ? "grayscale opacity-60" : ""
+                      className={`@container absolute w-[35%] h-[30%] sm:w-[36%] sm:h-[30%] ${isChecked ? "grayscale opacity-60" : ""
                         }`}
                       style={{
                         left: `${d.x}%`,
@@ -388,7 +391,6 @@ export default function CheckInBoard() {
                           }}
                         >
                           <div
-                            className="text-sm sm:text-base"
                             style={{
                               fontFamily: '"Times New Roman"',
                               color: "green",
@@ -396,6 +398,7 @@ export default function CheckInBoard() {
                               fontWeight: 700,
                               lineHeight: "normal",
                               zIndex: 10,
+                              fontSize: "clamp(10px, 12cqi, 16px)",
                             }}
                           >
                             {d.reward}
@@ -403,15 +406,18 @@ export default function CheckInBoard() {
                         </div>
                       </div>
 
-                      {/* Day 7 Label */}
+                      {/* Day 7 Label — same fluid sizing as the other days. */}
                       <div
-                        className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 text-center text-lg "
+                        className="absolute left-1/2 transform -translate-x-1/2 text-center"
                         style={{
+                          bottom: "-12cqi",
                           fontFamily: '"Times New Roman"',
                           color: "#60803C",
                           fontStyle: "normal",
                           fontWeight: 700,
                           lineHeight: "normal",
+                          fontSize: "clamp(11px, 14cqi, 20px)",
+                          whiteSpace: "nowrap",
                         }}
                       >
                         {d.label}
@@ -426,7 +432,7 @@ export default function CheckInBoard() {
                     key={d.day}
                     type="button"
                     onClick={() => onDayClick(d)}
-                    className={`absolute w-[31%] h-[31%] ${isChecked ? "grayscale opacity-60" : ""
+                    className={`@container absolute w-[31%] h-[31%] ${isChecked ? "grayscale opacity-60" : ""
                       }`}
                     style={{
                       left: `${d.x}%`,
@@ -464,21 +470,21 @@ export default function CheckInBoard() {
                         }
                     }
                   >
-                    {/* Card Frame */}
-                    <div className="relative w-[120px] h-[130px] sm:w-[150px] sm:h-[150px]">
+                    {/* Card Frame — sizes proportionally to the parent
+                        motion.button via container queries so the cards
+                        scale with the frame at any viewport. */}
+                    <div className="relative w-full h-full">
                       <Image
                         src={HOME_ASSETS.dayCard1}
                         alt="Calendar frame"
                         fill
                         className="object-contain"
-                        sizes="80px"
+                        sizes="(max-width: 380px) 30vw, 120px"
                       />
 
                       {/* Content inside card */}
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <div
-                          className="relative w-[30px] h-[30px] sm:w-[40px] sm:h-[40px]"
-                        >
+                        <div className="relative w-[28%] aspect-square">
                           <Image
                             src={d.iconSrc}
                             alt="Reward"
@@ -488,11 +494,11 @@ export default function CheckInBoard() {
                           />
                         </div>
                         <div
-                          className="mt-1"
+                          className="mt-[3cqi]"
                           style={{
                             fontFamily: '"Times New Roman"',
                             color: "#FAD707",
-                            fontSize: "18px",
+                            fontSize: "clamp(10px, 15cqi, 18px)",
                             fontStyle: "normal",
                             fontWeight: 700,
                             lineHeight: "normal",
@@ -528,16 +534,19 @@ export default function CheckInBoard() {
                       )} */}
                     </div>
 
-                    {/* Day Label */}
+                    {/* Day Label — sized + offset via container queries so it
+                        fits between rows at every viewport without intruding. */}
                     <div
-                      className="absolute -bottom-7 sm:-bottom-4 left-1/2 transform -translate-x-1/2 text-center text-lg sm:text-xl"
+                      className="absolute left-1/2 transform -translate-x-1/2 text-center"
                       style={{
+                        bottom: "-12cqi",
                         fontFamily: '"Times New Roman"',
                         color: "#60803C",
                         fontStyle: "normal",
                         fontWeight: 700,
                         lineHeight: "normal",
-                        marginBottom: "10px",
+                        fontSize: "clamp(11px, 14cqi, 20px)",
+                        whiteSpace: "nowrap",
                       }}
                     >
                       {d.label}

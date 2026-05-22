@@ -159,7 +159,7 @@ const RewardsList = memo(function RewardsList() {
 
   if (isLoading) {
     return (
-      <div className="relative w-[400px] min-h-[820px] sm:w-[520px] sm:min-h-[1020px] mx-auto flex items-center justify-center">
+      <div className="relative w-full max-w-[400px] min-h-[400px] sm:max-w-[520px] mx-auto flex items-center justify-center">
         <LoadingState />
       </div>
     );
@@ -167,7 +167,7 @@ const RewardsList = memo(function RewardsList() {
 
   if (error) {
     return (
-      <div className="relative w-[400px] min-h-[820px] sm:w-[520px] sm:min-h-[1020px] mx-auto flex items-center justify-center">
+      <div className="relative w-full max-w-[400px] min-h-[400px] sm:max-w-[520px] mx-auto flex items-center justify-center">
         <ErrorDisplay message={error} />
       </div>
     );
@@ -175,7 +175,7 @@ const RewardsList = memo(function RewardsList() {
 
   return (
     <motion.div
-      className="relative w-[400px] sm:w-[520px] min-h-[820px] sm:min-h-[1020px] mx-auto"
+      className="relative w-full max-w-[400px] sm:max-w-[520px] mx-auto"
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
@@ -188,7 +188,7 @@ const RewardsList = memo(function RewardsList() {
         className="object-cover"
       />
 
-      <div className="relative flex flex-col items-center pt-32 px-10 pb-20">
+      <div className="relative flex flex-col items-center pt-20 px-6 pb-16">
         <motion.h2
           className="text-[36px] font-bold text-center mb-4"
           style={{ color: '#8B6914' }}
@@ -199,7 +199,7 @@ const RewardsList = memo(function RewardsList() {
           Rewards List
         </motion.h2>
 
-        <div className="flex flex-col gap-3 w-full max-w-[300px]">
+        <div className="flex flex-col gap-3 w-full max-w-[340px]">
           {itemRewards.map((reward, index) => (
             <RewardItem 
               key={reward.uuid} 

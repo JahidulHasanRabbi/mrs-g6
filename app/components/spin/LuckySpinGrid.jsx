@@ -5,6 +5,7 @@ import { motion, useMotionValue, useSpring } from "framer-motion";
 import { useCallback, useEffect, useRef, useState, memo, useMemo } from "react";
 import { SPIN_ASSETS } from "./spinAssets";
 import { usePerformanceOptimization } from "../../hooks/usePerformanceOptimization";
+import FluidFrame from "../ui/FluidFrame";
 
 const GRID_AREA = [
   "col-start-1 row-start-1",
@@ -435,12 +436,13 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
 
   return (
     <motion.div
-      className="relative w-[376px] h-[348px] mx-auto"
+      className="w-full"
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
       style={{ willChange: "transform, opacity" }}
     >
+      <FluidFrame designWidth={376} designHeight={348}>
       <Image
         alt="Spin Grid Background"
         src={SPIN_ASSETS.background}
@@ -500,6 +502,7 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
           </motion.div>
         </motion.div>
       </div>
+      </FluidFrame>
     </motion.div>
   );
 });

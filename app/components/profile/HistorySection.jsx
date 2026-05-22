@@ -408,7 +408,7 @@ export default function HistorySection() {
 
   return (
     <>
-      <div className="mx-auto mt-4 flex w-[336px] justify-between px-[8px] min-[465px]:w-[370px]">
+      <div className="mx-auto mt-4 flex w-full max-w-[336px] justify-between px-[8px] min-[465px]:max-w-[370px]">
         <HistoryButton
           title="Token History"
           onClick={() => setActiveHistory("token")}

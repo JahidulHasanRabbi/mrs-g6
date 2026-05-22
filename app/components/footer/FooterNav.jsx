@@ -33,8 +33,12 @@ const FooterNavItem = memo(({ item, isActive, onAction }) => {
       whileTap={{ scale: 0.95 }}
     >
       <motion.div
-        className="relative"
-        style={{ width: `${width}px`, height: `${height}px` }}
+        className="relative flex items-center justify-center"
+        style={
+          isCenter
+            ? { width: `${width}px`, height: `${height}px` }
+            : { height: `${height}px` }
+        }
         whileHover={!isCenter ? {
           rotate: [0, -10, 10, -10, 0],
           transition: { duration: 0.5 }
@@ -47,7 +51,11 @@ const FooterNavItem = memo(({ item, isActive, onAction }) => {
           height={height}
           className="object-contain"
           priority={isCenter}
-          style={{ height: "auto" }}
+          style={
+            isCenter
+              ? { width: "100%", height: "100%" }
+              : { height: `${height}px`, width: "auto" }
+          }
         />
       </motion.div>
       <motion.p

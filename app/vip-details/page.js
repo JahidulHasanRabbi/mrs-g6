@@ -87,7 +87,7 @@ export default function VipDetailsPage() {
           <>
             {/* VIP Level Chain — breaks out of most of page px-4 but keeps a small inset
                 so the leftmost/rightmost badges don't touch the screen edge. */}
-            <div className="mt-8 relative -mx-4">
+            <div className="mt-2 relative -mx-4">
               <VipLevelChain
                 selectedLevel={selectedLevel}
                 onLevelSelect={setSelectedLevel}
@@ -96,7 +96,7 @@ export default function VipDetailsPage() {
             </div>
 
             {/* Privileges Carousel — breaks out of page px-4 so prev/next cards peek further */}
-            <div className="mt-12 mb-8 relative -mx-4">
+            <div className="mt-2 mb-8 relative -mx-4">
               <PrivilegesCarousel
                 tiers={displayTiers}
                 activeName={selectedLevel}

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { PROFILE_ASSETS } from "./profileAssets";
+import FluidFrame from "../ui/FluidFrame";
 
 const Row = ({ index, label, onClick, top, complete }) => {
   return (
@@ -72,12 +73,13 @@ export default function EditProfileSection({
 
   return (
     <motion.div
-      className="relative mx-auto w-[359px] h-[268px] min-[465px]:w-[395px] min-[465px]:h-[295px]"
+      className="mx-auto w-full"
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.55, ease: "easeOut", delay: 0.1 }}
     >
-      <div className="absolute left-1/2 top-0 -translate-x-1/2 origin-top w-[366px] h-[268px] scale-[1] min-[465px]:scale-[1.1]">
+      <FluidFrame designWidth={403} designHeight={295}>
+      <div className="absolute left-1/2 top-0 -translate-x-1/2 origin-top w-[366px] h-[268px] scale-[1.1]">
         <Image alt="" src={PROFILE_ASSETS.editProfileBg} fill className="object-cover" />
 
         <motion.p
@@ -100,6 +102,7 @@ export default function EditProfileSection({
           />
         ))}
       </div>
+      </FluidFrame>
     </motion.div>
   );
 }
