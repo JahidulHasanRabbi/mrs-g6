@@ -121,7 +121,9 @@ export function mapVipTiers(apiResponse) {
     upgrade_free_token: tier.upgrade_bonus, // Map upgrade_bonus to upgrade_free_token for display
     upgrade_bonus: tier.upgrade_bonus,
     birthday_bonus: tier.birthday_bonus,
-    mart_tier: tier.mart_tier
+    mart_tier: tier.mart_tier,
+    rank_icon: tier.rank_icon || null,
+    level_icon: tier.level_icon || null,
   }));
 }
 

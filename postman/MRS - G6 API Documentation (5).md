@@ -312,6 +312,9 @@ Output
 | **7** | birthday\_bonus | int |  |
 | **8** | check\_in\_token | int |  |
 | **9** | mart\_tier | str |  |
+| **10** | rank\_icon | Image | Can be null |
+| **11** | level\_icon | Image | Can be null |
+| **12** | level\_image | Int |  |
 
 ## MRS VIP TIER \- POST/PUT {#mrs-vip-tier---post/put}
 
@@ -328,6 +331,9 @@ Input
 | **5** | birthday\_bonus | Int |  |
 | **6** | check\_in\_token | Int |  |
 | **7** | mart\_tier\_uuid | UUID | Check/redemption/redemption-tier/ |
+| **8** | rank\_icon | Image | Can be null |
+| **9** | level\_icon | Image | Can be null |
+| **10** | level\_order | Int |  |
 
 ## MRS VIP TIER \- ARCHIVE {#mrs-vip-tier---archive}
 
@@ -353,7 +359,7 @@ Output
 | **1** | access | String |  |
 | **2** | refresh | String |  |
 | **3** | member\_uuid | UUID |  |
-| **4** | tokens\_obtained | Int |  |
+| **4** | station\_url | Url |  |
 
 ## HOME PAGE {#home-page}
 
@@ -1417,6 +1423,14 @@ Data output
 | **3** | icon | Image | Yes |  |
 | **4** | display\_order | Int | No |  |
 
+## Wallet Floating Menus \- POST
+
+/third-party/station-floating-menu/ POST  
+Input
+
+1. Special Code  
+2. userId
+
 ## Claim Eligibility \- GET
 
 /third-party/\<user\_id\>/bonus\_eligibility/\<special\_code\>/ GET  
@@ -1429,6 +1443,8 @@ Data output
 | **3** | monthly\_bonus | Decimal or Bool | No | If claimable, returns Decimal, if not, returns False |
 | **4** | current\_xp | Decimal | No |  |
 | **5** | tier\_uuid | uuid | No |  |
+| **6** | vip\_rank\_image | Image | Yes |  |
+| **7** | vip\_level\_image | Image | Yes |  |
 
 ## Claim VIP
 

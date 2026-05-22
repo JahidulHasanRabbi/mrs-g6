@@ -24,7 +24,7 @@ export default function PrivilegesCard({ level = "Bronze", tierData = null, tier
   }
 
   const rankIconKey = (tierIndex % 9) + 1;
-  const rankIcon = VIP_DETAILS_ASSETS.rankIcons[rankIconKey];
+  const rankIcon = tierData?.level_icon || VIP_DETAILS_ASSETS.rankIcons[rankIconKey];
 
   const stats = [
     { label: "Lifetime Deposit", value: tierData?.lifetime_deposit_required != null ? `RM ${tierData.lifetime_deposit_required}` : "—" },
@@ -56,14 +56,22 @@ export default function PrivilegesCard({ level = "Bronze", tierData = null, tier
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
         >
-          <Image
-            alt={`${level} Rank Icon`}
-            src={rankIcon}
-            fill
-            className="object-contain drop-shadow-[0_0_14px_rgba(252,208,100,0.5)]"
-            priority={isActive}
-            sizes="150px"
-          />
+          {typeof rankIcon === 'string' && rankIcon.startsWith('http') ? (
+            <img
+              alt={`${level} Rank Icon`}
+              src={rankIcon}
+              className="absolute inset-0 w-full h-full object-contain drop-shadow-[0_0_14px_rgba(252,208,100,0.5)]"
+            />
+          ) : (
+            <Image
+              alt={`${level} Rank Icon`}
+              src={rankIcon}
+              fill
+              className="object-contain drop-shadow-[0_0_14px_rgba(252,208,100,0.5)]"
+              priority={isActive}
+              sizes="150px"
+            />
+          )}
         </motion.div>
 
         {/* Stats list */}

@@ -84,7 +84,7 @@ export default function VipLevelChain({ selectedLevel, onLevelSelect, vipTiers =
     return {
       ...defaultLevel,
       name: tier.name,
-      badge: getBadgeForTier(tier.name, index),
+      badge: tier.rank_icon || getBadgeForTier(tier.name, index),
     };
   });
 
@@ -160,12 +160,20 @@ export default function VipLevelChain({ selectedLevel, onLevelSelect, vipTiers =
                 animate={{ rotate: rotation }}
                 transition={{ type: "spring", stiffness: 220, damping: 32 }}
               >
-                <Image
-                  alt={level.name}
-                  src={level.badge}
-                  fill
-                  className={`object-contain transition-all duration-300 ${!isSelected ? "grayscale-[0.7] opacity-90" : ""}`}
-                />
+                {typeof level.badge === 'string' && level.badge.startsWith('http') ? (
+                  <img
+                    alt={level.name}
+                    src={level.badge}
+                    className={`absolute inset-0 w-full h-full object-contain transition-all duration-300 ${!isSelected ? "grayscale-[0.7] opacity-90" : ""}`}
+                  />
+                ) : (
+                  <Image
+                    alt={level.name}
+                    src={level.badge}
+                    fill
+                    className={`object-contain transition-all duration-300 ${!isSelected ? "grayscale-[0.7] opacity-90" : ""}`}
+                  />
+                )}
               </motion.div>
               <p
                 className={`text-center text-[#e9af41] font-bold font-['Times_New_Roman'] mt-2 transition-all leading-tight uppercase ${isSelected ? "scale-110" : ""}`}
