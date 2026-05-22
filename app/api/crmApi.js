@@ -48,6 +48,28 @@ export async function getCrmActivityLog(params = {}) {
   return await apiRequest(`${ENDPOINTS.CRM.ACTIVITY_LOG}${qs}`, { method: 'GET' }, true, 'admin');
 }
 
+export async function getCrmPermissions() {
+  return await apiRequest(ENDPOINTS.CRM.PERMISSIONS, { method: 'GET' }, true, 'admin');
+}
+
+export async function createCrmRole(data) {
+  return await apiRequest(ENDPOINTS.CRM.ROLES, {
+    method: 'POST',
+    body: data
+  }, true, 'admin');
+}
+
+export async function updateCrmRole(uuid, data) {
+  return await apiRequest(ENDPOINTS.CRM.ROLE_SINGLE(uuid), {
+    method: 'PUT',
+    body: data
+  }, true, 'admin');
+}
+
+export async function archiveCrmRole(uuid) {
+  return await apiRequest(ENDPOINTS.CRM.ROLE_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
 // ───────────────────────── Member Profile ─────────────────────────
 
 // GET /crm-members/members/  (paginated)

@@ -125,9 +125,8 @@ export default function MemberProfilePage() {
 
   const financialInfo = {
     "Total Sales": formatCurrency(data?.financial_info?.total_sales),
-    "Total Withdrawal": formatCurrency(data?.financial_info?.total_withdrawal),
+    "Total Withdrawal": formatCurrency(customer?.total_withdrawal),
     "Total Win/lose": formatCurrency(data?.financial_info?.total_win_lose),
-    "Total Bonus": formatCurrency(data?.financial_info?.total_bonus),
     "Total Sales Ticket": show(data?.financial_info?.total_sales_ticket),
     ARPU: formatCurrency(data?.financial_info?.arpu),
     "Average Deposit": formatCurrency(data?.financial_info?.average_deposit),

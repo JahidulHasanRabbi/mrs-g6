@@ -8,9 +8,11 @@ import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
 import { ASSETS, GRAD_DARK, GRAD_GOLD } from "../../../components/admin/retention/constants";
 import {
   getCrmMembers,
+  getCrmUsers,
   getPrioritySummary,
   refreshCrmMembers,
 } from "../../../api/crmApi";
+import { getVipTiers } from "../../../api/adminApi";
 
 // Member Alert page — Figma 69:340. "Overview" KPI strip + Member Follow Up
 // list. The list is the same shape as /admin/retention/members but with a
@@ -19,8 +21,6 @@ import {
 const PAGE_SIZE = 7;
 
 const PRIORITY_OPTIONS = ["High", "Medium", "Low"];
-const VIP_OPTIONS = ["VIP 1", "VIP 2", "VIP 3", "VIP 4", "VIP 5"];
-const RETENTION_OPTIONS = ["Sarah", "John", "Michael", "Emma", "Linda"];
 const BRAND_OPTIONS = ["AB", "EP", "KG", "LV", "UB", "N1"];
 
 // Map UI label → API integer code. The backend hasn't published the priority
@@ -235,6 +235,26 @@ function FollowUpList() {
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [vipTiers, setVipTiers] = useState([]);
+  const [pics, setPics] = useState([]);
+
+  useEffect(() => {
+    getVipTiers()
+      .then((res) => {
+        const list = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        setVipTiers(list);
+      })
+      .catch(() => setVipTiers([]));
+  }, []);
+
+  useEffect(() => {
+    getCrmUsers({ page: 1, page_size: 100 })
+      .then((res) => {
+        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        setPics(results);
+      })
+      .catch(() => setPics([]));
+  }, []);
 
   // Reset to page 1 whenever filters change so the user isn't stranded on a
   // page that no longer exists after the result set shrinks.
@@ -254,16 +274,16 @@ function FollowUpList() {
     const fetchRows = async () => {
       setLoading(true);
       try {
+        const retentionUuid = retention
+          ? pics.find((u) => (u.full_name || u.username) === retention)?.uuid
+          : undefined;
         const res = await getCrmMembers({
           page,
           page_size: PAGE_SIZE,
           brand: brand || undefined,
           priority: priority ? PRIORITY_TO_INT[priority] : undefined,
           vip_level: vip ? VIP_TO_INT(vip) : undefined,
-          // `retention` here is filter by PIC name in the design; backend
-          // accepts int. Until we have a PIC list endpoint, leave as-is and
-          // let the user-typed search field do the heavy lifting.
-          retention: undefined,
+          retention: retentionUuid || undefined,
           search: debouncedQuery || undefined,
         });
         if (cancelled) return;
@@ -283,7 +303,7 @@ function FollowUpList() {
     return () => {
       cancelled = true;
     };
-  }, [page, brand, priority, vip, retention, debouncedQuery]);
+  }, [page, brand, priority, vip, retention, pics, debouncedQuery]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -308,8 +328,8 @@ function FollowUpList() {
         <div className="flex flex-wrap items-center gap-3">
           <FilterPill label="Brand" value={brand} onChange={setBrand} options={BRAND_OPTIONS} />
           <FilterPill label="Priority" value={priority} onChange={setPriority} options={PRIORITY_OPTIONS} />
-          <FilterPill label="VIP Level" value={vip} onChange={setVip} options={VIP_OPTIONS} />
-          <FilterPill label="All Retention" value={retention} onChange={setRetention} options={RETENTION_OPTIONS} />
+          <FilterPill label="VIP Level" value={vip} onChange={setVip} options={vipTiers.map((t) => t.name || t.tier_name || t.vip_tier || t.level || t.title).filter(Boolean)} />
+          <FilterPill label="All Retention" value={retention} onChange={setRetention} options={pics.map((u) => u.full_name || u.username).filter(Boolean)} />
           <SearchInput value={query} onChange={setQuery} />
         </div>
       </header>

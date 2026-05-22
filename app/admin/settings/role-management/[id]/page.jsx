@@ -1,100 +1,135 @@
 "use client";
 
-import { use, useEffect, useMemo, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  GRAD_DARK,
   GRAD_GOLD,
 } from "../../../../components/admin/retention/constants";
-
-// Role Setting (Add / Edit) — Figma 168:2454. Two-column toggle grid for
-// MRS Access and Retention System Access. Same chrome as the rest of
-// /admin/settings/* (auth guard + RetentionTopBar via the settings layout).
-//
-// Note on alignment: the Figma lays each toggle out as `[label] [toggle]`
-// with only an 8px gap, so labels of different widths leave toggles at
-// different horizontal positions and the column ends up ragged. We fix this
-// by giving every row `justify-between`, so the toggle always pins to the
-// right edge of the 317px column regardless of label length.
+import {
+  archiveCrmRole,
+  createCrmRole,
+  getCrmPermissions,
+  getCrmRoles,
+  updateCrmRole,
+} from "../../../../api/crmApi";
 
 const PAGE_WIDTH_MAX = 1112;
 const COL_WIDTH = 317.33;
-
-// Module-level constants — match the existing user-access pattern and
-// avoid re-allocating these arrays on every render (per Vercel React
-// guidelines on hoisting non-reactive data).
-const MRS_ACCESS_FIELDS = [
-  { id: "spin",            label: "Spin Panel" },
-  { id: "memberList",      label: "Member List" },
-  { id: "pointsMall",      label: "Points Redemption Mall" },
-  { id: "pointsGift",      label: "Points Redemption Gift" },
-  { id: "prizeSettings",   label: "Prize Settings" },
-  { id: "vipPanel",        label: "VIP Membership Panel" },
-  { id: "userLogs",        label: "User Logs" },
-  { id: "dailyLimits",     label: "Daily Limits" },
-  { id: "framesSettings",  label: "Frames Settings" },
-  { id: "checkinRewards",  label: "Check-in Rewards" },
-  { id: "reports",         label: "Reports" },
-  { id: "userManagement",  label: "User Management" },
-  { id: "notification",    label: "Notification" },
-];
-
-const RETENTION_ACCESS_FIELDS = [
-  { id: "hidePhone",        label: "Hide Member Phone Numbers" },
-  { id: "noOtherRetention", label: "No Access to Other Retention" },
-  { id: "assignedOnly",     label: "Only Access Other Assigned Members" },
-  { id: "viewWinLossOnly",  label: "View Own Members Deposit & Win/Loss Only" },
-];
-
-const STATUS_OPTIONS = ["Active", "Inactive"];
-
-// Mock store keyed by id — when wired up this becomes an `/admin/roles/:id`
-// fetch. The "new" id falls through to defaults so Add Role and Edit can
-// share the exact same view.
-const MOCK_ROLE_LOOKUP = {
-  "1": { name: "Retention",            status: "Active" },
-  "2": { name: "Lucky Spin Manager",   status: "Active" },
-  "3": { name: "Prize Moderator",      status: "Active" },
-  "4": { name: "Game Master",          status: "Active" },
-  "5": { name: "Supervisor Retention", status: "Inactive" },
-};
-
-const DEFAULT_TOGGLE_STATE = (() => {
-  const state = {};
-  for (const f of MRS_ACCESS_FIELDS) state[f.id] = true;
-  for (const f of RETENTION_ACCESS_FIELDS) state[f.id] = true;
-  return state;
-})();
+const ROLE_PAGE_SIZE = 100;
 
 export default function RoleSettingPage({ params }) {
-  // Next 16 passes route params as a Promise — `use()` unwraps it so the
-  // component can stay a leaf without an effect.
   const { id } = use(params);
   const isNew = id === "new";
   const router = useRouter();
 
-  const initialRole = useMemo(() => {
-    if (isNew) return { name: "", status: "Active" };
-    return MOCK_ROLE_LOOKUP[id] ?? { name: "", status: "Active" };
-  }, [id, isNew]);
-
-  const [name, setName] = useState(initialRole.name);
-  const [status, setStatus] = useState(initialRole.status);
-  const [mrsAccess, setMrsAccess] = useState(true);
-  const [retentionAccess, setRetentionAccess] = useState(true);
-  const [toggles, setToggles] = useState(DEFAULT_TOGGLE_STATE);
+  const [name, setName] = useState("");
+  const [permissionGroups, setPermissionGroups] = useState([]);
+  const [selectedPermissions, setSelectedPermissions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [showDeletePrompt, setShowDeletePrompt] = useState(false);
 
-  const updateToggle = (key, next) =>
-    setToggles((prev) => ({ ...prev, [key]: next }));
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadRoleForm() {
+      setLoading(true);
+      setLoadError(false);
+
+      try {
+        const [permissionsRes, role] = await Promise.all([
+          getCrmPermissions(),
+          isNew ? Promise.resolve(null) : fetchRoleByUuid(id),
+        ]);
+
+        if (cancelled) return;
+
+        const groups = normalizePermissionGroups(permissionsRes);
+        setPermissionGroups(groups);
+
+        if (role) {
+          setName(role.name || "");
+          setSelectedPermissions(Array.isArray(role.permissions) ? role.permissions : []);
+        } else if (isNew) {
+          setName("");
+          setSelectedPermissions([]);
+        } else {
+          setLoadError(true);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        console.error("[role-setting] load failed", err);
+        setLoadError(true);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    loadRoleForm();
+    return () => { cancelled = true; };
+  }, [id, isNew]);
 
   const goBack = () => router.push("/admin/settings/role-management");
 
-  const confirmDelete = () => {
-    // Mock — eventually call adminApi.deleteRole(id). For now, close the
-    // prompt and navigate back to the list.
-    setShowDeletePrompt(false);
-    goBack();
+  const updatePermission = (key, checked) => {
+    setSelectedPermissions((prev) => {
+      const set = new Set(prev);
+      if (checked) set.add(key);
+      else set.delete(key);
+      return Array.from(set);
+    });
+  };
+
+  const updateGroup = (group, checked) => {
+    setSelectedPermissions((prev) => {
+      const set = new Set(prev);
+      for (const permission of group.permissions) {
+        if (checked) set.add(permission.key);
+        else set.delete(permission.key);
+      }
+      return Array.from(set);
+    });
+  };
+
+  const saveRole = async () => {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      alert("Cannot save: role name is required.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const payload = {
+        name: trimmedName,
+        permissions: selectedPermissions,
+      };
+
+      if (isNew) await createCrmRole(payload);
+      else await updateCrmRole(id, payload);
+
+      goBack();
+    } catch (err) {
+      console.error("[role-setting] save failed", err);
+      alert("Failed to save role.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const confirmDelete = async () => {
+    setSaving(true);
+    try {
+      await archiveCrmRole(id);
+      setShowDeletePrompt(false);
+      goBack();
+    } catch (err) {
+      console.error("[role-setting] archive failed", err);
+      alert("Failed to delete role.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -105,93 +140,115 @@ export default function RoleSettingPage({ params }) {
           className="flex flex-col items-stretch rounded-[16px] bg-[#05060a] p-6 md:p-10 shadow-[0_0_1.5px_#dea220]"
           style={{ maxWidth: PAGE_WIDTH_MAX }}
         >
-          <div className="flex flex-col gap-6 w-full">
-            <h2
-              className="bg-clip-text text-transparent font-bold whitespace-nowrap"
-              style={{
-                backgroundImage: GRAD_GOLD,
-                fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-                fontSize: "26px",
-                lineHeight: "39px",
-                letterSpacing: "-2px",
-              }}
-            >
-              {isNew ? "Add Role" : "Edit Role"}
-            </h2>
+          {loading ? (
+            <div className="py-12 text-center text-[12px] text-white/40">Loading...</div>
+          ) : loadError ? (
+            <div className="py-12 text-center text-[12px] text-red-400">Failed to load role settings.</div>
+          ) : (
+            <div className="flex flex-col gap-6 w-full">
+              <h2
+                className="bg-clip-text text-transparent font-bold whitespace-nowrap"
+                style={{
+                  backgroundImage: GRAD_GOLD,
+                  fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+                  fontSize: "26px",
+                  lineHeight: "39px",
+                  letterSpacing: "-2px",
+                }}
+              >
+                {isNew ? "Add Role" : "Edit Role"}
+              </h2>
 
-            <div className="flex flex-col gap-6 md:flex-row md:gap-10 md:flex-wrap">
-              <FieldColumn>
-                <FieldLabel>Role Name</FieldLabel>
-                <TextInput
-                  value={name}
-                  onChange={setName}
-                  placeholder="Enter role name"
-                />
-              </FieldColumn>
-              <FieldColumn>
-                <FieldLabel>Status</FieldLabel>
-                <SelectInput
-                  value={status}
-                  onChange={setStatus}
-                  options={STATUS_OPTIONS}
-                />
-              </FieldColumn>
-            </div>
-
-            <div className="flex flex-col gap-6 md:flex-row md:gap-10 md:items-start md:flex-wrap">
-              <FieldColumn>
-                <SectionToggleRow
-                  label="MRS Access"
-                  checked={mrsAccess}
-                  onChange={setMrsAccess}
-                />
-                {MRS_ACCESS_FIELDS.map((field) => (
-                  <ToggleRow
-                    key={field.id}
-                    label={field.label}
-                    checked={!!toggles[field.id]}
-                    disabled={!mrsAccess}
-                    onChange={(v) => updateToggle(field.id, v)}
+              <div className="flex flex-col gap-6 md:flex-row md:gap-10 md:flex-wrap">
+                <FieldColumn>
+                  <FieldLabel>Role Name</FieldLabel>
+                  <TextInput
+                    value={name}
+                    onChange={setName}
+                    placeholder="Enter role name"
                   />
-                ))}
-              </FieldColumn>
+                </FieldColumn>
+              </div>
 
-              <FieldColumn>
-                <SectionToggleRow
-                  label="Retention System Access"
-                  checked={retentionAccess}
-                  onChange={setRetentionAccess}
-                />
-                {RETENTION_ACCESS_FIELDS.map((field) => (
-                  <ToggleRow
-                    key={field.id}
-                    label={field.label}
-                    checked={!!toggles[field.id]}
-                    disabled={!retentionAccess}
-                    onChange={(v) => updateToggle(field.id, v)}
-                  />
-                ))}
-              </FieldColumn>
+              <div className="flex flex-col gap-6 md:flex-row md:gap-10 md:items-start md:flex-wrap">
+                {permissionGroups.map((group) => {
+                  const keys = group.permissions.map((permission) => permission.key);
+                  const checkedCount = keys.filter((key) => selectedPermissions.includes(key)).length;
+                  const allChecked = keys.length > 0 && checkedCount === keys.length;
+
+                  return (
+                    <FieldColumn key={group.name}>
+                      <SectionToggleRow
+                        label={group.name}
+                        checked={allChecked}
+                        onChange={(checked) => updateGroup(group, checked)}
+                      />
+                      {group.permissions.map((permission) => (
+                        <ToggleRow
+                          key={permission.key}
+                          label={permission.label || permission.key}
+                          checked={selectedPermissions.includes(permission.key)}
+                          onChange={(checked) => updatePermission(permission.key, checked)}
+                        />
+                      ))}
+                    </FieldColumn>
+                  );
+                })}
+              </div>
+
+              <FooterActions
+                isNew={isNew}
+                saving={saving}
+                onBack={goBack}
+                onDelete={() => setShowDeletePrompt(true)}
+                onSave={saveRole}
+              />
             </div>
-
-            <FooterActions
-              isNew={isNew}
-              onBack={goBack}
-              onDelete={() => setShowDeletePrompt(true)}
-              onSave={goBack}
-            />
-          </div>
+          )}
         </div>
       </div>
 
       {showDeletePrompt && (
         <DeleteRoleModal
+          saving={saving}
           onCancel={() => setShowDeletePrompt(false)}
           onConfirm={confirmDelete}
         />
       )}
     </>
   );
+}
+
+async function fetchRoleByUuid(uuid) {
+  const roles = [];
+  let page = 1;
+  let hasNext = true;
+
+  while (hasNext) {
+    const res = await getCrmRoles({ page, page_size: ROLE_PAGE_SIZE });
+    const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+    roles.push(...results);
+    hasNext = Boolean(res?.next) && results.length > 0;
+    page += 1;
+  }
+
+  return roles.find((role) => role.uuid === uuid) || null;
+}
+
+function normalizePermissionGroups(response) {
+  if (!response || Array.isArray(response) || typeof response !== "object") return [];
+
+  return Object.entries(response).map(([name, permissions]) => ({
+    name,
+    permissions: Array.isArray(permissions)
+      ? permissions
+          .filter((permission) => permission?.key)
+          .map((permission) => ({
+            key: permission.key,
+            label: permission.label || permission.key,
+          }))
+      : [],
+  }));
 }
 
 function PageHeader() {
@@ -218,11 +275,6 @@ function PageHeader() {
   );
 }
 
-// ── Layout primitives ───────────────────────────────────────────────────
-
-// Fixed-width column on md+, full-width on mobile. The fixed width is what
-// makes every toggle in the column line up — combined with `justify-between`
-// on the rows, the knob always lands flush with the column's right edge.
 function FieldColumn({ children }) {
   return (
     <div
@@ -258,33 +310,6 @@ function TextInput({ value, onChange, placeholder }) {
   );
 }
 
-function SelectInput({ value, onChange, options }) {
-  return (
-    <div className="relative w-full">
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="appearance-none w-full rounded-[8px] border border-[#fbeed2] bg-transparent pl-4 pr-10 py-3 text-[12px] font-medium text-white focus:outline-none focus:border-[#eaad2c] cursor-pointer"
-        style={{ fontFamily: "Inter, sans-serif", lineHeight: "18px" }}
-      >
-        {options.map((opt) => (
-          <option key={opt} value={opt} className="bg-[#05060a] text-white">
-            {opt}
-          </option>
-        ))}
-      </select>
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#eaad2c]"
-      >
-        <ChevronDownIcon />
-      </span>
-    </div>
-  );
-}
-
-// Section header toggle (MRS Access / Retention System Access). Larger 46px
-// track and 20px knob per Figma B-1 spec.
 function SectionToggleRow({ label, checked, onChange }) {
   return (
     <div className="flex w-full items-center justify-between py-3">
@@ -299,16 +324,9 @@ function SectionToggleRow({ label, checked, onChange }) {
   );
 }
 
-// Sub-field row. Always `justify-between` so the toggle pins to the column's
-// right edge — this is the alignment fix vs the Figma's `gap-[8px]` layout
-// where labels of varying widths pushed toggles around horizontally.
-function ToggleRow({ label, checked, onChange, disabled }) {
+function ToggleRow({ label, checked, onChange }) {
   return (
-    <div
-      className={`flex w-full items-center justify-between gap-2 ${
-        disabled ? "opacity-40" : ""
-      }`}
-    >
+    <div className="flex w-full items-center justify-between gap-2">
       <span
         className="text-[12px] font-medium text-white leading-[18px]"
         style={{ fontFamily: "Inter, sans-serif" }}
@@ -320,15 +338,11 @@ function ToggleRow({ label, checked, onChange, disabled }) {
         checked={checked}
         onChange={onChange}
         ariaLabel={label}
-        disabled={disabled}
       />
     </div>
   );
 }
 
-// Two-size toggle. `lg` matches the section header (46×24, 20px knob),
-// `sm` matches the sub-field rows (32×17, 13px knob). Knob position is
-// computed from track width so the math stays correct if sizes change.
 function Toggle({ size = "sm", checked, onChange, ariaLabel, disabled }) {
   const isLarge = size === "lg";
   const trackW = isLarge ? 46 : 32;
@@ -371,25 +385,17 @@ function Toggle({ size = "sm", checked, onChange, ariaLabel, disabled }) {
   );
 }
 
-// ── Footer actions ──────────────────────────────────────────────────────
-
-function FooterActions({ isNew, onBack, onDelete, onSave }) {
+function FooterActions({ isNew, saving, onBack, onDelete, onSave }) {
   return (
     <div className="flex flex-wrap items-center justify-end gap-4 pt-2">
-      <ActionButton variant="back" onClick={onBack} />
-      {!isNew && <ActionButton variant="delete" onClick={onDelete} />}
-      <ActionButton variant="save" onClick={onSave} />
+      <ActionButton variant="back" onClick={onBack} disabled={saving} />
+      {!isNew && <ActionButton variant="delete" onClick={onDelete} disabled={saving} />}
+      <ActionButton variant="save" onClick={onSave} disabled={saving} />
     </div>
   );
 }
 
-// ── Delete Role modal — Figma 271:9782 ──────────────────────────────────
-
-// Confirmation prompt opened by the footer Delete button. "Back" closes
-// the modal (returns to the form unchanged); "Delete" runs onConfirm —
-// which today does the mock close+redirect, but is the hook for the real
-// adminApi.deleteRole call once the backend lands.
-function DeleteRoleModal({ onCancel, onConfirm }) {
+function DeleteRoleModal({ saving, onCancel, onConfirm }) {
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape") onCancel();
@@ -434,13 +440,14 @@ function DeleteRoleModal({ onCancel, onConfirm }) {
             className="mb-8 max-w-[320px] px-4 text-center text-[12px] font-medium text-[#fbeed2]"
             style={{ fontFamily: "Inter, sans-serif", lineHeight: "18px" }}
           >
-            The role and its Retention assignments will be deleted
+            This role will be archived.
           </p>
           <div className="flex w-full items-center justify-between gap-4">
             <button
               type="button"
               onClick={onCancel}
-              className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#f2cb7a] bg-transparent px-6 py-2 text-[14px] font-semibold text-[#fbeed2] transition hover:bg-white/5"
+              disabled={saving}
+              className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#f2cb7a] bg-transparent px-6 py-2 text-[14px] font-semibold text-[#fbeed2] transition hover:bg-white/5 disabled:opacity-50"
               style={{ letterSpacing: "-1px" }}
             >
               <ArrowLeftIcon />
@@ -449,7 +456,8 @@ function DeleteRoleModal({ onCancel, onConfirm }) {
             <button
               type="button"
               onClick={onConfirm}
-              className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#fb3748] bg-[#d00416] px-6 py-2 text-[14px] font-semibold text-[#fbeed2] transition hover:brightness-110"
+              disabled={saving}
+              className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#fb3748] bg-[#d00416] px-6 py-2 text-[14px] font-semibold text-[#fbeed2] transition hover:brightness-110 disabled:opacity-50"
               style={{ letterSpacing: "-1px" }}
             >
               <TrashIcon />
@@ -484,13 +492,14 @@ function LargeTrashIcon() {
   );
 }
 
-function ActionButton({ variant, onClick }) {
+function ActionButton({ variant, onClick, disabled }) {
   if (variant === "back") {
     return (
       <button
         type="button"
         onClick={onClick}
-        className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#f2cb7a] bg-transparent px-6 py-2 text-[14px] font-semibold text-[#fbeed2] transition hover:bg-white/5"
+        disabled={disabled}
+        className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#f2cb7a] bg-transparent px-6 py-2 text-[14px] font-semibold text-[#fbeed2] transition hover:bg-white/5 disabled:opacity-50"
         style={{ letterSpacing: "-1px" }}
       >
         <ArrowLeftIcon />
@@ -503,7 +512,8 @@ function ActionButton({ variant, onClick }) {
       <button
         type="button"
         onClick={onClick}
-        className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#fb3748] bg-[#d00416] px-6 py-2 text-[14px] font-semibold text-[#fbeed2] transition hover:brightness-110"
+        disabled={disabled}
+        className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#fb3748] bg-[#d00416] px-6 py-2 text-[14px] font-semibold text-[#fbeed2] transition hover:brightness-110 disabled:opacity-50"
         style={{ letterSpacing: "-1px" }}
       >
         <TrashIcon />
@@ -515,32 +525,13 @@ function ActionButton({ variant, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold text-[#141828] transition hover:brightness-110"
+      disabled={disabled}
+      className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold text-[#141828] transition hover:brightness-110 disabled:opacity-50"
       style={{ backgroundImage: GRAD_GOLD, letterSpacing: "-1px" }}
     >
       <CheckIcon />
       <span>Save</span>
     </button>
-  );
-}
-
-// ── Icons ───────────────────────────────────────────────────────────────
-
-function ChevronDownIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
   );
 }
 

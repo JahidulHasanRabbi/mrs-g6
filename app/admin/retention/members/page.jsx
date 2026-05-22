@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { getCrmMembers } from "../../../api/crmApi";
-import { getStationList } from "../../../api/adminApi";
+import { getCrmMembers, getCrmUsers } from "../../../api/crmApi";
+import { getStationList, getVipTiers } from "../../../api/adminApi";
 import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
 
 const A = "/assets/admin/pic-dashboard";
@@ -12,8 +12,6 @@ const GRAD_DARK = "linear-gradient(178deg, #141828 0%, #333333 99.7%)";
 const PAGE_SIZE = 7;
 
 const PRIORITY_OPTIONS = ["High", "Medium", "Low"];
-const VIP_OPTIONS = ["VIP 1", "VIP 2", "VIP 3", "VIP 4", "VIP 5"];
-const PIC_OPTIONS = ["Sarah", "John", "Michael", "Emma", "Linda"];
 
 // UI label → API integer.
 const PRIORITY_TO_INT = { High: 1, Medium: 2, Low: 3 };
@@ -54,6 +52,8 @@ export default function RetentionMembersPage() {
   const [page, setPage] = useState(1);
 
   const [stations, setStations] = useState([]);
+  const [vipTiers, setVipTiers] = useState([]);
+  const [pics, setPics] = useState([]);
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -75,9 +75,32 @@ export default function RetentionMembersPage() {
     };
   }, []);
 
+  useEffect(() => {
+    getVipTiers()
+      .then((res) => {
+        const list = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        setVipTiers(list);
+      })
+      .catch(() => setVipTiers([]));
+  }, []);
+
+  useEffect(() => {
+    getCrmUsers({ page: 1, page_size: 100 })
+      .then((res) => {
+        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        setPics(results);
+      })
+      .catch(() => setPics([]));
+  }, []);
+
   const brandOptions = useMemo(
     () => stations.map((s) => s.station_name || s.name).filter(Boolean),
     [stations]
+  );
+
+  const vipOptions = useMemo(
+    () => vipTiers.map((t) => t.name || t.tier_name || t.vip_tier || t.level || t.title).filter(Boolean),
+    [vipTiers]
   );
 
   // Reset to page 1 when any filter changes.
@@ -100,16 +123,16 @@ export default function RetentionMembersPage() {
         const stationUuid = brand
           ? stations.find((s) => (s.station_name || s.name) === brand)?.uuid
           : undefined;
+        const retentionUuid = pic
+          ? pics.find((u) => (u.full_name || u.username) === pic)?.uuid
+          : undefined;
         const res = await getCrmMembers({
           page,
           page_size: PAGE_SIZE,
           station_uuid: stationUuid,
           priority: priority ? PRIORITY_TO_INT[priority] : undefined,
           vip_level: vip ? VIP_TO_INT(vip) : undefined,
-          // `retention` is an int the backend expects (likely a PIC id). The
-          // current filter only knows names; leave unsent until we expose a
-          // PIC list endpoint.
-          retention: undefined,
+          retention: retentionUuid || undefined,
           search: debouncedQuery || undefined,
         });
         if (cancelled) return;
@@ -133,7 +156,7 @@ export default function RetentionMembersPage() {
     return () => {
       cancelled = true;
     };
-  }, [page, brand, stations, sort, priority, vip, pic, debouncedQuery]);
+  }, [page, brand, stations, sort, priority, vip, pic, pics, debouncedQuery]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -183,8 +206,8 @@ export default function RetentionMembersPage() {
             options={["Winlose (H-L)", "Winlose (L-H)"]}
           />
           <FilterDropdown label="Priority" value={priority} onChange={setPriority} options={PRIORITY_OPTIONS} />
-          <FilterDropdown label="VIP Level" value={vip} onChange={setVip} options={VIP_OPTIONS} />
-          <FilterDropdown label="All PIC" value={pic} onChange={setPic} options={PIC_OPTIONS} />
+          <FilterDropdown label="VIP Level" value={vip} onChange={setVip} options={vipOptions} />
+          <FilterDropdown label="All PIC" value={pic} onChange={setPic} options={pics.map((u) => u.full_name || u.username).filter(Boolean)} />
           <SearchInput value={query} onChange={setQuery} />
         </div>
       </header>
