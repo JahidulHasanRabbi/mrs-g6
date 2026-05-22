@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import MemberActivityEditModal from "./MemberActivityEditModal";
@@ -68,7 +68,7 @@ export default function MemberActivityTable() {
             <tr className="bg-black border-b border-white/10">
               <th className="px-4 py-3 text-left">
                 <div className="flex items-center gap-2">
-                  <span className="text-[16px] font-bold text-white font-['Times_New_Roman']">
+                  <span className="text-[16px] font-bold text-white">
                     User Tier
                   </span>
                   <div className="relative h-8 w-8">
@@ -81,7 +81,7 @@ export default function MemberActivityTable() {
               </th>
               <th className="px-4 py-3 text-left">
                 <div className="flex items-center gap-2">
-                  <span className="text-[16px] font-bold text-white font-['Times_New_Roman']">
+                  <span className="text-[16px] font-bold text-white">
                     Max Spins/Day
                   </span>
                   <div className="relative h-8 w-8">
@@ -94,7 +94,7 @@ export default function MemberActivityTable() {
               </th>
               <th className="px-4 py-3 text-left">
                 <div className="flex items-center gap-2">
-                  <span className="text-[16px] font-bold text-white font-['Times_New_Roman']">
+                  <span className="text-[16px] font-bold text-white">
                     Bonus Spin
                   </span>
                   <div className="relative h-8 w-8">
@@ -107,7 +107,7 @@ export default function MemberActivityTable() {
               </th>
               <th className="px-4 py-3 text-left">
                 <div className="flex items-center gap-2">
-                  <span className="text-[16px] font-bold text-white font-['Times_New_Roman']">
+                  <span className="text-[16px] font-bold text-white">
                     Reset Time
                   </span>
                   <div className="relative h-8 w-8">
@@ -120,7 +120,7 @@ export default function MemberActivityTable() {
               </th>
               <th className="px-4 py-3 text-left">
                 <div className="flex items-center gap-2">
-                  <span className="text-[16px] font-bold text-white font-['Times_New_Roman']">
+                  <span className="text-[16px] font-bold text-white">
                     Editable
                   </span>
                   <div className="relative h-8 w-8">
@@ -140,22 +140,22 @@ export default function MemberActivityTable() {
                 className="border-b border-white/5 transition-colors hover:bg-white/[0.02]"
               >
                 <td className="px-4 py-4">
-                  <p className="text-[14px] text-white font-['Times_New_Roman']">
+                  <p className="text-[14px] text-white">
                     {member.userTier}
                   </p>
                 </td>
                 <td className="px-4 py-4">
-                  <p className="text-[14px] text-white/80 font-['Times_New_Roman']">
+                  <p className="text-[14px] text-white/80">
                     {member.maxSpinsPerDay}
                   </p>
                 </td>
                 <td className="px-4 py-4">
-                  <p className="text-[14px] text-white/80 font-['Times_New_Roman']">
+                  <p className="text-[14px] text-white/80">
                     {member.bonusSpin}
                   </p>
                 </td>
                 <td className="px-4 py-4">
-                  <p className="text-[14px] text-white/80 font-['Times_New_Roman']">
+                  <p className="text-[14px] text-white/80">
                     {member.resetTime}
                   </p>
                 </td>
@@ -169,7 +169,7 @@ export default function MemberActivityTable() {
                       Edit
                     </button>
                   ) : (
-                    <p className="text-[14px] text-white/80 font-['Times_New_Roman']">
+                    <p className="text-[14px] text-white/80">
                       No
                     </p>
                   )}

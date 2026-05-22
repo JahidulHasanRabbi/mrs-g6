@@ -1,5 +1,40 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+ * Admin typography scale (Retention CRM design system)
+ * Headings: DM Sans Bold.  Body: Montserrat (B-1 Medium, B-2..B-6 Regular).
+ * All letter-spacing 0.  Class names match the Figma tokens (h-1..h-8, b-1..b-6).
+ * The .admin-typography wrapper makes Montserrat the default body font under
+ * /admin* so individual elements only need to add .h-N / .b-N for variants.
+ * ------------------------------------------------------------------------- */
+.admin-typography {
+  font-family: var(--font-montserrat), system-ui, sans-serif;
+}
+.h-1, .h-2, .h-3, .h-4, .h-5, .h-6, .h-7, .h-8 {
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.h-1 { font-size: 82px; line-height: 123px; }
+.h-2 { font-size: 68px; line-height: 102px; }
+.h-3 { font-size: 56px; line-height: 84px; }
+.h-4 { font-size: 46px; line-height: 69px; }
+.h-5 { font-size: 38px; line-height: 57px; }
+.h-6 { font-size: 32px; line-height: 48px; }
+.h-7 { font-size: 26px; line-height: 39px; }
+.h-8 { font-size: 22px; line-height: 33px; }
+
+.b-1, .b-2, .b-3, .b-4, .b-5, .b-6 {
+  font-family: var(--font-montserrat), system-ui, sans-serif;
+  letter-spacing: 0;
+}
+.b-1 { font-size: 18px; line-height: 27px; font-weight: 500; }
+.b-2 { font-size: 16px; line-height: 24px; font-weight: 400; }
+.b-3 { font-size: 14px; line-height: 21px; font-weight: 400; }
+.b-4 { font-size: 12px; line-height: 18px; font-weight: 400; }
+.b-5 { font-size: 10px; line-height: 15px; font-weight: 400; }
+.b-6 { font-size: 8px;  line-height: 12px; font-weight: 400; }
+
 /* Hide scrollbars for horizontal scrolling */
 .scrollbar-hide {
   -ms-overflow-style: none;  /* IE and Edge */
@@ -8,6 +43,28 @@
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* Chrome, Safari and Opera */
+}
+
+/* Admin page content padding — follows the live sidebar width set by the
+ * admin layout (--admin-sidebar-w). Pages apply this class on the <main>
+ * so the content reflows smoothly when the sidebar collapses.
+ *
+ * 62px = aside left offset (24px) + gap between aside and content (~38px).
+ * The transition keeps the reflow synced with the sidebar's width animation.
+ *
+ * Defined as a raw class (not a Tailwind `@utility`) because the v4 utility
+ * generator was not emitting `.xl\:admin-content-pl` from JSX usage, leaving
+ * the sidebar overlapping the content on every admin page at xl widths. */
+.admin-content-pl {
+  padding-left: calc(var(--admin-sidebar-w, 326px) + 62px);
+  transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (min-width: 1280px) {
+  .xl\:admin-content-pl {
+    padding-left: calc(var(--admin-sidebar-w, 326px) + 62px);
+    transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
 }
 
 /* Admin sidebar scrollbar — thin gold-themed */
@@ -75,4 +132,33 @@
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Interactive elements show a pointer cursor on hover.
+ * Tailwind v4's preflight no longer sets this — adding it back broadly so
+ * buttons, links, and other clickable elements feel clickable by default.
+ * Disabled / aria-disabled states are excluded so existing
+ * `disabled:cursor-not-allowed` classes still win. */
+@layer base {
+  button:not(:disabled):not([aria-disabled="true"]),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  summary,
+  label[for],
+  select:not(:disabled),
+  input[type="submit"]:not(:disabled),
+  input[type="button"]:not(:disabled),
+  input[type="reset"]:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+/* Skeleton shimmer — used by app/components/admin/ui/Skeleton.jsx */
+@keyframes skeleton-shimmer {
+  100% { transform: translateX(100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  [class*="animate-[skeleton-shimmer"] { animation: none !important; }
 }

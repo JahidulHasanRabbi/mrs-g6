@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
@@ -47,57 +47,57 @@ export default function MemberActivityEditModal({
             </div>
           </div>
 
-          <h2 className="text-center text-[28px] font-bold text-white capitalize font-['Times_New_Roman'] mb-16">
+          <h2 className="text-center text-[28px] font-bold text-white capitalize mb-16">
             Edit Spin Items
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-16">
             <div className="space-y-3">
               <div className="flex items-center gap-[18px]">
-                <label className="text-[18px] text-white font-['Times_New_Roman'] w-[135px]">
+                <label className="text-[18px] text-white w-[135px]">
                   User Tier :
                 </label>
                 <input
                   type="text"
                   value={formData.userTier}
                   onChange={(e) => setFormData((p) => ({ ...p, userTier: e.target.value }))}
-                  className="bg-white/10 border-[#f2c36b] border-[0.5px] h-[36px] rounded-[4px] w-[305px] px-3 text-white placeholder-white/50 focus:outline-none focus:border-[#f2c36b] text-[14px] font-['Times_New_Roman']"
+                  className="bg-white/10 border-[#f2c36b] border-[0.5px] h-[36px] rounded-[4px] w-[305px] px-3 text-white placeholder-white/50 focus:outline-none focus:border-[#f2c36b] text-[14px]"
                 />
               </div>
 
               <div className="flex items-center gap-[18px]">
-                <label className="text-[18px] text-white font-['Times_New_Roman'] w-[136px]">
+                <label className="text-[18px] text-white w-[136px]">
                   Max Spins/Day:
                 </label>
                 <input
                   type="text"
                   value={formData.maxSpinsPerDay}
                   onChange={(e) => setFormData((p) => ({ ...p, maxSpinsPerDay: e.target.value }))}
-                  className="bg-white/10 border-[0.5px] border-white/8 h-[36px] rounded-[4px] w-[304px] px-3 text-white placeholder-white/50 focus:outline-none focus:border-[#f2c36b] text-[14px] font-['Times_New_Roman']"
+                  className="bg-white/10 border-[0.5px] border-white/8 h-[36px] rounded-[4px] w-[304px] px-3 text-white placeholder-white/50 focus:outline-none focus:border-[#f2c36b] text-[14px]"
                 />
               </div>
 
               <div className="flex items-center gap-[18px]">
-                <label className="text-[18px] text-white font-['Times_New_Roman'] w-[136px]">
+                <label className="text-[18px] text-white w-[136px]">
                   Bonus Spin :
                 </label>
                 <input
                   type="text"
                   value={formData.bonusSpin}
                   onChange={(e) => setFormData((p) => ({ ...p, bonusSpin: e.target.value }))}
-                  className="bg-white/10 border-[0.5px] border-white/8 h-[36px] rounded-[4px] w-[304px] px-3 text-white placeholder-white/50 focus:outline-none focus:border-[#f2c36b] text-[14px] font-['Times_New_Roman']"
+                  className="bg-white/10 border-[0.5px] border-white/8 h-[36px] rounded-[4px] w-[304px] px-3 text-white placeholder-white/50 focus:outline-none focus:border-[#f2c36b] text-[14px]"
                 />
               </div>
 
               <div className="flex items-center gap-[18px]">
-                <label className="text-[18px] text-white font-['Times_New_Roman'] w-[136px]">
+                <label className="text-[18px] text-white w-[136px]">
                   Reset Time :
                 </label>
                 <input
                   type="text"
                   value={formData.resetTime}
                   onChange={(e) => setFormData((p) => ({ ...p, resetTime: e.target.value }))}
-                  className="bg-white/10 border-[0.5px] border-white/8 h-[36px] rounded-[4px] w-[304px] px-3 text-white placeholder-white/50 focus:outline-none focus:border-[#f2c36b] text-[14px] font-['Times_New_Roman']"
+                  className="bg-white/10 border-[0.5px] border-white/8 h-[36px] rounded-[4px] w-[304px] px-3 text-white placeholder-white/50 focus:outline-none focus:border-[#f2c36b] text-[14px]"
                 />
               </div>
             </div>
@@ -108,7 +108,7 @@ export default function MemberActivityEditModal({
                 onClick={onClose}
                 className="bg-white border border-[#e5e6e6] h-[37px] px-[18px] py-[13px] rounded-[4px] flex items-center justify-center"
               >
-                <span className="text-[#f04a4a] text-[14px] font-bold font-['Times_New_Roman']">
+                <span className="text-[#f04a4a] text-[14px] font-bold">
                   Cancel
                 </span>
               </button>
@@ -121,7 +121,7 @@ export default function MemberActivityEditModal({
                     "linear-gradient(1.2852950753927956deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)",
                 }}
               >
-                <span className="text-black text-[14px] font-bold font-['Times_New_Roman']">
+                <span className="text-black text-[14px] font-bold">
                   Confirm
                 </span>
               </button>

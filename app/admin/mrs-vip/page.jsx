@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 import Image from "next/image";
@@ -6,7 +6,26 @@ import Image from "next/image";
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
 import { SortIcon, Pagination } from "../../components/admin/members/DataTable";
 import { LoadingState } from "../../components/ui/LoadingState";
+import Skeleton from "../../components/admin/ui/Skeleton";
 import * as adminApi from "../../api/adminApi";
+
+const SKELETON_COLUMNS = [
+  { label: "No",               type: "number" },
+  { label: "Tier Name",        type: "text" },
+  { label: "Lifetime Deposit", type: "number" },
+  { label: "Monthly Deposit",  type: "number" },
+  { label: "Check in Token",   type: "number" },
+  { label: "Upgrade Bonus",    type: "number" },
+  { label: "Birthday Bonus",   type: "number" },
+  { label: "Mart Tier",        type: "badge" },
+];
+
+const FULL_SKELETON = (
+  <Skeleton.TablePage columns={SKELETON_COLUMNS} rows={6} withFilters={false} titleWidth={260} />
+);
+const BARE_SKELETON = (
+  <Skeleton.TablePage columns={SKELETON_COLUMNS} rows={6} withHeader={false} withFilters={false} bare />
+);
 
 // ── Constants ────────────────────────────────────────────────────────────
 const PAGE_SIZE = 5;
@@ -178,14 +197,14 @@ function TierFormModal({ tier, onClose, onSave, martTiers }) {
         </div>
 
         {/* Title */}
-        <h2 className="font-['Times_New_Roman'] font-bold text-[28px] text-white text-center capitalize mb-8">
+        <h2 className=" font-bold text-[28px] text-white text-center capitalize mb-8">
           {isEdit ? "Edit Tier" : "Create Tier"}
         </h2>
 
         {/* Error Message */}
         {errorMessage && (
           <div className="mb-4 p-3 rounded bg-red-500/20 border border-red-500/50">
-            <p className="text-red-200 text-sm font-['Times_New_Roman']">{errorMessage}</p>
+            <p className="text-red-200 text-sm">{errorMessage}</p>
           </div>
         )}
 
@@ -194,7 +213,7 @@ function TierFormModal({ tier, onClose, onSave, martTiers }) {
           {fields.map((f) => (
             <div key={f.key} className="flex items-center gap-[18px]">
               {/* Label */}
-              <label className="w-[160px] shrink-0 font-['Times_New_Roman'] text-[16px] text-white">
+              <label className="w-[160px] shrink-0 text-[16px] text-white">
                 {f.key === 'upgrade_bonus' || f.key === 'birthday_bonus' ? (
                   <>
                     {f.label.replace(' (Free Token):', ':')} <span className="text-[#e9af41]">(Free Token)</span>
@@ -210,7 +229,7 @@ function TierFormModal({ tier, onClose, onSave, martTiers }) {
                   <select
                     value={form[f.key]}
                     onChange={(e) => handleChange(f.key, e.target.value)}
-                    className="h-[36px] w-full rounded-[4px] px-3 pr-8 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] font-['Times_New_Roman'] text-[14px] text-white outline-none focus:border-[#f2c36b] appearance-none cursor-pointer"
+                    className="h-[36px] w-full rounded-[4px] px-3 pr-8 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] text-[14px] text-white outline-none focus:border-[#f2c36b] appearance-none cursor-pointer"
                   >
                     <option value="" className="bg-[#4d4d4d] text-white">
                       {f.options?.length === 0 ? 'No options available' : `Select ${f.label.replace(':', '')}`}
@@ -243,7 +262,7 @@ function TierFormModal({ tier, onClose, onSave, martTiers }) {
                   required
                   min={f.type === "number" ? 0 : undefined}
                   step={f.type === "number" ? "0.01" : undefined}
-                  className="h-[36px] flex-1 rounded-[4px] px-3 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] font-['Times_New_Roman'] text-[14px] text-white outline-none focus:border-[#f2c36b]"
+                  className="h-[36px] flex-1 rounded-[4px] px-3 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] text-[14px] text-white outline-none focus:border-[#f2c36b]"
                 />
               )}
             </div>
@@ -255,14 +274,14 @@ function TierFormModal({ tier, onClose, onSave, martTiers }) {
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="h-[37px] px-7 rounded border border-[#e5e6e6] bg-white font-['Times_New_Roman'] font-bold text-[14px] text-[#f04a4a] hover:bg-gray-100 transition-colors disabled:opacity-50"
+              className="h-[37px] px-7 rounded border border-[#e5e6e6] bg-white font-bold text-[14px] text-[#f04a4a] hover:bg-gray-100 transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="h-[37px] px-7 rounded font-['Times_New_Roman'] font-bold text-[14px] text-black hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="h-[37px] px-7 rounded font-bold text-[14px] text-black hover:opacity-90 transition-opacity disabled:opacity-50"
               style={{ background: GOLD_BG }}
             >
               {isSubmitting ? "Saving..." : (isEdit ? "Confirm" : "Create")}
@@ -377,10 +396,10 @@ function MrsVipContent() {
 
   return (
     <>
-    <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:pl-[388px] xl:pr-10 xl:pt-8">
+    <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:admin-content-pl xl:pr-10 xl:pt-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="font-['Times_New_Roman'] font-bold text-[22px] sm:text-[28px] text-white">
+        <h1 className="text-4xl font-bold leading-[1.05] text-white">
           MRS VIP Level
         </h1>
         <svg
@@ -398,17 +417,17 @@ function MrsVipContent() {
         </svg>
       </div>
 
-      <LoadingState isLoading={isLoading}>
+      <LoadingState isLoading={isLoading} skeleton={BARE_SKELETON}>
         {/* Table card */}
         <div className="rounded-[12px] border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-3 sm:p-4 flex flex-col gap-4">
           {/* Title row + Create button */}
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <p className="font-['Times_New_Roman'] font-bold text-[18px] sm:text-[20px] text-white capitalize">
+            <p className=" font-bold text-[18px] sm:text-[20px] text-white capitalize">
               MRS VIP Level Is Given Below
             </p>
             <button
               onClick={() => setShowCreateForm(true)}
-              className="h-[36px] rounded px-4 font-['Times_New_Roman'] text-[16px] text-black hover:opacity-90 transition-opacity"
+              className="h-[36px] rounded px-4 text-[16px] text-black hover:opacity-90 transition-opacity"
               style={{ background: GOLD_BG }}
             >
               Create new tier <span className="font-bold">+</span>
@@ -427,7 +446,7 @@ function MrsVipContent() {
                       onClick={() => handleSort(col.key)}
                     >
                       <div className="flex items-center">
-                        <span className="font-['Times_New_Roman'] font-bold text-[14px] sm:text-[16px] text-white whitespace-nowrap">
+                        <span className=" font-bold text-[14px] sm:text-[16px] text-white whitespace-nowrap">
                           {col.label}
                           {col.hasFreeToken && (
                             <span className="text-[#e9af41] ml-1">(Free Token)</span>
@@ -440,7 +459,7 @@ function MrsVipContent() {
                     </th>
                   ))}
                   <th className="min-w-[180px] px-3 py-3 text-center">
-                    <span className="font-['Times_New_Roman'] font-bold text-[14px] sm:text-[16px] text-white">
+                    <span className=" font-bold text-[14px] sm:text-[16px] text-white">
                       Action
                     </span>
                   </th>
@@ -452,7 +471,7 @@ function MrsVipContent() {
                   <tr>
                     <td
                       colSpan={TABLE_COLUMNS.length + 1}
-                      className="px-5 py-12 text-center font-['Times_New_Roman'] text-white/40"
+                      className="px-5 py-12 text-center text-white/40"
                     >
                       No MRS VIP tiers found.
                     </td>
@@ -464,35 +483,35 @@ function MrsVipContent() {
                       className="border-b border-[rgba(240,240,240,0.2)] hover:bg-white/[0.03] transition-colors"
                     >
                       {/* Row number */}
-                      <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white whitespace-nowrap">
+                      <td className="px-3 py-3 text-[14px] text-white whitespace-nowrap">
                         {(currentPage - 1) * PAGE_SIZE + idx + 1}
                       </td>
                       {/* Tier Name */}
-                      <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80 whitespace-nowrap">
+                      <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                         {row.name}
                       </td>
                       {/* Lifetime Deposit */}
-                      <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80 whitespace-nowrap">
+                      <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                         {formatRM(row.lifetime_deposit_required)}
                       </td>
                       {/* Monthly Deposit */}
-                      <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80 whitespace-nowrap">
+                      <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                         {formatRM(row.monthly_deposit)}
                       </td>
                       {/* Check in Token */}
-                      <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80 whitespace-nowrap">
+                      <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                         {formatNum(row.check_in_token)}
                       </td>
                       {/* Upgrade Bonus */}
-                      <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80 whitespace-nowrap">
+                      <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                         {formatNum(row.upgrade_bonus)}
                       </td>
                       {/* Birthday Bonus */}
-                      <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80 whitespace-nowrap">
+                      <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                         {formatNum(row.birthday_bonus)}
                       </td>
                       {/* Mart Tier */}
-                      <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80 whitespace-nowrap">
+                      <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                         {row.mart_tier || "-"}
                       </td>
                       {/* Action */}
@@ -500,13 +519,13 @@ function MrsVipContent() {
                         <div className="flex gap-2 justify-center">
                           <button
                             onClick={() => handleArchive(row)}
-                            className="h-[31px] rounded px-3 bg-[#06b800] font-['Times_New_Roman'] font-bold text-[14px] text-white hover:bg-[#05a000] transition-colors"
+                            className="h-[31px] rounded px-3 bg-[#06b800] font-bold text-[14px] text-white hover:bg-[#05a000] transition-colors"
                           >
                             Archive
                           </button>
                           <button
                             onClick={() => setEditingTier(row)}
-                            className="h-[31px] w-[70px] rounded border border-[#00a63e] font-['Times_New_Roman'] text-[14px] text-[#00a63e] hover:bg-[#00a63e]/10 transition-colors"
+                            className="h-[31px] w-[70px] rounded border border-[#00a63e] text-[14px] text-[#00a63e] hover:bg-[#00a63e]/10 transition-colors"
                           >
                             Edit
                           </button>
@@ -550,7 +569,7 @@ function MrsVipContent() {
 // ── Default export ───────────────────────────────────────────────────────
 export default function MrsVipPage() {
   return (
-    <AdminRouteGuard>
+    <AdminRouteGuard skeleton={FULL_SKELETON}>
       <MrsVipContent />
     </AdminRouteGuard>
   );

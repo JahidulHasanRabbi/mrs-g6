@@ -10,7 +10,7 @@ export default function LayoutShell({ children }) {
   const isAdminRoute = pathname === "/admin" || pathname?.startsWith("/admin/");
 
   if (isAdminRoute) {
-    return <div className="min-h-screen w-full">{children}</div>;
+    return <div className="admin-typography min-h-screen w-full">{children}</div>;
   }
 
   return (

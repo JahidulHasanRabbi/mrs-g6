@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { AdminRouteGuard } from "../../../components/guards/AdminRouteGuard";
@@ -42,7 +42,7 @@ function QuickFilterButtons({ value, onChange }) {
             key={filter.value}
             type="button"
             onClick={() => onChange(filter.value)}
-            className={`flex h-10 items-center gap-2 rounded-[6px] border px-4 font-['Times_New_Roman'] text-[15px] font-bold text-black transition ${
+            className={`flex h-10 items-center gap-2 rounded-[6px] border px-4 text-[15px] font-bold text-black transition ${
               active
                 ? "border-[#8a5a14] bg-[linear-gradient(180deg,#f6c65c_0%,#c98018_100%)] shadow-[0_2px_0_rgba(0,0,0,0.35),inset_0_-2px_0_rgba(0,0,0,0.18)]"
                 : "border-[#a36e1c] bg-[linear-gradient(180deg,#f6c65c_0%,#dd9526_100%)] shadow-[0_2px_0_rgba(0,0,0,0.35),inset_0_-2px_0_rgba(0,0,0,0.12)] hover:brightness-105"
@@ -97,7 +97,7 @@ function DateFilter({ value, onChange }) {
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="h-full w-full appearance-none bg-transparent pl-9 pr-9 font-['Times_New_Roman'] text-[14px] text-black outline-none"
+        className="h-full w-full appearance-none bg-transparent pl-9 pr-9 text-[14px] text-black outline-none"
       >
         {DATE_OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>
@@ -159,13 +159,16 @@ function MemberReportContent() {
   const [loading, setLoading] = useState(false);
   const [apiResults, setApiResults] = useState([]);
   
+  // Column widths sized so the total (≈960px) fits inside the admin content
+  // area on a 1280px viewport with the expanded sidebar. Numeric cells are
+  // short, so we can be tight without sacrificing readability.
   const TABLE_COLUMNS = [
-    { key: "no", label: "No", className: "w-[88px]" },
-    { key: "date", label: "Date", className: "w-[300px]" },
-    { key: "new_members", label: "New Member", className: "w-[220px]" },
-    { key: "total_members", label: "Total Member", className: "w-[260px]" },
-    { key: "active_members", label: "Active Members", className: "w-[260px]" },
-    { key: "total_tokens_issued", label: "Token Issued", className: "w-[260px] text-right" },
+    { key: "no",                  label: "No",             className: "w-[80px]" },
+    { key: "date",                label: "Date",           className: "w-[180px]" },
+    { key: "new_members",         label: "New Member",     className: "w-[140px]" },
+    { key: "total_members",       label: "Total Member",   className: "w-[140px]" },
+    { key: "active_members",      label: "Active Members", className: "w-[150px]" },
+    { key: "total_tokens_issued", label: "Token Issued",   className: "w-[170px] text-right" },
   ];
 
   const fetchReport = useCallback(async () => {
@@ -250,9 +253,9 @@ function MemberReportContent() {
   };
 
   return (
-    <main className="min-h-screen pl-[388px] pr-10 pt-8 pb-10">
+    <main className="min-h-screen xl:admin-content-pl pr-10 pt-8 pb-10">
         <div className="mb-6 flex items-center justify-between gap-4">
-          <h1 className="font-['Times_New_Roman'] text-[34px] font-bold leading-none text-[#f4efe0]">
+          <h1 className="text-4xl font-bold leading-[1.05] text-white">
             Member Report
           </h1>
 
@@ -279,20 +282,20 @@ function MemberReportContent() {
 
         <section className="overflow-hidden rounded-[12px] border border-[rgba(255,255,132,0.18)] bg-[linear-gradient(180deg,rgba(28,48,31,0.98)_0%,rgba(24,44,28,0.98)_100%)] shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
           <div className="flex flex-wrap items-center justify-between gap-4 px-4 pb-4 pt-4">
-            <h2 className="font-['Times_New_Roman'] text-[22px] font-bold leading-none text-[#f4efe0]">
+            <h2 className=" text-[22px] font-bold leading-none text-[#f4efe0]">
               Member Report
             </h2>
 
             <div className="flex flex-wrap items-center gap-3">
-              <span className="whitespace-nowrap font-['Times_New_Roman'] text-[13px] text-[#d6d6d6]">
+              <span className="whitespace-nowrap text-[13px] text-[#d6d6d6]">
                 Filter By:
               </span>
               <DateFilter value={dateFilter} onChange={setDateFilter} />
             </div>
           </div>
 
-          <div className="overflow-x-auto border-t border-white/5">
-            <table className="min-w-[1472px] w-full border-separate border-spacing-0">
+          <div className="overflow-x-auto overflow-y-hidden scrollbar-admin border-t border-white/5">
+            <table className="min-w-[960px] w-full table-fixed border-separate border-spacing-0">
               <thead>
                 <tr className="bg-black">
                   {TABLE_COLUMNS.map((column) => {
@@ -305,7 +308,7 @@ function MemberReportContent() {
                           onClick={() => handleSort(column.key)}
                           className={`flex w-full items-center ${column.key === "total_tokens_issued" ? "justify-end" : "justify-start"}`}
                         >
-                          <span className="whitespace-nowrap font-['Times_New_Roman'] text-[14px] font-bold text-white">
+                          <span className="whitespace-nowrap text-[14px] font-bold text-white">
                             {column.label}
                           </span>
                           <SortIcon active={active} direction={sortConfig.direction} />
@@ -319,7 +322,7 @@ function MemberReportContent() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={TABLE_COLUMNS.length} className="px-5 py-12 text-center font-['Times_New_Roman'] text-[14px] text-white/60">
+                    <td colSpan={TABLE_COLUMNS.length} className="px-5 py-12 text-center text-[14px] text-white/60">
                       Loading...
                     </td>
                   </tr>
@@ -328,22 +331,22 @@ function MemberReportContent() {
                     const displayNo = (currentPage - 1) * PAGE_SIZE + index + 1;
                     return (
                       <tr key={row.no || index} className="border-b border-[rgba(255,255,255,0.08)] transition-colors hover:bg-white/[0.03]">
-                        <td className="px-4 py-[14px] first:pl-5 font-['Times_New_Roman'] text-[13px] text-[#f1f1f1] whitespace-nowrap">
+                        <td className="px-4 py-[14px] first:pl-5 text-[13px] text-[#f1f1f1] whitespace-nowrap">
                           {displayNo}
                         </td>
-                        <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#f1f1f1] whitespace-nowrap">
+                        <td className="px-4 py-[14px] text-[13px] text-[#f1f1f1] whitespace-nowrap">
                           {formatDateDisplay(row.date, reportType)}
                         </td>
-                        <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#ece9dc] whitespace-nowrap">
+                        <td className="px-4 py-[14px] text-[13px] text-[#ece9dc] whitespace-nowrap">
                           {formatNumber(row.new_members)}
                         </td>
-                        <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#ece9dc] whitespace-nowrap">
+                        <td className="px-4 py-[14px] text-[13px] text-[#ece9dc] whitespace-nowrap">
                           {formatNumber(row.total_members)}
                         </td>
-                        <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#ece9dc] whitespace-nowrap">
+                        <td className="px-4 py-[14px] text-[13px] text-[#ece9dc] whitespace-nowrap">
                           {formatNumber(row.active_members)}
                         </td>
-                        <td className="px-4 py-[14px] pr-5 text-right font-['Times_New_Roman'] text-[13px] text-[#f1f1f1] whitespace-nowrap">
+                        <td className="px-4 py-[14px] pr-5 text-right text-[13px] text-[#f1f1f1] whitespace-nowrap">
                           {formatNumber(row.total_tokens_issued)}
                         </td>
                       </tr>
@@ -353,7 +356,7 @@ function MemberReportContent() {
                   <tr>
                     <td
                       colSpan={TABLE_COLUMNS.length}
-                      className="px-5 py-12 text-center font-['Times_New_Roman'] text-[14px] text-white/60"
+                      className="px-5 py-12 text-center text-[14px] text-white/60"
                     >
                       No member report rows match the selected filters.
                     </td>

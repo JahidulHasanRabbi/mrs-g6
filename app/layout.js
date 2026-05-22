@@ -1,4 +1,4 @@
-import { Inter, Geist, Geist_Mono } from "next/font/google";
+import { Inter, Geist, Geist_Mono, Montserrat, DM_Sans } from "next/font/google";
 import "./globals.css";
 
 /**
@@ -17,6 +17,7 @@ import "./globals.css";
  */
 
 import LayoutShell from "./LayoutShell";
+import { ToastProvider } from "./components/admin/ui/Toast";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -31,6 +32,18 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
+  subsets: ["latin"],
+  weight: ["400", "500"],
+});
+
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
+  subsets: ["latin"],
+  weight: ["700"],
 });
 
 export const metadata = {
@@ -53,10 +66,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} antialiased bg-black`}
+        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${montserrat.variable} ${dmSans.variable} antialiased bg-black`}
         style={{ fontFamily: '"Times New Roman", serif' }}
       >
-        <LayoutShell>{children}</LayoutShell>
+        <ToastProvider>
+          <LayoutShell>{children}</LayoutShell>
+        </ToastProvider>
       </body>
     </html>
   );

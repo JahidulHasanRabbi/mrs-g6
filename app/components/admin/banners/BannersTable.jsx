@@ -1,5 +1,8 @@
 "use client";
 
+import Button from "../ui/Button";
+import StatusBadge from "../ui/StatusBadge";
+
 export default function BannersTable({ banners, onEdit, onArchive }) {
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -50,13 +53,9 @@ export default function BannersTable({ banners, onEdit, onArchive }) {
                   </td>
                   <td className="px-5 py-3 text-sm text-white">{banner.name}</td>
                   <td className="px-5 py-3 text-sm text-gray-400">
-                    <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                      banner.location === 'Main Page' 
-                        ? 'bg-purple-500/20 text-purple-400' 
-                        : 'bg-blue-500/20 text-blue-400'
-                    }`}>
+                    <StatusBadge tone={banner.location === 'Side Panel' ? 'info' : 'neutral'} showDot={false}>
                       {banner.location || 'Main Page'}
-                    </span>
+                    </StatusBadge>
                   </td>
                   <td className="px-5 py-3 text-sm text-gray-400">
                     <a
@@ -72,30 +71,18 @@ export default function BannersTable({ banners, onEdit, onArchive }) {
                     {formatDate(banner.active_until)}
                   </td>
                   <td className="px-5 py-3">
-                    <span
-                      className={`px-2 py-1 rounded text-xs font-semibold ${
-                        isActive(banner.active_until)
-                          ? 'bg-green-500/20 text-green-400'
-                          : 'bg-red-500/20 text-red-400'
-                      }`}
-                    >
+                    <StatusBadge tone={isActive(banner.active_until) ? 'success' : 'danger'}>
                       {isActive(banner.active_until) ? 'Active' : 'Expired'}
-                    </span>
+                    </StatusBadge>
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex gap-2">
-                      <button
-                        onClick={() => onEdit(banner)}
-                        className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30 transition-colors text-sm"
-                      >
+                      <Button variant="secondary" size="sm" onClick={() => onEdit(banner)}>
                         Edit
-                      </button>
-                      <button
-                        onClick={() => onArchive(banner.uuid)}
-                        className="px-3 py-1 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 transition-colors text-sm"
-                      >
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => onArchive(banner)}>
                         Archive
-                      </button>
+                      </Button>
                     </div>
                   </td>
                 </tr>

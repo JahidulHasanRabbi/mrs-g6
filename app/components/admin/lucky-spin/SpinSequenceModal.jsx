@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import ErrorDisplay from "../../ui/ErrorDisplay";
@@ -74,7 +74,7 @@ export default function SpinSequenceModal({
       <div className="w-full max-w-md rounded-xl border border-white/10 bg-[#1a1a1a] shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-          <h2 className="text-xl font-bold text-white font-['Times_New_Roman']">
+          <h2 className="text-xl font-bold text-white">
             {mode === "add" ? "Add Spin Sequence" : "Edit Spin Sequence"}
           </h2>
           <button
@@ -99,7 +99,7 @@ export default function SpinSequenceModal({
 
           {/* Item Order */}
           <div className="space-y-2">
-            <label className="block text-sm font-bold text-white font-['Times_New_Roman']">
+            <label className="block text-sm font-bold text-white">
               Item Order <span className="text-red-400">*</span>
             </label>
             <input
@@ -111,14 +111,14 @@ export default function SpinSequenceModal({
               disabled={isLoading}
               required
             />
-            <p className="text-xs text-white/40 font-['Times_New_Roman']">
+            <p className="text-xs text-white/40">
               The position order of this item in the spin sequence
             </p>
           </div>
 
           {/* Spin Item */}
           <div className="space-y-2">
-            <label className="block text-sm font-bold text-white font-['Times_New_Roman']">
+            <label className="block text-sm font-bold text-white">
               Spin Item <span className="text-red-400">*</span>
             </label>
             <select
@@ -143,14 +143,14 @@ export default function SpinSequenceModal({
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="px-6 py-2 rounded-lg border border-white/20 text-white hover:bg-white/5 disabled:opacity-50 font-['Times_New_Roman'] text-sm font-bold"
+              className="px-6 py-2 rounded-lg border border-white/20 text-white hover:bg-white/5 disabled:opacity-50 text-sm font-bold"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="inline-flex min-w-[100px] items-center justify-center whitespace-nowrap rounded-lg px-6 py-2 font-['Times_New_Roman'] text-sm font-bold leading-none text-black transition-colors disabled:opacity-50"
+              className="inline-flex min-w-[100px] items-center justify-center whitespace-nowrap rounded-lg px-6 py-2 text-sm font-bold leading-none text-black transition-colors disabled:opacity-50"
               style={{
                 backgroundImage: "linear-gradient(2.1326483653998594deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
               }}

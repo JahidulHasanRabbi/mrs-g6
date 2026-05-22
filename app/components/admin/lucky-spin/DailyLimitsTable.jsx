@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 const DAILY_LIMITS_DATA = [
   {
@@ -56,7 +56,7 @@ export default function DailyLimitsTable() {
           <tr className="bg-black border-b border-white/10">
             <th className="px-4 py-3 text-left">
               <div className="flex items-center gap-2">
-                <span className="text-[16px] font-bold text-white font-['Times_New_Roman']">
+                <span className="text-[16px] font-bold text-white">
                   Member Name
                 </span>
                 <div className="relative h-8 w-8">
@@ -69,7 +69,7 @@ export default function DailyLimitsTable() {
             </th>
             <th className="px-4 py-3 text-left">
               <div className="flex items-center gap-2">
-                <span className="text-[16px] font-bold text-white font-['Times_New_Roman']">
+                <span className="text-[16px] font-bold text-white">
                   Last Login
                 </span>
                 <div className="relative h-8 w-8">
@@ -82,7 +82,7 @@ export default function DailyLimitsTable() {
             </th>
             <th className="px-4 py-3 text-left">
               <div className="flex items-center gap-2">
-                <span className="text-[16px] font-bold text-white font-['Times_New_Roman']">
+                <span className="text-[16px] font-bold text-white">
                   Active Section
                 </span>
                 <div className="relative h-8 w-8">
@@ -95,7 +95,7 @@ export default function DailyLimitsTable() {
             </th>
             <th className="px-4 py-3 text-left">
               <div className="flex items-center gap-2">
-                <span className="text-[16px] font-bold text-white font-['Times_New_Roman']">
+                <span className="text-[16px] font-bold text-white">
                   Time Spent
                 </span>
                 <div className="relative h-8 w-8">
@@ -108,7 +108,7 @@ export default function DailyLimitsTable() {
             </th>
             <th className="px-4 py-3 text-left">
               <div className="flex items-center gap-2">
-                <span className="text-[16px] font-bold text-white font-['Times_New_Roman']">
+                <span className="text-[16px] font-bold text-white">
                   VIP Tier
                 </span>
                 <div className="relative h-8 w-8">
@@ -121,7 +121,7 @@ export default function DailyLimitsTable() {
             </th>
             <th className="px-4 py-3 text-left">
               <div className="flex items-center gap-2">
-                <span className="text-[16px] font-bold text-white font-['Times_New_Roman']">
+                <span className="text-[16px] font-bold text-white">
                   Actions
                 </span>
                 <div className="relative h-8 w-8">
@@ -141,27 +141,27 @@ export default function DailyLimitsTable() {
               className="border-b border-white/5 transition-colors hover:bg-white/[0.02]"
             >
               <td className="px-4 py-4">
-                <p className="text-[14px] text-white font-['Times_New_Roman']">
+                <p className="text-[14px] text-white">
                   {member.memberName}
                 </p>
               </td>
               <td className="px-4 py-4">
-                <p className="text-[14px] text-white/80 font-['Times_New_Roman']">
+                <p className="text-[14px] text-white/80">
                   {member.lastLogin}
                 </p>
               </td>
               <td className="px-4 py-4">
-                <p className="text-[14px] text-white/80 font-['Times_New_Roman']">
+                <p className="text-[14px] text-white/80">
                   {member.activeSection}
                 </p>
               </td>
               <td className="px-4 py-4">
-                <p className="text-[14px] text-white/80 font-['Times_New_Roman']">
+                <p className="text-[14px] text-white/80">
                   {member.timeSpent}
                 </p>
               </td>
               <td className="px-4 py-4">
-                <p className="text-[14px] text-white/80 font-['Times_New_Roman']">
+                <p className="text-[14px] text-white/80">
                   {member.vipTier}
                 </p>
               </td>

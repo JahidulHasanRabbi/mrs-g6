@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useMemo } from "react";
 import BarChart from "../components/admin/charts/BarChart";
 import { AdminRouteGuard } from "../components/guards/AdminRouteGuard";
+import { SHIMMER } from "../components/admin/ui/Skeleton";
 import ErrorDisplay from "../components/ui/ErrorDisplay";
 import * as adminApi from "../api/adminApi";
 
@@ -61,8 +62,8 @@ function AdminDashboardContent() {
       const sevenDaysAgo = new Date(today);
       sevenDaysAgo.setDate(today.getDate() - 6);
       
-      const membersList = Array.isArray(membersData) ? membersData : (membersData?.results || []);
-      const newMembers = membersList.filter((member) => {
+      const membersArray = Array.isArray(membersData) ? membersData : (membersData?.results || []);
+      const newMembers = membersArray.filter((member) => {
         if (!member.registered_date) return false;
         const registered = new Date(member.registered_date);
         const registeredDay = new Date(registered.getFullYear(), registered.getMonth(), registered.getDate());
@@ -101,15 +102,11 @@ function AdminDashboardContent() {
     return labels;
   }, []);
 
-  if (loading) {
-    return <DashboardSkeleton />;
-  }
-
   return (
-    <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
+    <main className="min-h-screen xl:admin-content-pl pr-10 pt-10 pb-10">
         {/* Header */}
         <div className="mb-8 flex items-start justify-between">
-          <h1 className="text-4xl font-bold leading-[1.05] text-white font-['Times_New_Roman']">
+          <h1 className="text-4xl font-bold leading-[1.05] text-white">
             Home Dashboard
           </h1>
           <button className="flex h-[26px] w-[26px] items-center justify-center">
@@ -141,95 +138,96 @@ function AdminDashboardContent() {
         )}
 
         {/* Stats Grid */}
-        <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr_1fr]">
-          {/* Daily Check-In */}
-          <div className="rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-[20px] font-bold text-white font-['Times_New_Roman'] capitalize leading-[1.2]">
-                  Daily Check-In
-                </h2>
-                <div className="rounded-[4px] px-[15px] py-[9px]" style={{ backgroundImage: "linear-gradient(1.0746108354373831deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)" }}>
-                  <span className="text-[16px] font-bold text-black font-['Times_New_Roman'] leading-none">
-                    last 7 days
-                  </span>
+        {loading ? (
+          <DashboardSkeleton />
+        ) : (
+          <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr_1fr]">
+            {/* Daily Check-In */}
+            <div className="rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-[20px] font-bold text-white capitalize leading-[1.2]">
+                    Daily Check-In
+                  </h2>
+                  <div className="rounded-[4px] px-[15px] py-[9px]" style={{ backgroundImage: "linear-gradient(1.0746108354373831deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)" }}>
+                    <span className="text-[16px] font-bold text-black leading-none">
+                      last 7 days
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <p className="mb-4 text-[16px] text-[#5c5c5c] font-['Times_New_Roman'] capitalize leading-[1.2]">
-                Active Counts : {stats.totalCheckins}
-              </p>
-              <BarChart
-                labels={dayLabels}
-                values={stats.checkins}
-                positiveColor="#f6c75c"
-                baseColor="rgba(255,255,255,0.15)"
-              />
-          </div>
+                <p className="mb-4 text-[16px] text-[#5c5c5c] capitalize leading-[1.2]">
+                  Active Counts : {stats.totalCheckins}
+                </p>
+                <BarChart
+                  labels={dayLabels}
+                  values={stats.checkins}
+                  positiveColor="#f6c75c"
+                  baseColor="rgba(255,255,255,0.15)"
+                />
+            </div>
 
-          {/* Total Active Users */}
-          <TotalActiveUsersCard activeToday={stats.activeToday} totalMembers={stats.totalMembers} />
+            {/* Total Active Users */}
+            <TotalActiveUsersCard activeToday={stats.activeToday} totalMembers={stats.totalMembers} />
 
-          {/* Members Snapshot */}
-          <div className="flex flex-col justify-around gap-4 rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] px-8 py-8 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
-            <SnapshotStat label="Total Users" value={stats.totalMembers} />
-            <SnapshotStat label="New Members" value={stats.newMembers} />
-            <SnapshotStat label="Active Members" value={stats.activeToday} />
+            {/* Members Snapshot */}
+            <div className="flex flex-col justify-around gap-4 rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] px-8 py-8 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
+              <SnapshotStat label="Total Users" value={stats.totalMembers} />
+              <SnapshotStat label="New Members" value={stats.newMembers} />
+              <SnapshotStat label="Active Members" value={stats.activeToday} />
+            </div>
           </div>
-        </div>
+        )}
     </main>
   );
 }
 
 function DashboardSkeleton() {
   return (
-    <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
-      <div className="mb-8 flex items-start justify-between">
-        <div className="h-10 w-56 animate-pulse rounded-lg bg-white/10" />
-        <div className="h-[26px] w-[26px] animate-pulse rounded-full bg-white/10" />
-      </div>
-      <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr_1fr]">
-        {/* Daily Check-In card */}
-        <div className="rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="h-6 w-36 animate-pulse rounded bg-white/10" />
-            <div className="h-9 w-28 animate-pulse rounded-[4px] bg-white/10" />
-          </div>
-          <div className="mb-6 h-4 w-44 animate-pulse rounded bg-white/10" />
-          <div className="flex h-[160px] items-end gap-2">
-            {[55, 80, 45, 90, 65, 75, 85].map((h, i) => (
-              <div key={i} className="flex flex-1 flex-col items-center gap-2">
-                <div className="w-full animate-pulse rounded-t bg-white/10" style={{ height: `${h}%` }} />
-                <div className="h-3 w-8 animate-pulse rounded bg-white/10" />
-              </div>
-            ))}
-          </div>
+    <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr_1fr]">
+      <div className="rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
+        <div className="mb-4 flex items-center justify-between">
+          <div className={`h-6 w-40 rounded ${SHIMMER}`} />
+          <div className={`h-9 w-24 rounded-md ${SHIMMER}`} />
         </div>
-        {/* Total Active Users card */}
-        <div className="flex h-full flex-col items-center justify-between rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
-          <div className="mb-2 h-6 w-40 animate-pulse rounded bg-white/10" />
-          <div className="h-[200px] w-[200px] animate-pulse rounded-full bg-white/10" />
-          <div className="mt-2 h-4 w-32 animate-pulse rounded bg-white/10" />
-        </div>
-        {/* Members Snapshot card */}
-        <div className="flex flex-col justify-around gap-4 rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] px-8 py-8 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="flex flex-col items-center gap-3">
-              <div className="h-5 w-28 animate-pulse rounded bg-white/10" />
-              <div className="h-11 w-24 animate-pulse rounded bg-white/10" />
-            </div>
+        <div className={`mb-4 h-4 w-32 rounded ${SHIMMER}`} />
+        <div className="flex h-[260px] items-end justify-between gap-3 px-2">
+          {[60, 70, 55, 80, 50, 65, 45].map((h, i) => (
+            <div
+              key={i}
+              className={`flex-1 rounded-t ${SHIMMER}`}
+              style={{ height: `${h}%` }}
+            />
           ))}
         </div>
       </div>
-    </main>
+
+      <div className="flex flex-col items-center justify-between rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
+        <div className={`mb-2 h-6 w-44 rounded ${SHIMMER}`} />
+        <div
+          className="rounded-full border-[22px] border-white/[0.08]"
+          style={{ width: 200, height: 200 }}
+        />
+        <div className={`mt-2 h-3 w-28 rounded ${SHIMMER}`} />
+      </div>
+
+      <div className="flex flex-col justify-around gap-4 rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] px-8 py-8 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="flex flex-col items-center gap-3">
+            <div className={`h-5 w-28 rounded ${SHIMMER}`} />
+            <div className={`h-10 w-24 rounded ${SHIMMER}`} />
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
 function SnapshotStat({ label, value }) {
   return (
     <div className="flex flex-col items-center gap-3 text-center">
-      <span className="font-['Times_New_Roman'] text-[18px] font-bold leading-none text-[#f4bf55]">
+      <span className=" text-[18px] font-bold leading-none text-[#f4bf55]">
         {label}
       </span>
-      <span className="font-['Times_New_Roman'] text-[44px] font-bold leading-none text-white">
+      <span className=" text-[44px] font-bold leading-none text-white">
         {value.toLocaleString()}
       </span>
     </div>
@@ -246,7 +244,7 @@ function TotalActiveUsersCard({ activeToday, totalMembers }) {
 
   return (
     <div className="flex h-full flex-col items-center justify-between rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
-      <h2 className="mb-2 text-center font-['Times_New_Roman'] text-[20px] font-bold leading-[1.2] text-white capitalize">
+      <h2 className="mb-2 text-center text-[20px] font-bold leading-[1.2] text-white capitalize">
         Total Active Users
       </h2>
 
@@ -273,16 +271,16 @@ function TotalActiveUsersCard({ activeToday, totalMembers }) {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-          <span className="font-['Times_New_Roman'] text-[14px] font-bold leading-tight text-[#06b800]">
+          <span className=" text-[14px] font-bold leading-tight text-[#06b800]">
             Active Users Today
           </span>
-          <span className="font-['Times_New_Roman'] text-[30px] font-bold leading-none text-white">
+          <span className=" text-[30px] font-bold leading-none text-white">
             {activeToday.toLocaleString()}
           </span>
         </div>
       </div>
 
-      <p className="mt-2 text-center font-['Times_New_Roman'] text-[14px] text-[#9f9f9f]">
+      <p className="mt-2 text-center text-[14px] text-[#9f9f9f]">
         Setup Active Users
       </p>
     </div>

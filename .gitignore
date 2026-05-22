@@ -41,3 +41,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .kiro/
+.claude/
+CLAUDE.md
+
+# graphify knowledge graph outputs
+/graphify-out/

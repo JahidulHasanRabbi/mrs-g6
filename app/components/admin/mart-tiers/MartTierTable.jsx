@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 
@@ -70,12 +70,12 @@ export default function MartTierTable({ tiers, onCreate, onEdit, onArchive }) {
     >
       {/* Card header */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
-        <h2 className="font-['Times_New_Roman'] text-[18px] font-bold text-white">
+        <h2 className=" text-[18px] font-bold text-white">
           Mart Tier Panel Table
         </h2>
         <button
           onClick={onCreate}
-          className="inline-flex min-w-[160px] items-center justify-center gap-2 whitespace-nowrap rounded-[6px] bg-[#e8b558] px-4 py-2 font-['Times_New_Roman'] text-[14px] font-bold leading-none text-black shadow-[0_2px_8px_rgba(231,196,87,0.35)] transition hover:brightness-110"
+          className="inline-flex min-w-[160px] items-center justify-center gap-2 whitespace-nowrap rounded-[6px] bg-[#e8b558] px-4 py-2 text-[14px] font-bold leading-none text-black shadow-[0_2px_8px_rgba(231,196,87,0.35)] transition hover:brightness-110"
         >
           <span>Create Mart Tier</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -99,7 +99,7 @@ export default function MartTierTable({ tiers, onCreate, onEdit, onArchive }) {
                   key={col.id}
                   type={col.sortable ? "button" : undefined}
                   onClick={col.sortable ? () => handleSort(col) : undefined}
-                  className={`flex items-center font-['Times_New_Roman'] text-[14px] font-bold ${
+                  className={`flex items-center text-[14px] font-bold ${
                     col.align === "center" ? "justify-center" : "justify-start"
                   } ${col.sortable ? "cursor-pointer select-none transition hover:text-[#e9af41]" : ""} ${
                     isActive ? "text-[#e9af41]" : "text-white"
@@ -115,7 +115,7 @@ export default function MartTierTable({ tiers, onCreate, onEdit, onArchive }) {
           {/* Rows */}
           <div className="divide-y divide-white/10">
             {pagedTiers.length === 0 ? (
-              <div className="px-6 py-10 text-center font-['Times_New_Roman'] text-white/60">
+              <div className="px-6 py-10 text-center text-white/60">
                 No mart tiers yet. Create one to get started.
               </div>
             ) : (
@@ -124,18 +124,18 @@ export default function MartTierTable({ tiers, onCreate, onEdit, onArchive }) {
                   key={tier.uuid}
                   className="grid grid-cols-[2fr_1fr_1.5fr] items-center px-6 py-4 transition-colors hover:bg-white/5"
                 >
-                  <div className="font-['Times_New_Roman'] text-[14px] text-white">{tier.name}</div>
-                  <div className="font-['Times_New_Roman'] text-[14px] tabular-nums text-white">{tier.level}</div>
+                  <div className=" text-[14px] text-white">{tier.name}</div>
+                  <div className=" text-[14px] tabular-nums text-white">{tier.level}</div>
                   <div className="flex items-center justify-center gap-2">
                     <button
                       onClick={() => onArchive(tier)}
-                      className="inline-flex h-[28px] min-w-[72px] items-center justify-center rounded-[6px] bg-[#22c55e] px-3 font-['Times_New_Roman'] text-[13px] font-bold text-white transition hover:bg-[#16a34a]"
+                      className="inline-flex h-[28px] min-w-[72px] items-center justify-center rounded-[6px] bg-[#22c55e] px-3 text-[13px] font-bold text-white transition hover:bg-[#16a34a]"
                     >
                       Archive
                     </button>
                     <button
                       onClick={() => onEdit(tier)}
-                      className="inline-flex h-[28px] min-w-[60px] items-center justify-center rounded-[6px] border border-white/20 px-3 font-['Times_New_Roman'] text-[13px] font-bold text-white/60 transition hover:border-[#e9af41] hover:text-[#e9af41]"
+                      className="inline-flex h-[28px] min-w-[60px] items-center justify-center rounded-[6px] border border-white/20 px-3 text-[13px] font-bold text-white/60 transition hover:border-[#e9af41] hover:text-[#e9af41]"
                     >
                       Edit
                     </button>
@@ -149,7 +149,7 @@ export default function MartTierTable({ tiers, onCreate, onEdit, onArchive }) {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex flex-wrap items-center justify-end gap-3 px-6 py-4 font-['Times_New_Roman'] text-[13px] text-white/70">
+        <div className="flex flex-wrap items-center justify-end gap-3 px-6 py-4 text-[13px] text-white/70">
           <span className="text-white/50">
             Showing {pagedTiers.length} of {sortedTiers.length}
           </span>

@@ -1,10 +1,12 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
 
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
 import { LoadingState } from "../../components/ui/LoadingState";
+import Skeleton from "../../components/admin/ui/Skeleton";
+import { useToast } from "../../components/admin/ui/Toast";
 import * as externalApi from "../../api/externalApi";
 
 const GOLD_BG =
@@ -12,6 +14,7 @@ const GOLD_BG =
 
 // ── Page content ─────────────────────────────────────────────────────────
 function ExternalApiContent() {
+  const toast = useToast();
   const [specialCodes, setSpecialCodes] = useState([]);
   const [selectedCode, setSelectedCode] = useState("");
   const [walletVipTiers, setWalletVipTiers] = useState([]);
@@ -73,16 +76,20 @@ function ExternalApiContent() {
     loadDataForCode(code);
   };
 
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);
-    alert('Copied to clipboard!');
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success("Copied to clipboard");
+    } catch {
+      toast.error("Failed to copy", { description: "Clipboard access was blocked." });
+    }
   };
 
   return (
-    <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:pl-[388px] xl:pr-10 xl:pt-8">
+    <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:admin-content-pl xl:pr-10 xl:pt-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="font-['Times_New_Roman'] font-bold text-[22px] sm:text-[28px] text-white">
+        <h1 className="text-4xl font-bold leading-[1.05] text-white">
           External API
         </h1>
         <svg
@@ -100,7 +107,10 @@ function ExternalApiContent() {
         </svg>
       </div>
 
-      <LoadingState isLoading={isLoading}>
+      <LoadingState
+        isLoading={isLoading}
+        skeleton={<Skeleton.TabbedPage tabs={2} columnLabels={["Tier", "Code", "Status", "Action"]} rows={6} withHeader={false} bare />}
+      >
         {/* Info Card */}
         <div className="rounded-[12px] border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-4 sm:p-6 mb-6">
           <div className="flex items-start gap-3 mb-4">
@@ -110,10 +120,10 @@ function ExternalApiContent() {
               <line x1="12" y1="8" x2="12.01" y2="8" />
             </svg>
             <div className="flex-1">
-              <h2 className="font-['Times_New_Roman'] font-bold text-[18px] text-white mb-2">
+              <h2 className=" font-bold text-[18px] text-white mb-2">
                 Public API Endpoints
               </h2>
-              <p className="font-['Times_New_Roman'] text-[14px] text-white/70 mb-4">
+              <p className=" text-[14px] text-white/70 mb-4">
                 These endpoints are publicly accessible and do not require authentication. 
                 They are designed for third-party integration with external wallet and gaming sites.
               </p>
@@ -121,14 +131,14 @@ function ExternalApiContent() {
               {/* Station Selector */}
               {specialCodes.length > 0 && (
                 <div className="flex items-center gap-3 mt-4">
-                  <label className="font-['Times_New_Roman'] text-[14px] text-white">
+                  <label className=" text-[14px] text-white">
                     Select Station:
                   </label>
                   <div className="relative">
                     <select
                       value={selectedCode}
                       onChange={(e) => handleCodeChange(e.target.value)}
-                      className="h-[36px] px-4 pr-10 rounded-[4px] bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] font-['Times_New_Roman'] text-[14px] text-white outline-none focus:border-[#f2c36b] appearance-none cursor-pointer"
+                      className="h-[36px] px-4 pr-10 rounded-[4px] bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] text-[14px] text-white outline-none focus:border-[#f2c36b] appearance-none cursor-pointer"
                     >
                       {specialCodes.map((station) => (
                         <option key={station.special_code} value={station.special_code} className="bg-[#4d4d4d] text-white">
@@ -150,7 +160,7 @@ function ExternalApiContent() {
                       <polyline points="6 9 12 15 18 9" />
                     </svg>
                   </div>
-                  <span className="font-['Times_New_Roman'] text-[12px] text-white/50 font-mono">
+                  <span className=" text-[12px] text-white/50 font-mono">
                     Code: {selectedCode}
                   </span>
                 </div>
@@ -163,7 +173,7 @@ function ExternalApiContent() {
         <div className="flex gap-2 mb-6 flex-wrap">
           <button
             onClick={() => setActiveTab("special-code")}
-            className={`h-[40px] px-6 rounded font-['Times_New_Roman'] text-[16px] transition-all ${
+            className={`h-[40px] px-6 rounded text-[16px] transition-all ${
               activeTab === "special-code"
                 ? "text-black"
                 : "text-white/70 bg-white/5 hover:bg-white/10"
@@ -174,7 +184,7 @@ function ExternalApiContent() {
           </button>
           <button
             onClick={() => setActiveTab("wallet-vip")}
-            className={`h-[40px] px-6 rounded font-['Times_New_Roman'] text-[16px] transition-all ${
+            className={`h-[40px] px-6 rounded text-[16px] transition-all ${
               activeTab === "wallet-vip"
                 ? "text-black"
                 : "text-white/70 bg-white/5 hover:bg-white/10"
@@ -185,7 +195,7 @@ function ExternalApiContent() {
           </button>
           <button
             onClick={() => setActiveTab("floating-menus")}
-            className={`h-[40px] px-6 rounded font-['Times_New_Roman'] text-[16px] transition-all ${
+            className={`h-[40px] px-6 rounded text-[16px] transition-all ${
               activeTab === "floating-menus"
                 ? "text-black"
                 : "text-white/70 bg-white/5 hover:bg-white/10"
@@ -210,7 +220,7 @@ function ExternalApiContent() {
               {activeTab === "special-code" && (
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-['Times_New_Roman'] font-bold text-[20px] text-white">
+                    <h3 className=" font-bold text-[20px] text-white">
                       Special Codes (All Stations)
                     </h3>
                     <code className="px-3 py-1 rounded bg-black/30 text-[#e9af41] font-mono text-sm">
@@ -224,12 +234,12 @@ function ExternalApiContent() {
                         <thead>
                           <tr className="bg-black rounded-t-[6px]">
                             <th className="px-4 py-3 text-left">
-                              <span className="font-['Times_New_Roman'] font-bold text-[16px] text-white">
+                              <span className=" font-bold text-[16px] text-white">
                                 Station Name
                               </span>
                             </th>
                             <th className="px-4 py-3 text-left">
-                              <span className="font-['Times_New_Roman'] font-bold text-[16px] text-white">
+                              <span className=" font-bold text-[16px] text-white">
                                 Special Code
                               </span>
                             </th>
@@ -238,10 +248,10 @@ function ExternalApiContent() {
                         <tbody>
                           {specialCodes.map((station, idx) => (
                             <tr key={idx} className="border-b border-[rgba(240,240,240,0.2)] hover:bg-white/[0.03] transition-colors">
-                              <td className="px-4 py-3 font-['Times_New_Roman'] text-[14px] text-white/80">
+                              <td className="px-4 py-3 text-[14px] text-white/80">
                                 {station.station_name}
                               </td>
-                              <td className="px-4 py-3 font-['Times_New_Roman'] text-[14px] text-[#e9af41] font-mono">
+                              <td className="px-4 py-3 text-[14px] text-[#e9af41] font-mono">
                                 {station.special_code}
                               </td>
                             </tr>
@@ -250,7 +260,7 @@ function ExternalApiContent() {
                       </table>
                     </div>
                   ) : (
-                    <p className="text-white/50 font-['Times_New_Roman']">No special codes available</p>
+                    <p className="text-white/50">No special codes available</p>
                   )}
                 </div>
               )}
@@ -259,7 +269,7 @@ function ExternalApiContent() {
               {activeTab === "wallet-vip" && (
                 <div>
                   <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-                    <h3 className="font-['Times_New_Roman'] font-bold text-[20px] text-white">
+                    <h3 className=" font-bold text-[20px] text-white">
                       Wallet VIP Tiers
                     </h3>
                     <code className="px-3 py-1 rounded bg-black/30 text-[#e9af41] font-mono text-sm">
@@ -273,44 +283,44 @@ function ExternalApiContent() {
                         <thead>
                           <tr className="bg-black rounded-t-[6px]">
                             <th className="px-4 py-3 text-left min-w-[120px]">
-                              <span className="font-['Times_New_Roman'] font-bold text-[16px] text-white">Tier Name</span>
+                              <span className=" font-bold text-[16px] text-white">Tier Name</span>
                             </th>
                             <th className="px-4 py-3 text-left min-w-[140px]">
-                              <span className="font-['Times_New_Roman'] font-bold text-[16px] text-white">Lifetime Deposit</span>
+                              <span className=" font-bold text-[16px] text-white">Lifetime Deposit</span>
                             </th>
                             <th className="px-4 py-3 text-left min-w-[130px]">
-                              <span className="font-['Times_New_Roman'] font-bold text-[16px] text-white">Monthly Deposit</span>
+                              <span className=" font-bold text-[16px] text-white">Monthly Deposit</span>
                             </th>
                             <th className="px-4 py-3 text-left min-w-[120px]">
-                              <span className="font-['Times_New_Roman'] font-bold text-[16px] text-white">Upgrade Bonus</span>
+                              <span className=" font-bold text-[16px] text-white">Upgrade Bonus</span>
                             </th>
                             <th className="px-4 py-3 text-left min-w-[130px]">
-                              <span className="font-['Times_New_Roman'] font-bold text-[16px] text-white">Monthly Loyalty</span>
+                              <span className=" font-bold text-[16px] text-white">Monthly Loyalty</span>
                             </th>
                             <th className="px-4 py-3 text-left min-w-[120px]">
-                              <span className="font-['Times_New_Roman'] font-bold text-[16px] text-white">Birthday Bonus</span>
+                              <span className=" font-bold text-[16px] text-white">Birthday Bonus</span>
                             </th>
                           </tr>
                         </thead>
                         <tbody>
                           {walletVipTiers.map((tier, idx) => (
                             <tr key={idx} className="border-b border-[rgba(240,240,240,0.2)] hover:bg-white/[0.03] transition-colors">
-                              <td className="px-4 py-3 font-['Times_New_Roman'] text-[14px] text-white/80 font-bold">
+                              <td className="px-4 py-3 text-[14px] text-white/80 font-bold">
                                 {tier.name}
                               </td>
-                              <td className="px-4 py-3 font-['Times_New_Roman'] text-[14px] text-white/80">
+                              <td className="px-4 py-3 text-[14px] text-white/80">
                                 RM {Number(tier.lifetime_deposit_required || 0).toLocaleString('en-MY')}
                               </td>
-                              <td className="px-4 py-3 font-['Times_New_Roman'] text-[14px] text-white/80">
+                              <td className="px-4 py-3 text-[14px] text-white/80">
                                 RM {Number(tier.monthly_deposit || 0).toLocaleString('en-MY')}
                               </td>
-                              <td className="px-4 py-3 font-['Times_New_Roman'] text-[14px] text-white/80">
+                              <td className="px-4 py-3 text-[14px] text-white/80">
                                 RM {Number(tier.upgrade_bonus || 0).toLocaleString('en-MY')}
                               </td>
-                              <td className="px-4 py-3 font-['Times_New_Roman'] text-[14px] text-white/80">
+                              <td className="px-4 py-3 text-[14px] text-white/80">
                                 RM {Number(tier.monthly_loyalty_bonus || 0).toLocaleString('en-MY')}
                               </td>
-                              <td className="px-4 py-3 font-['Times_New_Roman'] text-[14px] text-white/80">
+                              <td className="px-4 py-3 text-[14px] text-white/80">
                                 RM {Number(tier.birthday_bonus || 0).toLocaleString('en-MY')}
                               </td>
                             </tr>
@@ -319,7 +329,7 @@ function ExternalApiContent() {
                       </table>
                     </div>
                   ) : (
-                    <p className="text-white/50 font-['Times_New_Roman']">No wallet VIP tiers available for this station</p>
+                    <p className="text-white/50">No wallet VIP tiers available for this station</p>
                   )}
                 </div>
               )}
@@ -328,7 +338,7 @@ function ExternalApiContent() {
               {activeTab === "floating-menus" && (
                 <div>
                   <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-                    <h3 className="font-['Times_New_Roman'] font-bold text-[20px] text-white">
+                    <h3 className=" font-bold text-[20px] text-white">
                       Floating Menus
                     </h3>
                     <code className="px-3 py-1 rounded bg-black/30 text-[#e9af41] font-mono text-sm">
@@ -342,26 +352,26 @@ function ExternalApiContent() {
                         <thead>
                           <tr className="bg-black rounded-t-[6px]">
                             <th className="px-4 py-3 text-left min-w-[180px]">
-                              <span className="font-['Times_New_Roman'] font-bold text-[16px] text-white">Display Text</span>
+                              <span className=" font-bold text-[16px] text-white">Display Text</span>
                             </th>
                             <th className="px-4 py-3 text-left min-w-[250px]">
-                              <span className="font-['Times_New_Roman'] font-bold text-[16px] text-white">URL</span>
+                              <span className=" font-bold text-[16px] text-white">URL</span>
                             </th>
                             <th className="px-4 py-3 text-left min-w-[100px]">
-                              <span className="font-['Times_New_Roman'] font-bold text-[16px] text-white">Order</span>
+                              <span className=" font-bold text-[16px] text-white">Order</span>
                             </th>
                             <th className="px-4 py-3 text-left min-w-[100px]">
-                              <span className="font-['Times_New_Roman'] font-bold text-[16px] text-white">Icon</span>
+                              <span className=" font-bold text-[16px] text-white">Icon</span>
                             </th>
                           </tr>
                         </thead>
                         <tbody>
                           {floatingMenus.map((menu, idx) => (
                             <tr key={idx} className="border-b border-[rgba(240,240,240,0.2)] hover:bg-white/[0.03] transition-colors">
-                              <td className="px-4 py-3 font-['Times_New_Roman'] text-[14px] text-white/80">
+                              <td className="px-4 py-3 text-[14px] text-white/80">
                                 {menu.display_text}
                               </td>
-                              <td className="px-4 py-3 font-['Times_New_Roman'] text-[14px] text-white/80">
+                              <td className="px-4 py-3 text-[14px] text-white/80">
                                 <a 
                                   href={menu.url_slug} 
                                   target="_blank" 
@@ -371,7 +381,7 @@ function ExternalApiContent() {
                                   {menu.url_slug}
                                 </a>
                               </td>
-                              <td className="px-4 py-3 font-['Times_New_Roman'] text-[14px] text-white/80">
+                              <td className="px-4 py-3 text-[14px] text-white/80">
                                 {menu.display_order}
                               </td>
                               <td className="px-4 py-3">
@@ -392,7 +402,7 @@ function ExternalApiContent() {
                       </table>
                     </div>
                   ) : (
-                    <p className="text-white/50 font-['Times_New_Roman']">No floating menus available for this station</p>
+                    <p className="text-white/50">No floating menus available for this station</p>
                   )}
                 </div>
               )}

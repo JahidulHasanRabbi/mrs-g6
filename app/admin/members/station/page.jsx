@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
@@ -89,30 +89,22 @@ function StationContent() {
       <div className="rounded-[12px] border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-3 sm:p-4 flex flex-col gap-3">
         {/* Header */}
         <div className="flex items-center flex-wrap gap-2 sm:gap-3">
-          <p className="font-['Times_New_Roman'] font-bold text-[16px] sm:text-[18px] text-white whitespace-nowrap italic">
+          <p className=" font-bold text-[16px] sm:text-[18px] text-white whitespace-nowrap italic">
             Member Station Details
           </p>
         </div>
 
         {/* Table */}
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#e9af41] border-t-transparent" />
-            <span className="ml-3 font-['Times_New_Roman'] text-white/60">
-              Loading stations...
-            </span>
-          </div>
-        ) : (
-          <DataTable
-            columns={TABLE_COLUMNS}
-            rows={sortedRows}
-            sortKey={sortKey}
-            sortDir={sortDir}
-            onSort={handleSort}
-            renderCell={renderCell}
-            emptyMessage="No station records found for this member."
-          />
-        )}
+        <DataTable
+          columns={TABLE_COLUMNS}
+          rows={sortedRows}
+          sortKey={sortKey}
+          sortDir={sortDir}
+          onSort={handleSort}
+          renderCell={renderCell}
+          isLoading={loading}
+          emptyMessage="No station records found for this member."
+        />
       </div>
     </HistoryPageShell>
   );

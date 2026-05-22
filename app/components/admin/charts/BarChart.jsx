@@ -1,4 +1,4 @@
-export default function BarChart({
+﻿export default function BarChart({
   labels,
   values,
   positiveColor = "#fab47f",
@@ -38,7 +38,7 @@ export default function BarChart({
       {/* Y-axis labels */}
       <div className="flex flex-col justify-between pr-[18px]" style={{ height: `${chartHeight}px` }}>
         {yLabels.map((label, i) => (
-          <p key={i} className="text-[12px] text-[#757575] font-['Times_New_Roman'] leading-[1.3] text-right">
+          <p key={i} className="text-[12px] text-[#757575] leading-[1.3] text-right">
             {label}
           </p>
         ))}
@@ -118,7 +118,6 @@ export default function BarChart({
                   textAnchor="middle"
                   fontSize="14"
                   fill="#757575"
-                  fontFamily="Times New Roman"
                 >
                   {labels[i]}
                 </text>

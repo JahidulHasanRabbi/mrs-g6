@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import SpinItemsTable from "./SpinItemsTable";
@@ -239,13 +239,13 @@ export default function SpinTablesContainer() {
       <div className="rounded-xl border border-white/10 bg-white/[0.03] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
         {/* Table Header */}
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-          <h2 className="text-xl font-bold text-white font-['Times_New_Roman']">
+          <h2 className="text-xl font-bold text-white">
             {activeTab === "items" ? "Spin Items Panel Table" : "Spin Sequence Table"}
           </h2>
           <div className="flex items-center gap-3">
             <button 
               onClick={handleTabToggle}
-              className={`inline-flex min-w-[172px] items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-center font-['Times_New_Roman'] text-sm font-bold leading-none transition-colors ${
+              className={`inline-flex min-w-[172px] items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-center text-sm font-bold leading-none transition-colors ${
                 activeTab === "sequence"
                   ? "border-[0.5px] border-[#f2c36b] text-black"
                   : "border border-[#e9af41]/30 bg-[#e9af41]/10 text-[#e9af41] hover:bg-[#e9af41]/20"
@@ -264,7 +264,7 @@ export default function SpinTablesContainer() {
             {activeTab === "items" && (
               <button 
                 onClick={handleAddClick}
-                className="inline-flex min-w-[72px] items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-center font-['Times_New_Roman'] text-sm font-bold leading-none text-black transition-colors disabled:opacity-50"
+                className="inline-flex min-w-[72px] items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-center text-sm font-bold leading-none text-black transition-colors disabled:opacity-50"
                 style={{
                   backgroundImage: "linear-gradient(2.1326483653998594deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
                 }}
@@ -278,17 +278,12 @@ export default function SpinTablesContainer() {
 
         {/* Loading State or Conditional Table Rendering */}
         {activeTab === "items" ? (
-          isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-white/60">Loading...</div>
-            </div>
-          ) : (
-            <SpinItemsTable
-              items={spinItems}
-              onEditClick={handleEditClick}
-              onDeleteClick={handleDeleteClick}
-            />
-          )
+          <SpinItemsTable
+            items={spinItems}
+            isLoading={isLoading}
+            onEditClick={handleEditClick}
+            onDeleteClick={handleDeleteClick}
+          />
         ) : (
           <div className="p-6">
             <SpinSequenceTable
@@ -303,26 +298,6 @@ export default function SpinTablesContainer() {
           </div>
         )}
 
-        {/* Pagination */}
-        <div className="flex items-center justify-center border-t border-white/10 px-6 py-4">
-          <div className="flex items-center gap-2">
-            <button className="flex h-8 w-8 items-center justify-center rounded border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10">
-              ‹
-            </button>
-            <div className="flex items-center gap-1 px-2 text-sm text-white/70">
-              <span className="font-bold text-white">
-                {activeTab === "items" ? spinItems.length : spinSequences.length}
-              </span>
-              <span>/</span>
-              <span>
-                {activeTab === "items" ? spinItems.length : spinSequences.length}
-              </span>
-            </div>
-            <button className="flex h-8 w-8 items-center justify-center rounded border border-white/10 bg-white/5 text-white/70 transition-colors hover:bg-white/10">
-              ›
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* Modal - Only for Items */}

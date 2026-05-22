@@ -1,0 +1,21 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 19 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Mask group">
+<mask id="mask0_0_102" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="19" height="22">
+<g id="Group">
+<g id="Group_2">
+<path id="Vector" d="M18 6L9.5 1L1 6V16L9.5 21L18 16V6Z" fill="var(--fill-0, white)" stroke="var(--stroke-0, white)" stroke-width="2" stroke-linejoin="round"/>
+<path id="Vector_2" d="M9.5 10V14M13.5 8V14M5.5 12V14" stroke="var(--stroke-0, black)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</g>
+</mask>
+<g mask="url(#mask0_0_102)">
+<path id="Vector_3" d="M-2.5 -1H21.5V23H-2.5V-1Z" fill="url(#paint0_linear_0_102)"/>
+</g>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_102" x1="-2.20968" y1="-0.999999" x2="22.2128" y2="0.286779" gradientUnits="userSpaceOnUse">
+<stop stop-color="#DC9D16"/>
+<stop offset="1" stop-color="#F2CB7A"/>
+</linearGradient>
+</defs>
+</svg>

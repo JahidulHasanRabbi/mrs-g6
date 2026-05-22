@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { getOptionLabel } from "../../../api/apiOptions";
 
@@ -64,37 +64,37 @@ export default function RedemptionItemsTable({ items = [], onEditClick, onDelete
               className="border-b border-white/5 transition-colors hover:bg-white/[0.02]"
             >
               <td className="px-4 py-4">
-                <p className="text-sm text-white font-['Times_New_Roman']">
+                <p className="text-sm text-white">
                   {item.name}
                 </p>
               </td>
               <td className="px-4 py-4">
-                <p className="text-sm text-white/80 font-['Times_New_Roman']">
+                <p className="text-sm text-white/80">
                   {item.quantity_available ?? item.quantity ?? ""}
                 </p>
               </td>
               <td className="px-4 py-4">
-                <p className="text-sm text-white/80 font-['Times_New_Roman']">
+                <p className="text-sm text-white/80">
                   {item.start_date}
                 </p>
               </td>
               <td className="px-4 py-4">
-                <p className="text-sm text-white/80 font-['Times_New_Roman']">
+                <p className="text-sm text-white/80">
                   {item.end_date}
                 </p>
               </td>
               <td className="px-4 py-4">
-                <p className="text-sm text-white/80 font-['Times_New_Roman']">
+                <p className="text-sm text-white/80">
                   {formatPrizeType(item.prize_type)}
                 </p>
               </td>
               <td className="px-4 py-4">
-                <p className="text-sm text-white/80 font-['Times_New_Roman']">
+                <p className="text-sm text-white/80">
                   {item.tokens_needed}
                 </p>
               </td>
               <td className="px-4 py-4">
-                <p className="text-sm text-white/80 font-['Times_New_Roman']">
+                <p className="text-sm text-white/80">
                   {item.promotion}
                 </p>
               </td>
@@ -108,7 +108,7 @@ export default function RedemptionItemsTable({ items = [], onEditClick, onDelete
                     />
                   </div>
                 ) : (
-                  <p className="text-sm text-white/40 font-['Times_New_Roman']">
+                  <p className="text-sm text-white/40">
                     No image
                   </p>
                 )}

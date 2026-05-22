@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { tokenStorage } from '../../api/tokenStorage';
 import { verifyToken, refreshToken } from '../../api/adminApi';
@@ -8,6 +8,7 @@ import { verifyToken, refreshToken } from '../../api/adminApi';
 async function attemptRefresh() {
   const storedRefresh = tokenStorage.getAdminRefreshToken();
   if (!storedRefresh) return false;
+
   try {
     await refreshToken(storedRefresh);
     return true;
@@ -17,78 +18,60 @@ async function attemptRefresh() {
   }
 }
 
-export function AdminRouteGuard({ children }) {
+/**
+ * Admin route guard.
+ *
+ * Behavior: optimistic render. If a token exists in localStorage, render the
+ * children immediately so static chrome appears in the first frame. The token
+ * is verified in the background; if verification fails the guard tries one
+ * refresh before redirecting to /admin/login.
+ *
+ * The `skeleton` prop is accepted for backwards compatibility but is no
+ * longer rendered. Pages should render their own loading states inside their
+ * data sections instead.
+ */
+export function AdminRouteGuard({ children /* , skeleton (deprecated) */ }) {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const verifiedRef = useRef(false);
+  const [tokenState, setTokenState] = useState(null); // null | 'present' | 'absent'
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const token = tokenStorage.getAdminAccessToken();
+    if (verifiedRef.current) return;
+    verifiedRef.current = true;
 
-      if (!token) {
-        // Access token missing or expired — try refresh before giving up
-        const refreshed = await attemptRefresh();
+    const token = tokenStorage.getAdminAccessToken();
+
+    if (!token) {
+      attemptRefresh().then((refreshed) => {
         if (refreshed) {
-          setIsAuthenticated(true);
+          setTokenState('present');
         } else {
+          setTokenState('absent');
           router.push('/admin/login');
         }
-        setIsLoading(false);
-        return;
-      }
+      });
+      return;
+    }
 
-      try {
-        await verifyToken(token);
-        setIsAuthenticated(true);
-      } catch {
-        // Server rejected the token — try refresh once
-        const refreshed = await attemptRefresh();
+    setTokenState('present');
+
+    // Background verify - non-blocking.
+    verifyToken(token).catch((error) => {
+      console.log('[AdminRouteGuard] background token verify failed:', error?.message);
+
+      attemptRefresh().then((refreshed) => {
         if (refreshed) {
-          setIsAuthenticated(true);
+          setTokenState('present');
         } else {
+          tokenStorage.clearAdminTokens();
+          setTokenState('absent');
           router.push('/admin/login');
         }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAuth();
+      });
+    });
   }, [router]);
 
-  // Show loading spinner while checking authentication
-  if (isLoading) {
-    return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        minHeight: '100vh',
-        backgroundColor: '#1a1a1a'
-      }}>
-        <div style={{ 
-          border: '4px solid rgba(233, 175, 65, 0.2)', 
-          borderTop: '4px solid #e9af41', 
-          borderRadius: '50%', 
-          width: '50px', 
-          height: '50px', 
-          animation: 'spin 1s linear infinite' 
-        }} />
-        <style jsx>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-      </div>
-    );
-  }
-
-  // Don't render anything if not authenticated (redirecting to login)
-  if (!isAuthenticated) {
-    return null;
-  }
+  if (tokenState === 'absent') return null;
 
   return children;
 }

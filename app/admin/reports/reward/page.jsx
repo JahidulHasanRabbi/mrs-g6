@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState, useCallback, Suspense } from "react";
 import { AdminRouteGuard } from "../../../components/guards/AdminRouteGuard";
@@ -9,14 +9,18 @@ import { getCategoryOptions } from "../../../api/queryParams";
 
 const PAGE_SIZE = 8;
 
+// Column widths are tuned so the total (≈1040px) fits inside the admin
+// content area on a 1440px viewport with the expanded sidebar. Below that
+// the wrapper still allows horizontal scroll, but most desktops won't see
+// it. Long cell values are truncated with title fallbacks (see <td>s).
 const TABLE_COLUMNS = [
-  { key: "phone_number", label: "Phone Number", className: "w-[170px]" },
-  { key: "username", label: "Username", className: "w-[180px]" },
-  { key: "station", label: "Station", className: "w-[180px]" },
-  { key: "created", label: "Date/Time", className: "w-[240px]" },
-  { key: "category", label: "Category", className: "w-[280px]" },
-  { key: "reward_details", label: "Reward Details", className: "w-[290px]" },
-  { key: "reward_name", label: "Reward Name", className: "w-[180px]" },
+  { key: "phone_number",   label: "Phone Number",   className: "w-[140px]" },
+  { key: "username",       label: "Username",       className: "w-[140px]" },
+  { key: "station",        label: "Station",        className: "w-[130px]" },
+  { key: "created",        label: "Date/Time",      className: "w-[170px]" },
+  { key: "category",       label: "Category",       className: "w-[110px]" },
+  { key: "reward_details", label: "Reward Details", className: "w-[180px]" },
+  { key: "reward_name",    label: "Reward Name",    className: "w-[170px]" },
 ];
 
 function formatDateTime(isoStr) {
@@ -143,13 +147,13 @@ function RewardReportContent() {
   };
 
   return (
-    <main className="min-h-screen pl-[388px] pr-10 pt-8 pb-10">
+    <main className="min-h-screen xl:admin-content-pl pr-10 pt-8 pb-10">
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
-            <h1 className="font-['Times_New_Roman'] text-[30px] font-bold leading-none text-white">
+            <h1 className="text-4xl font-bold leading-[1.05] text-white">
               Reward Report
             </h1>
-            <p className="mt-2 font-['Times_New_Roman'] text-[14px] text-white/55">
+            <p className="mt-2 text-[14px] text-white/55">
               Frontend-only report layout based on the approved Phase 1 enhancement spec.
             </p>
           </div>
@@ -165,11 +169,11 @@ function RewardReportContent() {
         <section className="overflow-hidden rounded-[12px] border border-[rgba(255,255,132,0.18)] bg-[linear-gradient(180deg,rgba(28,48,31,0.98)_0%,rgba(24,44,28,0.98)_100%)] shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
           <div className="border-b border-white/5 px-4 pt-4 pb-3">
             <div className="flex flex-wrap items-center gap-3">
-              <h2 className="mr-auto whitespace-nowrap font-['Times_New_Roman'] text-[15px] font-bold text-[#f4efe0] sm:text-[16px] lg:text-[17px]">
+              <h2 className="mr-auto whitespace-nowrap text-[15px] font-bold text-[#f4efe0] sm:text-[16px] lg:text-[17px]">
                 The Reward Reports Are Given
               </h2>
 
-              <span className="whitespace-nowrap font-['Times_New_Roman'] text-[13px] text-[#d6d6d6]">
+              <span className="whitespace-nowrap text-[13px] text-[#d6d6d6]">
                 Filter By:
               </span>
 
@@ -182,8 +186,8 @@ function RewardReportContent() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-[1472px] w-full border-separate border-spacing-0">
+          <div className="overflow-x-auto overflow-y-hidden scrollbar-admin">
+            <table className="min-w-[1040px] w-full table-fixed border-separate border-spacing-0">
               <thead>
                 <tr className="bg-black">
                   {TABLE_COLUMNS.map((column) => {
@@ -196,7 +200,7 @@ function RewardReportContent() {
                           onClick={() => handleSort(column.key)}
                           className="flex w-full items-center justify-start"
                         >
-                          <span className="font-['Times_New_Roman'] text-[14px] font-bold text-white whitespace-nowrap">
+                          <span className=" text-[14px] font-bold text-white whitespace-nowrap">
                             {column.label}
                           </span>
                           <SortIcon active={active} direction={sortConfig.direction} />
@@ -210,32 +214,32 @@ function RewardReportContent() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={TABLE_COLUMNS.length} className="px-5 py-12 text-center font-['Times_New_Roman'] text-[14px] text-white/60">
+                    <td colSpan={TABLE_COLUMNS.length} className="px-5 py-12 text-center text-[14px] text-white/60">
                       Loading...
                     </td>
                   </tr>
                 ) : sortedRows.length > 0 ? (
                   sortedRows.map((row) => (
                     <tr key={row.id} className="border-b border-[rgba(255,255,255,0.08)] transition-colors hover:bg-white/[0.03]">
-                      <td className="px-4 py-[14px] first:pl-5 font-['Times_New_Roman'] text-[13px] text-[#f1f1f1] whitespace-nowrap">
+                      <td className="px-4 py-[14px] first:pl-5 text-[13px] text-[#f1f1f1] truncate" title={row.phone_number || ""}>
                         {row.phone_number || "—"}
                       </td>
-                      <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#f1f1f1] whitespace-nowrap">
+                      <td className="px-4 py-[14px] text-[13px] text-[#f1f1f1] truncate" title={row.username || ""}>
                         {row.username || "—"}
                       </td>
-                      <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#e8e8e8] whitespace-nowrap">
+                      <td className="px-4 py-[14px] text-[13px] text-[#e8e8e8] truncate" title={row.station || ""}>
                         {row.station || "—"}
                       </td>
-                      <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#e8e8e8] whitespace-nowrap">
+                      <td className="px-4 py-[14px] text-[13px] text-[#e8e8e8] whitespace-nowrap">
                         {formatDateTime(row.created)}
                       </td>
-                      <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#ece9dc] whitespace-nowrap">
+                      <td className="px-4 py-[14px] text-[13px] text-[#ece9dc] truncate" title={row.category || ""}>
                         {row.category || "—"}
                       </td>
-                      <td className="px-4 py-[14px] font-['Times_New_Roman'] text-[13px] text-[#dadada] whitespace-nowrap">
+                      <td className="px-4 py-[14px] text-[13px] text-[#dadada] truncate" title={row.reward_details || ""}>
                         {row.reward_details || "—"}
                       </td>
-                      <td className="px-4 py-[14px] pr-5 font-['Times_New_Roman'] text-[13px] text-[#f1f1f1] whitespace-nowrap">
+                      <td className="px-4 py-[14px] pr-5 text-[13px] text-[#f1f1f1] truncate" title={row.reward_name || ""}>
                         {row.reward_name || "—"}
                       </td>
                     </tr>
@@ -244,7 +248,7 @@ function RewardReportContent() {
                   <tr>
                     <td
                       colSpan={TABLE_COLUMNS.length}
-                      className="px-5 py-12 text-center font-['Times_New_Roman'] text-[14px] text-white/60"
+                      className="px-5 py-12 text-center text-[14px] text-white/60"
                     >
                       {loading ? "Loading reports..." : "No reward report rows match the current filters."}
                     </td>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * Sort indicator arrows — highlights gold when active.
@@ -59,14 +59,14 @@ export function Pagination({ currentPage, totalPages, onPageChange }) {
         type="button"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="font-['Times_New_Roman'] text-[13px] text-white/70 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed px-2 py-1 italic"
+        className=" text-[13px] text-white/70 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed px-2 py-1 italic"
       >
         Previous
       </button>
 
       {pages.map((page, idx) =>
         page === "..." ? (
-          <span key={`e-${idx}`} className="font-['Times_New_Roman'] text-[13px] text-white/40 px-1">
+          <span key={`e-${idx}`} className=" text-[13px] text-white/40 px-1">
             ...
           </span>
         ) : (
@@ -74,7 +74,7 @@ export function Pagination({ currentPage, totalPages, onPageChange }) {
             type="button"
             key={page}
             onClick={() => onPageChange(page)}
-            className={`font-['Times_New_Roman'] text-[13px] min-w-[28px] h-[28px] rounded flex items-center justify-center transition-colors ${
+            className={` text-[13px] min-w-[28px] h-[28px] rounded flex items-center justify-center transition-colors ${
               currentPage === page
                 ? "bg-[#e9af41] text-black font-bold"
                 : "text-white/70 hover:text-white hover:bg-white/10"
@@ -89,7 +89,7 @@ export function Pagination({ currentPage, totalPages, onPageChange }) {
         type="button"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="font-['Times_New_Roman'] text-[13px] text-white/70 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed px-2 py-1 italic"
+        className=" text-[13px] text-white/70 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed px-2 py-1 italic"
       >
         Next
       </button>
@@ -98,16 +98,38 @@ export function Pagination({ currentPage, totalPages, onPageChange }) {
 }
 
 /**
+ * Skeleton placeholder row — shown while data is loading.
+ * Mimics row geometry so layout doesn't jump when real data arrives (checklist #12).
+ */
+function SkeletonRow({ columns }) {
+  return (
+    <tr className="border-b border-[rgba(240,240,240,0.2)]">
+      {columns.map((col) => (
+        <td key={col.key} className="px-3 py-3">
+          <div
+            className={`h-3 rounded bg-white/10 animate-pulse ${col.align === "right" ? "ml-auto" : ""}`}
+            style={{ width: `${40 + ((col.key?.length ?? 6) * 7) % 50}%` }}
+          />
+        </td>
+      ))}
+    </tr>
+  );
+}
+
+/**
  * Generic sortable data table.
  *
  * @param {Object}   props
- * @param {Array}    props.columns      - { key, label, minW?, align? }
- * @param {Array}    props.rows         - data rows
- * @param {string}   props.sortKey      - currently sorted column key
- * @param {string}   props.sortDir      - "asc" | "desc"
- * @param {Function} props.onSort       - (key) => void
- * @param {Function} props.renderCell   - (row, column) => ReactNode
- * @param {string}   props.emptyMessage - shown when rows is empty
+ * @param {Array}    props.columns       - { key, label, minW?, align? }
+ * @param {Array}    props.rows          - data rows
+ * @param {string}   props.sortKey       - currently sorted column key
+ * @param {string}   props.sortDir       - "asc" | "desc"
+ * @param {Function} props.onSort        - (key) => void
+ * @param {Function} props.renderCell    - (row, column) => ReactNode
+ * @param {string}   props.emptyMessage  - shown when rows is empty
+ * @param {boolean}  props.isLoading     - render skeleton rows instead of data
+ * @param {number}   props.skeletonRows  - how many skeleton rows to show (default 6)
+ * @param {string}   props.maxHeight     - sets a max-height + sticky header (e.g. "60vh", "480px")
  */
 export function DataTable({
   columns,
@@ -117,20 +139,27 @@ export function DataTable({
   onSort,
   renderCell,
   emptyMessage = "No records found.",
+  isLoading = false,
+  skeletonRows = 6,
+  maxHeight,
 }) {
+  const sticky = !!maxHeight;
   return (
-    <div className="overflow-x-auto scrollbar-admin rounded-lg">
+    <div
+      className="overflow-auto scrollbar-admin rounded-lg"
+      style={maxHeight ? { maxHeight } : undefined}
+    >
       <table className="w-full min-w-[700px]">
-        <thead>
+        <thead className={sticky ? "sticky top-0 z-10" : ""}>
           <tr className="bg-black">
             {columns.map((col) => (
               <th
                 key={col.key}
-                className={`${col.minW || ""} px-3 py-3 text-left cursor-pointer select-none hover:bg-white/5 transition-colors`}
-                onClick={() => onSort(col.key)}
+                className={`${col.minW || ""} px-3 py-3 text-left cursor-pointer select-none bg-black hover:bg-white/5 transition-colors`}
+                onClick={() => onSort?.(col.key)}
               >
                 <div className={`flex items-center ${col.align === "right" ? "justify-end" : "justify-start"}`}>
-                  <span className="font-['Times_New_Roman'] font-bold text-[13px] sm:text-[14px] text-white whitespace-nowrap">
+                  <span className=" font-bold text-[13px] sm:text-[14px] text-white whitespace-nowrap">
                     {col.label}
                   </span>
                   <SortIcon active={sortKey === col.key} direction={sortDir} />
@@ -141,11 +170,15 @@ export function DataTable({
         </thead>
 
         <tbody>
-          {rows.length === 0 ? (
+          {isLoading ? (
+            Array.from({ length: skeletonRows }).map((_, i) => (
+              <SkeletonRow key={`sk-${i}`} columns={columns} />
+            ))
+          ) : rows.length === 0 ? (
             <tr>
               <td
                 colSpan={columns.length}
-                className="px-5 py-12 text-center font-['Times_New_Roman'] text-white/40"
+                className="px-5 py-12 text-center text-white/40"
               >
                 {emptyMessage}
               </td>
@@ -159,7 +192,7 @@ export function DataTable({
                 {columns.map((col) => (
                   <td
                     key={col.key}
-                    className={`px-3 py-3 font-['Times_New_Roman'] text-[13px] text-white/80 whitespace-nowrap ${
+                    className={`px-3 py-3 text-[13px] text-white/80 whitespace-nowrap ${
                       col.align === "right" ? "text-right" : ""
                     }`}
                   >

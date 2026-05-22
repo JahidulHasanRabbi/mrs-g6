@@ -1,14 +1,32 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
 import ErrorDisplay from "../../components/ui/ErrorDisplay";
 import { LoadingState, LoadingButton } from "../../components/ui/LoadingState";
+import Skeleton from "../../components/admin/ui/Skeleton";
 import * as adminApi from "../../api/adminApi";
+
+const SKELETON_COLUMNS = [
+  { label: "Tier Name",        type: "text" },
+  { label: "Lifetime Deposit", type: "number" },
+  { label: "Monthly Deposit",  type: "number" },
+  { label: "Upgrade Bonus",    type: "number" },
+  { label: "Monthly Loyalty",  type: "number" },
+  { label: "Birthday Bonus",   type: "number" },
+  { label: "Actions",          type: "actions", count: 2 },
+];
+
+const FULL_SKELETON = (
+  <Skeleton.TablePage columns={SKELETON_COLUMNS} rows={5} withFilters={false} titleWidth={300} />
+);
+const BARE_SKELETON = (
+  <Skeleton.TablePage columns={SKELETON_COLUMNS} rows={5} withHeader={false} withFilters={false} bare />
+);
 
 export default function VipTiersPage() {
   return (
-    <AdminRouteGuard>
+    <AdminRouteGuard skeleton={FULL_SKELETON}>
       <VipTiersContent />
     </AdminRouteGuard>
   );
@@ -76,10 +94,10 @@ function VipTiersContent() {
   };
 
   return (
-    <main className="min-h-screen pl-[388px] pr-10 pt-10 pb-10">
+    <main className="min-h-screen xl:admin-content-pl pr-10 pt-10 pb-10">
         {/* Header */}
         <div className="mb-8 flex items-start justify-between">
-          <h1 className="text-4xl font-bold leading-[1.05] text-white font-['Times_New_Roman']">
+          <h1 className="text-4xl font-bold leading-[1.05] text-white">
             VIP Tier Management
           </h1>
           <button
@@ -89,7 +107,7 @@ function VipTiersContent() {
               backgroundImage: "linear-gradient(1.0746108354373831deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
             }}
           >
-            <span className="text-[16px] font-bold text-black font-['Times_New_Roman'] leading-none">
+            <span className="text-[16px] font-bold text-black leading-none">
               Create New Tier
             </span>
           </button>
@@ -122,7 +140,7 @@ function VipTiersContent() {
         )}
 
         {/* Tiers List */}
-        <LoadingState isLoading={isLoading}>
+        <LoadingState isLoading={isLoading} skeleton={BARE_SKELETON}>
           <div className="rounded-xl border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -221,7 +239,7 @@ function TierFormModal({ title, tier, onSubmit, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-full max-w-2xl rounded-xl border border-[rgba(255,255,132,0.2)] bg-[#07190d] p-6 shadow-xl">
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-white font-['Times_New_Roman']">
+          <h2 className="text-2xl font-bold text-white">
             {title}
           </h2>
           <button
@@ -354,7 +372,7 @@ function TierFormModal({ title, tier, onSubmit, onClose }) {
                 backgroundImage: "linear-gradient(1.0746108354373831deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
               }}
             >
-              <span className="text-[16px] font-bold text-black font-['Times_New_Roman'] leading-none">
+              <span className="text-[16px] font-bold text-black leading-none">
                 {tier ? 'Update Tier' : 'Create Tier'}
               </span>
             </LoadingButton>

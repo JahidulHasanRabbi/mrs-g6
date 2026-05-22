@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import Image from "next/image";
@@ -6,6 +6,7 @@ import Image from "next/image";
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
 import { SortIcon, Pagination } from "../../components/admin/members/DataTable";
 import { LoadingState } from "../../components/ui/LoadingState";
+import Skeleton from "../../components/admin/ui/Skeleton";
 import * as adminApi from "../../api/adminApi";
 
 // ── Constants ────────────────────────────────────────────────────────────
@@ -195,14 +196,14 @@ function FrameFormModal({ frame, onClose, onSave, vipTiers }) {
         </div>
 
         {/* Title */}
-        <h2 className="font-['Times_New_Roman'] font-bold text-[28px] text-white text-center mb-8">
+        <h2 className=" font-bold text-[28px] text-white text-center mb-8">
           {isEdit ? "Edit Frame" : "Create New Frame"}
         </h2>
 
         {/* Error Message */}
         {errorMessage && (
           <div className="mb-4 p-3 rounded bg-red-500/20 border border-red-500/50">
-            <p className="text-red-200 text-sm font-['Times_New_Roman']">{errorMessage}</p>
+            <p className="text-red-200 text-sm">{errorMessage}</p>
           </div>
         )}
 
@@ -210,7 +211,7 @@ function FrameFormModal({ frame, onClose, onSave, vipTiers }) {
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           {/* Name */}
           <div className="flex items-center gap-[18px]">
-            <label className="w-[120px] shrink-0 font-['Times_New_Roman'] text-[16px] text-white">
+            <label className="w-[120px] shrink-0 text-[16px] text-white">
               Name:
             </label>
             <input
@@ -218,26 +219,26 @@ function FrameFormModal({ frame, onClose, onSave, vipTiers }) {
               value={form.name}
               onChange={(e) => handleChange("name", e.target.value)}
               required
-              className="h-[36px] flex-1 rounded-[4px] px-3 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] font-['Times_New_Roman'] text-[14px] text-white outline-none focus:border-[#f2c36b]"
+              className="h-[36px] flex-1 rounded-[4px] px-3 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] text-[14px] text-white outline-none focus:border-[#f2c36b]"
             />
           </div>
 
           {/* Details */}
           <div className="flex items-center gap-[18px]">
-            <label className="w-[120px] shrink-0 font-['Times_New_Roman'] text-[16px] text-white">
+            <label className="w-[120px] shrink-0 text-[16px] text-white">
               Details:
             </label>
             <textarea
               value={form.details}
               onChange={(e) => handleChange("details", e.target.value)}
               rows={3}
-              className="flex-1 rounded-[4px] px-3 py-2 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] font-['Times_New_Roman'] text-[14px] text-white outline-none focus:border-[#f2c36b] resize-none"
+              className="flex-1 rounded-[4px] px-3 py-2 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] text-[14px] text-white outline-none focus:border-[#f2c36b] resize-none"
             />
           </div>
 
           {/* Challenge */}
           <div className="flex items-center gap-[18px]">
-            <label className="w-[120px] shrink-0 font-['Times_New_Roman'] text-[16px] text-white">
+            <label className="w-[120px] shrink-0 text-[16px] text-white">
               Challenge:
             </label>
             <div className="relative flex-1">
@@ -245,7 +246,7 @@ function FrameFormModal({ frame, onClose, onSave, vipTiers }) {
                 value={form.challenge}
                 onChange={(e) => handleChange("challenge", e.target.value)}
                 required
-                className="h-[36px] w-full rounded-[4px] px-3 pr-8 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] font-['Times_New_Roman'] text-[14px] text-white outline-none focus:border-[#f2c36b] appearance-none cursor-pointer"
+                className="h-[36px] w-full rounded-[4px] px-3 pr-8 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] text-[14px] text-white outline-none focus:border-[#f2c36b] appearance-none cursor-pointer"
               >
                 {CHALLENGE_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value} className="bg-[#4d4d4d] text-white">
@@ -272,14 +273,14 @@ function FrameFormModal({ frame, onClose, onSave, vipTiers }) {
           {/* VIP Tier (only if challenge = 1) */}
           {form.challenge == 1 && (
             <div className="flex items-center gap-[18px]">
-              <label className="w-[120px] shrink-0 font-['Times_New_Roman'] text-[16px] text-white">
+              <label className="w-[120px] shrink-0 text-[16px] text-white">
                 VIP Tier:
               </label>
               <div className="relative flex-1">
                 <select
                   value={form.vip_tier_uuid}
                   onChange={(e) => handleChange("vip_tier_uuid", e.target.value)}
-                  className="h-[36px] w-full rounded-[4px] px-3 pr-8 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] font-['Times_New_Roman'] text-[14px] text-white outline-none focus:border-[#f2c36b] appearance-none cursor-pointer"
+                  className="h-[36px] w-full rounded-[4px] px-3 pr-8 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] text-[14px] text-white outline-none focus:border-[#f2c36b] appearance-none cursor-pointer"
                 >
                   <option value="" className="bg-[#4d4d4d] text-white">Select VIP tier (optional)</option>
                   {vipTiers?.map((tier) => (
@@ -307,7 +308,7 @@ function FrameFormModal({ frame, onClose, onSave, vipTiers }) {
 
           {/* Icon upload */}
           <div className="flex flex-col gap-2 pt-2">
-            <span className="font-['Times_New_Roman'] text-[16px] text-white">
+            <span className=" text-[16px] text-white">
               Icon
             </span>
             <button
@@ -346,14 +347,14 @@ function FrameFormModal({ frame, onClose, onSave, vipTiers }) {
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="h-[37px] px-7 rounded border border-[#e5e6e6] bg-white font-['Times_New_Roman'] font-bold text-[14px] text-[#f04a4a] hover:bg-gray-100 transition-colors disabled:opacity-50"
+              className="h-[37px] px-7 rounded border border-[#e5e6e6] bg-white font-bold text-[14px] text-[#f04a4a] hover:bg-gray-100 transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="h-[37px] px-7 rounded font-['Times_New_Roman'] font-bold text-[14px] text-black hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="h-[37px] px-7 rounded font-bold text-[14px] text-black hover:opacity-90 transition-opacity disabled:opacity-50"
               style={{ background: GOLD_BG }}
             >
               {isSubmitting ? "Saving..." : (isEdit ? "Save" : "Create")}
@@ -476,10 +477,10 @@ function FrameSettingContent() {
 
   return (
     <>
-    <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:pl-[388px] xl:pr-10 xl:pt-8">
+    <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:admin-content-pl xl:pr-10 xl:pt-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="font-['Times_New_Roman'] font-bold text-[22px] sm:text-[28px] text-white">
+        <h1 className="text-4xl font-bold leading-[1.05] text-white">
           Frame Setting
         </h1>
         <svg
@@ -497,17 +498,36 @@ function FrameSettingContent() {
         </svg>
       </div>
 
-      <LoadingState isLoading={isLoading}>
+      <LoadingState
+        isLoading={isLoading}
+        skeleton={
+          <Skeleton.TablePage
+            columns={[
+              { label: "No",         type: "number" },
+              { label: "Frame Name", type: "text" },
+              { label: "Details",    type: "text" },
+              { label: "Challenge",  type: "badge" },
+              { label: "VIP Tier",   type: "badge" },
+              { label: "Frame Icon", type: "image" },
+              { label: "Action",     type: "actions", count: 2 },
+            ]}
+            rows={6}
+            withHeader={false}
+            withFilters={false}
+            bare
+          />
+        }
+      >
         {/* Table card */}
         <div className="rounded-[12px] border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-3 sm:p-4 flex flex-col gap-4">
         {/* Title row + Create button */}
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <p className="font-['Times_New_Roman'] font-bold text-[18px] sm:text-[20px] text-white">
+          <p className=" font-bold text-[18px] sm:text-[20px] text-white">
             The Frame Setting Options Are Given Below
           </p>
           <button
             onClick={() => setShowCreateForm(true)}
-            className="h-[36px] rounded px-4 font-['Times_New_Roman'] text-[16px] text-black hover:opacity-90 transition-opacity"
+            className="h-[36px] rounded px-4 text-[16px] text-black hover:opacity-90 transition-opacity"
             style={{ background: GOLD_BG }}
           >
             Create New Frame <span className="font-bold">+</span>
@@ -526,7 +546,7 @@ function FrameSettingContent() {
                     onClick={() => handleSort(col.key)}
                   >
                     <div className="flex items-center">
-                      <span className="font-['Times_New_Roman'] font-bold text-[14px] sm:text-[16px] text-white whitespace-nowrap">
+                      <span className=" font-bold text-[14px] sm:text-[16px] text-white whitespace-nowrap">
                         {col.label}
                       </span>
                       {col.key !== "rowNum" && col.key !== "frameIcon" && (
@@ -536,7 +556,7 @@ function FrameSettingContent() {
                   </th>
                 ))}
                 <th className="min-w-[180px] px-3 py-3 text-center">
-                  <span className="font-['Times_New_Roman'] font-bold text-[14px] sm:text-[16px] text-white">
+                  <span className=" font-bold text-[14px] sm:text-[16px] text-white">
                     Action
                   </span>
                 </th>
@@ -548,7 +568,7 @@ function FrameSettingContent() {
                 <tr>
                   <td
                     colSpan={TABLE_COLUMNS.length + 1}
-                    className="px-5 py-12 text-center font-['Times_New_Roman'] text-white/40"
+                    className="px-5 py-12 text-center text-white/40"
                   >
                     No frames found.
                   </td>
@@ -560,25 +580,25 @@ function FrameSettingContent() {
                     className="border-b border-[rgba(240,240,240,0.2)] hover:bg-white/[0.03] transition-colors"
                   >
                     {/* Row number */}
-                    <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white whitespace-nowrap">
+                    <td className="px-3 py-3 text-[14px] text-white whitespace-nowrap">
                       {(currentPage - 1) * PAGE_SIZE + idx + 1}
                     </td>
                     {/* Frame Name */}
-                    <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80 whitespace-nowrap">
+                    <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                       {row.name}
                     </td>
                     {/* Details */}
-                    <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80">
+                    <td className="px-3 py-3 text-[14px] text-white/80">
                       <div className="max-w-[200px] truncate" title={row.details}>
                         {row.details || "-"}
                       </div>
                     </td>
                     {/* Challenge */}
-                    <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80 whitespace-nowrap">
+                    <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                       {row.challenge === 1 ? "VIP" : row.challenge}
                     </td>
                     {/* VIP Tier */}
-                    <td className="px-3 py-3 font-['Times_New_Roman'] text-[14px] text-white/80 whitespace-nowrap">
+                    <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                       {row.vip_tier || "-"}
                     </td>
                     {/* Frame Icon */}
@@ -590,13 +610,13 @@ function FrameSettingContent() {
                       <div className="flex gap-2 justify-center">
                         <button
                           onClick={() => handleArchive(row)}
-                          className="h-[31px] rounded px-3 bg-[#06b800] font-['Times_New_Roman'] font-bold text-[14px] text-white hover:bg-[#05a000] transition-colors"
+                          className="h-[31px] rounded px-3 bg-[#06b800] font-bold text-[14px] text-white hover:bg-[#05a000] transition-colors"
                         >
                           Archive
                         </button>
                         <button
                           onClick={() => setEditingFrame(row)}
-                          className="h-[31px] w-[70px] rounded border border-[#00a63e] font-['Times_New_Roman'] text-[14px] text-[#00a63e] hover:bg-[#00a63e]/10 transition-colors"
+                          className="h-[31px] w-[70px] rounded border border-[#00a63e] text-[14px] text-[#00a63e] hover:bg-[#00a63e]/10 transition-colors"
                         >
                           Edit
                         </button>

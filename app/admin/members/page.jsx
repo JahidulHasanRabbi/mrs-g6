@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -119,7 +119,7 @@ function ViewMemberModal({ member, onClose, onNavigate }) {
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#e9af41] border-t-transparent" />
-            <span className="ml-3 font-['Times_New_Roman'] text-white/60">
+            <span className="ml-3 text-white/60">
               Loading profile...
             </span>
           </div>
@@ -127,14 +127,14 @@ function ViewMemberModal({ member, onClose, onNavigate }) {
           <>
             {/* Profile info card */}
             <div className="rounded-[10px] border border-[#6e6e6e] bg-[#555555] p-5 sm:p-6 mb-5">
-              <h2 className="font-['Times_New_Roman'] font-bold text-[20px] text-white text-center mb-5">
+              <h2 className=" font-bold text-[20px] text-white text-center mb-5">
                 Member Profile
               </h2>
 
               {/* Profile picture */}
               {profile?.profile_picture && (
                 <div className="flex items-center gap-2 mb-3">
-                  <span className="font-['Times_New_Roman'] text-[14px] text-white/90">
+                  <span className=" text-[14px] text-white/90">
                     Profile Picture
                   </span>
                   <div className="w-[30px] h-[30px] rounded bg-[#e9af41]/20 flex items-center justify-center overflow-hidden">
@@ -153,10 +153,10 @@ function ViewMemberModal({ member, onClose, onNavigate }) {
                 { label: "MRS VIP Tier:", value: profile?.vip_tier || member.tier || "N/A" },
               ].map((row) => (
                 <div key={row.label} className="flex items-baseline gap-2 py-1.5">
-                  <span className="font-['Times_New_Roman'] font-bold text-[14px] text-white/90 w-[110px] shrink-0">
+                  <span className=" font-bold text-[14px] text-white/90 w-[110px] shrink-0">
                     {row.label}
                   </span>
-                  <span className="font-['Times_New_Roman'] text-[14px] text-white/70">
+                  <span className=" text-[14px] text-white/70">
                     {row.value}
                   </span>
                 </div>
@@ -174,7 +174,7 @@ function ViewMemberModal({ member, onClose, onNavigate }) {
                 <button
                   key={btn.label}
                   onClick={btn.action || undefined}
-                  className="h-[44px] rounded-[8px] border border-[#2ed82e] bg-[#06b800] font-['Times_New_Roman'] font-bold text-[15px] text-white hover:bg-[#05a000] transition-colors shadow-md"
+                  className="h-[44px] rounded-[8px] border border-[#2ed82e] bg-[#06b800] font-bold text-[15px] text-white hover:bg-[#05a000] transition-colors shadow-md"
                 >
                   {btn.label}
                 </button>
@@ -185,7 +185,7 @@ function ViewMemberModal({ member, onClose, onNavigate }) {
             <div className="flex justify-end">
               <button
                 onClick={onClose}
-                className="h-[36px] px-5 rounded font-['Times_New_Roman'] font-bold text-[14px] text-black hover:opacity-90 transition-opacity"
+                className="h-[36px] px-5 rounded font-bold text-[14px] text-black hover:opacity-90 transition-opacity"
                 style={{ background: GOLD_BG }}
               >
                 Close
@@ -362,7 +362,7 @@ function EditMemberModal({ member, onClose, onSave }) {
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#e9af41] border-t-transparent" />
-            <span className="ml-3 font-['Times_New_Roman'] text-white/60">
+            <span className="ml-3 text-white/60">
               Loading...
             </span>
           </div>
@@ -371,20 +371,20 @@ function EditMemberModal({ member, onClose, onSave }) {
             {/* Gold badge + title */}
             <div className="flex flex-col items-center mb-6">
               <Image src="/assets/admin/Edit-profile.png" alt="Gold Badge" width={80} height={80} className="object-contain" />
-              <h2 className="font-['Times_New_Roman'] font-bold text-[22px] text-white">
+              <h2 className=" font-bold text-[22px] text-white">
                 Edit Profile
               </h2>
             </div>
 
             {/* Profile picture upload */}
             <div className="mb-5">
-              <p className="font-['Times_New_Roman'] text-[14px] text-white/90 mb-2">
+              <p className=" text-[14px] text-white/90 mb-2">
                 Profile Picture
               </p>
               <label className="w-full h-[80px] rounded-lg border-2 border-dashed border-[#e9af41]/40 flex items-center justify-center cursor-pointer hover:border-[#e9af41]/70 transition-colors bg-white/[0.03]">
                 <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
                 {profilePictureFile ? (
-                  <span className="font-['Times_New_Roman'] text-[13px] text-white/70">
+                  <span className=" text-[13px] text-white/70">
                     {profilePictureFile.name}
                   </span>
                 ) : form.profile_picture ? (
@@ -403,14 +403,14 @@ function EditMemberModal({ member, onClose, onSave }) {
             <div className="flex flex-col gap-4 mb-6">
               {fields.map((f) => (
                 <div key={f.key} className="flex items-center gap-3">
-                  <label className="font-['Times_New_Roman'] font-bold text-[14px] text-white/90 w-[110px] shrink-0">
+                  <label className=" font-bold text-[14px] text-white/90 w-[110px] shrink-0">
                     {f.label}
                   </label>
                   {f.type === "select" ? (
                     <select
                       value={form[f.key]}
                       onChange={(e) => handleChange(f.key, f.key === "gender" || f.key === "hobby" ? parseInt(e.target.value) : e.target.value)}
-                      className="flex-1 h-[38px] rounded px-3 bg-[#b0b0b0] text-[#333] font-['Times_New_Roman'] text-[14px] outline-none focus:ring-2 focus:ring-[#e9af41]/40 border-none cursor-pointer"
+                      className="flex-1 h-[38px] rounded px-3 bg-[#b0b0b0] text-[#333] text-[14px] outline-none focus:ring-2 focus:ring-[#e9af41]/40 border-none cursor-pointer"
                     >
                       <option value="">Select...</option>
                       {f.options.map((opt) => (
@@ -424,7 +424,7 @@ function EditMemberModal({ member, onClose, onSave }) {
                       type={f.type}
                       value={form[f.key]}
                       onChange={(e) => handleChange(f.key, e.target.value)}
-                      className="flex-1 h-[38px] rounded px-3 bg-[#b0b0b0] text-[#333] font-['Times_New_Roman'] text-[14px] outline-none focus:ring-2 focus:ring-[#e9af41]/40 placeholder:text-[#666] [color-scheme:light]"
+                      className="flex-1 h-[38px] rounded px-3 bg-[#b0b0b0] text-[#333] text-[14px] outline-none focus:ring-2 focus:ring-[#e9af41]/40 placeholder:text-[#666] [color-scheme:light]"
                     />
                   )}
                 </div>
@@ -436,14 +436,14 @@ function EditMemberModal({ member, onClose, onSave }) {
               <button
                 onClick={onClose}
                 disabled={saving}
-                className="h-[38px] px-6 rounded border border-white/20 bg-white font-['Times_New_Roman'] font-bold text-[14px] text-red-500 hover:bg-white/90 transition-colors disabled:opacity-50"
+                className="h-[38px] px-6 rounded border border-white/20 bg-white font-bold text-[14px] text-red-500 hover:bg-white/90 transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirm}
                 disabled={saving}
-                className="h-[38px] px-6 rounded font-['Times_New_Roman'] font-bold text-[14px] text-black hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="h-[38px] px-6 rounded font-bold text-[14px] text-black hover:opacity-90 transition-opacity disabled:opacity-50"
                 style={{ background: GOLD_BG }}
               >
                 {saving ? "Saving..." : "Confirm"}
@@ -651,10 +651,10 @@ function MembersContent() {
 
   return (
     <>
-    <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:pl-[388px] xl:pr-10 xl:pt-8">
+    <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:admin-content-pl xl:pr-10 xl:pt-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-4 sm:mb-6">
-          <h1 className="font-['Times_New_Roman'] font-bold text-[22px] sm:text-[28px] text-white">
+          <h1 className="text-4xl font-bold leading-[1.05] text-white">
             Member List
           </h1>
           <svg
@@ -674,7 +674,7 @@ function MembersContent() {
 
         {/* Error Display */}
         {error && (
-          <div className="mb-6 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-red-300 font-['Times_New_Roman']">
+          <div className="mb-6 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-red-300">
             Failed to load members. Please try again.
           </div>
         )}
@@ -684,12 +684,12 @@ function MembersContent() {
           {/* Filters row - Fixed height to prevent content jumping */}
           <div className="min-h-[44px]">
             <div className="flex items-center flex-wrap gap-2 sm:gap-3">
-              <p className="font-['Times_New_Roman'] font-bold text-[16px] sm:text-[18px] text-white whitespace-nowrap italic">
+              <p className=" font-bold text-[16px] sm:text-[18px] text-white whitespace-nowrap italic">
                 The Member List
               </p>
               {activeFilterCount > 0 && (
                 <>
-                  <span className="font-['Times_New_Roman'] text-[11px] text-[#e9af41] bg-[rgba(233,175,65,0.15)] rounded-full px-2 py-0.5">
+                  <span className=" text-[11px] text-[#e9af41] bg-[rgba(233,175,65,0.15)] rounded-full px-2 py-0.5">
                     {activeFilterCount} active
                   </span>
                   <button
@@ -706,13 +706,13 @@ function MembersContent() {
                       setLoginFrom("");
                       setLoginTo("");
                     }}
-                    className="font-['Times_New_Roman'] text-[11px] text-red-400 hover:text-red-300 underline"
+                    className=" text-[11px] text-red-400 hover:text-red-300 underline"
                   >
                     Clear All
                   </button>
                 </>
               )}
-              <span className="font-['Times_New_Roman'] text-[13px] text-white/80 ml-auto mr-1 sm:mr-2">
+              <span className=" text-[13px] text-white/80 ml-auto mr-1 sm:mr-2">
                 Filter By:
               </span>
 
@@ -775,7 +775,7 @@ function MembersContent() {
 
           {/* Results count */}
           {!isLoading && (
-            <div className="font-['Times_New_Roman'] text-[12px] text-white/40">
+            <div className=" text-[12px] text-white/40">
               Showing {totalCount === 0 ? 0 : startIndex + 1}–
               {Math.min(startIndex + itemsPerPage, totalCount)} of{" "}
               {totalCount} members
@@ -786,7 +786,7 @@ function MembersContent() {
           {isLoading && (
             <div className="flex items-center justify-center py-20">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#e9af41] border-t-transparent" />
-              <span className="ml-3 font-['Times_New_Roman'] text-white/60">
+              <span className="ml-3 text-white/60">
                 Loading members...
               </span>
             </div>
@@ -805,7 +805,7 @@ function MembersContent() {
                         onClick={() => handleSort(c.key)}
                       >
                         <div className="flex items-center">
-                          <span className="font-['Times_New_Roman'] font-bold text-[13px] sm:text-[14px] text-white whitespace-nowrap">
+                          <span className=" font-bold text-[13px] sm:text-[14px] text-white whitespace-nowrap">
                             {c.label}
                           </span>
                           <SortIcon active={sortKey === c.key} dir={sortDir} />
@@ -814,7 +814,7 @@ function MembersContent() {
                     ))}
                     <th className="min-w-[120px] px-2 py-3 text-left">
                       <div className="flex items-center">
-                        <span className="font-['Times_New_Roman'] font-bold text-[13px] sm:text-[14px] text-white">
+                        <span className=" font-bold text-[13px] sm:text-[14px] text-white">
                           Action
                         </span>
                       </div>
@@ -826,7 +826,7 @@ function MembersContent() {
                     <tr>
                       <td
                         colSpan={columns.length + 1}
-                        className="px-5 py-12 text-center font-['Times_New_Roman'] text-white/40"
+                        className="px-5 py-12 text-center text-white/40"
                       >
                         {activeFilterCount > 0
                           ? "No members found matching your filters."
@@ -839,41 +839,41 @@ function MembersContent() {
                         key={m.uuid || idx}
                         className="border-b border-[rgba(240,240,240,0.2)] hover:bg-white/[0.03] transition-colors"
                       >
-                        <td className="px-2 py-3 font-['Times_New_Roman'] text-[13px] text-white">
+                        <td className="px-2 py-3 text-[13px] text-white">
                           {startIndex + idx + 1}
                         </td>
-                        <td className="px-2 py-3 font-['Times_New_Roman'] text-[13px] text-white/80 whitespace-nowrap">
+                        <td className="px-2 py-3 text-[13px] text-white/80 whitespace-nowrap">
                           {m.full_name || m.username || "N/A"}
                         </td>
-                        <td className="px-2 py-3 font-['Times_New_Roman'] text-[13px] text-white/80 whitespace-nowrap">
+                        <td className="px-2 py-3 text-[13px] text-white/80 whitespace-nowrap">
                           {m.phone_number || "N/A"}
                         </td>
-                        <td className="px-2 py-3 font-['Times_New_Roman'] text-[13px] text-white/80 whitespace-nowrap">
+                        <td className="px-2 py-3 text-[13px] text-white/80 whitespace-nowrap">
                           {m.vip_tier || "N/A"}
                         </td>
-                        <td className="px-2 py-3 font-['Times_New_Roman'] text-[13px] text-white/80 whitespace-nowrap">
+                        <td className="px-2 py-3 text-[13px] text-white/80 whitespace-nowrap">
                           {m.current_tokens?.toLocaleString() || "0"}
                         </td>
-                        <td className="px-2 py-3 font-['Times_New_Roman'] text-[13px] text-white/80 whitespace-nowrap">
+                        <td className="px-2 py-3 text-[13px] text-white/80 whitespace-nowrap">
                           {formatDateTime(m.registered_datetime)}
                         </td>
-                        <td className="px-2 py-3 font-['Times_New_Roman'] text-[13px] text-white/80 whitespace-nowrap">
+                        <td className="px-2 py-3 text-[13px] text-white/80 whitespace-nowrap">
                           {formatDateTime(m.last_check_in_date)}
                         </td>
-                        <td className="px-2 py-3 font-['Times_New_Roman'] text-[13px] text-white/80 whitespace-nowrap">
+                        <td className="px-2 py-3 text-[13px] text-white/80 whitespace-nowrap">
                           {formatDateTime(m.last_login_datetime)}
                         </td>
                         <td className="px-2 py-3">
                           <div className="flex gap-1.5">
                             <button
                               onClick={() => setViewMember(m)}
-                              className="bg-[#06b800] rounded px-3 py-1.5 font-['Times_New_Roman'] font-bold text-[13px] text-white hover:bg-[#05a000] transition-colors"
+                              className="bg-[#06b800] rounded px-3 py-1.5 font-bold text-[13px] text-white hover:bg-[#05a000] transition-colors"
                             >
                               View
                             </button>
                             <button
                               onClick={() => setEditMember(m)}
-                              className="border border-[#00a63e] rounded px-3 py-1.5 font-['Times_New_Roman'] text-[13px] text-[#00a63e] hover:bg-[#00a63e]/10 transition-colors"
+                              className="border border-[#00a63e] rounded px-3 py-1.5 text-[13px] text-[#00a63e] hover:bg-[#00a63e]/10 transition-colors"
                             >
                               Edit
                             </button>

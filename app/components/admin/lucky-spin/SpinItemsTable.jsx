@@ -1,95 +1,82 @@
 "use client";
 
+import { useState } from "react";
 import { getOptionLabel } from "../../../api/apiOptions";
+import { DataTable } from "../members/DataTable";
+import Button from "../ui/Button";
 
-export default function SpinItemsTable({ items = [], onEditClick, onDeleteClick }) {
-  if (items.length === 0) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <p className="text-white/60">No spin items found</p>
-      </div>
-    );
-  }
+const COLUMNS = [
+  { key: "reward_name", label: "Reward Name", minW: "min-w-[180px]" },
+  { key: "quantity",    label: "Quantity",    minW: "min-w-[110px]" },
+  { key: "item_type",   label: "Item Type",   minW: "min-w-[140px]" },
+  { key: "image",       label: "Image",       minW: "min-w-[80px]" },
+  { key: "actions",     label: "Actions",     minW: "min-w-[180px]" },
+];
+
+export default function SpinItemsTable({ items = [], isLoading = false, onEditClick, onDeleteClick }) {
+  const [sortKey, setSortKey] = useState("reward_name");
+  const [sortDir, setSortDir] = useState("asc");
+
+  const handleSort = (key) => {
+    if (key === "image" || key === "actions") return; // not sortable
+    if (key === sortKey) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
+
+  const sortedItems = [...items].sort((a, b) => {
+    let av = a[sortKey];
+    let bv = b[sortKey];
+    if (sortKey === "quantity") {
+      av = a.unlimited ? Infinity : Number(a.quantity ?? 0);
+      bv = b.unlimited ? Infinity : Number(b.quantity ?? 0);
+    } else if (sortKey === "item_type") {
+      av = getOptionLabel("ITEM_TYPE", a.item_type) ?? "";
+      bv = getOptionLabel("ITEM_TYPE", b.item_type) ?? "";
+    }
+    if (av < bv) return sortDir === "asc" ? -1 : 1;
+    if (av > bv) return sortDir === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  const renderCell = (item, col) => {
+    if (col.key === "quantity") return item.unlimited ? "Unlimited" : item.quantity;
+    if (col.key === "item_type") return getOptionLabel("ITEM_TYPE", item.item_type);
+    if (col.key === "image") {
+      return item.image ? (
+        <img src={item.image} alt={item.reward_name} className="h-10 w-10 object-contain" />
+      ) : (
+        <span className="text-white/40">No image</span>
+      );
+    }
+    if (col.key === "actions") {
+      return (
+        <div className="flex items-center gap-2">
+          <Button variant="success" size="sm" onClick={() => onEditClick(item)}>
+            Edit
+          </Button>
+          <Button variant="destructive" size="sm" onClick={() => onDeleteClick?.(item)}>
+            Archive
+          </Button>
+        </div>
+      );
+    }
+    return item[col.key];
+  };
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full">
-        <thead>
-          <tr className="border-b border-white/10">
-            <th className="px-4 py-3 text-left text-sm font-medium text-white/60">
-              Reward Name
-            </th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-white/60">
-              Quantity
-            </th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-white/60">
-              Item Type
-            </th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-white/60">
-              Image
-            </th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-white/60">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item) => (
-            <tr
-              key={item.uuid}
-              className="border-b border-white/5 transition-colors hover:bg-white/[0.02]"
-            >
-              <td className="px-4 py-4">
-                <p className="text-sm text-white font-['Times_New_Roman']">
-                  {item.reward_name}
-                </p>
-              </td>
-              <td className="px-4 py-4">
-                <p className="text-sm text-white/80 font-['Times_New_Roman']">
-                  {item.unlimited ? 'Unlimited' : item.quantity}
-                </p>
-              </td>
-              <td className="px-4 py-4">
-                <p className="text-sm text-white/80 font-['Times_New_Roman']">
-                  {getOptionLabel('ITEM_TYPE', item.item_type)}
-                </p>
-              </td>
-              <td className="px-4 py-4">
-                {item.image ? (
-                  <div className="relative h-10 w-10">
-                    <img
-                      src={item.image}
-                      alt={item.reward_name}
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                ) : (
-                  <p className="text-sm text-white/40 font-['Times_New_Roman']">
-                    No image
-                  </p>
-                )}
-              </td>
-              <td className="px-4 py-4">
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => onEditClick(item)}
-                    className="rounded bg-[#06b800] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-[#06b800]/90"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onDeleteClick?.(item)}
-                    className="rounded border border-[#f04a4a] px-4 py-2 text-sm text-[#f04a4a] transition-colors hover:bg-[#f04a4a]/10"
-                  >
-                    Archive
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <DataTable
+      columns={COLUMNS}
+      rows={sortedItems}
+      sortKey={sortKey}
+      sortDir={sortDir}
+      onSort={handleSort}
+      renderCell={renderCell}
+      isLoading={isLoading}
+      emptyMessage="No spin items found."
+    />
   );
 }

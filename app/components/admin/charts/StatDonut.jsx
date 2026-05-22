@@ -1,4 +1,4 @@
-export default function StatDonut({
+﻿export default function StatDonut({
   value,
   total,
   size = 160,
@@ -44,10 +44,10 @@ export default function StatDonut({
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-[16px] font-bold text-[#06b800] font-['Times_New_Roman'] leading-[1.2] capitalize">
+          <div className="text-[16px] font-bold text-[#06b800] leading-[1.2] capitalize">
             Active Users
           </div>
-          <div className="text-[28px] font-bold text-white font-['Times_New_Roman'] leading-[1.1]">
+          <div className="text-[28px] font-bold text-white leading-[1.1]">
             {value.toLocaleString()}
           </div>
         </div>

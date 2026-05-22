@@ -1,5 +1,8 @@
+﻿"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const NAVIGATION_CARDS = [
   {
@@ -33,11 +36,19 @@ const NAVIGATION_CARDS = [
 ];
 
 
-export default function NavigationCards({ activeCard = "spin-items" }) {
+function activeFromPath(pathname) {
+  // /admin/lucky-spin → spin-items; /admin/lucky-spin/prize-settings → prize-settings; etc.
+  const match = NAVIGATION_CARDS.find((c) => c.href === pathname);
+  return match?.id ?? "spin-items";
+}
+
+export default function NavigationCards({ activeCard }) {
+  const pathname = usePathname();
+  const active = activeCard ?? activeFromPath(pathname);
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
       {NAVIGATION_CARDS.map((card) => {
-        const isCardActive = card.id === activeCard;
+        const isCardActive = card.id === active;
         return (
           <Link key={card.id} href={card.href}>
             <div
@@ -65,7 +76,7 @@ export default function NavigationCards({ activeCard = "spin-items" }) {
                 />
               </div>
               <h3
-                className={`text-2xl font-bold leading-[1.5] font-['Times_New_Roman'] ${
+                className={`text-2xl font-bold leading-[1.5] ${
                   isCardActive ? "text-black" : "text-white"
                 }`}
               >
