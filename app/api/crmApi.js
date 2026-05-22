@@ -70,6 +70,27 @@ export async function archiveCrmRole(uuid) {
   return await apiRequest(ENDPOINTS.CRM.ROLE_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
 }
 
+// ───────────────────────── CRM VIP Tiers ──────────────────────────
+
+// GET /crm-admins/vip-tier/  (paginated)
+// params: { page, page_size }
+export async function getCrmVipTiers(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.CRM.CRM_VIP_TIERS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+export async function createCrmVipTier(data) {
+  return await apiRequest(ENDPOINTS.CRM.CRM_VIP_TIERS, { method: 'POST', body: data }, true, 'admin');
+}
+
+export async function updateCrmVipTier(uuid, data) {
+  return await apiRequest(ENDPOINTS.CRM.CRM_VIP_TIER_SINGLE(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+
+export async function archiveCrmVipTier(uuid) {
+  return await apiRequest(ENDPOINTS.CRM.CRM_VIP_TIER_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
 // ───────────────────────── Member Profile ─────────────────────────
 
 // GET /crm-members/members/  (paginated)

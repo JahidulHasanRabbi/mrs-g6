@@ -576,7 +576,7 @@ function FrameSettingContent() {
               ) : (
                 pageRows.map((row, idx) => (
                   <tr
-                    key={row.id}
+                    key={row.uuid ?? idx}
                     className="border-b border-[rgba(240,240,240,0.2)] hover:bg-white/[0.03] transition-colors"
                   >
                     {/* Row number */}

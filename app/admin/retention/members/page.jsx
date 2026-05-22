@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getCrmMembers, getCrmUsers } from "../../../api/crmApi";
-import { getStationList, getVipTiers } from "../../../api/adminApi";
+import { getCrmMembers, getCrmUsers, getCrmVipTiers } from "../../../api/crmApi";
 import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
 
 const A = "/assets/admin/pic-dashboard";
@@ -15,10 +14,6 @@ const PRIORITY_OPTIONS = ["High", "Medium", "Low"];
 
 // UI label → API integer.
 const PRIORITY_TO_INT = { High: 1, Medium: 2, Low: 3 };
-const VIP_TO_INT = (label) => {
-  const n = parseInt(String(label).replace(/[^0-9]/g, ""), 10);
-  return Number.isFinite(n) ? n : "";
-};
 
 const COLUMNS = [
   { key: "name",     label: "Username",       minW: 180 },
@@ -41,48 +36,17 @@ function formatCurrency(value) {
 }
 
 export default function RetentionMembersPage() {
-  const [brand, setBrand] = useState("");
-  // Single sort key. Sales and Win/Lose dropdowns are mutually exclusive —
-  // they share this one slot so the table only ever has one active order.
-  const [sort, setSort] = useState("");
   const [priority, setPriority] = useState("");
   const [vip, setVip] = useState("");
   const [pic, setPic] = useState("");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
 
-  const [stations, setStations] = useState([]);
-  const [vipTiers, setVipTiers] = useState([]);
   const [pics, setPics] = useState([]);
+  const [vipTiers, setVipTiers] = useState([]); // [{ name, level }]
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    getStationList()
-      .then((res) => {
-        if (cancelled) return;
-        const list = Array.isArray(res) ? res : res?.results || [];
-        setStations(list);
-      })
-      .catch((err) => {
-        console.error("[retention-members] station list failed", err);
-        if (!cancelled) setStations([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    getVipTiers()
-      .then((res) => {
-        const list = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
-        setVipTiers(list);
-      })
-      .catch(() => setVipTiers([]));
-  }, []);
 
   useEffect(() => {
     getCrmUsers({ page: 1, page_size: 100 })
@@ -91,22 +55,18 @@ export default function RetentionMembersPage() {
         setPics(results);
       })
       .catch(() => setPics([]));
+    getCrmVipTiers({ page: 1, page_size: 100 })
+      .then((res) => {
+        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        setVipTiers(results.map((t, i) => ({ name: t.name, level: i + 1 })));
+      })
+      .catch(() => setVipTiers([]));
   }, []);
-
-  const brandOptions = useMemo(
-    () => stations.map((s) => s.station_name || s.name).filter(Boolean),
-    [stations]
-  );
-
-  const vipOptions = useMemo(
-    () => vipTiers.map((t) => t.name || t.tier_name || t.vip_tier || t.level || t.title).filter(Boolean),
-    [vipTiers]
-  );
 
   // Reset to page 1 when any filter changes.
   useEffect(() => {
     setPage(1);
-  }, [brand, sort, priority, vip, pic, query]);
+  }, [priority, vip, pic, query]);
 
   // Debounce search to avoid hammering the API on every keystroke.
   const [debouncedQuery, setDebouncedQuery] = useState(query);
@@ -120,27 +80,19 @@ export default function RetentionMembersPage() {
     const fetchRows = async () => {
       setLoading(true);
       try {
-        const stationUuid = brand
-          ? stations.find((s) => (s.station_name || s.name) === brand)?.uuid
-          : undefined;
         const retentionUuid = pic
           ? pics.find((u) => (u.full_name || u.username) === pic)?.uuid
           : undefined;
         const res = await getCrmMembers({
           page,
           page_size: PAGE_SIZE,
-          station_uuid: stationUuid,
           priority: priority ? PRIORITY_TO_INT[priority] : undefined,
-          vip_level: vip ? VIP_TO_INT(vip) : undefined,
+          vip_level: vip ? (vipTiers.find((t) => t.name === vip)?.level ?? undefined) : undefined,
           retention: retentionUuid || undefined,
           search: debouncedQuery || undefined,
         });
         if (cancelled) return;
-        let results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
-        if (sort === "sales-hl") results = [...results].sort((a, b) => parseFloat(b.daily_sales || 0) - parseFloat(a.daily_sales || 0));
-        else if (sort === "sales-lh") results = [...results].sort((a, b) => parseFloat(a.daily_sales || 0) - parseFloat(b.daily_sales || 0));
-        else if (sort === "winlose-hl") results = [...results].sort((a, b) => parseFloat(b.daily_win_loss || 0) - parseFloat(a.daily_win_loss || 0));
-        else if (sort === "winlose-lh") results = [...results].sort((a, b) => parseFloat(a.daily_win_loss || 0) - parseFloat(b.daily_win_loss || 0));
+        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
         setRows(results);
         setTotal(Number.isFinite(res?.count) ? res.count : results.length);
       } catch (err) {
@@ -156,7 +108,7 @@ export default function RetentionMembersPage() {
     return () => {
       cancelled = true;
     };
-  }, [page, brand, stations, sort, priority, vip, pic, pics, debouncedQuery]);
+  }, [page, priority, vip, pic, pics, vipTiers, debouncedQuery]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -179,34 +131,8 @@ export default function RetentionMembersPage() {
           Member List
         </h1>
         <div className="flex flex-wrap items-center gap-3">
-          <FilterDropdown
-            label="Brand"
-            value={brand}
-            onChange={setBrand}
-            options={brandOptions}
-          />
-          <FilterDropdown
-            label="Sales (H-L)"
-            value={sort === "sales-hl" ? "Sales (H-L)" : sort === "sales-lh" ? "Sales (L-H)" : ""}
-            onChange={(v) => {
-              if (v === "Sales (H-L)") setSort("sales-hl");
-              else if (v === "Sales (L-H)") setSort("sales-lh");
-              else if (sort.startsWith("sales")) setSort("");
-            }}
-            options={["Sales (H-L)", "Sales (L-H)"]}
-          />
-          <FilterDropdown
-            label="Winlose (H-L)"
-            value={sort === "winlose-hl" ? "Winlose (H-L)" : sort === "winlose-lh" ? "Winlose (L-H)" : ""}
-            onChange={(v) => {
-              if (v === "Winlose (H-L)") setSort("winlose-hl");
-              else if (v === "Winlose (L-H)") setSort("winlose-lh");
-              else if (sort.startsWith("winlose")) setSort("");
-            }}
-            options={["Winlose (H-L)", "Winlose (L-H)"]}
-          />
           <FilterDropdown label="Priority" value={priority} onChange={setPriority} options={PRIORITY_OPTIONS} />
-          <FilterDropdown label="VIP Level" value={vip} onChange={setVip} options={vipOptions} />
+          <FilterDropdown label="VIP Level" value={vip} onChange={setVip} options={vipTiers.map((t) => t.name)} />
           <FilterDropdown label="All PIC" value={pic} onChange={setPic} options={pics.map((u) => u.full_name || u.username).filter(Boolean)} />
           <SearchInput value={query} onChange={setQuery} />
         </div>

@@ -262,6 +262,39 @@ Input
 
 ### 
 
+## VIP-Tier
+
+### Vip Tiers \- GET
+
+/crm-admins/vip-tier/ GET  
+Query parameters
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | page | Int | No | For Pagination |
+| **2** | page\_size | Int | No | For Pagination |
+
+Output (Is Paginated)
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | uuid | UUID | No |  |
+| **2** | name | str | No |  |
+
+### Vip Tiers \- POST / PUT
+
+/crm-admins/vip-tier/ POST  
+/crm-admins/vip-tier/\<uuid\>/ PUT  
+Input
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | name | str | No |  |
+
+### Vip Tiers \- Archive
+
+### /crm-admins/vip-tier/\<uuid\>/archive/ PATCH
+
 # Member Profile {#member-profile}
 
 ## Member List {#member-list}
@@ -328,8 +361,11 @@ Financial Data Output
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | total\_sales | Str (Decimal) | No |  |
+|  | total\_withdrawal | Str (Decimal) | No |  |
 | **2** | total\_win\_lose | Str (Decimal) | No |  |
-| **3** | total\_sales\_ticket | Str (Decimal) | No |  |
+|  | total\_bonus | Str (Decimal) |  |  |
+| **3** | total\_sales\_ticket | Int | No |  |
+|  | total\_withdrawal\_ticket | Int |  |  |
 | **4** | arpu | Str (Decimal) | No |  |
 | **5** | average\_deposit | Str (Decimal) | No |  |
 | **6** | last\_deposit\_date | date | No |  |
@@ -349,6 +385,7 @@ Gaming Data Output
 | **8** | deposit\_trigger | Str |  |  |
 | **9** | churn\_risk\_reason | Str |  |  |
 | **10** | reactivation\_trigger | Str |  |  |
+| **11** | note | Str |  |  |
 
 ### Member Single \- PUT {#member-single---put}
 

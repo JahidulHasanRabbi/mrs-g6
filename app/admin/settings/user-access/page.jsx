@@ -7,7 +7,6 @@ import {
   GRAD_DARK,
   GRAD_GOLD,
 } from "../../../components/admin/retention/constants";
-import { ROLE_OPTIONS, STATUS_OPTIONS } from "./_data";
 import { getCrmLoginRequests, getCrmUsers } from "../../../api/crmApi";
 
 // User Access management — Figma 94:11764. Four KPI cards (Total Users,
@@ -215,35 +214,23 @@ function LoginPendingCard({ count }) {
 }
 
 function UserList({ allUsers, loading, error }) {
-  const [role, setRole] = useState("");
-  const [status, setStatus] = useState("");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
-  const roleOptions = useMemo(
-    () => Array.from(new Set(allUsers.map((user) => user.role).filter(Boolean))),
-    [allUsers]
-  );
 
   const filtered = useMemo(() => {
+    if (!query) return allUsers;
+    const q = query.toLowerCase();
     return allUsers.filter((u) => {
-      if (role && u.role !== role) return false;
-      if (status && u.status !== status) return false;
-      if (query) {
-        const q = query.toLowerCase();
-        const name = (u.full_name || u.username || "").toLowerCase();
-        if (!name.includes(q)) return false;
-      }
-      return true;
+      const name = (u.full_name || u.username || "").toLowerCase();
+      return name.includes(q);
     });
-  }, [allUsers, role, status, query]);
+  }, [allUsers, query]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
 
-  // Reset to page 1 whenever filters change so the user isn't stranded on a
-  // page that no longer exists.
   useEffect(() => {
     setPage(1);
-  }, [role, status, query]);
+  }, [query]);
 
   const safePage = Math.min(page, totalPages);
   const startIdx = (safePage - 1) * PAGE_SIZE;
@@ -266,8 +253,6 @@ function UserList({ allUsers, loading, error }) {
           User List
         </h2>
         <div className="flex flex-wrap items-center gap-3">
-          <FilterPill label="Role" value={role} onChange={setRole} options={roleOptions.length ? roleOptions : ROLE_OPTIONS} />
-          <FilterPill label="Status" value={status} onChange={setStatus} options={STATUS_OPTIONS} />
           <SearchInput value={query} onChange={setQuery} />
           <AddUserButton />
         </div>
@@ -312,53 +297,6 @@ function AddUserButton() {
       <UserAddIcon />
       <span>Add User</span>
     </Link>
-  );
-}
-
-function FilterPill({ label, value, onChange, options }) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center justify-center gap-1 rounded-[8px] border border-[#f2cb7a] px-4 py-2"
-        style={{ backgroundImage: GRAD_DARK }}
-      >
-        <span className="text-[12px] font-medium text-[#f6dda6] leading-[18px] whitespace-nowrap">
-          {value || label}
-        </span>
-        <Chevron up={open} />
-      </button>
-      {open ? (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div
-            className="absolute right-0 top-full mt-1 z-20 min-w-full rounded-[8px] border border-[#f2cb7a] overflow-hidden"
-            style={{ backgroundImage: GRAD_DARK }}
-          >
-            <button
-              type="button"
-              onClick={() => { onChange(""); setOpen(false); }}
-              className="block w-full text-left px-4 py-2 text-[12px] text-[#f6dda6] hover:bg-white/5 whitespace-nowrap"
-            >
-              All
-            </button>
-            {options.map((opt) => (
-              <button
-                key={opt}
-                type="button"
-                onClick={() => { onChange(opt); setOpen(false); }}
-                className="block w-full text-left px-4 py-2 text-[12px] text-[#f6dda6] hover:bg-white/5 whitespace-nowrap"
-              >
-                {opt}
-              </button>
-            ))}
-          </div>
-        </>
-      ) : null}
-    </div>
   );
 }
 
@@ -482,24 +420,6 @@ function EmptyRow() {
     <div className="px-6 py-12 text-center text-[12px] text-white/40">
       No users found.
     </div>
-  );
-}
-
-function Chevron({ up }) {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="#f6dda6"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      style={{ transform: up ? "rotate(0deg)" : "rotate(180deg)", transition: "transform 0.2s" }}
-    >
-      <polyline points="6 15 12 9 18 15" />
-    </svg>
   );
 }
 

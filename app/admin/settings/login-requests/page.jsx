@@ -122,13 +122,22 @@ function LoginListSection() {
   const showingFrom = total === 0 ? 0 : startIdx + 1;
   const showingTo = Math.min(startIdx + rows.length, total);
 
+  const [decidingId, setDecidingId] = useState(null);
+  const [decideError, setDecideError] = useState(null);
+
   const decide = async (row, action) => {
+    if (decidingId) return;
+    setDecidingId(row.id);
+    setDecideError(null);
     try {
       if (action === STATUS_APPROVED) await approveCrmLoginRequest(row.id);
       else await rejectCrmLoginRequest(row.id);
       await loadRows();
     } catch (err) {
       console.error("[login-requests] decision failed", err);
+      setDecideError(action === STATUS_APPROVED ? "Failed to approve request." : "Failed to reject request.");
+    } finally {
+      setDecidingId(null);
     }
   };
 
@@ -148,6 +157,12 @@ function LoginListSection() {
         </h2>
       </header>
 
+      {decideError && (
+        <div className="mx-6 mb-0 mt-2 rounded-[8px] border border-[#fb3748] bg-[#d00416]/20 px-4 py-2 text-[12px] text-[#fb3748]">
+          {decideError}
+        </div>
+      )}
+
       <div className="overflow-x-auto overflow-y-hidden scrollbar-admin">
         <div style={{ minWidth: TABLE_MIN_WIDTH }}>
           <TableHeader />
@@ -163,6 +178,7 @@ function LoginListSection() {
                 <LoginRow
                   key={row.id}
                   row={row}
+                  deciding={decidingId === row.id}
                   onApprove={() => decide(row, STATUS_APPROVED)}
                   onReject={() => decide(row, STATUS_REJECTED)}
                 />
@@ -213,8 +229,9 @@ function TableHeader() {
   );
 }
 
-function LoginRow({ row, onApprove, onReject }) {
+function LoginRow({ row, deciding, onApprove, onReject }) {
   const isPending = row.status === STATUS_PENDING;
+  const actionsDisabled = !isPending || deciding;
   return (
     <div className="flex w-full items-stretch -mb-px border-b border-white/5">
       <Cell col={COLUMNS[0]}>
@@ -245,8 +262,8 @@ function LoginRow({ row, onApprove, onReject }) {
       </Cell>
       <Cell col={COLUMNS[5]}>
         <div className="flex items-center gap-2">
-          <RejectButton onClick={onReject} disabled={!isPending} />
-          <ApproveButton onClick={onApprove} disabled={!isPending} />
+          <RejectButton onClick={onReject} disabled={actionsDisabled} />
+          <ApproveButton onClick={onApprove} disabled={actionsDisabled} loading={deciding} />
         </div>
       </Cell>
     </div>
@@ -329,7 +346,7 @@ function RejectButton({ onClick, disabled }) {
   );
 }
 
-function ApproveButton({ onClick, disabled }) {
+function ApproveButton({ onClick, disabled, loading }) {
   return (
     <button
       type="button"
@@ -341,7 +358,7 @@ function ApproveButton({ onClick, disabled }) {
       }`}
     >
       <CheckIcon />
-      <span>Approve</span>
+      <span>{loading ? "..." : "Approve"}</span>
     </button>
   );
 }

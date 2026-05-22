@@ -24,6 +24,8 @@ export default function RoleSettingPage({ params }) {
 
   const [name, setName] = useState("");
   const [permissionGroups, setPermissionGroups] = useState([]);
+  const [permissionsLoading, setPermissionsLoading] = useState(true);
+  const [permissionsError, setPermissionsError] = useState(false);
   const [selectedPermissions, setSelectedPermissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -36,17 +38,26 @@ export default function RoleSettingPage({ params }) {
     async function loadRoleForm() {
       setLoading(true);
       setLoadError(false);
+      setPermissionsLoading(true);
+      setPermissionsError(false);
 
       try {
         const [permissionsRes, role] = await Promise.all([
-          getCrmPermissions(),
+          getCrmPermissions().catch((err) => {
+            console.error("[role-setting] permissions load failed", err);
+            return null;
+          }),
           isNew ? Promise.resolve(null) : fetchRoleByUuid(id),
         ]);
 
         if (cancelled) return;
 
-        const groups = normalizePermissionGroups(permissionsRes);
-        setPermissionGroups(groups);
+        if (permissionsRes !== null) {
+          setPermissionGroups(normalizePermissionGroups(permissionsRes));
+        } else {
+          setPermissionsError(true);
+        }
+        setPermissionsLoading(false);
 
         if (role) {
           setName(role.name || "");
@@ -61,6 +72,7 @@ export default function RoleSettingPage({ params }) {
         if (cancelled) return;
         console.error("[role-setting] load failed", err);
         setLoadError(true);
+        setPermissionsLoading(false);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -171,29 +183,35 @@ export default function RoleSettingPage({ params }) {
               </div>
 
               <div className="flex flex-col gap-6 md:flex-row md:gap-10 md:items-start md:flex-wrap">
-                {permissionGroups.map((group) => {
-                  const keys = group.permissions.map((permission) => permission.key);
-                  const checkedCount = keys.filter((key) => selectedPermissions.includes(key)).length;
-                  const allChecked = keys.length > 0 && checkedCount === keys.length;
+                {permissionsLoading ? (
+                  <p className="text-[12px] text-white/40">Loading permissions...</p>
+                ) : permissionsError ? (
+                  <p className="text-[12px] text-red-400">Failed to load permissions. Please refresh.</p>
+                ) : (
+                  permissionGroups.map((group) => {
+                    const keys = group.permissions.map((permission) => permission.key);
+                    const checkedCount = keys.filter((key) => selectedPermissions.includes(key)).length;
+                    const allChecked = keys.length > 0 && checkedCount === keys.length;
 
-                  return (
-                    <FieldColumn key={group.name}>
-                      <SectionToggleRow
-                        label={group.name}
-                        checked={allChecked}
-                        onChange={(checked) => updateGroup(group, checked)}
-                      />
-                      {group.permissions.map((permission) => (
-                        <ToggleRow
-                          key={permission.key}
-                          label={permission.label || permission.key}
-                          checked={selectedPermissions.includes(permission.key)}
-                          onChange={(checked) => updatePermission(permission.key, checked)}
+                    return (
+                      <FieldColumn key={group.name}>
+                        <SectionToggleRow
+                          label={group.name}
+                          checked={allChecked}
+                          onChange={(checked) => updateGroup(group, checked)}
                         />
-                      ))}
-                    </FieldColumn>
-                  );
-                })}
+                        {group.permissions.map((permission) => (
+                          <ToggleRow
+                            key={permission.key}
+                            label={permission.label || permission.key}
+                            checked={selectedPermissions.includes(permission.key)}
+                            onChange={(checked) => updatePermission(permission.key, checked)}
+                          />
+                        ))}
+                      </FieldColumn>
+                    );
+                  })
+                )}
               </div>
 
               <FooterActions
@@ -236,19 +254,31 @@ async function fetchRoleByUuid(uuid) {
 }
 
 function normalizePermissionGroups(response) {
-  if (!response || Array.isArray(response) || typeof response !== "object") return [];
+  if (!response || typeof response !== "object") return [];
 
-  return Object.entries(response).map(([name, permissions]) => ({
-    name,
-    permissions: Array.isArray(permissions)
-      ? permissions
-          .filter((permission) => permission?.key)
-          .map((permission) => ({
-            key: permission.key,
-            label: permission.label || permission.key,
-          }))
-      : [],
-  }));
+  // Handle paginated wrapper like { results: { GroupName: [...] } }
+  const data = (
+    !Array.isArray(response) &&
+    response.results &&
+    typeof response.results === "object" &&
+    !Array.isArray(response.results)
+  ) ? response.results : response;
+
+  if (!data || Array.isArray(data) || typeof data !== "object") return [];
+
+  return Object.entries(data)
+    .map(([name, permissions]) => ({
+      name,
+      permissions: Array.isArray(permissions)
+        ? permissions
+            .filter((permission) => permission?.key)
+            .map((permission) => ({
+              key: permission.key,
+              label: permission.label || permission.key,
+            }))
+        : [],
+    }))
+    .filter((group) => group.permissions.length > 0);
 }
 
 function PageHeader() {

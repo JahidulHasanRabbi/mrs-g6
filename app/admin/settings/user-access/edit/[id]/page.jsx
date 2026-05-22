@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { GRAD_GOLD } from "../../../../../components/admin/retention/constants";
-import { ROLE_OPTIONS, STATUS_OPTIONS } from "../../_data";
+import { STATUS_OPTIONS } from "../../_data";
 import { getCrmRoles, getCrmUsers, updateCrmUser } from "../../../../../api/crmApi";
 import Skeleton from "../../../../../components/admin/ui/Skeleton";
 
@@ -20,11 +20,14 @@ export default function EditUserPage() {
   const [roles, setRoles] = useState([]);
   const [rolesError, setRolesError] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+  const [originalForm, setOriginalForm] = useState(null);
 
   const [form, setForm] = useState({
     username: "",
     fullName: "",
-    role: "",
+    role_uuid: "",
+    roleName: "",
     status: "",
     password: "",
     confirmPassword: "",
@@ -47,14 +50,18 @@ export default function EditUserPage() {
         const found = users.find((u) => u.uuid === uuid) || null;
         setUser(found);
         if (found) {
-          setForm({
+          const matchedRole = roleResults.find((r) => r.name === found.role);
+          const initialForm = {
             username: found.username || "",
             fullName: found.full_name || "",
-            role: found.role || "",
-            status: found.status || "",
+            role_uuid: matchedRole?.uuid || "",
+            roleName: found.role || "",
+            status: STATUS_OPTIONS.includes(found.status) ? found.status : "",
             password: "",
             confirmPassword: "",
-          });
+          };
+          setForm(initialForm);
+          setOriginalForm(initialForm);
         }
       })
       .catch(() => setUser(null))
@@ -67,39 +74,37 @@ export default function EditUserPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const role = roles.find((item) => item.name === form.role);
-    if (rolesError) {
-      alert("Cannot save: roles could not be loaded from /admins/roles/.");
-      return;
-    }
-    if (!role?.uuid) {
-      alert("Cannot save: please select a valid role.");
-      return;
-    }
-    if (!STATUS_TO_INT[form.status]) {
-      alert("Cannot save: please select a valid status.");
-      return;
-    }
-    if (form.password !== form.confirmPassword) {
+    if (form.password && form.password !== form.confirmPassword) {
       alert("Password and confirm password must match.");
       return;
     }
+
+    const orig = originalForm || {};
+    const payload = {};
+
+    // Only include fields that actually changed
+    if (form.username !== orig.username) payload.username = form.username;
+    if (form.fullName !== orig.fullName) payload.full_name = form.fullName || "";
+    if (form.role_uuid && form.role_uuid !== orig.role_uuid) payload.role_uuid = form.role_uuid;
+    if (form.status && form.status !== orig.status) payload.status = STATUS_TO_INT[form.status];
+    if (form.password) {
+      payload.password = form.password;
+      payload.confirm_password = form.confirmPassword;
+    }
+
+    // Nothing actually changed — just go back
+    if (Object.keys(payload).length === 0) {
+      router.push("/admin/settings/user-access");
+      return;
+    }
+
     setSaving(true);
+    setSaveError(null);
     try {
-      const payload = {
-        username: form.username,
-        full_name: form.fullName,
-        role_uuid: role.uuid,
-        status: STATUS_TO_INT[form.status],
-      };
-      if (form.password || form.confirmPassword) {
-        payload.password = form.password;
-        payload.confirm_password = form.confirmPassword;
-      }
       await updateCrmUser(uuid, payload);
       router.push("/admin/settings/user-access");
     } catch (err) {
-      console.error("[user-access-edit] save failed", err);
+      setSaveError(extractApiError(err, "Failed to save user."));
     } finally {
       setSaving(false);
     }
@@ -155,10 +160,13 @@ export default function EditUserPage() {
             />
             <SelectField
               label="Assign Role"
-              value={form.role}
-              onChange={update("role")}
-              options={roles.length ? roles.map((role) => role.name) : ROLE_OPTIONS}
-              placeholder="Select role"
+              value={roles.find((r) => r.uuid === form.role_uuid)?.name || form.roleName}
+              onChange={(name) => {
+                const match = roles.find((r) => r.name === name);
+                if (match) setForm((prev) => ({ ...prev, role_uuid: match.uuid, roleName: "" }));
+              }}
+              options={roles.map((r) => r.name)}
+              placeholder={rolesError ? "Failed to load roles" : roles.length === 0 ? "Loading..." : "Select role"}
             />
           </div>
 
@@ -193,6 +201,9 @@ export default function EditUserPage() {
             />
           </div>
 
+          {saveError && (
+            <p className="text-[13px] text-red-400 text-right">{saveError}</p>
+          )}
           <div className="flex flex-wrap items-center justify-end gap-4 pt-2">
             <BackButton />
             <SaveButton disabled={saving} />
@@ -434,4 +445,17 @@ function CheckIcon() {
       <polyline points="20 6 9 17 4 12" />
     </svg>
   );
+}
+
+function extractApiError(err, fallback) {
+  const d = err?.data;
+  if (!d) return fallback;
+  let msg = d.error || d.detail || fallback;
+  if (d.details && typeof d.details === "object") {
+    const parts = Object.entries(d.details)
+      .map(([f, v]) => `${f}: ${Array.isArray(v) ? v[0] : v}`)
+      .join(" | ");
+    msg += ` — ${parts}`;
+  }
+  return msg;
 }

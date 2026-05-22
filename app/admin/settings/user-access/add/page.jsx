@@ -10,21 +10,13 @@ import { createCrmUser, getCrmRoles } from "../../../../api/crmApi";
 // Credentials) inside a dark card with a thin gold glow. Chrome (auth
 // guard, topbar, padding) comes from app/admin/settings/layout.jsx.
 
-const ROLE_OPTIONS = [
-  "Retention",
-  "Prize Moderator",
-  "Game Master",
-  "Lucky Spin Manager",
-  "Supervisor Retention",
-];
-
 const STATUS_OPTIONS = ["Active", "Inactive"];
 const STATUS_TO_INT = { Active: 1, Inactive: 2 };
 
 const INITIAL_FORM = {
   username: "",
   fullName: "",
-  role: "",
+  role_uuid: "",
   status: "",
   password: "",
   confirmPassword: "",
@@ -56,12 +48,7 @@ export default function AddUserPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const role = roles.find((item) => item.name === form.role);
-    if (rolesError) {
-      alert("Cannot save: roles could not be loaded from /admins/roles/.");
-      return;
-    }
-    if (!role?.uuid) {
+    if (!form.role_uuid) {
       alert("Cannot save: please select a valid role.");
       return;
     }
@@ -78,7 +65,7 @@ export default function AddUserPage() {
       await createCrmUser({
         username: form.username,
         full_name: form.fullName,
-        role_uuid: role.uuid,
+        role_uuid: form.role_uuid,
         status: STATUS_TO_INT[form.status],
         password: form.password,
         confirm_password: form.confirmPassword,
@@ -118,10 +105,13 @@ export default function AddUserPage() {
             />
             <SelectField
               label="Assign Role"
-              value={form.role}
-              onChange={update("role")}
-              options={roles.length ? roles.map((role) => role.name) : ROLE_OPTIONS}
-              placeholder="Select role"
+              value={roles.find((r) => r.uuid === form.role_uuid)?.name || ""}
+              onChange={(name) => {
+                const match = roles.find((r) => r.name === name);
+                if (match) update("role_uuid")(match.uuid);
+              }}
+              options={roles.map((r) => r.name)}
+              placeholder={rolesError ? "Failed to load roles" : roles.length === 0 ? "Loading..." : "Select role"}
             />
           </div>
 

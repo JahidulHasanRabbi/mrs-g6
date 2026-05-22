@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { GRAD_GOLD } from "../../../../../components/admin/retention/constants";
-import { getCrmMemberSingle, updateCrmMember } from "../../../../../api/crmApi";
-import { getVipTiers } from "../../../../../api/adminApi";
+import { getCrmMemberSingle, getCrmVipTiers, updateCrmMember } from "../../../../../api/crmApi";
 import Skeleton from "../../../../../components/admin/ui/Skeleton";
 
 // Member edit form — Figma 87:7291. 3-step wizard:
@@ -303,6 +302,7 @@ function apiToForm(data, vipTiers = []) {
     depositTrigger: tagListFor("hobby", g.deposit_trigger),
     churnRiskReason: tagListFor("hobby", g.churn_risk_reason),
     reactivationTrigger: tagListFor("hobby", g.reactivation_trigger),
+    note: g.note || "",
   };
 }
 
@@ -346,6 +346,7 @@ function formToApi(form, vipTiers = []) {
       deposit_trigger: labelsToInts("depositTrigger", form.depositTrigger),
       churn_risk_reason: labelsToInts("churnRiskReason", form.churnRiskReason),
       reactivation_trigger: labelsToInts("reactivationTrigger", form.reactivationTrigger),
+      note: form.note || undefined,
     },
   };
 }
@@ -371,8 +372,8 @@ export default function MemberEditPage() {
       try {
         const [res, tiersRes] = await Promise.all([
           getCrmMemberSingle(memberUuid),
-          getVipTiers().catch((err) => {
-            console.error("[member-edit] vip tiers load failed", err);
+          getCrmVipTiers({ page: 1, page_size: 100 }).catch((err) => {
+            console.error("[member-edit] crm vip tiers load failed", err);
             return [];
           }),
         ]);
@@ -1013,10 +1014,10 @@ function BasicInfoStep({ form, setField, vipTiers = [] }) {
       <SectionTitle>Basic Info</SectionTitle>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-10 gap-y-6">
         <FieldWrapper label="Full Name">
-          <TextInput value={form.fullName} onChange={(v) => setField("fullName", v)} />
+          <ReadOnlyValue value={form.fullName} />
         </FieldWrapper>
         <FieldWrapper label="Phone">
-          <TextInput value={form.phone} onChange={(v) => setField("phone", v)} />
+          <ReadOnlyValue value={form.phone} />
         </FieldWrapper>
         <FieldWrapper label="Gender">
           <SelectInput value={form.gender} onChange={(v) => setField("gender", v)} options={SELECT_OPTIONS.gender} />
@@ -1025,7 +1026,7 @@ function BasicInfoStep({ form, setField, vipTiers = [] }) {
           <TextInput type="date" value={form.dob} onChange={(v) => setField("dob", v)} leftIcon={<CalendarIcon />} />
         </FieldWrapper>
         <FieldWrapper label="Age">
-          <TextInput value={form.age} onChange={(v) => setField("age", v)} />
+          <ReadOnlyValue value={form.age} />
         </FieldWrapper>
         <FieldWrapper label="Nationality">
           <SelectInput value={form.nationality} onChange={(v) => setField("nationality", v)} options={SELECT_OPTIONS.nationality} />

@@ -9,6 +9,7 @@ import RefreshControl from "../../../../components/admin/retention/RefreshContro
 import Pagination from "../../../../components/admin/retention/Pagination";
 import FilterDropdown from "../../../../components/admin/retention/FilterDropdown";
 import SearchInput from "../../../../components/admin/retention/SearchInput";
+import DateRangePicker from "../../../../components/admin/retention/DateRangePicker";
 import {
   ASSETS,
   GRAD_DARK,
@@ -20,7 +21,6 @@ import {
   periodLabelToType,
   refreshCrmMembers,
 } from "../../../../api/crmApi";
-import { getStationList } from "../../../../api/adminApi";
 
 // PIC detail view — shows per-PIC breakdown of members + a member list.
 
@@ -58,8 +58,8 @@ const LEVEL_OPTIONS = [
 ];
 
 const SORT_OPTIONS = [
-  { value: "hl", label: "Win/Lose (H-L)" },
-  { value: "lh", label: "Win/Lose (L-H)" },
+  { value: "hl", label: "Sales (H-L)" },
+  { value: "lh", label: "Sales (L-H)" },
 ];
 
 function formatNumber(value) {
@@ -278,7 +278,8 @@ function MemberListSection({ onRefreshSummary }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const brand = searchParams.get("brand") ?? "";
+  const fromDate = searchParams.get("from") ?? "";
+  const toDate = searchParams.get("to") ?? "";
   const level = searchParams.get("level") ?? "all";
   const sort = searchParams.get("sort") ?? "";
   const q = searchParams.get("q") ?? "";
@@ -288,35 +289,6 @@ function MemberListSection({ onRefreshSummary }) {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [stations, setStations] = useState([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    getStationList()
-      .then((res) => {
-        if (cancelled) return;
-        const list = Array.isArray(res) ? res : res?.results || [];
-        setStations(list);
-      })
-      .catch((err) => {
-        console.error("[pic-detail] station list failed", err);
-        if (!cancelled) setStations([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const brandOptions = useMemo(
-    () => [
-      { value: "", label: "All" },
-      ...stations.map((s) => ({
-        value: s.uuid,
-        label: s.station_name || s.name || "—",
-      })),
-    ],
-    [stations]
-  );
 
   // Single helper for swapping any param while preserving the rest.
   const updateParams = useCallback(
@@ -332,21 +304,26 @@ function MemberListSection({ onRefreshSummary }) {
     [pathname, router, searchParams]
   );
 
+  const handleDateApply = useCallback((from, to) => {
+    updateParams({ from: from || null, to: to || null, page: null });
+  }, [updateParams]);
+
   const apiParams = useMemo(() => ({
     page,
     page_size: PAGE_SIZE,
-    station_uuid: brand || undefined,
+    from_date: fromDate || undefined,
+    to_date: toDate || undefined,
     vip_level: level !== "all" ? vipLabelToInt(level) : undefined,
     search: q || undefined,
-  }), [brand, level, page, q]);
+  }), [fromDate, toDate, level, page, q]);
 
   const fetchMembers = useCallback(async () => {
     setLoading(true);
     try {
       const res = await getRetentionMembers(apiParams);
       let results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
-      if (sort === "hl") results = [...results].sort((a, b) => parseFloat(b.total_winlose || 0) - parseFloat(a.total_winlose || 0));
-      else if (sort === "lh") results = [...results].sort((a, b) => parseFloat(a.total_winlose || 0) - parseFloat(b.total_winlose || 0));
+      if (sort === "hl") results = [...results].sort((a, b) => parseFloat(b.total_sales || 0) - parseFloat(a.total_sales || 0));
+      else if (sort === "lh") results = [...results].sort((a, b) => parseFloat(a.total_sales || 0) - parseFloat(b.total_sales || 0));
       setRows(results);
       setTotal(Number.isFinite(res?.count) ? res.count : results.length);
     } catch (err) {
@@ -388,12 +365,7 @@ function MemberListSection({ onRefreshSummary }) {
           Member List
         </h2>
         <div className="flex flex-1 flex-wrap items-center gap-4">
-          <FilterDropdown
-            value={brand}
-            options={brandOptions}
-            placeholder="Brand"
-            onChange={(v) => updateParams({ brand: v || null, page: null })}
-          />
+          <DateRangePicker fromDate={fromDate} toDate={toDate} onApply={handleDateApply} />
           <FilterDropdown
             value={level}
             options={LEVEL_OPTIONS}
@@ -403,7 +375,7 @@ function MemberListSection({ onRefreshSummary }) {
           <FilterDropdown
             value={sort}
             options={SORT_OPTIONS}
-            placeholder="Win/Lose (H-L)"
+            placeholder="Sales (H-L)"
             onChange={(v) => updateParams({ sort: v, page: null })}
           />
           <SearchInput

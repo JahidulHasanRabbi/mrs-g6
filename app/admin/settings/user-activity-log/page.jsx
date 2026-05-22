@@ -1,16 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { GRAD_DARK, GRAD_GOLD } from "../../../components/admin/retention/constants";
 import { getCrmActivityLog } from "../../../api/crmApi";
 
 const PAGE_SIZE = 7;
 
 const COLUMNS = [
-  { key: "id", label: "#", minW: 70, flex: false },
-  { key: "date", label: "Date", minW: 130, flex: true },
-  { key: "time", label: "Time", minW: 130, flex: true },
-  { key: "user", label: "User", minW: 180, flex: true },
+  { key: "id",       label: "#",        minW: 70,  flex: false },
+  { key: "date",     label: "Date",     minW: 130, flex: true  },
+  { key: "time",     label: "Time",     minW: 130, flex: true  },
+  { key: "user",     label: "User",     minW: 180, flex: true  },
   { key: "activity", label: "Activity", minW: 360, flex: false, align: "end" },
 ];
 
@@ -49,39 +49,90 @@ function PageHeader() {
   );
 }
 
+async function fetchAllPages(fetcher) {
+  const rows = [];
+  let page = 1;
+  let hasNext = true;
+  while (hasNext) {
+    const res = await fetcher({ page, page_size: 100 });
+    const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+    rows.push(...results);
+    hasNext = Boolean(res?.next) && results.length > 0;
+    page += 1;
+  }
+  return rows;
+}
+
+function mapActivityRow(row, id) {
+  const date = row.datetime ? new Date(row.datetime) : null;
+  const validDate = date && !Number.isNaN(date.getTime());
+  return {
+    id,
+    uuid: row.uuid,
+    rawDate: validDate ? date.toISOString().split("T")[0] : null,
+    date: validDate ? date.toLocaleDateString("en-US", { year: "2-digit", month: "2-digit", day: "2-digit" }) : "—",
+    time: validDate ? date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "—",
+    user: row.user || "—",
+    activity: row.activity || "—",
+  };
+}
+
 function ActivityListSection() {
-  const [page, setPage] = useState(1);
-  const [rows, setRows] = useState([]);
-  const [total, setTotal] = useState(0);
+  const [allRows, setAllRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+
+  const [search, setSearch] = useState("");
+  const [pic, setPic] = useState("");
+  const [date, setDate] = useState("");
+  const [page, setPage] = useState(1);
 
   const loadRows = useCallback(async () => {
     setLoading(true);
     setError(false);
     try {
-      const res = await getCrmActivityLog({ page, page_size: PAGE_SIZE });
-      const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
-      setRows(results.map((row, idx) => mapActivityRow(row, (page - 1) * PAGE_SIZE + idx + 1)));
-      setTotal(Number.isFinite(res?.count) ? res.count : results.length);
+      const raw = await fetchAllPages(getCrmActivityLog);
+      setAllRows(raw.map((row, idx) => mapActivityRow(row, idx + 1)));
     } catch {
-      setRows([]);
-      setTotal(0);
+      setAllRows([]);
       setError(true);
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, []);
 
   useEffect(() => {
     loadRows();
   }, [loadRows]);
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const picOptions = useMemo(
+    () => [...new Set(allRows.map((r) => r.user).filter((u) => u && u !== "—"))].sort(),
+    [allRows]
+  );
+
+  const filtered = useMemo(() => {
+    return allRows.filter((row) => {
+      if (search) {
+        const q = search.toLowerCase();
+        if (
+          !row.user.toLowerCase().includes(q) &&
+          !row.activity.toLowerCase().includes(q)
+        ) return false;
+      }
+      if (pic && row.user !== pic) return false;
+      if (date && row.rawDate !== date) return false;
+      return true;
+    });
+  }, [allRows, search, pic, date]);
+
+  useEffect(() => { setPage(1); }, [search, pic, date]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const startIdx = (safePage - 1) * PAGE_SIZE;
-  const showingFrom = total === 0 ? 0 : startIdx + 1;
-  const showingTo = Math.min(startIdx + rows.length, total);
+  const visibleRows = filtered.slice(startIdx, startIdx + PAGE_SIZE);
+  const showingFrom = filtered.length === 0 ? 0 : startIdx + 1;
+  const showingTo = Math.min(startIdx + visibleRows.length, filtered.length);
 
   return (
     <section className="flex w-full flex-col overflow-hidden rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
@@ -97,6 +148,20 @@ function ActivityListSection() {
         >
           Activity List
         </h2>
+        <div className="flex flex-wrap items-center gap-3">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="Enter Username"
+          />
+          <FilterDropdown
+            label="Select PIC"
+            value={pic}
+            onChange={setPic}
+            options={picOptions}
+          />
+          <DateFilter value={date} onChange={setDate} />
+        </div>
       </header>
 
       <div className="overflow-x-auto overflow-y-hidden scrollbar-admin">
@@ -107,10 +172,10 @@ function ActivityListSection() {
               <div className="px-6 py-12 text-center text-[12px] text-white/40">Loading...</div>
             ) : error ? (
               <div className="px-6 py-12 text-center text-[12px] text-red-400">Failed to load activity log.</div>
-            ) : rows.length === 0 ? (
+            ) : visibleRows.length === 0 ? (
               <EmptyRow />
             ) : (
-              rows.map((row) => <ActivityRow key={row.uuid || row.id} row={row} />)
+              visibleRows.map((row) => <ActivityRow key={row.uuid || row.id} row={row} />)
             )}
           </div>
         </div>
@@ -119,7 +184,7 @@ function ActivityListSection() {
       <PaginationBar
         from={showingFrom}
         to={showingTo}
-        total={total}
+        total={filtered.length}
         page={safePage}
         totalPages={totalPages}
         onPageChange={setPage}
@@ -128,17 +193,110 @@ function ActivityListSection() {
   );
 }
 
-function mapActivityRow(row, id) {
-  const date = row.datetime ? new Date(row.datetime) : null;
-  const validDate = date && !Number.isNaN(date.getTime());
-  return {
-    id,
-    uuid: row.uuid,
-    date: validDate ? date.toLocaleDateString("en-US", { year: "2-digit", month: "2-digit", day: "2-digit" }) : "—",
-    time: validDate ? date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "—",
-    user: row.user || "—",
-    activity: row.activity || "—",
-  };
+function SearchInput({ value, onChange, placeholder }) {
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="w-[160px] bg-[#141828] border border-[#f2cb7a] rounded-[8px] px-3 py-2 text-[10px] italic text-[#f6dda6] placeholder:text-[#f6dda6] focus:outline-none focus:ring-1 focus:ring-[#eaad2c]"
+      style={{ fontFamily: "Inter, sans-serif", lineHeight: "15px" }}
+    />
+  );
+}
+
+function FilterDropdown({ label, value, onChange, options }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1 rounded-[8px] border border-[#f2cb7a] px-4 py-2"
+        style={{ backgroundImage: GRAD_DARK }}
+      >
+        <span className="text-[12px] font-medium text-[#f6dda6] leading-[18px] whitespace-nowrap">
+          {value || label}
+        </span>
+        <ChevronIcon up={open} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div
+            className="absolute right-0 top-full mt-1 z-20 min-w-full max-h-48 overflow-y-auto rounded-[8px] border border-[#f2cb7a] overflow-hidden"
+            style={{ backgroundImage: GRAD_DARK }}
+          >
+            <button
+              type="button"
+              onClick={() => { onChange(""); setOpen(false); }}
+              className="block w-full text-left px-4 py-2 text-[12px] text-[#f6dda6] hover:bg-white/5 whitespace-nowrap"
+            >
+              All
+            </button>
+            {options.map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => { onChange(opt); setOpen(false); }}
+                className="block w-full text-left px-4 py-2 text-[12px] text-[#f6dda6] hover:bg-white/5 whitespace-nowrap"
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function DateFilter({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-1 rounded-[8px] border border-[#f2cb7a] px-4 py-2"
+        style={{ backgroundImage: GRAD_DARK }}
+      >
+        <CalendarIcon />
+        <span className="text-[12px] font-medium text-[#f6dda6] leading-[18px] whitespace-nowrap">
+          {value || "Select Date"}
+        </span>
+        <ChevronIcon up={open} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div
+            className="absolute right-0 top-full mt-1 z-20 rounded-[8px] border border-[#f2cb7a] p-3"
+            style={{ backgroundImage: GRAD_DARK }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <input
+              type="date"
+              value={value}
+              onChange={(e) => { onChange(e.target.value); setOpen(false); }}
+              className="rounded-[6px] border border-[#fbeed2] bg-transparent px-3 py-2 text-[12px] text-white focus:outline-none focus:ring-1 focus:ring-[#eaad2c]"
+              style={{ colorScheme: "dark" }}
+            />
+            {value && (
+              <button
+                type="button"
+                onClick={() => { onChange(""); setOpen(false); }}
+                className="mt-2 block w-full text-center text-[11px] text-[#f6dda6] hover:text-white"
+              >
+                Clear date
+              </button>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 function TableHeader() {
@@ -211,6 +369,26 @@ function UserAvatar() {
 
 function EmptyRow() {
   return <div className="px-6 py-12 text-center text-[12px] text-white/40">No activity found.</div>;
+}
+
+function ChevronIcon({ up }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f6dda6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      style={{ transform: up ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} aria-hidden="true">
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f6dda6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  );
 }
 
 function buildPageItems(currentPage, totalPages) {

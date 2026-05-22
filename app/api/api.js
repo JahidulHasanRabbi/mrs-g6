@@ -116,6 +116,10 @@ export const ENDPOINTS = {
     // Member Assignment
     ASSIGNMENTS: '/crm-admins/assignments/',
     ASSIGNMENT_SINGLE: (uuid) => `/crm-admins/assignments/${uuid}/`,
-    ASSIGNMENT_SET_TARGET: '/crm-admins/assignments/set-target/'
+    ASSIGNMENT_SET_TARGET: '/crm-admins/assignments/set-target/',
+    // CRM VIP Tiers
+    CRM_VIP_TIERS: '/crm-admins/vip-tier/',
+    CRM_VIP_TIER_SINGLE: (uuid) => `/crm-admins/vip-tier/${uuid}/`,
+    CRM_VIP_TIER_ARCHIVE: (uuid) => `/crm-admins/vip-tier/${uuid}/archive/`
   }
 };
