@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import PeriodToggle from "../../../components/admin/retention/PeriodToggle";
 import RefreshControl from "../../../components/admin/retention/RefreshControl";
@@ -94,7 +94,9 @@ function HeaderRow({ period, onPeriodChange }) {
           Dashboard
         </h1>
       </div>
-      <PeriodToggle period={period} onPeriodChange={onPeriodChange} />
+      <Suspense fallback={null}>
+        <PeriodToggle period={period} onPeriodChange={onPeriodChange} />
+      </Suspense>
     </div>
   );
 }
