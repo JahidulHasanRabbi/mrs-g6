@@ -130,60 +130,6 @@ const ActivityLogIcon = ({ className }) => (
   </svg>
 );
 
-// Soccer ball — represents "Penalty Kick"
-const PenaltyKickIcon = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="9" />
-    <path d="M12 3 L14.5 6 L12 9 L9.5 6 Z" fill="currentColor" stroke="none" />
-    <path d="M21 12 L17.5 13.5 L16 11 L17.5 8 Z" fill="currentColor" stroke="none" />
-    <path d="M3 12 L6.5 8 L8 11 L6.5 13.5 Z" fill="currentColor" stroke="none" />
-    <path d="M12 21 L9.5 18 L12 15 L14.5 18 Z" fill="currentColor" stroke="none" />
-  </svg>
-);
-
-// Flag-on-target — represents "Mission Game"
-const MissionGameIcon = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="9" />
-    <circle cx="12" cy="12" r="5" />
-    <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
-    <path d="M12 3 V8" />
-  </svg>
-);
-
-// Trophy — represents "World Cup Dashboard"
-const TrophyIcon = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M8 21h8" />
-    <path d="M12 17v4" />
-    <path d="M7 4h10v4a5 5 0 0 1-10 0V4Z" />
-    <path d="M17 5h3v3a3 3 0 0 1-3 3" />
-    <path d="M7 5H4v3a3 3 0 0 0 3 3" />
-  </svg>
-);
-
-// Bar-chart — represents "Predictions"
-const PredictionsIcon = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="18" y1="20" x2="18" y2="10" />
-    <line x1="12" y1="20" x2="12" y2="4" />
-    <line x1="6" y1="20" x2="6" y2="14" />
-  </svg>
-);
-
-// Soccer ball — represents "Settings" (matches Figma World Cup soccer-ball icon)
-const SettingsBallIcon = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="9" />
-    <polygon points="12,8 16,11 14.5,15.5 9.5,15.5 8,11" fill="currentColor" stroke="none" />
-    <path d="M12 3v5" />
-    <path d="M21 12l-5-1" />
-    <path d="M3 12l5-1" />
-    <path d="M15 21l-1-5" />
-    <path d="M9 21l1-5" />
-  </svg>
-);
-
 // Person with arrow — represents "login request"
 const LoginRequestIcon = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -221,14 +167,14 @@ const MENU_ITEMS = [
   {
     id: "penalty-kick",
     label: "Penalty Kick",
-    iconNode: PenaltyKickIcon,
+    iconMask: "/assets/admin/sidebar/icons/lucide-lab-soccer-ball.svg",
     href: "/admin/penalty-kick",
     disabled: false,
   },
   {
     id: "mission-game",
     label: "Mission Game",
-    iconNode: MissionGameIcon,
+    iconMask: "/assets/admin/sidebar/icons/gravity-ui-target.svg",
     href: "/admin/mission-game",
     disabled: false,
   },
@@ -284,21 +230,21 @@ const WORLD_CUP_MENU = [
   {
     id: "wc-dashboard",
     label: "World Cup Dashboard",
-    iconNode: TrophyIcon,
+    iconMask: "/assets/admin/sidebar/icons/solar-cup-outline.svg",
     href: "/admin/world-cup",
     disabled: false,
   },
   {
     id: "wc-predictions",
     label: "Predictions",
-    iconNode: PredictionsIcon,
+    iconMask: "/assets/admin/sidebar/icons/icon-park-outline-ranking.svg",
     href: "/admin/world-cup/predictions",
     disabled: false,
   },
   {
     id: "wc-settings",
     label: "Settings",
-    iconNode: SettingsBallIcon,
+    iconMask: "/assets/admin/sidebar/icons/hugeicons-football.svg",
     href: "/admin/world-cup/settings",
     disabled: false,
   },
