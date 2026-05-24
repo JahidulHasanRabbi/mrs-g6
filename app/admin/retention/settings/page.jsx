@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, Suspense } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Pagination from "../../../components/admin/retention/Pagination";
 import SetTargetModal from "../../../components/admin/retention/SetTargetModal";
@@ -124,13 +124,13 @@ function applyFormToRow(row, values) {
 
 export default function RetentionSettingsPage() {
   return (
-    <Suspense>
-      <RetentionSettingsContent />
+    <Suspense fallback={null}>
+      <RetentionSettingsPageInner />
     </Suspense>
   );
 }
 
-function RetentionSettingsContent() {
+function RetentionSettingsPageInner() {
   const searchParams = useSearchParams();
   const pageParam = parseInt(searchParams.get("page") || "1", 10);
   const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;

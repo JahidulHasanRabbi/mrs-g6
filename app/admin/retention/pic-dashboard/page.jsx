@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, Suspense } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import PeriodToggle from "../../../components/admin/retention/PeriodToggle";
@@ -120,7 +120,9 @@ function HeaderRow({ period, onPeriodChange, fromDate, toDate }) {
           Dashboard
         </h1>
       </div>
-      <PeriodToggle period={period} onPeriodChange={onPeriodChange} fromDate={fromDate} toDate={toDate} />
+      <Suspense fallback={null}>
+        <PeriodToggle period={period} onPeriodChange={onPeriodChange} />
+      </Suspense>
     </div>
   );
 }
