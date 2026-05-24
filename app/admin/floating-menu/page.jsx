@@ -195,11 +195,11 @@ function MenuFormModal({ menu, onClose, onSave, stations }) {
               URL:
             </label>
             <input
-              type="url"
+              type="text"
               value={form.url_slug}
               onChange={(e) => handleChange("url_slug", e.target.value)}
               required
-              placeholder="https://example.com"
+              placeholder="/spin or https://example.com"
               className="h-[36px] flex-1 rounded-[4px] px-3 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] text-[14px] text-white outline-none focus:border-[#f2c36b]"
             />
           </div>
