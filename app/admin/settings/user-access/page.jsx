@@ -390,14 +390,15 @@ function UserAvatar() {
 }
 
 function StatusBadge({ status }) {
-  const isActive = status === "Active";
+  const normalized = status ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase() : status;
+  const isActive = normalized === "Active";
   return (
     <span
       className={`flex items-center justify-center rounded-[8px] px-4 py-2 text-[12px] font-medium leading-[18px] text-white whitespace-nowrap ${
         isActive ? "bg-[#01813d]" : "bg-[#d00416]"
       }`}
     >
-      {status}
+      {normalized}
     </span>
   );
 }

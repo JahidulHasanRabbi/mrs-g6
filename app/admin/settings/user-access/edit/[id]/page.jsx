@@ -7,6 +7,7 @@ import { GRAD_GOLD } from "../../../../../components/admin/retention/constants";
 import { STATUS_OPTIONS } from "../../_data";
 import { getCrmRoles, getCrmUsers, updateCrmUser } from "../../../../../api/crmApi";
 import Skeleton from "../../../../../components/admin/ui/Skeleton";
+import { useToast } from "../../../../../components/admin/ui/Toast";
 
 const STATUS_TO_INT = { Active: 1, Inactive: 2 };
 
@@ -14,13 +15,13 @@ export default function EditUserPage() {
   const router = useRouter();
   const params = useParams();
   const uuid = params?.id;
+  const toast = useToast();
 
   const [user, setUser] = useState(null);
   const [userLoading, setUserLoading] = useState(true);
   const [roles, setRoles] = useState([]);
   const [rolesError, setRolesError] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState(null);
   const [originalForm, setOriginalForm] = useState(null);
 
   const [form, setForm] = useState({
@@ -35,15 +36,36 @@ export default function EditUserPage() {
 
   useEffect(() => {
     if (!uuid) { setUserLoading(false); return; }
+
+    // Reset immediately so stale data from a previous edit never flashes
+    setUserLoading(true);
+    setUser(null);
+
+    let cancelled = false;
+
+    async function fetchAllPages(fetcher) {
+      const rows = [];
+      let page = 1;
+      let hasNext = true;
+      while (hasNext) {
+        const res = await fetcher({ page, page_size: 100 });
+        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        rows.push(...results);
+        hasNext = Boolean(res?.next) && results.length > 0;
+        page += 1;
+      }
+      return rows;
+    }
+
     Promise.all([
-      getCrmUsers({ page: 1, page_size: 100 }),
+      fetchAllPages(getCrmUsers),
       getCrmRoles({ page: 1, page_size: 100 }).catch(() => {
-        setRolesError(true);
+        if (!cancelled) setRolesError(true);
         return { results: [] };
       }),
     ])
-      .then(([usersRes, rolesRes]) => {
-        const users = Array.isArray(usersRes?.results) ? usersRes.results : Array.isArray(usersRes) ? usersRes : [];
+      .then(([users, rolesRes]) => {
+        if (cancelled) return;
         const roleResults = Array.isArray(rolesRes?.results) ? rolesRes.results : Array.isArray(rolesRes) ? rolesRes : [];
         setRoles(roleResults);
         if (roleResults.length) setRolesError(false);
@@ -56,7 +78,7 @@ export default function EditUserPage() {
             fullName: found.full_name || "",
             role_uuid: matchedRole?.uuid || "",
             roleName: found.role || "",
-            status: STATUS_OPTIONS.includes(found.status) ? found.status : "",
+            status: (() => { const s = found.status ? found.status.charAt(0).toUpperCase() + found.status.slice(1).toLowerCase() : ""; return STATUS_OPTIONS.includes(s) ? s : ""; })(),
             password: "",
             confirmPassword: "",
           };
@@ -64,8 +86,10 @@ export default function EditUserPage() {
           setOriginalForm(initialForm);
         }
       })
-      .catch(() => setUser(null))
-      .finally(() => setUserLoading(false));
+      .catch(() => { if (!cancelled) setUser(null); })
+      .finally(() => { if (!cancelled) setUserLoading(false); });
+
+    return () => { cancelled = true; };
   }, [uuid]);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -75,7 +99,7 @@ export default function EditUserPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (form.password && form.password !== form.confirmPassword) {
-      alert("Password and confirm password must match.");
+      toast.error("Passwords do not match", { description: "Make sure the password and confirm password fields are identical." });
       return;
     }
 
@@ -99,12 +123,12 @@ export default function EditUserPage() {
     }
 
     setSaving(true);
-    setSaveError(null);
     try {
       await updateCrmUser(uuid, payload);
       router.push("/admin/settings/user-access");
     } catch (err) {
-      setSaveError(extractApiError(err, "Failed to save user."));
+      const { message, description } = extractApiError(err);
+      toast.error(message, description ? { description, duration: 7000 } : { duration: 7000 });
     } finally {
       setSaving(false);
     }
@@ -201,9 +225,6 @@ export default function EditUserPage() {
             />
           </div>
 
-          {saveError && (
-            <p className="text-[13px] text-red-400 text-right">{saveError}</p>
-          )}
           <div className="flex flex-wrap items-center justify-end gap-4 pt-2">
             <BackButton />
             <SaveButton disabled={saving} />
@@ -447,15 +468,15 @@ function CheckIcon() {
   );
 }
 
-function extractApiError(err, fallback) {
+function extractApiError(err) {
   const d = err?.data;
-  if (!d) return fallback;
-  let msg = d.error || d.detail || fallback;
+  if (!d) return { message: "Failed to save user.", description: err?.message || undefined };
+  const message = d.error || d.detail || "Failed to save user.";
+  let description;
   if (d.details && typeof d.details === "object") {
-    const parts = Object.entries(d.details)
+    description = Object.entries(d.details)
       .map(([f, v]) => `${f}: ${Array.isArray(v) ? v[0] : v}`)
-      .join(" | ");
-    msg += ` — ${parts}`;
+      .join(" · ");
   }
-  return msg;
+  return { message, description };
 }

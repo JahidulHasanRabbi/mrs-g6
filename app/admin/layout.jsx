@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import Sidebar from "../components/admin/Sidebar";
 import { SidebarProvider, useSidebar } from "../contexts/SidebarContext";
+import { ToastProvider } from "../components/admin/ui/Toast";
 
 // Sidebar widths — must match the values the sidebar component renders with.
 // Kept here so both the aside and any consumer of `--admin-sidebar-w` agree.
@@ -58,7 +59,9 @@ export default function AdminLayout({ children }) {
 
   return (
     <SidebarProvider>
-      <AdminLayoutInner>{children}</AdminLayoutInner>
+      <ToastProvider>
+        <AdminLayoutInner>{children}</AdminLayoutInner>
+      </ToastProvider>
     </SidebarProvider>
   );
 }

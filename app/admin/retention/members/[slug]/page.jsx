@@ -2,16 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import PeriodToggle from "../../../../components/admin/retention/PeriodToggle";
 import { ASSETS, GRAD_DARK, GRAD_GOLD } from "../../../../components/admin/retention/constants";
-import { getCrmMemberSingle } from "../../../../api/crmApi";
-
-// Member profile detail — mirrors Figma node 34:316.
-// Route: /admin/retention/members/[slug] where slug is the member UUID coming
-// from the list pages. The page hits GET /crm-members/members/<uuid>/ and
-// renders three info sections (basic / financial / gaming) plus the header
-// stats. Fields the API doesn't return are shown as "—" so the UI stays intact.
+import { getCrmMemberSingle, updateCrmMember, getCrmVipTiers } from "../../../../api/crmApi";
 
 const TAG_STYLES = {
   vip:    { bg: "#d9acff", color: "#8800fb" },
@@ -21,9 +15,6 @@ const TAG_STYLES = {
   weekly: { bg: "#a4a4a4", color: "#141828" },
 };
 
-// Canonical brand list displayed in the "Active on" row. Each chip is either
-// active (gold-filled) or inactive (outlined) based on whether the brand code
-// appears in the member's played-brands list. Codes are matched case-insensitively.
 const ACTIVE_BRANDS = ["KG", "AB", "EP", "LV", "UB", "N1"];
 
 function normalizeBrandList(raw) {
@@ -43,8 +34,6 @@ function show(value, fallback = "—") {
   return value === null || value === undefined || value === "" ? fallback : String(value);
 }
 
-// Heuristic for tag kind/colors: pick chips based on field content so it
-// resembles the Figma without inventing data the API doesn't provide.
 function inferTags(data) {
   const tags = [];
   const vip = data?.customer_data?.mrs_level || data?.customer_data?.vip_level || data?.vip_level;
@@ -56,13 +45,114 @@ function inferTags(data) {
   return tags;
 }
 
+function normalizeListResponse(response) {
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response?.results)) return response.results;
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.data?.results)) return response.data.results;
+  return [];
+}
+
+// ─── Enum maps for PUT payload (mirrors edit/page.jsx) ────────────────────────
+const ENUMS = {
+  gender:              ["Male", "Female", "Prefer not to say"],
+  nationality:         ["South Korean", "Malaysian", "Singaporean", "Thai", "Other"],
+  marital:             ["Single", "Married", "Divorced", "Widowed"],
+  playerType:          ["VIP", "Regular", "New", "Dormant"],
+  risk:                ["Low", "Medium", "High"],
+  depositFreq:         ["Daily", "Weekly", "Bi-Weekly", "Monthly", "Quarterly"],
+  status:              ["Active", "Inactive", "Dormant", "Suspended"],
+  hobby:               ["Gaming", "Reading", "Sports", "Music", "Travel", "Cooking", "Photography"],
+  providerPref:        ["Pragmatic", "Microgaming", "NetEnt", "Playtech", "PG Soft", "Evolution"],
+  depositTrigger:      ["Bonus", "Promotion", "FOMO", "Habit", "Tournament"],
+  churnRiskReason:     ["Any", "Lost Interest", "Better Offer", "Personal Reason", "Service Issue"],
+  reactivationTrigger: ["Any", "Bonus", "Tournament", "VIP Upgrade", "Personal Outreach"],
+  riskStyle:           ["Conservative", "Balanced", "Aggressive", "High Risk"],
+  depositFreqStyle:    ["Daily", "Weekly", "Bi-Weekly", "Monthly", "Quarterly"],
+  paymentMethod:       ["Bank Transfer", "Credit Card", "Debit Card", "E-Wallet", "Crypto", "Other"],
+  playTimePattern:     ["Morning (6am-12pm)", "Afternoon (12pm-6pm)", "Evening (6pm-8pm)", "Night (8pm-2am)", "Late Night (2am-6am)"],
+};
+
+function labelToInt(enumKey, label) {
+  if (!label) return undefined;
+  const list = ENUMS[enumKey];
+  if (!list) return undefined;
+  const norm = String(label).toLowerCase().trim();
+  const idx = list.findIndex((opt) => opt.toLowerCase().trim() === norm);
+  return idx >= 0 ? idx + 1 : undefined;
+}
+
+function labelsToInts(enumKey, value) {
+  if (!value) return [];
+  const labels = Array.isArray(value) ? value : String(value).split(",").map((s) => s.trim());
+  return labels.filter(Boolean).map((l) => labelToInt(enumKey, l)).filter((v) => v !== undefined);
+}
+
+function getExistingVipUuid(data) {
+  return (
+    data?.profile_data?.vip_level_uuid ||
+    data?.basic_info?.vip_level_uuid ||
+    data?.customer_data?.vip_level_uuid ||
+    data?.customer_data?.mrs_level_uuid ||
+    data?.vip_level_uuid ||
+    undefined
+  );
+}
+
+// Reconstruct the full PUT payload from the GET response data, applying any
+// overrides for profile_data or game_info fields.
+function buildMemberPayload(data, { profileDataOverrides = {}, gameInfoOverrides = {} } = {}) {
+  const c = data?.customer_data || {};
+  const b = data?.basic_info || {};
+  const g = data?.gaming_info || {};
+  const f = data?.financial_info || {};
+
+  return {
+    profile_data: {
+      vip_level_uuid: getExistingVipUuid(data),
+      player_type:       labelToInt("playerType", g.player_type),
+      risk:              labelToInt("risk", g.risk_style),
+      deposit_frequency: labelToInt("depositFreq", g.deposit_frequency_style),
+      status:            labelToInt("status", data?.status || "Active") || 1,
+      ...profileDataOverrides,
+    },
+    basic_info: {
+      gender:         labelToInt("gender", c.gender || b.gender),
+      date_of_birth:  c.date_of_birth || b.date_of_birth || undefined,
+      nationality:    labelToInt("nationality", c.nationality || b.nationality),
+      home_address:   c.home_address || b.home_address || undefined,
+      marital_status: labelToInt("marital", c.marital_status || b.marital_status),
+      job:            c.job || b.job || undefined,
+      hobby:          labelsToInts("hobby", c.hobby || b.hobby),
+      payment_method: labelToInt("paymentMethod", f.payment_method),
+    },
+    game_info: {
+      game_preference:        g.game_preference || undefined,
+      provider_Preference:    labelsToInts("providerPref", g.provider_preference),
+      play_type_pattern:      labelToInt("playTimePattern", g.play_time_pattern),
+      average_bet_size:       g.average_bet_size ? parseFloat(g.average_bet_size) || undefined : undefined,
+      player_type:            labelToInt("playerType", g.player_type),
+      risk_style:             labelToInt("riskStyle", g.risk_style),
+      deposit_frequency_style: labelToInt("depositFreqStyle", g.deposit_frequency_style),
+      deposit_trigger:        labelsToInts("depositTrigger", g.deposit_trigger),
+      churn_risk_reason:      labelsToInts("churnRiskReason", g.churn_risk_reason),
+      reactivation_trigger:   labelsToInts("reactivationTrigger", g.reactivation_trigger),
+      note:                   g.note || undefined,
+      ...gameInfoOverrides,
+    },
+  };
+}
+
 export default function MemberProfilePage() {
   const params = useParams();
+  const router = useRouter();
   const memberUuid = typeof params?.slug === "string" ? params.slug : Array.isArray(params?.slug) ? params.slug[0] : "";
   const [period, setPeriod] = useState("Daily");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [activeModal, setActiveModal] = useState(null);
 
   useEffect(() => {
     if (!memberUuid) return;
@@ -86,7 +176,7 @@ export default function MemberProfilePage() {
     return () => {
       cancelled = true;
     };
-  }, [memberUuid]);
+  }, [memberUuid, refreshKey]);
 
   if (loading) {
     return (
@@ -104,9 +194,6 @@ export default function MemberProfilePage() {
     );
   }
 
-  // customer_data is fully documented and returns human-readable strings.
-  // basic_info exists in the GET output but its fields are undocumented —
-  // prefer customer_data so display values are always readable strings.
   const customer = data?.customer_data || {};
   const basic = data?.basic_info || {};
 
@@ -158,6 +245,11 @@ export default function MemberProfilePage() {
     data?.active_brands ?? data?.brands ?? data?.brands_played ?? customer?.active_brands,
   );
 
+  const handleSaved = () => {
+    setActiveModal(null);
+    setRefreshKey((k) => k + 1);
+  };
+
   return (
     <>
       <ProfileHeader
@@ -168,15 +260,37 @@ export default function MemberProfilePage() {
         period={period}
         onPeriodChange={setPeriod}
         activeBrands={activeBrands}
+        onNoteOpen={() => setActiveModal("note")}
+        onVipOpen={() => setActiveModal("vip")}
+        onAddTag={() => router.push(`/admin/retention/members/${memberUuid}/edit`)}
       />
       <StatsRow stats={stats} />
       <InfoGrid basicInfo={basicInfo} financialInfo={financialInfo} gamingInfo={gamingInfo} />
-      <NotesCard notes={show(data?.notes, "No notes available.")} />
+      <NotesCard notes={show(data?.gaming_info?.note || data?.notes, "No notes available.")} />
+
+      {activeModal === "note" && (
+        <NoteModal
+          memberUuid={memberUuid}
+          memberData={data}
+          initialNote={data?.gaming_info?.note || ""}
+          onClose={() => setActiveModal(null)}
+          onSaved={handleSaved}
+        />
+      )}
+      {activeModal === "vip" && (
+        <VipModal
+          memberUuid={memberUuid}
+          memberData={data}
+          currentVipLabel={stats.mrsLevel !== "—" ? stats.mrsLevel : ""}
+          onClose={() => setActiveModal(null)}
+          onSaved={handleSaved}
+        />
+      )}
     </>
   );
 }
 
-function ProfileHeader({ name, tags, dateJoined, slug, period, onPeriodChange, activeBrands }) {
+function ProfileHeader({ name, tags, dateJoined, slug, period, onPeriodChange, activeBrands, onNoteOpen, onVipOpen, onAddTag }) {
   return (
     <div className="flex flex-col gap-4 px-2 md:flex-row md:flex-wrap md:items-start md:justify-between md:gap-6">
       <div className="flex flex-col gap-3">
@@ -226,7 +340,7 @@ function ProfileHeader({ name, tags, dateJoined, slug, period, onPeriodChange, a
               <EditIcon />
               <span className="text-[12px] font-medium leading-[18px] text-[#141828]">Edit Profile</span>
             </Link>
-            <MoreOptionsMenu />
+            <MoreOptionsMenu onNoteOpen={onNoteOpen} onVipOpen={onVipOpen} onAddTag={onAddTag} />
           </div>
         </div>
       </div>
@@ -238,11 +352,6 @@ function ProfileHeader({ name, tags, dateJoined, slug, period, onPeriodChange, a
   );
 }
 
-// Shows the canonical brand list with each chip filled (gold) when the
-// member has played that brand, outlined when not. The backend field name
-// is still TBD — we accept `active_brands`, `brands`, or `brands_played`
-// (see normalizeBrandList caller). All chips render as outlined until the
-// backend supplies one of those keys.
 function ActiveBrandsRow({ active }) {
   const activeSet = new Set(active || []);
   return (
@@ -270,25 +379,23 @@ function ActiveBrandsRow({ active }) {
   );
 }
 
-// Cream popover triggered by the dots button next to Edit Profile. Items
-// are placeholders until the corresponding admin endpoints are wired up.
 const MORE_OPTIONS = [
-  { key: "send-bonus",      label: "Send Bonus" },
-  { key: "add-note",        label: "Add Note" },
+  { key: "send-bonus",       label: "Send Bonus" },
+  { key: "add-note",         label: "Add Note" },
   { key: "change-vip-level", label: "Change VIP Level" },
-  { key: "add-tag",         label: "Add Tag" },
-  { key: "block-customer",  label: "Block Customer", danger: true },
-  { key: "alert",           label: "Alert",          danger: true },
+  { key: "add-tag",          label: "Add Tag" },
+  { key: "block-customer",   label: "Block Customer", danger: true },
+  { key: "alert",            label: "Alert",          danger: true },
 ];
 
-function MoreOptionsMenu() {
+function MoreOptionsMenu({ onNoteOpen, onVipOpen, onAddTag }) {
   const [open, setOpen] = useState(false);
 
   const handleSelect = (key) => {
     setOpen(false);
-    if (process.env.NODE_ENV !== "production") {
-      console.log(`[member-profile] more-options action: ${key}`);
-    }
+    if (key === "add-note") onNoteOpen();
+    else if (key === "change-vip-level") onVipOpen();
+    else if (key === "add-tag") onAddTag();
   };
 
   return (
@@ -329,6 +436,222 @@ function MoreOptionsMenu() {
         </>
       ) : null}
     </div>
+  );
+}
+
+function ModalOverlay({ onClose, children }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ backgroundColor: "rgba(0,0,0,0.65)" }}>
+      <div className="fixed inset-0" onClick={onClose} />
+      <div
+        className="relative z-10 w-full max-w-lg rounded-[16px] p-8 shadow-[0_0_3px_0_#dea220]"
+        style={{ backgroundColor: "#05060a" }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function ModalTitle({ children }) {
+  return (
+    <h2
+      className="bg-clip-text text-transparent font-bold mb-5"
+      style={{
+        backgroundImage: GRAD_GOLD,
+        fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+        fontSize: "22px",
+        lineHeight: "33px",
+        letterSpacing: "-1.5px",
+      }}
+    >
+      {children}
+    </h2>
+  );
+}
+
+function ModalActions({ onClose, onSave, saving, saveLabel = "Save" }) {
+  return (
+    <div className="flex justify-end gap-3 mt-6">
+      <button
+        type="button"
+        onClick={onClose}
+        disabled={saving}
+        className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#d00416] px-6 py-2 text-[14px] font-semibold text-[#d00416] leading-[21px] transition hover:bg-[#d00416]/10 disabled:opacity-50"
+        style={{ letterSpacing: "-1px" }}
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        onClick={onSave}
+        disabled={saving}
+        className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold text-[#141828] leading-[21px] transition hover:brightness-110 disabled:opacity-60"
+        style={{ backgroundImage: GRAD_GOLD, letterSpacing: "-1px" }}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#141828" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+        {saving ? "Saving..." : saveLabel}
+      </button>
+    </div>
+  );
+}
+
+function NoteModal({ memberUuid, memberData, initialNote, onClose, onSaved }) {
+  const [note, setNote] = useState(initialNote);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+
+  const handleSave = async () => {
+    if (saving) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await updateCrmMember(memberUuid, buildMemberPayload(memberData, {
+        gameInfoOverrides: { note: note || undefined },
+      }));
+      onSaved();
+    } catch (err) {
+      console.error("[note-modal] save failed", err);
+      setSaveError("Failed to save note. Please try again.");
+      setSaving(false);
+    }
+  };
+
+  return (
+    <ModalOverlay onClose={onClose}>
+      <ModalTitle>Add Note</ModalTitle>
+      <label className="block text-[14px] font-medium text-[#f6dda6] leading-[21px] mb-2">
+        Note
+      </label>
+      <div className="rounded-[8px] border border-[#fbeed2] px-4 py-3">
+        <textarea
+          rows={6}
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Write a note about this member..."
+          className="block w-full resize-none bg-transparent text-[12px] font-medium leading-[18px] text-white outline-none placeholder:text-white/40"
+        />
+      </div>
+      {saveError && (
+        <p className="mt-2 text-[12px] text-[#fb3748]">{saveError}</p>
+      )}
+      <ModalActions onClose={onClose} onSave={handleSave} saving={saving} />
+    </ModalOverlay>
+  );
+}
+
+function VipModal({ memberUuid, memberData, currentVipLabel, onClose, onSaved }) {
+  const [vipTiers, setVipTiers] = useState([]);
+  const [tiersLoading, setTiersLoading] = useState(true);
+  const [selectedUuid, setSelectedUuid] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+
+  useEffect(() => {
+    getCrmVipTiers({ page: 1, page_size: 100 })
+      .then((res) => {
+        const tiers = normalizeListResponse(res);
+        setVipTiers(tiers);
+        if (currentVipLabel) {
+          const match = tiers.find((t) =>
+            (t.name || t.tier_name || "").toLowerCase() === currentVipLabel.toLowerCase()
+          );
+          if (match) setSelectedUuid(match.uuid);
+        }
+      })
+      .catch((err) => console.error("[vip-modal] tiers load failed", err))
+      .finally(() => setTiersLoading(false));
+  }, [currentVipLabel]);
+
+  const handleSave = async () => {
+    if (saving || !selectedUuid) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await updateCrmMember(memberUuid, buildMemberPayload(memberData, {
+        profileDataOverrides: { vip_level_uuid: selectedUuid },
+      }));
+      onSaved();
+    } catch (err) {
+      console.error("[vip-modal] save failed", err);
+      setSaveError("Failed to update VIP level. Please try again.");
+      setSaving(false);
+    }
+  };
+
+  const selectedTier = vipTiers.find((t) => t.uuid === selectedUuid);
+  const selectedLabel = selectedTier ? (selectedTier.name || selectedTier.tier_name || "") : null;
+
+  return (
+    <ModalOverlay onClose={onClose}>
+      <ModalTitle>Change VIP Level</ModalTitle>
+
+      {currentVipLabel && (
+        <div className="mb-5">
+          <p className="text-[12px] font-medium text-white/60 leading-[18px] mb-2">Current VIP Level</p>
+          <span
+            className="inline-flex h-[27px] items-center justify-center rounded-[12px] px-4 text-[12px] font-semibold"
+            style={{ backgroundColor: TAG_STYLES.vip.bg, color: TAG_STYLES.vip.color }}
+          >
+            {currentVipLabel}
+          </span>
+        </div>
+      )}
+
+      <label className="block text-[14px] font-medium text-[#f6dda6] leading-[21px] mb-2">
+        Select New VIP Level
+      </label>
+      {tiersLoading ? (
+        <div className="rounded-[8px] border border-[#fbeed2]/30 px-4 py-3 text-[12px] text-white/40">
+          Loading VIP levels...
+        </div>
+      ) : (
+        <div className="flex items-center gap-3 rounded-[8px] border border-[#fbeed2] px-4 py-3">
+          <select
+            value={selectedUuid || ""}
+            onChange={(e) => setSelectedUuid(e.target.value || null)}
+            className="flex-1 appearance-none bg-transparent text-[12px] font-medium leading-[18px] text-white outline-none [color-scheme:dark]"
+          >
+            <option value="" className="bg-[#05060a] text-white/60">Select a VIP level...</option>
+            {vipTiers.map((tier) => {
+              const label = tier.name || tier.tier_name || tier.uuid;
+              return (
+                <option key={tier.uuid} value={tier.uuid} className="bg-[#05060a] text-white">
+                  {label}
+                </option>
+              );
+            })}
+          </select>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbeed2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </div>
+      )}
+
+      {selectedLabel && (
+        <div className="mt-3 flex items-center gap-2">
+          <span className="text-[12px] text-white/60">Selected:</span>
+          <span
+            className="inline-flex h-[23px] items-center justify-center rounded-[12px] px-3 text-[12px] font-medium"
+            style={{ backgroundColor: TAG_STYLES.vip.bg, color: TAG_STYLES.vip.color }}
+          >
+            {selectedLabel}
+          </span>
+        </div>
+      )}
+
+      {saveError && (
+        <p className="mt-2 text-[12px] text-[#fb3748]">{saveError}</p>
+      )}
+      <ModalActions
+        onClose={onClose}
+        onSave={handleSave}
+        saving={saving}
+        saveLabel={!selectedUuid ? "Select a level" : "Save"}
+      />
+    </ModalOverlay>
   );
 }
 

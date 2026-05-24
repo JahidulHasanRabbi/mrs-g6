@@ -83,11 +83,10 @@ function mapAssignment(row, idx = 0) {
   return {
     id: row.uuid || row.id || idx + 1,
     uuid: row.uuid,
-    name: row.full_name || row.name || "—",
+    name: row.full_name || "—",
     picUuid: firstPresent(row.pic_uuid, row.admin_uuid, row.user_uuid, row.pic?.uuid, row.admin?.uuid),
-    vip: row.vip_level || "",
     avatar: `${ASSETS}/avatar-${(idx % 5) + 1}.jpg`,
-    level: row.level || row.name || "—",
+    level: row.level || "—",
     members: formatNumber(row.target_members),
     retain: formatCurrency(row.retain_criteria),
     upgrade: formatCurrency(row.upgrade_criteria),
@@ -118,7 +117,6 @@ function applyFormToRow(row, values) {
     status: values.status,
     retain: `RM ${values.retain.replace(/^RM\s*/i, "")}`,
     upgrade: values.upgrade,
-    name: values.pic,
   };
 }
 
@@ -315,7 +313,7 @@ function AssignmentListSection({ rows, total, page, loading, pics = [] }) {
           style={{ backgroundImage: GRAD_GOLD }}
         >
           <PlusGlyph />
-          Add Member level
+          Add Member Assignment
         </button>
       </header>
 
@@ -362,7 +360,7 @@ function AssignmentListSection({ rows, total, page, loading, pics = [] }) {
 function TableHeader() {
   return (
     <div className="flex w-full items-start justify-between" style={{ backgroundImage: GRAD_DARK }}>
-      <HeaderCell label="Username" widthClass="w-[200px]" />
+      <HeaderCell label="Member Assignment" widthClass="w-[200px]" />
       <HeaderCell label="Level" />
       <HeaderCell label="No. of Members" />
       <HeaderCell label="Retain Criteria" />
@@ -391,14 +389,8 @@ function AssignmentRow({ row, onEdit }) {
         <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full">
           <img src={row.avatar} alt="" className="h-full w-full object-cover" />
         </div>
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-center">
           <span className="b-4 text-white whitespace-nowrap">{row.name}</span>
-          <span
-            className="inline-flex items-center rounded-[12px] px-2 py-[2px] b-6 text-[#05060a] whitespace-nowrap"
-            style={{ backgroundImage: GRAD_GOLD }}
-          >
-            {row.vip}
-          </span>
         </div>
       </div>
       <DataCell value={row.level} />
@@ -489,11 +481,11 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
           lineHeight: "39px",
         }}
       >
-        {isEdit ? "Edit Member Level" : "Add Member Level"}
+        {isEdit ? "Edit Member Assignment" : "Add Member Assignment"}
       </h2>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <FormField label="Name">
+        <FormField label="Level">
           <TextInput value={name} onChange={setName} />
         </FormField>
         <FormField label="Status">

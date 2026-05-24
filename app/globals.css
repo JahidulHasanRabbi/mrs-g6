@@ -35,6 +35,13 @@
 .b-5 { font-size: 10px; line-height: 15px; font-weight: 400; }
 .b-6 { font-size: 8px;  line-height: 12px; font-weight: 400; }
 
+/* Sidebar navigation — Inter SemiBold per Figma spec (nav labels and section
+ * titles use Inter while the rest of admin uses Montserrat / DM Sans) */
+.sidebar-inter {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-weight: 600;
+}
+
 /* Hide scrollbars for horizontal scrolling */
 .scrollbar-hide {
   -ms-overflow-style: none;  /* IE and Edge */
