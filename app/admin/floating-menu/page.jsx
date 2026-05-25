@@ -12,6 +12,18 @@ import * as adminApi from "../../api/adminApi";
 // ── Constants ────────────────────────────────────────────────────────────
 const PAGE_SIZE = 7;
 
+const MRS_PAGES = [
+  { slug: "/",                   label: "Home" },
+  { slug: "/personal-data",      label: "Personal Data" },
+  { slug: "/profile",            label: "Profile" },
+  { slug: "/mart",               label: "Redemption Mart" },
+  { slug: "/spin",               label: "Lucky Spin" },
+  { slug: "/terms-and-conditions", label: "Terms & Conditions" },
+  { slug: "/vip",                label: "VIP" },
+];
+
+const MRS_SLUGS = new Set(MRS_PAGES.map((p) => p.slug));
+
 const GOLD_BG =
   "linear-gradient(1deg, rgba(242,195,107,0) 74%, #dd8f1f 94%), linear-gradient(90deg, #ffff84, #ffff84)";
 
@@ -45,12 +57,16 @@ function MenuIconCell({ src }) {
 function MenuFormModal({ menu, onClose, onSave, stations }) {
   const isEdit = !!menu;
 
+  const initialSlug = menu?.url_slug ?? "";
+  const initialIsMrs = MRS_SLUGS.has(initialSlug);
+
   const [form, setForm] = useState({
     display_text:   menu?.display_text ?? "",
-    url_slug:       menu?.url_slug ?? "",
+    url_slug:       initialSlug,
     display_order:  menu?.display_order ?? "",
     station_uuid:   menu?.station_uuid ?? "",
   });
+  const [useMrsPage, setUseMrsPage] = useState(initialIsMrs);
   const [iconFile, setIconFile] = useState(null);
   const [iconPreview, setIconPreview] = useState(menu?.icon ?? "");
   const [iconErrored, setIconErrored] = useState(false);
@@ -190,18 +206,67 @@ function MenuFormModal({ menu, onClose, onSave, stations }) {
           </div>
 
           {/* URL Slug */}
-          <div className="flex items-center gap-[18px]">
-            <label className="w-[120px] shrink-0 text-[16px] text-white">
-              URL:
-            </label>
-            <input
-              type="text"
-              value={form.url_slug}
-              onChange={(e) => handleChange("url_slug", e.target.value)}
-              required
-              placeholder="/spin or https://example.com"
-              className="h-[36px] flex-1 rounded-[4px] px-3 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] text-[14px] text-white outline-none focus:border-[#f2c36b]"
-            />
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-[18px]">
+              <label className="w-[120px] shrink-0 text-[16px] text-white">
+                URL:
+              </label>
+              {/* Use MRS Page toggle */}
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={useMrsPage}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setUseMrsPage(checked);
+                    // clear url when toggling to avoid stale value
+                    handleChange("url_slug", checked ? (MRS_PAGES[0]?.slug ?? "") : "");
+                  }}
+                  className="w-4 h-4 accent-[#f2c36b] cursor-pointer"
+                />
+                <span className="text-[14px] text-white/80">Use MRS Page</span>
+              </label>
+            </div>
+
+            {useMrsPage ? (
+              <div className="flex items-center gap-[18px]">
+                <span className="w-[120px] shrink-0" />
+                <div className="relative flex-1">
+                  <select
+                    value={form.url_slug}
+                    onChange={(e) => handleChange("url_slug", e.target.value)}
+                    required
+                    className="h-[36px] w-full rounded-[4px] px-3 pr-8 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] text-[14px] text-white outline-none focus:border-[#f2c36b] appearance-none cursor-pointer"
+                  >
+                    {MRS_PAGES.map((p) => (
+                      <option key={p.slug} value={p.slug} className="bg-[#4d4d4d] text-white">
+                        {p.label} ({p.slug})
+                      </option>
+                    ))}
+                  </select>
+                  <svg
+                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"
+                    width="12" height="12" viewBox="0 0 24 24" fill="none"
+                    stroke="rgba(255,255,255,0.6)" strokeWidth="2.5"
+                    strokeLinecap="round" strokeLinejoin="round"
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-[18px]">
+                <span className="w-[120px] shrink-0" />
+                <input
+                  type="text"
+                  value={form.url_slug}
+                  onChange={(e) => handleChange("url_slug", e.target.value)}
+                  required
+                  placeholder="https://example.com or /custom-path"
+                  className="h-[36px] flex-1 rounded-[4px] px-3 bg-[rgba(255,255,255,0.1)] border-[0.5px] border-[rgba(255,255,255,0.15)] text-[14px] text-white outline-none focus:border-[#f2c36b]"
+                />
+              </div>
+            )}
           </div>
 
           {/* Display Order */}

@@ -231,7 +231,7 @@ export default function ProfileCard({
 
   const handleVipDetailsClick = () => {
     // Navigate to personal-data page
-    router.push('/vip-details');
+    router.push('/vip');
     
     // Also call the original handler if provided
     if (onVipDetailsClick) {

@@ -15,7 +15,7 @@ export const MENU_CONFIG = {
   },
   mainItems: [
     { icon: "/assets/images/leaderboard-icon.png", label: "Leaderboard", link: "/leaderboard", disabled: true },
-    { icon: "/assets/images/vip-membership-icon.png", label: "VIP Membership", link: "/vip-details" },
+    { icon: "/assets/images/vip-membership-icon.png", label: "VIP Membership", link: "/vip" },
     { icon: "/assets/images/pagcor-mart-icon.png", label: "Mart", link: "/mart" },
   ],
   stayConnected: {
