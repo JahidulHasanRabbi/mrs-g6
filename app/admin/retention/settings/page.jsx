@@ -317,11 +317,12 @@ function AssignmentListSection({ rows, total, page, loading, pics = [] }) {
         </button>
       </header>
 
-      <div className="flex w-full flex-col overflow-clip">
+      <div className="w-full overflow-x-auto scrollbar-admin">
+        <div style={{ minWidth: 900 }}>
         <TableHeader />
         <div className="flex w-full flex-col">
           {loading ? (
-            <div className="px-6 py-10 text-center b-4 text-white/60">Loading...</div>
+            Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonRow key={i} />)
           ) : rows.length === 0 ? (
             <div className="px-6 py-10 text-center b-4 text-white/60">No assignments found.</div>
           ) : rows.map((row, idx) => (
@@ -332,6 +333,8 @@ function AssignmentListSection({ rows, total, page, loading, pics = [] }) {
             />
           ))}
         </div>
+        </div>
+      </div>
         <Pagination
           from={showingFrom}
           to={showingTo}
@@ -345,7 +348,6 @@ function AssignmentListSection({ rows, total, page, loading, pics = [] }) {
             router.push(next.toString() ? `${pathname}?${next.toString()}` : pathname);
           }}
         />
-      </div>
 
       <SetTargetModal
         isOpen={targetOpen}
@@ -431,6 +433,24 @@ function DataCell({ value }) {
     <div className="flex flex-1 min-w-0 items-center self-stretch">
       <div className="flex h-full flex-1 flex-col justify-center p-6">
         <span className="b-4 text-white whitespace-nowrap">{value}</span>
+      </div>
+    </div>
+  );
+}
+
+function SkeletonRow() {
+  return (
+    <div className="flex w-full items-center border-b border-white/5">
+      <div className="flex w-[200px] shrink-0 items-center p-6">
+        <div className="h-3 w-3/4 rounded bg-white/10 animate-pulse" />
+      </div>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="flex flex-1 min-w-0 items-center p-6">
+          <div className="h-3 w-3/4 rounded bg-white/10 animate-pulse" />
+        </div>
+      ))}
+      <div className="flex w-[110px] shrink-0 items-center p-6">
+        <div className="h-3 w-3/4 rounded bg-white/10 animate-pulse" />
       </div>
     </div>
   );

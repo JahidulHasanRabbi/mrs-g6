@@ -17,6 +17,8 @@ export const STORAGE_KEYS = {
   ADMIN_ACCESS_TOKEN: 'mrs_admin_access_token',
   ADMIN_REFRESH_TOKEN: 'mrs_admin_refresh_token',
   ADMIN_TOKEN_EXPIRY: 'mrs_admin_token_expiry',
+  ADMIN_ROLE: 'mrs_admin_role',
+  ADMIN_PERMISSIONS: 'mrs_admin_permissions',
   REDIRECT_O: 'mrs_redirect_o',
   STATION_URL: 'mrs_station_url'
 };
@@ -125,7 +127,40 @@ export const tokenStorage = {
       localStorage.removeItem(STORAGE_KEYS.ADMIN_ACCESS_TOKEN);
       localStorage.removeItem(STORAGE_KEYS.ADMIN_REFRESH_TOKEN);
       localStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN_EXPIRY);
+      localStorage.removeItem(STORAGE_KEYS.ADMIN_ROLE);
+      localStorage.removeItem(STORAGE_KEYS.ADMIN_PERMISSIONS);
     }
+  },
+
+  setAdminRole: (role) => {
+    if (typeof window !== 'undefined' && role) {
+      localStorage.setItem(STORAGE_KEYS.ADMIN_ROLE, role);
+    }
+  },
+
+  getAdminRole: () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(STORAGE_KEYS.ADMIN_ROLE);
+    }
+    return null;
+  },
+
+  setAdminPermissions: (permissions) => {
+    if (typeof window !== 'undefined' && Array.isArray(permissions)) {
+      localStorage.setItem(STORAGE_KEYS.ADMIN_PERMISSIONS, JSON.stringify(permissions));
+    }
+  },
+
+  getAdminPermissions: () => {
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEYS.ADMIN_PERMISSIONS);
+        return raw ? JSON.parse(raw) : [];
+      } catch {
+        return [];
+      }
+    }
+    return [];
   },
 
   isAdminTokenExpired: () => {

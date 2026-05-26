@@ -17,11 +17,50 @@ const TAG_STYLES = {
 
 const ACTIVE_BRANDS = ["KG", "AB", "EP", "LV", "UB", "N1"];
 
-function normalizeBrandList(raw) {
-  if (!raw) return [];
-  const arr = Array.isArray(raw) ? raw : String(raw).split(/[,\s]+/);
-  return arr.map((b) => String(b).trim().toUpperCase()).filter(Boolean);
+const BRAND_COLORS = {
+  N1: { bg: "#FBBF24", text: "#141828", border: "#FBBF24" }, // yellow
+  KG: { bg: "#3B82F6", text: "#ffffff", border: "#3B82F6" }, // blue
+  AB: { bg: "#F97316", text: "#ffffff", border: "#F97316" }, // orange
+  EP: { bg: "#22C55E", text: "#141828", border: "#22C55E" }, // green
+  UB: { bg: "#EF4444", text: "#ffffff", border: "#EF4444" }, // red
+  LV: { bg: "#EC4899", text: "#ffffff", border: "#EC4899" }, // pink
+};
+
+// Lowercase station name/code → display code shown in "Active on" chips.
+// Includes both full names and short codes so either format from the API works.
+const STATION_TO_BRAND = {
+  // full names
+  "n1gang":   "N1",
+  "kgame99":  "KG",
+  "acebet77": "AB",
+  "ep369":    "EP",
+  "ubetclub": "UB",
+  "lv918":    "LV",
+  // short codes
+  "n1": "N1",
+  "kg": "KG",
+  "ab": "AB",
+  "ep": "EP",
+  "ub": "UB",
+  "lv": "LV",
+};
+
+// Reads customer_data.wallet_level from the Member Single API.
+// Each item is { Station: str, Level: str }.
+// Returns brand codes for stations found in the response.
+// If wallet_level is missing or empty, returns [] — no fallback.
+function inferActiveBrands(customerData) {
+  if (!customerData) return [];
+  const walletLevel = customerData.wallet_level;
+  if (!Array.isArray(walletLevel) || walletLevel.length === 0) return [];
+  return walletLevel
+    .map((item) => {
+      const name = String(item?.Station || item?.station || "").trim().toLowerCase();
+      return STATION_TO_BRAND[name] ?? null;
+    })
+    .filter(Boolean);
 }
+
 
 function formatCurrency(value) {
   if (value === null || value === undefined || value === "") return "—";
@@ -241,9 +280,7 @@ export default function MemberProfilePage() {
     totalWinLose: formatCurrency(data?.financial_info?.total_win_lose),
   };
 
-  const activeBrands = normalizeBrandList(
-    data?.active_brands ?? data?.brands ?? data?.brands_played ?? customer?.active_brands,
-  );
+  const activeBrands = inferActiveBrands(data?.customer_data);
 
   const handleSaved = () => {
     setActiveModal(null);
@@ -362,13 +399,16 @@ function ActiveBrandsRow({ active }) {
       <div className="flex flex-wrap items-center gap-2">
         {ACTIVE_BRANDS.map((code) => {
           const isActive = activeSet.has(code);
+          const colors = BRAND_COLORS[code];
           return (
             <span
               key={code}
-              className={`flex h-[34px] min-w-[44px] items-center justify-center rounded-[8px] border-2 px-3 text-[12px] font-semibold leading-[18px] ${
-                isActive ? "border-[#f2cb7a] text-[#141828]" : "border-[#f2cb7a]/40 text-[#f6dda6]/60"
-              }`}
-              style={isActive ? { backgroundImage: GRAD_GOLD } : undefined}
+              className="flex h-[34px] min-w-[44px] items-center justify-center rounded-[8px] border-2 px-3 text-[12px] font-semibold leading-[18px]"
+              style={
+                isActive
+                  ? { backgroundColor: colors.bg, borderColor: colors.border, color: colors.text }
+                  : { borderColor: "rgba(242,203,122,0.4)", color: "rgba(246,221,166,0.4)" }
+              }
             >
               {code}
             </span>

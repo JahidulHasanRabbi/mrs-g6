@@ -278,7 +278,7 @@ function PerformanceSummary({ period, fromDate, toDate, onRefreshSummary }) {
           <TableHeader />
           <div className="flex w-full flex-col">
             {loading ? (
-              <div className="px-6 py-10 text-center b-4 text-white/60">Loading...</div>
+              Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonRow key={i} />)
             ) : rows.length === 0 ? (
               <div className="px-6 py-10 text-center b-4 text-white/60">No data available.</div>
             ) : (
@@ -376,6 +376,18 @@ function TableRow({ row }) {
           </Link>
         </div>
       </div>
+    </div>
+  );
+}
+
+function SkeletonRow() {
+  return (
+    <div className="flex w-full items-center border-b border-white/5">
+      {Array.from({ length: 7 }).map((_, i) => (
+        <div key={i} className={`flex ${i === 0 ? "w-[269px] shrink-0" : "flex-1 min-w-0"} items-center p-6`}>
+          <div className="h-3 w-3/4 rounded bg-white/10 animate-pulse" />
+        </div>
+      ))}
     </div>
   );
 }
