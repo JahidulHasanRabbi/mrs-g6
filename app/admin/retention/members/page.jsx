@@ -17,6 +17,17 @@ const PRIORITY_OPTIONS = ["High", "Medium", "Low"];
 // UI label → API integer.
 const PRIORITY_TO_INT = { High: 1, Medium: 2, Low: 3 };
 
+const MOCK_FIRST_ROW = {
+  uuid: "mock-preview-001",
+  full_name: "Ah Chong 88",
+  phone_number: "+6012-309 8765",
+  vip_level: "VIP 4",
+  daily_sales: 9999.88,
+  daily_win_loss: 1023.13,
+  priority: "High",
+  retention: "Sarah",
+};
+
 const COLUMNS = [
   { key: "name",     label: "Username",       minW: 220 },
   { key: "phone",    label: "Phone Number",   minW: 160 },
@@ -112,11 +123,13 @@ export default function RetentionMembersPage() {
     };
   }, [page, priority, vip, pic, pics, vipTiers, debouncedQuery]);
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const displayRows = page === 1 ? [MOCK_FIRST_ROW, ...rows] : rows;
+  const displayTotal = total + 1;
+  const totalPages = Math.max(1, Math.ceil(displayTotal / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const startIdx = (safePage - 1) * PAGE_SIZE;
-  const showingFrom = total === 0 ? 0 : startIdx + 1;
-  const showingTo = Math.min(startIdx + rows.length, total);
+  const showingFrom = displayTotal === 0 ? 0 : startIdx + 1;
+  const showingTo = Math.min(startIdx + displayRows.length, displayTotal);
 
   return (
     <section className="relative flex w-full flex-col rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
@@ -146,12 +159,12 @@ export default function RetentionMembersPage() {
           <div className="flex w-full flex-col">
             {loading ? (
               Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonRow key={i} />)
-            ) : rows.length === 0 ? (
+            ) : displayRows.length === 0 ? (
               <div className="px-6 py-12 text-center text-[12px] text-white/40">
                 No members found.
               </div>
             ) : (
-              rows.map((row, idx) => <TableRow key={`${row.uuid || row.username || "member"}-${idx}`} row={row} />)
+              displayRows.map((row, idx) => <TableRow key={`${row.uuid || row.username || "member"}-${idx}`} row={row} />)
             )}
           </div>
         </div>
@@ -160,7 +173,7 @@ export default function RetentionMembersPage() {
       <Pagination
         from={showingFrom}
         to={showingTo}
-        total={total}
+        total={displayTotal}
         currentPage={safePage}
         pageCount={totalPages}
         onPageChange={setPage}

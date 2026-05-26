@@ -4,7 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import PeriodToggle from "../../../../components/admin/retention/PeriodToggle";
-import { ASSETS, GRAD_DARK, GRAD_GOLD } from "../../../../components/admin/retention/constants";
+import { GRAD_GOLD } from "../../../../components/admin/retention/constants";
+import {
+  AlertHistorySection,
+  FollowUpCreateModal,
+  MOCK_FOLLOWUP_HISTORY,
+} from "../../../../components/admin/retention/FollowUpComponents";
 import { getCrmMemberSingle, patchCrmMember } from "../../../../api/crmApi";
 import { getVipTierList, getWalletVipTiers, getStationList } from "../../../../api/adminApi";
 
@@ -17,6 +22,51 @@ const TAG_STYLES = {
 };
 
 const ACTIVE_BRANDS = ["KG", "AB", "EP", "LV", "UB", "N1"];
+
+const MOCK_PROFILE_DATA = {
+  uuid: "mock-preview-001",
+  full_name: "Ah Chong 88",
+  vip_level: "VIP 4",
+  priority: "High",
+  date_joined: "2026-05-27",
+  customer_data: {
+    username: "Ah Chong 88",
+    phone_number: "+6012-309 8765",
+    gender: "Male",
+    date_of_birth: "1990-08-12",
+    age: 35,
+    nationality: "Malaysia",
+    home_address: "Kuala Lumpur",
+    marital_status: "Single",
+    job: "Business Owner",
+    hobby: "Slots",
+    mrs_level: "VIP 4",
+    ns_level: "NS 2",
+    total_withdrawal: 3200,
+  },
+  financial_info: {
+    total_sales: 9999.88,
+    total_win_lose: 1023.13,
+    total_sales_ticket: 18,
+    arpu: 555.55,
+    average_deposit: 900,
+    last_deposit_date: "2026-05-27",
+    payment_method: "Bank Transfer",
+  },
+  gaming_info: {
+    game_preference: "Slot",
+    provider_preference: "Pragmatic Play",
+    play_time_pattern: "Night",
+    average_bet_size: "RM 20",
+    player_type: "VIP",
+    risk_style: "High",
+    deposit_frequency_style: "Weekly",
+    deposit_trigger: "Bonus",
+    churn_risk_reason: "Follow up required",
+    reactivation_trigger: "TG",
+    note: "Mock preview profile for alert follow-up development.",
+  },
+};
 
 const BRAND_COLORS = {
   N1: { bg: "#FBBF24", text: "#141828", border: "#FBBF24" }, // yellow
@@ -122,9 +172,18 @@ export default function MemberProfilePage() {
   const [activeModal, setActiveModal] = useState(null);
   const [walletVipTiers, setWalletVipTiers] = useState([]);
   const [stationList, setStationList] = useState([]);
+  const [alertHistory, setAlertHistory] = useState(MOCK_FOLLOWUP_HISTORY);
 
   useEffect(() => {
     if (!memberUuid) return;
+    if (memberUuid === MOCK_PROFILE_DATA.uuid) {
+      setLoading(false);
+      setError(null);
+      setData(MOCK_PROFILE_DATA);
+      setWalletVipTiers([]);
+      setStationList([]);
+      return;
+    }
     let cancelled = false;
     const fetchAll = async () => {
       setLoading(true);
@@ -224,10 +283,12 @@ export default function MemberProfilePage() {
     setRefreshKey((k) => k + 1);
   };
 
+  const profileName = data?.full_name || basic?.username || "Member";
+  const profilePriority = data?.priority || "High";
   return (
     <>
       <ProfileHeader
-        name={data?.full_name || basic?.username || "Member"}
+        name={profileName}
         tags={inferTags(data)}
         dateJoined={show(data?.date_joined)}
         slug={memberUuid}
@@ -236,10 +297,12 @@ export default function MemberProfilePage() {
         activeBrands={activeBrands}
         onNoteOpen={() => setActiveModal("note")}
         onVipOpen={() => setActiveModal("vip")}
+        onAlertOpen={() => setActiveModal("alert")}
       />
       <StatsRow stats={stats} />
       <InfoGrid basicInfo={basicInfo} financialInfo={financialInfo} gamingInfo={gamingInfo} />
       <NotesCard notes={show(data?.gaming_info?.note || data?.notes, "No notes available.")} />
+      <AlertHistorySection memberName={profileName} history={alertHistory} />
 
       {activeModal === "note" && (
         <NoteModal
@@ -261,11 +324,27 @@ export default function MemberProfilePage() {
           onSaved={handleSaved}
         />
       )}
+      {activeModal === "alert" && (
+        <FollowUpCreateModal
+          memberName={profileName}
+          title="Add Alert"
+          showPriority
+          initialPriority={profilePriority}
+          onClose={() => setActiveModal(null)}
+          onSubmit={(entry) => {
+            if (entry.priority) {
+              setData((prev) => (prev ? { ...prev, priority: entry.priority } : prev));
+            }
+            setAlertHistory((prev) => [entry, ...prev]);
+            setActiveModal(null);
+          }}
+        />
+      )}
     </>
   );
 }
 
-function ProfileHeader({ name, tags, dateJoined, slug, period, onPeriodChange, activeBrands, onNoteOpen, onVipOpen }) {
+function ProfileHeader({ name, tags, dateJoined, slug, period, onPeriodChange, activeBrands, onNoteOpen, onVipOpen, onAlertOpen }) {
   return (
     <div className="flex flex-col gap-4 px-2 md:flex-row md:flex-wrap md:items-start md:justify-between md:gap-6">
       <div className="flex flex-col gap-3">
@@ -315,7 +394,7 @@ function ProfileHeader({ name, tags, dateJoined, slug, period, onPeriodChange, a
               <EditIcon />
               <span className="text-[12px] font-medium leading-[18px] text-[#141828]">Edit Profile</span>
             </Link>
-            <MoreOptionsMenu onNoteOpen={onNoteOpen} onVipOpen={onVipOpen} />
+            <MoreOptionsMenu onNoteOpen={onNoteOpen} onVipOpen={onVipOpen} onAlertOpen={onAlertOpen} />
           </div>
         </div>
       </div>
@@ -361,16 +440,18 @@ const MORE_OPTIONS = [
   // { key: "send-bonus",       label: "Send Bonus" },
   { key: "add-note",         label: "Add Note" },
   { key: "change-vip-level", label: "Change VIP Level" },
-  { key: "block-customer",   label: "Block Customer", danger: true },
+  { key: "alert",            label: "Alert", danger: true },
+  // { key: "block-customer",   label: "Block Customer", danger: true },
 ];
 
-function MoreOptionsMenu({ onNoteOpen, onVipOpen }) {
+function MoreOptionsMenu({ onNoteOpen, onVipOpen, onAlertOpen }) {
   const [open, setOpen] = useState(false);
 
   const handleSelect = (key) => {
     setOpen(false);
     if (key === "add-note") onNoteOpen();
     else if (key === "change-vip-level") onVipOpen();
+    else if (key === "alert") onAlertOpen();
   };
 
   return (

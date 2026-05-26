@@ -1,18 +1,23 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
 import RefreshControl from "../../../components/admin/retention/RefreshControl";
 import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
 import Pagination from "../../../components/admin/retention/Pagination";
-import { ASSETS, GRAD_DARK, GRAD_GOLD } from "../../../components/admin/retention/constants";
+import { GRAD_DARK, GRAD_GOLD } from "../../../components/admin/retention/constants";
 import {
-  getCrmMembers,
-  getCrmUsers,
+  AlertViewModal,
+  MOCK_FOLLOWUP_HISTORY,
+  StatusBadge,
+} from "../../../components/admin/retention/FollowUpComponents";
+import {
   getPrioritySummary,
   refreshCrmMembers,
 } from "../../../api/crmApi";
+/*
+import { getCrmMembers, getCrmUsers } from "../../../api/crmApi";
 import { getVipTierList } from "../../../api/adminApi";
+*/
 
 // Member Alert page — Figma 69:340. "Overview" KPI strip + Member Follow Up
 // list. The list is the same shape as /admin/retention/members but with a
@@ -21,19 +26,20 @@ import { getVipTierList } from "../../../api/adminApi";
 const PAGE_SIZE = 7;
 
 const PRIORITY_OPTIONS = ["High", "Medium", "Low"];
-
-const PRIORITY_TO_INT = { High: 1, Medium: 2, Low: 3 };
+const STATUS_OPTIONS = ["New", "In Progress", "Snoozed", "Resolved"];
+const ALERT_ACTION_OPTIONS = ["In Progress", "Resolve", "Snooze", "Remark"];
 
 // Column widths from Figma 69:340 (frame ids 87:6604 etc). Username and
 const COLUMNS = [
-  { key: "name",     label: "Username",       minW: 220 },
+  { key: "name",     label: "Username",       minW: 200 },
   { key: "phone",    label: "Phone Number",   minW: 160 },
-  { key: "vip",      label: "VIP Level",      minW: 110 },
-  { key: "sales",    label: "Daily Sales",    minW: 130 },
-  { key: "winloss",  label: "Daily Win/Loss", minW: 140 },
-  { key: "priority", label: "Priority",       minW: 110 },
-  { key: "pic",      label: "Retention",      minW: 130 },
-  { key: "action",   label: "Action",         minW: 120, align: "end" },
+  { key: "vip",      label: "VIP Level",      minW: 100 },
+  { key: "sales",    label: "Daily Sales",    minW: 120 },
+  { key: "winloss",  label: "Daily Win/Loss", minW: 130 },
+  { key: "priority", label: "Priority",       minW: 100 },
+  { key: "pic",      label: "Retention",      minW: 120 },
+  { key: "status",   label: "Status",         minW: 130 },
+  { key: "action",   label: "Action",         minW: 150, align: "end" },
 ];
 
 const TABLE_MIN_WIDTH = COLUMNS.reduce((sum, c) => sum + c.minW, 0);
@@ -46,6 +52,16 @@ const KPI_META = [
   { id: "medium",   label: "Medium Priority",  key: "medium_priority",  icon: "user-minus", iconColor: "#fbeed2" },
   { id: "low",      label: "Low Priority",     key: "low_priority",     icon: "user-check", iconColor: "#84ebb4" },
   { id: "inactive", label: "Inactive Members", key: "inactive_members", icon: "user-clock", iconColor: "#4188ff" },
+];
+
+const MOCK_MEMBERS = [
+  { uuid: "mock-001", full_name: "Ah Chong 88", phone_number: "+6012-309 8765", vip_level: "VIP 4", daily_sales: 9999.88, daily_win_loss: 1023.13, priority: "High", retention: "Sarah", status: "In Progress", last_action: "TG", last_action_at: "2026-05-27 09:15", last_action_by: "Sarah" },
+  { uuid: "mock-002", full_name: "Jason Win", phone_number: "+6011-111 1111", vip_level: "VIP 5", daily_sales: 4000.00, daily_win_loss: -600.00, priority: "High", retention: "Sarah", status: "New", last_action: null, last_action_at: null, last_action_by: null },
+  { uuid: "mock-003", full_name: "Peter Lee", phone_number: "+6012-353 2148", vip_level: "VIP 6", daily_sales: 5000.00, daily_win_loss: 1000.00, priority: "Medium", retention: "Eddie", status: "Snoozed", last_action: "WA", last_action_at: "2026-05-26 14:30", last_action_by: "Eddie" },
+  { uuid: "mock-004", full_name: "Star99", phone_number: "+6016-778 4521", vip_level: "VIP 2", daily_sales: 2500.50, daily_win_loss: -300.00, priority: "Medium", retention: "Zoey", status: "In Progress", last_action: "Bonus", last_action_at: "2026-05-26 09:00", last_action_by: "Zoey" },
+  { uuid: "mock-005", full_name: "MegaKing", phone_number: "+6019-234 5678", vip_level: "VIP 3", daily_sales: 8750.00, daily_win_loss: 450.00, priority: "Low", retention: "Candy", status: "Resolved", last_action: "LiveChat", last_action_at: "2026-05-25 16:45", last_action_by: "Candy" },
+  { uuid: "mock-006", full_name: "LuckyDragon", phone_number: "+6013-987 6543", vip_level: "VIP 1", daily_sales: 1200.00, daily_win_loss: -150.00, priority: "Low", retention: "Marcus", status: "New", last_action: null, last_action_at: null, last_action_by: null },
+  { uuid: "mock-007", full_name: "GoldFish77", phone_number: "+6017-456 7890", vip_level: "VIP 7", daily_sales: 15000.00, daily_win_loss: 2300.00, priority: "High", retention: "Sarah", status: "In Progress", last_action: "Event", last_action_at: "2026-05-24 11:20", last_action_by: "Sarah" },
 ];
 
 function formatNumber(value) {
@@ -100,7 +116,7 @@ export default function MemberAlertPage() {
     <>
       <OverviewHeader onRefresh={handleRefresh} />
       <KpiRow summary={summary} loading={summaryLoading} />
-      <FollowUpList onRefresh={handleRefresh} />
+      <FollowUpList />
     </>
   );
 }
@@ -216,15 +232,18 @@ function FollowUpList() {
   const [priority, setPriority] = useState("");
   const [vip, setVip] = useState("");
   const [retention, setRetention] = useState("");
+  const [status, setStatus] = useState("");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
 
-  const [rows, setRows] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [pics, setPics] = useState([]);
-  const [vipTiers, setVipTiers] = useState([]);
+  const [rows, setRows] = useState(MOCK_MEMBERS);
+  const [histories, setHistories] = useState(() =>
+    Object.fromEntries(MOCK_MEMBERS.map((member) => [member.uuid, MOCK_FOLLOWUP_HISTORY]))
+  );
+  const [selectedMemberId, setSelectedMemberId] = useState(null);
+  const [remarkMemberId, setRemarkMemberId] = useState(null);
 
+  /*
   useEffect(() => {
     getCrmUsers({ page: 1, page_size: 100 })
       .then((res) => {
@@ -239,10 +258,11 @@ function FollowUpList() {
       })
       .catch(() => setVipTiers([]));
   }, []);
+  */
 
   useEffect(() => {
     setPage(1);
-  }, [priority, vip, retention, query]);
+  }, [priority, vip, retention, status, query]);
 
   const [debouncedQuery, setDebouncedQuery] = useState(query);
   useEffect(() => {
@@ -250,6 +270,7 @@ function FollowUpList() {
     return () => clearTimeout(t);
   }, [query]);
 
+  /*
   useEffect(() => {
     let cancelled = false;
     const fetchRows = async () => {
@@ -284,12 +305,54 @@ function FollowUpList() {
       cancelled = true;
     };
   }, [page, priority, vip, retention, pics, debouncedQuery]);
+  */
 
+  const vipOptions = [...new Set(MOCK_MEMBERS.map((member) => member.vip_level).filter(Boolean))];
+  const retentionOptions = [...new Set(MOCK_MEMBERS.map((member) => member.retention).filter(Boolean))];
+  const filteredRows = rows.filter((member) => {
+    const haystack = `${member.full_name || ""} ${member.username || ""} ${member.phone_number || ""}`.toLowerCase();
+    return (
+      (!priority || member.priority === priority) &&
+      (!vip || member.vip_level === vip) &&
+      (!retention || member.retention === retention) &&
+      (!status || member.status === status) &&
+      (!debouncedQuery || haystack.includes(debouncedQuery.toLowerCase()))
+    );
+  });
+
+  const total = filteredRows.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const startIdx = (safePage - 1) * PAGE_SIZE;
+  const pagedRows = filteredRows.slice(startIdx, startIdx + PAGE_SIZE);
   const showingFrom = total === 0 ? 0 : startIdx + 1;
-  const showingTo = Math.min(startIdx + rows.length, total);
+  const showingTo = Math.min(startIdx + pagedRows.length, total);
+  const selectedMember = rows.find((member) => member.uuid === selectedMemberId);
+
+  const updateAlertStatus = (memberUuid, nextStatus) => {
+    setRows((prev) =>
+      prev.map((member) =>
+        member.uuid === memberUuid
+          ? {
+              ...member,
+              status: nextStatus,
+              priority: nextStatus === "Snoozed" ? "Low" : member.priority,
+            }
+          : member
+      )
+    );
+  };
+
+  const handleActionSelect = (memberUuid, actionType) => {
+    if (actionType === "In Progress") updateAlertStatus(memberUuid, "In Progress");
+    if (actionType === "Snooze") updateAlertStatus(memberUuid, "Snoozed");
+    if (actionType === "Resolve") updateAlertStatus(memberUuid, "Resolved");
+    if (actionType === "Remark") setRemarkMemberId(memberUuid);
+  };
+
+  const handleSnooze = (memberUuid) => {
+    updateAlertStatus(memberUuid, "Snoozed");
+  };
 
   return (
     <section className="flex w-full flex-col overflow-hidden rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
@@ -307,8 +370,9 @@ function FollowUpList() {
         </h2>
         <div className="flex flex-wrap items-center gap-3">
           <FilterPill label="Priority" value={priority} onChange={setPriority} options={PRIORITY_OPTIONS} />
-          <FilterPill label="VIP Level" value={vip} onChange={setVip} options={vipTiers.map((t) => t.name)} />
-          <FilterPill label="All Retention" value={retention} onChange={setRetention} options={pics.map((u) => u.full_name || u.username).filter(Boolean)} />
+          <FilterPill label="VIP Level" value={vip} onChange={setVip} options={vipOptions} />
+          <FilterPill label="All Retention" value={retention} onChange={setRetention} options={retentionOptions} />
+          <FilterPill label="Status" value={status} onChange={setStatus} options={STATUS_OPTIONS} />
           <SearchInput value={query} onChange={setQuery} />
         </div>
       </header>
@@ -317,13 +381,16 @@ function FollowUpList() {
         <div style={{ minWidth: TABLE_MIN_WIDTH }}>
           <TableHeader />
           <div className="flex w-full flex-col">
-            {loading ? (
-              Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonRow key={i} />)
-            ) : rows.length === 0 ? (
+            {pagedRows.length === 0 ? (
               <EmptyRow />
             ) : (
-              rows.map((row, idx) => (
-                <TableRow key={`${row.uuid || row.username || "member"}-${idx}`} row={row} />
+              pagedRows.map((row, idx) => (
+                <TableRow
+                  key={`${row.uuid || row.username || "member"}-${idx}`}
+                  row={row}
+                  onView={() => setSelectedMemberId(row.uuid)}
+                  onActionSelect={(actionType) => handleActionSelect(row.uuid, actionType)}
+                />
               ))
             )}
           </div>
@@ -338,18 +405,98 @@ function FollowUpList() {
         pageCount={totalPages}
         onPageChange={setPage}
       />
+      {selectedMember ? (
+        <AlertViewModal
+          member={selectedMember}
+          onClose={() => setSelectedMemberId(null)}
+          onSnooze={() => handleSnooze(selectedMember.uuid)}
+        />
+      ) : null}
+      {remarkMemberId ? (
+        <RemarkModal
+          memberName={rows.find((member) => member.uuid === remarkMemberId)?.full_name || "Member"}
+          onClose={() => setRemarkMemberId(null)}
+          onSubmit={(remark) => {
+            setRows((prev) =>
+              prev.map((member) =>
+                member.uuid === remarkMemberId
+                  ? {
+                      ...member,
+                      last_action: "Remark",
+                      last_action_at: currentDateTime(),
+                      last_action_by: "Sarah",
+                      remark,
+                    }
+                  : member
+              )
+            );
+            setRemarkMemberId(null);
+          }}
+        />
+      ) : null}
     </section>
   );
 }
 
-function SkeletonRow() {
+function currentDateTime() {
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+}
+
+function RemarkModal({ memberName, onClose, onSubmit }) {
+  const [remark, setRemark] = useState("");
+  const canSubmit = remark.trim().length > 0;
+
   return (
-    <div className="flex w-full items-stretch border-b border-white/5">
-      {COLUMNS.map((col) => (
-        <div key={col.key} className="flex flex-1 items-center px-4 py-4" style={{ minWidth: col.minW }}>
-          <div className="h-3 w-3/4 rounded bg-white/10 animate-pulse" />
+    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4" style={{ backgroundColor: "rgba(0,0,0,0.65)" }}>
+      <div className="fixed inset-0" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-md rounded-[16px] bg-[#05060a] p-6 shadow-[0_0_3px_0_#dea220]">
+        <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
+          <h2
+            className="bg-clip-text text-transparent font-bold"
+            style={{
+              backgroundImage: GRAD_GOLD,
+              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+              fontSize: "22px",
+              lineHeight: "33px",
+              letterSpacing: "-1.5px",
+            }}
+          >
+            Remark - {memberName}
+          </h2>
+          <button type="button" onClick={onClose} className="rounded-[6px] p-1 text-white/60 transition hover:bg-white/10 hover:text-white" aria-label="Close">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         </div>
-      ))}
+        <textarea
+          value={remark}
+          onChange={(e) => setRemark(e.target.value)}
+          placeholder="Write remark here..."
+          className="mt-5 min-h-[96px] w-full resize-none rounded-[8px] border border-[#f2cb7a] bg-[#141828] px-3 py-2 text-[13px] text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-[#eaad2c]"
+        />
+        <div className="mt-6 flex justify-end gap-3 border-t border-white/10 pt-5">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-[8px] border border-[#d00416] px-5 py-2 text-[12px] font-medium text-[#d00416] transition hover:bg-[#d00416]/10"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => canSubmit && onSubmit(remark.trim())}
+            disabled={!canSubmit}
+            className="rounded-[8px] border border-[#f2cb7a] px-5 py-2 text-[12px] font-medium text-[#141828] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+            style={{ backgroundImage: GRAD_GOLD }}
+          >
+            Submit
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -457,18 +604,16 @@ function TableHeader() {
   );
 }
 
-function TableRow({ row }) {
-  // Route by the member's real UUID — the [slug] page accepts it transparently.
-  const href = `/admin/retention/members/${row.uuid}`;
+function TableRow({ row, onView, onActionSelect }) {
   return (
     <div className="flex w-full items-stretch -mb-px border-b border-white/5">
       <Cell minW={COLUMNS[0].minW}>
-        <Link href={href} className="flex items-start gap-3 hover:opacity-80">
+        <div className="flex items-start gap-3">
           <div className="shrink-0 pt-0.5"><UserAvatar /></div>
           <span className="text-[12px] font-medium text-white leading-[18px] break-words">
             {row.full_name || row.username}
           </span>
-        </Link>
+        </div>
       </Cell>
       <DataCell value={row.phone_number} minW={COLUMNS[1].minW} />
       <DataCell value={row.vip_level} minW={COLUMNS[2].minW} />
@@ -478,8 +623,14 @@ function TableRow({ row }) {
         <PriorityBadge value={row.priority} />
       </Cell>
       <DataCell value={row.retention} minW={COLUMNS[6].minW} />
-      <Cell minW={COLUMNS[7].minW} align="end">
-        <ViewButton href={href} />
+      <Cell minW={COLUMNS[7].minW}>
+        <StatusBadge value={row.status} />
+      </Cell>
+      <Cell minW={COLUMNS[8].minW} align="end">
+        <div className="flex items-center justify-end gap-2">
+          <ViewButton onClick={onView} />
+          <FollowupActionMenu onSelect={onActionSelect} />
+        </div>
       </Cell>
     </div>
   );
@@ -487,16 +638,85 @@ function TableRow({ row }) {
 
 // View link — dark gradient pill with gold border and gold text/eye icon.
 // Matches Figma 20:1735 (the shared "button" component used across the table).
-function ViewButton({ href }) {
+function ViewButton({ onClick }) {
   return (
-    <Link
-      href={href}
-      className="flex items-center justify-center gap-1 rounded-[8px] border border-[#f2cb7a] px-4 py-2 transition hover:brightness-110"
-      style={{ backgroundImage: GRAD_DARK }}
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex h-[34px] w-[34px] items-center justify-center rounded-[8px] border-2 border-[#f2cb7a] transition hover:brightness-110"
+      style={{ backgroundImage: GRAD_GOLD }}
+      aria-label="View followup history"
     >
       <EyeIcon />
-      <span className="text-[12px] font-medium text-[#eaad2c] leading-[18px]">View</span>
-    </Link>
+    </button>
+  );
+}
+
+function FollowupActionMenu({ onSelect }) {
+  const [open, setOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+  const buttonRef = useRef(null);
+
+  const openMenu = () => {
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (rect) {
+      setMenuPos({
+        top: rect.bottom + 4,
+        right: Math.max(8, window.innerWidth - rect.right),
+      });
+    }
+    setOpen((v) => !v);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    window.addEventListener("resize", close);
+    window.addEventListener("scroll", close, true);
+    return () => {
+      window.removeEventListener("resize", close);
+      window.removeEventListener("scroll", close, true);
+    };
+  }, [open]);
+
+  return (
+    <div className="relative">
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={openMenu}
+        className="flex h-[34px] items-center justify-center gap-1 rounded-[8px] border border-[#f2cb7a] px-3 transition hover:brightness-110"
+        style={{ backgroundImage: GRAD_DARK }}
+      >
+        <span className="text-[12px] font-medium text-[#eaad2c] leading-[18px]">Action</span>
+        <Chevron up={open} />
+      </button>
+      {open ? (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div
+            className="fixed z-50 min-w-[170px] overflow-hidden rounded-[14px] bg-[#fbeed2] py-2 shadow-[0_12px_32px_rgba(0,0,0,0.45)]"
+            style={{ top: menuPos.top, right: menuPos.right }}
+          >
+            {ALERT_ACTION_OPTIONS.map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => {
+                  onSelect(type);
+                  setOpen(false);
+                }}
+                className={`block w-full px-5 py-2.5 text-left text-[14px] font-medium leading-[21px] transition hover:bg-[#f2cb7a]/30 ${
+                  type === "Resolve" ? "text-[#d00416]" : "text-[#141828]"
+                }`}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+        </>
+      ) : null}
+    </div>
   );
 }
 
@@ -508,7 +728,7 @@ function EyeIcon() {
       height="16"
       viewBox="0 0 24 24"
       fill="none"
-      stroke="#eaad2c"
+      stroke="#141828"
       strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
