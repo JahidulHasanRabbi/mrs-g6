@@ -105,11 +105,19 @@ export async function getCrmMemberSingle(memberUuid) {
   return await apiRequest(ENDPOINTS.CRM.MEMBER_SINGLE(memberUuid), { method: 'GET' }, true, 'admin');
 }
 
-// PUT /crm-members/members/<uuid>/
+// PUT /crm-members/members/<uuid>/  — requires all fields
 // body: { profile_data, basic_info, game_info }
 export async function updateCrmMember(memberUuid, data) {
   return await apiRequest(ENDPOINTS.CRM.MEMBER_SINGLE(memberUuid), {
     method: 'PUT',
+    body: data
+  }, true, 'admin');
+}
+
+// PATCH /crm-members/members/<uuid>/  — send only fields that changed
+export async function patchCrmMember(memberUuid, data) {
+  return await apiRequest(ENDPOINTS.CRM.MEMBER_SINGLE(memberUuid), {
+    method: 'PATCH',
     body: data
   }, true, 'admin');
 }

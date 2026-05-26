@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getCrmMembers, getCrmUsers, getCrmVipTiers } from "../../../api/crmApi";
+import { getCrmMembers, getCrmUsers } from "../../../api/crmApi";
+import { getVipTierList } from "../../../api/adminApi";
 import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
 import Pagination from "../../../components/admin/retention/Pagination";
 
@@ -56,10 +57,10 @@ export default function RetentionMembersPage() {
         setPics(results);
       })
       .catch(() => setPics([]));
-    getCrmVipTiers({ page: 1, page_size: 100 })
+    getVipTierList()
       .then((res) => {
         const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
-        setVipTiers(results.map((t, i) => ({ name: t.name, level: i + 1 })));
+        setVipTiers(results.map((t) => ({ name: t.name, level: t.id ?? t.uuid })));
       })
       .catch(() => setVipTiers([]));
   }, []);

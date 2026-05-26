@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import PeriodToggle from "../../../../components/admin/retention/PeriodToggle";
 import { ASSETS, GRAD_DARK, GRAD_GOLD } from "../../../../components/admin/retention/constants";
-import { getCrmMemberSingle, updateCrmMember, getCrmVipTiers } from "../../../../api/crmApi";
+import { getCrmMemberSingle, patchCrmMember } from "../../../../api/crmApi";
+import { getVipTierList, getWalletVipTiers, getStationList } from "../../../../api/adminApi";
 
 const TAG_STYLES = {
   vip:    { bg: "#d9acff", color: "#8800fb" },
@@ -92,99 +93,26 @@ function normalizeListResponse(response) {
   return [];
 }
 
-// ─── Enum maps for PUT payload (mirrors edit/page.jsx) ────────────────────────
-const ENUMS = {
-  gender:              ["Male", "Female", "Prefer not to say"],
-  nationality:         ["South Korean", "Malaysian", "Singaporean", "Thai", "Other"],
-  marital:             ["Single", "Married", "Divorced", "Widowed"],
-  playerType:          ["VIP", "Regular", "New", "Dormant"],
-  risk:                ["Low", "Medium", "High"],
-  depositFreq:         ["Daily", "Weekly", "Bi-Weekly", "Monthly", "Quarterly"],
-  status:              ["Active", "Inactive", "Dormant", "Suspended"],
-  hobby:               ["Gaming", "Reading", "Sports", "Music", "Travel", "Cooking", "Photography"],
-  providerPref:        ["Pragmatic", "Microgaming", "NetEnt", "Playtech", "PG Soft", "Evolution"],
-  depositTrigger:      ["Bonus", "Promotion", "FOMO", "Habit", "Tournament"],
-  churnRiskReason:     ["Any", "Lost Interest", "Better Offer", "Personal Reason", "Service Issue"],
-  reactivationTrigger: ["Any", "Bonus", "Tournament", "VIP Upgrade", "Personal Outreach"],
-  riskStyle:           ["Conservative", "Balanced", "Aggressive", "High Risk"],
-  depositFreqStyle:    ["Daily", "Weekly", "Bi-Weekly", "Monthly", "Quarterly"],
-  paymentMethod:       ["Bank Transfer", "Credit Card", "Debit Card", "E-Wallet", "Crypto", "Other"],
-  playTimePattern:     ["Morning (6am-12pm)", "Afternoon (12pm-6pm)", "Evening (6pm-8pm)", "Night (8pm-2am)", "Late Night (2am-6am)"],
-};
-
-function labelToInt(enumKey, label) {
-  if (!label) return undefined;
-  const list = ENUMS[enumKey];
-  if (!list) return undefined;
-  const norm = String(label).toLowerCase().trim();
-  const idx = list.findIndex((opt) => opt.toLowerCase().trim() === norm);
-  return idx >= 0 ? idx + 1 : undefined;
-}
-
-function labelsToInts(enumKey, value) {
-  if (!value) return [];
-  const labels = Array.isArray(value) ? value : String(value).split(",").map((s) => s.trim());
-  return labels.filter(Boolean).map((l) => labelToInt(enumKey, l)).filter((v) => v !== undefined);
-}
-
-function getExistingVipUuid(data) {
-  return (
-    data?.profile_data?.vip_level_uuid ||
-    data?.basic_info?.vip_level_uuid ||
-    data?.customer_data?.vip_level_uuid ||
-    data?.customer_data?.mrs_level_uuid ||
-    data?.vip_level_uuid ||
-    undefined
-  );
-}
-
-// Reconstruct the full PUT payload from the GET response data, applying any
-// overrides for profile_data or game_info fields.
-function buildMemberPayload(data, { profileDataOverrides = {}, gameInfoOverrides = {} } = {}) {
-  const c = data?.customer_data || {};
-  const b = data?.basic_info || {};
-  const g = data?.gaming_info || {};
-  const f = data?.financial_info || {};
-
-  return {
-    profile_data: {
-      vip_level_uuid: getExistingVipUuid(data),
-      player_type:       labelToInt("playerType", g.player_type),
-      risk:              labelToInt("risk", g.risk_style),
-      deposit_frequency: labelToInt("depositFreq", g.deposit_frequency_style),
-      status:            labelToInt("status", data?.status || "Active") || 1,
-      ...profileDataOverrides,
-    },
-    basic_info: {
-      gender:         labelToInt("gender", c.gender || b.gender),
-      date_of_birth:  c.date_of_birth || b.date_of_birth || undefined,
-      nationality:    labelToInt("nationality", c.nationality || b.nationality),
-      home_address:   c.home_address || b.home_address || undefined,
-      marital_status: labelToInt("marital", c.marital_status || b.marital_status),
-      job:            c.job || b.job || undefined,
-      hobby:          labelsToInts("hobby", c.hobby || b.hobby),
-      payment_method: labelToInt("paymentMethod", f.payment_method),
-    },
-    game_info: {
-      game_preference:        g.game_preference || undefined,
-      provider_Preference:    labelsToInts("providerPref", g.provider_preference),
-      play_type_pattern:      labelToInt("playTimePattern", g.play_time_pattern),
-      average_bet_size:       g.average_bet_size ? parseFloat(g.average_bet_size) || undefined : undefined,
-      player_type:            labelToInt("playerType", g.player_type),
-      risk_style:             labelToInt("riskStyle", g.risk_style),
-      deposit_frequency_style: labelToInt("depositFreqStyle", g.deposit_frequency_style),
-      deposit_trigger:        labelsToInts("depositTrigger", g.deposit_trigger),
-      churn_risk_reason:      labelsToInts("churnRiskReason", g.churn_risk_reason),
-      reactivation_trigger:   labelsToInts("reactivationTrigger", g.reactivation_trigger),
-      note:                   g.note || undefined,
-      ...gameInfoOverrides,
-    },
-  };
+// Map GET response wallet_level (names) → PUT payload wallet_levels (UUIDs).
+function buildWalletLevels(memberData, walletVipTiers, stationList) {
+  const raw = memberData?.customer_data?.wallet_level;
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const item of raw) {
+    const sName = String(item?.Station || item?.station || "").toLowerCase();
+    const lName = String(item?.Level || item?.level || "").toLowerCase();
+    const station = stationList.find((s) => String(s.name || s.station_name || "").toLowerCase() === sName);
+    const tier = walletVipTiers.find(
+      (t) => String(t.station_name || "").toLowerCase() === sName &&
+             String(t.tier_name || t.name || "").toLowerCase() === lName
+    );
+    if (station?.uuid && tier?.uuid) out.push({ station_uuid: station.uuid, wallet_level_uuid: tier.uuid });
+  }
+  return out;
 }
 
 export default function MemberProfilePage() {
   const params = useParams();
-  const router = useRouter();
   const memberUuid = typeof params?.slug === "string" ? params.slug : Array.isArray(params?.slug) ? params.slug[0] : "";
   const [period, setPeriod] = useState("Daily");
   const [data, setData] = useState(null);
@@ -192,16 +120,25 @@ export default function MemberProfilePage() {
   const [error, setError] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [activeModal, setActiveModal] = useState(null);
+  const [walletVipTiers, setWalletVipTiers] = useState([]);
+  const [stationList, setStationList] = useState([]);
 
   useEffect(() => {
     if (!memberUuid) return;
     let cancelled = false;
-    const fetchMember = async () => {
+    const fetchAll = async () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await getCrmMemberSingle(memberUuid);
-        if (!cancelled) setData(res);
+        const [res, walletTiersRes, stationsRes] = await Promise.all([
+          getCrmMemberSingle(memberUuid),
+          getWalletVipTiers().catch(() => []),
+          getStationList().catch(() => []),
+        ]);
+        if (cancelled) return;
+        setData(res);
+        setWalletVipTiers(normalizeListResponse(walletTiersRes));
+        setStationList(normalizeListResponse(stationsRes));
       } catch (err) {
         if (cancelled) return;
         console.error("[member-profile] fetch failed", err);
@@ -211,7 +148,7 @@ export default function MemberProfilePage() {
         if (!cancelled) setLoading(false);
       }
     };
-    fetchMember();
+    fetchAll();
     return () => {
       cancelled = true;
     };
@@ -299,7 +236,6 @@ export default function MemberProfilePage() {
         activeBrands={activeBrands}
         onNoteOpen={() => setActiveModal("note")}
         onVipOpen={() => setActiveModal("vip")}
-        onAddTag={() => router.push(`/admin/retention/members/${memberUuid}/edit`)}
       />
       <StatsRow stats={stats} />
       <InfoGrid basicInfo={basicInfo} financialInfo={financialInfo} gamingInfo={gamingInfo} />
@@ -308,7 +244,6 @@ export default function MemberProfilePage() {
       {activeModal === "note" && (
         <NoteModal
           memberUuid={memberUuid}
-          memberData={data}
           initialNote={data?.gaming_info?.note || ""}
           onClose={() => setActiveModal(null)}
           onSaved={handleSaved}
@@ -319,6 +254,9 @@ export default function MemberProfilePage() {
           memberUuid={memberUuid}
           memberData={data}
           currentVipLabel={stats.mrsLevel !== "—" ? stats.mrsLevel : ""}
+          walletVipTiers={walletVipTiers}
+          stationList={stationList}
+          initialWalletLevels={buildWalletLevels(data, walletVipTiers, stationList)}
           onClose={() => setActiveModal(null)}
           onSaved={handleSaved}
         />
@@ -327,7 +265,7 @@ export default function MemberProfilePage() {
   );
 }
 
-function ProfileHeader({ name, tags, dateJoined, slug, period, onPeriodChange, activeBrands, onNoteOpen, onVipOpen, onAddTag }) {
+function ProfileHeader({ name, tags, dateJoined, slug, period, onPeriodChange, activeBrands, onNoteOpen, onVipOpen }) {
   return (
     <div className="flex flex-col gap-4 px-2 md:flex-row md:flex-wrap md:items-start md:justify-between md:gap-6">
       <div className="flex flex-col gap-3">
@@ -377,7 +315,7 @@ function ProfileHeader({ name, tags, dateJoined, slug, period, onPeriodChange, a
               <EditIcon />
               <span className="text-[12px] font-medium leading-[18px] text-[#141828]">Edit Profile</span>
             </Link>
-            <MoreOptionsMenu onNoteOpen={onNoteOpen} onVipOpen={onVipOpen} onAddTag={onAddTag} />
+            <MoreOptionsMenu onNoteOpen={onNoteOpen} onVipOpen={onVipOpen} />
           </div>
         </div>
       </div>
@@ -420,22 +358,19 @@ function ActiveBrandsRow({ active }) {
 }
 
 const MORE_OPTIONS = [
-  { key: "send-bonus",       label: "Send Bonus" },
+  // { key: "send-bonus",       label: "Send Bonus" },
   { key: "add-note",         label: "Add Note" },
   { key: "change-vip-level", label: "Change VIP Level" },
-  { key: "add-tag",          label: "Add Tag" },
   { key: "block-customer",   label: "Block Customer", danger: true },
-  { key: "alert",            label: "Alert",          danger: true },
 ];
 
-function MoreOptionsMenu({ onNoteOpen, onVipOpen, onAddTag }) {
+function MoreOptionsMenu({ onNoteOpen, onVipOpen }) {
   const [open, setOpen] = useState(false);
 
   const handleSelect = (key) => {
     setOpen(false);
     if (key === "add-note") onNoteOpen();
     else if (key === "change-vip-level") onVipOpen();
-    else if (key === "add-tag") onAddTag();
   };
 
   return (
@@ -538,7 +473,61 @@ function ModalActions({ onClose, onSave, saving, saveLabel = "Save" }) {
   );
 }
 
-function NoteModal({ memberUuid, memberData, initialNote, onClose, onSaved }) {
+// Custom styled dropdown matching the dark edit-form style.
+function StyledSelect({ value, onChange, options, placeholder = "Select...", disabled = false }) {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  const selected = options.find((o) => o.value === value);
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => !disabled && setOpen((v) => !v)}
+        className={`flex w-full min-h-[42px] items-center justify-between gap-2 rounded-[8px] border px-4 py-2.5 text-left transition ${
+          disabled ? "border-[#fbeed2]/30 opacity-50 cursor-not-allowed" : "border-[#fbeed2] hover:border-[#f2cb7a]"
+        }`}
+      >
+        <span className={`text-[13px] font-medium leading-[20px] ${selected ? "text-white" : "text-white/40"}`}>
+          {selected ? selected.label : placeholder}
+        </span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fbeed2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          style={{ transform: open ? "rotate(180deg)" : undefined, transition: "transform 0.15s" }}>
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-[200px] overflow-y-auto rounded-[8px] border border-[#f2cb7a] bg-[#05060a] shadow-lg">
+          <button type="button" onClick={() => { onChange(""); setOpen(false); }}
+            className="flex w-full items-center px-3 py-2 text-left hover:bg-white/5">
+            <span className="text-[13px] font-medium text-white/40 leading-[20px]">{placeholder}</span>
+          </button>
+          {options.map((opt) => (
+            <button key={opt.value} type="button"
+              onClick={() => { onChange(opt.value); setOpen(false); }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-white/5">
+              <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: "#d9acff" }} />
+              <span className="text-[13px] font-medium text-[#f6dda6] leading-[20px]">{opt.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function NoteModal({ memberUuid, initialNote, onClose, onSaved }) {
   const [note, setNote] = useState(initialNote);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
@@ -548,9 +537,7 @@ function NoteModal({ memberUuid, memberData, initialNote, onClose, onSaved }) {
     setSaving(true);
     setSaveError(null);
     try {
-      await updateCrmMember(memberUuid, buildMemberPayload(memberData, {
-        gameInfoOverrides: { note: note || undefined },
-      }));
+      await patchCrmMember(memberUuid, { game_info: { note: note || "" } });
       onSaved();
     } catch (err) {
       console.error("[note-modal] save failed", err);
@@ -582,37 +569,66 @@ function NoteModal({ memberUuid, memberData, initialNote, onClose, onSaved }) {
   );
 }
 
-function VipModal({ memberUuid, memberData, currentVipLabel, onClose, onSaved }) {
-  const [vipTiers, setVipTiers] = useState([]);
+function VipModal({ memberUuid, memberData, currentVipLabel, walletVipTiers, stationList, initialWalletLevels, onClose, onSaved }) {
+  const [mrsTiers, setMrsTiers] = useState([]);
   const [tiersLoading, setTiersLoading] = useState(true);
-  const [selectedUuid, setSelectedUuid] = useState(null);
+  const [selectedMrsUuid, setSelectedMrsUuid] = useState(null);
+  const [walletSelections, setWalletSelections] = useState({});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(null);
 
   useEffect(() => {
-    getCrmVipTiers({ page: 1, page_size: 100 })
+    getVipTierList()
       .then((res) => {
         const tiers = normalizeListResponse(res);
-        setVipTiers(tiers);
+        setMrsTiers(tiers);
         if (currentVipLabel) {
-          const match = tiers.find((t) =>
-            (t.name || t.tier_name || "").toLowerCase() === currentVipLabel.toLowerCase()
-          );
-          if (match) setSelectedUuid(match.uuid);
+          const match = tiers.find((t) => (t.name || t.tier_name || "").toLowerCase() === currentVipLabel.toLowerCase());
+          if (match) setSelectedMrsUuid(match.uuid);
         }
       })
       .catch((err) => console.error("[vip-modal] tiers load failed", err))
       .finally(() => setTiersLoading(false));
   }, [currentVipLabel]);
 
+  useEffect(() => {
+    const init = {};
+    for (const wl of initialWalletLevels || []) {
+      if (wl.station_uuid && wl.wallet_level_uuid) init[wl.station_uuid] = wl.wallet_level_uuid;
+    }
+    setWalletSelections(init);
+  }, [initialWalletLevels]);
+
+  // Stations that actually have wallet VIP tiers
+  const walletStations = (stationList || []).filter((s) =>
+    (walletVipTiers || []).some(
+      (t) => String(t.station_name || "").toLowerCase() === String(s.name || s.station_name || "").toLowerCase()
+    )
+  );
+
+  const [walletStation, setWalletStation] = useState("");
+  const selectedStation = walletStations.find((s) => s.uuid === walletStation);
+  const selectedStationTiers = selectedStation
+    ? (walletVipTiers || []).filter(
+        (t) => String(t.station_name || "").toLowerCase() === String(selectedStation.name || selectedStation.station_name || "").toLowerCase()
+      )
+    : [];
+  const currentLevelUuid = walletStation ? (walletSelections[walletStation] || "") : "";
+
   const handleSave = async () => {
-    if (saving || !selectedUuid) return;
+    if (saving) return;
     setSaving(true);
     setSaveError(null);
     try {
-      await updateCrmMember(memberUuid, buildMemberPayload(memberData, {
-        profileDataOverrides: { vip_level_uuid: selectedUuid },
-      }));
+      const walletLevels = Object.entries(walletSelections)
+        .filter(([, uuid]) => uuid)
+        .map(([station_uuid, wallet_level_uuid]) => ({ station_uuid, wallet_level_uuid }));
+      await patchCrmMember(memberUuid, {
+        profile_data: {
+          mrs_vip_level_uuid: selectedMrsUuid,
+          wallet_levels: walletLevels,
+        },
+      });
       onSaved();
     } catch (err) {
       console.error("[vip-modal] save failed", err);
@@ -621,76 +637,78 @@ function VipModal({ memberUuid, memberData, currentVipLabel, onClose, onSaved })
     }
   };
 
-  const selectedTier = vipTiers.find((t) => t.uuid === selectedUuid);
-  const selectedLabel = selectedTier ? (selectedTier.name || selectedTier.tier_name || "") : null;
-
   return (
     <ModalOverlay onClose={onClose}>
       <ModalTitle>Change VIP Level</ModalTitle>
 
-      {currentVipLabel && (
+      {/* MRS VIP Section */}
+      <div className="mb-5">
+        <p className="text-[14px] font-medium text-[#f6dda6] leading-[21px] mb-2">MRS VIP Level</p>
+        {currentVipLabel && (
+          <div className="mb-3">
+            <p className="text-[11px] text-white/50 mb-1">Current</p>
+            <span className="inline-flex h-[24px] items-center rounded-[8px] px-3 text-[12px] font-semibold" style={{ backgroundColor: TAG_STYLES.vip.bg, color: TAG_STYLES.vip.color }}>
+              {currentVipLabel}
+            </span>
+          </div>
+        )}
+        {tiersLoading ? (
+          <div className="rounded-[8px] border border-[#fbeed2]/30 px-4 py-3 text-[12px] text-white/40">Loading...</div>
+        ) : (
+          <StyledSelect
+            value={selectedMrsUuid || ""}
+            onChange={(v) => setSelectedMrsUuid(v || null)}
+            placeholder="Select MRS VIP..."
+            options={mrsTiers.map((t) => ({ value: t.uuid, label: t.name || t.tier_name || t.uuid }))}
+          />
+        )}
+      </div>
+
+      {/* Wallet VIP — cascading: pick station, then pick level for that station */}
+      {walletStations.length > 0 && (
         <div className="mb-5">
-          <p className="text-[12px] font-medium text-white/60 leading-[18px] mb-2">Current VIP Level</p>
-          <span
-            className="inline-flex h-[27px] items-center justify-center rounded-[12px] px-4 text-[12px] font-semibold"
-            style={{ backgroundColor: TAG_STYLES.vip.bg, color: TAG_STYLES.vip.color }}
-          >
-            {currentVipLabel}
-          </span>
+          <p className="text-[14px] font-medium text-[#f6dda6] leading-[21px] mb-3">Wallet VIP Level</p>
+          <div className="flex flex-col gap-3">
+            {/* Station selector */}
+            <div>
+              <p className="text-[11px] text-white/50 mb-1">Station</p>
+              <StyledSelect
+                value={walletStation}
+                onChange={setWalletStation}
+                placeholder="Select station..."
+                options={walletStations.map((s) => ({ value: s.uuid, label: s.name || s.station_name }))}
+              />
+            </div>
+            {/* VIP level for selected station */}
+            <div>
+              <p className="text-[11px] text-white/50 mb-1">VIP Level</p>
+              <StyledSelect
+                value={currentLevelUuid}
+                disabled={!walletStation}
+                onChange={(v) => setWalletSelections((prev) => ({ ...prev, [walletStation]: v || undefined }))}
+                placeholder={walletStation ? "Select level..." : "Select a station first"}
+                options={selectedStationTiers.map((t) => ({ value: t.uuid, label: t.tier_name || t.name || t.uuid }))}
+              />
+            </div>
+            {/* Summary chips of all selected wallet levels */}
+            {Object.keys(walletSelections).filter((k) => walletSelections[k]).length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {walletStations.filter((s) => walletSelections[s.uuid]).map((s) => {
+                  const tier = (walletVipTiers || []).find((t) => t.uuid === walletSelections[s.uuid]);
+                  return (
+                    <span key={s.uuid} className="rounded-[6px] border border-[#f2cb7a]/40 px-2 py-0.5 text-[11px] text-[#f6dda6]">
+                      {s.name || s.station_name}: {tier?.tier_name || tier?.name || "—"}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
-      <label className="block text-[14px] font-medium text-[#f6dda6] leading-[21px] mb-2">
-        Select New VIP Level
-      </label>
-      {tiersLoading ? (
-        <div className="rounded-[8px] border border-[#fbeed2]/30 px-4 py-3 text-[12px] text-white/40">
-          Loading VIP levels...
-        </div>
-      ) : (
-        <div className="flex items-center gap-3 rounded-[8px] border border-[#fbeed2] px-4 py-3">
-          <select
-            value={selectedUuid || ""}
-            onChange={(e) => setSelectedUuid(e.target.value || null)}
-            className="flex-1 appearance-none bg-transparent text-[12px] font-medium leading-[18px] text-white outline-none [color-scheme:dark]"
-          >
-            <option value="" className="bg-[#05060a] text-white/60">Select a VIP level...</option>
-            {vipTiers.map((tier) => {
-              const label = tier.name || tier.tier_name || tier.uuid;
-              return (
-                <option key={tier.uuid} value={tier.uuid} className="bg-[#05060a] text-white">
-                  {label}
-                </option>
-              );
-            })}
-          </select>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbeed2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </div>
-      )}
-
-      {selectedLabel && (
-        <div className="mt-3 flex items-center gap-2">
-          <span className="text-[12px] text-white/60">Selected:</span>
-          <span
-            className="inline-flex h-[23px] items-center justify-center rounded-[12px] px-3 text-[12px] font-medium"
-            style={{ backgroundColor: TAG_STYLES.vip.bg, color: TAG_STYLES.vip.color }}
-          >
-            {selectedLabel}
-          </span>
-        </div>
-      )}
-
-      {saveError && (
-        <p className="mt-2 text-[12px] text-[#fb3748]">{saveError}</p>
-      )}
-      <ModalActions
-        onClose={onClose}
-        onSave={handleSave}
-        saving={saving}
-        saveLabel={!selectedUuid ? "Select a level" : "Save"}
-      />
+      {saveError && <p className="mt-2 text-[12px] text-[#fb3748]">{saveError}</p>}
+      <ModalActions onClose={onClose} onSave={handleSave} saving={saving} />
     </ModalOverlay>
   );
 }

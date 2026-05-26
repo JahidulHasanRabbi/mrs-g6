@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { GRAD_GOLD } from "../../../../../components/admin/retention/constants";
-import { getCrmMemberSingle, getCrmVipTiers, updateCrmMember } from "../../../../../api/crmApi";
+import { getCrmMemberSingle, updateCrmMember } from "../../../../../api/crmApi";
+import { getVipTierList, getWalletVipTiers, getStationList } from "../../../../../api/adminApi";
 import Skeleton from "../../../../../components/admin/ui/Skeleton";
 
 // Member edit form — Figma 87:7291. 3-step wizard:
@@ -172,6 +173,7 @@ function emptyForm() {
     risk: null,
     depositFreq: null,
     status: null,
+    walletLevels: {}, // { [stationUuid]: walletLevelUuid }
 
     fullName: "",
     phone: "",
@@ -230,7 +232,7 @@ function labelsToInts(enumKey, list) {
 
 // Hydrate the form from the GET response. Tag-style fields wrap the label in
 // `{ kind, label }` to match TagSelectField; selects/inputs are plain strings.
-function apiToForm(data, vipTiers = []) {
+function apiToForm(data, vipTiers = [], walletVipTiers = [], stationList = []) {
   const form = emptyForm();
   if (!data) return form;
   const c = data.customer_data || {};
@@ -264,23 +266,21 @@ function apiToForm(data, vipTiers = []) {
         status: { kind: statusKind(statusLabel), label: statusLabel },
       };
     })(),
-    playerType: tagFor("game", g.player_type),
-    risk: tagFor("risk", g.risk_style),
-    depositFreq: tagFor("weekly", g.deposit_frequency_style),
+    // Fall back to defaults for null fields so the form passes API validation
+    // without forcing the user to fill every field on first edit.
+    playerType: tagFor("game", g.player_type) || { kind: "game", label: "Regular" },
+    risk: tagFor("risk", g.risk_style) || { kind: "risk", label: "Low" },
+    depositFreq: tagFor("weekly", g.deposit_frequency_style) || { kind: "weekly", label: "Monthly" },
 
-    // customer_data returns documented string values (e.g. gender="Male").
-    // basic_info GET fields are undocumented and likely return the same
-    // integer enum codes used in the PUT, which won't match select options.
-    // Prefer customer_data strings; fall back to basic_info as a safety net.
     fullName: data.full_name || c.username || b.username || "",
     phone: c.phone_number || b.phone_number || "",
-    gender: c.gender || b.gender || "",
-    dob: dateToInput(c.date_of_birth || b.date_of_birth),
+    gender: c.gender || b.gender || "Male",
+    dob: dateToInput(c.date_of_birth || b.date_of_birth) || "1990-01-01",
     age: c.age ?? b.age ?? "",
-    nationality: c.nationality || b.nationality || "",
-    homeAddress: c.home_address || b.home_address || "",
-    marital: c.marital_status || b.marital_status || "",
-    job: c.job || b.job || "",
+    nationality: c.nationality || b.nationality || "Malaysian",
+    homeAddress: c.home_address || b.home_address || "N/A",
+    marital: c.marital_status || b.marital_status || "Single",
+    job: c.job || b.job || "N/A",
     hobby: tagListFor("hobby", c.hobby || b.hobby),
 
     totalSales: f.total_sales ?? "",
@@ -289,20 +289,35 @@ function apiToForm(data, vipTiers = []) {
     arpu: f.arpu ?? "",
     avgDeposit: f.average_deposit ?? "",
     lastDepositDate: f.last_deposit_date || "",
-    paymentMethod: f.payment_method || "",
+    paymentMethod: f.payment_method || "Bank Transfer",
 
-    gamePreference: g.game_preference || "",
+    gamePreference: g.game_preference || "Slots",
     providerPref: tagListFor("hobby", g.provider_preference),
-    playTimePattern: g.play_time_pattern || "",
-    avgBetMin: betSize.min,
-    avgBetMax: betSize.max,
-    playerSegment: g.player_type || "",
-    riskStyle: g.risk_style || "",
-    depositFreqStyle: g.deposit_frequency_style || "",
+    playTimePattern: g.play_time_pattern || "Night (8pm-2am)",
+    avgBetMin: betSize.min || "0",
+    avgBetMax: betSize.max || "100",
+    playerSegment: g.player_type || "Regular",
+    riskStyle: g.risk_style || "Low",
+    depositFreqStyle: g.deposit_frequency_style || "Monthly",
     depositTrigger: tagListFor("hobby", g.deposit_trigger),
     churnRiskReason: tagListFor("hobby", g.churn_risk_reason),
     reactivationTrigger: tagListFor("hobby", g.reactivation_trigger),
     note: g.note || "",
+    walletLevels: (() => {
+      const out = {};
+      const raw = data?.customer_data?.wallet_level;
+      if (!Array.isArray(raw)) return out;
+      for (const item of raw) {
+        const sName = String(item?.Station || item?.station || "").toLowerCase();
+        const lName = String(item?.Level || item?.level || "").toLowerCase();
+        const station = stationList.find((s) => String(s.name || s.station_name || "").toLowerCase() === sName);
+        const tier = walletVipTiers.find(
+          (t) => String(t.station_name || "").toLowerCase() === sName && String(t.tier_name || t.name || "").toLowerCase() === lName
+        );
+        if (station?.uuid && tier?.uuid) out[station.uuid] = tier.uuid;
+      }
+      return out;
+    })(),
   };
 }
 
@@ -317,13 +332,18 @@ function formToApi(form, vipTiers = []) {
   const paymentMethod = labelToInt("paymentMethod", form.paymentMethod);
   const playTimePattern = labelToInt("playTimePattern", form.playTimePattern);
 
+  const walletLevels = Object.entries(form.walletLevels || {})
+    .filter(([, uuid]) => uuid)
+    .map(([station_uuid, wallet_level_uuid]) => ({ station_uuid, wallet_level_uuid }));
+
   return {
     profile_data: {
-      vip_level_uuid: vipUuid,
+      mrs_vip_level_uuid: vipUuid,
       player_type: playerType,
       risk,
       deposit_frequency: labelToInt("depositFreq", form.depositFreq?.label),
       status,
+      wallet_levels: walletLevels,
     },
     basic_info: {
       gender: labelToInt("gender", form.gender),
@@ -362,6 +382,8 @@ export default function MemberEditPage() {
   const [saving, setSaving] = useState(false);
   const [memberName, setMemberName] = useState("Member");
   const [vipTiers, setVipTiers] = useState([]);
+  const [walletVipTiers, setWalletVipTiers] = useState([]);
+  const [stationList, setStationList] = useState([]);
   const [originalMember, setOriginalMember] = useState(null);
 
   useEffect(() => {
@@ -370,18 +392,21 @@ export default function MemberEditPage() {
     const fetchMember = async () => {
       setLoading(true);
       try {
-        const [res, tiersRes] = await Promise.all([
+        const [res, tiersRes, walletTiersRes, stationsRes] = await Promise.all([
           getCrmMemberSingle(memberUuid),
-          getCrmVipTiers({ page: 1, page_size: 100 }).catch((err) => {
-            console.error("[member-edit] crm vip tiers load failed", err);
-            return [];
-          }),
+          getVipTierList().catch(() => []),
+          getWalletVipTiers().catch(() => []),
+          getStationList().catch(() => []),
         ]);
         if (cancelled) return;
         const tiers = normalizeListResponse(tiersRes);
+        const walletTiers = normalizeListResponse(walletTiersRes);
+        const stations = normalizeListResponse(stationsRes);
         setVipTiers(tiers);
+        setWalletVipTiers(walletTiers);
+        setStationList(stations);
         setOriginalMember(res);
-        setForm(apiToForm(res, tiers));
+        setForm(apiToForm(res, tiers, walletTiers, stations));
         setMemberName(res?.full_name || res?.basic_info?.username || "Member");
       } catch (err) {
         if (cancelled) return;
@@ -407,7 +432,7 @@ export default function MemberEditPage() {
     if (saving) return;
     const vipUuid = form.vipUuid || getExistingVipUuid(originalMember) || findVipUuid(vipTiers, form.vip?.label);
     if (!vipUuid) {
-      alert("Please select a valid VIP Level before saving.");
+      alert("Please select a VIP Level before saving.");
       return;
     }
     setSaving(true);
@@ -429,7 +454,7 @@ export default function MemberEditPage() {
       <EditHeader name={memberName} />
       <Card>
         <Stepper step={step} onPrev={goPrev} onNext={goNext} onStepClick={goToStep} />
-        {step === 0 && <BasicInfoStep form={form} setField={setField} vipTiers={vipTiers} />}
+        {step === 0 && <BasicInfoStep form={form} setField={setField} vipTiers={vipTiers} walletVipTiers={walletVipTiers} stationList={stationList} />}
         {step === 1 && <FinancialInfoStep form={form} setField={setField} />}
         {step === 2 && <GameInfoStep form={form} setField={setField} />}
         <ActionRow
@@ -681,11 +706,11 @@ function SelectInput({ value, onChange, options }) {
       <select
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
-        className="flex-1 appearance-none bg-transparent text-[12px] font-medium leading-[18px] text-white outline-none [color-scheme:dark]"
+        className="flex-1 appearance-none bg-transparent text-[13px] font-medium leading-[20px] text-white outline-none [color-scheme:dark]"
       >
-        <option value="" className="bg-[#05060a] text-white/60">Select...</option>
+        <option value="" className="bg-[#05060a] text-white/60 py-2">Select...</option>
         {options.map((opt) => (
-          <option key={opt} value={opt} className="bg-[#05060a] text-white">
+          <option key={opt} value={opt} className="bg-[#05060a] text-white py-2">
             {opt}
           </option>
         ))}
@@ -792,12 +817,13 @@ function TagSelectField({ value, onChange, kind, options, kindFor }) {
                 key={opt}
                 type="button"
                 onClick={() => { onChange({ kind: resolveKind(opt), label: opt }); setOpen(false); }}
-                className="flex w-full items-center px-3 py-2 text-left text-[12px] font-medium text-[#f6dda6] hover:bg-white/5"
+                className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-white/5"
               >
                 <span
-                  className="inline-flex items-center rounded-[4px] px-1 text-[12px] font-medium leading-[18px]"
-                  style={{ backgroundColor: optPalette.bg, color: optPalette.color }}
-                >
+                  className="h-3 w-3 shrink-0 rounded-full"
+                  style={{ backgroundColor: optPalette.bg }}
+                />
+                <span className="text-[13px] font-medium text-[#f6dda6] leading-[20px]">
                   {opt}
                 </span>
               </button>
@@ -970,7 +996,84 @@ function UserImage({ value, onChange }) {
   );
 }
 
-function BasicInfoStep({ form, setField, vipTiers = [] }) {
+// Custom styled dropdown — matches TagSelectField visuals but works with plain uuid/label pairs.
+function StyledSelect({ value, onChange, options, placeholder = "Select..." }) {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  const selected = options.find((o) => o.value === value);
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full min-h-[44px] items-center justify-between gap-2 rounded-[8px] border border-[#fbeed2] px-4 py-3 text-left transition hover:border-[#f2cb7a]"
+      >
+        <span className={`text-[13px] font-medium leading-[20px] ${selected ? "text-white" : "text-white/40"}`}>
+          {selected ? selected.label : placeholder}
+        </span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbeed2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          style={{ transform: open ? "rotate(180deg)" : undefined, transition: "transform 0.15s" }}>
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-[220px] overflow-y-auto rounded-[8px] border border-[#f2cb7a] bg-[#05060a] shadow-lg">
+          <button type="button" onClick={() => { onChange(""); setOpen(false); }}
+            className="flex w-full items-center px-3 py-2 text-left hover:bg-white/5">
+            <span className="text-[13px] font-medium text-white/40 leading-[20px]">{placeholder}</span>
+          </button>
+          {options.map((opt) => (
+            <button key={opt.value} type="button"
+              onClick={() => { onChange(opt.value); setOpen(false); }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-white/5">
+              <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: "#d9acff" }} />
+              <span className="text-[13px] font-medium text-[#f6dda6] leading-[20px]">{opt.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Thin wrapper: converts tier objects to { value, label } for StyledSelect.
+function WalletVipSelect({ value, tiers, onChange }) {
+  const options = tiers.map((t) => ({ value: t.uuid, label: t.tier_name || t.name || t.uuid }));
+  return <StyledSelect value={value || ""} onChange={onChange} options={options} />;
+}
+
+// Date input where clicking anywhere on the container opens the native date picker.
+function DateInput({ value, onChange }) {
+  const inputRef = useRef(null);
+  return (
+    <div
+      className="flex items-center gap-3 rounded-[8px] border border-[#fbeed2] px-4 py-3 cursor-pointer"
+      onClick={() => inputRef.current?.showPicker?.()}
+    >
+      <CalendarIcon />
+      <input
+        ref={inputRef}
+        type="date"
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        className="flex-1 bg-transparent text-[12px] font-medium leading-[18px] text-white outline-none [color-scheme:dark] cursor-pointer"
+      />
+    </div>
+  );
+}
+
+function BasicInfoStep({ form, setField, vipTiers = [], walletVipTiers = [], stationList = [] }) {
   const vipOptionsFromApi = vipTiers.length
     ? vipTiers
         .map((tier) => tier.name || tier.tier_name || tier.vip_tier || tier.level || tier.title)
@@ -984,12 +1087,29 @@ function BasicInfoStep({ form, setField, vipTiers = [] }) {
     setField("vipUuid", next ? findVipUuid(vipTiers, next.label) : undefined);
   };
 
+  // Stations that have wallet VIP tiers available
+  const walletStations = stationList.filter((station) =>
+    walletVipTiers.some(
+      (t) => String(t.station_name || "").toLowerCase() === String(station.name || station.station_name || "").toLowerCase()
+    )
+  );
+
+  // Cascading: track which station is selected in the wallet section
+  const [walletStation, setWalletStation] = useState("");
+  const selectedStation = walletStations.find((s) => s.uuid === walletStation);
+  const selectedStationTiers = selectedStation
+    ? walletVipTiers.filter(
+        (t) => String(t.station_name || "").toLowerCase() === String(selectedStation.name || selectedStation.station_name || "").toLowerCase()
+      )
+    : [];
+  const currentLevelUuid = walletStation ? (form.walletLevels?.[walletStation] || "") : "";
+
   return (
     <>
       <SectionTitle>Profile Data</SectionTitle>
       <UserImage value={form.image} onChange={(file) => setField("image", file)} />
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-10 gap-y-6">
-        <FieldWrapper label="VIP Level">
+        <FieldWrapper label="MRS VIP Level">
           <TagSelectField value={form.vip} onChange={handleVipChange} kind={TAG_OPTIONS.vip.kind} options={vipOptions} />
         </FieldWrapper>
         <FieldWrapper label="Player Type">
@@ -1011,6 +1131,49 @@ function BasicInfoStep({ form, setField, vipTiers = [] }) {
         </FieldWrapper>
       </div>
 
+      {walletStations.length > 0 && (
+        <>
+          <SectionTitle>Wallet VIP Level</SectionTitle>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-6">
+            <FieldWrapper label="Station">
+              <StyledSelect
+                value={walletStation}
+                onChange={setWalletStation}
+                placeholder="Select station..."
+                options={walletStations.map((s) => ({ value: s.uuid, label: s.name || s.station_name || s.uuid }))}
+              />
+            </FieldWrapper>
+            <FieldWrapper label="VIP Level">
+              <StyledSelect
+                value={currentLevelUuid}
+                disabled={!walletStation}
+                onChange={(uuid) => {
+                  if (!walletStation) return;
+                  setField("walletLevels", { ...form.walletLevels, [walletStation]: uuid || undefined });
+                }}
+                placeholder={walletStation ? "Select level..." : "Select a station first"}
+                options={selectedStationTiers.map((t) => ({ value: t.uuid, label: t.tier_name || t.name || t.uuid }))}
+              />
+            </FieldWrapper>
+          </div>
+          {/* Summary of all assigned wallet levels */}
+          {Object.keys(form.walletLevels || {}).filter((k) => form.walletLevels[k]).length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {walletStations
+                .filter((s) => form.walletLevels?.[s.uuid])
+                .map((s) => {
+                  const tier = walletVipTiers.find((t) => t.uuid === form.walletLevels[s.uuid]);
+                  return (
+                    <span key={s.uuid} className="rounded-[6px] border border-[#f2cb7a]/40 px-3 py-1 text-[12px] text-[#f6dda6]">
+                      {s.name || s.station_name}: {tier?.tier_name || tier?.name || "—"}
+                    </span>
+                  );
+                })}
+            </div>
+          )}
+        </>
+      )}
+
       <SectionTitle>Basic Info</SectionTitle>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-10 gap-y-6">
         <FieldWrapper label="Full Name">
@@ -1023,7 +1186,7 @@ function BasicInfoStep({ form, setField, vipTiers = [] }) {
           <SelectInput value={form.gender} onChange={(v) => setField("gender", v)} options={SELECT_OPTIONS.gender} />
         </FieldWrapper>
         <FieldWrapper label="Date of Birth">
-          <TextInput type="date" value={form.dob} onChange={(v) => setField("dob", v)} leftIcon={<CalendarIcon />} />
+          <DateInput value={form.dob} onChange={(v) => setField("dob", v)} />
         </FieldWrapper>
         <FieldWrapper label="Age">
           <ReadOnlyValue value={form.age} />

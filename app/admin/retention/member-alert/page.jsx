@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import RefreshControl from "../../../components/admin/retention/RefreshControl";
 import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
@@ -10,10 +9,10 @@ import { ASSETS, GRAD_DARK, GRAD_GOLD } from "../../../components/admin/retentio
 import {
   getCrmMembers,
   getCrmUsers,
-  getCrmVipTiers,
   getPrioritySummary,
   refreshCrmMembers,
 } from "../../../api/crmApi";
+import { getVipTierList } from "../../../api/adminApi";
 
 // Member Alert page — Figma 69:340. "Overview" KPI strip + Member Follow Up
 // list. The list is the same shape as /admin/retention/members but with a
@@ -26,17 +25,15 @@ const PRIORITY_OPTIONS = ["High", "Medium", "Low"];
 const PRIORITY_TO_INT = { High: 1, Medium: 2, Low: 3 };
 
 // Column widths from Figma 69:340 (frame ids 87:6604 etc). Username and
-// Action are wider to accommodate the avatar+name and the View + more-menu
-// button pair respectively; everything else is uniform at 124px.
 const COLUMNS = [
-  { key: "name",     label: "Username",       minW: 197 },
-  { key: "phone",    label: "Phone Number",   minW: 124 },
-  { key: "vip",      label: "VIP Level",      minW: 124 },
-  { key: "sales",    label: "Daily Sales",    minW: 124 },
-  { key: "winloss",  label: "Daily Win/Loss", minW: 124 },
-  { key: "priority", label: "Priority",       minW: 124 },
-  { key: "pic",      label: "Retention",      minW: 124 },
-  { key: "action",   label: "Action",         minW: 171, align: "end" },
+  { key: "name",     label: "Username",       minW: 220 },
+  { key: "phone",    label: "Phone Number",   minW: 160 },
+  { key: "vip",      label: "VIP Level",      minW: 110 },
+  { key: "sales",    label: "Daily Sales",    minW: 130 },
+  { key: "winloss",  label: "Daily Win/Loss", minW: 140 },
+  { key: "priority", label: "Priority",       minW: 110 },
+  { key: "pic",      label: "Retention",      minW: 130 },
+  { key: "action",   label: "Action",         minW: 120, align: "end" },
 ];
 
 const TABLE_MIN_WIDTH = COLUMNS.reduce((sum, c) => sum + c.minW, 0);
@@ -235,10 +232,10 @@ function FollowUpList() {
         setPics(results);
       })
       .catch(() => setPics([]));
-    getCrmVipTiers({ page: 1, page_size: 100 })
+    getVipTierList()
       .then((res) => {
         const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
-        setVipTiers(results.map((t, i) => ({ name: t.name, level: i + 1 })));
+        setVipTiers(results.map((t) => ({ name: t.name, level: t.id ?? t.uuid })));
       })
       .catch(() => setVipTiers([]));
   }, []);
@@ -349,7 +346,7 @@ function SkeletonRow() {
   return (
     <div className="flex w-full items-stretch border-b border-white/5">
       {COLUMNS.map((col) => (
-        <div key={col.key} className="flex flex-1 items-center p-6" style={{ minWidth: col.minW }}>
+        <div key={col.key} className="flex flex-1 items-center px-4 py-4" style={{ minWidth: col.minW }}>
           <div className="h-3 w-3/4 rounded bg-white/10 animate-pulse" />
         </div>
       ))}
@@ -448,7 +445,7 @@ function TableHeader() {
       {COLUMNS.map((col) => (
         <div
           key={col.key}
-          className={`flex flex-1 flex-col px-6 py-4 ${col.align === "end" ? "items-end" : "items-start"}`}
+          className={`flex flex-1 flex-col px-4 py-4 ${col.align === "end" ? "items-end" : "items-start"}`}
           style={{ minWidth: col.minW }}
         >
           <p className="text-[12px] font-medium text-[#fbeed2] leading-[18px] whitespace-nowrap">
@@ -466,9 +463,9 @@ function TableRow({ row }) {
   return (
     <div className="flex w-full items-stretch -mb-px border-b border-white/5">
       <Cell minW={COLUMNS[0].minW}>
-        <Link href={href} className="flex items-center gap-3 hover:opacity-80">
-          <UserAvatar />
-          <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">
+        <Link href={href} className="flex items-start gap-3 hover:opacity-80">
+          <div className="shrink-0 pt-0.5"><UserAvatar /></div>
+          <span className="text-[12px] font-medium text-white leading-[18px] break-words">
             {row.full_name || row.username}
           </span>
         </Link>
@@ -482,10 +479,7 @@ function TableRow({ row }) {
       </Cell>
       <DataCell value={row.retention} minW={COLUMNS[6].minW} />
       <Cell minW={COLUMNS[7].minW} align="end">
-        <div className="flex items-center gap-2">
-          <ViewButton href={href} />
-          <MoreButton ariaLabel={`More actions for ${row.full_name || row.username}`} />
-        </div>
+        <ViewButton href={href} />
       </Cell>
     </div>
   );
@@ -506,127 +500,6 @@ function ViewButton({ href }) {
   );
 }
 
-// Square 34×34 icon button — gold gradient, dark three-dots glyph. Opens a
-// cream-colored status dropdown (In Progress / Resolve / Snooze / Remark)
-// per the design. Status is local to each row; eventually this hooks into
-// adminApi.updateMemberAlertStatus(id, status).
-const STATUS_OPTIONS = ["In Progress", "Resolve", "Snooze", "Remark"];
-
-function MoreButton({ ariaLabel }) {
-  const [open, setOpen] = useState(false);
-  const [status, setStatus] = useState("Snooze");
-  const buttonRef = useRef(null);
-
-  return (
-    <div className="relative">
-      <button
-        ref={buttonRef}
-        type="button"
-        aria-label={ariaLabel}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-        className="flex h-[34px] w-[34px] items-center justify-center rounded-[8px] border-2 border-[#f2cb7a] transition hover:brightness-110"
-        style={{ backgroundImage: GRAD_GOLD }}
-      >
-        <ThreeDotsIcon />
-      </button>
-      {open && (
-        <StatusMenu
-          anchorRef={buttonRef}
-          status={status}
-          onSelect={(next) => {
-            setStatus(next);
-            setOpen(false);
-          }}
-          onClose={() => setOpen(false)}
-        />
-      )}
-    </div>
-  );
-}
-
-// Cream popup rendered through a portal so it escapes the table's
-// `overflow-hidden` / `overflow-x-auto` ancestors. Positioned with
-// `position: fixed` from the anchor button's bounding rect, with a small
-// triangular notch pointing up at the button. Backdrop swallows outside
-// clicks to dismiss.
-function StatusMenu({ anchorRef, status, onSelect, onClose }) {
-  const MENU_WIDTH = 180;
-  const GAP = 12;
-  const [coords, setCoords] = useState(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
-
-  useLayoutEffect(() => {
-    const update = () => {
-      const el = anchorRef.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      // Right-align the menu under the button: button's right edge becomes
-      // the menu's right edge, then clamp to viewport with an 8px margin.
-      const desiredRight = window.innerWidth - rect.right;
-      const right = Math.max(8, desiredRight);
-      const top = rect.bottom + GAP;
-      // Notch sits below the button's horizontal center, measured from the
-      // menu's right edge.
-      const buttonCenterX = rect.left + rect.width / 2;
-      const menuRightX = window.innerWidth - right;
-      const notchRight = Math.max(10, menuRightX - buttonCenterX - 6);
-      setCoords({ top, right, notchRight });
-    };
-    update();
-    window.addEventListener("scroll", update, true);
-    window.addEventListener("resize", update);
-    return () => {
-      window.removeEventListener("scroll", update, true);
-      window.removeEventListener("resize", update);
-    };
-  }, [anchorRef]);
-
-  if (!mounted || !coords) return null;
-
-  return createPortal(
-    <>
-      <div className="fixed inset-0 z-[60]" onClick={onClose} />
-      <div
-        role="menu"
-        className="fixed z-[61] rounded-[16px] bg-[#fbeed2] shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
-        style={{ top: coords.top, right: coords.right, width: MENU_WIDTH }}
-      >
-        <span
-          aria-hidden="true"
-          className="absolute -top-[6px] h-3 w-3 rotate-45 bg-[#fbeed2]"
-          style={{ right: coords.notchRight }}
-        />
-        <ul className="relative flex flex-col py-1">
-          {STATUS_OPTIONS.map((opt, idx) => {
-            const active = opt === status;
-            return (
-              <li key={opt}>
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => onSelect(opt)}
-                  className={`block w-full px-5 py-3 text-left text-[14px] font-semibold leading-[21px] transition ${
-                    active
-                      ? "text-[#eaad2c]"
-                      : "text-[#141828] hover:bg-[#141828]/5"
-                  } ${idx < STATUS_OPTIONS.length - 1 ? "border-b border-[#141828]/10" : ""}`}
-                  style={{ letterSpacing: "-0.5px" }}
-                >
-                  {opt}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    </>,
-    document.body,
-  );
-}
 
 function EyeIcon() {
   return (
@@ -647,22 +520,6 @@ function EyeIcon() {
   );
 }
 
-function ThreeDotsIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="#141828"
-      aria-hidden="true"
-    >
-      <circle cx="3" cy="8" r="1.6" />
-      <circle cx="8" cy="8" r="1.6" />
-      <circle cx="13" cy="8" r="1.6" />
-    </svg>
-  );
-}
-
 function DataCell({ value, minW }) {
   return (
     <Cell minW={minW}>
@@ -676,7 +533,7 @@ function DataCell({ value, minW }) {
 function Cell({ children, minW, align = "start" }) {
   const justify = align === "end" ? "justify-end" : "justify-start";
   return (
-    <div className={`flex flex-1 items-center p-6 ${justify}`} style={{ minWidth: minW }}>
+    <div className={`flex flex-1 items-center overflow-hidden px-4 py-4 ${justify}`} style={{ minWidth: minW }}>
       {children}
     </div>
   );
