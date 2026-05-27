@@ -18,7 +18,7 @@ const PRIORITY_OPTIONS = ["High", "Medium", "Low"];
 const PRIORITY_TO_INT = { High: 1, Medium: 2, Low: 3 };
 
 const MOCK_FIRST_ROW = {
-  uuid: "mock-preview-001",
+  uuid: "mock-001",
   full_name: "Ah Chong 88",
   phone_number: "+6012-309 8765",
   vip_level: "VIP 4",

@@ -129,6 +129,8 @@ export function FollowUpCreateModal({
         <ModalTitle>{title} - {memberName}</ModalTitle>
         <CloseButton onClick={onClose} />
       </div>
+
+      {/* Action — picker when no fixedActionType, confirmation chip when fixed */}
       {!fixedActionType ? (
         <div className="mt-5">
           <p className="mb-3 text-[12px] font-medium text-[#fbeed2]">Action</p>
@@ -144,7 +146,14 @@ export function FollowUpCreateModal({
             ))}
           </div>
         </div>
-      ) : null}
+      ) : (
+        <div className="mt-5 flex items-center gap-3">
+          <p className="text-[12px] font-medium text-[#fbeed2]">Action:</p>
+          <ActionTypeChip type={fixedActionType} />
+        </div>
+      )}
+
+      {/* Priority picker */}
       {showPriority ? (
         <div className="mt-5">
           <p className="mb-3 text-[12px] font-medium text-[#fbeed2]">Priority</p>
@@ -171,14 +180,22 @@ export function FollowUpCreateModal({
           </div>
         </div>
       ) : null}
+
+      {/* Note — only shown for "Others", required */}
       {noteRequired ? (
-        <textarea
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="Write your note here..."
-          className="mt-5 min-h-[80px] w-full resize-none rounded-[8px] border border-[#f2cb7a] bg-[#141828] px-3 py-2 text-[13px] text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-[#eaad2c]"
-        />
+        <div className="mt-5">
+          <p className="mb-2 text-[12px] font-medium text-[#fbeed2]">
+            Note <span className="text-[#fb3748]">*</span>
+          </p>
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Write your note here..."
+            className="min-h-[80px] w-full resize-none rounded-[8px] border border-[#f2cb7a] bg-[#141828] px-3 py-2 text-[13px] text-white placeholder:text-white/30 focus:outline-none focus:ring-1 focus:ring-[#eaad2c]"
+          />
+        </div>
       ) : null}
+
       <div className="mt-6 flex justify-end gap-3 border-t border-white/10 pt-5">
         <button
           type="button"
@@ -194,7 +211,7 @@ export function FollowUpCreateModal({
           className="rounded-[8px] border border-[#f2cb7a] px-5 py-2 text-[12px] font-medium text-[#141828] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
           style={{ backgroundImage: GRAD_GOLD }}
         >
-          Submit
+          Confirm
         </button>
       </div>
     </ModalOverlay>

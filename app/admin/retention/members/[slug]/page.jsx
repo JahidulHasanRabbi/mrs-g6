@@ -24,7 +24,7 @@ const TAG_STYLES = {
 const ACTIVE_BRANDS = ["KG", "AB", "EP", "LV", "UB", "N1"];
 
 const MOCK_PROFILE_DATA = {
-  uuid: "mock-preview-001",
+  uuid: "mock-001",
   full_name: "Ah Chong 88",
   vip_level: "VIP 4",
   priority: "High",
