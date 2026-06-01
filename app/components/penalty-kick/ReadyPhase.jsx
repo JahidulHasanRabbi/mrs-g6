@@ -14,27 +14,32 @@ export default function ReadyPhase({ surfaceHandlers, setSurface }) {
       className="relative flex w-full flex-1 touch-none select-none flex-col items-center justify-end"
       style={{ minHeight: 540 }}
     >
-      <GoalFrame />
-      <Keeper diveTo={0} />
-
+      {/* Rendered FIRST so it stacks behind GoalFrame and Keeper —
+          reads as a stadium banner peeking through the goal net/posts. */}
       <motion.h2
         initial={{ y: 10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.35, ease: "easeOut" }}
-        // "SWIPE TO KICK" sits between the pills (pinned to header) and
-        // the goal post. 22 % of the scene puts it in the dim sky strip
-        // above the floodlight horizon, matching Figma node 535:2.
         className="pointer-events-none absolute left-0 right-0 text-center text-[32px] font-bold tracking-wider uppercase"
         style={{
-          top: "15%",
+          top: "12%",
+          zIndex: 0,
           color: COLORS.primary,
           fontFamily: "'Lexend', sans-serif",
+          // Dark stroke gives the text a hard edge against the net mesh
+          // and crowd; paintOrder keeps the stroke behind the fill so
+          // the green color stays vivid. Green glow on top for brand.
+          WebkitTextStroke: "2px rgba(0,0,0,0.9)",
+          paintOrder: "stroke fill",
           textShadow:
-            "0 0 14px rgba(84,233,138,0.55), 0 0 28px rgba(84,233,138,0.35)",
+            "0 2px 4px rgba(0,0,0,0.85), 0 0 14px rgba(84,233,138,0.55), 0 0 28px rgba(84,233,138,0.35)",
         }}
       >
         Swipe To Kick
       </motion.h2>
+
+      <GoalFrame />
+      <Keeper diveTo={0} />
 
       {/* Foreground ball at bottom: 14 vh. Sized at 100 px so it still reads
           as "at the kicker's foot" without dominating the frame — the

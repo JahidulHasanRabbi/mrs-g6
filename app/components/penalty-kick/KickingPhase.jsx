@@ -85,6 +85,30 @@ export default function KickingPhase({ swipe, outcome, onLanded }) {
       className="relative flex w-full flex-1 select-none flex-col items-center justify-end"
       style={{ minHeight: 540 }}
     >
+      {/* Rendered FIRST so it stacks behind GoalFrame and Keeper —
+          the verdict reads as a stadium banner peeking through the net. */}
+      <h2
+        className="pointer-events-none absolute left-0 right-0 text-center text-[40px] font-bold tracking-wider uppercase"
+        style={{
+          top: "5%",
+          zIndex: 0,
+          color: COLORS.primary,
+          fontFamily: "'Lexend', sans-serif",
+          opacity: t > 0.6 ? 1 : 0,
+          transition: "opacity 0.2s ease-out",
+          WebkitTextStroke: "2px rgba(0,0,0,0.9)",
+          paintOrder: "stroke fill",
+          textShadow:
+            "0 2px 4px rgba(0,0,0,0.85), 0 0 14px rgba(84,233,138,0.55), 0 0 28px rgba(84,233,138,0.35)",
+        }}
+      >
+        {outcome.outcome === "goal"
+          ? "Goal!"
+          : outcome.outcome === "miss"
+            ? "Off-target!"
+            : "Saved!"}
+      </h2>
+
       <GoalFrame />
       <Keeper
         // On an off-target shot, force diveTo=0 so the keeper doesn't
@@ -126,23 +150,6 @@ export default function KickingPhase({ swipe, outcome, onLanded }) {
         }}
       />
 
-      <h2
-        className="pointer-events-none absolute left-0 right-0 top-[60px] text-center text-[40px] font-bold tracking-wider uppercase"
-        style={{
-          color: COLORS.primary,
-          fontFamily: "'Lexend', sans-serif",
-          opacity: t > 0.6 ? 1 : 0,
-          transition: "opacity 0.2s ease-out",
-          textShadow:
-            "0 0 14px rgba(84,233,138,0.55), 0 0 28px rgba(84,233,138,0.35)",
-        }}
-      >
-        {outcome.outcome === "goal"
-          ? "Goal!"
-          : outcome.outcome === "miss"
-            ? "Off-target!"
-            : "Saved!"}
-      </h2>
     </div>
   );
 }
