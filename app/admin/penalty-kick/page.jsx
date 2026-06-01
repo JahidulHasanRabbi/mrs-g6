@@ -8,6 +8,12 @@ import KeeperDifficultyModal from "../../components/admin/penalty-kick/KeeperDif
 import GameStatusModal from "../../components/admin/penalty-kick/GameStatusModal";
 import CostSettingModal from "../../components/admin/penalty-kick/CostSettingModal";
 import KickSequenceModal from "../../components/admin/penalty-kick/KickSequenceModal";
+import {
+  saveKeeperDifficultyMock,
+  saveCostMock,
+  saveGameStatusMock,
+  saveKickSequenceMock,
+} from "../../components/penalty-kick/mockApi";
 
 const GOLD_BG = "linear-gradient(101deg, #dc9d16 1%, #f2cb7a 98%)";
 
@@ -154,25 +160,36 @@ export default function PenaltyKickPage() {
         open={keeperOpen}
         initial={keeperData}
         onClose={() => setKeeperOpen(false)}
-        onSave={setKeeperData}
+        onSave={async (payload) => {
+          setKeeperData(payload);
+          await saveKeeperDifficultyMock(payload);
+        }}
       />
       <CostSettingModal
         open={costOpen}
         initial={costData}
         onClose={() => setCostOpen(false)}
-        onSave={setCostData}
+        onSave={async (payload) => {
+          setCostData(payload);
+          await saveCostMock(payload);
+        }}
       />
       <GameStatusModal
         open={statusOpen}
         initial={statusData}
         onClose={() => setStatusOpen(false)}
-        onSave={setStatusData}
+        onSave={async (payload) => {
+          setStatusData(payload);
+          await saveGameStatusMock(payload);
+        }}
       />
       <KickSequenceModal
         open={sequenceOpen}
         rewards={rewards.map((r) => ({ id: r.id, name: r.name }))}
         onClose={() => setSequenceOpen(false)}
-        onSave={(payload) => console.log("kick sequence", payload)}
+        onSave={async (payload) => {
+          await saveKickSequenceMock(payload);
+        }}
       />
     </div>
   );

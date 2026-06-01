@@ -30,9 +30,19 @@ export default function AppLayout({ children }) {
   const isHomePage = pathname === "/";
   const isSpinPage = pathname === "/spin";
   const isTermsPage = pathname === "/terms-and-conditions";
+  const isPenaltyKickPage = pathname === "/penalty-kick";
+  const isLeaderboardPage = pathname === "/leaderboard";
 
   // Don't show layout on home page
   if (isHomePage) {
+    return <>{children}</>;
+  }
+
+  // Penalty Kick and Leaderboard each draw their own top HUD + bottom
+  // FooterNav and need a full-bleed surface — skip the global header/
+  // footer chrome here so we don't end up with two stacked headers
+  // (the global hamburger + the page's "LEADERBOARDS" bar).
+  if (isPenaltyKickPage || isLeaderboardPage) {
     return <>{children}</>;
   }
 

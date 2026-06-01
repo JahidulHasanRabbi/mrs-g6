@@ -1,0 +1,46 @@
+export const LB_COLORS = {
+  bg: "#121414",
+  primary: "#54E98A",
+  primaryDeep: "#003919",
+  primarySoft: "rgba(84,233,138,0.1)",
+  primarySoft20: "rgba(84,233,138,0.2)",
+  primaryGreenBtn: "#54E98A",
+  gold: "#FFDD74",
+  goldStrong: "#E9DD54",
+  blueTier: "#5FBAFF",
+  cyan: "#54DAE9",
+  challengerTier: "#3D4A3E",
+  textPrimary: "#E2E2E2",
+  textMuted: "#BBCBBB",
+  textWhite: "#FFFFFF",
+  rankGreen: "#51FF90",
+  red: "#FF3B30",
+  blue: "#007AFF",
+  orange: "#FF9500",
+  panelDark: "rgba(40,42,43,0.95)",
+  panelLight: "rgba(255,255,255,0.05)",
+  cardOverlay: "rgba(18,20,20,0.7)",
+  borderSoft: "rgba(255,255,255,0.1)",
+  borderGreen30: "rgba(84,233,138,0.3)",
+  borderGreen50: "rgba(84,233,138,0.5)",
+};
+
+export const LB_SCREENS = {
+  NATION_SELECT: "NATION_SELECT",
+  ONBOARDING: "ONBOARDING",
+  COUNTRIES: "COUNTRIES",
+  GLOBAL_PLAYERS: "GLOBAL_PLAYERS",
+  MY_COUNTRY: "MY_COUNTRY",
+  PREDICTIONS_LIST: "PREDICTIONS_LIST",
+  MY_PREDICTIONS: "MY_PREDICTIONS",
+  PRIZE_COUNTRY: "PRIZE_COUNTRY",
+  PRIZE_PLAYERS: "PRIZE_PLAYERS",
+  PRIZE_PREDICTIONS: "PRIZE_PREDICTIONS",
+  PRIZE_INFO: "PRIZE_INFO",
+};
+
+export const LB_TABS = {
+  COUNTRIES: "COUNTRIES",
+  PLAYERS: "PLAYERS",
+  PREDICTIONS: "PREDICTIONS",
+};

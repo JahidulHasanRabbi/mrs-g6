@@ -1,0 +1,164 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { KEEPER } from "./assets";
+
+// 4-frame sprite dive animation:
+//   idle  → no-move
+//   dive  → jump-{side}-1 → 2 → 3 → 4   (after delayMs)
+//   land  → save-{side} on a save, jump-{side} (extended mid-air pose) on a miss
+//
+// `diveTo` is -1 (left), 0 (center), or 1 (right).
+// `outcome` is "save" or "goal" — picks the landing sprite.
+// `delayMs` waits before the keeper reacts — higher difficulty reads earlier.
+// `kicking` triggers the dive; when false the keeper resets to idle.
+
+const FRAME_MS = 130;       // time between dive frames (4 frames × 130 = 520ms total dive)
+const TOTAL_DIVE_MS = FRAME_MS * 4;
+const IDLE_FRAME_MS = 360;  // time between still-pose cycle frames — quicker = more alert
+// Maximum sideways translation for a full-aim dive (|diveAim|=1). Calibrated
+// to match the ball's max endX offset from goal center (≈ aim × half_goal_width).
+// At GOAL_HALF_WIDTH_PCT=0.36 on a 475-px surface this is 171 px, so the
+// keeper's hand reaches the ball even on a far-post save instead of leaving
+// a visible gap (which made the "Saved!" verdict look wrong).
+const DIVE_TRAVEL_PX = 170;
+
+export default function Keeper({
+  diveTo = 0,
+  // Signed magnitude (-1..1) the keeper should commit to during the dive.
+  // For a save, KickingPhase passes the actual swipe aim so the keeper
+  // lands on top of the ball (not just in the same zone). For a goal /
+  // wrong-foot dive, it's the opposite sign at a reduced magnitude.
+  // Falls back to sign(diveTo) when unspecified.
+  diveAim,
+  outcome = "save",
+  delayMs = 0,
+  kicking = false,
+}) {
+  // 0 = idle, 1-4 = dive frames, 5 = landed save pose
+  const [phase, setPhase] = useState(0);
+  // Index into the 3-frame idle pose cycle. Advanced on a setInterval
+  // while the keeper is waiting; reset to 0 when the kick fires so the
+  // dive starts from a consistent base pose.
+  const [idleFrame, setIdleFrame] = useState(0);
+
+  useEffect(() => {
+    if (!kicking) {
+      setPhase(0);
+      return;
+    }
+    setIdleFrame(0);
+    const timers = [];
+    // Keeper stays planted when "diving" to centre — no dive frames, just
+    // a settle into the appropriate landing pose.
+    if (diveTo === 0) {
+      timers.push(setTimeout(() => setPhase(5), delayMs));
+    } else {
+      timers.push(setTimeout(() => setPhase(1), delayMs));
+      timers.push(setTimeout(() => setPhase(2), delayMs + FRAME_MS));
+      timers.push(setTimeout(() => setPhase(3), delayMs + FRAME_MS * 2));
+      timers.push(setTimeout(() => setPhase(4), delayMs + FRAME_MS * 3));
+      timers.push(setTimeout(() => setPhase(5), delayMs + TOTAL_DIVE_MS));
+    }
+    return () => timers.forEach(clearTimeout);
+  }, [kicking, diveTo, delayMs]);
+
+  // Cycle the still-pose frames while idle. The cycle freezes the moment a
+  // kick fires (kicking=true) so the keeper holds whatever pose they were
+  // on as their "ready / reading the shot" stance through delayMs — feels
+  // like they're tracking the ball instead of casually shifting weight.
+  useEffect(() => {
+    if (phase !== 0 || kicking) return;
+    const id = setInterval(() => {
+      setIdleFrame((i) => (i + 1) % KEEPER.idleCycle.length);
+    }, IDLE_FRAME_MS);
+    return () => clearInterval(id);
+  }, [phase, kicking]);
+
+  const src = pickSprite(phase, diveTo, outcome, idleFrame);
+  const isLanded = phase === 5;
+  const isDiving = phase >= 1 && phase <= 4;
+
+  // Diving sprites + side-save / mid-dive landing poses are landscape; the
+  // idle and centre-save sprites are portrait. Container scales to fit,
+  // anchored on the keeper's feet at the goal line.
+  const isLandscape = isDiving || (isLanded && diveTo !== 0);
+
+  // Horizontal travel during the dive — the keeper's container slides
+  // toward the actual ball landing point as the sprite frames cycle.
+  // Magnitude comes from diveAim (signed, |aim|=1 is full reach); the
+  // sprite direction still comes from diveTo. CSS transition between
+  // phase changes smooths the leap. Without this scaling the keeper
+  // under-reaches on corner saves and the verdict "Saved!" looks wrong.
+  const aimMag = diveAim ?? Math.sign(diveTo);
+  const diveProgress =
+    phase === 1 ? 0.28 :
+    phase === 2 ? 0.62 :
+    phase === 3 ? 0.88 :
+    phase >= 4  ? 1.0  : 0;
+  const diveOffsetPx = aimMag * diveProgress * DIVE_TRAVEL_PX;
+
+  return (
+    <div
+      className="pointer-events-none absolute"
+      style={{
+        left: "50%",
+        // Feet on the same 58-vh grass line as the goal post, so the
+        // keeper stands AT the goal line on the distant-grass strip.
+        // Sized 120 / 165 px to fit the larger 400-wide goal mouth —
+        // proportions stay aligned with GoalFrame width so the keeper
+        // reads as standing INSIDE the goal, not in front of it.
+        bottom: "58vh",
+        width: isLandscape ? 220 : 120,
+        height: 165,
+        // translateX -50% centers the container; the second term slides
+        // it toward the post during a dive. transition smooths the move
+        // across the discrete phase changes so the keeper visibly leaps.
+        transform: `translateX(calc(-50% + ${diveOffsetPx}px))`,
+        transition: kicking
+          ? `transform ${FRAME_MS}ms cubic-bezier(0.25, 0.6, 0.35, 1)`
+          : "none",
+      }}
+    >
+      {/* Idle: cycles through the 3 still poses to create real weight-shift
+          motion. Once kicking, dive frames + landing pose take over. Both
+          left and right dive sprites are natively drawn — no CSS mirror. */}
+      <img
+        src={src}
+        alt=""
+        draggable={false}
+        className="block h-full w-full select-none"
+        style={{
+          objectFit: "contain",
+          objectPosition: "bottom center",
+          filter: "drop-shadow(0 6px 10px rgba(0,0,0,0.55))",
+        }}
+      />
+    </div>
+  );
+}
+
+function pickSprite(phase, diveTo, outcome, idleFrame) {
+  // Idle — cycle through still-pose frames so the keeper visibly moves.
+  if (phase === 0) return KEEPER.idleCycle[idleFrame] ?? KEEPER.noMove;
+
+  // Mid-dive frame (phase 1..4)
+  if (phase >= 1 && phase <= 4) {
+    const idx = phase - 1;
+    if (diveTo === -1) return KEEPER.diveLeft[idx];
+    if (diveTo === 1) return KEEPER.diveRight[idx];
+    return KEEPER.noMove; // centre never reaches dive phases
+  }
+
+  // Landed (phase 5) — sprite depends on whether the keeper saved or missed.
+  if (diveTo === 0) {
+    // No dive: catch standing if saved, otherwise just stay idle (ball
+    // went past).
+    return outcome === "save" ? KEEPER.saveCenter : KEEPER.noMove;
+  }
+  // Side saves and side misses both end on the extended mid-air pose —
+  // the save-{side} sprites are intentionally unused (the keeper holding a
+  // ball in glove read poorly against the dive frames).
+  if (diveTo === -1) return KEEPER.jumpLeft;
+  return KEEPER.jumpRight;
+}
