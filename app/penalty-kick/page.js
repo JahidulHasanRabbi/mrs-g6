@@ -81,22 +81,31 @@ export default function PenaltyKickPage() {
       if (!resolved.valid) return;
       pendingKickRef.current = true;
 
-      setSwipeData(resolved);
-      setPhase(PHASES.KICKING);
-      play("kick");
-
+      // Resolve the outcome BEFORE switching to the kicking scene. The ball's
+      // flight path depends on whether the shot is off-target (a server
+      // decision), so the animation can't start until the result is in.
+      // Switching to KICKING first — as this used to — left AnimatePresence
+      // with no renderable KICKING child during the request window (the
+      // child is gated on `outcome`), so the goal + keeper blinked out for a
+      // moment: the flicker seen on swipe. The resting ball keeps pulsing in
+      // READY while we wait, then all four state writes below land in one
+      // batched commit so KICKING mounts fully-formed.
+      let res;
       try {
         const memberUuid = tokenStorage.getMemberUuid();
-        const res = await kickMock(memberUuid, resolved, {
+        res = await kickMock(memberUuid, resolved, {
           difficulty: config.difficulty,
         });
-        setOutcome(res);
-        setReward(res.reward);
       } catch (err) {
         console.error("kick failed", err);
-        setOutcome({ outcome: "save", saveDelayMs: 200 });
-        setReward(null);
+        res = { outcome: "save", saveDelayMs: 200, reward: null };
       }
+
+      setSwipeData(resolved);
+      setOutcome(res);
+      setReward(res.reward ?? null);
+      setPhase(PHASES.KICKING);
+      play("kick");
     },
     [config.difficulty, play],
   );
@@ -239,7 +248,13 @@ export default function PenaltyKickPage() {
               key="ready"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              // Exit instantly (no fade) so the swap to KICKING is a hard cut.
+              // READY and KICKING render the identical goal + keeper at the
+              // same anchors, and the resting ball sits exactly where the
+              // kicking ball starts — so an un-faded cut is seamless, whereas
+              // a fade-out-then-fade-in (the default with mode="wait") made
+              // the goal/keeper visibly blink.
+              exit={{ opacity: 1, transition: { duration: 0 } }}
               className="flex flex-1 flex-col"
             >
               <ReadyPhase setSurface={setSurface} surfaceHandlers={surfaceHandlers} />
@@ -248,7 +263,9 @@ export default function PenaltyKickPage() {
           {phase === PHASES.KICKING && swipeData && outcome && (
             <motion.div
               key="kicking"
-              initial={{ opacity: 0 }}
+              // Mount at full opacity (no fade-in) so it takes over from READY
+              // in a single frame — see the READY exit note above.
+              initial={false}
               animate={{ opacity: 1 }}
               className="flex flex-1 flex-col"
             >
