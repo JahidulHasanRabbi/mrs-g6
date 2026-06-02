@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getCrmMembers, getCrmUsers, getCrmVipTiers } from "../../../api/crmApi";
-import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
 import { Pagination } from "../../../components/admin/members/DataTable";
+import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
 
 const A = "/assets/admin/pic-dashboard";
 
@@ -59,7 +59,7 @@ export default function RetentionMembersPage() {
     getCrmVipTiers({ page: 1, page_size: 100 })
       .then((res) => {
         const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
-        setVipTiers(results.map((t, i) => ({ name: t.name, level: i + 1 })));
+        setVipTiers(results.map((t, i) => ({ name: t.name || t.tier_name || t.level || t.uuid, level: i + 1 })).filter((t) => t.name));
       })
       .catch(() => setVipTiers([]));
   }, []);
@@ -81,15 +81,15 @@ export default function RetentionMembersPage() {
     const fetchRows = async () => {
       setLoading(true);
       try {
-        const retentionUuid = pic
-          ? pics.find((u) => (u.full_name || u.username) === pic)?.uuid
+        const retentionUser = pic
+          ? pics.find((u) => (u.full_name || u.username) === pic)
           : undefined;
         const res = await getCrmMembers({
           page,
           page_size: PAGE_SIZE,
           priority: priority ? PRIORITY_TO_INT[priority] : undefined,
           mrs_vip_level: vip || undefined,
-          retention: retentionUuid || undefined,
+          retention: retentionUser?.id ?? retentionUser?.uuid ?? undefined,
           search: debouncedQuery || undefined,
         });
         if (cancelled) return;
@@ -109,7 +109,7 @@ export default function RetentionMembersPage() {
     return () => {
       cancelled = true;
     };
-  }, [page, priority, vip, pic, pics, vipTiers, debouncedQuery]);
+  }, [page, priority, vip, pic, pics, debouncedQuery]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -393,102 +393,3 @@ function UserAvatar() {
   );
 }
 
-// Build the page chip list with ellipsis. When there are 7 or fewer pages we
-// just list them all. Otherwise we always show the first and last page, and
-// a 1-page window around the current page, inserting ellipsis where there's a
-// gap so we never render adjacent numbers like "1, 2" with an ellipsis in
-// between.
-function buildPageItems(currentPage, totalPages) {
-  if (totalPages <= 7) {
-    return Array.from({ length: totalPages }, (_, i) => i + 1);
-  }
-  const items = [1];
-  const start = Math.max(2, currentPage - 1);
-  const end = Math.min(totalPages - 1, currentPage + 1);
-  if (start > 2) items.push("ellipsis-l");
-  for (let p = start; p <= end; p += 1) items.push(p);
-  if (end < totalPages - 1) items.push("ellipsis-r");
-  items.push(totalPages);
-  return items;
-}
-
-function PaginationBar({ from, to, total, page, totalPages, onPageChange }) {
-  const items = buildPageItems(page, totalPages);
-  const prevDisabled = page <= 1;
-  const nextDisabled = page >= totalPages;
-
-  return (
-    <div className="flex min-h-[44px] w-full items-center justify-between gap-3 flex-wrap px-6 py-3">
-      <span className="text-[8px] text-white leading-[12px]">
-        Showing {from} to {to} of {total} Results
-      </span>
-      <div className="flex items-center gap-[5.5px]">
-        <PageButton
-          onClick={() => onPageChange(Math.max(1, page - 1))}
-          disabled={prevDisabled}
-          ariaLabel="Previous page"
-        >
-          <PageChevron direction="left" />
-        </PageButton>
-        {items.map((item) =>
-          typeof item === "number" ? (
-            <PageNumber
-              key={item}
-              value={item}
-              active={item === page}
-              onClick={() => onPageChange(item)}
-            />
-          ) : (
-            <span key={item} className="text-[8px] text-white leading-[12px]">....</span>
-          )
-        )}
-        <PageButton
-          onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-          disabled={nextDisabled}
-          ariaLabel="Next page"
-        >
-          <PageChevron direction="right" />
-        </PageButton>
-      </div>
-    </div>
-  );
-}
-
-function PageNumber({ value, active, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex h-[18px] w-[18px] items-center justify-center rounded-[4px] text-[8px] text-white leading-[12px] ${
-        active ? "bg-[#eaad2c]" : "border border-[#eaad2c] hover:bg-[#eaad2c]/20"
-      }`}
-    >
-      {value}
-    </button>
-  );
-}
-
-function PageButton({ children, onClick, ariaLabel, disabled }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={ariaLabel}
-      disabled={disabled}
-      className={`flex h-[18px] w-[18px] items-center justify-center rounded-[4px] border border-[#eaad2c] ${
-        disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-[#eaad2c]/20"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
-function PageChevron({ direction }) {
-  const rotate = direction === "left" ? "rotate(180deg)" : "rotate(0deg)";
-  return (
-    <svg width="6" height="10" viewBox="0 0 6 10" fill="none" style={{ transform: rotate }}>
-      <path d="M1 1l4 4-4 4" stroke="#eaad2c" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}

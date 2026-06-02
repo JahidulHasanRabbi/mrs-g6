@@ -141,13 +141,12 @@ function KpiGrid({ summary, loading }) {
   return (
     <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
       {KPI_META.map((meta) => {
+        if (loading) return <KpiCardSkeleton key={meta.id} />;
         const raw = summary?.[meta.key];
         let value = "-";
-        if (!loading) {
-          if (meta.type === "currency") value = formatCurrency(raw);
-          else if (meta.type === "percent") value = formatPercent(raw);
-          else value = formatNumber(raw);
-        }
+        if (meta.type === "currency") value = formatCurrency(raw);
+        else if (meta.type === "percent") value = formatPercent(raw);
+        else value = formatNumber(raw);
         return (
           <KpiCard
             key={meta.id}
@@ -159,6 +158,32 @@ function KpiGrid({ summary, loading }) {
           />
         );
       })}
+    </div>
+  );
+}
+
+function SkeletonBlock({ className = "" }) {
+  return (
+    <div
+      className={`animate-pulse rounded-[8px] bg-white/10 ${className}`}
+      style={{ boxShadow: "inset 0 0 0 1px rgba(242,203,122,0.08)" }}
+    />
+  );
+}
+
+function KpiCardSkeleton() {
+  return (
+    <div
+      className="flex flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-3 sm:p-5 xl:p-3 2xl:p-5 [@media(min-width:1700px)]:p-6"
+      style={{ backgroundImage: GRAD_CARD }}
+    >
+      <div className="flex w-full items-start gap-2 sm:gap-4 xl:gap-2 2xl:gap-4">
+        <SkeletonBlock className="h-9 w-9 shrink-0 rounded-[4px] sm:h-12 sm:w-12 xl:h-9 xl:w-9 2xl:h-11 2xl:w-11 [@media(min-width:1700px)]:h-12 [@media(min-width:1700px)]:w-12" />
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <SkeletonBlock className="h-[14px] w-[72%]" />
+          <SkeletonBlock className="h-[32px] w-[58%]" />
+        </div>
+      </div>
     </div>
   );
 }

@@ -106,7 +106,7 @@ function inferActiveBrands(customerData) {
   if (!Array.isArray(walletLevels) || walletLevels.length === 0) return [];
   return walletLevels
     .map((item) => {
-      const name = String(item?.Station || item?.station || "").trim().toLowerCase();
+      const name = normalizeLookup(item?.Station || item?.station || item?.station_name);
       return STATION_TO_BRAND[name] ?? null;
     })
     .filter(Boolean);

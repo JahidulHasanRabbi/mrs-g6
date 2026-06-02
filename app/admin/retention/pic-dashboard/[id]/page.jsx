@@ -231,12 +231,41 @@ function PicProfileHeader({ name, period, onPeriodChange, fromDate, toDate }) {
 }
 
 function KpiGrid({ summary, loading }) {
-  const items = loading ? KPIS.map((k) => ({ ...k, total: "—", values: VIP_LEVELS.map(() => "—") })) : buildKpis(summary);
+  const items = buildKpis(summary);
   return (
     <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
       {items.map((k) => (
-        <DetailKpiCard key={k.id} kpi={k} />
+        loading ? <DetailKpiCardSkeleton key={k.id} /> : <DetailKpiCard key={k.id} kpi={k} />
       ))}
+    </div>
+  );
+}
+
+function SkeletonBlock({ className = "" }) {
+  return (
+    <div
+      className={`animate-pulse rounded-[8px] bg-white/10 ${className}`}
+      style={{ boxShadow: "inset 0 0 0 1px rgba(242,203,122,0.08)" }}
+    />
+  );
+}
+
+function DetailKpiCardSkeleton() {
+  return (
+    <div className="flex min-w-0 flex-col gap-4 rounded-[16px] bg-[rgba(5,6,10,0.4)] p-5 shadow-[0_0_3px_0_#dea220] 2xl:p-4 [@media(min-width:1700px)]:p-6">
+      <div className="flex w-full items-start gap-3">
+        <SkeletonBlock className="h-[18px] flex-1" />
+        <SkeletonBlock className="h-[18px] w-[58px]" />
+      </div>
+      <div className="flex flex-col gap-4">
+        {VIP_LEVELS.map((level) => (
+          <div key={level} className="flex w-full items-center gap-3">
+            <SkeletonBlock className="h-6 w-6 shrink-0 rounded-[4px]" />
+            <SkeletonBlock className="h-[16px] flex-1" />
+            <SkeletonBlock className="h-[16px] w-[58px]" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -403,9 +432,7 @@ function MemberListSection({ onRefreshSummary }) {
             <MemberTableHeader />
             <div className="flex w-full flex-col">
               {loading ? (
-                <div className="px-6 py-10 text-center b-4 text-white/60">
-                  Loading...
-                </div>
+                Array.from({ length: PAGE_SIZE }).map((_, i) => <MemberSkeletonRow key={i} />)
               ) : rows.length === 0 ? (
                 <div className="px-6 py-10 text-center b-4 text-white/60">
                   No members match the current filters.
@@ -428,6 +455,27 @@ function MemberListSection({ onRefreshSummary }) {
         />
       </div>
     </section>
+  );
+}
+
+function MemberSkeletonRow() {
+  return (
+    <div className="flex w-full items-center -mb-px border-b border-white/5">
+      <div className="flex h-full w-[197px] shrink-0 items-center gap-3 p-6">
+        <SkeletonBlock className="h-8 w-8 shrink-0 rounded-full" />
+        <SkeletonBlock className="h-[18px] w-[120px]" />
+      </div>
+      {Array.from({ length: 6 }).map((_, index) => (
+        <div key={index} className="flex flex-1 min-w-0 items-center self-stretch">
+          <div className="flex h-full flex-1 flex-col justify-center p-6">
+            <SkeletonBlock className="h-[18px] w-[78px]" />
+          </div>
+        </div>
+      ))}
+      <div className="flex h-full w-[130px] shrink-0 items-center justify-end p-6">
+        <SkeletonBlock className="h-[34px] w-[82px]" />
+      </div>
+    </div>
   );
 }
 
