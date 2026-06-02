@@ -5,13 +5,17 @@ import { COLORS } from "./constants";
 import GoalFrame from "./GoalFrame";
 import Keeper from "./Keeper";
 import Ball from "./Ball";
+import { useResponsiveScale } from "./useResponsiveScale";
 
 export default function ReadyPhase({ surfaceHandlers, setSurface }) {
+  // 100 px at the 475 design width; scales down on narrow phones and matches
+  // the kicking ball so there's no size pop when the swipe fires.
+  const ballSize = Math.round(100 * useResponsiveScale());
   return (
     <div
       ref={setSurface}
       {...surfaceHandlers}
-      className="relative flex w-full flex-1 touch-none select-none flex-col items-center justify-end"
+      className="relative flex w-full flex-1 cursor-grab touch-none select-none flex-col items-center justify-end active:cursor-grabbing"
       style={{ minHeight: 540 }}
     >
       {/* Rendered FIRST so it stacks behind GoalFrame and Keeper —
@@ -20,10 +24,17 @@ export default function ReadyPhase({ surfaceHandlers, setSurface }) {
         initial={{ y: 10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.35, ease: "easeOut" }}
-        className="pointer-events-none absolute left-0 right-0 text-center text-[32px] font-bold tracking-wider uppercase"
+        className="pointer-events-none absolute left-0 right-0 text-center font-bold tracking-wider uppercase"
         style={{
-          top: "12%",
+          // Sits ABOVE the goal: the crossbar is at 48vh + goalWidth×0.494
+          // (the goalpost image aspect 643/1302), and +16px lifts the text
+          // just clear of it into the dark crowd band above the goal.
+          bottom: "calc(48vh + min(400px, 84vw) * 0.494 + 16px)",
           zIndex: 0,
+          // 32px at the 475 design width; the low floor lets it shrink to
+          // fit the smaller goal mouth on narrow phones (else it overflows
+          // the crossbar).
+          fontSize: "clamp(16px, 6.7vw, 32px)",
           color: COLORS.primary,
           fontFamily: "'Lexend', sans-serif",
           // Dark stroke gives the text a hard edge against the net mesh
@@ -48,10 +59,12 @@ export default function ReadyPhase({ surfaceHandlers, setSurface }) {
           ball and goal. z-10 keeps it visually in front of goal/keeper.
           marginTop: 0 cancels Ball's default top-anchor centering. */}
       <Ball
-        size={100}
+        size={ballSize}
         style={{
           left: "50%",
-          bottom: "14vh",
+          // 24vh keeps the penalty-spot ball clear of the token pills +
+          // footer at the bottom of the scene (the pills sit ~15vh up).
+          bottom: "24vh",
           marginTop: 0,
           zIndex: 10,
         }}

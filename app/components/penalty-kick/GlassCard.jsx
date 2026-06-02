@@ -10,7 +10,7 @@ export default function GlassCard({ children, className = "", style }) {
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: 6 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
-      className={`w-[350px] max-w-full rounded-[12px] p-[17px] backdrop-blur-[10px] ${className}`}
+      className={`w-full max-w-[350px] rounded-[12px] p-[17px] backdrop-blur-[10px] ${className}`}
       style={{
         backgroundColor: COLORS.glassFill,
         border: `1px solid ${COLORS.glassBorder}`,

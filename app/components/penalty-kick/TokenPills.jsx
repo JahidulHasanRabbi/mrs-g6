@@ -70,7 +70,9 @@ export default function TokenPills({ tokens = 0, perShot = 0 }) {
       <div
         className="flex items-center gap-2 rounded-[12px] px-[17px] py-[9px] backdrop-blur-[10px]"
         style={{
-          width: 142,
+          // 142px at the 475 design width; shrinks on narrow phones so the
+          // two pills don't collide, with a floor that keeps "24.00" legible.
+          width: "min(142px, 42vw)",
           backgroundColor: "rgba(255,255,255,0.1)",
           border: "1px solid rgba(255,255,255,0.2)",
         }}

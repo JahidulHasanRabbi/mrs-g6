@@ -66,17 +66,40 @@ export function resolveSwipe(path) {
 // (the marked target stripe). Vertical aim variation was tried earlier
 // but felt inconsistent; locking the height keeps the read clean —
 // only horizontal aim and curl matter for outcome.
-const GOAL_LINE_Y_PCT = 0.25;      // ball lands at keeper-shoulder height
+//
+// The landing point is derived from the SAME viewport-height anchor that
+// GoalFrame/Keeper use (CSS `bottom: 48vh`), so the ball lands on the goal
+// mouth on every device instead of drifting off a width- or surface-based
+// endpoint.
+// Goal base + resting-ball positions as fractions of VIEWPORT HEIGHT —
+// these mirror the CSS anchors (`bottom: 48vh` on GoalFrame/Keeper,
+// `bottom: 24vh` on the ReadyPhase ball). Driving the trajectory off the
+// same height basis keeps the kick aligned with the rendered goal/ball on
+// every device.
+const GOAL_BASE_VH = 0.48;
+const BALL_REST_VH = 0.24;
+// Keeper shoulder (the marked target stripe) sits ~105 px above the goal
+// base at the 475-px design width. Expressed as a fraction of surface
+// width (105 / 475) so it tracks the keeper's now-fluid height — the ball
+// lands on the shoulder on every device, not 105 px up regardless of how
+// small the keeper has scaled.
+const KEEPER_SHOULDER_RATIO = 0.221;
 const GOAL_HALF_WIDTH_PCT = 0.36;  // ball stays clear of the posts at aim=1
 
 export function buildTrajectory({
   width,
   height,
+  // Viewport height — used to place the start (resting ball, 24vh) and the
+  // goal base (48vh) so the trajectory matches the CSS-anchored visuals.
+  // Falls back to height/0.85 (surface ≈ 85% of viewport after the header)
+  // for the synthetic pre-measure render.
+  viewportHeight,
   aim,
   power,
   curl,
   offTarget = false,
 }) {
+  const vh = viewportHeight || height / 0.85;
   const goalHalfWidth = width * GOAL_HALF_WIDTH_PCT;
   // Off-target shots push the ball ~1.8× past the goal edge along the
   // aim direction — far enough that the post is clearly missed. The
@@ -86,12 +109,16 @@ export function buildTrajectory({
   const endX = width / 2 + aim * goalHalfWidth * horizontalScale;
 
   const startX = width / 2;
-  // startY aligns with the ReadyPhase ball at bottom: 14vh. In surface
-  // fractions that lands the ball center around 0.79 of the wrapper
-  // height — so the kicking ball appears exactly where the resting ball
-  // was, no vertical jump at phase swap.
-  const startY = height * 0.79;
-  const endY = height * GOAL_LINE_Y_PCT;
+  // startY aligns with the ReadyPhase ball at bottom: 24vh (the surface
+  // bottom is the viewport bottom — the footer overlays it). Converting to
+  // a top-anchored Y keeps the kicking ball exactly where the resting ball
+  // was, so there's no vertical jump at the phase swap.
+  const startY = height - BALL_REST_VH * vh;
+  // Goal base at 48vh from the bottom (matches GoalFrame/Keeper). Convert
+  // to a top-anchored Y (the ball uses `top`) and lift to the keeper's
+  // shoulder so the ball lands on the goal mouth on every device.
+  const goalBaseFromBottom = GOAL_BASE_VH * vh;
+  const endY = height - goalBaseFromBottom - width * KEEPER_SHOULDER_RATIO;
 
   // Arc height — power scales the parabola peak. Capped so the trajectory
   // peak stays below the crossbar, even at max power.

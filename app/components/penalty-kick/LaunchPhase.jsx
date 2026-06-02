@@ -21,8 +21,9 @@ export default function LaunchPhase({ onStart }) {
         initial={{ y: 12, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.15, duration: 0.35, ease: "easeOut" }}
-        className="mb-10 text-[40px] font-bold tracking-wider uppercase"
+        className="mb-10 font-bold tracking-wider uppercase"
         style={{
+          fontSize: "clamp(28px, 8.4vw, 40px)",
           color: COLORS.primary,
           fontFamily: "'Lexend', sans-serif",
           textShadow:

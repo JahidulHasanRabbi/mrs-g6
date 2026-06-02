@@ -262,22 +262,17 @@ export default function PenaltyKickPage() {
         </AnimatePresence>
       </div>
 
-      {/* Pills change position by phase, matching the Figma's two layouts:
-          - Loading / Launch  → float above the arcade footer (bottom: 130 px)
-          - Ready / Kicking  → tuck right under the header so the bottom
-                               half of the scene stays clear for the goal
-                               + ball, which sit on the pitch backdrop. */}
+      {/* Token pills float just above the arcade footer in every phase
+          (bottom: 130 px). Keeping them at the bottom clears the goal +
+          "Swipe To Kick" banner at the top of the gameplay scene — at the
+          top they overlapped both. The whole overlay is pointer-events-none
+          (the pills have nothing to tap) so it never intercepts the swipe
+          gesture that drives the kick. */}
       <div
         className="pointer-events-none absolute left-0 right-0 z-20"
-        style={
-          phase === PHASES.READY || phase === PHASES.KICKING
-            ? { top: 72 }
-            : { bottom: 130 }
-        }
+        style={{ bottom: 130 }}
       >
-        <div className="pointer-events-auto">
-          <TokenPills tokens={config.tokensBalance} perShot={config.tokenPerShot} />
-        </div>
+        <TokenPills tokens={config.tokensBalance} perShot={config.tokenPerShot} />
       </div>
 
       {/* Same FooterNav the rest of the member pages use. It pins itself

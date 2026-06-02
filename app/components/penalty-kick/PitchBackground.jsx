@@ -23,7 +23,17 @@ export default function PitchBackground({ variant = "close", children }) {
           className="absolute inset-0"
           style={{
             backgroundImage: `url(${IMAGES.stadiumBg})`,
-            backgroundSize: "200% auto",
+            // Sized to 175% of the VIEWPORT HEIGHT (not width) and bottom-
+            // anchored. Height-based sizing keeps the grass horizon at a
+            // consistent fraction of the screen on every aspect ratio — a
+            // width-based zoom (the old "200% auto") under-zoomed on narrow
+            // tall phones, leaving a big dark crowd band above the goal and
+            // dropping the horizon too low. The goal/keeper anchor to the
+            // same height basis (48vh) so they always sit on this horizon.
+            // 175% (vs a lower zoom) lifts the photo's crowd→field seam up
+            // BEHIND the goal net, so the foreground grass is continuous
+            // from the goal line down — no flat horizon band below the goal.
+            backgroundSize: "auto 175%",
             backgroundPosition: "center bottom",
             backgroundRepeat: "no-repeat",
           }}

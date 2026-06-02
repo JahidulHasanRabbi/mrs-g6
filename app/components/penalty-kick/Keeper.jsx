@@ -34,6 +34,11 @@ export default function Keeper({
   outcome = "save",
   delayMs = 0,
   kicking = false,
+  // Max sideways travel for a full-aim dive, in px. Defaults to the 475-px
+  // design value; KickingPhase passes a width-scaled value so the keeper's
+  // reach shrinks with the (now responsive) goal on narrow phones and still
+  // meets the ball at the post.
+  diveTravelPx = DIVE_TRAVEL_PX,
 }) {
   // 0 = idle, 1-4 = dive frames, 5 = landed save pose
   const [phase, setPhase] = useState(0);
@@ -96,21 +101,24 @@ export default function Keeper({
     phase === 2 ? 0.62 :
     phase === 3 ? 0.88 :
     phase >= 4  ? 1.0  : 0;
-  const diveOffsetPx = aimMag * diveProgress * DIVE_TRAVEL_PX;
+  const diveOffsetPx = aimMag * diveProgress * diveTravelPx;
 
   return (
     <div
       className="pointer-events-none absolute"
       style={{
         left: "50%",
-        // Feet on the same 58-vh grass line as the goal post, so the
-        // keeper stands AT the goal line on the distant-grass strip.
+        // Feet on the same 48vh grass-line anchor as the goal post (see
+        // GoalFrame) so the keeper stands at the goal line on the horizon.
         // Sized 120 / 165 px to fit the larger 400-wide goal mouth —
         // proportions stay aligned with GoalFrame width so the keeper
         // reads as standing INSIDE the goal, not in front of it.
-        bottom: "58vh",
-        width: isLandscape ? 220 : 120,
-        height: 165,
+        bottom: "48vh",
+        // Fluid on the 475-px design basis (220/120/165 ÷ 475), so the
+        // keeper shrinks in lockstep with the goal on narrow phones and
+        // keeps its proportions inside the goal mouth.
+        width: isLandscape ? "min(220px, 46.3vw)" : "min(120px, 25.3vw)",
+        height: "min(165px, 34.7vw)",
         // translateX -50% centers the container; the second term slides
         // it toward the post during a dive. transition smooths the move
         // across the discrete phase changes so the keeper visibly leaps.
