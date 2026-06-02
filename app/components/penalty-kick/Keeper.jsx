@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { KEEPER } from "./assets";
 
 // 4-frame sprite dive animation:
@@ -23,6 +23,16 @@ const IDLE_FRAME_MS = 360;  // time between still-pose cycle frames — quicker 
 // a visible gap (which made the "Saved!" verdict look wrong).
 const DIVE_TRAVEL_PX = 170;
 
+// Horizontal position of the keeper's extended *catching* glove inside the
+// landscape dive sprite, as a signed fraction of the container width measured
+// out from its centre (the sprite is 4:3 and exactly fills the 4:3 landscape
+// container, so sprite fractions map 1:1 onto the rendered box). Measured from
+// the artwork: jump-right-4 glove sits at x-frac 0.915 (+0.415 from centre),
+// jump-left glove at x-frac 0.098 (-0.402). On a save we slide the keeper IN
+// by this much so the glove — not the torso centre — lands on the ball,
+// closing the gap that made "Saved!" look like the ball flew past the hand.
+const SAVE_GLOVE_FRAC = { "-1": -0.402, 1: 0.415 };
+
 export default function Keeper({
   diveTo = 0,
   // Signed magnitude (-1..1) the keeper should commit to during the dive.
@@ -42,6 +52,12 @@ export default function Keeper({
 }) {
   // 0 = idle, 1-4 = dive frames, 5 = landed save pose
   const [phase, setPhase] = useState(0);
+  // Rendered container width in px. The glove correction is a fraction of the
+  // sprite (= container) width, so we measure the actual box rather than
+  // assume the 220-px design value — it shrinks with the goal on narrow
+  // phones (width is min(220px, 46.3vw)).
+  const containerRef = useRef(null);
+  const [containerW, setContainerW] = useState(220);
   // Index into the 3-frame idle pose cycle. Advanced on a setInterval
   // while the keeper is waiting; reset to 0 when the kick fires so the
   // dive starts from a consistent base pose.
@@ -89,6 +105,19 @@ export default function Keeper({
   // anchored on the keeper's feet at the goal line.
   const isLandscape = isDiving || (isLanded && diveTo !== 0);
 
+  // Measure the rendered container so the glove correction tracks the goal's
+  // responsive width. Re-measure when the landscape/portrait box swaps and on
+  // viewport resize/rotation.
+  useLayoutEffect(() => {
+    const measure = () => {
+      const el = containerRef.current;
+      if (el) setContainerW(el.getBoundingClientRect().width);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [isLandscape]);
+
   // Horizontal travel during the dive — the keeper's container slides
   // toward the actual ball landing point as the sprite frames cycle.
   // Magnitude comes from diveAim (signed, |aim|=1 is full reach); the
@@ -102,9 +131,19 @@ export default function Keeper({
     phase === 3 ? 0.88 :
     phase >= 4  ? 1.0  : 0;
   const diveOffsetPx = aimMag * diveProgress * diveTravelPx;
+  // On a side save the dive lands the container CENTRE on the ball, which
+  // leaves the extended glove ~0.41×width past it (toward the post). Pull the
+  // keeper back in by the glove's sprite offset so the glove itself meets the
+  // ball. Scaled by diveProgress so it eases in with the leap; only for saves
+  // (a goal/miss keeper isn't trying to make contact, so leave him be).
+  const gloveFrac =
+    outcome === "save" && diveTo !== 0 ? SAVE_GLOVE_FRAC[diveTo] ?? 0 : 0;
+  const gloveCorrectionPx = -gloveFrac * containerW * diveProgress;
+  const totalOffsetPx = diveOffsetPx + gloveCorrectionPx;
 
   return (
     <div
+      ref={containerRef}
       className="pointer-events-none absolute"
       style={{
         left: "50%",
@@ -122,7 +161,7 @@ export default function Keeper({
         // translateX -50% centers the container; the second term slides
         // it toward the post during a dive. transition smooths the move
         // across the discrete phase changes so the keeper visibly leaps.
-        transform: `translateX(calc(-50% + ${diveOffsetPx}px))`,
+        transform: `translateX(calc(-50% + ${totalOffsetPx}px))`,
         transition: kicking
           ? `transform ${FRAME_MS}ms cubic-bezier(0.25, 0.6, 0.35, 1)`
           : "none",
