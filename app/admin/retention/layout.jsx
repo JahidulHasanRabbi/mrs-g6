@@ -1,7 +1,6 @@
 ﻿"use client";
 
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
-import RetentionTopBar from "../../components/admin/retention/RetentionTopBar";
 
 // Shared chrome for every /admin/retention/* page:
 //   - Auth guard (redirects unauthenticated users)
@@ -19,10 +18,7 @@ export default function RetentionLayout({ children }) {
   return (
     <AdminRouteGuard>
       <main className="min-h-screen px-4 py-4 sm:px-6 sm:py-6 xl:admin-content-pl xl:pr-12">
-        <div className="flex flex-col gap-4">
-          <RetentionTopBar />
-          {children}
-        </div>
+        {children}
       </main>
     </AdminRouteGuard>
   );

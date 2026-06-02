@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import Sidebar from "../components/admin/Sidebar";
+import RetentionTopBar from "../components/admin/retention/RetentionTopBar";
+import { AdminRouteGuard } from "../components/guards/AdminRouteGuard";
 import { SidebarProvider, useSidebar } from "../contexts/SidebarContext";
 import { ToastProvider } from "../components/admin/ui/Toast";
 
@@ -46,6 +48,10 @@ function AdminLayoutInner({ children }) {
         <Sidebar />
       </motion.aside>
 
+      <div className="px-4 pt-4 sm:px-6 sm:pt-6 xl:admin-content-pl xl:pr-12">
+        <RetentionTopBar />
+      </div>
+
       {children}
     </div>
   );
@@ -81,7 +87,9 @@ export default function AdminLayout({ children }) {
   return (
     <SidebarProvider>
       <ToastProvider>
-        <AdminLayoutInner>{children}</AdminLayoutInner>
+        <AdminRouteGuard>
+          <AdminLayoutInner>{children}</AdminLayoutInner>
+        </AdminRouteGuard>
       </ToastProvider>
     </SidebarProvider>
   );

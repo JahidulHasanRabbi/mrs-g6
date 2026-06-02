@@ -189,10 +189,15 @@ export default function RetentionTopBar({ userName = "Admin", role = "PIC" }) {
     setOpenMenu((current) => (current === menu ? null : menu));
 
   const handleLogout = async () => {
+    const refreshToken = tokenStorage.getAdminRefreshToken();
+
     try {
-      await adminLogout();
+      if (refreshToken) {
+        await adminLogout(refreshToken);
+      }
     } catch (err) {
-      console.error("Logout API error:", err);
+      // Local logout should still complete if the server-side token is already expired.
+      console.warn("Logout API warning:", err);
     } finally {
       tokenStorage.clearAdminTokens();
       router.push("/admin/login");
