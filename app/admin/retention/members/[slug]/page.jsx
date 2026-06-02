@@ -102,9 +102,9 @@ const STATION_TO_BRAND = {
 // If wallet_level is missing or empty, returns [] — no fallback.
 function inferActiveBrands(customerData) {
   if (!customerData) return [];
-  const walletLevel = customerData.wallet_level;
-  if (!Array.isArray(walletLevel) || walletLevel.length === 0) return [];
-  return walletLevel
+  const walletLevels = customerData.wallet_levels || customerData.wallet_level;
+  if (!Array.isArray(walletLevels) || walletLevels.length === 0) return [];
+  return walletLevels
     .map((item) => {
       const name = String(item?.Station || item?.station || "").trim().toLowerCase();
       return STATION_TO_BRAND[name] ?? null;
@@ -149,7 +149,7 @@ function normalizeListResponse(response) {
 
 // Map GET response wallet_level (names) → PUT payload wallet_levels (UUIDs).
 function buildWalletLevels(memberData, walletVipTiers, stationList) {
-  const raw = memberData?.customer_data?.wallet_level;
+  const raw = memberData?.customer_data?.wallet_levels || memberData?.customer_data?.wallet_level;
   if (!Array.isArray(raw)) return [];
   const out = [];
   for (const item of raw) {

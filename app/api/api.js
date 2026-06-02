@@ -120,9 +120,13 @@ export const ENDPOINTS = {
     ASSIGNMENTS: '/crm-admins/assignments/',
     ASSIGNMENT_SINGLE: (uuid) => `/crm-admins/assignments/${uuid}/`,
     ASSIGNMENT_SET_TARGET: '/crm-admins/assignments/set-target/',
-    // CRM VIP Tiers
-    CRM_VIP_TIERS: '/crm-admins/vip-tier/',
-    CRM_VIP_TIER_SINGLE: (uuid) => `/crm-admins/vip-tier/${uuid}/`,
-    CRM_VIP_TIER_ARCHIVE: (uuid) => `/crm-admins/vip-tier/${uuid}/archive/`
+    // CRM MRS VIP Tier aliases.
+    // Old CRM-specific paths returned 404 on staging:
+    // CRM_VIP_TIERS: '/crm-admins/vip-tier/',
+    // CRM_VIP_TIER_SINGLE: (uuid) => `/crm-admins/vip-tier/${uuid}/`,
+    // CRM_VIP_TIER_ARCHIVE: (uuid) => `/crm-admins/vip-tier/${uuid}/archive/`
+    CRM_VIP_TIERS: '/member/vip-tier/',
+    CRM_VIP_TIER_SINGLE: (uuid) => `/member/vip-tier/${uuid}/`,
+    CRM_VIP_TIER_ARCHIVE: (uuid) => `/member/vip-tier/${uuid}/archive/`
   }
 };

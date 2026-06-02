@@ -27,10 +27,14 @@ import {
 const PAGE_SIZE = 7;
 
 const KPI_META = [
-  { id: "members",  label: "Total Members",   key: "total_members",  icon: `${ASSETS}/kpi-members.svg`, iconSize: 24, isCurrency: false },
-  { id: "active",   label: "Active Members",  key: "active_members", icon: `${ASSETS}/kpi-active.svg`,  iconSize: 24, isCurrency: false },
-  { id: "sales",    label: "Total Sales",     key: "total_sales",    icon: `${ASSETS}/kpi-sales.svg`,   iconSize: 24, isCurrency: true  },
-  { id: "winlose",  label: "Total Win/Lose",  key: "daily_win_lose", icon: `${ASSETS}/kpi-winlose.svg`, iconSize: 28, isCurrency: true  },
+  { id: "members",       label: "Total Members",                key: "total_members",                icon: `${ASSETS}/kpi-members.svg`, iconSize: 24, type: "number" },
+  { id: "active",        label: "Active Members",               key: "active_members",               icon: `${ASSETS}/kpi-active.svg`,  iconSize: 24, type: "number" },
+  { id: "sales",         label: "Total Sales",                  key: "total_sales",                  icon: `${ASSETS}/kpi-sales.svg`,   iconSize: 24, type: "currency" },
+  { id: "winlose",       label: "Total Win/Lose",               key: "total_win_lose",               icon: `${ASSETS}/kpi-winlose.svg`, iconSize: 28, type: "currency" },
+  { id: "sales-tickets", label: "Total Sales Ticket",           key: "total_sales_tickets",          icon: `${ASSETS}/kpi-sales.svg`,   iconSize: 24, type: "number" },
+  { id: "bonus",         label: "Total Bonus Given",            key: "total_bonus_given",            icon: `${ASSETS}/kpi-sales.svg`,   iconSize: 24, type: "currency" },
+  { id: "bonus-percent", label: "Total Bonus Given Percentage", key: "total_bonus_given_percentage", icon: `${ASSETS}/kpi-winlose.svg`, iconSize: 28, type: "percent" },
+  { id: "win-rate",      label: "Total Win Rate",               key: "total_win_rate",               icon: `${ASSETS}/kpi-winlose.svg`, iconSize: 28, type: "percent" },
 ];
 
 function formatNumber(value) {
@@ -48,6 +52,14 @@ function formatCurrency(value) {
 function formatRmCurrency(value) {
   if (value === null || value === undefined || value === "") return "RM 0";
   return `RM ${formatCurrency(value)}`;
+}
+
+function formatPercent(value) {
+  if (value === null || value === undefined || value === "") return "0%";
+  if (typeof value === "string" && value.trim().endsWith("%")) return value.trim();
+  const num = parseFloat(value);
+  if (Number.isNaN(num)) return String(value);
+  return `${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}%`;
 }
 
 // Chrome (auth guard, main wrapper, topbar) lives in
@@ -130,18 +142,19 @@ function KpiGrid({ summary, loading }) {
     <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
       {KPI_META.map((meta) => {
         const raw = summary?.[meta.key];
-        const value = loading
-          ? "—"
-          : meta.isCurrency
-            ? formatCurrency(raw)
-            : formatNumber(raw);
+        let value = "-";
+        if (!loading) {
+          if (meta.type === "currency") value = formatCurrency(raw);
+          else if (meta.type === "percent") value = formatPercent(raw);
+          else value = formatNumber(raw);
+        }
         return (
           <KpiCard
             key={meta.id}
             kpi={{
               ...meta,
               value,
-              valuePrefix: meta.isCurrency ? "RM" : undefined,
+              valuePrefix: meta.type === "currency" ? "RM" : undefined,
             }}
           />
         );

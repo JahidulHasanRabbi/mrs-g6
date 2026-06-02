@@ -72,7 +72,7 @@ export async function archiveCrmRole(uuid) {
 
 // ───────────────────────── CRM VIP Tiers ──────────────────────────
 
-// GET /crm-admins/vip-tier/  (paginated)
+// GET /member/vip-tier/  (paginated)
 // params: { page, page_size }
 export async function getCrmVipTiers(params = {}) {
   const qs = buildQueryParams(params);

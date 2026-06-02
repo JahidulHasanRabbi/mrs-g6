@@ -148,7 +148,7 @@ export default function RetentionMembersPage() {
           <TableHeader />
           <div className="flex w-full flex-col">
             {loading ? (
-              <div className="px-6 py-12 text-center text-[12px] text-white/60">Loading...</div>
+              <TableSkeleton rows={PAGE_SIZE} />
             ) : rows.length === 0 ? (
               <div className="px-6 py-12 text-center text-[12px] text-white/40">
                 No members found.
@@ -300,6 +300,60 @@ function TableRow({ row }) {
         </Link>
       </Cell>
     </div>
+  );
+}
+
+function TableSkeleton({ rows = 7 }) {
+  return Array.from({ length: rows }).map((_, rowIndex) => (
+    <div key={`member-skeleton-${rowIndex}`} className="flex w-full items-stretch -mb-px border-b border-white/5">
+      {COLUMNS.map((col, colIndex) => (
+        <Cell key={col.key} minW={col.minW} align={col.align === "end" ? "end" : "start"}>
+          {col.key === "name" ? (
+            <div className="flex w-full min-w-0 items-center gap-3">
+              <SkeletonCircle />
+              <SkeletonBar width={skeletonWidth(rowIndex, colIndex, ["68%", "82%", "74%"])} />
+            </div>
+          ) : col.key === "priority" ? (
+            <SkeletonPill />
+          ) : col.key === "action" ? (
+            <SkeletonButton />
+          ) : (
+            <SkeletonBar width={skeletonWidth(rowIndex, colIndex)} />
+          )}
+        </Cell>
+      ))}
+    </div>
+  ));
+}
+
+function skeletonWidth(row, col, widths = ["48%", "62%", "72%", "56%", "66%"]) {
+  return widths[(row * 3 + col * 2) % widths.length];
+}
+
+function SkeletonBar({ width }) {
+  return (
+    <span
+      className="block h-3 min-w-0 rounded bg-white/[0.07] before:absolute before:inset-0 before:-translate-x-full before:animate-[skeleton-shimmer_1.4s_ease-in-out_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/[0.1] before:to-transparent relative overflow-hidden"
+      style={{ width }}
+    />
+  );
+}
+
+function SkeletonCircle() {
+  return (
+    <span className="relative block h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white/[0.07] before:absolute before:inset-0 before:-translate-x-full before:animate-[skeleton-shimmer_1.4s_ease-in-out_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/[0.1] before:to-transparent" />
+  );
+}
+
+function SkeletonPill() {
+  return (
+    <span className="relative block h-6 w-20 overflow-hidden rounded-full bg-white/[0.07] before:absolute before:inset-0 before:-translate-x-full before:animate-[skeleton-shimmer_1.4s_ease-in-out_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/[0.1] before:to-transparent" />
+  );
+}
+
+function SkeletonButton() {
+  return (
+    <span className="relative block h-9 w-[78px] overflow-hidden rounded-[8px] bg-[#e9af41]/20 before:absolute before:inset-0 before:-translate-x-full before:animate-[skeleton-shimmer_1.4s_ease-in-out_infinite] before:bg-gradient-to-r before:from-transparent before:via-[#e9af41]/30 before:to-transparent" />
   );
 }
 
