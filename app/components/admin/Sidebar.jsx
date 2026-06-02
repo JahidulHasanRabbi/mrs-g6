@@ -578,16 +578,46 @@ const ExpandableMenuItem = ({ item, activeItem, forceOpen = false }) => {
 
 // Section title gradient — Primary 600 → Primary 300 from the Figma tokens.
 const SECTION_TITLE_GRADIENT = "linear-gradient(102deg, #dc9d16 1%, #f2cb7a 98%)";
+const SECTION_STORAGE_PREFIX = "mrs_admin_sidebar_section_";
+
+function getStoredSectionOpen(sectionKey, defaultOpen) {
+  if (typeof window === "undefined") return defaultOpen;
+  try {
+    const stored = localStorage.getItem(`${SECTION_STORAGE_PREFIX}${sectionKey}`);
+    if (stored === null) return defaultOpen;
+    return stored === "true";
+  } catch {
+    return defaultOpen;
+  }
+}
+
+function storeSectionOpen(sectionKey, value) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(`${SECTION_STORAGE_PREFIX}${sectionKey}`, value ? "true" : "false");
+  } catch {
+    // Ignore storage failures; the in-memory section state still works.
+  }
+}
 
 // Collapsible section wrapper — renders a header with the section title
 // and a chevron that toggles visibility of the items inside.
 //
 // When the sidebar is collapsed, the title shows a short prefix (~3 chars +
 // ellipsis) so the section is still distinguishable in the narrow track.
-const CollapsibleSection = ({ title, defaultOpen = true, forceOpen = false, children }) => {
+const CollapsibleSection = ({ title, storageKey, defaultOpen = true, forceOpen = false, children }) => {
   const { collapsed: sidebarCollapsed } = useSidebar();
-  const [open, setOpen] = useState(defaultOpen);
+  const sectionKey = storageKey || title.toLowerCase().replace(/\s+/g, "-");
+  const [open, setOpen] = useState(() => getStoredSectionOpen(sectionKey, defaultOpen));
   const effectivelyOpen = forceOpen || open;
+
+  const toggleSection = () => {
+    setOpen((current) => {
+      const next = !current;
+      storeSectionOpen(sectionKey, next);
+      return next;
+    });
+  };
 
   // First 3 chars + ellipsis when the whole sidebar is squeezed
   const shortTitle = title.length > 3 ? `${title.slice(0, 3)}…` : title;
@@ -596,7 +626,7 @@ const CollapsibleSection = ({ title, defaultOpen = true, forceOpen = false, chil
     <div className="flex flex-col gap-2">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggleSection}
         disabled={forceOpen}
         className={`flex items-center w-full py-1 group ${
           sidebarCollapsed ? "justify-center gap-1 px-0" : "justify-between gap-2 px-0"
@@ -835,19 +865,19 @@ export default function Sidebar({ activeItem: activeItemProp }) {
           a "No matches" hint appears if every section is empty. */}
       <div className={`pb-6 flex w-full flex-col gap-6 ${collapsed ? "px-3" : "px-4"}`}>
         {mrsItems.length > 0 && (
-          <CollapsibleSection title="MRS System" forceOpen={hasQuery}>
+          <CollapsibleSection title="MRS System" storageKey="mrs-system" forceOpen={hasQuery}>
             {mrsItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
           </CollapsibleSection>
         )}
 
         {retentionItems.length > 0 && (
-          <CollapsibleSection title="Retention System" forceOpen={hasQuery}>
+          <CollapsibleSection title="Retention System" storageKey="retention-system" forceOpen={hasQuery}>
             {retentionItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
           </CollapsibleSection>
         )}
 
         {settingsItems.length > 0 && (
-          <CollapsibleSection title="Settings" forceOpen={hasQuery}>
+          <CollapsibleSection title="Settings" storageKey="settings" forceOpen={hasQuery}>
             {settingsItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
           </CollapsibleSection>
         )}

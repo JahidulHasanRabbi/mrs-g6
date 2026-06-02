@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import Sidebar from "../components/admin/Sidebar";
 import RetentionTopBar from "../components/admin/retention/RetentionTopBar";
 import { AdminRouteGuard } from "../components/guards/AdminRouteGuard";
-import { SidebarProvider, useSidebar } from "../contexts/SidebarContext";
+import { getStoredSidebarCollapsed, SidebarProvider, useSidebar } from "../contexts/SidebarContext";
 import { ToastProvider } from "../components/admin/ui/Toast";
 
 // Sidebar widths — must match the values the sidebar component renders with.
@@ -70,9 +70,11 @@ function AdminLayoutInner({ children }) {
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const [initialSidebarCollapsed, setInitialSidebarCollapsed] = useState(false);
   const isLogin = pathname === "/admin/login";
 
   useEffect(() => {
+    setInitialSidebarCollapsed(getStoredSidebarCollapsed(false));
     setMounted(true);
   }, []);
 
@@ -85,7 +87,7 @@ export default function AdminLayout({ children }) {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider initialCollapsed={initialSidebarCollapsed}>
       <ToastProvider>
         <AdminRouteGuard>
           <AdminLayoutInner>{children}</AdminLayoutInner>
