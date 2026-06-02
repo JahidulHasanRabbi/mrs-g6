@@ -8,6 +8,7 @@ import { LoadingState } from "../../components/ui/LoadingState";
 import Skeleton from "../../components/admin/ui/Skeleton";
 import Image from "next/image";
 import * as adminApi from "../../api/adminApi";
+import { ADMIN_PERMISSIONS, hasAdminPermission } from "../../config/adminPermissions";
 
 const SKELETON_COLUMNS = [
   { label: "No",               type: "number" },
@@ -356,6 +357,9 @@ function WalletSiteVipContent() {
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState("asc");
   const [currentPage, setCurrentPage] = useState(1);
+  const canCreateTier = hasAdminPermission(ADMIN_PERMISSIONS.CREATE_WALLET_TIER);
+  const canEditTier = hasAdminPermission(ADMIN_PERMISSIONS.EDIT_WALLET_TIER);
+  const canArchiveTier = hasAdminPermission(ADMIN_PERMISSIONS.ARCHIVE_WALLET_TIER);
 
   useEffect(() => {
     loadData();
@@ -477,13 +481,15 @@ function WalletSiteVipContent() {
               <p className=" font-bold text-[18px] sm:text-[20px] text-white capitalize">
                 Wallet Site VIP Is Given Below
               </p>
-              <button
-                onClick={() => setShowCreateForm(true)}
-                className="h-[36px] rounded px-4 text-[16px] text-black hover:opacity-90 transition-opacity"
-                style={{ background: GOLD_BG }}
-              >
-                Create new tier <span className="font-bold">+</span>
-              </button>
+              {canCreateTier && (
+                <button
+                  onClick={() => setShowCreateForm(true)}
+                  className="h-[36px] rounded px-4 text-[16px] text-black hover:opacity-90 transition-opacity"
+                  style={{ background: GOLD_BG }}
+                >
+                  Create new tier <span className="font-bold">+</span>
+                </button>
+              )}
             </div>
 
             {/* Search filters */}
@@ -602,18 +608,22 @@ function WalletSiteVipContent() {
                         {/* Action */}
                         <td className="px-3 py-3">
                           <div className="flex gap-2">
-                            <button
-                              onClick={() => handleArchive(row)}
-                              className="h-[31px] rounded px-3 bg-[#06b800] font-bold text-[14px] text-white hover:bg-[#05a000] transition-colors"
-                            >
-                              Archive
-                            </button>
-                            <button
-                              onClick={() => setEditingTier(row)}
-                              className="h-[31px] w-[70px] rounded border border-[#00a63e] text-[14px] text-[#00a63e] hover:bg-[#00a63e]/10 transition-colors"
-                            >
-                              Edit
-                            </button>
+                            {canArchiveTier && (
+                              <button
+                                onClick={() => handleArchive(row)}
+                                className="h-[31px] rounded px-3 bg-[#06b800] font-bold text-[14px] text-white hover:bg-[#05a000] transition-colors"
+                              >
+                                Archive
+                              </button>
+                            )}
+                            {canEditTier && (
+                              <button
+                                onClick={() => setEditingTier(row)}
+                                className="h-[31px] w-[70px] rounded border border-[#00a63e] text-[14px] text-[#00a63e] hover:bg-[#00a63e]/10 transition-colors"
+                              >
+                                Edit
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>

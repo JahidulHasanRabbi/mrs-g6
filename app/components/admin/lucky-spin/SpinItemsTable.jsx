@@ -13,7 +13,14 @@ const COLUMNS = [
   { key: "actions",     label: "Actions",     minW: "min-w-[180px]" },
 ];
 
-export default function SpinItemsTable({ items = [], isLoading = false, onEditClick, onDeleteClick }) {
+export default function SpinItemsTable({
+  items = [],
+  isLoading = false,
+  canEdit = true,
+  canArchive = true,
+  onEditClick,
+  onDeleteClick,
+}) {
   const [sortKey, setSortKey] = useState("reward_name");
   const [sortDir, setSortDir] = useState("asc");
 
@@ -55,12 +62,16 @@ export default function SpinItemsTable({ items = [], isLoading = false, onEditCl
     if (col.key === "actions") {
       return (
         <div className="flex items-center gap-2">
-          <Button variant="success" size="sm" onClick={() => onEditClick(item)}>
-            Edit
-          </Button>
-          <Button variant="destructive" size="sm" onClick={() => onDeleteClick?.(item)}>
-            Archive
-          </Button>
+          {canEdit && (
+            <Button variant="success" size="sm" onClick={() => onEditClick(item)}>
+              Edit
+            </Button>
+          )}
+          {canArchive && (
+            <Button variant="destructive" size="sm" onClick={() => onDeleteClick?.(item)}>
+              Archive
+            </Button>
+          )}
         </div>
       );
     }

@@ -1,11 +1,12 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSidebar } from "../../contexts/SidebarContext";
-import { tokenStorage } from "../../api/tokenStorage";
+import { filterMenuByPermissions, getStoredAdminPermissions } from "../../config/adminPermissions";
+import { onAuthChanged } from "../../api/authEvents";
 
 // Panel-left icon used by the collapse/expand toggle (Radix-style).
 const PanelLeftIcon = ({ className }) => (
@@ -707,12 +708,19 @@ export default function Sidebar({ activeItem: activeItemProp }) {
   const activeItem = activeItemProp ?? pathnameToActiveItem(pathname);
   const { collapsed, toggle } = useSidebar();
   const [search, setSearch] = useState("");
+  const [permissions, setPermissions] = useState(() => getStoredAdminPermissions());
 
   const hasQuery = search.trim().length > 0;
 
-  const mrsItems = filterMenuItems([...MENU_ITEMS, ...SECONDARY_MENU], search);
-  const retentionItems = filterMenuItems(RETENTION_MENU, search);
-  const settingsItems = filterMenuItems(SETTINGS_MENU, search);
+  useEffect(() => {
+    const refreshPermissions = () => setPermissions(getStoredAdminPermissions());
+    refreshPermissions();
+    return onAuthChanged(refreshPermissions);
+  }, []);
+
+  const mrsItems = filterMenuItems(filterMenuByPermissions([...MENU_ITEMS, ...SECONDARY_MENU], permissions), search);
+  const retentionItems = filterMenuItems(filterMenuByPermissions(RETENTION_MENU, permissions), search);
+  const settingsItems = filterMenuItems(filterMenuByPermissions(SETTINGS_MENU, permissions), search);
   const noResults = hasQuery && !mrsItems.length && !retentionItems.length && !settingsItems.length;
 
   return (

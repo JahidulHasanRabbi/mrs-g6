@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import Sidebar from "../components/admin/Sidebar";
@@ -11,6 +12,17 @@ import { ToastProvider } from "../components/admin/ui/Toast";
 const SIDEBAR_WIDTH_EXPANDED = 326;
 const SIDEBAR_WIDTH_COLLAPSED = 88;
 const SIDEBAR_TRANSITION = { duration: 0.3, ease: [0.4, 0, 0.2, 1] };
+
+function AdminShellLoading() {
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#07190d]">
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#f2cb7a]/30 border-t-[#f2cb7a]" />
+        <p className="text-[13px] font-medium text-[#fbeed2]/70">Loading admin panel...</p>
+      </div>
+    </div>
+  );
+}
 
 function AdminLayoutInner({ children }) {
   const { collapsed } = useSidebar();
@@ -51,10 +63,19 @@ function AdminLayoutInner({ children }) {
  */
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
   const isLogin = pathname === "/admin/login";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   if (isLogin) {
     return children;
+  }
+
+  if (!mounted) {
+    return <AdminShellLoading />;
   }
 
   return (

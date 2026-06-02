@@ -8,6 +8,7 @@ import {
 } from "../../../components/admin/retention/constants";
 import Pagination from "../../../components/admin/retention/Pagination";
 import { getCrmRoles, getCrmUsers, updateCrmUser } from "../../../api/crmApi";
+import { ADMIN_PERMISSIONS, hasAdminPermission } from "../../../config/adminPermissions";
 
 const STATUS_TO_INT = { Active: 1, Inactive: 2 };
 
@@ -114,6 +115,9 @@ function RoleList() {
   const startIdx = (safePage - 1) * PAGE_SIZE;
   const showingFrom = total === 0 ? 0 : startIdx + 1;
   const showingTo = Math.min(startIdx + rows.length, total);
+  const canCreateRoles = hasAdminPermission(ADMIN_PERMISSIONS.CREATE_ROLES);
+  const canEditRoles = hasAdminPermission(ADMIN_PERMISSIONS.EDIT_ROLES);
+  const canAssignRoles = hasAdminPermission(ADMIN_PERMISSIONS.EDIT_ADMINS);
 
   return (
     <>
@@ -131,7 +135,7 @@ function RoleList() {
           Roles
         </h2>
         <div className="flex items-center gap-3">
-          <AddRoleButton />
+          {canCreateRoles && <AddRoleButton />}
         </div>
       </header>
 
@@ -150,6 +154,8 @@ function RoleList() {
                 <RoleRow
                   key={role.uuid || role.name}
                   role={role}
+                  canEdit={canEditRoles}
+                  canAssign={canAssignRoles}
                   onAssign={() => { setAssignRoleUuid(role.uuid || ""); setShowAssign(true); }}
                 />
               ))
@@ -421,7 +427,7 @@ function TableHeader() {
   );
 }
 
-function RoleRow({ role, onAssign }) {
+function RoleRow({ role, canEdit, canAssign, onAssign }) {
   const status = role.status || "Active";
   const isActive = status.toLowerCase() !== "inactive";
 
@@ -450,8 +456,8 @@ function RoleRow({ role, onAssign }) {
       </Cell>
       <Cell flex align="end">
         <div className="flex items-center gap-2">
-          <EditButton roleId={role.uuid} />
-          <AssignButton onClick={onAssign} />
+          {canEdit && <EditButton roleId={role.uuid} />}
+          {canAssign && <AssignButton onClick={onAssign} />}
         </div>
       </Cell>
     </div>

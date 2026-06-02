@@ -6,6 +6,7 @@ import SpinSequenceTable from "./SpinSequenceTable";
 import LuckySpinItemForm from "./LuckySpinItemForm";
 import ErrorDisplay from "../../ui/ErrorDisplay";
 import * as adminApi from "../../../api/adminApi";
+import { ADMIN_PERMISSIONS, hasAdminPermission } from "../../../config/adminPermissions";
 
 export default function SpinTablesContainer() {
   const [activeTab, setActiveTab] = useState("items"); // "items" or "sequence"
@@ -18,6 +19,9 @@ export default function SpinTablesContainer() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [formError, setFormError] = useState(null);
+  const canCreatePrizes = hasAdminPermission(ADMIN_PERMISSIONS.CREATE_LUCKY_SPIN_PRIZES);
+  const canEditPrizes = hasAdminPermission(ADMIN_PERMISSIONS.EDIT_LUCKY_SPIN_PRIZES);
+  const canArchivePrizes = hasAdminPermission(ADMIN_PERMISSIONS.ARCHIVE_LUCKY_SPIN_PRIZES);
 
   // Load spin items on mount
   useEffect(() => {
@@ -261,7 +265,7 @@ export default function SpinTablesContainer() {
             >
               Spin Sequence Setting
             </button>
-            {activeTab === "items" && (
+            {activeTab === "items" && canCreatePrizes && (
               <button 
                 onClick={handleAddClick}
                 className="inline-flex min-w-[72px] items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-center text-sm font-bold leading-none text-black transition-colors disabled:opacity-50"
@@ -281,6 +285,8 @@ export default function SpinTablesContainer() {
           <SpinItemsTable
             items={spinItems}
             isLoading={isLoading}
+            canEdit={canEditPrizes}
+            canArchive={canArchivePrizes}
             onEditClick={handleEditClick}
             onDeleteClick={handleDeleteClick}
           />

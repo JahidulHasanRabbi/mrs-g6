@@ -8,6 +8,7 @@ import {
   getCrmLoginRequests,
   rejectCrmLoginRequest,
 } from "../../../api/crmApi";
+import { ADMIN_PERMISSIONS, hasAdminPermission } from "../../../config/adminPermissions";
 
 // Login Requests — Figma 175:3738. Table of inbound login attempts; admin
 // can Approve/Reject pending rows. Already-resolved rows show their final
@@ -133,6 +134,7 @@ function LoginListSection() {
 
   const [decidingId, setDecidingId] = useState(null);
   const [decideError, setDecideError] = useState(null);
+  const canApproveLogins = hasAdminPermission(ADMIN_PERMISSIONS.APPROVE_LOGINS);
 
   const decide = async (row, action) => {
     if (decidingId) return;
@@ -188,6 +190,7 @@ function LoginListSection() {
                   key={row.id}
                   row={row}
                   deciding={decidingId === row.id}
+                  canDecide={canApproveLogins}
                   onApprove={() => decide(row, STATUS_APPROVED)}
                   onReject={() => decide(row, STATUS_REJECTED)}
                 />
@@ -238,7 +241,7 @@ function TableHeader() {
   );
 }
 
-function LoginRow({ row, deciding, onApprove, onReject }) {
+function LoginRow({ row, deciding, canDecide, onApprove, onReject }) {
   const isPending = row.status === STATUS_PENDING;
   const actionsDisabled = !isPending || deciding;
   return (
@@ -270,10 +273,12 @@ function LoginRow({ row, deciding, onApprove, onReject }) {
         <StatusBadge status={row.status} />
       </Cell>
       <Cell col={COLUMNS[5]}>
-        <div className="flex items-center gap-2">
-          <RejectButton onClick={onReject} disabled={actionsDisabled} />
-          <ApproveButton onClick={onApprove} disabled={actionsDisabled} loading={deciding} />
-        </div>
+        {canDecide && (
+          <div className="flex items-center gap-2">
+            <RejectButton onClick={onReject} disabled={actionsDisabled} />
+            <ApproveButton onClick={onApprove} disabled={actionsDisabled} loading={deciding} />
+          </div>
+        )}
       </Cell>
     </div>
   );

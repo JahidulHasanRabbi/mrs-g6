@@ -119,6 +119,7 @@ export const tokenStorage = {
       if (refresh) {
         localStorage.setItem(STORAGE_KEYS.ADMIN_REFRESH_TOKEN, refresh);
       }
+      dispatchAuthChanged();
     }
   },
 
@@ -129,12 +130,14 @@ export const tokenStorage = {
       localStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN_EXPIRY);
       localStorage.removeItem(STORAGE_KEYS.ADMIN_ROLE);
       localStorage.removeItem(STORAGE_KEYS.ADMIN_PERMISSIONS);
+      dispatchAuthChanged();
     }
   },
 
   setAdminRole: (role) => {
     if (typeof window !== 'undefined' && role) {
       localStorage.setItem(STORAGE_KEYS.ADMIN_ROLE, role);
+      dispatchAuthChanged();
     }
   },
 
@@ -148,6 +151,7 @@ export const tokenStorage = {
   setAdminPermissions: (permissions) => {
     if (typeof window !== 'undefined' && Array.isArray(permissions)) {
       localStorage.setItem(STORAGE_KEYS.ADMIN_PERMISSIONS, JSON.stringify(permissions));
+      dispatchAuthChanged();
     }
   },
 

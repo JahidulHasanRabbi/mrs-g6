@@ -9,6 +9,7 @@ import {
 } from "../../../components/admin/retention/constants";
 import Pagination from "../../../components/admin/retention/Pagination";
 import { getCrmLoginRequests, getCrmUsers } from "../../../api/crmApi";
+import { ADMIN_PERMISSIONS, hasAdminPermission } from "../../../config/adminPermissions";
 
 // User Access management — Figma 94:11764. Four KPI cards (Total Users,
 // Active Users, Suspended, Login Pending) and a User List table with
@@ -254,6 +255,8 @@ function UserList({ allUsers, loading, error }) {
   const visibleRows = filtered.slice(startIdx, startIdx + PAGE_SIZE);
   const showingFrom = filtered.length === 0 ? 0 : startIdx + 1;
   const showingTo = Math.min(startIdx + PAGE_SIZE, filtered.length);
+  const canCreateAdmins = hasAdminPermission(ADMIN_PERMISSIONS.CREATE_ADMINS);
+  const canEditAdmins = hasAdminPermission(ADMIN_PERMISSIONS.EDIT_ADMINS);
 
   return (
     <section className="flex w-full flex-col overflow-hidden rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
@@ -271,7 +274,7 @@ function UserList({ allUsers, loading, error }) {
         </h2>
         <div className="flex flex-wrap items-center gap-3">
           <SearchInput value={query} onChange={setQuery} />
-          <AddUserButton />
+          {canCreateAdmins && <AddUserButton />}
         </div>
       </header>
 
@@ -286,7 +289,9 @@ function UserList({ allUsers, loading, error }) {
             ) : visibleRows.length === 0 ? (
               <EmptyRow />
             ) : (
-              visibleRows.map((user, idx) => <UserRow key={user.uuid || `${user.username}-${idx}`} user={user} />)
+              visibleRows.map((user, idx) => (
+                <UserRow key={user.uuid || `${user.username}-${idx}`} user={user} canEdit={canEditAdmins} />
+              ))
             )}
           </div>
         </div>
@@ -354,7 +359,7 @@ function TableHeader() {
   );
 }
 
-function UserRow({ user }) {
+function UserRow({ user, canEdit }) {
   return (
     <div className="flex w-full items-stretch -mb-px border-b border-white/5">
       <Cell minW={COLUMNS[0].minW}>
@@ -379,7 +384,7 @@ function UserRow({ user }) {
         <StatusBadge status={user.status} />
       </Cell>
       <Cell minW={COLUMNS[4].minW} align="end">
-        <EditButton href={`/admin/settings/user-access/edit/${user.uuid}`} />
+        {canEdit && <EditButton href={`/admin/settings/user-access/edit/${user.uuid}`} />}
       </Cell>
     </div>
   );

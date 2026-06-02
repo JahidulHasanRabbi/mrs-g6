@@ -3,15 +3,27 @@ import { ENDPOINTS, BASE_URL } from './api';
 import { tokenStorage } from './tokenStorage';
 import { buildQueryParams } from './queryParams';
 
+function storeAdminSession(response) {
+  if (response.access && response.refresh) {
+    tokenStorage.setAdminTokens(response.access, response.refresh);
+  }
+  if (response.role) {
+    tokenStorage.setAdminRole(response.role);
+  }
+  if (Array.isArray(response.permissions)) {
+    tokenStorage.setAdminPermissions(response.permissions);
+  }
+}
+
 export async function adminLogin(username, password) {
+  tokenStorage.clearAdminTokens();
+
   const response = await apiRequest(ENDPOINTS.ADMIN.LOGIN, {
     method: 'POST',
     body: { username, password }
   }, false);
   
-  if (response.access && response.refresh) {
-    tokenStorage.setAdminTokens(response.access, response.refresh);
-  }
+  storeAdminSession(response);
   
   return response;
 }
@@ -22,9 +34,7 @@ export async function completeAdminLogin(approvalId) {
     body: { approval_id: approvalId }
   }, false);
 
-  if (response.access && response.refresh) {
-    tokenStorage.setAdminTokens(response.access, response.refresh);
-  }
+  storeAdminSession(response);
 
   return response;
 }

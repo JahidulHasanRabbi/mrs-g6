@@ -12,6 +12,7 @@ import {
   getCrmRoles,
   updateCrmRole,
 } from "../../../../api/crmApi";
+import { ADMIN_PERMISSIONS, hasAdminPermission } from "../../../../config/adminPermissions";
 
 const PAGE_WIDTH_MAX = 1112;
 const COL_WIDTH = 317.33;
@@ -31,6 +32,7 @@ export default function RoleSettingPage({ params }) {
   const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showDeletePrompt, setShowDeletePrompt] = useState(false);
+  const canArchiveRoles = hasAdminPermission(ADMIN_PERMISSIONS.ARCHIVE_ROLES);
 
   useEffect(() => {
     let cancelled = false;
@@ -216,6 +218,7 @@ export default function RoleSettingPage({ params }) {
 
               <FooterActions
                 isNew={isNew}
+                canDelete={canArchiveRoles}
                 saving={saving}
                 onBack={goBack}
                 onDelete={() => setShowDeletePrompt(true)}
@@ -528,11 +531,11 @@ function Toggle({ size = "sm", checked, onChange, ariaLabel, disabled }) {
   );
 }
 
-function FooterActions({ isNew, saving, onBack, onDelete, onSave }) {
+function FooterActions({ isNew, canDelete, saving, onBack, onDelete, onSave }) {
   return (
     <div className="flex flex-wrap items-center justify-end gap-4 pt-2">
       <ActionButton variant="back" onClick={onBack} disabled={saving} />
-      {!isNew && <ActionButton variant="delete" onClick={onDelete} disabled={saving} />}
+      {!isNew && canDelete && <ActionButton variant="delete" onClick={onDelete} disabled={saving} />}
       <ActionButton variant="save" onClick={onSave} disabled={saving} />
     </div>
   );
