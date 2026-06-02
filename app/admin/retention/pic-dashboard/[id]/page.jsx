@@ -17,6 +17,7 @@ import {
 } from "../../../../components/admin/retention/constants";
 import {
   getAdminMembers,
+  getCrmUserSingle,
   getRetentionSummary,
   periodLabelToType,
   refreshCrmMembers,
@@ -154,6 +155,7 @@ function PicDetailContent() {
   const searchParams = useSearchParams();
   const slug = typeof params?.id === "string" ? params.id : Array.isArray(params?.id) ? params.id[0] : "";
   const picName = searchParams.get("name") || "Unknown PIC";
+  const [picProfile, setPicProfile] = useState(null);
   const [period, setPeriod] = useState("Daily");
   const [summary, setSummary] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
@@ -193,10 +195,27 @@ function PicDetailContent() {
     loadSummary();
   }, [loadSummary]);
 
+  useEffect(() => {
+    if (!slug) return;
+    let cancelled = false;
+    getCrmUserSingle(slug)
+      .then((res) => {
+        if (!cancelled) setPicProfile(res || null);
+      })
+      .catch((err) => {
+        console.error("[pic-detail] profile failed", err);
+        if (!cancelled) setPicProfile(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
+
   return (
     <>
       <PicProfileHeader
-        name={picName}
+        name={picProfile?.full_name || picProfile?.username || picName}
+        image={picProfile?.profile_picture}
         period={period}
         onPeriodChange={handlePeriodChange}
         fromDate={fromDate}
@@ -208,12 +227,12 @@ function PicDetailContent() {
   );
 }
 
-function PicProfileHeader({ name, period, onPeriodChange, fromDate, toDate }) {
+function PicProfileHeader({ name, image, period, onPeriodChange, fromDate, toDate }) {
   return (
     <div className="flex items-end justify-between gap-2 px-2">
       <div className="flex items-center gap-2">
         <div className="h-[66px] w-[66px] shrink-0 overflow-hidden rounded-[12px]">
-          <img src={`${ASSETS}/avatar-1.jpg`} alt="" className="h-full w-full object-cover" />
+          <img src={image || `${ASSETS}/member-avatar.svg`} alt="" className="h-full w-full object-cover" />
         </div>
         <div className="flex flex-col gap-1">
           <span className="b-4 text-white leading-[18px]">PIC PROFILE</span>

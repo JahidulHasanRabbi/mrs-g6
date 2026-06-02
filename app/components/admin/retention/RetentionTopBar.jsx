@@ -17,7 +17,7 @@ const useIsoLayoutEffect =
 
 const ASSETS = "/assets/admin/pic-dashboard";
 const BELL_ICON = `${ASSETS}/notification-bell.svg`;
-const AVATAR = `${ASSETS}/topbar-avatar.jpg`;
+const AVATAR = `${ASSETS}/member-avatar.svg`;
 
 // Hoisted gradient string — avoids re-allocating the literal each render.
 const GRADIENT = "linear-gradient(178deg, #141828 0%, #333333 99.7%)";

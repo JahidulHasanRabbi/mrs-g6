@@ -364,7 +364,7 @@ function UserRow({ user, canEdit }) {
     <div className="flex w-full items-stretch -mb-px border-b border-white/5">
       <Cell minW={COLUMNS[0].minW}>
         <div className="flex items-center gap-3 min-w-0">
-          <UserAvatar />
+          <UserAvatar src={user.profile_picture} />
           <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">
             {user.username}
           </span>
@@ -400,13 +400,17 @@ function Cell({ children, minW, align = "start" }) {
   );
 }
 
-function UserAvatar() {
+function UserAvatar({ src }) {
   return (
-    <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[12px] bg-[#3a4255]">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f6dda6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-        <circle cx="12" cy="7" r="4" />
-      </svg>
+    <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-[#3a4255]">
+      {src ? (
+        <img src={src} alt="" className="h-full w-full object-cover" />
+      ) : (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f6dda6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+      )}
     </div>
   );
 }

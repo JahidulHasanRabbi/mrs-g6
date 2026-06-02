@@ -11,6 +11,10 @@ export async function getCrmUsers(params = {}) {
   return await apiRequest(`${ENDPOINTS.CRM.USERS}${qs}`, { method: 'GET' }, true, 'admin');
 }
 
+export async function getCrmUserSingle(uuid) {
+  return await apiRequest(ENDPOINTS.CRM.USER_SINGLE(uuid), { method: 'GET' }, true, 'admin');
+}
+
 export async function createCrmUser(data) {
   return await apiRequest(ENDPOINTS.CRM.USERS, {
     method: 'POST',

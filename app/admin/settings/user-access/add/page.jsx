@@ -18,6 +18,7 @@ const INITIAL_FORM = {
   fullName: "",
   role_uuid: "",
   status: "",
+  profilePicture: null,
   password: "",
   confirmPassword: "",
 };
@@ -62,14 +63,16 @@ export default function AddUserPage() {
     }
     setSaving(true);
     try {
-      await createCrmUser({
+      const payload = {
         username: form.username,
         full_name: form.fullName,
         role_uuid: form.role_uuid,
         status: STATUS_TO_INT[form.status],
         password: form.password,
         confirm_password: form.confirmPassword,
-      });
+      };
+      if (form.profilePicture) payload.profile_picture = form.profilePicture;
+      await createCrmUser(payload);
       router.push("/admin/settings/user-access");
     } catch (err) {
       console.error("[user-access-add] save failed", err);
@@ -112,6 +115,11 @@ export default function AddUserPage() {
               }}
               options={roles.map((r) => r.name)}
               placeholder={rolesError ? "Failed to load roles" : roles.length === 0 ? "Loading..." : "Select role"}
+            />
+            <ImageUploadField
+              label="Profile Picture"
+              file={form.profilePicture}
+              onChange={update("profilePicture")}
             />
           </div>
 
@@ -277,6 +285,49 @@ function SelectField({ label, value, onChange, options, placeholder }) {
   );
 }
 
+function ImageUploadField({ label, file, onChange }) {
+  const [preview, setPreview] = useState("");
+  const id = `field-${label.replace(/\s+/g, "-").toLowerCase()}`;
+
+  useEffect(() => {
+    if (!file) {
+      setPreview("");
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  return (
+    <div className="flex w-full flex-col gap-2">
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <label
+        htmlFor={id}
+        className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-[8px] border border-[#fbeed2] bg-transparent px-4 py-2 text-[12px] font-medium leading-[18px] text-white hover:border-[#eaad2c]"
+      >
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[10px] bg-[#3a4255]">
+          {preview ? (
+            <img src={preview} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <UserIcon />
+          )}
+        </span>
+        <span className="min-w-0 flex-1 truncate text-white/70">
+          {file?.name || "Choose image"}
+        </span>
+      </label>
+      <input
+        id={id}
+        type="file"
+        accept="image/*"
+        className="sr-only"
+        onChange={(e) => onChange(e.target.files?.[0] || null)}
+      />
+    </div>
+  );
+}
+
 function PasswordField({ label, value, onChange, visible, onToggleVisible, autoComplete }) {
   const id = `field-${label.replace(/\s+/g, "-").toLowerCase()}`;
   return (
@@ -359,6 +410,15 @@ function EyeIcon() {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
       <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function UserIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f6dda6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
     </svg>
   );
 }
