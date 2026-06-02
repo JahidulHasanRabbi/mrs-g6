@@ -44,6 +44,10 @@ const KPIS = [
     id: "winlose",
     label: "Total Win/Lose",
   },
+  {
+    id: "sales-tickets",
+    label: "Total Sales Ticket",
+  },
 ];
 
 const PAGE_SIZE = 7;
@@ -99,6 +103,7 @@ function buildKpis(summary) {
   const active = rowsByStation(summary?.active_members, "members");
   const sales = rowsByStation(summary?.total_sales, "amount");
   const winlose = rowsByStation(summary?.total_win_lose, "amount");
+  const salesTickets = rowsByStation(summary?.total_sales_tickets, "amount");
 
   return [
     {
@@ -124,6 +129,12 @@ function buildKpis(summary) {
       label: "Total Win/Lose",
       total: formatCurrency(summary?.total_win_lose__total),
       values: VIP_LEVELS.map((level) => formatCurrency(winlose[level])),
+    },
+    {
+      id: "sales-tickets",
+      label: "Total Sales Ticket",
+      total: formatNumber(summary?.total_sales_tickets_total ?? summary?.total_sales_tickets__total),
+      values: VIP_LEVELS.map((level) => formatNumber(salesTickets[level])),
     },
   ];
 }
@@ -222,7 +233,7 @@ function PicProfileHeader({ name, period, onPeriodChange, fromDate, toDate }) {
 function KpiGrid({ summary, loading }) {
   const items = loading ? KPIS.map((k) => ({ ...k, total: "—", values: VIP_LEVELS.map(() => "—") })) : buildKpis(summary);
   return (
-    <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
       {items.map((k) => (
         <DetailKpiCard key={k.id} kpi={k} />
       ))}
@@ -232,13 +243,13 @@ function KpiGrid({ summary, loading }) {
 
 function DetailKpiCard({ kpi }) {
   return (
-    <div className="flex flex-col gap-4 rounded-[16px] bg-[rgba(5,6,10,0.4)] p-6 shadow-[0_0_3px_0_#dea220]">
-      <div className="flex w-full items-center gap-4">
-        <p className="flex-1 b-3 font-semibold text-[#f6dda6]" style={{ letterSpacing: "-1px" }}>
+    <div className="flex min-w-0 flex-col gap-4 rounded-[16px] bg-[rgba(5,6,10,0.4)] p-5 shadow-[0_0_3px_0_#dea220] 2xl:p-4 [@media(min-width:1700px)]:p-6">
+      <div className="flex w-full items-start gap-3">
+        <p className="min-w-0 flex-1 b-3 font-semibold text-[#f6dda6]" style={{ letterSpacing: "-1px" }}>
           {kpi.label}
         </p>
         <p
-          className="bg-clip-text text-transparent"
+          className="shrink-0 whitespace-nowrap bg-clip-text text-transparent tabular-nums"
           style={{
             backgroundImage: GRAD_GOLD,
             fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
@@ -263,8 +274,8 @@ function VipLevelRow({ level, value }) {
   return (
     <div className="flex w-full items-center gap-3">
       <img src={`${ASSETS}/shop-icon.svg`} alt="" className="h-6 w-6 shrink-0" />
-      <span className="flex-1 b-4 text-white">{level}</span>
-      <span className="b-4 text-[#84ebb4] whitespace-nowrap">{value}</span>
+      <span className="min-w-0 flex-1 b-4 text-white">{level}</span>
+      <span className="shrink-0 b-4 text-[#84ebb4] whitespace-nowrap tabular-nums">{value}</span>
     </div>
   );
 }
@@ -322,8 +333,8 @@ function MemberListSection({ onRefreshSummary }) {
     try {
       const res = await getRetentionMembers(apiParams);
       let results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
-      if (sort === "hl") results = [...results].sort((a, b) => parseFloat(b.total_sales || 0) - parseFloat(a.total_sales || 0));
-      else if (sort === "lh") results = [...results].sort((a, b) => parseFloat(a.total_sales || 0) - parseFloat(b.total_sales || 0));
+      if (sort === "hl") results = [...results].sort((a, b) => parseFloat(memberSales(b) || 0) - parseFloat(memberSales(a) || 0));
+      else if (sort === "lh") results = [...results].sort((a, b) => parseFloat(memberSales(a) || 0) - parseFloat(memberSales(b) || 0));
       setRows(results);
       setTotal(Number.isFinite(res?.count) ? res.count : results.length);
     } catch (err) {
@@ -386,22 +397,26 @@ function MemberListSection({ onRefreshSummary }) {
         </div>
         <RefreshControl onRefresh={handleRefresh} disabled={refreshing} />
       </header>
-      <div className="flex w-full flex-col overflow-clip rounded-b-[16px]">
-        <MemberTableHeader />
-        <div className="flex w-full flex-col">
-          {loading ? (
-            <div className="px-6 py-10 text-center b-4 text-white/60">
-              Loading...
+      <div className="flex w-full flex-col overflow-hidden rounded-b-[16px]">
+        <div className="w-full overflow-x-auto scrollbar-admin">
+          <div className="min-w-[1100px]">
+            <MemberTableHeader />
+            <div className="flex w-full flex-col">
+              {loading ? (
+                <div className="px-6 py-10 text-center b-4 text-white/60">
+                  Loading...
+                </div>
+              ) : rows.length === 0 ? (
+                <div className="px-6 py-10 text-center b-4 text-white/60">
+                  No members match the current filters.
+                </div>
+              ) : (
+                rows.map((m, idx) => (
+                  <MemberTableRow key={`${m.uuid || m.username || "member"}-${idx}`} member={m} />
+                ))
+              )}
             </div>
-          ) : rows.length === 0 ? (
-            <div className="px-6 py-10 text-center b-4 text-white/60">
-              No members match the current filters.
-            </div>
-          ) : (
-            rows.map((m, idx) => (
-              <MemberTableRow key={`${m.uuid || m.username || "member"}-${idx}`} member={m} />
-            ))
-          )}
+          </div>
         </div>
         <Pagination
           from={showingFrom}
@@ -420,6 +435,7 @@ function MemberTableHeader() {
   return (
     <div className="flex w-full items-start justify-between" style={{ backgroundImage: GRAD_DARK }}>
       <HeaderCell label="Username" widthClass="w-[197px]" />
+      <HeaderCell label="Brand" />
       <HeaderCell label="Phone Number" />
       <HeaderCell label="Level" />
       <HeaderCell label="Total Sales" />
@@ -445,8 +461,11 @@ function MemberTableRow({ member }) {
     <div className="flex w-full items-center -mb-px border-b border-white/5">
       <div className="flex h-full w-[197px] shrink-0 items-center gap-3 p-6">
         <img src={`${ASSETS}/member-avatar.svg`} alt="" className="h-8 w-8 shrink-0" />
-        <span className="b-4 text-white whitespace-nowrap">{member.username || "—"}</span>
+        <span className="min-w-0 break-words b-4 text-white leading-[18px]">
+          {member.full_name || member.username || "—"}
+        </span>
       </div>
+      <DataCell value={formatBrand(member)} />
       <DataCell value={member.phone_number || "—"} />
       <div className="flex flex-1 min-w-0 items-center self-stretch">
         <div className="flex h-full flex-1 flex-col justify-center p-6">
@@ -454,12 +473,12 @@ function MemberTableRow({ member }) {
             className="inline-flex w-fit items-center rounded-[12px] px-3 py-1 b-6 text-[#05060a] whitespace-nowrap"
             style={{ backgroundImage: GRAD_GOLD }}
           >
-            {member.level || "—"}
+            {member.level || member.vip_level || "—"}
           </span>
         </div>
       </div>
-      <DataCell value={formatCurrency(member.total_sales)} />
-      <DataCell value={formatCurrency(member.total_winlose)} />
+      <DataCell value={formatCurrency(memberSales(member))} />
+      <DataCell value={formatCurrency(memberWinLose(member))} />
       <DataCell value={formatDate(member.last_deposit)} />
       <div className="flex h-full w-[130px] shrink-0 items-center justify-end p-6">
         <Link
@@ -473,6 +492,43 @@ function MemberTableRow({ member }) {
       </div>
     </div>
   );
+}
+
+function memberSales(member) {
+  return member?.total_sales ?? member?.daily_sales;
+}
+
+function memberWinLose(member) {
+  return member?.total_winlose ?? member?.total_win_lose ?? member?.daily_win_loss;
+}
+
+function formatBrand(member) {
+  const direct =
+    member?.brand ||
+    member?.brand_name ||
+    member?.station ||
+    member?.station_name ||
+    member?.site ||
+    member?.platform;
+  if (direct) return String(direct);
+
+  const brands = member?.brands || member?.stations;
+  if (Array.isArray(brands) && brands.length > 0) {
+    return brands
+      .map((item) => item?.station || item?.name || item?.brand || item)
+      .filter(Boolean)
+      .join(", ");
+  }
+
+  const walletLevels = member?.wallet_levels || member?.customer_data?.wallet_levels || member?.customer_data?.wallet_level;
+  if (Array.isArray(walletLevels) && walletLevels.length > 0) {
+    return walletLevels
+      .map((item) => item?.station || item?.Station)
+      .filter(Boolean)
+      .join(", ");
+  }
+
+  return "—";
 }
 
 function DataCell({ value }) {

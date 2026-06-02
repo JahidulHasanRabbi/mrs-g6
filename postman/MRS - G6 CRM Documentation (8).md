@@ -18,11 +18,7 @@
 
 [Admin Login	4](#admin-login)
 
-<<<<<<<< Updated upstream:postman/MRS - G6 CRM Documentation (6).md
-[User List \- POST/PUT	4](#user-list---post)
-========
 [Login Complete	5](#login-complete)
->>>>>>>> Stashed changes:postman/MRS - G6 CRM Documentation (7).md
 
 [User List	6](#user-list)
 
@@ -54,11 +50,7 @@
 
 [Roles \- Archive	11](#roles---archive)
 
-<<<<<<<< Updated upstream:postman/MRS - G6 CRM Documentation (6).md
-[Member Single \- PUT	12](#member-single---put-/-patch)
-========
 [**Member Profile	12**](#member-profile)
->>>>>>>> Stashed changes:postman/MRS - G6 CRM Documentation (7).md
 
 [Member List	12](#member-list)
 
@@ -219,11 +211,7 @@ Input
 | **5** | password | str | No |  |
 | **6** | confirm\_password | str | No |  |
 
-<<<<<<<< Updated upstream:postman/MRS - G6 CRM Documentation (6).md
-### User List \- POST
-========
 ### User List \- POST {#user-list---post-1}
->>>>>>>> Stashed changes:postman/MRS - G6 CRM Documentation (7).md
 
 /admins/users/\<uuid\>/ PUT  
 /admins/users/\<uuid\>/ PATCH  
@@ -363,6 +351,8 @@ Output (Is Paginated)
 | **1** | uuid | UUID | No |  |
 | **2** | name | str | No |  |
 | **3** | permissions | List | No | List of strings |
+| **4** | status | str | No |  |
+| **5** | total\_assigned | int | No |  |
 
 ### Roles \- POST / PUT {#roles---post-/-put}
 
@@ -374,6 +364,7 @@ Input
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | name | str | No |  |
 | **2** | permissions | List | No | List of keys from /permissions/ |
+| **3** | status | Int | Yes (defaults to Active) | 1 \= Active 2 \= Inactive |
 
 ### Roles \- Archive {#roles---archive}
 
@@ -503,16 +494,8 @@ Profile Data Input
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | mrs\_vip\_level\_uuid | UUID | No | Taken from mrs vip |
-<<<<<<<< Updated upstream:postman/MRS - G6 CRM Documentation (6).md
-| **2** | player\_type | Int | No | (Will have choices later) |
-| **3** | risk | Int | No | (Will have choices later) |
-| **4** | deposit\_frequency | Int | No | (Will have choices later) |
-| **5** | status | Int | No | (Will have choices later) |
-| **6** | wallet\_levels | List |  | station\_uuid: uuid wallet\_level\_uuid: uuid (taken from wallet level vip) |
-========
 | **2** | tags | List\[str\] |  |  |
 | **3** | wallet\_levels | List |  | station\_uuid: uuid wallet\_level\_uuid: uuid (taken from wallet level vip) |
->>>>>>>> Stashed changes:postman/MRS - G6 CRM Documentation (7).md
 
 Basic Info Input
 
@@ -582,7 +565,11 @@ Output
 | **1** | total\_members | Int | No |  |
 | **2** | active\_members | Int | No |  |
 | **3** | total\_sales | Str(Decimal) | No |  |
-| **4** | daily\_win\_lose | Str(Decimal) | No |  |
+| **4** | total\_win\_lose | Str(Decimal) | No |  |
+| **5** | total\_sales\_tickets | Int | No |  |
+| **6** | total\_bonus\_given | Str(Decimal) | No |  |
+| **7** | total\_bonus\_given\_percentage | Str | No |  |
+| **8** | total\_win\_rate | Str | NoOh  |  |
 
 ### Dashboard Details \- GET {#dashboard-details---get}
 
@@ -638,6 +625,8 @@ Output
 | **6** | total\_sales\_\_total | Str (Decimal) | No |  |
 | **7** | total\_win\_lose | List | \- | See Amount output below |
 | **8** | total\_win\_lose\_\_total | Str (Decimal) | No |  |
+| **9** | total\_sales\_tickets | List | \- | See Amount below (Except it’s int instead of Str) |
+| **10** | total\_sales\_tickets\_\_total | Int | No |  |
 
 Members output
 
@@ -655,7 +644,7 @@ Amount output
 
 ## Retention Member List \- GET {#retention-member-list---get}
 
-/crm-members/retention-profile/ GET  
+/crm-members/retention-members/ GET  
 Query parameters
 
 | \# | Property/Field | Data Type | Nullable | Description |

@@ -115,6 +115,9 @@ function inferActiveBrands(customerData) {
 
 function formatCurrency(value) {
   if (value === null || value === undefined || value === "") return "—";
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return `RM ${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
   const raw = String(value).trim();
   const normalized = raw.replace(/,/g, "");
   const match = normalized.match(/^(-?)(\d+)(\.\d+)?$/);
@@ -147,18 +150,58 @@ function normalizeListResponse(response) {
   return [];
 }
 
+function normalizeLookup(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function stationName(station) {
+  return station?.name || station?.station_name || station?.Station || station?.special_code || station?.code || "";
+}
+
+function stationCandidates(station) {
+  return [
+    station?.name,
+    station?.station_name,
+    station?.Station,
+    station?.special_code,
+    station?.code,
+    station?.short_code,
+  ].map(normalizeLookup).filter(Boolean);
+}
+
+function walletTierStationCandidates(tier) {
+  return [
+    tier?.station_name,
+    tier?.station,
+    tier?.station_code,
+    tier?.station_special_code,
+    tier?.station_detail?.name,
+    tier?.station_detail?.station_name,
+    tier?.station_detail?.special_code,
+  ].map(normalizeLookup).filter(Boolean);
+}
+
+function walletTierName(tier) {
+  return tier?.tier_name || tier?.name || tier?.level || tier?.vip_level || tier?.title || "";
+}
+
 // Map GET response wallet_level (names) → PUT payload wallet_levels (UUIDs).
 function buildWalletLevels(memberData, walletVipTiers, stationList) {
   const raw = memberData?.customer_data?.wallet_levels || memberData?.customer_data?.wallet_level;
   if (!Array.isArray(raw)) return [];
   const out = [];
   for (const item of raw) {
-    const sName = String(item?.Station || item?.station || "").toLowerCase();
-    const lName = String(item?.Level || item?.level || "").toLowerCase();
-    const station = stationList.find((s) => String(s.name || s.station_name || "").toLowerCase() === sName);
+    const sName = normalizeLookup(item?.Station || item?.station || item?.station_name);
+    const lName = normalizeLookup(item?.Level || item?.level || item?.tier_name || item?.name);
+    if (!sName || !lName) continue;
+    const station = stationList.find((s) => stationCandidates(s).includes(sName));
     const tier = walletVipTiers.find(
-      (t) => String(t.station_name || "").toLowerCase() === sName &&
-             String(t.tier_name || t.name || "").toLowerCase() === lName
+      (t) => walletTierStationCandidates(t).includes(sName) &&
+             normalizeLookup(walletTierName(t)) === lName
     );
     if (station?.uuid && tier?.uuid) out.push({ station_uuid: station.uuid, wallet_level_uuid: tier.uuid });
   }
@@ -218,11 +261,7 @@ export default function MemberProfilePage() {
   }, [memberUuid, refreshKey]);
 
   if (loading) {
-    return (
-      <div className="px-2 py-12 text-center text-[14px] text-white/60">
-        Loading member profile...
-      </div>
-    );
+    return <MemberProfileSkeleton />;
   }
 
   if (error || !data) {
@@ -252,7 +291,8 @@ export default function MemberProfilePage() {
   const financialInfo = {
     "Total Sales": formatCurrency(data?.financial_info?.total_sales),
     "Total Withdrawal": formatCurrency(data?.financial_info?.total_withdrawal ?? customer?.total_withdrawal),
-    "Total Win/lose": formatCurrency(data?.financial_info?.total_win_lose),
+    "Total Win/Loss": formatCurrency(data?.financial_info?.total_win_lose),
+    "Total Bonus": formatCurrency(data?.financial_info?.total_bonus),
     "Total Sales Ticket": show(data?.financial_info?.total_sales_ticket),
     "Total Withdrawal Ticket": show(data?.financial_info?.total_withdrawal_ticket),
     ARPU: formatCurrency(data?.financial_info?.arpu),
@@ -295,7 +335,7 @@ export default function MemberProfilePage() {
       <ProfileHeader
         name={profileName}
         tags={inferTags(data)}
-        dateJoined={show(data?.date_joined)}
+        dateJoined={show(customer?.date_joined || data?.date_joined)}
         slug={memberUuid}
         period={period}
         onPeriodChange={setPeriod}
@@ -688,15 +728,21 @@ function VipModal({ memberUuid, memberData, currentVipLabel, walletVipTiers, sta
   // Stations that actually have wallet VIP tiers
   const walletStations = (stationList || []).filter((s) =>
     (walletVipTiers || []).some(
-      (t) => String(t.station_name || "").toLowerCase() === String(s.name || s.station_name || "").toLowerCase()
+      (t) => stationCandidates(s).some((candidate) => walletTierStationCandidates(t).includes(candidate))
     )
   );
 
   const [walletStation, setWalletStation] = useState("");
+  useEffect(() => {
+    if (walletStation || walletStations.length === 0) return;
+    const firstSelected = walletStations.find((s) => walletSelections[s.uuid]);
+    setWalletStation((firstSelected || walletStations[0])?.uuid || "");
+  }, [walletStation, walletStations, walletSelections]);
+
   const selectedStation = walletStations.find((s) => s.uuid === walletStation);
   const selectedStationTiers = selectedStation
     ? (walletVipTiers || []).filter(
-        (t) => String(t.station_name || "").toLowerCase() === String(selectedStation.name || selectedStation.station_name || "").toLowerCase()
+        (t) => stationCandidates(selectedStation).some((candidate) => walletTierStationCandidates(t).includes(candidate))
       )
     : [];
   const currentLevelUuid = walletStation ? (walletSelections[walletStation] || "") : "";
@@ -709,11 +755,10 @@ function VipModal({ memberUuid, memberData, currentVipLabel, walletVipTiers, sta
       const walletLevels = Object.entries(walletSelections)
         .filter(([, uuid]) => uuid)
         .map(([station_uuid, wallet_level_uuid]) => ({ station_uuid, wallet_level_uuid }));
+      const profileData = { wallet_levels: walletLevels };
+      if (selectedMrsUuid) profileData.mrs_vip_level_uuid = selectedMrsUuid;
       await patchCrmMember(memberUuid, {
-        profile_data: {
-          mrs_vip_level_uuid: selectedMrsUuid,
-          wallet_levels: walletLevels,
-        },
+        profile_data: profileData,
       });
       onSaved();
     } catch (err) {
@@ -762,7 +807,7 @@ function VipModal({ memberUuid, memberData, currentVipLabel, walletVipTiers, sta
                 value={walletStation}
                 onChange={setWalletStation}
                 placeholder="Select station..."
-                options={walletStations.map((s) => ({ value: s.uuid, label: s.name || s.station_name }))}
+                options={walletStations.map((s) => ({ value: s.uuid, label: stationName(s) || s.uuid }))}
               />
             </div>
             {/* VIP level for selected station */}
@@ -773,7 +818,9 @@ function VipModal({ memberUuid, memberData, currentVipLabel, walletVipTiers, sta
                 disabled={!walletStation}
                 onChange={(v) => setWalletSelections((prev) => ({ ...prev, [walletStation]: v || undefined }))}
                 placeholder={walletStation ? "Select level..." : "Select a station first"}
-                options={selectedStationTiers.map((t) => ({ value: t.uuid, label: t.tier_name || t.name || t.uuid }))}
+                options={selectedStationTiers
+                  .filter((t) => t.uuid)
+                  .map((t) => ({ value: t.uuid, label: walletTierName(t) || t.uuid }))}
               />
             </div>
             {/* Summary chips of all selected wallet levels */}
@@ -783,7 +830,7 @@ function VipModal({ memberUuid, memberData, currentVipLabel, walletVipTiers, sta
                   const tier = (walletVipTiers || []).find((t) => t.uuid === walletSelections[s.uuid]);
                   return (
                     <span key={s.uuid} className="rounded-[6px] border border-[#f2cb7a]/40 px-2 py-0.5 text-[11px] text-[#f6dda6]">
-                      {s.name || s.station_name}: {tier?.tier_name || tier?.name || "—"}
+                      {stationName(s) || s.uuid}: {walletTierName(tier) || "—"}
                     </span>
                   );
                 })}
@@ -922,6 +969,117 @@ function NotesCard({ notes }) {
         Notes
       </h3>
       <p className="text-[12px] font-medium text-white leading-[18px]">{notes}</p>
+    </div>
+  );
+}
+
+function SkeletonBlock({ className = "" }) {
+  return (
+    <div
+      className={`animate-pulse rounded-[8px] bg-white/10 ${className}`}
+      style={{ boxShadow: "inset 0 0 0 1px rgba(242,203,122,0.08)" }}
+    />
+  );
+}
+
+function MemberProfileSkeleton() {
+  return (
+    <>
+      <div className="flex flex-col gap-4 px-2 md:flex-row md:flex-wrap md:items-start md:justify-between md:gap-6">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-start gap-2">
+            <SkeletonBlock className="h-14 w-14 shrink-0 rounded-full" />
+            <div className="flex min-w-0 flex-col gap-2">
+              <SkeletonBlock className="h-[14px] w-[96px]" />
+              <div className="flex flex-wrap items-center gap-2">
+                <SkeletonBlock className="h-[32px] w-[210px]" />
+                <SkeletonBlock className="h-[23px] w-[60px] rounded-[12px]" />
+                <SkeletonBlock className="h-[23px] w-[72px] rounded-[12px]" />
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 pl-[64px]">
+            <SkeletonBlock className="h-[12px] w-[150px]" />
+            <div className="flex items-center gap-2">
+              <SkeletonBlock className="h-[38px] w-[128px]" />
+              <SkeletonBlock className="h-[38px] w-[38px]" />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <SkeletonBlock className="h-[18px] w-[58px]" />
+          {ACTIVE_BRANDS.map((code) => (
+            <SkeletonBlock key={code} className="h-[34px] w-[44px]" />
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <SkeletonBlock className="h-[36px] w-[72px]" />
+          <SkeletonBlock className="h-[36px] w-[84px]" />
+          <SkeletonBlock className="h-[36px] w-[72px]" />
+        </div>
+      </div>
+
+      <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+        {["mrs", "ns", "sales", "win"].map((item) => (
+          <div
+            key={item}
+            className="flex flex-col gap-2 border border-[#05060a] p-2"
+            style={{ backgroundImage: "linear-gradient(179deg, #11320e 0%, #031101 99.7%)" }}
+          >
+            <SkeletonBlock className="h-[20px] w-[120px]" />
+            <SkeletonBlock className="h-[18px] w-[86px]" />
+          </div>
+        ))}
+      </div>
+
+      <div className="grid w-full gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+        <SkeletonInfoCard rows={10} />
+        <SkeletonInfoCard rows={10} />
+        <SkeletonInfoCard rows={9} />
+      </div>
+
+      <div className="flex flex-col gap-4 rounded-[16px] bg-[rgba(5,6,10,0.3)] p-6 shadow-[0_0_3px_0_#dea220]">
+        <SkeletonBlock className="h-[22px] w-[74px]" />
+        <SkeletonBlock className="h-[16px] w-full" />
+        <SkeletonBlock className="h-[16px] w-3/4" />
+      </div>
+
+      <div className="flex flex-col gap-4 rounded-[16px] bg-[rgba(5,6,10,0.3)] p-6 shadow-[0_0_3px_0_#dea220]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <SkeletonBlock className="h-[22px] w-[170px]" />
+          <SkeletonBlock className="h-[36px] w-[118px]" />
+        </div>
+        <div className="flex flex-col gap-3">
+          {[0, 1, 2].map((row) => (
+            <div key={row} className="grid grid-cols-1 gap-3 rounded-[10px] border border-white/5 bg-white/[0.03] p-4 md:grid-cols-[1fr_120px_120px]">
+              <div className="flex flex-col gap-2">
+                <SkeletonBlock className="h-[16px] w-[180px]" />
+                <SkeletonBlock className="h-[14px] w-full" />
+              </div>
+              <SkeletonBlock className="h-[26px] w-[96px]" />
+              <SkeletonBlock className="h-[26px] w-[96px]" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function SkeletonInfoCard({ rows }) {
+  return (
+    <div className="flex flex-col gap-4 rounded-[16px] bg-[rgba(5,6,10,0.3)] p-6 shadow-[0_0_3px_0_#dea220]">
+      <SkeletonBlock className="h-[22px] w-[140px]" />
+      <div className="flex flex-col gap-3">
+        {Array.from({ length: rows }).map((_, index) => (
+          <div key={index} className="flex items-start gap-3">
+            <SkeletonBlock className="h-[18px] flex-1" />
+            <SkeletonBlock className="h-[18px] w-[92px]" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -112,7 +112,9 @@ export const ENDPOINTS = {
     REFRESH_MEMBERS: '/crm-members/refresh-members/',
     // Retention Profile
     RETENTION_SUMMARY: (adminUuid) => `/crm-members/retention-summary/${adminUuid}/`,
-    RETENTION_MEMBERS: '/crm-members/retention-profile/',
+    // Old path returned 404 on staging:
+    // RETENTION_MEMBERS: '/crm-members/retention-profile/',
+    RETENTION_MEMBERS: '/crm-members/retention-members/',
     // Dashboard
     DASHBOARD_SUMMARY: '/crm-admins/dashboard-summary/',
     DASHBOARD_DETAILS: '/crm-admins/dashboard-details/',

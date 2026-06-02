@@ -139,7 +139,7 @@ export async function getRetentionSummary(adminUuid, params = {}) {
   return await apiRequest(`${ENDPOINTS.CRM.RETENTION_SUMMARY(adminUuid)}${qs}`, { method: 'GET' }, true, 'admin');
 }
 
-// GET /crm-members/retention-profile/  (paginated)
+// GET /crm-members/retention-members/  (paginated)
 // params: { page, page_size, from_date, to_date, vip_level, from_sales, to_sales, search }
 export async function getRetentionMembers(params = {}) {
   const qs = buildQueryParams(params);

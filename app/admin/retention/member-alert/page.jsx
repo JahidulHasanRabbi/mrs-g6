@@ -22,6 +22,7 @@ import { Pagination } from "../../../components/admin/members/DataTable";
 const PAGE_SIZE = 7;
 
 const PRIORITY_OPTIONS = ["High", "Medium", "Low"];
+const BRAND_OPTIONS = ["KG", "LV", "EP", "AB", "UB", "N1"];
 
 const PRIORITY_TO_INT = { High: 1, Medium: 2, Low: 3 };
 
@@ -30,6 +31,7 @@ const PRIORITY_TO_INT = { High: 1, Medium: 2, Low: 3 };
 // button pair respectively; everything else is uniform at 124px.
 const COLUMNS = [
   { key: "name",     label: "Username",       minW: 197 },
+  { key: "brand",    label: "Brand",          minW: 124 },
   { key: "phone",    label: "Phone Number",   minW: 124 },
   { key: "vip",      label: "NS Level",       minW: 124 },
   { key: "sales",    label: "Total Sales",    minW: 124 },
@@ -216,6 +218,7 @@ function KpiIcon({ name }) {
 }
 
 function FollowUpList() {
+  const [brand, setBrand] = useState("");
   const [priority, setPriority] = useState("");
   const [vip, setVip] = useState("");
   const [retention, setRetention] = useState("");
@@ -245,7 +248,7 @@ function FollowUpList() {
 
   useEffect(() => {
     setPage(1);
-  }, [priority, vip, retention, query]);
+  }, [brand, priority, vip, retention, query]);
 
   const [debouncedQuery, setDebouncedQuery] = useState(query);
   useEffect(() => {
@@ -264,6 +267,7 @@ function FollowUpList() {
         const res = await getCrmMembers({
           page,
           page_size: PAGE_SIZE,
+          brand: brand || undefined,
           priority: priority ? PRIORITY_TO_INT[priority] : undefined,
           mrs_vip_level: vip || undefined,
           retention: retentionUuid || undefined,
@@ -286,7 +290,7 @@ function FollowUpList() {
     return () => {
       cancelled = true;
     };
-  }, [page, priority, vip, retention, pics, debouncedQuery]);
+  }, [page, brand, priority, vip, retention, pics, debouncedQuery]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -313,6 +317,7 @@ function FollowUpList() {
           Member Follow Up List
         </h2>
         <div className="flex flex-wrap items-center gap-3">
+          <FilterPill label="Brand" value={brand} onChange={setBrand} options={BRAND_OPTIONS} />
           <FilterPill label="Priority" value={priority} onChange={setPriority} options={PRIORITY_OPTIONS} />
           <FilterPill label="NS Level" value={vip} onChange={setVip} options={vipTiers.map((t) => t.name)} />
           <FilterPill label="All Retention" value={retention} onChange={setRetention} options={pics.map((u) => u.full_name || u.username).filter(Boolean)} />
@@ -473,15 +478,16 @@ function TableRow({ row }) {
           </span>
         </Link>
       </Cell>
-      <DataCell value={row.phone_number} minW={COLUMNS[1].minW} />
-      <DataCell value={row.ns_level || row.vip_level} minW={COLUMNS[2].minW} />
-      <DataCell value={formatCurrency(row.total_sales ?? row.daily_sales)} minW={COLUMNS[3].minW} />
-      <DataCell value={formatCurrency(row.total_win_lose ?? row.total_winlose ?? row.daily_win_loss)} minW={COLUMNS[4].minW} />
-      <Cell minW={COLUMNS[5].minW}>
+      <DataCell value={row.brand} minW={COLUMNS[1].minW} />
+      <DataCell value={row.phone_number} minW={COLUMNS[2].minW} />
+      <DataCell value={row.ns_level || row.vip_level} minW={COLUMNS[3].minW} />
+      <DataCell value={formatCurrency(row.total_sales ?? row.daily_sales)} minW={COLUMNS[4].minW} />
+      <DataCell value={formatCurrency(row.total_win_lose ?? row.total_winlose ?? row.daily_win_loss)} minW={COLUMNS[5].minW} />
+      <Cell minW={COLUMNS[6].minW}>
         <PriorityBadge value={row.priority} />
       </Cell>
-      <DataCell value={row.retention} minW={COLUMNS[6].minW} />
-      <Cell minW={COLUMNS[7].minW} align="end">
+      <DataCell value={row.retention} minW={COLUMNS[7].minW} />
+      <Cell minW={COLUMNS[8].minW} align="end">
         <div className="flex items-center gap-2">
           <ViewButton href={href} />
           <MoreButton ariaLabel={`More actions for ${row.full_name || row.username}`} />
