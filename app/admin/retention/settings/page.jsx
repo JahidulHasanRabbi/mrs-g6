@@ -194,10 +194,6 @@ function RetentionSettingsContent() {
         alert("Cannot save: please select a valid PIC from the list.");
         return;
       }
-      if (!isUuid(picUuid)) {
-        alert(invalidPicMessage(selectedPic || { uuid: picUuid }));
-        return;
-      }
       const payload = {
         name: values.name,
         status: statusLabelToInt(values.status),
@@ -286,10 +282,6 @@ function AssignmentListSection({ rows, total, page, loading, pics = [], onAssign
     const picUuid = payload.picUuid || selectedPic?.uuid;
     if (!picUuid) {
       alert("Cannot set target: please select a valid PIC from the list.");
-      return;
-    }
-    if (!isUuid(picUuid)) {
-      alert(invalidPicMessage(selectedPic || { uuid: picUuid }));
       return;
     }
     try {
@@ -411,7 +403,7 @@ function AssignmentRow({ row, onEdit }) {
           <img src={row.avatar} alt="" className="h-full w-full object-cover" />
         </div>
         <div className="flex min-w-0 flex-1 items-center">
-          <span className="b-4 text-white whitespace-nowrap">{row.name}</span>
+          <span className="b-4 text-white break-words leading-[18px]">{row.name}</span>
         </div>
       </div>
       <DataCell value={row.level} />
@@ -451,7 +443,7 @@ function DataCell({ value }) {
   return (
     <div className="flex flex-1 min-w-0 items-center self-stretch">
       <div className="flex h-full flex-1 flex-col justify-center p-6">
-        <span className="b-4 text-white whitespace-nowrap">{value}</span>
+        <span className="b-4 text-white break-words leading-[18px]">{value}</span>
       </div>
     </div>
   );
@@ -460,18 +452,34 @@ function DataCell({ value }) {
 function SkeletonRow() {
   return (
     <div className="flex w-full items-center border-b border-white/5">
-      <div className="flex w-[200px] shrink-0 items-center p-6">
-        <div className="h-3 w-3/4 rounded bg-white/10 animate-pulse" />
+      <div className="flex w-[200px] shrink-0 items-center gap-3 p-6">
+        <SkeletonCircle />
+        <SkeletonBar width="70%" />
       </div>
       {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="flex flex-1 min-w-0 items-center p-6">
-          <div className="h-3 w-3/4 rounded bg-white/10 animate-pulse" />
+          <SkeletonBar width={i % 2 === 0 ? "68%" : "52%"} />
         </div>
       ))}
       <div className="flex w-[110px] shrink-0 items-center p-6">
-        <div className="h-3 w-3/4 rounded bg-white/10 animate-pulse" />
+        <span className="relative block h-9 w-[76px] overflow-hidden rounded-[8px] bg-[#e9af41]/20 before:absolute before:inset-0 before:-translate-x-full before:animate-[skeleton-shimmer_1.4s_ease-in-out_infinite] before:bg-gradient-to-r before:from-transparent before:via-[#e9af41]/30 before:to-transparent" />
       </div>
     </div>
+  );
+}
+
+function SkeletonBar({ width }) {
+  return (
+    <span
+      className="relative block h-3 overflow-hidden rounded bg-white/[0.07] before:absolute before:inset-0 before:-translate-x-full before:animate-[skeleton-shimmer_1.4s_ease-in-out_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/[0.1] before:to-transparent"
+      style={{ width }}
+    />
+  );
+}
+
+function SkeletonCircle() {
+  return (
+    <span className="relative block h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white/[0.07] before:absolute before:inset-0 before:-translate-x-full before:animate-[skeleton-shimmer_1.4s_ease-in-out_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/[0.1] before:to-transparent" />
   );
 }
 
@@ -583,26 +591,7 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
 }
 
 function PicSelect({ value, onChange, options }) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="h-10 rounded-[8px] border border-[#f2cb7a] bg-transparent px-3 text-[14px] text-white focus:outline-none appearance-none"
-      style={{
-        backgroundImage:
-          "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M4 6l4 4 4-4' stroke='%23eaad2c' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>\")",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "right 10px center",
-        paddingRight: "30px",
-      }}
-    >
-      {options.map((pic) => (
-        <option key={pic.uuid} value={pic.uuid} className="bg-[#041502]">
-          {pic.label}
-        </option>
-      ))}
-    </select>
-  );
+  return <CustomSelect value={value} onChange={onChange} options={options.map((pic) => ({ value: pic.uuid, label: pic.label }))} placeholder="Choose PIC" />;
 }
 
 function FormField({ label, children }) {
@@ -641,25 +630,67 @@ function RmInput({ value, onChange }) {
 }
 
 function Select({ value, onChange, options }) {
+  return <CustomSelect value={value} onChange={onChange} options={options.map((opt) => ({ value: opt, label: opt }))} />;
+}
+
+function CustomSelect({ value, onChange, options, placeholder = "Select..." }) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find((option) => option.value === value);
+
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="h-10 rounded-[8px] border border-[#f2cb7a] bg-transparent px-3 text-[14px] text-white focus:outline-none appearance-none"
-      style={{
-        backgroundImage:
-          "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M4 6l4 4 4-4' stroke='%23eaad2c' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>\")",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "right 10px center",
-        paddingRight: "30px",
-      }}
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((next) => !next)}
+        className="flex h-10 w-full items-center justify-between gap-3 rounded-[8px] border border-[#f2cb7a] bg-transparent px-3 text-left text-[14px] text-white focus:outline-none"
+      >
+        <span className={selected ? "min-w-0 break-words" : "text-white/45"}>
+          {selected?.label || placeholder}
+        </span>
+        <ChevronGlyph open={open} />
+      </button>
+      {open ? (
+        <>
+          <div className="fixed inset-0 z-20" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-full z-30 mt-1 max-h-56 w-full overflow-y-auto rounded-[8px] border border-[#f2cb7a] bg-[#050805] py-1 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
+            {options.length === 0 ? (
+              <div className="px-3 py-2 text-[13px] text-white/40">No options</div>
+            ) : (
+              options.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(option.value);
+                    setOpen(false);
+                  }}
+                  className={`block w-full px-3 py-2 text-left text-[13px] leading-[18px] ${
+                    option.value === value ? "bg-[#eaad2c] text-black" : "text-white hover:bg-white/10"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))
+            )}
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function ChevronGlyph({ open }) {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      className="shrink-0 transition-transform"
+      style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
     >
-      {options.map((opt) => (
-        <option key={opt} value={opt} className="bg-[#041502]">
-          {opt}
-        </option>
-      ))}
-    </select>
+      <path d="M4 6l4 4 4-4" stroke="#eaad2c" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 

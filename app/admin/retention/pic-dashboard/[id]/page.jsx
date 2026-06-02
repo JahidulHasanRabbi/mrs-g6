@@ -16,7 +16,7 @@ import {
   GRAD_GOLD,
 } from "../../../../components/admin/retention/constants";
 import {
-  getRetentionMembers,
+  getAdminMembers,
   getRetentionSummary,
   periodLabelToType,
   refreshCrmMembers,
@@ -203,7 +203,7 @@ function PicDetailContent() {
         toDate={toDate}
       />
       <KpiGrid summary={summary} loading={summaryLoading} />
-      <MemberListSection onRefreshSummary={loadSummary} />
+      <MemberListSection adminUuid={slug} onRefreshSummary={loadSummary} />
     </>
   );
 }
@@ -309,7 +309,7 @@ function VipLevelRow({ level, value }) {
   );
 }
 
-function MemberListSection({ onRefreshSummary }) {
+function MemberListSection({ adminUuid, onRefreshSummary }) {
   // URL state ------------------------------------------------------------
   // All filter values live in the query string so the view is shareable and
   // browser-back / forward work as expected.  router.replace (not push) keeps
@@ -358,9 +358,10 @@ function MemberListSection({ onRefreshSummary }) {
   }), [fromDate, toDate, level, page, q]);
 
   const fetchMembers = useCallback(async () => {
+    if (!adminUuid) return;
     setLoading(true);
     try {
-      const res = await getRetentionMembers(apiParams);
+      const res = await getAdminMembers(adminUuid, apiParams);
       let results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
       if (sort === "hl") results = [...results].sort((a, b) => parseFloat(memberSales(b) || 0) - parseFloat(memberSales(a) || 0));
       else if (sort === "lh") results = [...results].sort((a, b) => parseFloat(memberSales(a) || 0) - parseFloat(memberSales(b) || 0));
@@ -373,7 +374,7 @@ function MemberListSection({ onRefreshSummary }) {
     } finally {
       setLoading(false);
     }
-  }, [apiParams, sort]);
+  }, [adminUuid, apiParams, sort]);
 
   useEffect(() => {
     fetchMembers();

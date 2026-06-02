@@ -146,6 +146,13 @@ export async function getRetentionMembers(params = {}) {
   return await apiRequest(`${ENDPOINTS.CRM.RETENTION_MEMBERS}${qs}`, { method: 'GET' }, true, 'admin');
 }
 
+// GET /crm-members/<admin_uuid>/admin-members/  (paginated)
+// params: { page, page_size, from_date, to_date, vip_level, from_sales, to_sales, search }
+export async function getAdminMembers(adminUuid, params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.CRM.ADMIN_MEMBERS(adminUuid)}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
 // ─────────────────────────── Dashboard ───────────────────────────
 
 // GET /crm-admins/dashboard-summary/
