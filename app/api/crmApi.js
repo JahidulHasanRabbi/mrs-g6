@@ -20,7 +20,7 @@ export async function createCrmUser(data) {
 
 export async function updateCrmUser(uuid, data) {
   return await apiRequest(ENDPOINTS.CRM.USER_SINGLE(uuid), {
-    method: 'PUT',
+    method: 'PATCH',
     body: data
   }, true, 'admin');
 }
@@ -94,7 +94,7 @@ export async function archiveCrmVipTier(uuid) {
 // ───────────────────────── Member Profile ─────────────────────────
 
 // GET /crm-members/members/  (paginated)
-// params: { page, page_size, priority, vip_level, retention, search }
+// params: { page, page_size, priority, wallet_vip_level, mrs_vip_level, retention, search }
 export async function getCrmMembers(params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.CRM.MEMBERS}${qs}`, { method: 'GET' }, true, 'admin');
@@ -105,17 +105,9 @@ export async function getCrmMemberSingle(memberUuid) {
   return await apiRequest(ENDPOINTS.CRM.MEMBER_SINGLE(memberUuid), { method: 'GET' }, true, 'admin');
 }
 
-// PUT /crm-members/members/<uuid>/  — requires all fields
+// PATCH /crm-members/members/<uuid>/
 // body: { profile_data, basic_info, game_info }
 export async function updateCrmMember(memberUuid, data) {
-  return await apiRequest(ENDPOINTS.CRM.MEMBER_SINGLE(memberUuid), {
-    method: 'PUT',
-    body: data
-  }, true, 'admin');
-}
-
-// PATCH /crm-members/members/<uuid>/  — send only fields that changed
-export async function patchCrmMember(memberUuid, data) {
   return await apiRequest(ENDPOINTS.CRM.MEMBER_SINGLE(memberUuid), {
     method: 'PATCH',
     body: data
@@ -143,7 +135,7 @@ export async function getRetentionSummary(adminUuid, params = {}) {
   return await apiRequest(`${ENDPOINTS.CRM.RETENTION_SUMMARY(adminUuid)}${qs}`, { method: 'GET' }, true, 'admin');
 }
 
-// GET /crm-members/retention-members/  (paginated)
+// GET /crm-members/retention-profile/  (paginated)
 // params: { page, page_size, from_date, to_date, vip_level, from_sales, to_sales, search }
 export async function getRetentionMembers(params = {}) {
   const qs = buildQueryParams(params);

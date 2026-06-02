@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { adminLogin, verifyToken } from '../../api/adminApi';
+import { adminLogin, completeAdminLogin, verifyToken } from '../../api/adminApi';
 import { tokenStorage } from '../../api/tokenStorage';
 import ErrorDisplay from '../../components/ui/ErrorDisplay';
 
@@ -18,6 +18,7 @@ export default function AdminLoginPage() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [keepLoggedIn, setKeepLoggedIn] = useState(false);
+  const [approvalRequest, setApprovalRequest] = useState(null);
 
   // Check if user is already logged in when component mounts
   useEffect(() => {
@@ -69,10 +70,32 @@ export default function AdminLoginPage() {
     setIsLoading(true);
 
     try {
-      await adminLogin(formData.username, formData.password);
+      const response = await adminLogin(formData.username, formData.password);
+      if (response?.message === 'approval_required' || response?.approval_id) {
+        setApprovalRequest({
+          approvalId: response.approval_id,
+          userId: response.user_id
+        });
+        setError(null);
+        return;
+      }
       router.push('/admin');
     } catch (err) {
       setError(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCheckApproval = async () => {
+    if (!approvalRequest?.approvalId) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      await completeAdminLogin(approvalRequest.approvalId);
+      router.push('/admin');
+    } catch (err) {
+      setError(err?.status === 400 ? { message: 'Login request has not been approved yet.' } : err);
     } finally {
       setIsLoading(false);
     }
@@ -133,6 +156,12 @@ export default function AdminLoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {approvalRequest && (
+              <div className="rounded-md border border-[#e9af41]/60 bg-[#e9af41]/10 px-3 py-3 text-sm text-[#fbeed2]">
+                Login approval is required. Ask an authorized admin to approve it from Login Requests, then check again.
+              </div>
+            )}
+
             {/* Username */}
             <div className="space-y-2">
               <label
@@ -216,7 +245,8 @@ export default function AdminLoginPage() {
             {/* Login Button */}
             <div className="pt-1">
               <button
-                type="submit"
+                type={approvalRequest ? 'button' : 'submit'}
+                onClick={approvalRequest ? handleCheckApproval : undefined}
                 className="w-[120px] rounded-md px-6 py-2.5 text-base font-bold text-black disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
                 style={{
                   backgroundImage:
@@ -224,7 +254,7 @@ export default function AdminLoginPage() {
                 }}
                 disabled={isLoading}
               >
-                {isLoading ? '...' : 'Login'}
+                {isLoading ? '...' : approvalRequest ? 'Check' : 'Login'}
               </button>
             </div>
           </form>

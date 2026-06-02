@@ -8,33 +8,25 @@ export async function adminLogin(username, password) {
     method: 'POST',
     body: { username, password }
   }, false);
+  
+  if (response.access && response.refresh) {
+    tokenStorage.setAdminTokens(response.access, response.refresh);
+  }
+  
+  return response;
+}
+
+export async function completeAdminLogin(approvalId) {
+  const response = await apiRequest(ENDPOINTS.ADMIN.LOGIN_COMPLETE, {
+    method: 'POST',
+    body: { approval_id: approvalId }
+  }, false);
 
   if (response.access && response.refresh) {
     tokenStorage.setAdminTokens(response.access, response.refresh);
   }
 
-  if (response.role) {
-    tokenStorage.setAdminRole(response.role);
-    // Fetch role permissions in the background — non-blocking
-    fetchAndStoreRolePermissions(response.role, response.access).catch(() => {});
-  }
-
-  return {
-    access: response.access,
-    refresh: response.refresh,
-    role: response.role,
-  };
-}
-
-async function fetchAndStoreRolePermissions(roleName, accessToken) {
-  // GET /admins/roles/ with the newly-stored token — find the matching role
-  const { getCrmRoles } = await import('./crmApi');
-  const res = await getCrmRoles({ page: 1, page_size: 100 });
-  const roles = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
-  const match = roles.find((r) => r.name === roleName);
-  if (match && Array.isArray(match.permissions)) {
-    tokenStorage.setAdminPermissions(match.permissions);
-  }
+  return response;
 }
 
 export async function adminLogout(refreshToken) {

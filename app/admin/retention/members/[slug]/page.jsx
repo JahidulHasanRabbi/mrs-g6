@@ -115,9 +115,13 @@ function inferActiveBrands(customerData) {
 
 function formatCurrency(value) {
   if (value === null || value === undefined || value === "") return "—";
-  const num = parseFloat(value);
-  if (Number.isNaN(num)) return String(value);
-  return `RM ${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  const raw = String(value).trim();
+  const normalized = raw.replace(/,/g, "");
+  const match = normalized.match(/^(-?)(\d+)(\.\d+)?$/);
+  if (!match) return `RM ${raw}`;
+  const [, sign, integer, decimal = ""] = match;
+  const grouped = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return `RM ${sign}${grouped}${decimal}`;
 }
 
 function show(value, fallback = "—") {
@@ -247,7 +251,7 @@ export default function MemberProfilePage() {
 
   const financialInfo = {
     "Total Sales": formatCurrency(data?.financial_info?.total_sales),
-    "Total Withdrawal": formatCurrency(customer?.total_withdrawal),
+    "Total Withdrawal": formatCurrency(data?.financial_info?.total_withdrawal ?? customer?.total_withdrawal),
     "Total Win/lose": formatCurrency(data?.financial_info?.total_win_lose),
     "Total Sales Ticket": show(data?.financial_info?.total_sales_ticket),
     ARPU: formatCurrency(data?.financial_info?.arpu),
@@ -893,14 +897,14 @@ function InfoCard({ title, data }) {
 
 function InfoRow({ label, value }) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-start gap-3">
       <span
         className="flex-1 min-w-0 text-[14px] font-semibold text-white leading-[21px]"
         style={{ letterSpacing: "-1px" }}
       >
         {label}
       </span>
-      <span className="text-[12px] font-medium text-[#84ebb4] leading-[18px] text-right whitespace-nowrap">
+      <span className="max-w-[55%] break-words text-right text-[12px] font-medium text-[#84ebb4] leading-[18px]">
         {value}
       </span>
     </div>

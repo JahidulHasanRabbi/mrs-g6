@@ -28,6 +28,22 @@ const COLUMNS = [
 
 const TABLE_MIN_WIDTH = COLUMNS.reduce((sum, c) => sum + c.minW, 0);
 
+function normalizeStatus(value) {
+  if (value === 1 || value === "1") return "Active";
+  if (value === 2 || value === "2") return "Inactive";
+  const normalized = String(value || "").trim().toUpperCase();
+  if (normalized === "ACTIVE") return "Active";
+  if (normalized === "INACTIVE") return "Inactive";
+  return value || "Inactive";
+}
+
+function normalizeUser(row) {
+  return {
+    ...row,
+    status: normalizeStatus(row?.status),
+  };
+}
+
 export default function UserAccessPage() {
   const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +55,7 @@ export default function UserAccessPage() {
     fetchAllPages(getCrmUsers)
       .then((users) => {
         if (cancelled) return;
-        setAllUsers(users);
+        setAllUsers(users.map(normalizeUser));
       })
       .catch((err) => {
         if (cancelled) return;
@@ -55,7 +71,7 @@ export default function UserAccessPage() {
     fetchAllPages(getCrmLoginRequests)
       .then((results) => {
         if (cancelled) return;
-        setPendingLogins(results.filter((row) => row.status === "Pending").length);
+        setPendingLogins(results.filter((row) => String(row.status || "").toUpperCase() === "PENDING").length);
       })
       .catch((err) => {
         if (cancelled) return;

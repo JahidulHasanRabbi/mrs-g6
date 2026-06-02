@@ -2,10 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getCrmMembers, getCrmUsers } from "../../../api/crmApi";
-import { getVipTierList } from "../../../api/adminApi";
+import { getCrmMembers, getCrmUsers, getCrmVipTiers } from "../../../api/crmApi";
 import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
-import Pagination from "../../../components/admin/retention/Pagination";
 
 const A = "/assets/admin/pic-dashboard";
 
@@ -17,26 +15,15 @@ const PRIORITY_OPTIONS = ["High", "Medium", "Low"];
 // UI label → API integer.
 const PRIORITY_TO_INT = { High: 1, Medium: 2, Low: 3 };
 
-const MOCK_FIRST_ROW = {
-  uuid: "mock-001",
-  full_name: "Ah Chong 88",
-  phone_number: "+6012-309 8765",
-  vip_level: "VIP 4",
-  daily_sales: 9999.88,
-  daily_win_loss: 1023.13,
-  priority: "High",
-  retention: "Sarah",
-};
-
 const COLUMNS = [
-  { key: "name",     label: "Username",       minW: 220 },
-  { key: "phone",    label: "Phone Number",   minW: 160 },
-  { key: "vip",      label: "VIP Level",      minW: 110 },
-  { key: "sales",    label: "Daily Sales",    minW: 130 },
-  { key: "winloss",  label: "Daily Win/Loss", minW: 140 },
-  { key: "priority", label: "Priority",       minW: 110 },
-  { key: "pic",      label: "Retention",      minW: 130 },
-  { key: "action",   label: "Action",         minW: 120, align: "end" },
+  { key: "name",     label: "Username",       minW: 180 },
+  { key: "phone",    label: "Phone Number",   minW: 140 },
+  { key: "vip",      label: "VIP Level",      minW: 100 },
+  { key: "sales",    label: "Daily Sales",    minW: 120 },
+  { key: "winloss",  label: "Daily Win/Loss", minW: 130 },
+  { key: "priority", label: "Priority",       minW: 100 },
+  { key: "pic",      label: "Retention",      minW: 110 },
+  { key: "action",   label: "Action",         minW: 110, align: "end" },
 ];
 
 const TABLE_MIN_WIDTH = COLUMNS.reduce((sum, c) => sum + c.minW, 0);
@@ -68,10 +55,10 @@ export default function RetentionMembersPage() {
         setPics(results);
       })
       .catch(() => setPics([]));
-    getVipTierList()
+    getCrmVipTiers({ page: 1, page_size: 100 })
       .then((res) => {
         const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
-        setVipTiers(results.map((t) => ({ name: t.name, level: t.id ?? t.uuid })));
+        setVipTiers(results.map((t, i) => ({ name: t.name, level: i + 1 })));
       })
       .catch(() => setVipTiers([]));
   }, []);
@@ -100,7 +87,7 @@ export default function RetentionMembersPage() {
           page,
           page_size: PAGE_SIZE,
           priority: priority ? PRIORITY_TO_INT[priority] : undefined,
-          vip_level: vip ? (vipTiers.find((t) => t.name === vip)?.level ?? undefined) : undefined,
+          mrs_vip_level: vip || undefined,
           retention: retentionUuid || undefined,
           search: debouncedQuery || undefined,
         });
@@ -123,13 +110,11 @@ export default function RetentionMembersPage() {
     };
   }, [page, priority, vip, pic, pics, vipTiers, debouncedQuery]);
 
-  const displayRows = page === 1 ? [MOCK_FIRST_ROW, ...rows] : rows;
-  const displayTotal = total + 1;
-  const totalPages = Math.max(1, Math.ceil(displayTotal / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const startIdx = (safePage - 1) * PAGE_SIZE;
-  const showingFrom = displayTotal === 0 ? 0 : startIdx + 1;
-  const showingTo = Math.min(startIdx + displayRows.length, displayTotal);
+  const showingFrom = total === 0 ? 0 : startIdx + 1;
+  const showingTo = Math.min(startIdx + rows.length, total);
 
   return (
     <section className="relative flex w-full flex-col rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
@@ -158,24 +143,24 @@ export default function RetentionMembersPage() {
           <TableHeader />
           <div className="flex w-full flex-col">
             {loading ? (
-              Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonRow key={i} />)
-            ) : displayRows.length === 0 ? (
+              <div className="px-6 py-12 text-center text-[12px] text-white/60">Loading...</div>
+            ) : rows.length === 0 ? (
               <div className="px-6 py-12 text-center text-[12px] text-white/40">
                 No members found.
               </div>
             ) : (
-              displayRows.map((row, idx) => <TableRow key={`${row.uuid || row.username || "member"}-${idx}`} row={row} />)
+              rows.map((row, idx) => <TableRow key={`${row.uuid || row.username || "member"}-${idx}`} row={row} />)
             )}
           </div>
         </div>
       </div>
 
-      <Pagination
+      <PaginationBar
         from={showingFrom}
         to={showingTo}
-        total={displayTotal}
-        currentPage={safePage}
-        pageCount={totalPages}
+        total={total}
+        page={safePage}
+        totalPages={totalPages}
         onPageChange={setPage}
       />
     </section>
@@ -266,7 +251,7 @@ function TableHeader() {
       {COLUMNS.map((col) => (
         <div
           key={col.key}
-          className={`flex flex-1 flex-col px-4 py-4 ${col.align === "end" ? "items-end" : "items-start"}`}
+          className={`flex flex-1 flex-col px-6 py-4 ${col.align === "end" ? "items-end" : "items-start"}`}
           style={{ minWidth: col.minW }}
         >
           <p className="text-[12px] font-medium text-[#fbeed2] leading-[18px] whitespace-nowrap">
@@ -284,31 +269,21 @@ function TableRow({ row }) {
   return (
     <div className="flex w-full items-stretch -mb-px border-b border-white/5">
       <Cell minW={COLUMNS[0].minW}>
-        <div className="flex items-start gap-3">
-          <div className="shrink-0 pt-0.5"><UserAvatar /></div>
-          <span className="text-[12px] font-medium text-white leading-[18px] break-words">
+        <div className="flex min-w-0 items-center gap-3">
+          <UserAvatar />
+          <span className="min-w-0 break-words text-[12px] font-medium text-white leading-[18px]">
             {name}
           </span>
         </div>
       </Cell>
-      <Cell minW={COLUMNS[1].minW}>
-        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{row.phone_number ?? "—"}</span>
-      </Cell>
-      <Cell minW={COLUMNS[2].minW}>
-        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{row.vip_level ?? "—"}</span>
-      </Cell>
-      <Cell minW={COLUMNS[3].minW}>
-        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{formatCurrency(row.daily_sales)}</span>
-      </Cell>
-      <Cell minW={COLUMNS[4].minW}>
-        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{formatCurrency(row.daily_win_loss)}</span>
-      </Cell>
+      <DataCell value={row.phone_number} minW={COLUMNS[1].minW} />
+      <DataCell value={row.vip_level} minW={COLUMNS[2].minW} />
+      <DataCell value={formatCurrency(row.daily_sales)} minW={COLUMNS[3].minW} />
+      <DataCell value={formatCurrency(row.daily_win_loss)} minW={COLUMNS[4].minW} />
       <Cell minW={COLUMNS[5].minW}>
         <PriorityBadge value={row.priority} />
       </Cell>
-      <Cell minW={COLUMNS[6].minW}>
-        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{row.retention ?? "—"}</span>
-      </Cell>
+      <DataCell value={row.retention} minW={COLUMNS[6].minW} />
       <Cell minW={COLUMNS[7].minW} align="end">
         <Link
           href={href}
@@ -323,11 +298,21 @@ function TableRow({ row }) {
   );
 }
 
+function DataCell({ value, minW }) {
+  return (
+    <Cell minW={minW}>
+      <span className="min-w-0 break-words text-[12px] font-medium text-white leading-[18px]">
+        {value ?? "—"}
+      </span>
+    </Cell>
+  );
+}
+
 function Cell({ children, minW, align = "start" }) {
   const justify = align === "end" ? "justify-end" : "justify-start";
   return (
     <div
-      className={`flex flex-1 items-center overflow-hidden px-4 py-4 ${justify}`}
+      className={`flex min-w-0 flex-1 items-center overflow-hidden p-6 ${justify}`}
       style={{ minWidth: minW }}
     >
       {children}
@@ -349,14 +334,102 @@ function UserAvatar() {
   );
 }
 
-function SkeletonRow() {
+// Build the page chip list with ellipsis. When there are 7 or fewer pages we
+// just list them all. Otherwise we always show the first and last page, and
+// a 1-page window around the current page, inserting ellipsis where there's a
+// gap so we never render adjacent numbers like "1, 2" with an ellipsis in
+// between.
+function buildPageItems(currentPage, totalPages) {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  const items = [1];
+  const start = Math.max(2, currentPage - 1);
+  const end = Math.min(totalPages - 1, currentPage + 1);
+  if (start > 2) items.push("ellipsis-l");
+  for (let p = start; p <= end; p += 1) items.push(p);
+  if (end < totalPages - 1) items.push("ellipsis-r");
+  items.push(totalPages);
+  return items;
+}
+
+function PaginationBar({ from, to, total, page, totalPages, onPageChange }) {
+  const items = buildPageItems(page, totalPages);
+  const prevDisabled = page <= 1;
+  const nextDisabled = page >= totalPages;
+
   return (
-    <div className="flex w-full items-stretch border-b border-white/5">
-      {COLUMNS.map((col) => (
-        <div key={col.key} className="flex flex-1 items-center px-4 py-4" style={{ minWidth: col.minW }}>
-          <div className="h-3 w-3/4 rounded bg-white/10 animate-pulse" />
-        </div>
-      ))}
+    <div className="flex min-h-[44px] w-full items-center justify-between gap-3 flex-wrap px-6 py-3">
+      <span className="text-[8px] text-white leading-[12px]">
+        Showing {from} to {to} of {total} Results
+      </span>
+      <div className="flex items-center gap-[5.5px]">
+        <PageButton
+          onClick={() => onPageChange(Math.max(1, page - 1))}
+          disabled={prevDisabled}
+          ariaLabel="Previous page"
+        >
+          <PageChevron direction="left" />
+        </PageButton>
+        {items.map((item) =>
+          typeof item === "number" ? (
+            <PageNumber
+              key={item}
+              value={item}
+              active={item === page}
+              onClick={() => onPageChange(item)}
+            />
+          ) : (
+            <span key={item} className="text-[8px] text-white leading-[12px]">....</span>
+          )
+        )}
+        <PageButton
+          onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+          disabled={nextDisabled}
+          ariaLabel="Next page"
+        >
+          <PageChevron direction="right" />
+        </PageButton>
+      </div>
     </div>
+  );
+}
+
+function PageNumber({ value, active, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex h-[18px] w-[18px] items-center justify-center rounded-[4px] text-[8px] text-white leading-[12px] ${
+        active ? "bg-[#eaad2c]" : "border border-[#eaad2c] hover:bg-[#eaad2c]/20"
+      }`}
+    >
+      {value}
+    </button>
+  );
+}
+
+function PageButton({ children, onClick, ariaLabel, disabled }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      disabled={disabled}
+      className={`flex h-[18px] w-[18px] items-center justify-center rounded-[4px] border border-[#eaad2c] ${
+        disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-[#eaad2c]/20"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function PageChevron({ direction }) {
+  const rotate = direction === "left" ? "rotate(180deg)" : "rotate(0deg)";
+  return (
+    <svg width="6" height="10" viewBox="0 0 6 10" fill="none" style={{ transform: rotate }}>
+      <path d="M1 1l4 4-4 4" stroke="#eaad2c" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }

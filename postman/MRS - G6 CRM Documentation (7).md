@@ -14,75 +14,91 @@
 
 [**User Access Panel	4**](#user-access-panel)
 
-[User List	4](#user-list)
+[New Login Method \- With Login Approval	4](#new-login-method---with-login-approval)
 
-[User List \- GET	4](#user-list---get)
+[Admin Login	4](#admin-login)
 
+<<<<<<<< Updated upstream:postman/MRS - G6 CRM Documentation (6).md
 [User List \- POST/PUT	4](#user-list---post)
+========
+[Login Complete	5](#login-complete)
+>>>>>>>> Stashed changes:postman/MRS - G6 CRM Documentation (7).md
 
-[Login Requests	5](#login-requests)
+[User List	6](#user-list)
 
-[Login Requests \- GET	5](#login-requests---get)
+[User List \- GET	6](#user-list---get)
 
-[Login Requests \- PATCH	5](#login-requests---patch)
+[User List \- POST	6](#user-list---post)
 
-[Activity Log	6](#activity-log)
+[User List \- POST	7](#user-list---post-1)
 
-[Activity Log \- GET	6](#activity-log---get)
+[Login Requests	7](#login-requests)
 
-[Permissions	6](#permissions)
+[Login Requests \- GET	7](#login-requests---get)
 
-[Permissions \- GET	6](#permissions---get)
+[Login Requests \- PATCH	8](#login-requests---patch)
 
-[Roles	7](#roles)
+[Activity Log	8](#activity-log)
 
-[Roles \- GET	7](#roles---get)
+[Activity Log \- GET	8](#activity-log---get)
 
-[Roles \- POST / PUT	7](#roles---post-/-put)
+[Permissions	9](#permissions)
 
-[Roles \- Archive	8](#roles---archive)
+[Permissions \- GET	9](#permissions---get)
 
-[**Member Profile	9**](#member-profile)
+[Roles	10](#roles)
 
-[Member List	9](#member-list)
+[Roles \- GET	10](#roles---get)
 
-[Member List \- GET	9](#member-list---get)
+[Roles \- POST / PUT	11](#roles---post-/-put)
 
-[Member Single \- GET	10](#member-single---get)
+[Roles \- Archive	11](#roles---archive)
 
+<<<<<<<< Updated upstream:postman/MRS - G6 CRM Documentation (6).md
 [Member Single \- PUT	12](#member-single---put-/-patch)
+========
+[**Member Profile	12**](#member-profile)
+>>>>>>>> Stashed changes:postman/MRS - G6 CRM Documentation (7).md
 
-[**Retention Alert System	14**](#retention-alert-system)
+[Member List	12](#member-list)
 
-[Priority Summary \- GET	14](#priority-summary---get)
+[Member List \- GET	12](#member-list---get)
 
-[Refresh Members \- POST	14](#refresh-members---post)
+[Member Single \- GET	13](#member-single---get)
 
-[**Individual Sales Report	15**](#individual-sales-report)
+[Member Single \- PUT / PATCH	15](#member-single---put-/-patch)
 
-[**Dashboard View	16**](#dashboard-view)
+[**Retention Alert System	18**](#retention-alert-system)
 
-[Dashboard Summary	16](#dashboard-summary)
+[Priority Summary \- GET	18](#priority-summary---get)
 
-[Dashboard Summary \- GET	16](#dashboard-summary---get)
+[Refresh Members \- POST	18](#refresh-members---post)
 
-[Dashboard Details \- GET	16](#dashboard-details---get)
+[**Individual Sales Report	19**](#individual-sales-report)
 
-[**Retention Profile	18**](#retention-profile)
+[**Dashboard View	20**](#dashboard-view)
 
-[Retention Summary	18](#retention-summary)
+[Dashboard Summary	20](#dashboard-summary)
 
-[Retention Member List \- GET	19](#retention-member-list---get)
+[Dashboard Summary \- GET	20](#dashboard-summary---get)
 
-[**Settings	21**](#settings)
+[Dashboard Details \- GET	20](#dashboard-details---get)
 
-[Member Assignment	21](#member-assignment)
+[**Retention Profile	22**](#retention-profile)
 
-[Member Assignment \- GET	21](#member-assignment---get)
+[Retention Summary	22](#retention-summary)
 
-[Member Assignment \- POST/PUT	21](#member-assignment---post/put)
+[Retention Member List \- GET	23](#retention-member-list---get)
 
-[Member Assignment \- Set Deposit \- Patch	22](#member-assignment---set-deposit---patch)
+[**Settings	25**](#settings)
+
+[Member Assignment	25](#member-assignment)
+
+[Member Assignment \- GET	25](#member-assignment---get)
+
+[Member Assignment \- POST/PUT	25](#member-assignment---post/put)
+
+[Member Assignment \- Set Deposit \- Patch	26](#member-assignment---set-deposit---patch)
 
 # Initial Notes {#initial-notes}
 
@@ -109,6 +125,63 @@ Password: Qwerabcd\!
 | **4** | results | List of Objects |  |
 
 # User Access Panel {#user-access-panel}
+
+## New Login Method \- With Login Approval {#new-login-method---with-login-approval}
+
+### Admin Login {#admin-login}
+
+/login/admin-login POST
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | username | str | No |  |
+| **2** | password | str | No |  |
+| **3** | ip\_address | str | Yes |  |
+| **4** | device | str | Yes |  |
+
+Response  
+If user has bypass\_approval:
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | id | uuid | No |  |
+| **2** | username | str | No |  |
+| **3** | access | str | No |  |
+| **4** | refresh | str | No |  |
+| **5** | permissions | List | No | Returns list of permissions like “view\_admins”, “bypass\_approvals”, etc |
+| **6** | role | str | No | Returns role name |
+
+If user doesn’t have bypass\_approval:
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | message | str | No | Returns “approval\_required” |
+| **2** | approval\_id | uuid | No |  |
+| **3** | user\_id | UUID | No |  |
+
+### Login Complete {#login-complete}
+
+/login/admin-login/complete/ POST
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | approval\_id | UUID | No |  |
+
+If Approval is approved:
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | id | uuid | No |  |
+| **2** | username | str | No |  |
+| **3** | access | str | No |  |
+| **4** | refresh | str | No |  |
+| **5** | permissions | List | No | Returns list of permissions like “view\_admins”, “bypass\_approvals”, etc |
+| **6** | role | str | No | Returns role name |
+
+Else:  
+Error 400 \- Login Request has not been approved
+
+## 
 
 ## User List {#user-list}
 
@@ -146,7 +219,11 @@ Input
 | **5** | password | str | No |  |
 | **6** | confirm\_password | str | No |  |
 
+<<<<<<<< Updated upstream:postman/MRS - G6 CRM Documentation (6).md
 ### User List \- POST
+========
+### User List \- POST {#user-list---post-1}
+>>>>>>>> Stashed changes:postman/MRS - G6 CRM Documentation (7).md
 
 /admins/users/\<uuid\>/ PUT  
 /admins/users/\<uuid\>/ PATCH  
@@ -171,6 +248,8 @@ Query parameters
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | page | Int | No | For Pagination |
 | **2** | page\_size | Int | No | For Pagination |
+| **3** | status | int | Yes | 1 \= PENDING 2 \= APPROVED 3 \= REJECTED |
+| **4** | username | str | Yes | icontains |
 
 Output (Is Paginated)
 
@@ -181,6 +260,8 @@ Output (Is Paginated)
 | **3** | device | Str | No |  |
 | **4** | request\_time | datetime | No |  |
 | **5** | status | Str | No | Pending, Approved, Rejected |
+| **6** | approved\_by | Str | Yes |  |
+| **7** | approved\_datetime | datetime | Yes |  |
 
 ### Login Requests \- PATCH {#login-requests---patch}
 
@@ -203,6 +284,7 @@ Query parameters
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | page | Int | No | For Pagination |
 | **2** | page\_size | Int | No | For Pagination |
+| **3** | username | str | Yes | Fuzzy |
 
 Output (Is Paginated)
 
@@ -220,23 +302,47 @@ Output (Is Paginated)
 /admins/permissions/ GET  
 Response example:  
 {  
-    "Members": \[  
-        {  
-            "key": "view\_members",  
-            "label": "View Members"  
-        },  
-        {  
-             "key": "edit\_members",  
-             "label": "Edit Members"  
-      }  
-  \],  
- "Admins": \[  
-   {  
-     "key": "view\_admins",  
-     "label": "View Admins"  
-   }  
- \]  
+"Others": {  
+"Login": \[  
+{  
+"key": "view\_logins",  
+"label": "View Logins"  
+}  
+\]  
+},  
+"Retention": {  
+"Admins": \[  
+{  
+"key": "view\_admins",  
+"label": "View Admins"  
+}  
+\],  
+"Roles": \[  
+{  
+"key": "view\_roles",  
+"label": "View Roles"  
+}  
+\]  
+},  
+"Member": {  
+"VIP": \[  
+{  
+"key": "view\_vip",  
+"label": "View VIP"  
+}  
+\]  
+}  
 }
+
+Current Structure:
+
+| \# | Property/Field | Description |
+| ----: | :---- | :---- |
+| **1** | Others | Logins |
+| **2** | Retention | Admins Roles |
+| **3** | Member | Tiers Spins |
+
+## 
 
 ## Roles {#roles}
 
@@ -289,9 +395,10 @@ Query parameters
 | **1** | page | Int | No | For Pagination |
 | **2** | page\_size | Int | No | For Pagination |
 | **3** | priority | int | Yes |  |
-| **4** | vip\_level | int | Yes |  |
-| **5** | retention | int | Yes |  |
-| **6** | search | str | Yes | For Name and Phone Number, fuzzy |
+| **4** | wallet\_vip\_level | str | Yes | Fuzzy |
+| **5** | mrs\_vip\_level | str | Yes | Fuzzy |
+| **6** | retention | int | Yes |  |
+| **7** | search | str | Yes | For Name and Phone Number, fuzzy |
 
 Output (Is Paginated)
 
@@ -396,11 +503,16 @@ Profile Data Input
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | mrs\_vip\_level\_uuid | UUID | No | Taken from mrs vip |
+<<<<<<<< Updated upstream:postman/MRS - G6 CRM Documentation (6).md
 | **2** | player\_type | Int | No | (Will have choices later) |
 | **3** | risk | Int | No | (Will have choices later) |
 | **4** | deposit\_frequency | Int | No | (Will have choices later) |
 | **5** | status | Int | No | (Will have choices later) |
 | **6** | wallet\_levels | List |  | station\_uuid: uuid wallet\_level\_uuid: uuid (taken from wallet level vip) |
+========
+| **2** | tags | List\[str\] |  |  |
+| **3** | wallet\_levels | List |  | station\_uuid: uuid wallet\_level\_uuid: uuid (taken from wallet level vip) |
+>>>>>>>> Stashed changes:postman/MRS - G6 CRM Documentation (7).md
 
 Basic Info Input
 
@@ -543,7 +655,7 @@ Amount output
 
 ## Retention Member List \- GET {#retention-member-list---get}
 
-/crm-members/retention-members/ GET  
+/crm-members/retention-profile/ GET  
 Query parameters
 
 | \# | Property/Field | Data Type | Nullable | Description |

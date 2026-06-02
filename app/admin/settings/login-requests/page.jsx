@@ -44,14 +44,22 @@ function formatRequestTime(value) {
   });
 }
 
+function normalizeStatus(value) {
+  const normalized = String(value || "").trim().toUpperCase();
+  if (normalized === "APPROVED") return STATUS_APPROVED;
+  if (normalized === "REJECTED") return STATUS_REJECTED;
+  if (normalized === "PENDING") return STATUS_PENDING;
+  return STATUS_PENDING;
+}
+
 function mapLoginRequest(row) {
   return {
     id: row.uuid,
-    username: row.user || row.username || "—",
+    username: row.admin || row.user || row.username || "—",
     ip: row.ip_address || "—",
     device: row.device || "—",
     time: formatRequestTime(row.request_time),
-    status: row.status || STATUS_PENDING,
+    status: normalizeStatus(row.status),
   };
 }
 

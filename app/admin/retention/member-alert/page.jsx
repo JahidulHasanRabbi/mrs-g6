@@ -1,64 +1,53 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import RefreshControl from "../../../components/admin/retention/RefreshControl";
 import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
-import Pagination from "../../../components/admin/retention/Pagination";
-import { GRAD_DARK, GRAD_GOLD } from "../../../components/admin/retention/constants";
+import { ASSETS, GRAD_DARK, GRAD_GOLD } from "../../../components/admin/retention/constants";
 import {
-  ACTION_TYPES,
-  FollowUpCreateModal,
-  MOCK_FOLLOWUP_HISTORY,
-} from "../../../components/admin/retention/FollowUpComponents";
-import {
+  getCrmMembers,
+  getCrmUsers,
+  getCrmVipTiers,
   getPrioritySummary,
   refreshCrmMembers,
 } from "../../../api/crmApi";
-/*
-import { getCrmMembers, getCrmUsers } from "../../../api/crmApi";
-import { getVipTierList } from "../../../api/adminApi";
-*/
 
-// Member Alert page — Figma 69:340. "Overview" KPI strip + Member Follow Up list.
-// Action column: Eye (→ Member Profile) + Follow-up button (audit trail log).
+// Member Alert page — Figma 69:340. "Overview" KPI strip + Member Follow Up
+// list. The list is the same shape as /admin/retention/members but with a
+// green "Done" action button instead of a gold View link.
 
 const PAGE_SIZE = 7;
 
 const PRIORITY_OPTIONS = ["High", "Medium", "Low"];
 
-// Columns per wireframe: #, Username, Phone Number, VIP Level, Daily Sales,
-// Daily Win/Loss, Priority, PIC, Action.  "Status" removed — members simply
-// disappear from the list after a follow-up is logged.
+const PRIORITY_TO_INT = { High: 1, Medium: 2, Low: 3 };
+
+// Column widths from Figma 69:340 (frame ids 87:6604 etc). Username and
+// Action are wider to accommodate the avatar+name and the View + more-menu
+// button pair respectively; everything else is uniform at 124px.
 const COLUMNS = [
-  { key: "rowNum",   label: "#",              minW: 50  },
-  { key: "name",     label: "Username",       minW: 200 },
-  { key: "phone",    label: "Phone Number",   minW: 160 },
-  { key: "vip",      label: "VIP Level",      minW: 100 },
-  { key: "sales",    label: "Daily Sales",    minW: 120 },
-  { key: "winloss",  label: "Daily Win/Loss", minW: 130 },
-  { key: "priority", label: "Priority",       minW: 100 },
-  { key: "pic",      label: "PIC",            minW: 120 },
-  { key: "action",   label: "Action",         minW: 160, align: "end" },
+  { key: "name",     label: "Username",       minW: 197 },
+  { key: "phone",    label: "Phone Number",   minW: 124 },
+  { key: "vip",      label: "VIP Level",      minW: 124 },
+  { key: "sales",    label: "Daily Sales",    minW: 124 },
+  { key: "winloss",  label: "Daily Win/Loss", minW: 124 },
+  { key: "priority", label: "Priority",       minW: 124 },
+  { key: "pic",      label: "Retention",      minW: 124 },
+  { key: "action",   label: "Action",         minW: 171, align: "end" },
 ];
 
 const TABLE_MIN_WIDTH = COLUMNS.reduce((sum, c) => sum + c.minW, 0);
 
+// KPI tiles — all render with the gold gradient. Each tile pairs the label
+// with a dark icon-tile whose glyph is tinted per priority (red → white →
+// green → blue) so the row scans left-to-right from most to least urgent.
 const KPI_META = [
   { id: "high",     label: "High Priority",    key: "high_priority",    icon: "user-times", iconColor: "#fb3748" },
   { id: "medium",   label: "Medium Priority",  key: "medium_priority",  icon: "user-minus", iconColor: "#fbeed2" },
   { id: "low",      label: "Low Priority",     key: "low_priority",     icon: "user-check", iconColor: "#84ebb4" },
   { id: "inactive", label: "Inactive Members", key: "inactive_members", icon: "user-clock", iconColor: "#4188ff" },
-];
-
-const MOCK_MEMBERS = [
-  { uuid: "mock-001", full_name: "Ah Chong 88",  phone_number: "+6012-309 8765", vip_level: "VIP 4", daily_sales: 9999.88,  daily_win_loss:  1023.13, priority: "High",   retention: "Sarah",  last_action: "TG",       last_action_at: "2026-05-27 09:15", last_action_by: "Sarah"  },
-  { uuid: "mock-002", full_name: "Jason Win",    phone_number: "+6011-111 1111", vip_level: "VIP 5", daily_sales: 4000.00,  daily_win_loss:  -600.00, priority: "High",   retention: "Sarah",  last_action: null,       last_action_at: null,               last_action_by: null    },
-  { uuid: "mock-003", full_name: "Peter Lee",    phone_number: "+6012-353 2148", vip_level: "VIP 6", daily_sales: 5000.00,  daily_win_loss:  1000.00, priority: "Medium", retention: "Eddie",  last_action: "WA",       last_action_at: "2026-05-26 14:30", last_action_by: "Eddie"  },
-  { uuid: "mock-004", full_name: "Star99",       phone_number: "+6016-778 4521", vip_level: "VIP 2", daily_sales: 2500.50,  daily_win_loss:  -300.00, priority: "Medium", retention: "Zoey",   last_action: "Bonus",    last_action_at: "2026-05-26 09:00", last_action_by: "Zoey"   },
-  { uuid: "mock-005", full_name: "MegaKing",     phone_number: "+6019-234 5678", vip_level: "VIP 3", daily_sales: 8750.00,  daily_win_loss:   450.00, priority: "Low",    retention: "Candy",  last_action: "LiveChat", last_action_at: "2026-05-25 16:45", last_action_by: "Candy"  },
-  { uuid: "mock-006", full_name: "LuckyDragon",  phone_number: "+6013-987 6543", vip_level: "VIP 1", daily_sales: 1200.00,  daily_win_loss:  -150.00, priority: "Low",    retention: "Marcus", last_action: null,       last_action_at: null,               last_action_by: null    },
-  { uuid: "mock-007", full_name: "GoldFish77",   phone_number: "+6017-456 7890", vip_level: "VIP 7", daily_sales: 15000.00, daily_win_loss:  2300.00, priority: "High",   retention: "Sarah",  last_action: "Event",    last_action_at: "2026-05-24 11:20", last_action_by: "Sarah"  },
 ];
 
 function formatNumber(value) {
@@ -71,12 +60,6 @@ function formatCurrency(value) {
   const num = parseFloat(value);
   if (Number.isNaN(num)) return `RM ${value}`;
   return `RM ${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-}
-
-function currentDateTime() {
-  const now = new Date();
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
 }
 
 export default function MemberAlertPage() {
@@ -101,6 +84,7 @@ export default function MemberAlertPage() {
     loadSummary();
   }, [loadSummary]);
 
+  // POST refresh-members, then refresh the summary so KPIs reflect new state.
   const handleRefresh = useCallback(async () => {
     if (refreshing) return;
     setRefreshing(true);
@@ -118,7 +102,7 @@ export default function MemberAlertPage() {
     <>
       <OverviewHeader onRefresh={handleRefresh} />
       <KpiRow summary={summary} loading={summaryLoading} />
-      <FollowUpList />
+      <FollowUpList onRefresh={handleRefresh} />
     </>
   );
 }
@@ -160,6 +144,8 @@ function KpiRow({ summary, loading }) {
   );
 }
 
+// Gold-gradient card with a dark icon-tile + per-priority colored glyph.
+// Matches Figma 69:340.
 function KpiCard({ kpi, value }) {
   return (
     <div
@@ -194,6 +180,9 @@ function KpiCard({ kpi, value }) {
   );
 }
 
+// FA-style user glyphs. Use currentColor so the wrapping icon-tile controls
+// the fill via inline `color`. Sized at 24px; viewBox tuned to keep the
+// person centered.
 function KpiIcon({ name }) {
   const common = { width: 24, height: 24, viewBox: "0 0 24 24", fill: "currentColor" };
   if (name === "user-times") {
@@ -217,6 +206,7 @@ function KpiIcon({ name }) {
       </svg>
     );
   }
+  // user-clock
   return (
     <svg {...common}>
       <path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-7 9a7 7 0 0 1 12.5-4.3 6 6 0 0 0 .5 9.3H2v-5zm15-3a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm.5 2v3l2.1 1.3-.7 1.2L16 18v-4h1.5z" />
@@ -227,24 +217,34 @@ function KpiIcon({ name }) {
 function FollowUpList() {
   const [priority, setPriority] = useState("");
   const [vip, setVip] = useState("");
-  const [pic, setPic] = useState("");
+  const [retention, setRetention] = useState("");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
 
-  // rows: members currently needing follow-up.
-  // After a follow-up is logged the member is removed from this list.
-  // They re-appear when the NS System triggers again (daily loss / 30-day inactive).
-  const [rows, setRows] = useState(MOCK_MEMBERS);
+  const [rows, setRows] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [pics, setPics] = useState([]);
+  const [vipTiers, setVipTiers] = useState([]);
 
-  // histories: per-member follow-up audit trail
-  const [histories, setHistories] = useState(() =>
-    Object.fromEntries(MOCK_MEMBERS.map((m) => [m.uuid, [...MOCK_FOLLOWUP_HISTORY]]))
-  );
+  useEffect(() => {
+    getCrmUsers({ page: 1, page_size: 100 })
+      .then((res) => {
+        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        setPics(results);
+      })
+      .catch(() => setPics([]));
+    getCrmVipTiers({ page: 1, page_size: 100 })
+      .then((res) => {
+        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        setVipTiers(results.map((t, i) => ({ name: t.name, level: i + 1 })));
+      })
+      .catch(() => setVipTiers([]));
+  }, []);
 
-  // Confirm modal state: member + the action type selected from the dropdown
-  const [confirmData, setConfirmData] = useState(null); // { member, actionType }
-
-  useEffect(() => { setPage(1); }, [priority, vip, pic, query]);
+  useEffect(() => {
+    setPage(1);
+  }, [priority, vip, retention, query]);
 
   const [debouncedQuery, setDebouncedQuery] = useState(query);
   useEffect(() => {
@@ -252,55 +252,46 @@ function FollowUpList() {
     return () => clearTimeout(t);
   }, [query]);
 
-  /*
   useEffect(() => {
-    getCrmUsers({ page: 1, page_size: 100 })
-      .then((res) => { ... setPics(results); })
-      .catch(() => setPics([]));
-    getVipTierList()
-      .then((res) => { ... setVipTiers(results); })
-      .catch(() => setVipTiers([]));
-  }, []);
-  */
+    let cancelled = false;
+    const fetchRows = async () => {
+      setLoading(true);
+      try {
+        const retentionUuid = retention
+          ? pics.find((u) => (u.full_name || u.username) === retention)?.uuid
+          : undefined;
+        const res = await getCrmMembers({
+          page,
+          page_size: PAGE_SIZE,
+          priority: priority ? PRIORITY_TO_INT[priority] : undefined,
+          mrs_vip_level: vip || undefined,
+          retention: retentionUuid || undefined,
+          search: debouncedQuery || undefined,
+        });
+        if (cancelled) return;
+        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        setRows(results);
+        setTotal(Number.isFinite(res?.count) ? res.count : results.length);
+      } catch (err) {
+        if (cancelled) return;
+        console.error("[member-alert] members fetch failed", err);
+        setRows([]);
+        setTotal(0);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    fetchRows();
+    return () => {
+      cancelled = true;
+    };
+  }, [page, priority, vip, retention, pics, debouncedQuery]);
 
-  const vipOptions  = [...new Set(MOCK_MEMBERS.map((m) => m.vip_level).filter(Boolean))];
-  const picOptions  = [...new Set(MOCK_MEMBERS.map((m) => m.retention).filter(Boolean))];
-
-  const filteredRows = rows.filter((m) => {
-    const haystack = `${m.full_name || ""} ${m.username || ""} ${m.phone_number || ""}`.toLowerCase();
-    return (
-      (!priority || m.priority === priority) &&
-      (!vip      || m.vip_level === vip) &&
-      (!pic      || m.retention === pic) &&
-      (!debouncedQuery || haystack.includes(debouncedQuery.toLowerCase()))
-    );
-  });
-
-  const total      = filteredRows.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const safePage   = Math.min(page, totalPages);
-  const startIdx   = (safePage - 1) * PAGE_SIZE;
-  const pagedRows  = filteredRows.slice(startIdx, startIdx + PAGE_SIZE);
+  const safePage = Math.min(page, totalPages);
+  const startIdx = (safePage - 1) * PAGE_SIZE;
   const showingFrom = total === 0 ? 0 : startIdx + 1;
-  const showingTo   = Math.min(startIdx + pagedRows.length, total);
-
-  // Log a follow-up entry and remove the member from the alert list.
-  // Member will re-appear when the NS System next triggers them.
-  const handleFollowup = (memberUuid, entry) => {
-    setHistories((prev) => ({
-      ...prev,
-      [memberUuid]: [entry, ...(prev[memberUuid] || [])],
-    }));
-    setRows((prev) => prev.filter((m) => m.uuid !== memberUuid));
-  };
-
-  // Called when an action type is selected from the dropdown.
-  // All types open the confirm modal — TG/WA/etc show the chip + optional note,
-  // Others shows the chip + required note.
-  const handleActionSelect = (memberUuid, actionType) => {
-    const member = rows.find((m) => m.uuid === memberUuid) || null;
-    setConfirmData({ member, actionType });
-  };
+  const showingTo = Math.min(startIdx + rows.length, total);
 
   return (
     <section className="flex w-full flex-col overflow-hidden rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
@@ -317,9 +308,9 @@ function FollowUpList() {
           Member Follow Up List
         </h2>
         <div className="flex flex-wrap items-center gap-3">
-          <FilterPill label="Priority"  value={priority} onChange={setPriority} options={PRIORITY_OPTIONS} />
-          <FilterPill label="VIP Level" value={vip}      onChange={setVip}      options={vipOptions} />
-          <FilterPill label="PIC"       value={pic}      onChange={setPic}      options={picOptions} />
+          <FilterPill label="Priority" value={priority} onChange={setPriority} options={PRIORITY_OPTIONS} />
+          <FilterPill label="VIP Level" value={vip} onChange={setVip} options={vipTiers.map((t) => t.name)} />
+          <FilterPill label="All Retention" value={retention} onChange={setRetention} options={pics.map((u) => u.full_name || u.username).filter(Boolean)} />
           <SearchInput value={query} onChange={setQuery} />
         </div>
       </header>
@@ -328,215 +319,43 @@ function FollowUpList() {
         <div style={{ minWidth: TABLE_MIN_WIDTH }}>
           <TableHeader />
           <div className="flex w-full flex-col">
-            {pagedRows.length === 0 ? (
+            {loading ? (
+              <LoadingRow />
+            ) : rows.length === 0 ? (
               <EmptyRow />
             ) : (
-              pagedRows.map((row, idx) => (
-                <TableRow
-                  key={`${row.uuid || row.username || "member"}-${idx}`}
-                  row={row}
-                  rowNum={startIdx + idx + 1}
-                  onActionSelect={(actionType) => handleActionSelect(row.uuid, actionType)}
-                />
+              rows.map((row, idx) => (
+                <TableRow key={`${row.uuid || row.username || "member"}-${idx}`} row={row} />
               ))
             )}
           </div>
         </div>
       </div>
 
-      <Pagination
+      <PaginationBar
         from={showingFrom}
         to={showingTo}
         total={total}
-        currentPage={safePage}
-        pageCount={totalPages}
+        page={safePage}
+        totalPages={totalPages}
         onPageChange={setPage}
       />
-
-      {/* Confirm follow-up modal — all action types go through here */}
-      {confirmData ? (
-        <FollowUpCreateModal
-          memberName={confirmData.member?.full_name || confirmData.member?.username || "Member"}
-          fixedActionType={confirmData.actionType}
-          title="Add Follow Up"
-          onClose={() => setConfirmData(null)}
-          onSubmit={(entry) => {
-            handleFollowup(confirmData.member.uuid, entry);
-            setConfirmData(null);
-          }}
-        />
-      ) : null}
     </section>
   );
 }
 
-// ── Table ────────────────────────────────────────────────────────────────────
-
-function TableHeader() {
+function LoadingRow() {
   return (
-    <div className="flex w-full items-stretch" style={{ backgroundImage: GRAD_DARK }}>
-      {COLUMNS.map((col) => (
-        <div
-          key={col.key}
-          className={`flex flex-1 flex-col px-4 py-4 ${col.align === "end" ? "items-end" : "items-start"}`}
-          style={{ minWidth: col.minW }}
-        >
-          <p className="text-[12px] font-medium text-[#fbeed2] leading-[18px] whitespace-nowrap">
-            {col.label}
-          </p>
-        </div>
-      ))}
+    <div className="px-6 py-12 text-center text-[12px] text-white/60">
+      Loading...
     </div>
   );
 }
-
-function TableRow({ row, rowNum, onActionSelect }) {
-  return (
-    <div className="flex w-full items-stretch -mb-px border-b border-white/5">
-      {/* # */}
-      <Cell minW={COLUMNS[0].minW}>
-        <span className="text-[12px] font-medium text-white/50 leading-[18px]">{rowNum}</span>
-      </Cell>
-      {/* Username */}
-      <Cell minW={COLUMNS[1].minW}>
-        <div className="flex items-start gap-3">
-          <div className="shrink-0 pt-0.5"><UserAvatar /></div>
-          <span className="text-[12px] font-medium text-white leading-[18px] break-words">
-            {row.full_name || row.username}
-          </span>
-        </div>
-      </Cell>
-      {/* Phone Number */}
-      <DataCell value={row.phone_number} minW={COLUMNS[2].minW} />
-      {/* VIP Level */}
-      <DataCell value={row.vip_level} minW={COLUMNS[3].minW} />
-      {/* Daily Sales */}
-      <DataCell value={formatCurrency(row.daily_sales)} minW={COLUMNS[4].minW} />
-      {/* Daily Win/Loss */}
-      <Cell minW={COLUMNS[5].minW}>
-        <WinLossCell value={row.daily_win_loss} />
-      </Cell>
-      {/* Priority */}
-      <Cell minW={COLUMNS[6].minW}>
-        <PriorityBadge value={row.priority} />
-      </Cell>
-      {/* PIC */}
-      <DataCell value={row.retention} minW={COLUMNS[7].minW} />
-      {/* Action */}
-      <Cell minW={COLUMNS[8].minW} align="end">
-        <div className="flex items-center justify-end gap-2">
-          {/* Eye → navigate to Member Profile */}
-          <Link
-            href={`/admin/retention/members/${row.uuid}`}
-            className="flex h-[34px] w-[34px] items-center justify-center rounded-[8px] border-2 border-[#f2cb7a] transition hover:brightness-110"
-            style={{ backgroundImage: GRAD_GOLD }}
-            aria-label="View member profile"
-          >
-            <EyeIcon />
-          </Link>
-          {/* Follow-up button → audit trail log */}
-          <FollowupActionMenu onSelect={onActionSelect} />
-        </div>
-      </Cell>
-    </div>
-  );
-}
-
-// Win/Loss value coloured red for negative, green for positive
-function WinLossCell({ value }) {
-  if (value === null || value === undefined || value === "") {
-    return <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">—</span>;
-  }
-  const num = parseFloat(value);
-  const color = num < 0 ? "#fb3748" : num > 0 ? "#84ebb4" : "#ffffff";
-  const formatted = formatCurrency(Math.abs(num));
-  return (
-    <span className="text-[12px] font-medium leading-[18px] whitespace-nowrap" style={{ color }}>
-      {num < 0 ? `-${formatted}` : num > 0 ? `+${formatted}` : formatted}
-    </span>
-  );
-}
-
-// Follow-up action dropdown.
-// Options: TG | WA | Bonus | Event | LiveChat | Others (from ACTION_TYPES).
-// TG–LiveChat → log immediately, Others → open text modal via onSelect("Others").
-function FollowupActionMenu({ onSelect }) {
-  const [open, setOpen] = useState(false);
-  const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
-  const buttonRef = useRef(null);
-
-  const openMenu = () => {
-    const rect = buttonRef.current?.getBoundingClientRect();
-    if (rect) {
-      setMenuPos({
-        top: rect.bottom + 4,
-        right: Math.max(8, window.innerWidth - rect.right),
-      });
-    }
-    setOpen((v) => !v);
-  };
-
-  useEffect(() => {
-    if (!open) return;
-    const close = () => setOpen(false);
-    window.addEventListener("resize", close);
-    window.addEventListener("scroll", close, true);
-    return () => {
-      window.removeEventListener("resize", close);
-      window.removeEventListener("scroll", close, true);
-    };
-  }, [open]);
-
-  return (
-    <div className="relative">
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={openMenu}
-        className="flex h-[34px] items-center justify-center gap-1 rounded-[8px] border border-[#f2cb7a] px-3 transition hover:brightness-110"
-        style={{ backgroundImage: GRAD_DARK }}
-        aria-label="Follow-up actions"
-        aria-expanded={open}
-        aria-haspopup="menu"
-      >
-        <span className="whitespace-nowrap text-[12px] font-medium text-[#eaad2c] leading-[18px]">Follow Up</span>
-        <Chevron up={open} />
-      </button>
-      {open ? (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div
-            className="fixed z-50 min-w-[160px] overflow-hidden rounded-[14px] bg-[#fbeed2] py-2 shadow-[0_12px_32px_rgba(0,0,0,0.45)]"
-            style={{ top: menuPos.top, right: menuPos.right }}
-            role="menu"
-          >
-            {ACTION_TYPES.map((type) => (
-              <button
-                key={type}
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  onSelect(type);
-                  setOpen(false);
-                }}
-                className="block w-full px-5 py-2.5 text-left text-[14px] font-medium leading-[21px] text-[#141828] transition hover:bg-[#f2cb7a]/30"
-              >
-                {type}
-              </button>
-            ))}
-          </div>
-        </>
-      ) : null}
-    </div>
-  );
-}
-
-// ── Misc UI ──────────────────────────────────────────────────────────────────
 
 function EmptyRow() {
   return (
     <div className="px-6 py-12 text-center text-[12px] text-white/40">
-      No members requiring follow-up.
+      No members found.
     </div>
   );
 }
@@ -587,19 +406,6 @@ function FilterPill({ label, value, onChange, options }) {
   );
 }
 
-function SearchInput({ value, onChange }) {
-  return (
-    <input
-      type="text"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder="Enter Name/Phone Number"
-      className="w-[180px] bg-[#141828] border border-[#f2cb7a] rounded-[8px] px-3 py-2 text-[10px] italic text-[#f6dda6] placeholder:text-[#f6dda6] placeholder:capitalize focus:outline-none focus:ring-1 focus:ring-[#eaad2c]"
-      style={{ fontFamily: "Inter, sans-serif", lineHeight: "15px" }}
-    />
-  );
-}
-
 function Chevron({ up }) {
   return (
     <svg
@@ -618,6 +424,205 @@ function Chevron({ up }) {
   );
 }
 
+function SearchInput({ value, onChange }) {
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder="Enter Name/Phone Number"
+      className="w-[180px] bg-[#141828] border border-[#f2cb7a] rounded-[8px] px-3 py-2 text-[10px] italic text-[#f6dda6] placeholder:text-[#f6dda6] placeholder:capitalize focus:outline-none focus:ring-1 focus:ring-[#eaad2c]"
+      style={{ fontFamily: "Inter, sans-serif", lineHeight: "15px" }}
+    />
+  );
+}
+
+function TableHeader() {
+  return (
+    <div className="flex w-full items-stretch" style={{ backgroundImage: GRAD_DARK }}>
+      {COLUMNS.map((col) => (
+        <div
+          key={col.key}
+          className={`flex flex-1 flex-col px-6 py-4 ${col.align === "end" ? "items-end" : "items-start"}`}
+          style={{ minWidth: col.minW }}
+        >
+          <p className="text-[12px] font-medium text-[#fbeed2] leading-[18px] whitespace-nowrap">
+            {col.label}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TableRow({ row }) {
+  // Route by the member's real UUID — the [slug] page accepts it transparently.
+  const href = `/admin/retention/members/${row.uuid}`;
+  return (
+    <div className="flex w-full items-stretch -mb-px border-b border-white/5">
+      <Cell minW={COLUMNS[0].minW}>
+        <Link href={href} className="flex min-w-0 items-center gap-3 hover:opacity-80">
+          <UserAvatar />
+          <span className="min-w-0 break-words text-[12px] font-medium text-white leading-[18px]">
+            {row.full_name || row.username}
+          </span>
+        </Link>
+      </Cell>
+      <DataCell value={row.phone_number} minW={COLUMNS[1].minW} />
+      <DataCell value={row.vip_level} minW={COLUMNS[2].minW} />
+      <DataCell value={formatCurrency(row.daily_sales)} minW={COLUMNS[3].minW} />
+      <DataCell value={formatCurrency(row.daily_win_loss)} minW={COLUMNS[4].minW} />
+      <Cell minW={COLUMNS[5].minW}>
+        <PriorityBadge value={row.priority} />
+      </Cell>
+      <DataCell value={row.retention} minW={COLUMNS[6].minW} />
+      <Cell minW={COLUMNS[7].minW} align="end">
+        <div className="flex items-center gap-2">
+          <ViewButton href={href} />
+          <MoreButton ariaLabel={`More actions for ${row.full_name || row.username}`} />
+        </div>
+      </Cell>
+    </div>
+  );
+}
+
+// View link — dark gradient pill with gold border and gold text/eye icon.
+// Matches Figma 20:1735 (the shared "button" component used across the table).
+function ViewButton({ href }) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center justify-center gap-1 rounded-[8px] border border-[#f2cb7a] px-4 py-2 transition hover:brightness-110"
+      style={{ backgroundImage: GRAD_DARK }}
+    >
+      <EyeIcon />
+      <span className="text-[12px] font-medium text-[#eaad2c] leading-[18px]">View</span>
+    </Link>
+  );
+}
+
+// Square 34×34 icon button — gold gradient, dark three-dots glyph. Opens a
+// cream-colored status dropdown (In Progress / Resolve / Snooze / Remark)
+// per the design. Status is local to each row; eventually this hooks into
+// adminApi.updateMemberAlertStatus(id, status).
+const STATUS_OPTIONS = ["In Progress", "Resolve", "Snooze", "Remark"];
+
+function MoreButton({ ariaLabel }) {
+  const [open, setOpen] = useState(false);
+  const [status, setStatus] = useState("Snooze");
+  const buttonRef = useRef(null);
+
+  return (
+    <div className="relative">
+      <button
+        ref={buttonRef}
+        type="button"
+        aria-label={ariaLabel}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="flex h-[34px] w-[34px] items-center justify-center rounded-[8px] border-2 border-[#f2cb7a] transition hover:brightness-110"
+        style={{ backgroundImage: GRAD_GOLD }}
+      >
+        <ThreeDotsIcon />
+      </button>
+      {open && (
+        <StatusMenu
+          anchorRef={buttonRef}
+          status={status}
+          onSelect={(next) => {
+            setStatus(next);
+            setOpen(false);
+          }}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// Cream popup rendered through a portal so it escapes the table's
+// `overflow-hidden` / `overflow-x-auto` ancestors. Positioned with
+// `position: fixed` from the anchor button's bounding rect, with a small
+// triangular notch pointing up at the button. Backdrop swallows outside
+// clicks to dismiss.
+function StatusMenu({ anchorRef, status, onSelect, onClose }) {
+  const MENU_WIDTH = 180;
+  const GAP = 12;
+  const [coords, setCoords] = useState(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  useLayoutEffect(() => {
+    const update = () => {
+      const el = anchorRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      // Right-align the menu under the button: button's right edge becomes
+      // the menu's right edge, then clamp to viewport with an 8px margin.
+      const desiredRight = window.innerWidth - rect.right;
+      const right = Math.max(8, desiredRight);
+      const top = rect.bottom + GAP;
+      // Notch sits below the button's horizontal center, measured from the
+      // menu's right edge.
+      const buttonCenterX = rect.left + rect.width / 2;
+      const menuRightX = window.innerWidth - right;
+      const notchRight = Math.max(10, menuRightX - buttonCenterX - 6);
+      setCoords({ top, right, notchRight });
+    };
+    update();
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update, true);
+      window.removeEventListener("resize", update);
+    };
+  }, [anchorRef]);
+
+  if (!mounted || !coords) return null;
+
+  return createPortal(
+    <>
+      <div className="fixed inset-0 z-[60]" onClick={onClose} />
+      <div
+        role="menu"
+        className="fixed z-[61] rounded-[16px] bg-[#fbeed2] shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
+        style={{ top: coords.top, right: coords.right, width: MENU_WIDTH }}
+      >
+        <span
+          aria-hidden="true"
+          className="absolute -top-[6px] h-3 w-3 rotate-45 bg-[#fbeed2]"
+          style={{ right: coords.notchRight }}
+        />
+        <ul className="relative flex flex-col py-1">
+          {STATUS_OPTIONS.map((opt, idx) => {
+            const active = opt === status;
+            return (
+              <li key={opt}>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => onSelect(opt)}
+                  className={`block w-full px-5 py-3 text-left text-[14px] font-semibold leading-[21px] transition ${
+                    active
+                      ? "text-[#eaad2c]"
+                      : "text-[#141828] hover:bg-[#141828]/5"
+                  } ${idx < STATUS_OPTIONS.length - 1 ? "border-b border-[#141828]/10" : ""}`}
+                  style={{ letterSpacing: "-0.5px" }}
+                >
+                  {opt}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </>,
+    document.body,
+  );
+}
+
 function EyeIcon() {
   return (
     <svg
@@ -625,7 +630,7 @@ function EyeIcon() {
       height="16"
       viewBox="0 0 24 24"
       fill="none"
-      stroke="#141828"
+      stroke="#eaad2c"
       strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -637,10 +642,26 @@ function EyeIcon() {
   );
 }
 
+function ThreeDotsIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="#141828"
+      aria-hidden="true"
+    >
+      <circle cx="3" cy="8" r="1.6" />
+      <circle cx="8" cy="8" r="1.6" />
+      <circle cx="13" cy="8" r="1.6" />
+    </svg>
+  );
+}
+
 function DataCell({ value, minW }) {
   return (
     <Cell minW={minW}>
-      <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">
+      <span className="min-w-0 break-words text-[12px] font-medium text-white leading-[18px]">
         {value ?? "—"}
       </span>
     </Cell>
@@ -650,7 +671,7 @@ function DataCell({ value, minW }) {
 function Cell({ children, minW, align = "start" }) {
   const justify = align === "end" ? "justify-end" : "justify-start";
   return (
-    <div className={`flex flex-1 items-center overflow-hidden px-4 py-4 ${justify}`} style={{ minWidth: minW }}>
+    <div className={`flex min-w-0 flex-1 items-center overflow-hidden p-6 ${justify}`} style={{ minWidth: minW }}>
       {children}
     </div>
   );
@@ -667,5 +688,99 @@ function UserAvatar() {
         <circle cx="12" cy="7" r="4" />
       </svg>
     </div>
+  );
+}
+
+function buildPageItems(currentPage, totalPages) {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  const items = [1];
+  const start = Math.max(2, currentPage - 1);
+  const end = Math.min(totalPages - 1, currentPage + 1);
+  if (start > 2) items.push("ellipsis-l");
+  for (let p = start; p <= end; p += 1) items.push(p);
+  if (end < totalPages - 1) items.push("ellipsis-r");
+  items.push(totalPages);
+  return items;
+}
+
+function PaginationBar({ from, to, total, page, totalPages, onPageChange }) {
+  const items = buildPageItems(page, totalPages);
+  const prevDisabled = page <= 1;
+  const nextDisabled = page >= totalPages;
+  return (
+    <div className="flex min-h-[44px] w-full items-center justify-between gap-3 flex-wrap px-6 py-3">
+      <span className="text-[8px] text-white leading-[12px]">
+        Showing {from} to {to} of {total} Results
+      </span>
+      <div className="flex items-center gap-[5.5px]">
+        <PageButton
+          onClick={() => onPageChange(Math.max(1, page - 1))}
+          disabled={prevDisabled}
+          ariaLabel="Previous page"
+        >
+          <PageChevron direction="left" />
+        </PageButton>
+        {items.map((item) =>
+          typeof item === "number" ? (
+            <PageNumber
+              key={item}
+              value={item}
+              active={item === page}
+              onClick={() => onPageChange(item)}
+            />
+          ) : (
+            <span key={item} className="text-[8px] text-white leading-[12px]">....</span>
+          )
+        )}
+        <PageButton
+          onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+          disabled={nextDisabled}
+          ariaLabel="Next page"
+        >
+          <PageChevron direction="right" />
+        </PageButton>
+      </div>
+    </div>
+  );
+}
+
+function PageNumber({ value, active, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex h-[18px] w-[18px] items-center justify-center rounded-[4px] text-[8px] text-white leading-[12px] ${
+        active ? "bg-[#eaad2c]" : "border border-[#eaad2c] hover:bg-[#eaad2c]/20"
+      }`}
+    >
+      {value}
+    </button>
+  );
+}
+
+function PageButton({ children, onClick, ariaLabel, disabled }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      disabled={disabled}
+      className={`flex h-[18px] w-[18px] items-center justify-center rounded-[4px] border border-[#eaad2c] ${
+        disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-[#eaad2c]/20"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function PageChevron({ direction }) {
+  const rotate = direction === "left" ? "rotate(180deg)" : "rotate(0deg)";
+  return (
+    <svg width="6" height="10" viewBox="0 0 6 10" fill="none" style={{ transform: rotate }}>
+      <path d="M1 1l4 4-4 4" stroke="#eaad2c" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }

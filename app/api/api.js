@@ -29,7 +29,10 @@ export const ENDPOINTS = {
     PUBLIC_BANNERS: '/settings/banners/public/'
   },
   ADMIN: {
-    LOGIN: '/login/admin-access-token/',
+    // Previous admin login API:
+    // LOGIN: '/login/admin-access-token/',
+    LOGIN: '/login/admin-login/',
+    LOGIN_COMPLETE: '/login/admin-login/complete/',
     LOGOUT: '/login/logout/',
     REFRESH_TOKEN: '/login/refresh-token/',
     VERIFY_TOKEN: '/login/verify-token/',
@@ -109,7 +112,7 @@ export const ENDPOINTS = {
     REFRESH_MEMBERS: '/crm-members/refresh-members/',
     // Retention Profile
     RETENTION_SUMMARY: (adminUuid) => `/crm-members/retention-summary/${adminUuid}/`,
-    RETENTION_MEMBERS: '/crm-members/retention-members/',
+    RETENTION_MEMBERS: '/crm-members/retention-profile/',
     // Dashboard
     DASHBOARD_SUMMARY: '/crm-admins/dashboard-summary/',
     DASHBOARD_DETAILS: '/crm-admins/dashboard-details/',
