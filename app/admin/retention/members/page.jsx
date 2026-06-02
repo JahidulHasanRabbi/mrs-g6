@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getCrmMembers, getCrmUsers, getCrmVipTiers } from "../../../api/crmApi";
 import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
+import { Pagination } from "../../../components/admin/members/DataTable";
 
 const A = "/assets/admin/pic-dashboard";
 
@@ -116,6 +117,10 @@ export default function RetentionMembersPage() {
   const showingFrom = total === 0 ? 0 : startIdx + 1;
   const showingTo = Math.min(startIdx + rows.length, total);
 
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
   return (
     <section className="relative flex w-full flex-col rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
       <header className="flex flex-col gap-4 p-6 w-full md:flex-row md:flex-wrap md:items-center">
@@ -155,14 +160,14 @@ export default function RetentionMembersPage() {
         </div>
       </div>
 
-      <PaginationBar
-        from={showingFrom}
-        to={showingTo}
-        total={total}
-        page={safePage}
-        totalPages={totalPages}
-        onPageChange={setPage}
-      />
+      <div className="border-t border-white/5 px-4 pb-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="px-2 pt-4 text-[13px] text-white/70">
+            Showing {showingFrom} to {showingTo} of {total} Results
+          </span>
+          <Pagination currentPage={safePage} totalPages={totalPages} onPageChange={setPage} />
+        </div>
+      </div>
     </section>
   );
 }

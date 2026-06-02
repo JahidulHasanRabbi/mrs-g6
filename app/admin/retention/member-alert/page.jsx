@@ -13,6 +13,7 @@ import {
   getPrioritySummary,
   refreshCrmMembers,
 } from "../../../api/crmApi";
+import { Pagination } from "../../../components/admin/members/DataTable";
 
 // Member Alert page — Figma 69:340. "Overview" KPI strip + Member Follow Up
 // list. The list is the same shape as /admin/retention/members but with a
@@ -293,6 +294,10 @@ function FollowUpList() {
   const showingFrom = total === 0 ? 0 : startIdx + 1;
   const showingTo = Math.min(startIdx + rows.length, total);
 
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
   return (
     <section className="flex w-full flex-col overflow-hidden rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
       <header className="flex flex-col gap-4 p-6 w-full md:flex-row md:flex-wrap md:items-center">
@@ -332,14 +337,14 @@ function FollowUpList() {
         </div>
       </div>
 
-      <PaginationBar
-        from={showingFrom}
-        to={showingTo}
-        total={total}
-        page={safePage}
-        totalPages={totalPages}
-        onPageChange={setPage}
-      />
+      <div className="border-t border-white/5 px-4 pb-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="px-2 pt-4 text-[13px] text-white/70">
+            Showing {showingFrom} to {showingTo} of {total} Results
+          </span>
+          <Pagination currentPage={safePage} totalPages={totalPages} onPageChange={setPage} />
+        </div>
+      </div>
     </section>
   );
 }

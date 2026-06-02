@@ -114,6 +114,10 @@ export async function updateCrmMember(memberUuid, data) {
   }, true, 'admin');
 }
 
+export async function patchCrmMember(memberUuid, data) {
+  return updateCrmMember(memberUuid, data);
+}
+
 // ──────────────────────── Retention Alert ────────────────────────
 
 // GET /crm-members/priority-summary/
