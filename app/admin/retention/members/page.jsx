@@ -19,9 +19,9 @@ const PRIORITY_TO_INT = { High: 1, Medium: 2, Low: 3 };
 const COLUMNS = [
   { key: "name",     label: "Username",       minW: 180 },
   { key: "phone",    label: "Phone Number",   minW: 140 },
-  { key: "vip",      label: "VIP Level",      minW: 100 },
-  { key: "sales",    label: "Daily Sales",    minW: 120 },
-  { key: "winloss",  label: "Daily Win/Loss", minW: 130 },
+  { key: "vip",      label: "NS Level",       minW: 100 },
+  { key: "sales",    label: "Total Sales",    minW: 120 },
+  { key: "winloss",  label: "Total Win/Loss", minW: 130 },
   { key: "priority", label: "Priority",       minW: 100 },
   { key: "pic",      label: "Retention",      minW: 110 },
   { key: "action",   label: "Action",         minW: 110, align: "end" },
@@ -137,7 +137,7 @@ export default function RetentionMembersPage() {
         </h1>
         <div className="flex flex-wrap items-center gap-3">
           <FilterDropdown label="Priority" value={priority} onChange={setPriority} options={PRIORITY_OPTIONS} />
-          <FilterDropdown label="VIP Level" value={vip} onChange={setVip} options={vipTiers.map((t) => t.name)} />
+          <FilterDropdown label="NS Level" value={vip} onChange={setVip} options={vipTiers.map((t) => t.name)} />
           <FilterDropdown label="All PIC" value={pic} onChange={setPic} options={pics.map((u) => u.full_name || u.username).filter(Boolean)} />
           <SearchInput value={query} onChange={setQuery} />
         </div>
@@ -282,9 +282,9 @@ function TableRow({ row }) {
         </div>
       </Cell>
       <DataCell value={row.phone_number} minW={COLUMNS[1].minW} />
-      <DataCell value={row.vip_level} minW={COLUMNS[2].minW} />
-      <DataCell value={formatCurrency(row.daily_sales)} minW={COLUMNS[3].minW} />
-      <DataCell value={formatCurrency(row.daily_win_loss)} minW={COLUMNS[4].minW} />
+      <DataCell value={row.ns_level || row.vip_level} minW={COLUMNS[2].minW} />
+      <DataCell value={formatCurrency(row.total_sales ?? row.daily_sales)} minW={COLUMNS[3].minW} />
+      <DataCell value={formatCurrency(row.total_win_lose ?? row.total_winlose ?? row.daily_win_loss)} minW={COLUMNS[4].minW} />
       <Cell minW={COLUMNS[5].minW}>
         <PriorityBadge value={row.priority} />
       </Cell>

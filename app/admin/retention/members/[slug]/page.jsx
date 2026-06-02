@@ -254,6 +254,7 @@ export default function MemberProfilePage() {
     "Total Withdrawal": formatCurrency(data?.financial_info?.total_withdrawal ?? customer?.total_withdrawal),
     "Total Win/lose": formatCurrency(data?.financial_info?.total_win_lose),
     "Total Sales Ticket": show(data?.financial_info?.total_sales_ticket),
+    "Total Withdrawal Ticket": show(data?.financial_info?.total_withdrawal_ticket),
     ARPU: formatCurrency(data?.financial_info?.arpu),
     "Average Deposit": formatCurrency(data?.financial_info?.average_deposit),
     "Last Deposit Date": show(data?.financial_info?.last_deposit_date),

@@ -46,6 +46,15 @@ function stripCurrency(value) {
   return String(value ?? "").replace(/^RM\s*/i, "").replace(/,/g, "");
 }
 
+function normalizeAssignmentStatus(value) {
+  if (value === 1 || value === "1") return "Active";
+  if (value === 2 || value === "2") return "Inactive";
+  const normalized = String(value || "").trim().toUpperCase();
+  if (normalized === "ACTIVE") return "Active";
+  if (normalized === "INACTIVE") return "Inactive";
+  return value || "Inactive";
+}
+
 function isUuid(value) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ""));
 }
@@ -91,7 +100,7 @@ function mapAssignment(row, idx = 0) {
     retain: formatCurrency(row.retain_criteria),
     upgrade: formatCurrency(row.upgrade_criteria),
     target: formatCurrency(row.retention_target),
-    status: row.status || "Inactive",
+    status: normalizeAssignmentStatus(row.status),
   };
 }
 
@@ -202,6 +211,7 @@ function RetentionSettingsContent() {
         await loadAssignments();
       } catch (err) {
         console.error("[retention-settings] save failed", err);
+        throw err;
       }
     },
     [editingRow, loadAssignments, pics]
@@ -211,7 +221,14 @@ function RetentionSettingsContent() {
     <>
       <PageHeader />
       {mode === "list" ? (
-        <AssignmentListSection rows={rows} total={total} page={page} loading={loading} pics={pics} />
+        <AssignmentListSection
+          rows={rows}
+          total={total}
+          page={page}
+          loading={loading}
+          pics={pics}
+          onAssignmentsChanged={loadAssignments}
+        />
       ) : (
         <MemberLevelForm
           key={editingRow ? `edit-${editingRow.id}` : "add"}
@@ -239,7 +256,7 @@ function PageHeader() {
   );
 }
 
-function AssignmentListSection({ rows, total, page, loading, pics = [] }) {
+function AssignmentListSection({ rows, total, page, loading, pics = [], onAssignmentsChanged }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -280,10 +297,12 @@ function AssignmentListSection({ rows, total, page, loading, pics = [] }) {
         pic_uuid: picUuid,
         deposit: stripCurrency(payload.target),
       });
+      await onAssignmentsChanged?.();
     } catch (err) {
       console.error("[retention-settings] set target failed", err);
+      throw err;
     }
-  }, [pics]);
+  }, [onAssignmentsChanged, pics]);
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
@@ -471,6 +490,8 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
   const [upgrade, setUpgrade] = useState(() => initialValues?.upgrade ?? "1,000");
   const picOptions = pics?.length ? pics : [];
   const [picUuid, setPicUuid] = useState(() => initialValues?.picUuid ?? picOptions[0]?.uuid ?? "");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     if (!picUuid && picOptions[0]?.uuid) setPicUuid(picOptions[0].uuid);
@@ -485,8 +506,16 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
   }, [pathname, router, searchParams]);
 
   const handleSave = useCallback(async () => {
-    await onSave({ name, status, retain, upgrade, picUuid });
-    goBack();
+    setSaving(true);
+    setSaveError("");
+    try {
+      await onSave({ name, status, retain, upgrade, picUuid });
+      goBack();
+    } catch {
+      setSaveError("Failed to save assignment. Please check the values and try again.");
+    } finally {
+      setSaving(false);
+    }
   }, [name, status, retain, upgrade, picUuid, onSave, goBack]);
 
   return (
@@ -522,10 +551,17 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
         </FormField>
       </div>
 
+      {saveError && (
+        <p className="rounded-[8px] border border-[#fb3748] bg-[#d00416]/20 px-4 py-2 text-[12px] text-[#fb3748]">
+          {saveError}
+        </p>
+      )}
+
       <div className="mt-2 flex items-center justify-end gap-3">
         <button
           type="button"
           onClick={goBack}
+          disabled={saving}
           className="flex items-center justify-center gap-2 rounded-[8px] border border-[#f2cb7a] bg-transparent px-6 py-2 text-[14px] font-medium text-white transition hover:bg-white/5"
         >
           <ArrowBackGlyph />
@@ -534,11 +570,12 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
         <button
           type="button"
           onClick={handleSave}
-          className="flex items-center justify-center gap-2 rounded-[8px] border border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold text-[#152044] transition hover:brightness-110"
+          disabled={saving}
+          className="flex items-center justify-center gap-2 rounded-[8px] border border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold text-[#152044] transition hover:brightness-110 disabled:opacity-60"
           style={{ backgroundImage: GRAD_GOLD }}
         >
           <CheckGlyph />
-          {isEdit ? "Save Changes" : "Save"}
+          {saving ? "Saving..." : isEdit ? "Save Changes" : "Save"}
         </button>
       </div>
     </section>

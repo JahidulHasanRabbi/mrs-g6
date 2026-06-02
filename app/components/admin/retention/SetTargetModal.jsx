@@ -20,6 +20,8 @@ export default function SetTargetModal({ isOpen, onClose, onSave, pics }) {
   const picOptions = useMemo(() => (pics ?? []).filter((pic) => getPicUuid(pic)), [pics]);
   const [picUuid, setPicUuid] = useState(getPicUuid(picOptions[0]));
   const [target, setTarget] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   // Reset form whenever the modal re-opens so stale values don't leak between
   // sessions.
@@ -27,6 +29,8 @@ export default function SetTargetModal({ isOpen, onClose, onSave, pics }) {
     if (isOpen) {
       setPicUuid(getPicUuid(picOptions[0]));
       setTarget("");
+      setSaveError("");
+      setSaving(false);
     }
   }, [isOpen, picOptions]);
 
@@ -41,9 +45,17 @@ export default function SetTargetModal({ isOpen, onClose, onSave, pics }) {
 
   if (!isOpen || typeof document === "undefined") return null;
 
-  const handleSave = () => {
-    onSave?.({ picUuid, target });
-    onClose?.();
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveError("");
+    try {
+      await onSave?.({ picUuid, target });
+      onClose?.();
+    } catch {
+      setSaveError("Failed to set target. Please check the values and try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const modal = (
@@ -116,11 +128,18 @@ export default function SetTargetModal({ isOpen, onClose, onSave, pics }) {
           </div>
         </div>
 
+        {saveError && (
+          <p className="mt-4 rounded-[8px] border border-[#fb3748] bg-[#d00416]/20 px-4 py-2 text-[12px] text-[#fb3748]">
+            {saveError}
+          </p>
+        )}
+
         <div className="mt-8 flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="flex items-center justify-center gap-2 rounded-[8px] border border-[#f2cb7a] bg-transparent px-6 py-2 text-[14px] font-medium text-white transition hover:bg-white/5"
+            disabled={saving}
+            className="flex items-center justify-center gap-2 rounded-[8px] border border-[#f2cb7a] bg-transparent px-6 py-2 text-[14px] font-medium text-white transition hover:bg-white/5 disabled:opacity-60"
           >
             <CloseGlyph />
             Close
@@ -128,11 +147,12 @@ export default function SetTargetModal({ isOpen, onClose, onSave, pics }) {
           <button
             type="button"
             onClick={handleSave}
-            className="flex items-center justify-center gap-2 rounded-[8px] border border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold text-[#152044] transition hover:brightness-110"
+            disabled={saving}
+            className="flex items-center justify-center gap-2 rounded-[8px] border border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold text-[#152044] transition hover:brightness-110 disabled:opacity-60"
             style={{ backgroundImage: GRAD_GOLD }}
           >
             <CheckGlyph />
-            Save
+            {saving ? "Saving..." : "Save"}
           </button>
         </div>
       </motion.div>
