@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, Suspense } from "react";
+import { useCallback, useEffect, useMemo, useState, Suspense } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import PeriodToggle from "../../../components/admin/retention/PeriodToggle";
@@ -62,6 +62,14 @@ function formatPercent(value) {
   return `${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}%`;
 }
 
+function buildPeriodParams(period, fromDate, toDate) {
+  if (fromDate && toDate) {
+    return { type: 4, from_date: fromDate, to_date: toDate };
+  }
+  if (period === "All") return {};
+  return { type: periodLabelToType(period) };
+}
+
 // Chrome (auth guard, main wrapper, topbar) lives in
 // app/admin/retention/layout.jsx — pages here only render their own content.
 export default function PicDashboardPage() {
@@ -77,12 +85,16 @@ function PicDashboardContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [period, setPeriod] = useState("Daily");
+  const [period, setPeriod] = useState("All");
   const [summary, setSummary] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
 
   const fromDate = searchParams.get("from") || "";
   const toDate = searchParams.get("to") || "";
+  const periodParams = useMemo(
+    () => buildPeriodParams(period, fromDate, toDate),
+    [period, fromDate, toDate]
+  );
 
   // When a predefined period is selected, clear any active date range
   const handlePeriodChange = useCallback((newPeriod) => {
@@ -97,7 +109,7 @@ function PicDashboardContent() {
   const loadSummary = useCallback(async () => {
     setSummaryLoading(true);
     try {
-      const res = await getCrmDashboardSummary();
+      const res = await getCrmDashboardSummary(periodParams);
       setSummary(res || {});
     } catch (err) {
       console.error("[pic-dashboard] summary failed", err);
@@ -105,7 +117,7 @@ function PicDashboardContent() {
     } finally {
       setSummaryLoading(false);
     }
-  }, []);
+  }, [periodParams]);
 
   useEffect(() => {
     loadSummary();
@@ -115,7 +127,7 @@ function PicDashboardContent() {
     <>
       <HeaderRow period={period} onPeriodChange={handlePeriodChange} fromDate={fromDate} toDate={toDate} />
       <KpiGrid summary={summary} loading={summaryLoading} />
-      <PerformanceSummary period={period} fromDate={fromDate} toDate={toDate} onRefreshSummary={loadSummary} />
+      <PerformanceSummary periodParams={periodParams} onRefreshSummary={loadSummary} />
     </>
   );
 }
@@ -132,7 +144,7 @@ function HeaderRow({ period, onPeriodChange, fromDate, toDate }) {
           Dashboard
         </h1>
       </div>
-      <PeriodToggle period={period} onPeriodChange={onPeriodChange} fromDate={fromDate} toDate={toDate} />
+      <PeriodToggle includeAll period={period} onPeriodChange={onPeriodChange} fromDate={fromDate} toDate={toDate} />
     </div>
   );
 }
@@ -242,31 +254,23 @@ function KpiCard({ kpi }) {
   );
 }
 
-function PerformanceSummary({ period, fromDate, toDate, onRefreshSummary }) {
+function PerformanceSummary({ periodParams, onRefreshSummary }) {
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const hasDateRange = !!fromDate && !!toDate;
-
   // Reset to page 1 when the period or date range changes
   useEffect(() => {
     setPage(1);
-  }, [period, fromDate, toDate]);
+  }, [periodParams]);
 
   const fetchDetails = useCallback(async () => {
     setLoading(true);
     try {
       const params = { page, page_size: PAGE_SIZE };
-      if (hasDateRange) {
-        params.type = 4;
-        params.from_date = fromDate;
-        params.to_date = toDate;
-      } else {
-        params.type = periodLabelToType(period);
-      }
+      Object.assign(params, periodParams);
       const res = await getCrmDashboardDetails(params);
       const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
       setRows(results);
@@ -278,7 +282,7 @@ function PerformanceSummary({ period, fromDate, toDate, onRefreshSummary }) {
     } finally {
       setLoading(false);
     }
-  }, [page, period, fromDate, toDate, hasDateRange]);
+  }, [page, periodParams]);
 
   useEffect(() => {
     fetchDetails();

@@ -14,12 +14,13 @@ import DateRangePicker from "./DateRangePicker";
 // inactive — clearing happens in the parent via onPeriodChange which also
 // strips the URL params.
 
-export default function PeriodToggle({ period, onPeriodChange, fromDate, toDate }) {
+export default function PeriodToggle({ period, onPeriodChange, fromDate, toDate, includeAll = false }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const hasDateRange = !!fromDate && !!toDate;
+  const periods = includeAll ? ["All", ...PERIODS] : PERIODS;
 
   // Write `from` / `to` to the URL while preserving other params (level, sort, q).
   // router.replace (not push) — date picks shouldn't bloat history.
@@ -38,7 +39,7 @@ export default function PeriodToggle({ period, onPeriodChange, fromDate, toDate 
 
   return (
     <div className="flex items-center gap-2">
-      {PERIODS.map((p) => (
+      {periods.map((p) => (
         <PeriodButton
           key={p}
           label={p}

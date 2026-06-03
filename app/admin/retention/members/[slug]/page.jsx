@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import PeriodToggle from "../../../../components/admin/retention/PeriodToggle";
 import { GRAD_GOLD } from "../../../../components/admin/retention/constants";
 import {
   AlertHistorySection,
@@ -165,7 +164,6 @@ function buildWalletLevels(memberData, walletVipTiers, stationList) {
 export default function MemberProfilePage() {
   const params = useParams();
   const memberUuid = typeof params?.slug === "string" ? params.slug : Array.isArray(params?.slug) ? params.slug[0] : "";
-  const [period, setPeriod] = useState("Daily");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -315,8 +313,6 @@ export default function MemberProfilePage() {
         tags={inferTags(data)}
         dateJoined={show(customer?.date_joined || data?.date_joined)}
         slug={memberUuid}
-        period={period}
-        onPeriodChange={setPeriod}
         activeBrands={activeBrands}
         onNoteOpen={() => setActiveModal("note")}
         onVipOpen={() => setActiveModal("vip")}
@@ -382,7 +378,7 @@ export default function MemberProfilePage() {
   );
 }
 
-function ProfileHeader({ name, tags, dateJoined, slug, period, onPeriodChange, activeBrands, onNoteOpen, onVipOpen, onAlertOpen }) {
+function ProfileHeader({ name, tags, dateJoined, slug, activeBrands, onNoteOpen, onVipOpen, onAlertOpen }) {
   return (
     <div className="flex flex-col gap-4 px-2 md:flex-row md:flex-wrap md:items-start md:justify-between md:gap-6">
       <div className="flex flex-col gap-3">
@@ -437,9 +433,6 @@ function ProfileHeader({ name, tags, dateJoined, slug, period, onPeriodChange, a
         </div>
       </div>
       <ActiveBrandsRow active={activeBrands} />
-      <div className="flex items-center gap-2">
-        <PeriodToggle period={period} onPeriodChange={onPeriodChange} />
-      </div>
     </div>
   );
 }

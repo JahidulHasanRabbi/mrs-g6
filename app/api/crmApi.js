@@ -185,8 +185,10 @@ export async function getAdminMembers(adminUuid, params = {}) {
 // ─────────────────────────── Dashboard ───────────────────────────
 
 // GET /crm-admins/dashboard-summary/
-export async function getCrmDashboardSummary() {
-  return await apiRequest(ENDPOINTS.CRM.DASHBOARD_SUMMARY, { method: 'GET' }, true, 'admin');
+// params: { type, from_date, to_date }
+export async function getCrmDashboardSummary(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.CRM.DASHBOARD_SUMMARY}${qs}`, { method: 'GET' }, true, 'admin');
 }
 
 // GET /crm-admins/dashboard-details/  (paginated)
