@@ -364,12 +364,27 @@ function GamesSection() {
         </div>
       </div>
 
-      {/* Detail panel follows the centered card, with the pointer above it */}
+      {/* Detail panel follows the centered card, with the pointer above it.
+       * The pointer is an outlined triangle (green fill, gold stroke matching
+       * the card border) that floats just above the card — not a solid wedge
+       * tucked under it. */}
       <div className="flex flex-col items-center px-4">
-        <span
+        <svg
           aria-hidden="true"
-          className="relative z-10 -mb-3 h-0 w-0 border-x-[18px] border-b-[20px] border-x-transparent border-b-[#0a5205] drop-shadow-[0px_0px_8px_rgba(255,215,0,0.35)]"
-        />
+          width="60"
+          height="48"
+          viewBox="0 0 60 48"
+          fill="none"
+          className="relative z-10 mb-2 drop-shadow-[0px_0px_8px_rgba(255,215,0,0.35)]"
+        >
+          <path
+            d="M30 5 L56 44 L4 44 Z"
+            fill="#0a5205"
+            stroke="#ffd700"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+          />
+        </svg>
         <div className="relative w-full max-w-[413px] overflow-hidden rounded-xl border border-[#ffd700] px-8 py-10 shadow-[inset_-9px_8px_10px_0px_rgba(0,0,0,0.25)] sm:px-10 sm:py-12">
           <div className="absolute inset-0 bg-gradient-to-b from-[#0a5205] to-[#051d02]" />
           <div className="relative flex flex-col gap-2">
@@ -526,7 +541,10 @@ function Footer() {
 export default function LandingPage() {
   return (
     <MotionConfig reducedMotion="user">
-    <div className="relative isolate min-h-screen w-full overflow-hidden bg-[#020b01]">
+    {/* No `overflow-hidden` here: it would create a scroll container and break
+     * the header's `position: sticky`. Horizontal-overflow clipping lives on the
+     * background-motes layer (and the individual sections) instead. */}
+    <div className="relative isolate min-h-screen w-full bg-[#020b01]">
       {/* Background gradient + gold motes */}
       <div
         className="pointer-events-none absolute inset-0 -z-10"
@@ -535,7 +553,7 @@ export default function LandingPage() {
             "radial-gradient(120% 80% at 50% 0%, #0a3406 0%, #052003 35%, #021001 65%, #000000 100%)",
         }}
       />
-      <div className="pointer-events-none absolute inset-0 -z-10">
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         {BG_DOTS.map((dot, i) => (
           <motion.span
             key={i}
