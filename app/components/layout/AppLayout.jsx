@@ -30,7 +30,11 @@ export default function AppLayout({ children }) {
   const isHomePage = pathname === "/";
   const isSpinPage = pathname === "/spin";
   const isTermsPage = pathname === "/terms-and-conditions";
-  const isPenaltyKickPage = pathname === "/penalty-kick";
+  // The whole Penalty Kick section (the game at /penalty-kick plus the
+  // Missions sub-page at /penalty-kick/missions) is self-contained — each
+  // screen draws its own header + FooterNav over a full-bleed backdrop.
+  const isPenaltyKickPage =
+    pathname === "/penalty-kick" || pathname?.startsWith("/penalty-kick/");
   const isLeaderboardPage = pathname === "/leaderboard";
 
   // Don't show layout on home page
