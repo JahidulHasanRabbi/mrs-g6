@@ -35,22 +35,49 @@ const mono = "font-[family-name:var(--font-jetbrains-mono)]";
 const sora = "font-[family-name:var(--font-sora)]";
 const goldGlowText = { textShadow: "0px 0px 20px #826e00, 0px 0px 10px #ffd700" };
 
-const EASE = [0.22, 1, 0.36, 1];
+const EASE = [0.22, 1, 0.36, 1]; // expo-out: quick start, gentle landing
+const EASE_SOFT = [0.16, 1, 0.3, 1]; // even softer — for the larger hero blocks
 
 // Shared entrance variants. `fadeUp` is the per-element reveal; `stagger`
 // orchestrates its children so groups cascade in. MotionConfig (at the page
 // root) makes all of these respect prefers-reduced-motion automatically.
+//
+// The reveals layer a short focus-pull (filter: blur → 0) on top of the
+// rise/scale so elements resolve *into* place rather than just sliding — it
+// reads more premium without being showy. blur is only animated once, on
+// entrance, so the cost is negligible.
 const fadeUp = {
-  hidden: { opacity: 0, y: 28 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: EASE } },
+  hidden: { opacity: 0, y: 32, filter: "blur(8px)" },
+  visible: {
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { duration: 0.8, ease: EASE_SOFT },
+  },
 };
+// Cinematic headline reveal: a touch more travel + a subtle scale settle.
+const heroTitle = {
+  hidden: { opacity: 0, y: 44, scale: 0.96, filter: "blur(14px)" },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    filter: "blur(0px)",
+    transition: { duration: 1, ease: EASE_SOFT },
+  },
+};
+// Springy pop with a hint of overshoot — gives badges/logo a tactile snap.
 const popIn = {
-  hidden: { opacity: 0, scale: 0.7 },
-  visible: { opacity: 1, scale: 1, transition: { duration: 0.45, ease: EASE } },
+  hidden: { opacity: 0, scale: 0.55 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { type: "spring", stiffness: 240, damping: 16, mass: 0.7 },
+  },
 };
 const stagger = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.12, delayChildren: 0.08 } },
+  visible: { transition: { staggerChildren: 0.13, delayChildren: 0.12 } },
 };
 // Reveal once, when ~a quarter of the element has scrolled into view.
 const inView = { once: true, amount: 0.25 };
@@ -58,9 +85,9 @@ const inView = { once: true, amount: 0.25 };
 function Header() {
   return (
     <motion.header
-      initial={{ y: -90, opacity: 0 }}
+      initial={{ y: "-100%", opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6, ease: EASE }}
+      transition={{ duration: 0.9, ease: EASE_SOFT }}
       className="sticky top-0 z-20 w-full shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1)]"
     >
       <div className="absolute inset-0 bg-gradient-to-r from-[#041502] to-[#1e5119]" />
@@ -133,7 +160,7 @@ function Hero() {
           </span>
         </motion.div>
         <motion.h1
-          variants={fadeUp}
+          variants={heroTitle}
           className={`text-4xl font-extrabold leading-tight tracking-[-1.28px] text-[#e4e1e7] sm:text-5xl lg:text-[64px] lg:leading-[65px] ${sora}`}
         >
           The Next-Gen Mini Game Platform
@@ -239,16 +266,14 @@ function GameCard({ game, isActive, onSelect }) {
       type="button"
       onClick={onSelect}
       aria-current={isActive || undefined}
-      className={`flex shrink-0 flex-col items-center gap-4 outline-none transition-transform duration-500 ease-out ${
-        isActive ? "z-10 scale-[1.35]" : "scale-90 opacity-90"
-      }`}
+      className={`flex shrink-0 flex-col items-center gap-4 outline-none transition-transform duration-500 ease-out ${isActive ? "z-10 scale-[1.35]" : "scale-90 opacity-90"
+        }`}
     >
       <div
-        className={`relative h-[300px] w-[180px] overflow-hidden rounded-2xl transition-shadow duration-500 sm:h-[315px] sm:w-[225px] ${
-          isActive
+        className={`relative h-[300px] w-[180px] overflow-hidden rounded-2xl transition-shadow duration-500 sm:h-[315px] sm:w-[225px] ${isActive
             ? "border-2 border-[#ffd700] shadow-[0px_0px_10px_0px_#ffd700,0px_0px_24px_0px_#826e00]"
             : ""
-        }`}
+          }`}
       >
         <Image src={game.img} alt={game.name} fill sizes="265px" className="object-cover" />
         {isActive && (
@@ -335,43 +360,45 @@ function GamesSection() {
       initial="hidden"
       whileInView="visible"
       viewport={inView}
-      variants={fadeUp}
+      variants={stagger}
       className="flex w-full flex-col items-center gap-2 overflow-hidden py-10"
     >
-      <div
-        ref={viewportRef}
-        className="w-full overflow-hidden"
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-      >
+      <motion.div variants={fadeUp} className="w-full">
         <div
-          ref={trackRef}
-          onTransitionEnd={handleTransitionEnd}
-          // Vertical padding must clear the *scaled* active card (1.35×) plus its
-          // label — the viewport's overflow-hidden (which hides the off-screen
-          // loop cards) would otherwise clip them. py-20 leaves headroom.
-          className="flex items-center gap-6 py-20 lg:gap-10"
-          style={{
-            transform: `translateX(${offset}px)`,
-            transition: animate ? "transform 500ms ease-out" : "none",
-          }}
+          ref={viewportRef}
+          className="w-full overflow-hidden"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
         >
-          {GAMES_LOOP.map((game, i) => (
-            <GameCard
-              key={i}
-              game={game}
-              isActive={i === active}
-              onSelect={() => setActive(i)}
-            />
-          ))}
+          <div
+            ref={trackRef}
+            onTransitionEnd={handleTransitionEnd}
+            // Vertical padding must clear the *scaled* active card (1.35×) plus its
+            // label — the viewport's overflow-hidden (which hides the off-screen
+            // loop cards) would otherwise clip them. py-20 leaves headroom.
+            className="flex items-center gap-6 py-20 lg:gap-10"
+            style={{
+              transform: `translateX(${offset}px)`,
+              transition: animate ? "transform 500ms ease-out" : "none",
+            }}
+          >
+            {GAMES_LOOP.map((game, i) => (
+              <GameCard
+                key={i}
+                game={game}
+                isActive={i === active}
+                onSelect={() => setActive(i)}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Detail panel follows the centered card, with the pointer above it.
        * The pointer is an outlined triangle (green fill, gold stroke matching
        * the card border) that floats just above the card — not a solid wedge
        * tucked under it. */}
-      <div className="flex flex-col items-center px-4">
+      <motion.div variants={fadeUp} className="flex flex-col items-center px-4">
         <svg
           aria-hidden="true"
           width="60"
@@ -390,16 +417,25 @@ function GamesSection() {
         </svg>
         <div className="relative w-full max-w-[413px] overflow-hidden rounded-xl border border-[#ffd700] px-8 py-10 shadow-[inset_-9px_8px_10px_0px_rgba(0,0,0,0.25)] sm:px-10 sm:py-12">
           <div className="absolute inset-0 bg-gradient-to-b from-[#0a5205] to-[#051d02]" />
-          <div className="relative flex flex-col gap-2">
+          {/* Re-keying on the active game name remounts this block, so its
+           * intro replays each time the carousel advances — the copy resolves
+           * in with a soft blur/rise instead of snapping between games. */}
+          <motion.div
+            key={current.name}
+            initial={{ opacity: 0, y: 12, filter: "blur(6px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            transition={{ duration: 0.45, ease: EASE }}
+            className="relative flex flex-col gap-2"
+          >
             <h3 className={`text-3xl font-bold text-white ${sora}`} style={goldGlowText}>
               {current.name}
             </h3>
             <p className="text-base leading-6 text-[#d0c6ab] font-[family-name:var(--font-inter)]">
               {current.description}
             </p>
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
     </motion.section>
   );
 }
@@ -548,43 +584,43 @@ function Footer() {
 export default function LandingPage() {
   return (
     <MotionConfig reducedMotion="user">
-    {/* No `overflow-hidden` here: it would create a scroll container and break
+      {/* No `overflow-hidden` here: it would create a scroll container and break
      * the header's `position: sticky`. Horizontal-overflow clipping lives on the
      * background-motes layer (and the individual sections) instead. */}
-    <div className="relative isolate min-h-screen w-full bg-[#020b01]">
-      {/* Background gradient + gold motes */}
-      <div
-        className="pointer-events-none absolute inset-0 -z-10"
-        style={{
-          background:
-            "radial-gradient(120% 80% at 50% 0%, #0a3406 0%, #052003 35%, #021001 65%, #000000 100%)",
-        }}
-      />
-      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        {BG_DOTS.map((dot, i) => (
-          <motion.span
-            key={i}
-            className="absolute rounded-full bg-gradient-to-b from-[#ffd000] to-[#997d00]"
-            style={{ top: dot.top, left: dot.left, width: dot.size, height: dot.size }}
-            animate={{ opacity: [dot.opacity * 0.35, dot.opacity, dot.opacity * 0.35] }}
-            transition={{
-              duration: 3 + (i % 4),
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: (i % 5) * 0.4,
-            }}
-          />
-        ))}
-      </div>
+      <div className="relative isolate min-h-screen w-full bg-[#020b01]">
+        {/* Background gradient + gold motes */}
+        <div
+          className="pointer-events-none absolute inset-0 -z-10"
+          style={{
+            background:
+              "radial-gradient(120% 80% at 50% 0%, #0a3406 0%, #052003 35%, #021001 65%, #000000 100%)",
+          }}
+        />
+        <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+          {BG_DOTS.map((dot, i) => (
+            <motion.span
+              key={i}
+              className="absolute rounded-full bg-gradient-to-b from-[#ffd000] to-[#997d00]"
+              style={{ top: dot.top, left: dot.left, width: dot.size, height: dot.size }}
+              animate={{ opacity: [dot.opacity * 0.35, dot.opacity, dot.opacity * 0.35] }}
+              transition={{
+                duration: 3 + (i % 4),
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: (i % 5) * 0.4,
+              }}
+            />
+          ))}
+        </div>
 
-      <Header />
-      <main className="flex w-full flex-col items-center">
-        <Hero />
-        <GamesSection />
-        <PartnersSection />
-      </main>
-      <Footer />
-    </div>
+        <Header />
+        <main className="flex w-full flex-col items-center">
+          <Hero />
+          <GamesSection />
+          <PartnersSection />
+        </main>
+        <Footer />
+      </div>
     </MotionConfig>
   );
 }
