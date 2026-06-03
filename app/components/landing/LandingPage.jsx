@@ -37,42 +37,46 @@ const goldGlowText = { textShadow: "0px 0px 20px #826e00, 0px 0px 10px #ffd700" 
 
 const EASE = [0.22, 1, 0.36, 1]; // expo-out (an ease-out) — entrances land soft
 
-// Entrance variants, tuned to the ui-ux-pro-max §7 Animation rules:
-//  • ease-out for entrances; keep reveals ≤ ~450ms (the rule: avoid >500ms),
-//  • animate transform/opacity only on the bulk of elements (cheap, 60fps) —
-//    no filter/layout props, per `transform-performance` + `excessive-motion`
-//    ("animate 1–2 key elements per view"); the headline is the lone exception,
-//  • stagger children 30–50ms for a snappy cascade, not a slow drip.
-// MotionConfig at the page root makes all of these honour prefers-reduced-motion.
+// On-load entrance — intentionally BIG and clearly choreographed (the user
+// wants a noticeable hero moment, not a subtle one). Still transform/opacity +
+// a single headline blur so it stays 60fps; MotionConfig honours reduced-motion.
 const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE } },
+  hidden: { opacity: 0, y: 44 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: EASE } },
 };
-// The headline is the one showcase element that earns a richer reveal: a brief
-// focus-pull (blur→0) over the rise+scale, kept inside the duration budget.
+// Showpiece headline: a large rise + scale-up out of a heavy blur, paired with a
+// gold shimmer that sweeps across the letters (the backgroundPosition travel).
 const heroTitle = {
-  hidden: { opacity: 0, y: 32, scale: 0.97, filter: "blur(10px)" },
+  hidden: {
+    opacity: 0,
+    y: 64,
+    scale: 0.88,
+    filter: "blur(18px)",
+    backgroundPosition: "160% 0%",
+  },
   visible: {
     opacity: 1,
     y: 0,
     scale: 1,
     filter: "blur(0px)",
-    transition: { duration: 0.45, ease: EASE },
+    backgroundPosition: "-60% 0%",
+    transition: { duration: 1.1, ease: EASE },
   },
 };
-// Spring physics for badges/logo (`spring-physics` rule) — a quick, tactile pop
-// with light overshoot, tuned to settle fast rather than wobble.
+// Dramatic spring pop with real overshoot — badges/logo punch in from small.
 const popIn = {
-  hidden: { opacity: 0, scale: 0.7 },
+  hidden: { opacity: 0, scale: 0.2, y: 24 },
   visible: {
     opacity: 1,
     scale: 1,
-    transition: { type: "spring", stiffness: 320, damping: 20, mass: 0.6 },
+    y: 0,
+    transition: { type: "spring", stiffness: 260, damping: 12, mass: 0.8 },
   },
 };
+// A visible cascade (≈130ms apart) so you actually watch items arrive in order.
 const stagger = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.05, delayChildren: 0.05 } },
+  visible: { transition: { staggerChildren: 0.13, delayChildren: 0.2 } },
 };
 // Reveal once, when ~a quarter of the element has scrolled into view.
 const inView = { once: true, amount: 0.25 };
@@ -139,14 +143,22 @@ function Hero() {
         className="flex w-full max-w-[821px] flex-col items-center gap-4 pb-6 text-center"
       >
         <motion.div variants={fadeUp} className="flex flex-col items-center gap-2">
-          <Image
-            src="/assets/landing/logo.png"
-            alt=""
-            width={800}
-            height={300}
-            priority
-            className="h-12 w-12 rounded-full object-contain"
-          />
+          <motion.div
+            initial={{ scale: 0.2, opacity: 0, rotate: -12 }}
+            animate={{ scale: 1, opacity: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 11, mass: 0.8, delay: 0.15 }}
+            className="rounded-full"
+            style={{ filter: "drop-shadow(0 0 18px rgba(255,215,0,0.55))" }}
+          >
+            <Image
+              src="/assets/landing/logo.png"
+              alt=""
+              width={800}
+              height={300}
+              priority
+              className="h-12 w-12 rounded-full object-contain"
+            />
+          </motion.div>
           <span
             className="bg-gradient-to-r from-[#ffe86d] via-[#ffd700] to-[#ffe86d] bg-clip-text text-2xl capitalize tracking-[3.6px] text-transparent"
             style={{ fontFamily: '"Lucida Calligraphy", "Brush Script MT", cursive' }}
@@ -156,7 +168,14 @@ function Hero() {
         </motion.div>
         <motion.h1
           variants={heroTitle}
-          className={`text-4xl font-extrabold leading-tight tracking-[-1.28px] text-[#e4e1e7] sm:text-5xl lg:text-[64px] lg:leading-[65px] ${sora}`}
+          // Gradient text (base = the original #e4e1e7) with a bright band the
+          // entrance sweeps across for a one-shot gold shimmer.
+          className={`bg-clip-text text-4xl font-extrabold leading-tight tracking-[-1.28px] text-transparent sm:text-5xl lg:text-[64px] lg:leading-[65px] ${sora}`}
+          style={{
+            backgroundImage:
+              "linear-gradient(110deg, #e4e1e7 0%, #e4e1e7 42%, #fff7cc 49%, #ffffff 52%, #fff7cc 55%, #e4e1e7 62%, #e4e1e7 100%)",
+            backgroundSize: "250% 100%",
+          }}
         >
           The Next-Gen Mini Game Platform
         </motion.h1>
