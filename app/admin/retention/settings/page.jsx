@@ -10,7 +10,6 @@ import {
 } from "../../../components/admin/retention/constants";
 import {
   getCrmAssignments,
-  getCrmUsers,
   statusLabelToInt,
   updateCrmAssignment,
 } from "../../../api/crmApi";
@@ -50,38 +49,10 @@ function normalizeAssignmentStatus(value) {
   return value || "Inactive";
 }
 
-function isUuid(value) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ""));
-}
-
 function firstPresent(...values) {
   return values.find((value) => value !== null && value !== undefined && String(value) !== "") || "";
 }
 
-function normalizePic(user) {
-  const uuid = firstPresent(
-    user?.uuid,
-    user?.id,
-    user?.admin_uuid,
-    user?.user_uuid,
-    user?.pic_uuid,
-    user?.admin?.uuid,
-    user?.user?.uuid
-  );
-
-  return {
-    ...user,
-    uuid,
-    isValidUuid: isUuid(uuid),
-    label: user?.full_name || user?.name || user?.username || uuid || "Unknown PIC",
-  };
-}
-
-function invalidPicMessage(pic) {
-  const label = pic?.label || "selected PIC";
-  const uuid = pic?.uuid || "empty";
-  return `Cannot save: ${label} has invalid pic_uuid "${uuid}". The assignment API requires a real UUID, but /admins/users/ returned this value.`;
-}
 
 function mapAssignment(row, idx = 0) {
   return {
@@ -115,15 +86,6 @@ function rowToFormValues(row) {
   };
 }
 
-function applyFormToRow(row, values) {
-  return {
-    ...row,
-    level: values.name,
-    status: values.status,
-    retain: `RM ${values.retain.replace(/^RM\s*/i, "")}`,
-    upgrade: values.upgrade,
-  };
-}
 
 export default function RetentionSettingsPage() {
   return (
@@ -140,16 +102,6 @@ function RetentionSettingsContent() {
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [pics, setPics] = useState([]);
-
-  useEffect(() => {
-    getCrmUsers({ page: 1, page_size: 100 })
-      .then((res) => {
-        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
-        setPics(results.map(normalizePic).filter((pic) => pic.uuid));
-      })
-      .catch((err) => console.error("[retention-settings] users load failed", err));
-  }, []);
 
   const loadAssignments = useCallback(async () => {
     setLoading(true);
@@ -182,19 +134,13 @@ function RetentionSettingsContent() {
 
   const handleSave = useCallback(
     async (values) => {
-      const selectedPic = pics.find((u) => u.uuid === values.picUuid);
-      const picUuid = selectedPic?.uuid || values.picUuid;
-      if (!picUuid) {
-        alert("Cannot save: please select a valid PIC from the list.");
-        return;
-      }
       const payload = {
         name: values.name,
         status: statusLabelToInt(values.status),
         retain_criteria: stripCurrency(values.retain),
         upgrade_criteria: stripCurrency(values.upgrade),
         retention_target: stripCurrency(values.target),
-        pic_uuid: picUuid,
+        pic_uuid: editingRow?.picUuid,
       };
       try {
         if (editingRow?.uuid) await updateCrmAssignment(editingRow.uuid, payload);
@@ -204,7 +150,7 @@ function RetentionSettingsContent() {
         throw err;
       }
     },
-    [editingRow, loadAssignments, pics]
+    [editingRow, loadAssignments]
   );
 
   return (
@@ -224,7 +170,6 @@ function RetentionSettingsContent() {
           mode={mode}
           initialValues={editingRow ? rowToFormValues(editingRow) : null}
           onSave={handleSave}
-          pics={pics}
         />
       )}
     </>
@@ -423,7 +368,7 @@ function SkeletonCircle() {
   );
 }
 
-function MemberLevelForm({ mode, initialValues, onSave, pics }) {
+function MemberLevelForm({ mode, initialValues, onSave }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -437,14 +382,8 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
   const [retain, setRetain] = useState(() => initialValues?.retain ?? "10,000");
   const [upgrade, setUpgrade] = useState(() => initialValues?.upgrade ?? "1,000");
   const [target, setTarget] = useState(() => initialValues?.target ?? "");
-  const picOptions = pics?.length ? pics : [];
-  const [picUuid, setPicUuid] = useState(() => initialValues?.picUuid ?? picOptions[0]?.uuid ?? "");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
-
-  useEffect(() => {
-    if (!picUuid && picOptions[0]?.uuid) setPicUuid(picOptions[0].uuid);
-  }, [picOptions, picUuid]);
 
   const goBack = useCallback(() => {
     const next = new URLSearchParams(searchParams.toString());
@@ -458,14 +397,14 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
     setSaving(true);
     setSaveError("");
     try {
-      await onSave({ name, status, retain, upgrade, target, picUuid });
+      await onSave({ name, status, retain, upgrade, target });
       goBack();
     } catch {
       setSaveError("Failed to save assignment. Please check the values and try again.");
     } finally {
       setSaving(false);
     }
-  }, [name, status, retain, upgrade, picUuid, onSave, goBack]);
+  }, [name, status, retain, upgrade, target, onSave, goBack]);
 
   return (
     <section className="flex w-full flex-col gap-6 rounded-[16px] bg-[#041502] p-8 shadow-[0_-4px_12px_-2px_#dea220]">
@@ -498,9 +437,6 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
         <FormField label="Retention Target">
           <RmInput value={target} onChange={setTarget} />
         </FormField>
-        <FormField label="Choose PIC">
-          <PicSelect value={picUuid} onChange={setPicUuid} options={picOptions} />
-        </FormField>
       </div>
 
       {saveError && (
@@ -532,10 +468,6 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
       </div>
     </section>
   );
-}
-
-function PicSelect({ value, onChange, options }) {
-  return <CustomSelect value={value} onChange={onChange} options={options.map((pic) => ({ value: pic.uuid, label: pic.label }))} placeholder="Choose PIC" />;
 }
 
 function FormField({ label, children }) {
@@ -640,23 +572,6 @@ function ChevronGlyph({ open }) {
 
 // ── Inline SVG glyphs ──────────────────────────────────────────────────
 
-function TargetGlyph() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.4" />
-      <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.4" />
-      <circle cx="8" cy="8" r="0.8" fill="currentColor" />
-    </svg>
-  );
-}
-
-function PlusGlyph() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
 
 function PencilGlyph() {
   return (
