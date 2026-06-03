@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { MotionConfig, motion } from "framer-motion";
-import { VIP_TIERS, GAMES, PARTNERS, FOOTER_LINKS, BG_DOTS } from "./landingData";
+import { VIP_TIERS, GAMES, PARTNERS, FOOTER_LINKS, BG_DOTS, TELEGRAM_URL } from "./landingData";
 
 // useLayoutEffect on the client (so the carousel recenters before paint, which
 // keeps the infinite-loop snap invisible) but falls back to useEffect on the
@@ -240,7 +240,7 @@ function GameCard({ game, isActive, onSelect }) {
       onClick={onSelect}
       aria-current={isActive || undefined}
       className={`flex shrink-0 flex-col items-center gap-4 outline-none transition-transform duration-500 ease-out ${
-        isActive ? "z-10 scale-[1.18]" : "scale-90 opacity-90"
+        isActive ? "z-10 scale-[1.35]" : "scale-90 opacity-90"
       }`}
     >
       <div
@@ -439,23 +439,27 @@ function PartnerCard({ partner }) {
 
         {/* Actions */}
         <div className="flex gap-3">
-          <motion.button
-            type="button"
+          <motion.a
+            href={partner.claimUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
             className={`flex flex-1 items-center justify-center rounded-lg border border-[#6a5b0a] bg-[#ffd700] py-3 text-xs font-extrabold tracking-[1.2px] text-[#3a3000] ${mono}`}
           >
             Claim Now
-          </motion.button>
-          <motion.button
-            type="button"
+          </motion.a>
+          <motion.a
+            href={TELEGRAM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.96 }}
             className={`flex flex-1 items-center justify-center gap-1 rounded-lg border border-[#30ccdd] bg-[#1592a0] px-6 py-3 text-xs font-extrabold tracking-[1.2px] text-[#ebebeb] ${mono}`}
           >
             <MaskIcon src="/assets/landing/icons/ph-telegram-logo-duotone.svg" className="size-4" />
             Telegram
-          </motion.button>
+          </motion.a>
         </div>
       </div>
     </motion.div>
