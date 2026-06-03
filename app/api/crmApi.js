@@ -11,6 +11,10 @@ export async function getCrmUsers(params = {}) {
   return await apiRequest(`${ENDPOINTS.CRM.USERS}${qs}`, { method: 'GET' }, true, 'admin');
 }
 
+export async function getCrmUserSingle(uuid) {
+  return await apiRequest(ENDPOINTS.CRM.USER_SINGLE(uuid), { method: 'GET' }, true, 'admin');
+}
+
 export async function createCrmUser(data) {
   return await apiRequest(ENDPOINTS.CRM.USERS, {
     method: 'POST',
@@ -20,7 +24,7 @@ export async function createCrmUser(data) {
 
 export async function updateCrmUser(uuid, data) {
   return await apiRequest(ENDPOINTS.CRM.USER_SINGLE(uuid), {
-    method: 'PUT',
+    method: 'PATCH',
     body: data
   }, true, 'admin');
 }
@@ -72,7 +76,7 @@ export async function archiveCrmRole(uuid) {
 
 // ───────────────────────── CRM VIP Tiers ──────────────────────────
 
-// GET /crm-admins/vip-tier/  (paginated)
+// GET /member/vip-tier/  (paginated)
 // params: { page, page_size }
 export async function getCrmVipTiers(params = {}) {
   const qs = buildQueryParams(params);
@@ -94,7 +98,7 @@ export async function archiveCrmVipTier(uuid) {
 // ───────────────────────── Member Profile ─────────────────────────
 
 // GET /crm-members/members/  (paginated)
-// params: { page, page_size, priority, vip_level, retention, search }
+// params: { page, page_size, priority, wallet_vip_level, mrs_vip_level, retention, search }
 export async function getCrmMembers(params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.CRM.MEMBERS}${qs}`, { method: 'GET' }, true, 'admin');
@@ -105,13 +109,17 @@ export async function getCrmMemberSingle(memberUuid) {
   return await apiRequest(ENDPOINTS.CRM.MEMBER_SINGLE(memberUuid), { method: 'GET' }, true, 'admin');
 }
 
-// PUT /crm-members/members/<uuid>/
+// PATCH /crm-members/members/<uuid>/
 // body: { profile_data, basic_info, game_info }
 export async function updateCrmMember(memberUuid, data) {
   return await apiRequest(ENDPOINTS.CRM.MEMBER_SINGLE(memberUuid), {
-    method: 'PUT',
+    method: 'PATCH',
     body: data
   }, true, 'admin');
+}
+
+export async function patchCrmMember(memberUuid, data) {
+  return updateCrmMember(memberUuid, data);
 }
 
 // ──────────────────────── Retention Alert ────────────────────────
@@ -140,6 +148,13 @@ export async function getRetentionSummary(adminUuid, params = {}) {
 export async function getRetentionMembers(params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.CRM.RETENTION_MEMBERS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+// GET /crm-members/<admin_uuid>/admin-members/  (paginated)
+// params: { page, page_size, from_date, to_date, vip_level, from_sales, to_sales, search }
+export async function getAdminMembers(adminUuid, params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.CRM.ADMIN_MEMBERS(adminUuid)}${qs}`, { method: 'GET' }, true, 'admin');
 }
 
 // ─────────────────────────── Dashboard ───────────────────────────

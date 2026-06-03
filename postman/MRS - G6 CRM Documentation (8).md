@@ -14,75 +14,83 @@
 
 [**User Access Panel	4**](#user-access-panel)
 
-[User List	4](#user-list)
+[New Login Method \- With Login Approval	4](#new-login-method---with-login-approval)
 
-[User List \- GET	4](#user-list---get)
+[Admin Login	4](#admin-login)
 
-[User List \- POST/PUT	4](#user-list---post/put)
+[Login Complete	5](#login-complete)
 
-[Login Requests	5](#login-requests)
+[User List	6](#user-list)
 
-[Login Requests \- GET	5](#login-requests---get)
+[User List \- GET	6](#user-list---get)
 
-[Login Requests \- PATCH	5](#login-requests---patch)
+[User List \- POST	6](#user-list---post)
 
-[Activity Log	6](#activity-log)
+[User List \- POST	7](#user-list---post-1)
 
-[Activity Log \- GET	6](#activity-log---get)
+[Login Requests	7](#login-requests)
 
-[Permissions	6](#permissions)
+[Login Requests \- GET	7](#login-requests---get)
 
-[Permissions \- GET	6](#permissions---get)
+[Login Requests \- PATCH	8](#login-requests---patch)
 
-[Roles	7](#roles)
+[Activity Log	8](#activity-log)
 
-[Roles \- GET	7](#roles---get)
+[Activity Log \- GET	8](#activity-log---get)
 
-[Roles \- POST / PUT	7](#roles---post-/-put)
+[Permissions	9](#permissions)
 
-[Roles \- Archive	8](#roles---archive)
+[Permissions \- GET	9](#permissions---get)
 
-[**Member Profile	9**](#member-profile)
+[Roles	10](#roles)
 
-[Member List	9](#member-list)
+[Roles \- GET	10](#roles---get)
 
-[Member List \- GET	9](#member-list---get)
+[Roles \- POST / PUT	11](#roles---post-/-put)
 
-[Member Single \- GET	10](#member-single---get)
+[Roles \- Archive	11](#roles---archive)
 
-[Member Single \- PUT	12](#member-single---put)
+[**Member Profile	12**](#member-profile)
 
-[**Retention Alert System	14**](#retention-alert-system)
+[Member List	12](#member-list)
 
-[Priority Summary \- GET	14](#priority-summary---get)
+[Member List \- GET	12](#member-list---get)
 
-[Refresh Members \- POST	14](#refresh-members---post)
+[Member Single \- GET	13](#member-single---get)
 
-[**Individual Sales Report	15**](#individual-sales-report)
+[Member Single \- PUT / PATCH	15](#member-single---put-/-patch)
 
-[**Dashboard View	16**](#dashboard-view)
+[**Retention Alert System	18**](#retention-alert-system)
 
-[Dashboard Summary	16](#dashboard-summary)
+[Priority Summary \- GET	18](#priority-summary---get)
 
-[Dashboard Summary \- GET	16](#dashboard-summary---get)
+[Refresh Members \- POST	18](#refresh-members---post)
 
-[Dashboard Details \- GET	16](#dashboard-details---get)
+[**Individual Sales Report	19**](#individual-sales-report)
 
-[**Retention Profile	18**](#retention-profile)
+[**Dashboard View	20**](#dashboard-view)
 
-[Retention Summary	18](#retention-summary)
+[Dashboard Summary	20](#dashboard-summary)
 
-[Retention Member List \- GET	19](#retention-member-list---get)
+[Dashboard Summary \- GET	20](#dashboard-summary---get)
 
-[**Settings	21**](#settings)
+[Dashboard Details \- GET	20](#dashboard-details---get)
 
-[Member Assignment	21](#member-assignment)
+[**Retention Profile	22**](#retention-profile)
 
-[Member Assignment \- GET	21](#member-assignment---get)
+[Retention Summary	22](#retention-summary)
 
-[Member Assignment \- POST/PUT	21](#member-assignment---post/put)
+[Retention Member List \- GET	23](#retention-member-list---get)
 
-[Member Assignment \- Set Deposit \- Patch	22](#member-assignment---set-deposit---patch)
+[**Settings	25**](#settings)
+
+[Member Assignment	25](#member-assignment)
+
+[Member Assignment \- GET	25](#member-assignment---get)
+
+[Member Assignment \- POST/PUT	25](#member-assignment---post/put)
+
+[Member Assignment \- Set Deposit \- Patch	26](#member-assignment---set-deposit---patch)
 
 # Initial Notes {#initial-notes}
 
@@ -110,6 +118,63 @@ Password: Qwerabcd\!
 
 # User Access Panel {#user-access-panel}
 
+## New Login Method \- With Login Approval {#new-login-method---with-login-approval}
+
+### Admin Login {#admin-login}
+
+/login/admin-login POST
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | username | str | No |  |
+| **2** | password | str | No |  |
+| **3** | ip\_address | str | Yes |  |
+| **4** | device | str | Yes |  |
+
+Response  
+If user has bypass\_approval:
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | id | uuid | No |  |
+| **2** | username | str | No |  |
+| **3** | access | str | No |  |
+| **4** | refresh | str | No |  |
+| **5** | permissions | List | No | Returns list of permissions like “view\_admins”, “bypass\_approvals”, etc |
+| **6** | role | str | No | Returns role name |
+
+If user doesn’t have bypass\_approval:
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | message | str | No | Returns “approval\_required” |
+| **2** | approval\_id | uuid | No |  |
+| **3** | user\_id | UUID | No |  |
+
+### Login Complete {#login-complete}
+
+/login/admin-login/complete/ POST
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | approval\_id | UUID | No |  |
+
+If Approval is approved:
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | id | uuid | No |  |
+| **2** | username | str | No |  |
+| **3** | access | str | No |  |
+| **4** | refresh | str | No |  |
+| **5** | permissions | List | No | Returns list of permissions like “view\_admins”, “bypass\_approvals”, etc |
+| **6** | role | str | No | Returns role name |
+
+Else:  
+Error 400 \- Login Request has not been approved
+
+## 
+
 ## User List {#user-list}
 
 ### User List \- GET {#user-list---get}
@@ -132,10 +197,9 @@ Output (Is Paginated)
 | **4** | role | Str | No |  |
 | **5** | status | Str | No | Active or Inactive |
 
-### User List \- POST/PUT {#user-list---post/put}
+### User List \- POST {#user-list---post}
 
 /admins/users/ POST  
-/admins/users/\<uuid\>/ PUT  
 Input
 
 | \# | Property/Field | Data Type | Nullable | Description |
@@ -146,6 +210,20 @@ Input
 | **4** | status | int | No | 1 \= Active2 \= Inactive |
 | **5** | password | str | No |  |
 | **6** | confirm\_password | str | No |  |
+
+### User List \- POST {#user-list---post-1}
+
+/admins/users/\<uuid\>/ PUT  
+/admins/users/\<uuid\>/ PATCH  
+Input
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | full\_name | str | No |  |
+| **2** | role\_uuid | uuid | No |  |
+| **3** | status | int | No | 1 \= Active2 \= Inactive |
+| **4** | password | str | No |  |
+| **5** | confirm\_password | str | No |  |
 
 ## Login Requests {#login-requests}
 
@@ -158,6 +236,8 @@ Query parameters
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | page | Int | No | For Pagination |
 | **2** | page\_size | Int | No | For Pagination |
+| **3** | status | int | Yes | 1 \= PENDING 2 \= APPROVED 3 \= REJECTED |
+| **4** | username | str | Yes | icontains |
 
 Output (Is Paginated)
 
@@ -168,6 +248,8 @@ Output (Is Paginated)
 | **3** | device | Str | No |  |
 | **4** | request\_time | datetime | No |  |
 | **5** | status | Str | No | Pending, Approved, Rejected |
+| **6** | approved\_by | Str | Yes |  |
+| **7** | approved\_datetime | datetime | Yes |  |
 
 ### Login Requests \- PATCH {#login-requests---patch}
 
@@ -190,6 +272,7 @@ Query parameters
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | page | Int | No | For Pagination |
 | **2** | page\_size | Int | No | For Pagination |
+| **3** | username | str | Yes | Fuzzy |
 
 Output (Is Paginated)
 
@@ -207,23 +290,47 @@ Output (Is Paginated)
 /admins/permissions/ GET  
 Response example:  
 {  
-    "Members": \[  
-        {  
-            "key": "view\_members",  
-            "label": "View Members"  
-        },  
-        {  
-             "key": "edit\_members",  
-             "label": "Edit Members"  
-      }  
-  \],  
- "Admins": \[  
-   {  
-     "key": "view\_admins",  
-     "label": "View Admins"  
-   }  
- \]  
+"Others": {  
+"Login": \[  
+{  
+"key": "view\_logins",  
+"label": "View Logins"  
+}  
+\]  
+},  
+"Retention": {  
+"Admins": \[  
+{  
+"key": "view\_admins",  
+"label": "View Admins"  
+}  
+\],  
+"Roles": \[  
+{  
+"key": "view\_roles",  
+"label": "View Roles"  
+}  
+\]  
+},  
+"Member": {  
+"VIP": \[  
+{  
+"key": "view\_vip",  
+"label": "View VIP"  
+}  
+\]  
+}  
 }
+
+Current Structure:
+
+| \# | Property/Field | Description |
+| ----: | :---- | :---- |
+| **1** | Others | Logins |
+| **2** | Retention | Admins Roles |
+| **3** | Member | Tiers Spins |
+
+## 
 
 ## Roles {#roles}
 
@@ -244,6 +351,8 @@ Output (Is Paginated)
 | **1** | uuid | UUID | No |  |
 | **2** | name | str | No |  |
 | **3** | permissions | List | No | List of strings |
+| **4** | status | str | No |  |
+| **5** | total\_assigned | int | No |  |
 
 ### Roles \- POST / PUT {#roles---post-/-put}
 
@@ -255,45 +364,13 @@ Input
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | name | str | No |  |
 | **2** | permissions | List | No | List of keys from /permissions/ |
+| **3** | status | Int | Yes (defaults to Active) | 1 \= Active 2 \= Inactive |
 
 ### Roles \- Archive {#roles---archive}
 
 /admins/roles/\<uuid\>/archive/ PATCH
 
 ### 
-
-## VIP-Tier
-
-### Vip Tiers \- GET
-
-/crm-admins/vip-tier/ GET  
-Query parameters
-
-| \# | Property/Field | Data Type | Nullable | Description |
-| ----: | :---- | :---- | :---- | :---- |
-| **1** | page | Int | No | For Pagination |
-| **2** | page\_size | Int | No | For Pagination |
-
-Output (Is Paginated)
-
-| \# | Property/Field | Data Type | Nullable | Description |
-| ----: | :---- | :---- | :---- | :---- |
-| **1** | uuid | UUID | No |  |
-| **2** | name | str | No |  |
-
-### Vip Tiers \- POST / PUT
-
-/crm-admins/vip-tier/ POST  
-/crm-admins/vip-tier/\<uuid\>/ PUT  
-Input
-
-| \# | Property/Field | Data Type | Nullable | Description |
-| ----: | :---- | :---- | :---- | :---- |
-| **1** | name | str | No |  |
-
-### Vip Tiers \- Archive
-
-### /crm-admins/vip-tier/\<uuid\>/archive/ PATCH
 
 # Member Profile {#member-profile}
 
@@ -309,9 +386,10 @@ Query parameters
 | **1** | page | Int | No | For Pagination |
 | **2** | page\_size | Int | No | For Pagination |
 | **3** | priority | int | Yes |  |
-| **4** | vip\_level | int | Yes |  |
-| **5** | retention | int | Yes |  |
-| **6** | search | str | Yes | For Name and Phone Number, fuzzy |
+| **4** | wallet\_vip\_level | str | Yes | Fuzzy |
+| **5** | mrs\_vip\_level | str | Yes | Fuzzy |
+| **6** | retention | int | Yes |  |
+| **7** | search | str | Yes | For Name and Phone Number, fuzzy |
 
 Output (Is Paginated)
 
@@ -342,6 +420,17 @@ Output
 | **6** | gaming\_info | Obj | \- | See Gaming Info Output below |
 
 Customer Data Output
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | mrs\_level | str | No |  |
+| **2** | wallet\_level | List | No | Consists of: Station: str Level: str |
+| **3** | total\_sales | str | No |  |
+| **4** | total\_win\_lose | date | Yes |  |
+| **5** | date\_joined | int | Yes |  |
+| **6** | tags | List | Yes | Str |
+
+Basic Data Output
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
@@ -387,9 +476,11 @@ Gaming Data Output
 | **10** | reactivation\_trigger | Str |  |  |
 | **11** | note | Str |  |  |
 
-### Member Single \- PUT {#member-single---put}
+### Member Single \- PUT / PATCH {#member-single---put-/-patch}
 
 /crm-members/members/\<member\_uuid\>/ PUT  
+/crm-members/members/\<member\_uuid\>/ PATCH  
+Put requires All, patch can be flexible  
 Input
 
 | \# | Property/Field | Data Type | Nullable | Description |
@@ -402,11 +493,9 @@ Profile Data Input
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | vip\_level\_uuid | UUID | No |  |
-| **2** | player\_type | Int | No | (Will have choices later) |
-| **3** | risk | Int | No | (Will have choices later) |
-| **4** | deposit\_frequency | Int | No | (Will have choices later) |
-| **5** | status | Int | No | (Will have choices later) |
+| **1** | mrs\_vip\_level\_uuid | UUID | No | Taken from mrs vip |
+| **2** | tags | List\[str\] |  |  |
+| **3** | wallet\_levels | List |  | station\_uuid: uuid wallet\_level\_uuid: uuid (taken from wallet level vip) |
 
 Basic Info Input
 
@@ -435,6 +524,7 @@ Game Info Input
 | **8** | deposit\_trigger | Multiple Input | No | (Will have choices later) |
 | **9** | churn\_risk\_reason | Multiple Input | No | (Will have choices later) |
 | **10** | reactivation\_trigger | Multiple Input | No | (Will have choices later) |
+| **11** | note | Text | Yes |  |
 
 # Retention Alert System {#retention-alert-system}
 
@@ -475,7 +565,11 @@ Output
 | **1** | total\_members | Int | No |  |
 | **2** | active\_members | Int | No |  |
 | **3** | total\_sales | Str(Decimal) | No |  |
-| **4** | daily\_win\_lose | Str(Decimal) | No |  |
+| **4** | total\_win\_lose | Str(Decimal) | No |  |
+| **5** | total\_sales\_tickets | Int | No |  |
+| **6** | total\_bonus\_given | Str(Decimal) | No |  |
+| **7** | total\_bonus\_given\_percentage | Str | No |  |
+| **8** | total\_win\_rate | Str | NoOh  |  |
 
 ### Dashboard Details \- GET {#dashboard-details---get}
 
@@ -531,6 +625,8 @@ Output
 | **6** | total\_sales\_\_total | Str (Decimal) | No |  |
 | **7** | total\_win\_lose | List | \- | See Amount output below |
 | **8** | total\_win\_lose\_\_total | Str (Decimal) | No |  |
+| **9** | total\_sales\_tickets | List | \- | See Amount below (Except it’s int instead of Str) |
+| **10** | total\_sales\_tickets\_\_total | Int | No |  |
 
 Members output
 
@@ -603,6 +699,7 @@ Output (Is Paginated)
 | **6** | upgrade\_criteria | Str (decimal) | No |  |
 | **7** | retention\_target | Int | No |  |
 | **8** | status | str |  |  |
+| **9** | pic\_uuid | UUID |  |  |
 
 ### Member Assignment \- POST/PUT {#member-assignment---post/put}
 
@@ -616,7 +713,7 @@ Input
 | **2** | status | int | No | 1 \= Active 2 \= Inactive |
 | **3** | retain\_criteria | Str (Decimal) | No |  |
 | **4** | upgrade\_criteria | Str (Decimal) | No |  |
-| **5** | pic\_uuid | uuid | No | /admins/users/ GET |
+| **5** | pic\_uuid | uuid | No | /admins/users/ GET, use their uuid |
 
 ### Member Assignment \- Set Deposit \- Patch {#member-assignment---set-deposit---patch}
 
@@ -625,7 +722,7 @@ Input
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | pic\_uuid | uuid | No | /admins/users/ GET |
+| **1** | pic\_uuid | uuid | No | /admins/users/ GET, use their uuid |
 | **2** | deposit | Str (Decimal) | No |  |
 
 ### 

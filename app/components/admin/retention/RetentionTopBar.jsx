@@ -17,7 +17,7 @@ const useIsoLayoutEffect =
 
 const ASSETS = "/assets/admin/pic-dashboard";
 const BELL_ICON = `${ASSETS}/notification-bell.svg`;
-const AVATAR = `${ASSETS}/topbar-avatar.jpg`;
+const AVATAR = `${ASSETS}/member-avatar.svg`;
 
 // Hoisted gradient string — avoids re-allocating the literal each render.
 const GRADIENT = "linear-gradient(178deg, #141828 0%, #333333 99.7%)";
@@ -189,10 +189,15 @@ export default function RetentionTopBar({ userName = "Admin", role = "PIC" }) {
     setOpenMenu((current) => (current === menu ? null : menu));
 
   const handleLogout = async () => {
+    const refreshToken = tokenStorage.getAdminRefreshToken();
+
     try {
-      await adminLogout();
+      if (refreshToken) {
+        await adminLogout(refreshToken);
+      }
     } catch (err) {
-      console.error("Logout API error:", err);
+      // Local logout should still complete if the server-side token is already expired.
+      console.warn("Logout API warning:", err);
     } finally {
       tokenStorage.clearAdminTokens();
       router.push("/admin/login");

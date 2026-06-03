@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import PeriodToggle from "../../../../components/admin/retention/PeriodToggle";
-import { ASSETS, GRAD_DARK, GRAD_GOLD } from "../../../../components/admin/retention/constants";
-import { getCrmMemberSingle } from "../../../../api/crmApi";
-
-// Member profile detail — mirrors Figma node 34:316.
-// Route: /admin/retention/members/[slug] where slug is the member UUID coming
-// from the list pages. The page hits GET /crm-members/members/<uuid>/ and
-// renders three info sections (basic / financial / gaming) plus the header
-// stats. Fields the API doesn't return are shown as "—" so the UI stays intact.
+import { GRAD_GOLD } from "../../../../components/admin/retention/constants";
+import {
+  AlertHistorySection,
+  FollowUpCreateModal,
+  MOCK_FOLLOWUP_HISTORY,
+} from "../../../../components/admin/retention/FollowUpComponents";
+import { getCrmMemberSingle, patchCrmMember } from "../../../../api/crmApi";
+import { getVipTierList, getWalletVipTiers, getStationList } from "../../../../api/adminApi";
 
 const TAG_STYLES = {
   vip:    { bg: "#d9acff", color: "#8800fb" },
@@ -21,30 +21,116 @@ const TAG_STYLES = {
   weekly: { bg: "#a4a4a4", color: "#141828" },
 };
 
-// Canonical brand list displayed in the "Active on" row. Each chip is either
-// active (gold-filled) or inactive (outlined) based on whether the brand code
-// appears in the member's played-brands list. Codes are matched case-insensitively.
 const ACTIVE_BRANDS = ["KG", "AB", "EP", "LV", "UB", "N1"];
 
-function normalizeBrandList(raw) {
-  if (!raw) return [];
-  const arr = Array.isArray(raw) ? raw : String(raw).split(/[,\s]+/);
-  return arr.map((b) => String(b).trim().toUpperCase()).filter(Boolean);
+const MOCK_PROFILE_DATA = {
+  uuid: "mock-001",
+  full_name: "Ah Chong 88",
+  vip_level: "VIP 4",
+  priority: "High",
+  date_joined: "2026-05-27",
+  customer_data: {
+    username: "Ah Chong 88",
+    phone_number: "+6012-309 8765",
+    gender: "Male",
+    date_of_birth: "1990-08-12",
+    age: 35,
+    nationality: "Malaysia",
+    home_address: "Kuala Lumpur",
+    marital_status: "Single",
+    job: "Business Owner",
+    hobby: "Slots",
+    mrs_level: "VIP 4",
+    ns_level: "NS 2",
+    total_withdrawal: 3200,
+  },
+  financial_info: {
+    total_sales: 9999.88,
+    total_win_lose: 1023.13,
+    total_sales_ticket: 18,
+    arpu: 555.55,
+    average_deposit: 900,
+    last_deposit_date: "2026-05-27",
+    payment_method: "Bank Transfer",
+  },
+  gaming_info: {
+    game_preference: "Slot",
+    provider_preference: "Pragmatic Play",
+    play_time_pattern: "Night",
+    average_bet_size: "RM 20",
+    player_type: "VIP",
+    risk_style: "High",
+    deposit_frequency_style: "Weekly",
+    deposit_trigger: "Bonus",
+    churn_risk_reason: "Follow up required",
+    reactivation_trigger: "TG",
+    note: "Mock preview profile for alert follow-up development.",
+  },
+};
+
+const BRAND_COLORS = {
+  N1: { bg: "#FBBF24", text: "#141828", border: "#FBBF24" }, // yellow
+  KG: { bg: "#3B82F6", text: "#ffffff", border: "#3B82F6" }, // blue
+  AB: { bg: "#F97316", text: "#ffffff", border: "#F97316" }, // orange
+  EP: { bg: "#22C55E", text: "#141828", border: "#22C55E" }, // green
+  UB: { bg: "#EF4444", text: "#ffffff", border: "#EF4444" }, // red
+  LV: { bg: "#EC4899", text: "#ffffff", border: "#EC4899" }, // pink
+};
+
+// Lowercase station name/code → display code shown in "Active on" chips.
+// Includes both full names and short codes so either format from the API works.
+const STATION_TO_BRAND = {
+  // full names
+  "n1gang":   "N1",
+  "kgame99":  "KG",
+  "acebet77": "AB",
+  "ep369":    "EP",
+  "ubetclub": "UB",
+  "lv918":    "LV",
+  // short codes
+  "n1": "N1",
+  "kg": "KG",
+  "ab": "AB",
+  "ep": "EP",
+  "ub": "UB",
+  "lv": "LV",
+};
+
+// Reads customer_data.wallet_level from the Member Single API.
+// Each item is { Station: str, Level: str }.
+// Returns brand codes for stations found in the response.
+// If wallet_level is missing or empty, returns [] — no fallback.
+function inferActiveBrands(customerData) {
+  if (!customerData) return [];
+  const walletLevels = customerData.wallet_levels || customerData.wallet_level;
+  if (!Array.isArray(walletLevels) || walletLevels.length === 0) return [];
+  return walletLevels
+    .map((item) => {
+      const name = normalizeLookup(item?.Station || item?.station || item?.station_name);
+      return STATION_TO_BRAND[name] ?? null;
+    })
+    .filter(Boolean);
 }
+
 
 function formatCurrency(value) {
   if (value === null || value === undefined || value === "") return "—";
-  const num = parseFloat(value);
-  if (Number.isNaN(num)) return String(value);
-  return `RM ${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return `RM ${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+  const raw = String(value).trim();
+  const normalized = raw.replace(/,/g, "");
+  const match = normalized.match(/^(-?)(\d+)(\.\d+)?$/);
+  if (!match) return `RM ${raw}`;
+  const [, sign, integer, decimal = ""] = match;
+  const grouped = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return `RM ${sign}${grouped}${decimal}`;
 }
 
 function show(value, fallback = "—") {
   return value === null || value === undefined || value === "" ? fallback : String(value);
 }
 
-// Heuristic for tag kind/colors: pick chips based on field content so it
-// resembles the Figma without inventing data the API doesn't provide.
 function inferTags(data) {
   const tags = [];
   const vip = data?.customer_data?.mrs_level || data?.customer_data?.vip_level || data?.vip_level;
@@ -56,6 +142,72 @@ function inferTags(data) {
   return tags;
 }
 
+function normalizeListResponse(response) {
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response?.results)) return response.results;
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.data?.results)) return response.data.results;
+  return [];
+}
+
+function normalizeLookup(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function stationName(station) {
+  return station?.name || station?.station_name || station?.Station || station?.special_code || station?.code || "";
+}
+
+function stationCandidates(station) {
+  return [
+    station?.name,
+    station?.station_name,
+    station?.Station,
+    station?.special_code,
+    station?.code,
+    station?.short_code,
+  ].map(normalizeLookup).filter(Boolean);
+}
+
+function walletTierStationCandidates(tier) {
+  return [
+    tier?.station_name,
+    tier?.station,
+    tier?.station_code,
+    tier?.station_special_code,
+    tier?.station_detail?.name,
+    tier?.station_detail?.station_name,
+    tier?.station_detail?.special_code,
+  ].map(normalizeLookup).filter(Boolean);
+}
+
+function walletTierName(tier) {
+  return tier?.tier_name || tier?.name || tier?.level || tier?.vip_level || tier?.title || "";
+}
+
+// Map GET response wallet_level (names) → PUT payload wallet_levels (UUIDs).
+function buildWalletLevels(memberData, walletVipTiers, stationList) {
+  const raw = memberData?.customer_data?.wallet_levels || memberData?.customer_data?.wallet_level;
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const item of raw) {
+    const sName = normalizeLookup(item?.Station || item?.station || item?.station_name);
+    const lName = normalizeLookup(item?.Level || item?.level || item?.tier_name || item?.name);
+    if (!sName || !lName) continue;
+    const station = stationList.find((s) => stationCandidates(s).includes(sName));
+    const tier = walletVipTiers.find(
+      (t) => walletTierStationCandidates(t).includes(sName) &&
+             normalizeLookup(walletTierName(t)) === lName
+    );
+    if (station?.uuid && tier?.uuid) out.push({ station_uuid: station.uuid, wallet_level_uuid: tier.uuid });
+  }
+  return out;
+}
+
 export default function MemberProfilePage() {
   const params = useParams();
   const memberUuid = typeof params?.slug === "string" ? params.slug : Array.isArray(params?.slug) ? params.slug[0] : "";
@@ -63,16 +215,36 @@ export default function MemberProfilePage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [activeModal, setActiveModal] = useState(null);
+  const [walletVipTiers, setWalletVipTiers] = useState([]);
+  const [stationList, setStationList] = useState([]);
+  const [alertHistory, setAlertHistory] = useState(MOCK_FOLLOWUP_HISTORY);
 
   useEffect(() => {
     if (!memberUuid) return;
+    if (memberUuid === MOCK_PROFILE_DATA.uuid) {
+      setLoading(false);
+      setError(null);
+      setData(MOCK_PROFILE_DATA);
+      setWalletVipTiers([]);
+      setStationList([]);
+      return;
+    }
     let cancelled = false;
-    const fetchMember = async () => {
+    const fetchAll = async () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await getCrmMemberSingle(memberUuid);
-        if (!cancelled) setData(res);
+        const [res, walletTiersRes, stationsRes] = await Promise.all([
+          getCrmMemberSingle(memberUuid),
+          getWalletVipTiers().catch(() => []),
+          getStationList().catch(() => []),
+        ]);
+        if (cancelled) return;
+        setData(res);
+        setWalletVipTiers(normalizeListResponse(walletTiersRes));
+        setStationList(normalizeListResponse(stationsRes));
       } catch (err) {
         if (cancelled) return;
         console.error("[member-profile] fetch failed", err);
@@ -82,18 +254,14 @@ export default function MemberProfilePage() {
         if (!cancelled) setLoading(false);
       }
     };
-    fetchMember();
+    fetchAll();
     return () => {
       cancelled = true;
     };
-  }, [memberUuid]);
+  }, [memberUuid, refreshKey]);
 
   if (loading) {
-    return (
-      <div className="px-2 py-12 text-center text-[14px] text-white/60">
-        Loading member profile...
-      </div>
-    );
+    return <MemberProfileSkeleton />;
   }
 
   if (error || !data) {
@@ -104,9 +272,6 @@ export default function MemberProfilePage() {
     );
   }
 
-  // customer_data is fully documented and returns human-readable strings.
-  // basic_info exists in the GET output but its fields are undocumented —
-  // prefer customer_data so display values are always readable strings.
   const customer = data?.customer_data || {};
   const basic = data?.basic_info || {};
 
@@ -125,9 +290,11 @@ export default function MemberProfilePage() {
 
   const financialInfo = {
     "Total Sales": formatCurrency(data?.financial_info?.total_sales),
-    "Total Withdrawal": formatCurrency(customer?.total_withdrawal),
-    "Total Win/lose": formatCurrency(data?.financial_info?.total_win_lose),
+    "Total Withdrawal": formatCurrency(data?.financial_info?.total_withdrawal ?? customer?.total_withdrawal),
+    "Total Win/Loss": formatCurrency(data?.financial_info?.total_win_lose),
+    "Total Bonus": formatCurrency(data?.financial_info?.total_bonus),
     "Total Sales Ticket": show(data?.financial_info?.total_sales_ticket),
+    "Total Withdrawal Ticket": show(data?.financial_info?.total_withdrawal_ticket),
     ARPU: formatCurrency(data?.financial_info?.arpu),
     "Average Deposit": formatCurrency(data?.financial_info?.average_deposit),
     "Last Deposit Date": show(data?.financial_info?.last_deposit_date),
@@ -154,29 +321,75 @@ export default function MemberProfilePage() {
     totalWinLose: formatCurrency(data?.financial_info?.total_win_lose),
   };
 
-  const activeBrands = normalizeBrandList(
-    data?.active_brands ?? data?.brands ?? data?.brands_played ?? customer?.active_brands,
-  );
+  const activeBrands = inferActiveBrands(data?.customer_data);
 
+  const handleSaved = () => {
+    setActiveModal(null);
+    setRefreshKey((k) => k + 1);
+  };
+
+  const profileName = data?.full_name || basic?.username || "Member";
+  const profilePriority = data?.priority || "High";
   return (
     <>
       <ProfileHeader
-        name={data?.full_name || basic?.username || "Member"}
+        name={profileName}
         tags={inferTags(data)}
-        dateJoined={show(data?.date_joined)}
+        dateJoined={show(customer?.date_joined || data?.date_joined)}
         slug={memberUuid}
         period={period}
         onPeriodChange={setPeriod}
         activeBrands={activeBrands}
+        onNoteOpen={() => setActiveModal("note")}
+        onVipOpen={() => setActiveModal("vip")}
+        onAlertOpen={() => setActiveModal("alert")}
       />
       <StatsRow stats={stats} />
       <InfoGrid basicInfo={basicInfo} financialInfo={financialInfo} gamingInfo={gamingInfo} />
-      <NotesCard notes={show(data?.notes, "No notes available.")} />
+      <NotesCard notes={show(data?.gaming_info?.note || data?.notes, "No notes available.")} />
+      <AlertHistorySection memberName={profileName} history={alertHistory} />
+
+      {activeModal === "note" && (
+        <NoteModal
+          memberUuid={memberUuid}
+          initialNote={data?.gaming_info?.note || ""}
+          onClose={() => setActiveModal(null)}
+          onSaved={handleSaved}
+        />
+      )}
+      {activeModal === "vip" && (
+        <VipModal
+          memberUuid={memberUuid}
+          memberData={data}
+          currentVipLabel={stats.mrsLevel !== "—" ? stats.mrsLevel : ""}
+          walletVipTiers={walletVipTiers}
+          stationList={stationList}
+          initialWalletLevels={buildWalletLevels(data, walletVipTiers, stationList)}
+          onClose={() => setActiveModal(null)}
+          onSaved={handleSaved}
+        />
+      )}
+      {activeModal === "alert" && (
+        <FollowUpCreateModal
+          memberName={profileName}
+          title="Add Alert"
+          showPriority
+          initialPriority={profilePriority}
+          onClose={() => setActiveModal(null)}
+          onSubmit={(entry) => {
+            if (entry.priority) {
+              setData((prev) => (prev ? { ...prev, priority: entry.priority } : prev));
+            }
+            setAlertHistory((prev) => [entry, ...prev]);
+            setActiveModal(null);
+          }}
+        />
+      )}
     </>
   );
 }
 
-function ProfileHeader({ name, tags, dateJoined, slug, period, onPeriodChange, activeBrands }) {
+function ProfileHeader({ name, tags, dateJoined, slug, period, onPeriodChange, activeBrands, onNoteOpen, onVipOpen, onAlertOpen }) {
   return (
     <div className="flex flex-col gap-4 px-2 md:flex-row md:flex-wrap md:items-start md:justify-between md:gap-6">
       <div className="flex flex-col gap-3">
@@ -226,7 +439,7 @@ function ProfileHeader({ name, tags, dateJoined, slug, period, onPeriodChange, a
               <EditIcon />
               <span className="text-[12px] font-medium leading-[18px] text-[#141828]">Edit Profile</span>
             </Link>
-            <MoreOptionsMenu />
+            <MoreOptionsMenu onNoteOpen={onNoteOpen} onVipOpen={onVipOpen} onAlertOpen={onAlertOpen} />
           </div>
         </div>
       </div>
@@ -238,11 +451,6 @@ function ProfileHeader({ name, tags, dateJoined, slug, period, onPeriodChange, a
   );
 }
 
-// Shows the canonical brand list with each chip filled (gold) when the
-// member has played that brand, outlined when not. The backend field name
-// is still TBD — we accept `active_brands`, `brands`, or `brands_played`
-// (see normalizeBrandList caller). All chips render as outlined until the
-// backend supplies one of those keys.
 function ActiveBrandsRow({ active }) {
   const activeSet = new Set(active || []);
   return (
@@ -253,13 +461,16 @@ function ActiveBrandsRow({ active }) {
       <div className="flex flex-wrap items-center gap-2">
         {ACTIVE_BRANDS.map((code) => {
           const isActive = activeSet.has(code);
+          const colors = BRAND_COLORS[code];
           return (
             <span
               key={code}
-              className={`flex h-[34px] min-w-[44px] items-center justify-center rounded-[8px] border-2 px-3 text-[12px] font-semibold leading-[18px] ${
-                isActive ? "border-[#f2cb7a] text-[#141828]" : "border-[#f2cb7a]/40 text-[#f6dda6]/60"
-              }`}
-              style={isActive ? { backgroundImage: GRAD_GOLD } : undefined}
+              className="flex h-[34px] min-w-[44px] items-center justify-center rounded-[8px] border-2 px-3 text-[12px] font-semibold leading-[18px]"
+              style={
+                isActive
+                  ? { backgroundColor: colors.bg, borderColor: colors.border, color: colors.text }
+                  : { borderColor: "rgba(242,203,122,0.4)", color: "rgba(246,221,166,0.4)" }
+              }
             >
               {code}
             </span>
@@ -270,25 +481,22 @@ function ActiveBrandsRow({ active }) {
   );
 }
 
-// Cream popover triggered by the dots button next to Edit Profile. Items
-// are placeholders until the corresponding admin endpoints are wired up.
 const MORE_OPTIONS = [
-  { key: "send-bonus",      label: "Send Bonus" },
-  { key: "add-note",        label: "Add Note" },
+  // { key: "send-bonus",       label: "Send Bonus" },
+  { key: "add-note",         label: "Add Note" },
   { key: "change-vip-level", label: "Change VIP Level" },
-  { key: "add-tag",         label: "Add Tag" },
-  { key: "block-customer",  label: "Block Customer", danger: true },
-  { key: "alert",           label: "Alert",          danger: true },
+  { key: "alert",            label: "Alert", danger: true },
+  // { key: "block-customer",   label: "Block Customer", danger: true },
 ];
 
-function MoreOptionsMenu() {
+function MoreOptionsMenu({ onNoteOpen, onVipOpen, onAlertOpen }) {
   const [open, setOpen] = useState(false);
 
   const handleSelect = (key) => {
     setOpen(false);
-    if (process.env.NODE_ENV !== "production") {
-      console.log(`[member-profile] more-options action: ${key}`);
-    }
+    if (key === "add-note") onNoteOpen();
+    else if (key === "change-vip-level") onVipOpen();
+    else if (key === "alert") onAlertOpen();
   };
 
   return (
@@ -329,6 +537,312 @@ function MoreOptionsMenu() {
         </>
       ) : null}
     </div>
+  );
+}
+
+function ModalOverlay({ onClose, children }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ backgroundColor: "rgba(0,0,0,0.65)" }}>
+      <div className="fixed inset-0" onClick={onClose} />
+      <div
+        className="relative z-10 w-full max-w-lg rounded-[16px] p-8 shadow-[0_0_3px_0_#dea220]"
+        style={{ backgroundColor: "#05060a" }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function ModalTitle({ children }) {
+  return (
+    <h2
+      className="bg-clip-text text-transparent font-bold mb-5"
+      style={{
+        backgroundImage: GRAD_GOLD,
+        fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+        fontSize: "22px",
+        lineHeight: "33px",
+        letterSpacing: "-1.5px",
+      }}
+    >
+      {children}
+    </h2>
+  );
+}
+
+function ModalActions({ onClose, onSave, saving, saveLabel = "Save" }) {
+  return (
+    <div className="flex justify-end gap-3 mt-6">
+      <button
+        type="button"
+        onClick={onClose}
+        disabled={saving}
+        className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#d00416] px-6 py-2 text-[14px] font-semibold text-[#d00416] leading-[21px] transition hover:bg-[#d00416]/10 disabled:opacity-50"
+        style={{ letterSpacing: "-1px" }}
+      >
+        Cancel
+      </button>
+      <button
+        type="button"
+        onClick={onSave}
+        disabled={saving}
+        className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold text-[#141828] leading-[21px] transition hover:brightness-110 disabled:opacity-60"
+        style={{ backgroundImage: GRAD_GOLD, letterSpacing: "-1px" }}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#141828" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+        {saving ? "Saving..." : saveLabel}
+      </button>
+    </div>
+  );
+}
+
+// Custom styled dropdown matching the dark edit-form style.
+function StyledSelect({ value, onChange, options, placeholder = "Select...", disabled = false }) {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  const selected = options.find((o) => o.value === value);
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => !disabled && setOpen((v) => !v)}
+        className={`flex w-full min-h-[42px] items-center justify-between gap-2 rounded-[8px] border px-4 py-2.5 text-left transition ${
+          disabled ? "border-[#fbeed2]/30 opacity-50 cursor-not-allowed" : "border-[#fbeed2] hover:border-[#f2cb7a]"
+        }`}
+      >
+        <span className={`text-[13px] font-medium leading-[20px] ${selected ? "text-white" : "text-white/40"}`}>
+          {selected ? selected.label : placeholder}
+        </span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fbeed2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          style={{ transform: open ? "rotate(180deg)" : undefined, transition: "transform 0.15s" }}>
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-[200px] overflow-y-auto rounded-[8px] border border-[#f2cb7a] bg-[#05060a] shadow-lg">
+          <button type="button" onClick={() => { onChange(""); setOpen(false); }}
+            className="flex w-full items-center px-3 py-2 text-left hover:bg-white/5">
+            <span className="text-[13px] font-medium text-white/40 leading-[20px]">{placeholder}</span>
+          </button>
+          {options.map((opt) => (
+            <button key={opt.value} type="button"
+              onClick={() => { onChange(opt.value); setOpen(false); }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-white/5">
+              <span className="h-3 w-3 shrink-0 rounded-full" style={{ backgroundColor: "#d9acff" }} />
+              <span className="text-[13px] font-medium text-[#f6dda6] leading-[20px]">{opt.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function NoteModal({ memberUuid, initialNote, onClose, onSaved }) {
+  const [note, setNote] = useState(initialNote);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+
+  const handleSave = async () => {
+    if (saving) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await patchCrmMember(memberUuid, { game_info: { note: note || "" } });
+      onSaved();
+    } catch (err) {
+      console.error("[note-modal] save failed", err);
+      setSaveError("Failed to save note. Please try again.");
+      setSaving(false);
+    }
+  };
+
+  return (
+    <ModalOverlay onClose={onClose}>
+      <ModalTitle>Add Note</ModalTitle>
+      <label className="block text-[14px] font-medium text-[#f6dda6] leading-[21px] mb-2">
+        Note
+      </label>
+      <div className="rounded-[8px] border border-[#fbeed2] px-4 py-3">
+        <textarea
+          rows={6}
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Write a note about this member..."
+          className="block w-full resize-none bg-transparent text-[12px] font-medium leading-[18px] text-white outline-none placeholder:text-white/40"
+        />
+      </div>
+      {saveError && (
+        <p className="mt-2 text-[12px] text-[#fb3748]">{saveError}</p>
+      )}
+      <ModalActions onClose={onClose} onSave={handleSave} saving={saving} />
+    </ModalOverlay>
+  );
+}
+
+function VipModal({ memberUuid, memberData, currentVipLabel, walletVipTiers, stationList, initialWalletLevels, onClose, onSaved }) {
+  const [mrsTiers, setMrsTiers] = useState([]);
+  const [tiersLoading, setTiersLoading] = useState(true);
+  const [selectedMrsUuid, setSelectedMrsUuid] = useState(null);
+  const [walletSelections, setWalletSelections] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+
+  useEffect(() => {
+    getVipTierList()
+      .then((res) => {
+        const tiers = normalizeListResponse(res);
+        setMrsTiers(tiers);
+        if (currentVipLabel) {
+          const match = tiers.find((t) => (t.name || t.tier_name || "").toLowerCase() === currentVipLabel.toLowerCase());
+          if (match) setSelectedMrsUuid(match.uuid);
+        }
+      })
+      .catch((err) => console.error("[vip-modal] tiers load failed", err))
+      .finally(() => setTiersLoading(false));
+  }, [currentVipLabel]);
+
+  useEffect(() => {
+    const init = {};
+    for (const wl of initialWalletLevels || []) {
+      if (wl.station_uuid && wl.wallet_level_uuid) init[wl.station_uuid] = wl.wallet_level_uuid;
+    }
+    setWalletSelections(init);
+  }, [initialWalletLevels]);
+
+  // Stations that actually have wallet VIP tiers
+  const walletStations = (stationList || []).filter((s) =>
+    (walletVipTiers || []).some(
+      (t) => stationCandidates(s).some((candidate) => walletTierStationCandidates(t).includes(candidate))
+    )
+  );
+
+  const [walletStation, setWalletStation] = useState("");
+  useEffect(() => {
+    if (walletStation || walletStations.length === 0) return;
+    const firstSelected = walletStations.find((s) => walletSelections[s.uuid]);
+    setWalletStation((firstSelected || walletStations[0])?.uuid || "");
+  }, [walletStation, walletStations, walletSelections]);
+
+  const selectedStation = walletStations.find((s) => s.uuid === walletStation);
+  const selectedStationTiers = selectedStation
+    ? (walletVipTiers || []).filter(
+        (t) => stationCandidates(selectedStation).some((candidate) => walletTierStationCandidates(t).includes(candidate))
+      )
+    : [];
+  const currentLevelUuid = walletStation ? (walletSelections[walletStation] || "") : "";
+
+  const handleSave = async () => {
+    if (saving) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const walletLevels = Object.entries(walletSelections)
+        .filter(([, uuid]) => uuid)
+        .map(([station_uuid, wallet_level_uuid]) => ({ station_uuid, wallet_level_uuid }));
+      const profileData = { wallet_levels: walletLevels };
+      if (selectedMrsUuid) profileData.mrs_vip_level_uuid = selectedMrsUuid;
+      await patchCrmMember(memberUuid, {
+        profile_data: profileData,
+      });
+      onSaved();
+    } catch (err) {
+      console.error("[vip-modal] save failed", err);
+      setSaveError("Failed to update VIP level. Please try again.");
+      setSaving(false);
+    }
+  };
+
+  return (
+    <ModalOverlay onClose={onClose}>
+      <ModalTitle>Change VIP Level</ModalTitle>
+
+      {/* MRS VIP Section */}
+      <div className="mb-5">
+        <p className="text-[14px] font-medium text-[#f6dda6] leading-[21px] mb-2">MRS VIP Level</p>
+        {currentVipLabel && (
+          <div className="mb-3">
+            <p className="text-[11px] text-white/50 mb-1">Current</p>
+            <span className="inline-flex h-[24px] items-center rounded-[8px] px-3 text-[12px] font-semibold" style={{ backgroundColor: TAG_STYLES.vip.bg, color: TAG_STYLES.vip.color }}>
+              {currentVipLabel}
+            </span>
+          </div>
+        )}
+        {tiersLoading ? (
+          <div className="rounded-[8px] border border-[#fbeed2]/30 px-4 py-3 text-[12px] text-white/40">Loading...</div>
+        ) : (
+          <StyledSelect
+            value={selectedMrsUuid || ""}
+            onChange={(v) => setSelectedMrsUuid(v || null)}
+            placeholder="Select MRS VIP..."
+            options={mrsTiers.map((t) => ({ value: t.uuid, label: t.name || t.tier_name || t.uuid }))}
+          />
+        )}
+      </div>
+
+      {/* Wallet VIP — cascading: pick station, then pick level for that station */}
+      {walletStations.length > 0 && (
+        <div className="mb-5">
+          <p className="text-[14px] font-medium text-[#f6dda6] leading-[21px] mb-3">Wallet VIP Level</p>
+          <div className="flex flex-col gap-3">
+            {/* Station selector */}
+            <div>
+              <p className="text-[11px] text-white/50 mb-1">Station</p>
+              <StyledSelect
+                value={walletStation}
+                onChange={setWalletStation}
+                placeholder="Select station..."
+                options={walletStations.map((s) => ({ value: s.uuid, label: stationName(s) || s.uuid }))}
+              />
+            </div>
+            {/* VIP level for selected station */}
+            <div>
+              <p className="text-[11px] text-white/50 mb-1">VIP Level</p>
+              <StyledSelect
+                value={currentLevelUuid}
+                disabled={!walletStation}
+                onChange={(v) => setWalletSelections((prev) => ({ ...prev, [walletStation]: v || undefined }))}
+                placeholder={walletStation ? "Select level..." : "Select a station first"}
+                options={selectedStationTiers
+                  .filter((t) => t.uuid)
+                  .map((t) => ({ value: t.uuid, label: walletTierName(t) || t.uuid }))}
+              />
+            </div>
+            {/* Summary chips of all selected wallet levels */}
+            {Object.keys(walletSelections).filter((k) => walletSelections[k]).length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {walletStations.filter((s) => walletSelections[s.uuid]).map((s) => {
+                  const tier = (walletVipTiers || []).find((t) => t.uuid === walletSelections[s.uuid]);
+                  return (
+                    <span key={s.uuid} className="rounded-[6px] border border-[#f2cb7a]/40 px-2 py-0.5 text-[11px] text-[#f6dda6]">
+                      {stationName(s) || s.uuid}: {walletTierName(tier) || "—"}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {saveError && <p className="mt-2 text-[12px] text-[#fb3748]">{saveError}</p>}
+      <ModalActions onClose={onClose} onSave={handleSave} saving={saving} />
+    </ModalOverlay>
   );
 }
 
@@ -431,14 +945,14 @@ function InfoCard({ title, data }) {
 
 function InfoRow({ label, value }) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-start gap-3">
       <span
         className="flex-1 min-w-0 text-[14px] font-semibold text-white leading-[21px]"
         style={{ letterSpacing: "-1px" }}
       >
         {label}
       </span>
-      <span className="text-[12px] font-medium text-[#84ebb4] leading-[18px] text-right whitespace-nowrap">
+      <span className="max-w-[55%] break-words text-right text-[12px] font-medium text-[#84ebb4] leading-[18px]">
         {value}
       </span>
     </div>
@@ -455,6 +969,117 @@ function NotesCard({ notes }) {
         Notes
       </h3>
       <p className="text-[12px] font-medium text-white leading-[18px]">{notes}</p>
+    </div>
+  );
+}
+
+function SkeletonBlock({ className = "" }) {
+  return (
+    <div
+      className={`animate-pulse rounded-[8px] bg-white/10 ${className}`}
+      style={{ boxShadow: "inset 0 0 0 1px rgba(242,203,122,0.08)" }}
+    />
+  );
+}
+
+function MemberProfileSkeleton() {
+  return (
+    <>
+      <div className="flex flex-col gap-4 px-2 md:flex-row md:flex-wrap md:items-start md:justify-between md:gap-6">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-start gap-2">
+            <SkeletonBlock className="h-14 w-14 shrink-0 rounded-full" />
+            <div className="flex min-w-0 flex-col gap-2">
+              <SkeletonBlock className="h-[14px] w-[96px]" />
+              <div className="flex flex-wrap items-center gap-2">
+                <SkeletonBlock className="h-[32px] w-[210px]" />
+                <SkeletonBlock className="h-[23px] w-[60px] rounded-[12px]" />
+                <SkeletonBlock className="h-[23px] w-[72px] rounded-[12px]" />
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 pl-[64px]">
+            <SkeletonBlock className="h-[12px] w-[150px]" />
+            <div className="flex items-center gap-2">
+              <SkeletonBlock className="h-[38px] w-[128px]" />
+              <SkeletonBlock className="h-[38px] w-[38px]" />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <SkeletonBlock className="h-[18px] w-[58px]" />
+          {ACTIVE_BRANDS.map((code) => (
+            <SkeletonBlock key={code} className="h-[34px] w-[44px]" />
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <SkeletonBlock className="h-[36px] w-[72px]" />
+          <SkeletonBlock className="h-[36px] w-[84px]" />
+          <SkeletonBlock className="h-[36px] w-[72px]" />
+        </div>
+      </div>
+
+      <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+        {["mrs", "ns", "sales", "win"].map((item) => (
+          <div
+            key={item}
+            className="flex flex-col gap-2 border border-[#05060a] p-2"
+            style={{ backgroundImage: "linear-gradient(179deg, #11320e 0%, #031101 99.7%)" }}
+          >
+            <SkeletonBlock className="h-[20px] w-[120px]" />
+            <SkeletonBlock className="h-[18px] w-[86px]" />
+          </div>
+        ))}
+      </div>
+
+      <div className="grid w-full gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+        <SkeletonInfoCard rows={10} />
+        <SkeletonInfoCard rows={10} />
+        <SkeletonInfoCard rows={9} />
+      </div>
+
+      <div className="flex flex-col gap-4 rounded-[16px] bg-[rgba(5,6,10,0.3)] p-6 shadow-[0_0_3px_0_#dea220]">
+        <SkeletonBlock className="h-[22px] w-[74px]" />
+        <SkeletonBlock className="h-[16px] w-full" />
+        <SkeletonBlock className="h-[16px] w-3/4" />
+      </div>
+
+      <div className="flex flex-col gap-4 rounded-[16px] bg-[rgba(5,6,10,0.3)] p-6 shadow-[0_0_3px_0_#dea220]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <SkeletonBlock className="h-[22px] w-[170px]" />
+          <SkeletonBlock className="h-[36px] w-[118px]" />
+        </div>
+        <div className="flex flex-col gap-3">
+          {[0, 1, 2].map((row) => (
+            <div key={row} className="grid grid-cols-1 gap-3 rounded-[10px] border border-white/5 bg-white/[0.03] p-4 md:grid-cols-[1fr_120px_120px]">
+              <div className="flex flex-col gap-2">
+                <SkeletonBlock className="h-[16px] w-[180px]" />
+                <SkeletonBlock className="h-[14px] w-full" />
+              </div>
+              <SkeletonBlock className="h-[26px] w-[96px]" />
+              <SkeletonBlock className="h-[26px] w-[96px]" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function SkeletonInfoCard({ rows }) {
+  return (
+    <div className="flex flex-col gap-4 rounded-[16px] bg-[rgba(5,6,10,0.3)] p-6 shadow-[0_0_3px_0_#dea220]">
+      <SkeletonBlock className="h-[22px] w-[140px]" />
+      <div className="flex flex-col gap-3">
+        {Array.from({ length: rows }).map((_, index) => (
+          <div key={index} className="flex items-start gap-3">
+            <SkeletonBlock className="h-[18px] flex-1" />
+            <SkeletonBlock className="h-[18px] w-[92px]" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

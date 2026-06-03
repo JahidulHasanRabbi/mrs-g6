@@ -6,6 +6,7 @@ import ErrorDisplay from "../../components/ui/ErrorDisplay";
 import { LoadingState, LoadingButton } from "../../components/ui/LoadingState";
 import Skeleton from "../../components/admin/ui/Skeleton";
 import * as adminApi from "../../api/adminApi";
+import { ADMIN_PERMISSIONS, hasAdminPermission } from "../../config/adminPermissions";
 
 const SKELETON_COLUMNS = [
   { label: "Tier Name",        type: "text" },
@@ -38,6 +39,9 @@ function VipTiersContent() {
   const [error, setError] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingTier, setEditingTier] = useState(null);
+  const canCreateTier = hasAdminPermission(ADMIN_PERMISSIONS.CREATE_MRS_TIER);
+  const canEditTier = hasAdminPermission(ADMIN_PERMISSIONS.EDIT_MRS_TIER);
+  const canArchiveTier = hasAdminPermission(ADMIN_PERMISSIONS.ARCHIVE_MRS_TIER);
 
   useEffect(() => {
     loadTiers();
@@ -100,17 +104,19 @@ function VipTiersContent() {
           <h1 className="text-4xl font-bold leading-[1.05] text-white">
             VIP Tier Management
           </h1>
-          <button
-            onClick={() => setShowCreateForm(true)}
-            className="rounded-[4px] px-[15px] py-[9px]"
-            style={{
-              backgroundImage: "linear-gradient(1.0746108354373831deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
-            }}
-          >
-            <span className="text-[16px] font-bold text-black leading-none">
-              Create New Tier
-            </span>
-          </button>
+          {canCreateTier && (
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="rounded-[4px] px-[15px] py-[9px]"
+              style={{
+                backgroundImage: "linear-gradient(1.0746108354373831deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
+              }}
+            >
+              <span className="text-[16px] font-bold text-black leading-none">
+                Create New Tier
+              </span>
+            </button>
+          )}
         </div>
 
         {/* Error Display */}
@@ -173,20 +179,24 @@ function VipTiersContent() {
                         <td className="px-5 py-3 text-sm text-white">${tier.birthday_bonus?.toLocaleString()}</td>
                         <td className="px-5 py-3 text-sm">
                           <div className="flex gap-2">
-                            <button
-                              onClick={() => setEditingTier(tier)}
-                              className="rounded px-3 py-1 text-xs font-medium text-white hover:bg-white/10"
-                              style={{ backgroundColor: 'rgba(233, 175, 65, 0.2)' }}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleArchiveTier(tier.uuid)}
-                              className="rounded px-3 py-1 text-xs font-medium text-white hover:bg-red-500/30"
-                              style={{ backgroundColor: 'rgba(220, 38, 38, 0.2)' }}
-                            >
-                              Archive
-                            </button>
+                            {canEditTier && (
+                              <button
+                                onClick={() => setEditingTier(tier)}
+                                className="rounded px-3 py-1 text-xs font-medium text-white hover:bg-white/10"
+                                style={{ backgroundColor: 'rgba(233, 175, 65, 0.2)' }}
+                              >
+                                Edit
+                              </button>
+                            )}
+                            {canArchiveTier && (
+                              <button
+                                onClick={() => handleArchiveTier(tier.uuid)}
+                                className="rounded px-3 py-1 text-xs font-medium text-white hover:bg-red-500/30"
+                                style={{ backgroundColor: 'rgba(220, 38, 38, 0.2)' }}
+                              >
+                                Archive
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>

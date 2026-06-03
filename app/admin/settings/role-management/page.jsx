@@ -6,7 +6,9 @@ import {
   GRAD_DARK,
   GRAD_GOLD,
 } from "../../../components/admin/retention/constants";
+import Pagination from "../../../components/admin/retention/Pagination";
 import { getCrmRoles, getCrmUsers, updateCrmUser } from "../../../api/crmApi";
+import { ADMIN_PERMISSIONS, hasAdminPermission } from "../../../config/adminPermissions";
 
 const STATUS_TO_INT = { Active: 1, Inactive: 2 };
 
@@ -113,6 +115,9 @@ function RoleList() {
   const startIdx = (safePage - 1) * PAGE_SIZE;
   const showingFrom = total === 0 ? 0 : startIdx + 1;
   const showingTo = Math.min(startIdx + rows.length, total);
+  const canCreateRoles = hasAdminPermission(ADMIN_PERMISSIONS.CREATE_ROLES);
+  const canEditRoles = hasAdminPermission(ADMIN_PERMISSIONS.EDIT_ROLES);
+  const canAssignRoles = hasAdminPermission(ADMIN_PERMISSIONS.EDIT_ADMINS);
 
   return (
     <>
@@ -130,7 +135,7 @@ function RoleList() {
           Roles
         </h2>
         <div className="flex items-center gap-3">
-          <AddRoleButton />
+          {canCreateRoles && <AddRoleButton />}
         </div>
       </header>
 
@@ -139,7 +144,7 @@ function RoleList() {
           <TableHeader />
           <div className="flex w-full flex-col">
             {loading ? (
-              <div className="px-6 py-12 text-center text-[12px] text-white/40">Loading...</div>
+              Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonRow key={i} />)
             ) : error ? (
               <div className="px-6 py-12 text-center text-[12px] text-red-400">Failed to load roles.</div>
             ) : rows.length === 0 ? (
@@ -149,6 +154,8 @@ function RoleList() {
                 <RoleRow
                   key={role.uuid || role.name}
                   role={role}
+                  canEdit={canEditRoles}
+                  canAssign={canAssignRoles}
                   onAssign={() => { setAssignRoleUuid(role.uuid || ""); setShowAssign(true); }}
                 />
               ))
@@ -157,12 +164,12 @@ function RoleList() {
         </div>
       </div>
 
-      <PaginationBar
+      <Pagination
         from={showingFrom}
         to={showingTo}
         total={total}
-        page={safePage}
-        totalPages={totalPages}
+        currentPage={safePage}
+        pageCount={totalPages}
         onPageChange={setPage}
       />
     </section>
@@ -420,7 +427,7 @@ function TableHeader() {
   );
 }
 
-function RoleRow({ role, onAssign }) {
+function RoleRow({ role, canEdit, canAssign, onAssign }) {
   const status = role.status || "Active";
   const isActive = status.toLowerCase() !== "inactive";
 
@@ -449,8 +456,8 @@ function RoleRow({ role, onAssign }) {
       </Cell>
       <Cell flex align="end">
         <div className="flex items-center gap-2">
-          <EditButton roleId={role.uuid} />
-          <AssignButton onClick={onAssign} />
+          {canEdit && <EditButton roleId={role.uuid} />}
+          {canAssign && <AssignButton onClick={onAssign} />}
         </div>
       </Cell>
     </div>
@@ -540,103 +547,18 @@ function EditIcon() {
   );
 }
 
-function buildPageItems(currentPage, totalPages) {
-  if (totalPages <= 7) {
-    return Array.from({ length: totalPages }, (_, i) => i + 1);
-  }
-  const items = [1];
-  const start = Math.max(2, currentPage - 1);
-  const end = Math.min(totalPages - 1, currentPage + 1);
-  if (start > 2) items.push("ellipsis-l");
-  for (let p = start; p <= end; p += 1) items.push(p);
-  if (end < totalPages - 1) items.push("ellipsis-r");
-  items.push(totalPages);
-  return items;
-}
-
-function PaginationBar({ from, to, total, page, totalPages, onPageChange }) {
-  const items = buildPageItems(page, totalPages);
-  const prevDisabled = page <= 1;
-  const nextDisabled = page >= totalPages;
-
+function SkeletonRow() {
   return (
-    <div className="flex min-h-[44px] w-full items-center justify-between gap-3 flex-wrap px-6 py-3">
-      <span className="text-[8px] text-white leading-[12px]">
-        Showing {from} to {to} of {total} Results
-      </span>
-      <div className="flex items-center gap-[5.5px]">
-        <PageButton
-          onClick={() => onPageChange(Math.max(1, page - 1))}
-          disabled={prevDisabled}
-          ariaLabel="Previous page"
+    <div className="flex w-full items-stretch border-b border-white/5">
+      {COLUMNS.map((col) => (
+        <div
+          key={col.key}
+          className={`flex items-center p-6 ${col.flex ? "flex-1 min-w-0" : "shrink-0"}`}
+          style={col.width ? { width: col.width } : undefined}
         >
-          <PageChevron direction="left" />
-        </PageButton>
-        {items.map((item) =>
-          typeof item === "number" ? (
-            <PageNumber
-              key={item}
-              value={item}
-              active={item === page}
-              onClick={() => onPageChange(item)}
-            />
-          ) : (
-            <span key={item} className="text-[8px] text-white leading-[12px]">....</span>
-          )
-        )}
-        <PageButton
-          onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-          disabled={nextDisabled}
-          ariaLabel="Next page"
-        >
-          <PageChevron direction="right" />
-        </PageButton>
-      </div>
+          <div className="h-3 w-3/4 rounded bg-white/10 animate-pulse" />
+        </div>
+      ))}
     </div>
-  );
-}
-
-function PageNumber({ value, active, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex h-[18px] w-[18px] items-center justify-center rounded-[4px] text-[8px] text-white leading-[12px] ${
-        active ? "bg-[#eaad2c]" : "border border-[#eaad2c] hover:bg-[#eaad2c]/20"
-      }`}
-    >
-      {value}
-    </button>
-  );
-}
-
-function PageButton({ children, onClick, ariaLabel, disabled }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={ariaLabel}
-      disabled={disabled}
-      className={`flex h-[18px] w-[18px] items-center justify-center rounded-[4px] border border-[#eaad2c] ${
-        disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-[#eaad2c]/20"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
-function PageChevron({ direction }) {
-  const rotate = direction === "left" ? "rotate(180deg)" : "rotate(0deg)";
-  return (
-    <svg width="6" height="10" viewBox="0 0 6 10" fill="none" style={{ transform: rotate }}>
-      <path
-        d="M1 1l4 4-4 4"
-        stroke="#eaad2c"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }

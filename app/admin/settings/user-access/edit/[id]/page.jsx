@@ -10,6 +10,15 @@ import Skeleton from "../../../../../components/admin/ui/Skeleton";
 
 const STATUS_TO_INT = { Active: 1, Inactive: 2 };
 
+function normalizeStatus(value) {
+  if (value === 1 || value === "1") return "Active";
+  if (value === 2 || value === "2") return "Inactive";
+  const normalized = String(value || "").trim().toUpperCase();
+  if (normalized === "ACTIVE") return "Active";
+  if (normalized === "INACTIVE") return "Inactive";
+  return "";
+}
+
 export default function EditUserPage() {
   const router = useRouter();
   const params = useParams();
@@ -29,6 +38,8 @@ export default function EditUserPage() {
     role_uuid: "",
     roleName: "",
     status: "",
+    profilePicture: null,
+    profilePictureUrl: "",
     password: "",
     confirmPassword: "",
   });
@@ -56,7 +67,9 @@ export default function EditUserPage() {
             fullName: found.full_name || "",
             role_uuid: matchedRole?.uuid || "",
             roleName: found.role || "",
-            status: STATUS_OPTIONS.includes(found.status) ? found.status : "",
+            status: normalizeStatus(found.status),
+            profilePicture: null,
+            profilePictureUrl: found.profile_picture || "",
             password: "",
             confirmPassword: "",
           };
@@ -87,6 +100,7 @@ export default function EditUserPage() {
     if (form.fullName !== orig.fullName) payload.full_name = form.fullName || "";
     if (form.role_uuid && form.role_uuid !== orig.role_uuid) payload.role_uuid = form.role_uuid;
     if (form.status && form.status !== orig.status) payload.status = STATUS_TO_INT[form.status];
+    if (form.profilePicture) payload.profile_picture = form.profilePicture;
     if (form.password) {
       payload.password = form.password;
       payload.confirm_password = form.confirmPassword;
@@ -167,6 +181,12 @@ export default function EditUserPage() {
               }}
               options={roles.map((r) => r.name)}
               placeholder={rolesError ? "Failed to load roles" : roles.length === 0 ? "Loading..." : "Select role"}
+            />
+            <ImageUploadField
+              label="Profile Picture"
+              file={form.profilePicture}
+              currentUrl={form.profilePictureUrl}
+              onChange={update("profilePicture")}
             />
           </div>
 
@@ -335,6 +355,49 @@ function SelectField({ label, value, onChange, options, placeholder }) {
   );
 }
 
+function ImageUploadField({ label, file, currentUrl, onChange }) {
+  const [preview, setPreview] = useState(currentUrl || "");
+  const id = `field-${label.replace(/\s+/g, "-").toLowerCase()}`;
+
+  useEffect(() => {
+    if (!file) {
+      setPreview(currentUrl || "");
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [currentUrl, file]);
+
+  return (
+    <div className="flex w-full flex-col gap-2">
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <label
+        htmlFor={id}
+        className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-[8px] border border-[#fbeed2] bg-transparent px-4 py-2 text-[12px] font-medium leading-[18px] text-white hover:border-[#eaad2c]"
+      >
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[10px] bg-[#3a4255]">
+          {preview ? (
+            <img src={preview} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <UserIcon />
+          )}
+        </span>
+        <span className="min-w-0 flex-1 truncate text-white/70">
+          {file?.name || (currentUrl ? "Current image" : "Choose image")}
+        </span>
+      </label>
+      <input
+        id={id}
+        type="file"
+        accept="image/*"
+        className="sr-only"
+        onChange={(e) => onChange(e.target.files?.[0] || null)}
+      />
+    </div>
+  );
+}
+
 function PasswordField({ label, value, onChange, visible, onToggleVisible, autoComplete }) {
   const id = `field-${label.replace(/\s+/g, "-").toLowerCase()}`;
   return (
@@ -415,6 +478,15 @@ function EyeIcon() {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
       <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function UserIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f6dda6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
     </svg>
   );
 }

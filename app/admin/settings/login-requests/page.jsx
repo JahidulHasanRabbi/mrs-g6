@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { GRAD_DARK, GRAD_GOLD } from "../../../components/admin/retention/constants";
+import Pagination from "../../../components/admin/retention/Pagination";
 import {
   approveCrmLoginRequest,
   getCrmLoginRequests,
   rejectCrmLoginRequest,
 } from "../../../api/crmApi";
+import { ADMIN_PERMISSIONS, hasAdminPermission } from "../../../config/adminPermissions";
 
 // Login Requests — Figma 175:3738. Table of inbound login attempts; admin
 // can Approve/Reject pending rows. Already-resolved rows show their final
@@ -43,14 +45,22 @@ function formatRequestTime(value) {
   });
 }
 
+function normalizeStatus(value) {
+  const normalized = String(value || "").trim().toUpperCase();
+  if (normalized === "APPROVED") return STATUS_APPROVED;
+  if (normalized === "REJECTED") return STATUS_REJECTED;
+  if (normalized === "PENDING") return STATUS_PENDING;
+  return STATUS_PENDING;
+}
+
 function mapLoginRequest(row) {
   return {
     id: row.uuid,
-    username: row.user || row.username || "—",
+    username: row.admin || row.user || row.username || "—",
     ip: row.ip_address || "—",
     device: row.device || "—",
     time: formatRequestTime(row.request_time),
-    status: row.status || STATUS_PENDING,
+    status: normalizeStatus(row.status),
   };
 }
 
@@ -124,6 +134,7 @@ function LoginListSection() {
 
   const [decidingId, setDecidingId] = useState(null);
   const [decideError, setDecideError] = useState(null);
+  const canApproveLogins = hasAdminPermission(ADMIN_PERMISSIONS.APPROVE_LOGINS);
 
   const decide = async (row, action) => {
     if (decidingId) return;
@@ -168,7 +179,7 @@ function LoginListSection() {
           <TableHeader />
           <div className="flex w-full flex-col">
             {loading ? (
-              <div className="px-6 py-12 text-center text-[12px] text-white/40">Loading...</div>
+              Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonRow key={i} />)
             ) : error ? (
               <div className="px-6 py-12 text-center text-[12px] text-red-400">Failed to load login requests.</div>
             ) : rows.length === 0 ? (
@@ -179,6 +190,7 @@ function LoginListSection() {
                   key={row.id}
                   row={row}
                   deciding={decidingId === row.id}
+                  canDecide={canApproveLogins}
                   onApprove={() => decide(row, STATUS_APPROVED)}
                   onReject={() => decide(row, STATUS_REJECTED)}
                 />
@@ -188,12 +200,12 @@ function LoginListSection() {
         </div>
       </div>
 
-      <PaginationBar
+      <Pagination
         from={showingFrom}
         to={showingTo}
         total={total}
-        page={safePage}
-        totalPages={totalPages}
+        currentPage={safePage}
+        pageCount={totalPages}
         onPageChange={setPage}
       />
     </section>
@@ -229,7 +241,7 @@ function TableHeader() {
   );
 }
 
-function LoginRow({ row, deciding, onApprove, onReject }) {
+function LoginRow({ row, deciding, canDecide, onApprove, onReject }) {
   const isPending = row.status === STATUS_PENDING;
   const actionsDisabled = !isPending || deciding;
   return (
@@ -261,10 +273,12 @@ function LoginRow({ row, deciding, onApprove, onReject }) {
         <StatusBadge status={row.status} />
       </Cell>
       <Cell col={COLUMNS[5]}>
-        <div className="flex items-center gap-2">
-          <RejectButton onClick={onReject} disabled={actionsDisabled} />
-          <ApproveButton onClick={onApprove} disabled={actionsDisabled} loading={deciding} />
-        </div>
+        {canDecide && (
+          <div className="flex items-center gap-2">
+            <RejectButton onClick={onReject} disabled={actionsDisabled} />
+            <ApproveButton onClick={onApprove} disabled={actionsDisabled} loading={deciding} />
+          </div>
+        )}
       </Cell>
     </div>
   );
@@ -390,107 +404,18 @@ function CheckIcon() {
   );
 }
 
-// ── Pagination ──────────────────────────────────────────────────────────
-
-// Compact page-chip list with ellipsis. Pages <= 7 render in full, otherwise
-// always show first + last and a 1-page window around `currentPage`.
-function buildPageItems(currentPage, totalPages) {
-  if (totalPages <= 7) {
-    return Array.from({ length: totalPages }, (_, i) => i + 1);
-  }
-  const items = [1];
-  const start = Math.max(2, currentPage - 1);
-  const end = Math.min(totalPages - 1, currentPage + 1);
-  if (start > 2) items.push("ellipsis-l");
-  for (let p = start; p <= end; p += 1) items.push(p);
-  if (end < totalPages - 1) items.push("ellipsis-r");
-  items.push(totalPages);
-  return items;
-}
-
-function PaginationBar({ from, to, total, page, totalPages, onPageChange }) {
-  const items = buildPageItems(page, totalPages);
-  const prevDisabled = page <= 1;
-  const nextDisabled = page >= totalPages;
-
+function SkeletonRow() {
   return (
-    <div className="flex min-h-[44px] w-full items-center justify-between gap-3 flex-wrap px-6 py-3">
-      <span className="text-[8px] text-white leading-[12px]">
-        Showing {from} to {to} of {total} Results
-      </span>
-      <div className="flex items-center gap-[5.5px]">
-        <PageButton
-          onClick={() => onPageChange(Math.max(1, page - 1))}
-          disabled={prevDisabled}
-          ariaLabel="Previous page"
+    <div className="flex w-full items-stretch border-b border-white/5">
+      {COLUMNS.map((col) => (
+        <div
+          key={col.key}
+          className={`flex items-center p-6 ${col.flex ? "flex-1 min-w-0" : "shrink-0"}`}
+          style={{ minWidth: col.minW, width: col.flex ? undefined : col.minW }}
         >
-          <PageChevron direction="left" />
-        </PageButton>
-        {items.map((item) =>
-          typeof item === "number" ? (
-            <PageNumber
-              key={item}
-              value={item}
-              active={item === page}
-              onClick={() => onPageChange(item)}
-            />
-          ) : (
-            <span key={item} className="text-[8px] text-white leading-[12px]">....</span>
-          )
-        )}
-        <PageButton
-          onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-          disabled={nextDisabled}
-          ariaLabel="Next page"
-        >
-          <PageChevron direction="right" />
-        </PageButton>
-      </div>
+          <div className="h-3 w-3/4 rounded bg-white/10 animate-pulse" />
+        </div>
+      ))}
     </div>
-  );
-}
-
-function PageNumber({ value, active, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex h-[18px] w-[18px] items-center justify-center rounded-[4px] text-[8px] text-white leading-[12px] ${
-        active ? "bg-[#eaad2c]" : "border border-[#eaad2c] hover:bg-[#eaad2c]/20"
-      }`}
-    >
-      {value}
-    </button>
-  );
-}
-
-function PageButton({ children, onClick, ariaLabel, disabled }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={ariaLabel}
-      disabled={disabled}
-      className={`flex h-[18px] w-[18px] items-center justify-center rounded-[4px] border border-[#eaad2c] ${
-        disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-[#eaad2c]/20"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
-function PageChevron({ direction }) {
-  const rotate = direction === "left" ? "rotate(180deg)" : "rotate(0deg)";
-  return (
-    <svg width="6" height="10" viewBox="0 0 6 10" fill="none" style={{ transform: rotate }}>
-      <path
-        d="M1 1l4 4-4 4"
-        stroke="#eaad2c"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }

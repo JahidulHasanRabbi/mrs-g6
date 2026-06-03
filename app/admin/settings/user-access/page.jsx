@@ -7,7 +7,9 @@ import {
   GRAD_DARK,
   GRAD_GOLD,
 } from "../../../components/admin/retention/constants";
+import Pagination from "../../../components/admin/retention/Pagination";
 import { getCrmLoginRequests, getCrmUsers } from "../../../api/crmApi";
+import { ADMIN_PERMISSIONS, hasAdminPermission } from "../../../config/adminPermissions";
 
 // User Access management — Figma 94:11764. Four KPI cards (Total Users,
 // Active Users, Suspended, Login Pending) and a User List table with
@@ -27,6 +29,22 @@ const COLUMNS = [
 
 const TABLE_MIN_WIDTH = COLUMNS.reduce((sum, c) => sum + c.minW, 0);
 
+function normalizeStatus(value) {
+  if (value === 1 || value === "1") return "Active";
+  if (value === 2 || value === "2") return "Inactive";
+  const normalized = String(value || "").trim().toUpperCase();
+  if (normalized === "ACTIVE") return "Active";
+  if (normalized === "INACTIVE") return "Inactive";
+  return value || "Inactive";
+}
+
+function normalizeUser(row) {
+  return {
+    ...row,
+    status: normalizeStatus(row?.status),
+  };
+}
+
 export default function UserAccessPage() {
   const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +56,7 @@ export default function UserAccessPage() {
     fetchAllPages(getCrmUsers)
       .then((users) => {
         if (cancelled) return;
-        setAllUsers(users);
+        setAllUsers(users.map(normalizeUser));
       })
       .catch((err) => {
         if (cancelled) return;
@@ -54,7 +72,7 @@ export default function UserAccessPage() {
     fetchAllPages(getCrmLoginRequests)
       .then((results) => {
         if (cancelled) return;
-        setPendingLogins(results.filter((row) => row.status === "Pending").length);
+        setPendingLogins(results.filter((row) => String(row.status || "").toUpperCase() === "PENDING").length);
       })
       .catch((err) => {
         if (cancelled) return;
@@ -237,6 +255,8 @@ function UserList({ allUsers, loading, error }) {
   const visibleRows = filtered.slice(startIdx, startIdx + PAGE_SIZE);
   const showingFrom = filtered.length === 0 ? 0 : startIdx + 1;
   const showingTo = Math.min(startIdx + PAGE_SIZE, filtered.length);
+  const canCreateAdmins = hasAdminPermission(ADMIN_PERMISSIONS.CREATE_ADMINS);
+  const canEditAdmins = hasAdminPermission(ADMIN_PERMISSIONS.EDIT_ADMINS);
 
   return (
     <section className="flex w-full flex-col overflow-hidden rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
@@ -254,7 +274,7 @@ function UserList({ allUsers, loading, error }) {
         </h2>
         <div className="flex flex-wrap items-center gap-3">
           <SearchInput value={query} onChange={setQuery} />
-          <AddUserButton />
+          {canCreateAdmins && <AddUserButton />}
         </div>
       </header>
 
@@ -263,24 +283,26 @@ function UserList({ allUsers, loading, error }) {
           <TableHeader />
           <div className="flex w-full flex-col">
             {loading ? (
-              <div className="px-6 py-12 text-center text-[12px] text-white/40">Loading...</div>
+              Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonRow key={i} />)
             ) : error ? (
               <div className="px-6 py-12 text-center text-[12px] text-red-400">Failed to load users.</div>
             ) : visibleRows.length === 0 ? (
               <EmptyRow />
             ) : (
-              visibleRows.map((user, idx) => <UserRow key={user.uuid || `${user.username}-${idx}`} user={user} />)
+              visibleRows.map((user, idx) => (
+                <UserRow key={user.uuid || `${user.username}-${idx}`} user={user} canEdit={canEditAdmins} />
+              ))
             )}
           </div>
         </div>
       </div>
 
-      <PaginationBar
+      <Pagination
         from={showingFrom}
         to={showingTo}
         total={filtered.length}
-        page={safePage}
-        totalPages={totalPages}
+        currentPage={safePage}
+        pageCount={totalPages}
         onPageChange={setPage}
       />
     </section>
@@ -337,12 +359,12 @@ function TableHeader() {
   );
 }
 
-function UserRow({ user }) {
+function UserRow({ user, canEdit }) {
   return (
     <div className="flex w-full items-stretch -mb-px border-b border-white/5">
       <Cell minW={COLUMNS[0].minW}>
         <div className="flex items-center gap-3 min-w-0">
-          <UserAvatar />
+          <UserAvatar src={user.profile_picture} />
           <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">
             {user.username}
           </span>
@@ -362,7 +384,7 @@ function UserRow({ user }) {
         <StatusBadge status={user.status} />
       </Cell>
       <Cell minW={COLUMNS[4].minW} align="end">
-        <EditButton href={`/admin/settings/user-access/edit/${user.uuid}`} />
+        {canEdit && <EditButton href={`/admin/settings/user-access/edit/${user.uuid}`} />}
       </Cell>
     </div>
   );
@@ -378,26 +400,31 @@ function Cell({ children, minW, align = "start" }) {
   );
 }
 
-function UserAvatar() {
+function UserAvatar({ src }) {
   return (
-    <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[12px] bg-[#3a4255]">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f6dda6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-        <circle cx="12" cy="7" r="4" />
-      </svg>
+    <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-[#3a4255]">
+      {src ? (
+        <img src={src} alt="" className="h-full w-full object-cover" />
+      ) : (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f6dda6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
+        </svg>
+      )}
     </div>
   );
 }
 
 function StatusBadge({ status }) {
-  const isActive = status === "Active";
+  const normalized = status ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase() : status;
+  const isActive = normalized === "Active";
   return (
     <span
       className={`flex items-center justify-center rounded-[8px] px-4 py-2 text-[12px] font-medium leading-[18px] text-white whitespace-nowrap ${
         isActive ? "bg-[#01813d]" : "bg-[#d00416]"
       }`}
     >
-      {status}
+      {normalized}
     </span>
   );
 }
@@ -483,107 +510,14 @@ function ArrowRightIcon() {
   );
 }
 
-// ── Pagination ──────────────────────────────────────────────────────────
-
-// Compact page-chip list with ellipsis. Pages <= 7 render in full, otherwise
-// always show first + last and a 1-page window around `currentPage`.
-function buildPageItems(currentPage, totalPages) {
-  if (totalPages <= 7) {
-    return Array.from({ length: totalPages }, (_, i) => i + 1);
-  }
-  const items = [1];
-  const start = Math.max(2, currentPage - 1);
-  const end = Math.min(totalPages - 1, currentPage + 1);
-  if (start > 2) items.push("ellipsis-l");
-  for (let p = start; p <= end; p += 1) items.push(p);
-  if (end < totalPages - 1) items.push("ellipsis-r");
-  items.push(totalPages);
-  return items;
-}
-
-function PaginationBar({ from, to, total, page, totalPages, onPageChange }) {
-  const items = buildPageItems(page, totalPages);
-  const prevDisabled = page <= 1;
-  const nextDisabled = page >= totalPages;
-
+function SkeletonRow() {
   return (
-    <div className="flex min-h-[44px] w-full items-center justify-between gap-3 flex-wrap px-6 py-3">
-      <span className="text-[8px] text-white leading-[12px]">
-        Showing {from} to {to} of {total} Results
-      </span>
-      <div className="flex items-center gap-[5.5px]">
-        <PageButton
-          onClick={() => onPageChange(Math.max(1, page - 1))}
-          disabled={prevDisabled}
-          ariaLabel="Previous page"
-        >
-          <PageChevron direction="left" />
-        </PageButton>
-        {items.map((item) =>
-          typeof item === "number" ? (
-            <PageNumber
-              key={item}
-              value={item}
-              active={item === page}
-              onClick={() => onPageChange(item)}
-            />
-          ) : (
-            <span key={item} className="text-[8px] text-white leading-[12px]">....</span>
-          )
-        )}
-        <PageButton
-          onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-          disabled={nextDisabled}
-          ariaLabel="Next page"
-        >
-          <PageChevron direction="right" />
-        </PageButton>
-      </div>
+    <div className="flex w-full items-stretch border-b border-white/5">
+      {COLUMNS.map((col) => (
+        <div key={col.key} className="flex flex-1 items-center p-6" style={{ minWidth: col.minW }}>
+          <div className="h-3 w-3/4 rounded bg-white/10 animate-pulse" />
+        </div>
+      ))}
     </div>
-  );
-}
-
-function PageNumber({ value, active, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex h-[18px] w-[18px] items-center justify-center rounded-[4px] text-[8px] text-white leading-[12px] ${
-        active ? "bg-[#eaad2c]" : "border border-[#eaad2c] hover:bg-[#eaad2c]/20"
-      }`}
-    >
-      {value}
-    </button>
-  );
-}
-
-function PageButton({ children, onClick, ariaLabel, disabled }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={ariaLabel}
-      disabled={disabled}
-      className={`flex h-[18px] w-[18px] items-center justify-center rounded-[4px] border border-[#eaad2c] ${
-        disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-[#eaad2c]/20"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
-function PageChevron({ direction }) {
-  const rotate = direction === "left" ? "rotate(180deg)" : "rotate(0deg)";
-  return (
-    <svg width="6" height="10" viewBox="0 0 6 10" fill="none" style={{ transform: rotate }}>
-      <path
-        d="M1 1l4 4-4 4"
-        stroke="#eaad2c"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }

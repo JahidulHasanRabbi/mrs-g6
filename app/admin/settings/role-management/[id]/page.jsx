@@ -12,6 +12,7 @@ import {
   getCrmRoles,
   updateCrmRole,
 } from "../../../../api/crmApi";
+import { ADMIN_PERMISSIONS, hasAdminPermission } from "../../../../config/adminPermissions";
 
 const PAGE_WIDTH_MAX = 1112;
 const COL_WIDTH = 317.33;
@@ -23,7 +24,7 @@ export default function RoleSettingPage({ params }) {
   const router = useRouter();
 
   const [name, setName] = useState("");
-  const [permissionGroups, setPermissionGroups] = useState([]);
+  const [permissionAreas, setPermissionAreas] = useState([]);
   const [permissionsLoading, setPermissionsLoading] = useState(true);
   const [permissionsError, setPermissionsError] = useState(false);
   const [selectedPermissions, setSelectedPermissions] = useState([]);
@@ -31,6 +32,7 @@ export default function RoleSettingPage({ params }) {
   const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showDeletePrompt, setShowDeletePrompt] = useState(false);
+  const canArchiveRoles = hasAdminPermission(ADMIN_PERMISSIONS.ARCHIVE_ROLES);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,7 +55,7 @@ export default function RoleSettingPage({ params }) {
         if (cancelled) return;
 
         if (permissionsRes !== null) {
-          setPermissionGroups(normalizePermissionGroups(permissionsRes));
+          setPermissionAreas(normalizePermissionAreas(permissionsRes));
         } else {
           setPermissionsError(true);
         }
@@ -61,7 +63,7 @@ export default function RoleSettingPage({ params }) {
 
         if (role) {
           setName(role.name || "");
-          setSelectedPermissions(Array.isArray(role.permissions) ? role.permissions : []);
+          setSelectedPermissions(normalizeSelectedPermissions(role.permissions));
         } else if (isNew) {
           setName("");
           setSelectedPermissions([]);
@@ -99,6 +101,19 @@ export default function RoleSettingPage({ params }) {
       for (const permission of group.permissions) {
         if (checked) set.add(permission.key);
         else set.delete(permission.key);
+      }
+      return Array.from(set);
+    });
+  };
+
+  const updateArea = (area, checked) => {
+    setSelectedPermissions((prev) => {
+      const set = new Set(prev);
+      for (const group of area.groups) {
+        for (const permission of group.permissions) {
+          if (checked) set.add(permission.key);
+          else set.delete(permission.key);
+        }
       }
       return Array.from(set);
     });
@@ -182,40 +197,28 @@ export default function RoleSettingPage({ params }) {
                 </FieldColumn>
               </div>
 
-              <div className="flex flex-col gap-6 md:flex-row md:gap-10 md:items-start md:flex-wrap">
+              <div className="grid w-full grid-cols-1 overflow-hidden rounded-[12px] border border-[#f2cb7a]/20 bg-black/10 lg:grid-cols-2">
                 {permissionsLoading ? (
                   <p className="text-[12px] text-white/40">Loading permissions...</p>
                 ) : permissionsError ? (
                   <p className="text-[12px] text-red-400">Failed to load permissions. Please refresh.</p>
                 ) : (
-                  permissionGroups.map((group) => {
-                    const keys = group.permissions.map((permission) => permission.key);
-                    const checkedCount = keys.filter((key) => selectedPermissions.includes(key)).length;
-                    const allChecked = keys.length > 0 && checkedCount === keys.length;
-
-                    return (
-                      <FieldColumn key={group.name}>
-                        <SectionToggleRow
-                          label={group.name}
-                          checked={allChecked}
-                          onChange={(checked) => updateGroup(group, checked)}
-                        />
-                        {group.permissions.map((permission) => (
-                          <ToggleRow
-                            key={permission.key}
-                            label={permission.label || permission.key}
-                            checked={selectedPermissions.includes(permission.key)}
-                            onChange={(checked) => updatePermission(permission.key, checked)}
-                          />
-                        ))}
-                      </FieldColumn>
-                    );
-                  })
+                  permissionAreas.map((area) => (
+                    <PermissionArea
+                      key={area.name}
+                      area={area}
+                      selectedPermissions={selectedPermissions}
+                      onAreaChange={updateArea}
+                      onGroupChange={updateGroup}
+                      onPermissionChange={updatePermission}
+                    />
+                  ))
                 )}
               </div>
 
               <FooterActions
                 isNew={isNew}
+                canDelete={canArchiveRoles}
                 saving={saving}
                 onBack={goBack}
                 onDelete={() => setShowDeletePrompt(true)}
@@ -253,10 +256,20 @@ async function fetchRoleByUuid(uuid) {
   return roles.find((role) => role.uuid === uuid) || null;
 }
 
-function normalizePermissionGroups(response) {
+function normalizeSelectedPermissions(permissions) {
+  if (!Array.isArray(permissions)) return [];
+  return permissions
+    .map((permission) => {
+      if (typeof permission === "string") return permission;
+      return permission?.key;
+    })
+    .filter(Boolean);
+}
+
+function normalizePermissionAreas(response) {
   if (!response || typeof response !== "object") return [];
 
-  // Handle paginated wrapper like { results: { GroupName: [...] } }
+  // Handle paginated wrapper like { results: { AreaName: { GroupName: [...] } } }
   const data = (
     !Array.isArray(response) &&
     response.results &&
@@ -266,19 +279,67 @@ function normalizePermissionGroups(response) {
 
   if (!data || Array.isArray(data) || typeof data !== "object") return [];
 
-  return Object.entries(data)
-    .map(([name, permissions]) => ({
-      name,
-      permissions: Array.isArray(permissions)
-        ? permissions
-            .filter((permission) => permission?.key)
-            .map((permission) => ({
-              key: permission.key,
-              label: permission.label || permission.key,
-            }))
-        : [],
+  const rawAreas = Object.entries(data)
+    .map(([areaName, groupsOrPermissions]) => ({
+      name: areaName,
+      groups: normalizePermissionGroups(groupsOrPermissions),
+    }))
+    .filter((area) => area.groups.length > 0);
+
+  return groupPermissionAreas(rawAreas);
+}
+
+function groupPermissionAreas(areas) {
+  const mrsGroups = [];
+  const retentionGroups = [];
+
+  for (const area of areas) {
+    const normalized = area.name.toLowerCase();
+    if (normalized === "retention") {
+      retentionGroups.push(...area.groups);
+    } else if (normalized === "others") {
+      for (const group of area.groups) {
+        const groupName = group.name.toLowerCase();
+        if (groupName === "login") retentionGroups.push(group);
+        else mrsGroups.push(group);
+      }
+    } else {
+      mrsGroups.push(...area.groups);
+    }
+  }
+
+  return [
+    { name: "MRS Access", groups: mrsGroups },
+    { name: "Retention System Access", groups: retentionGroups },
+  ].filter((area) => area.groups.length > 0);
+}
+
+function normalizePermissionGroups(value) {
+  if (Array.isArray(value)) {
+    return [{
+      name: "Permissions",
+      permissions: normalizePermissionList(value),
+    }].filter((group) => group.permissions.length > 0);
+  }
+
+  if (!value || typeof value !== "object") return [];
+
+  return Object.entries(value)
+    .map(([groupName, permissions]) => ({
+      name: groupName,
+      permissions: normalizePermissionList(permissions),
     }))
     .filter((group) => group.permissions.length > 0);
+}
+
+function normalizePermissionList(value) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((permission) => permission?.key)
+    .map((permission) => ({
+      key: permission.key,
+      label: permission.label || permission.key,
+    }));
 }
 
 function PageHeader() {
@@ -340,25 +401,80 @@ function TextInput({ value, onChange, placeholder }) {
   );
 }
 
-function SectionToggleRow({ label, checked, onChange }) {
+function PermissionArea({ area, selectedPermissions, onAreaChange, onGroupChange, onPermissionChange }) {
+  const areaKeys = area.groups.flatMap((group) => group.permissions.map((permission) => permission.key));
+  const enabledCount = areaKeys.filter((key) => selectedPermissions.includes(key)).length;
+  const allEnabled = areaKeys.length > 0 && enabledCount === areaKeys.length;
+
   return (
-    <div className="flex w-full items-center justify-between py-3">
-      <span
-        className="text-[18px] font-medium text-[#f6dda6] leading-[27px] whitespace-nowrap"
-        style={{ fontFamily: "Inter, sans-serif" }}
-      >
-        {label}
-      </span>
-      <Toggle size="lg" checked={checked} onChange={onChange} ariaLabel={label} />
+    <div className="flex min-w-0 flex-col gap-4 border-b border-[#f2cb7a]/15 p-5 last:border-b-0 lg:border-b-0 lg:border-r lg:last:border-r-0">
+      <div className="flex min-h-[32px] items-center gap-3">
+        <h3
+          className="min-w-0 text-[18px] font-medium text-[#f6dda6] leading-[27px]"
+          style={{ fontFamily: "Inter, sans-serif" }}
+        >
+          {area.name}
+        </h3>
+        <Toggle
+          size="lg"
+          checked={allEnabled}
+          onChange={(checked) => onAreaChange(area, checked)}
+          ariaLabel={`${area.name} module permissions`}
+        />
+      </div>
+      <div className="flex flex-col gap-1">
+        {area.groups.map((group) => (
+          <PermissionGroupRows
+            key={`${area.name}-${group.name}`}
+            group={group}
+            selectedPermissions={selectedPermissions}
+            onGroupChange={onGroupChange}
+            onPermissionChange={onPermissionChange}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PermissionGroupRows({ group, selectedPermissions, onGroupChange, onPermissionChange }) {
+  const keys = group.permissions.map((permission) => permission.key);
+  const checkedCount = keys.filter((key) => selectedPermissions.includes(key)).length;
+  const allChecked = keys.length > 0 && checkedCount === keys.length;
+
+  return (
+    <div className="flex min-w-0 flex-col gap-1">
+      <div className="mt-2 flex min-h-[28px] items-center gap-3">
+        <span
+          className="min-w-0 pr-3 text-[12px] font-semibold text-[#edba4d] leading-[18px]"
+          style={{ fontFamily: "Inter, sans-serif" }}
+        >
+          {group.name}
+        </span>
+        <Toggle
+          size="sm"
+          checked={allChecked}
+          onChange={(checked) => onGroupChange(group, checked)}
+          ariaLabel={`${group.name} permissions`}
+        />
+      </div>
+      {group.permissions.map((permission) => (
+        <ToggleRow
+          key={permission.key}
+          label={permission.label || permission.key}
+          checked={selectedPermissions.includes(permission.key)}
+          onChange={(checked) => onPermissionChange(permission.key, checked)}
+        />
+      ))}
     </div>
   );
 }
 
 function ToggleRow({ label, checked, onChange }) {
   return (
-    <div className="flex w-full items-center justify-between gap-2">
+    <div className="flex min-h-[28px] w-full items-center gap-3">
       <span
-        className="text-[12px] font-medium text-white leading-[18px]"
+        className="min-w-0 max-w-[260px] break-words text-[12px] font-medium text-white leading-[18px]"
         style={{ fontFamily: "Inter, sans-serif" }}
       >
         {label}
@@ -415,11 +531,11 @@ function Toggle({ size = "sm", checked, onChange, ariaLabel, disabled }) {
   );
 }
 
-function FooterActions({ isNew, saving, onBack, onDelete, onSave }) {
+function FooterActions({ isNew, canDelete, saving, onBack, onDelete, onSave }) {
   return (
     <div className="flex flex-wrap items-center justify-end gap-4 pt-2">
       <ActionButton variant="back" onClick={onBack} disabled={saving} />
-      {!isNew && <ActionButton variant="delete" onClick={onDelete} disabled={saving} />}
+      {!isNew && canDelete && <ActionButton variant="delete" onClick={onDelete} disabled={saving} />}
       <ActionButton variant="save" onClick={onSave} disabled={saving} />
     </div>
   );

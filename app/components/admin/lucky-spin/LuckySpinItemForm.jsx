@@ -217,16 +217,18 @@ export default function LuckySpinItemForm({
               <select
                 value={fieldValues.item_type || ""}
                 onChange={(e) => handleItemTypeChange(e.target.value)}
-                className="bg-white/10 border-[0.5px] border-white/8 h-[36px] rounded-[4px] w-[304px] px-3 text-white focus:outline-none focus:border-[#f2c36b]"
+                className="bg-white/10 border-[0.5px] border-white/8 h-[36px] rounded-[4px] w-[304px] px-3 text-white focus:outline-none focus:border-[#f2c36b] [&>option]:bg-[#1a1a1a] [&>option]:text-white"
                 style={{
                   colorScheme: 'dark'
                 }}
                 required
                 disabled={isLoading}
               >
-                <option value="">Select item type</option>
+                <option value="" className="bg-[#1a1a1a] text-white">
+                  Select item type
+                </option>
                 {itemTypeOptions.map(option => (
-                  <option key={option.value} value={option.value}>
+                  <option key={option.value} value={option.value} className="bg-[#1a1a1a] text-white">
                     {option.label}
                   </option>
                 ))}

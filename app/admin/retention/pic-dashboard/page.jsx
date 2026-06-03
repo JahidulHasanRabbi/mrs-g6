@@ -27,10 +27,14 @@ import {
 const PAGE_SIZE = 7;
 
 const KPI_META = [
-  { id: "members",  label: "Total Members",   key: "total_members",  icon: `${ASSETS}/kpi-members.svg`, iconSize: 24, isCurrency: false },
-  { id: "active",   label: "Active Members",  key: "active_members", icon: `${ASSETS}/kpi-active.svg`,  iconSize: 24, isCurrency: false },
-  { id: "sales",    label: "Total Sales",     key: "total_sales",    icon: `${ASSETS}/kpi-sales.svg`,   iconSize: 24, isCurrency: true  },
-  { id: "winlose",  label: "Total Win/Lose",  key: "daily_win_lose", icon: `${ASSETS}/kpi-winlose.svg`, iconSize: 28, isCurrency: true  },
+  { id: "members",       label: "Total Members",                key: "total_members",                icon: `${ASSETS}/kpi-members.svg`, iconSize: 24, type: "number" },
+  { id: "active",        label: "Active Members",               key: "active_members",               icon: `${ASSETS}/kpi-active.svg`,  iconSize: 24, type: "number" },
+  { id: "sales",         label: "Total Sales",                  key: "total_sales",                  icon: `${ASSETS}/kpi-sales.svg`,   iconSize: 24, type: "currency" },
+  { id: "winlose",       label: "Total Win/Lose",               key: "total_win_lose",               icon: `${ASSETS}/kpi-winlose.svg`, iconSize: 28, type: "currency" },
+  { id: "sales-tickets", label: "Total Sales Ticket",           key: "total_sales_tickets",          icon: `${ASSETS}/kpi-sales.svg`,   iconSize: 24, type: "number" },
+  { id: "bonus",         label: "Total Bonus Given",            key: "total_bonus_given",            icon: `${ASSETS}/kpi-sales.svg`,   iconSize: 24, type: "currency" },
+  { id: "bonus-percent", label: "Total Bonus Given Percentage", key: "total_bonus_given_percentage", icon: `${ASSETS}/kpi-winlose.svg`, iconSize: 28, type: "percent" },
+  { id: "win-rate",      label: "Total Win Rate",               key: "total_win_rate",               icon: `${ASSETS}/kpi-winlose.svg`, iconSize: 28, type: "percent" },
 ];
 
 function formatNumber(value) {
@@ -48,6 +52,14 @@ function formatCurrency(value) {
 function formatRmCurrency(value) {
   if (value === null || value === undefined || value === "") return "RM 0";
   return `RM ${formatCurrency(value)}`;
+}
+
+function formatPercent(value) {
+  if (value === null || value === undefined || value === "") return "0%";
+  if (typeof value === "string" && value.trim().endsWith("%")) return value.trim();
+  const num = parseFloat(value);
+  if (Number.isNaN(num)) return String(value);
+  return `${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}%`;
 }
 
 // Chrome (auth guard, main wrapper, topbar) lives in
@@ -131,23 +143,49 @@ function KpiGrid({ summary, loading }) {
   return (
     <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
       {KPI_META.map((meta) => {
+        if (loading) return <KpiCardSkeleton key={meta.id} />;
         const raw = summary?.[meta.key];
-        const value = loading
-          ? "—"
-          : meta.isCurrency
-            ? formatCurrency(raw)
-            : formatNumber(raw);
+        let value = "-";
+        if (meta.type === "currency") value = formatCurrency(raw);
+        else if (meta.type === "percent") value = formatPercent(raw);
+        else value = formatNumber(raw);
         return (
           <KpiCard
             key={meta.id}
             kpi={{
               ...meta,
               value,
-              valuePrefix: meta.isCurrency ? "RM" : undefined,
+              valuePrefix: meta.type === "currency" ? "RM" : undefined,
             }}
           />
         );
       })}
+    </div>
+  );
+}
+
+function SkeletonBlock({ className = "" }) {
+  return (
+    <div
+      className={`animate-pulse rounded-[8px] bg-white/10 ${className}`}
+      style={{ boxShadow: "inset 0 0 0 1px rgba(242,203,122,0.08)" }}
+    />
+  );
+}
+
+function KpiCardSkeleton() {
+  return (
+    <div
+      className="flex flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-3 sm:p-5 xl:p-3 2xl:p-5 [@media(min-width:1700px)]:p-6"
+      style={{ backgroundImage: GRAD_CARD }}
+    >
+      <div className="flex w-full items-start gap-2 sm:gap-4 xl:gap-2 2xl:gap-4">
+        <SkeletonBlock className="h-9 w-9 shrink-0 rounded-[4px] sm:h-12 sm:w-12 xl:h-9 xl:w-9 2xl:h-11 2xl:w-11 [@media(min-width:1700px)]:h-12 [@media(min-width:1700px)]:w-12" />
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <SkeletonBlock className="h-[14px] w-[72%]" />
+          <SkeletonBlock className="h-[32px] w-[58%]" />
+        </div>
+      </div>
     </div>
   );
 }
@@ -280,7 +318,7 @@ function PerformanceSummary({ period, fromDate, toDate, onRefreshSummary }) {
           <TableHeader />
           <div className="flex w-full flex-col">
             {loading ? (
-              <div className="px-6 py-10 text-center b-4 text-white/60">Loading...</div>
+              Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonRow key={i} />)
             ) : rows.length === 0 ? (
               <div className="px-6 py-10 text-center b-4 text-white/60">No data available.</div>
             ) : (
@@ -339,10 +377,11 @@ function TableRow({ row }) {
     <div className="flex w-full items-center -mb-px border-b border-white/5">
       <div className="flex h-full w-[269px] shrink-0 items-center gap-3 p-6">
         <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-[#3a4255]">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f6dda6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
-          </svg>
+          {row.profile_picture ? (
+            <img src={row.profile_picture} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <PicFallbackIcon />
+          )}
         </div>
         <div className="flex min-w-0 flex-1 items-start gap-2">
           <span className="b-4 text-white whitespace-nowrap">{row.full_name || "—"}</span>
@@ -378,6 +417,27 @@ function TableRow({ row }) {
           </Link>
         </div>
       </div>
+    </div>
+  );
+}
+
+function PicFallbackIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f6dda6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
+
+function SkeletonRow() {
+  return (
+    <div className="flex w-full items-center border-b border-white/5">
+      {Array.from({ length: 7 }).map((_, i) => (
+        <div key={i} className={`flex ${i === 0 ? "w-[269px] shrink-0" : "flex-1 min-w-0"} items-center p-6`}>
+          <div className="h-3 w-3/4 rounded bg-white/10 animate-pulse" />
+        </div>
+      ))}
     </div>
   );
 }

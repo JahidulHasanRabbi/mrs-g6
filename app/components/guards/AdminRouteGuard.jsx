@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { tokenStorage } from '../../api/tokenStorage';
 import { verifyToken, refreshToken } from '../../api/adminApi';
+import { canAccessAdminRoute, getStoredAdminPermissions } from '../../config/adminPermissions';
 
 async function attemptRefresh() {
   const storedRefresh = tokenStorage.getAdminRefreshToken();
@@ -16,6 +17,17 @@ async function attemptRefresh() {
     tokenStorage.clearAdminTokens();
     return false;
   }
+}
+
+function AdminGuardLoading() {
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#07190d]">
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#f2cb7a]/30 border-t-[#f2cb7a]" />
+        <p className="text-[13px] font-medium text-[#fbeed2]/70">Loading admin panel...</p>
+      </div>
+    </div>
+  );
 }
 
 /**
@@ -32,6 +44,7 @@ async function attemptRefresh() {
  */
 export function AdminRouteGuard({ children /* , skeleton (deprecated) */ }) {
   const router = useRouter();
+  const pathname = usePathname();
   const verifiedRef = useRef(false);
   const [tokenState, setTokenState] = useState(null); // null | 'present' | 'absent'
 
@@ -71,7 +84,20 @@ export function AdminRouteGuard({ children /* , skeleton (deprecated) */ }) {
     });
   }, [router]);
 
-  if (tokenState === 'absent') return null;
+  useEffect(() => {
+    if (tokenState !== 'present') return;
+
+    const permissions = getStoredAdminPermissions();
+    if (!canAccessAdminRoute(pathname, permissions)) {
+      router.replace('/admin');
+    }
+  }, [pathname, router, tokenState]);
+
+  if (tokenState === null) return <AdminGuardLoading />;
+  if (tokenState === 'absent') return <AdminGuardLoading />;
+  if (tokenState === 'present' && !canAccessAdminRoute(pathname, getStoredAdminPermissions())) {
+    return <AdminGuardLoading />;
+  }
 
   return children;
 }

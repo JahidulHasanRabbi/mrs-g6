@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getCrmMembers, getCrmUsers, getCrmVipTiers } from "../../../api/crmApi";
+import { Pagination } from "../../../components/admin/members/DataTable";
 import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
 
 const A = "/assets/admin/pic-dashboard";
@@ -58,7 +59,7 @@ export default function RetentionMembersPage() {
     getCrmVipTiers({ page: 1, page_size: 100 })
       .then((res) => {
         const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
-        setVipTiers(results.map((t, i) => ({ name: t.name, level: i + 1 })));
+        setVipTiers(results.map((t, i) => ({ name: t.name || t.tier_name || t.level || t.uuid, level: i + 1 })).filter((t) => t.name));
       })
       .catch(() => setVipTiers([]));
   }, []);
@@ -80,15 +81,15 @@ export default function RetentionMembersPage() {
     const fetchRows = async () => {
       setLoading(true);
       try {
-        const retentionUuid = pic
-          ? pics.find((u) => (u.full_name || u.username) === pic)?.uuid
+        const retentionUser = pic
+          ? pics.find((u) => (u.full_name || u.username) === pic)
           : undefined;
         const res = await getCrmMembers({
           page,
           page_size: PAGE_SIZE,
           priority: priority ? PRIORITY_TO_INT[priority] : undefined,
-          vip_level: vip ? (vipTiers.find((t) => t.name === vip)?.level ?? undefined) : undefined,
-          retention: retentionUuid || undefined,
+          mrs_vip_level: vip || undefined,
+          retention: retentionUser?.id ?? retentionUser?.uuid ?? undefined,
           search: debouncedQuery || undefined,
         });
         if (cancelled) return;
@@ -108,13 +109,17 @@ export default function RetentionMembersPage() {
     return () => {
       cancelled = true;
     };
-  }, [page, priority, vip, pic, pics, vipTiers, debouncedQuery]);
+  }, [page, priority, vip, pic, pics, debouncedQuery]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const startIdx = (safePage - 1) * PAGE_SIZE;
   const showingFrom = total === 0 ? 0 : startIdx + 1;
   const showingTo = Math.min(startIdx + rows.length, total);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   return (
     <section className="relative flex w-full flex-col rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
@@ -143,7 +148,7 @@ export default function RetentionMembersPage() {
           <TableHeader />
           <div className="flex w-full flex-col">
             {loading ? (
-              <div className="px-6 py-12 text-center text-[12px] text-white/60">Loading...</div>
+              <TableSkeleton rows={PAGE_SIZE} />
             ) : rows.length === 0 ? (
               <div className="px-6 py-12 text-center text-[12px] text-white/40">
                 No members found.
@@ -155,14 +160,14 @@ export default function RetentionMembersPage() {
         </div>
       </div>
 
-      <PaginationBar
-        from={showingFrom}
-        to={showingTo}
-        total={total}
-        page={safePage}
-        totalPages={totalPages}
-        onPageChange={setPage}
-      />
+      <div className="border-t border-white/5 px-4 pb-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="px-2 pt-4 text-[13px] text-white/70">
+            Showing {showingFrom} to {showingTo} of {total} Results
+          </span>
+          <Pagination currentPage={safePage} totalPages={totalPages} onPageChange={setPage} />
+        </div>
+      </div>
     </section>
   );
 }
@@ -269,31 +274,21 @@ function TableRow({ row }) {
   return (
     <div className="flex w-full items-stretch -mb-px border-b border-white/5">
       <Cell minW={COLUMNS[0].minW}>
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3">
           <UserAvatar />
-          <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">
+          <span className="min-w-0 break-words text-[12px] font-medium text-white leading-[18px]">
             {name}
           </span>
         </div>
       </Cell>
-      <Cell minW={COLUMNS[1].minW}>
-        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{row.phone_number ?? "—"}</span>
-      </Cell>
-      <Cell minW={COLUMNS[2].minW}>
-        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{row.vip_level ?? "—"}</span>
-      </Cell>
-      <Cell minW={COLUMNS[3].minW}>
-        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{formatCurrency(row.daily_sales)}</span>
-      </Cell>
-      <Cell minW={COLUMNS[4].minW}>
-        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{formatCurrency(row.daily_win_loss)}</span>
-      </Cell>
+      <DataCell value={row.phone_number} minW={COLUMNS[1].minW} />
+      <DataCell value={row.vip_level} minW={COLUMNS[2].minW} />
+      <DataCell value={formatCurrency(row.daily_sales)} minW={COLUMNS[3].minW} />
+      <DataCell value={formatCurrency(row.daily_win_loss)} minW={COLUMNS[4].minW} />
       <Cell minW={COLUMNS[5].minW}>
         <PriorityBadge value={row.priority} />
       </Cell>
-      <Cell minW={COLUMNS[6].minW}>
-        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">{row.retention ?? "—"}</span>
-      </Cell>
+      <DataCell value={row.retention} minW={COLUMNS[6].minW} />
       <Cell minW={COLUMNS[7].minW} align="end">
         <Link
           href={href}
@@ -308,11 +303,75 @@ function TableRow({ row }) {
   );
 }
 
+function TableSkeleton({ rows = 7 }) {
+  return Array.from({ length: rows }).map((_, rowIndex) => (
+    <div key={`member-skeleton-${rowIndex}`} className="flex w-full items-stretch -mb-px border-b border-white/5">
+      {COLUMNS.map((col, colIndex) => (
+        <Cell key={col.key} minW={col.minW} align={col.align === "end" ? "end" : "start"}>
+          {col.key === "name" ? (
+            <div className="flex w-full min-w-0 items-center gap-3">
+              <SkeletonCircle />
+              <SkeletonBar width={skeletonWidth(rowIndex, colIndex, ["68%", "82%", "74%"])} />
+            </div>
+          ) : col.key === "priority" ? (
+            <SkeletonPill />
+          ) : col.key === "action" ? (
+            <SkeletonButton />
+          ) : (
+            <SkeletonBar width={skeletonWidth(rowIndex, colIndex)} />
+          )}
+        </Cell>
+      ))}
+    </div>
+  ));
+}
+
+function skeletonWidth(row, col, widths = ["48%", "62%", "72%", "56%", "66%"]) {
+  return widths[(row * 3 + col * 2) % widths.length];
+}
+
+function SkeletonBar({ width }) {
+  return (
+    <span
+      className="block h-3 min-w-0 rounded bg-white/[0.07] before:absolute before:inset-0 before:-translate-x-full before:animate-[skeleton-shimmer_1.4s_ease-in-out_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/[0.1] before:to-transparent relative overflow-hidden"
+      style={{ width }}
+    />
+  );
+}
+
+function SkeletonCircle() {
+  return (
+    <span className="relative block h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white/[0.07] before:absolute before:inset-0 before:-translate-x-full before:animate-[skeleton-shimmer_1.4s_ease-in-out_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/[0.1] before:to-transparent" />
+  );
+}
+
+function SkeletonPill() {
+  return (
+    <span className="relative block h-6 w-20 overflow-hidden rounded-full bg-white/[0.07] before:absolute before:inset-0 before:-translate-x-full before:animate-[skeleton-shimmer_1.4s_ease-in-out_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/[0.1] before:to-transparent" />
+  );
+}
+
+function SkeletonButton() {
+  return (
+    <span className="relative block h-9 w-[78px] overflow-hidden rounded-[8px] bg-[#e9af41]/20 before:absolute before:inset-0 before:-translate-x-full before:animate-[skeleton-shimmer_1.4s_ease-in-out_infinite] before:bg-gradient-to-r before:from-transparent before:via-[#e9af41]/30 before:to-transparent" />
+  );
+}
+
+function DataCell({ value, minW }) {
+  return (
+    <Cell minW={minW}>
+      <span className="min-w-0 break-words text-[12px] font-medium text-white leading-[18px]">
+        {value ?? "—"}
+      </span>
+    </Cell>
+  );
+}
+
 function Cell({ children, minW, align = "start" }) {
   const justify = align === "end" ? "justify-end" : "justify-start";
   return (
     <div
-      className={`flex flex-1 items-center p-6 ${justify}`}
+      className={`flex min-w-0 flex-1 items-center overflow-hidden p-6 ${justify}`}
       style={{ minWidth: minW }}
     >
       {children}
@@ -334,102 +393,3 @@ function UserAvatar() {
   );
 }
 
-// Build the page chip list with ellipsis. When there are 7 or fewer pages we
-// just list them all. Otherwise we always show the first and last page, and
-// a 1-page window around the current page, inserting ellipsis where there's a
-// gap so we never render adjacent numbers like "1, 2" with an ellipsis in
-// between.
-function buildPageItems(currentPage, totalPages) {
-  if (totalPages <= 7) {
-    return Array.from({ length: totalPages }, (_, i) => i + 1);
-  }
-  const items = [1];
-  const start = Math.max(2, currentPage - 1);
-  const end = Math.min(totalPages - 1, currentPage + 1);
-  if (start > 2) items.push("ellipsis-l");
-  for (let p = start; p <= end; p += 1) items.push(p);
-  if (end < totalPages - 1) items.push("ellipsis-r");
-  items.push(totalPages);
-  return items;
-}
-
-function PaginationBar({ from, to, total, page, totalPages, onPageChange }) {
-  const items = buildPageItems(page, totalPages);
-  const prevDisabled = page <= 1;
-  const nextDisabled = page >= totalPages;
-
-  return (
-    <div className="flex min-h-[44px] w-full items-center justify-between gap-3 flex-wrap px-6 py-3">
-      <span className="text-[8px] text-white leading-[12px]">
-        Showing {from} to {to} of {total} Results
-      </span>
-      <div className="flex items-center gap-[5.5px]">
-        <PageButton
-          onClick={() => onPageChange(Math.max(1, page - 1))}
-          disabled={prevDisabled}
-          ariaLabel="Previous page"
-        >
-          <PageChevron direction="left" />
-        </PageButton>
-        {items.map((item) =>
-          typeof item === "number" ? (
-            <PageNumber
-              key={item}
-              value={item}
-              active={item === page}
-              onClick={() => onPageChange(item)}
-            />
-          ) : (
-            <span key={item} className="text-[8px] text-white leading-[12px]">....</span>
-          )
-        )}
-        <PageButton
-          onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-          disabled={nextDisabled}
-          ariaLabel="Next page"
-        >
-          <PageChevron direction="right" />
-        </PageButton>
-      </div>
-    </div>
-  );
-}
-
-function PageNumber({ value, active, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex h-[18px] w-[18px] items-center justify-center rounded-[4px] text-[8px] text-white leading-[12px] ${
-        active ? "bg-[#eaad2c]" : "border border-[#eaad2c] hover:bg-[#eaad2c]/20"
-      }`}
-    >
-      {value}
-    </button>
-  );
-}
-
-function PageButton({ children, onClick, ariaLabel, disabled }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={ariaLabel}
-      disabled={disabled}
-      className={`flex h-[18px] w-[18px] items-center justify-center rounded-[4px] border border-[#eaad2c] ${
-        disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-[#eaad2c]/20"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
-function PageChevron({ direction }) {
-  const rotate = direction === "left" ? "rotate(180deg)" : "rotate(0deg)";
-  return (
-    <svg width="6" height="10" viewBox="0 0 6 10" fill="none" style={{ transform: rotate }}>
-      <path d="M1 1l4 4-4 4" stroke="#eaad2c" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}

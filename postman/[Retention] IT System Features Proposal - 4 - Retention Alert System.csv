@@ -1,0 +1,33 @@
+Dashboard View,,,,,,Features,,
+No,Title,Description,Remark,,,No,Title,Description
+1,High Priority  ,"NS System
+Members with daily net loss ≤ -2000",NS System Top customer - NET AMOUNT,,,1,Refresh Button,"When clicked, system will fetch latest data from NS System"
+2,Medium Priority,"NS System
+Members with daily net loss between -500 and -1999",NS System Top customer - NET AMOUNT,,,2,Notifications,Displays total number of members requiring attention and pending follow-up
+3,Low Piority,"NS System
+Members with daily net loss ≥ -499",NS System Top customer - NET AMOUNT,,,,,
+4,Inactive Member,"NS System
+Members whose last deposit is 30 days or more ago will be classified as inactive members.","NS System Top customer - LAST DEPOSIT DATE
+",,,,,
+,,,,,,,,
+Filter Function,,,,,,,,
+No,Title,Description,,,,,,
+1,Priority,Filter Members by CRM system priority (High / Medium / Low / Inactive),,,,,,
+2,Level,Manual Input,,,,,,
+4,PIC,Manual Input,,,,,,
+5,Search Username,Manual Input,,,,,,
+,,,,,,,,
+Members Follow Up List,,,,,,,,
+No,Title,Description,Type,Sample Value,,,,
+1,Username,NS System Username ID,Text,389910955,,,,
+2,Phone Number,NS System Contact number,Text,60++123456789,,,,
+3,Level,NS System Reports,Text,VIP 1,,,,
+4,Daily Sales,NS System,Currency,500.00,,,,
+5,Daily Winlose,NS System,Currency,  +200 / -100,,,,
+6,Priority,Manual Input,Dropdown,High / Medium / Low,,,,
+7,PIC,Manual Input,Text,Zoey / Alex,,,,
+8,Action,"Allows PIC to view member details, complete follow-up, and record interaction notes",Button / Action,“View / Follow up”,"Followup
+- Option: TG, WA, Bonus, Event, LiveChat, Others
+- Option: When choose Others, user will be able to write down the input accordingly
+In the Member Profile, should have 1 place to view the “Followup Status” 
+ - e:g to have a box to view last 5 actions, then when click “See More”, will have popup and see more. ",,,

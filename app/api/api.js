@@ -29,7 +29,10 @@ export const ENDPOINTS = {
     PUBLIC_BANNERS: '/settings/banners/public/'
   },
   ADMIN: {
-    LOGIN: '/login/admin-access-token/',
+    // Previous admin login API:
+    // LOGIN: '/login/admin-access-token/',
+    LOGIN: '/login/admin-login/',
+    LOGIN_COMPLETE: '/login/admin-login/complete/',
     LOGOUT: '/login/logout/',
     REFRESH_TOKEN: '/login/refresh-token/',
     VERIFY_TOKEN: '/login/verify-token/',
@@ -109,7 +112,10 @@ export const ENDPOINTS = {
     REFRESH_MEMBERS: '/crm-members/refresh-members/',
     // Retention Profile
     RETENTION_SUMMARY: (adminUuid) => `/crm-members/retention-summary/${adminUuid}/`,
+    // Old path returned 404 on staging:
+    // RETENTION_MEMBERS: '/crm-members/retention-profile/',
     RETENTION_MEMBERS: '/crm-members/retention-members/',
+    ADMIN_MEMBERS: (adminUuid) => `/crm-members/${adminUuid}/admin-members/`,
     // Dashboard
     DASHBOARD_SUMMARY: '/crm-admins/dashboard-summary/',
     DASHBOARD_DETAILS: '/crm-admins/dashboard-details/',
@@ -117,9 +123,13 @@ export const ENDPOINTS = {
     ASSIGNMENTS: '/crm-admins/assignments/',
     ASSIGNMENT_SINGLE: (uuid) => `/crm-admins/assignments/${uuid}/`,
     ASSIGNMENT_SET_TARGET: '/crm-admins/assignments/set-target/',
-    // CRM VIP Tiers
-    CRM_VIP_TIERS: '/crm-admins/vip-tier/',
-    CRM_VIP_TIER_SINGLE: (uuid) => `/crm-admins/vip-tier/${uuid}/`,
-    CRM_VIP_TIER_ARCHIVE: (uuid) => `/crm-admins/vip-tier/${uuid}/archive/`
+    // CRM MRS VIP Tier aliases.
+    // Old CRM-specific paths returned 404 on staging:
+    // CRM_VIP_TIERS: '/crm-admins/vip-tier/',
+    // CRM_VIP_TIER_SINGLE: (uuid) => `/crm-admins/vip-tier/${uuid}/`,
+    // CRM_VIP_TIER_ARCHIVE: (uuid) => `/crm-admins/vip-tier/${uuid}/archive/`
+    CRM_VIP_TIERS: '/member/vip-tier/',
+    CRM_VIP_TIER_SINGLE: (uuid) => `/member/vip-tier/${uuid}/`,
+    CRM_VIP_TIER_ARCHIVE: (uuid) => `/member/vip-tier/${uuid}/archive/`
   }
 };

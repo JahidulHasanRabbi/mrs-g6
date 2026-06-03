@@ -23,7 +23,7 @@ export default function ProfilePage() {
 
   const handleVipDetailsClick = () => {
     // Navigate to VIP details page
-    router.push('/vip-details');
+    router.push('/vip');
   };
 
   const handleEditProfileItem = (item) => {

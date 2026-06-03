@@ -34,7 +34,7 @@ NEXT_PUBLIC_TWITTER_URL=https://twitter.com/
 - `/spin` - Lucky spin
 - `/mart` - Redemption mart
 - `/personal-data` - Personal data form
-- `/vip-details` - VIP tier details
+- `/vip` - VIP tier details
 - `/terms-and-conditions` - Terms and conditions
 
 ### Examples:

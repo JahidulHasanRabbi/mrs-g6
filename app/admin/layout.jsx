@@ -1,15 +1,30 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import Sidebar from "../components/admin/Sidebar";
-import { SidebarProvider, useSidebar } from "../contexts/SidebarContext";
+import RetentionTopBar from "../components/admin/retention/RetentionTopBar";
+import { AdminRouteGuard } from "../components/guards/AdminRouteGuard";
+import { getStoredSidebarCollapsed, SidebarProvider, useSidebar } from "../contexts/SidebarContext";
+import { ToastProvider } from "../components/admin/ui/Toast";
 
 // Sidebar widths — must match the values the sidebar component renders with.
 // Kept here so both the aside and any consumer of `--admin-sidebar-w` agree.
 const SIDEBAR_WIDTH_EXPANDED = 326;
 const SIDEBAR_WIDTH_COLLAPSED = 88;
 const SIDEBAR_TRANSITION = { duration: 0.3, ease: [0.4, 0, 0.2, 1] };
+
+function AdminShellLoading() {
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#07190d]">
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#f2cb7a]/30 border-t-[#f2cb7a]" />
+        <p className="text-[13px] font-medium text-[#fbeed2]/70">Loading admin panel...</p>
+      </div>
+    </div>
+  );
+}
 
 function AdminLayoutInner({ children }) {
   const { collapsed } = useSidebar();
@@ -33,6 +48,10 @@ function AdminLayoutInner({ children }) {
         <Sidebar />
       </motion.aside>
 
+      <div className="px-4 pt-4 sm:px-6 sm:pt-6 xl:admin-content-pl xl:pr-12">
+        <RetentionTopBar />
+      </div>
+
       {children}
     </div>
   );
@@ -50,15 +69,30 @@ function AdminLayoutInner({ children }) {
  */
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+  const [initialSidebarCollapsed, setInitialSidebarCollapsed] = useState(false);
   const isLogin = pathname === "/admin/login";
+
+  useEffect(() => {
+    setInitialSidebarCollapsed(getStoredSidebarCollapsed(false));
+    setMounted(true);
+  }, []);
 
   if (isLogin) {
     return children;
   }
 
+  if (!mounted) {
+    return <AdminShellLoading />;
+  }
+
   return (
-    <SidebarProvider>
-      <AdminLayoutInner>{children}</AdminLayoutInner>
+    <SidebarProvider initialCollapsed={initialSidebarCollapsed}>
+      <ToastProvider>
+        <AdminRouteGuard>
+          <AdminLayoutInner>{children}</AdminLayoutInner>
+        </AdminRouteGuard>
+      </ToastProvider>
     </SidebarProvider>
   );
 }

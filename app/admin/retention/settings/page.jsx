@@ -46,6 +46,15 @@ function stripCurrency(value) {
   return String(value ?? "").replace(/^RM\s*/i, "").replace(/,/g, "");
 }
 
+function normalizeAssignmentStatus(value) {
+  if (value === 1 || value === "1") return "Active";
+  if (value === 2 || value === "2") return "Inactive";
+  const normalized = String(value || "").trim().toUpperCase();
+  if (normalized === "ACTIVE") return "Active";
+  if (normalized === "INACTIVE") return "Inactive";
+  return value || "Inactive";
+}
+
 function isUuid(value) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ""));
 }
@@ -83,16 +92,15 @@ function mapAssignment(row, idx = 0) {
   return {
     id: row.uuid || row.id || idx + 1,
     uuid: row.uuid,
-    name: row.full_name || row.name || "—",
+    name: row.full_name || "—",
     picUuid: firstPresent(row.pic_uuid, row.admin_uuid, row.user_uuid, row.pic?.uuid, row.admin?.uuid),
-    vip: row.vip_level || "",
     avatar: `${ASSETS}/avatar-${(idx % 5) + 1}.jpg`,
-    level: row.level || row.name || "—",
+    level: row.level || "—",
     members: formatNumber(row.target_members),
     retain: formatCurrency(row.retain_criteria),
     upgrade: formatCurrency(row.upgrade_criteria),
     target: formatCurrency(row.retention_target),
-    status: row.status || "Inactive",
+    status: normalizeAssignmentStatus(row.status),
   };
 }
 
@@ -118,7 +126,6 @@ function applyFormToRow(row, values) {
     status: values.status,
     retain: `RM ${values.retain.replace(/^RM\s*/i, "")}`,
     upgrade: values.upgrade,
-    name: values.pic,
   };
 }
 
@@ -187,10 +194,6 @@ function RetentionSettingsPageInner() {
         alert("Cannot save: please select a valid PIC from the list.");
         return;
       }
-      if (!isUuid(picUuid)) {
-        alert(invalidPicMessage(selectedPic || { uuid: picUuid }));
-        return;
-      }
       const payload = {
         name: values.name,
         status: statusLabelToInt(values.status),
@@ -204,6 +207,7 @@ function RetentionSettingsPageInner() {
         await loadAssignments();
       } catch (err) {
         console.error("[retention-settings] save failed", err);
+        throw err;
       }
     },
     [editingRow, loadAssignments, pics]
@@ -213,7 +217,14 @@ function RetentionSettingsPageInner() {
     <>
       <PageHeader />
       {mode === "list" ? (
-        <AssignmentListSection rows={rows} total={total} page={page} loading={loading} pics={pics} />
+        <AssignmentListSection
+          rows={rows}
+          total={total}
+          page={page}
+          loading={loading}
+          pics={pics}
+          onAssignmentsChanged={loadAssignments}
+        />
       ) : (
         <MemberLevelForm
           key={editingRow ? `edit-${editingRow.id}` : "add"}
@@ -241,7 +252,7 @@ function PageHeader() {
   );
 }
 
-function AssignmentListSection({ rows, total, page, loading, pics = [] }) {
+function AssignmentListSection({ rows, total, page, loading, pics = [], onAssignmentsChanged }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -273,19 +284,17 @@ function AssignmentListSection({ rows, total, page, loading, pics = [] }) {
       alert("Cannot set target: please select a valid PIC from the list.");
       return;
     }
-    if (!isUuid(picUuid)) {
-      alert(invalidPicMessage(selectedPic || { uuid: picUuid }));
-      return;
-    }
     try {
       await setCrmAssignmentTarget({
         pic_uuid: picUuid,
         deposit: stripCurrency(payload.target),
       });
+      await onAssignmentsChanged?.();
     } catch (err) {
       console.error("[retention-settings] set target failed", err);
+      throw err;
     }
-  }, [pics]);
+  }, [onAssignmentsChanged, pics]);
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
@@ -315,15 +324,16 @@ function AssignmentListSection({ rows, total, page, loading, pics = [] }) {
           style={{ backgroundImage: GRAD_GOLD }}
         >
           <PlusGlyph />
-          Add Member level
+          Add Member Assignment
         </button>
       </header>
 
-      <div className="flex w-full flex-col overflow-clip">
+      <div className="w-full overflow-x-auto scrollbar-admin">
+        <div style={{ minWidth: 900 }}>
         <TableHeader />
         <div className="flex w-full flex-col">
           {loading ? (
-            <div className="px-6 py-10 text-center b-4 text-white/60">Loading...</div>
+            Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonRow key={i} />)
           ) : rows.length === 0 ? (
             <div className="px-6 py-10 text-center b-4 text-white/60">No assignments found.</div>
           ) : rows.map((row, idx) => (
@@ -334,6 +344,8 @@ function AssignmentListSection({ rows, total, page, loading, pics = [] }) {
             />
           ))}
         </div>
+        </div>
+      </div>
         <Pagination
           from={showingFrom}
           to={showingTo}
@@ -347,7 +359,6 @@ function AssignmentListSection({ rows, total, page, loading, pics = [] }) {
             router.push(next.toString() ? `${pathname}?${next.toString()}` : pathname);
           }}
         />
-      </div>
 
       <SetTargetModal
         isOpen={targetOpen}
@@ -362,7 +373,7 @@ function AssignmentListSection({ rows, total, page, loading, pics = [] }) {
 function TableHeader() {
   return (
     <div className="flex w-full items-start justify-between" style={{ backgroundImage: GRAD_DARK }}>
-      <HeaderCell label="Username" widthClass="w-[200px]" />
+      <HeaderCell label="Member Assignment" widthClass="w-[200px]" />
       <HeaderCell label="Level" />
       <HeaderCell label="No. of Members" />
       <HeaderCell label="Retain Criteria" />
@@ -391,14 +402,8 @@ function AssignmentRow({ row, onEdit }) {
         <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full">
           <img src={row.avatar} alt="" className="h-full w-full object-cover" />
         </div>
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <span className="b-4 text-white whitespace-nowrap">{row.name}</span>
-          <span
-            className="inline-flex items-center rounded-[12px] px-2 py-[2px] b-6 text-[#05060a] whitespace-nowrap"
-            style={{ backgroundImage: GRAD_GOLD }}
-          >
-            {row.vip}
-          </span>
+        <div className="flex min-w-0 flex-1 items-center">
+          <span className="b-4 text-white break-words leading-[18px]">{row.name}</span>
         </div>
       </div>
       <DataCell value={row.level} />
@@ -438,9 +443,43 @@ function DataCell({ value }) {
   return (
     <div className="flex flex-1 min-w-0 items-center self-stretch">
       <div className="flex h-full flex-1 flex-col justify-center p-6">
-        <span className="b-4 text-white whitespace-nowrap">{value}</span>
+        <span className="b-4 text-white break-words leading-[18px]">{value}</span>
       </div>
     </div>
+  );
+}
+
+function SkeletonRow() {
+  return (
+    <div className="flex w-full items-center border-b border-white/5">
+      <div className="flex w-[200px] shrink-0 items-center gap-3 p-6">
+        <SkeletonCircle />
+        <SkeletonBar width="70%" />
+      </div>
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="flex flex-1 min-w-0 items-center p-6">
+          <SkeletonBar width={i % 2 === 0 ? "68%" : "52%"} />
+        </div>
+      ))}
+      <div className="flex w-[110px] shrink-0 items-center p-6">
+        <span className="relative block h-9 w-[76px] overflow-hidden rounded-[8px] bg-[#e9af41]/20 before:absolute before:inset-0 before:-translate-x-full before:animate-[skeleton-shimmer_1.4s_ease-in-out_infinite] before:bg-gradient-to-r before:from-transparent before:via-[#e9af41]/30 before:to-transparent" />
+      </div>
+    </div>
+  );
+}
+
+function SkeletonBar({ width }) {
+  return (
+    <span
+      className="relative block h-3 overflow-hidden rounded bg-white/[0.07] before:absolute before:inset-0 before:-translate-x-full before:animate-[skeleton-shimmer_1.4s_ease-in-out_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/[0.1] before:to-transparent"
+      style={{ width }}
+    />
+  );
+}
+
+function SkeletonCircle() {
+  return (
+    <span className="relative block h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white/[0.07] before:absolute before:inset-0 before:-translate-x-full before:animate-[skeleton-shimmer_1.4s_ease-in-out_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/[0.1] before:to-transparent" />
   );
 }
 
@@ -459,6 +498,8 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
   const [upgrade, setUpgrade] = useState(() => initialValues?.upgrade ?? "1,000");
   const picOptions = pics?.length ? pics : [];
   const [picUuid, setPicUuid] = useState(() => initialValues?.picUuid ?? picOptions[0]?.uuid ?? "");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     if (!picUuid && picOptions[0]?.uuid) setPicUuid(picOptions[0].uuid);
@@ -473,8 +514,16 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
   }, [pathname, router, searchParams]);
 
   const handleSave = useCallback(async () => {
-    await onSave({ name, status, retain, upgrade, picUuid });
-    goBack();
+    setSaving(true);
+    setSaveError("");
+    try {
+      await onSave({ name, status, retain, upgrade, picUuid });
+      goBack();
+    } catch {
+      setSaveError("Failed to save assignment. Please check the values and try again.");
+    } finally {
+      setSaving(false);
+    }
   }, [name, status, retain, upgrade, picUuid, onSave, goBack]);
 
   return (
@@ -489,11 +538,11 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
           lineHeight: "39px",
         }}
       >
-        {isEdit ? "Edit Member Level" : "Add Member Level"}
+        {isEdit ? "Edit Member Assignment" : "Add Member Assignment"}
       </h2>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <FormField label="Name">
+        <FormField label="Level">
           <TextInput value={name} onChange={setName} />
         </FormField>
         <FormField label="Status">
@@ -510,10 +559,17 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
         </FormField>
       </div>
 
+      {saveError && (
+        <p className="rounded-[8px] border border-[#fb3748] bg-[#d00416]/20 px-4 py-2 text-[12px] text-[#fb3748]">
+          {saveError}
+        </p>
+      )}
+
       <div className="mt-2 flex items-center justify-end gap-3">
         <button
           type="button"
           onClick={goBack}
+          disabled={saving}
           className="flex items-center justify-center gap-2 rounded-[8px] border border-[#f2cb7a] bg-transparent px-6 py-2 text-[14px] font-medium text-white transition hover:bg-white/5"
         >
           <ArrowBackGlyph />
@@ -522,11 +578,12 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
         <button
           type="button"
           onClick={handleSave}
-          className="flex items-center justify-center gap-2 rounded-[8px] border border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold text-[#152044] transition hover:brightness-110"
+          disabled={saving}
+          className="flex items-center justify-center gap-2 rounded-[8px] border border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold text-[#152044] transition hover:brightness-110 disabled:opacity-60"
           style={{ backgroundImage: GRAD_GOLD }}
         >
           <CheckGlyph />
-          {isEdit ? "Save Changes" : "Save"}
+          {saving ? "Saving..." : isEdit ? "Save Changes" : "Save"}
         </button>
       </div>
     </section>
@@ -534,26 +591,7 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
 }
 
 function PicSelect({ value, onChange, options }) {
-  return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="h-10 rounded-[8px] border border-[#f2cb7a] bg-transparent px-3 text-[14px] text-white focus:outline-none appearance-none"
-      style={{
-        backgroundImage:
-          "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M4 6l4 4 4-4' stroke='%23eaad2c' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>\")",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "right 10px center",
-        paddingRight: "30px",
-      }}
-    >
-      {options.map((pic) => (
-        <option key={pic.uuid} value={pic.uuid} className="bg-[#041502]">
-          {pic.label}
-        </option>
-      ))}
-    </select>
-  );
+  return <CustomSelect value={value} onChange={onChange} options={options.map((pic) => ({ value: pic.uuid, label: pic.label }))} placeholder="Choose PIC" />;
 }
 
 function FormField({ label, children }) {
@@ -592,25 +630,67 @@ function RmInput({ value, onChange }) {
 }
 
 function Select({ value, onChange, options }) {
+  return <CustomSelect value={value} onChange={onChange} options={options.map((opt) => ({ value: opt, label: opt }))} />;
+}
+
+function CustomSelect({ value, onChange, options, placeholder = "Select..." }) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find((option) => option.value === value);
+
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="h-10 rounded-[8px] border border-[#f2cb7a] bg-transparent px-3 text-[14px] text-white focus:outline-none appearance-none"
-      style={{
-        backgroundImage:
-          "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M4 6l4 4 4-4' stroke='%23eaad2c' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>\")",
-        backgroundRepeat: "no-repeat",
-        backgroundPosition: "right 10px center",
-        paddingRight: "30px",
-      }}
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((next) => !next)}
+        className="flex h-10 w-full items-center justify-between gap-3 rounded-[8px] border border-[#f2cb7a] bg-transparent px-3 text-left text-[14px] text-white focus:outline-none"
+      >
+        <span className={selected ? "min-w-0 break-words" : "text-white/45"}>
+          {selected?.label || placeholder}
+        </span>
+        <ChevronGlyph open={open} />
+      </button>
+      {open ? (
+        <>
+          <div className="fixed inset-0 z-20" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-full z-30 mt-1 max-h-56 w-full overflow-y-auto rounded-[8px] border border-[#f2cb7a] bg-[#050805] py-1 shadow-[0_12px_28px_rgba(0,0,0,0.45)]">
+            {options.length === 0 ? (
+              <div className="px-3 py-2 text-[13px] text-white/40">No options</div>
+            ) : (
+              options.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(option.value);
+                    setOpen(false);
+                  }}
+                  className={`block w-full px-3 py-2 text-left text-[13px] leading-[18px] ${
+                    option.value === value ? "bg-[#eaad2c] text-black" : "text-white hover:bg-white/10"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))
+            )}
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function ChevronGlyph({ open }) {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      className="shrink-0 transition-transform"
+      style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
     >
-      {options.map((opt) => (
-        <option key={opt} value={opt} className="bg-[#041502]">
-          {opt}
-        </option>
-      ))}
-    </select>
+      <path d="M4 6l4 4 4-4" stroke="#eaad2c" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 

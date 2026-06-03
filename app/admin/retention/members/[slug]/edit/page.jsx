@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { GRAD_GOLD } from "../../../../../components/admin/retention/constants";
 import { getCrmMemberSingle, getCrmVipTiers, updateCrmMember } from "../../../../../api/crmApi";
-import Skeleton from "../../../../../components/admin/ui/Skeleton";
+import { getStationList, getWalletVipTiers } from "../../../../../api/adminApi";
 
 // Member edit form — Figma 87:7291. 3-step wizard:
 //   01 Basic Info   (Profile Data + Basic Info shown in the Figma)
@@ -12,7 +12,7 @@ import Skeleton from "../../../../../components/admin/ui/Skeleton";
 //   03 Game Info       (stub fields until Figma is available)
 //
 // Initial values are loaded from GET /crm-members/members/<uuid>/ and saved
-// via PUT /crm-members/members/<uuid>/ split into the three payload sections
+// via PATCH /crm-members/members/<uuid>/ split into the three payload sections
 // the API expects (profile_data / basic_info / game_info).
 
 const STEPS = ["Basic Info", "Financial Info", "Game Info"];
@@ -124,13 +124,17 @@ function findVipUuid(vipTiers, label) {
 
 function getExistingVipUuid(data) {
   return (
+    data?.profile_data?.mrs_vip_level_uuid ||
     data?.profile_data?.vip_level_uuid ||
+    data?.basic_info?.mrs_vip_level_uuid ||
     data?.basic_info?.vip_level_uuid ||
     data?.basic_info?.mrs_level_uuid ||
     data?.basic_info?.vip_uuid ||
+    data?.customer_data?.mrs_vip_level_uuid ||
     data?.customer_data?.vip_level_uuid ||
     data?.customer_data?.mrs_level_uuid ||
     data?.customer_data?.vip_uuid ||
+    data?.mrs_vip_level_uuid ||
     data?.vip_level_uuid ||
     data?.mrs_level_uuid ||
     data?.vip_uuid ||
@@ -144,6 +148,75 @@ function normalizeListResponse(response) {
   if (Array.isArray(response?.data)) return response.data;
   if (Array.isArray(response?.data?.results)) return response.data.results;
   return [];
+}
+
+function stationName(station) {
+  return station?.name || station?.station_name || station?.Station || station?.special_code || station?.code || "";
+}
+
+function stationCandidates(station) {
+  return [
+    station?.name,
+    station?.station_name,
+    station?.Station,
+    station?.special_code,
+    station?.code,
+    station?.short_code,
+  ].map(normalizeLabel).filter(Boolean);
+}
+
+function walletTierStationCandidates(tier) {
+  return [
+    tier?.station_name,
+    tier?.station,
+    tier?.station_code,
+    tier?.station_special_code,
+    tier?.station_detail?.name,
+    tier?.station_detail?.station_name,
+    tier?.station_detail?.special_code,
+  ].map(normalizeLabel).filter(Boolean);
+}
+
+function walletTierName(tier) {
+  return tier?.tier_name || tier?.name || tier?.level || tier?.vip_level || tier?.title || "";
+}
+
+function buildWalletLevelSelections(data, walletVipTiers = [], stationList = []) {
+  const raw = data?.customer_data?.wallet_levels || data?.customer_data?.wallet_level || data?.profile_data?.wallet_levels;
+  if (!Array.isArray(raw)) return {};
+  return raw.reduce((acc, item) => {
+    if (item?.station_uuid && item?.wallet_level_uuid) {
+      acc[item.station_uuid] = item.wallet_level_uuid;
+      return acc;
+    }
+    const stationLabel = normalizeLabel(item?.Station || item?.station || item?.station_name);
+    const levelLabel = normalizeLabel(item?.Level || item?.level || item?.tier_name || item?.name);
+    if (!stationLabel || !levelLabel) return acc;
+    const station = stationList.find((s) => stationCandidates(s).includes(stationLabel));
+    const tier = walletVipTiers.find(
+      (t) => walletTierStationCandidates(t).includes(stationLabel) && normalizeLabel(walletTierName(t)) === levelLabel
+    );
+    if (station?.uuid && tier?.uuid) acc[station.uuid] = tier.uuid;
+    return acc;
+  }, {});
+}
+
+function walletLevelsToPayload(walletLevels = {}) {
+  return Object.entries(walletLevels)
+    .filter(([, wallet_level_uuid]) => wallet_level_uuid)
+    .map(([station_uuid, wallet_level_uuid]) => ({ station_uuid, wallet_level_uuid }));
+}
+
+function hasDisplayValue(value) {
+  return value !== null && value !== undefined && value !== "";
+}
+
+function moneyValue(value) {
+  if (!hasDisplayValue(value)) return undefined;
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return `RM ${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+  return `RM ${value}`;
 }
 
 function dateToInput(value) {
@@ -172,6 +245,7 @@ function emptyForm() {
     risk: null,
     depositFreq: null,
     status: null,
+    walletLevels: {},
 
     fullName: "",
     phone: "",
@@ -186,8 +260,11 @@ function emptyForm() {
     hobby: [],
 
     totalSales: "",
+    totalWithdrawal: "",
     totalWinLoss: "",
+    totalBonus: "",
     totalTicketSales: "",
+    totalWithdrawalTicket: "",
     arpu: "",
     avgDeposit: "",
     lastDepositDate: "",
@@ -230,7 +307,7 @@ function labelsToInts(enumKey, list) {
 
 // Hydrate the form from the GET response. Tag-style fields wrap the label in
 // `{ kind, label }` to match TagSelectField; selects/inputs are plain strings.
-function apiToForm(data, vipTiers = []) {
+function apiToForm(data, vipTiers = [], walletVipTiers = [], stationList = []) {
   const form = emptyForm();
   if (!data) return form;
   const c = data.customer_data || {};
@@ -250,7 +327,9 @@ function apiToForm(data, vipTiers = []) {
       const vipLabel =
         c.mrs_level || c.vip_level ||
         b.mrs_level || b.vip_level || b.vip_level_name ||
+        data?.profile_data?.mrs_vip_level || data?.profile_data?.mrs_vip_level_name ||
         data?.profile_data?.vip_level || data?.profile_data?.vip_level_name ||
+        data?.mrs_vip_level ||
         data?.vip_level || null;
       const vipUuid = getExistingVipUuid(data) || findVipUuid(vipTiers, vipLabel);
       const statusLabel =
@@ -267,6 +346,7 @@ function apiToForm(data, vipTiers = []) {
     playerType: tagFor("game", g.player_type),
     risk: tagFor("risk", g.risk_style),
     depositFreq: tagFor("weekly", g.deposit_frequency_style),
+    walletLevels: buildWalletLevelSelections(data, walletVipTiers, stationList),
 
     // customer_data returns documented string values (e.g. gender="Male").
     // basic_info GET fields are undocumented and likely return the same
@@ -284,8 +364,11 @@ function apiToForm(data, vipTiers = []) {
     hobby: tagListFor("hobby", c.hobby || b.hobby),
 
     totalSales: f.total_sales ?? "",
+    totalWithdrawal: f.total_withdrawal ?? "",
     totalWinLoss: f.total_win_lose ?? "",
+    totalBonus: f.total_bonus ?? "",
     totalTicketSales: f.total_sales_ticket ?? "",
+    totalWithdrawalTicket: f.total_withdrawal_ticket ?? "",
     arpu: f.arpu ?? "",
     avgDeposit: f.average_deposit ?? "",
     lastDepositDate: f.last_deposit_date || "",
@@ -306,24 +389,34 @@ function apiToForm(data, vipTiers = []) {
   };
 }
 
-// Build the PUT payload split into the three top-level objects the API
+// Build the PATCH payload split into the three top-level objects the API
 // expects. Values still kept as strings/labels are mapped to ints where the
 // doc says "Int / Will have choices later".
-function formToApi(form, vipTiers = []) {
+function formToApi(form, vipTiers = [], originalData = null) {
   const vipUuid = form.vipUuid || findVipUuid(vipTiers, form.vip?.label);
-  const playerType = labelToInt("playerType", form.playerType?.label) || labelToInt("playerSegment", form.playerSegment);
-  const risk = riskLabelToInt(form.risk?.label) || riskLabelToInt(form.riskStyle);
-  const status = labelToInt("status", form.status?.label) || 1;
   const paymentMethod = labelToInt("paymentMethod", form.paymentMethod);
   const playTimePattern = labelToInt("playTimePattern", form.playTimePattern);
+  const existingProfile = originalData?.profile_data || {};
+  const existingTags = existingProfile.tags || originalData?.customer_data?.tags;
+  const existingWalletLevels = existingProfile.wallet_levels;
+  const walletLevels = walletLevelsToPayload(form.walletLevels);
+
+  // Doc 8 removed these from profile_data. Keep the old mapping here as a
+  // reference only in case backend reintroduces the fields later.
+  // const playerType = labelToInt("playerType", form.playerType?.label) || labelToInt("playerSegment", form.playerSegment);
+  // const risk = riskLabelToInt(form.risk?.label) || riskLabelToInt(form.riskStyle);
+  // const status = labelToInt("status", form.status?.label) || 1;
 
   return {
     profile_data: {
-      vip_level_uuid: vipUuid,
-      player_type: playerType,
-      risk,
-      deposit_frequency: labelToInt("depositFreq", form.depositFreq?.label),
-      status,
+      mrs_vip_level_uuid: vipUuid,
+      tags: Array.isArray(existingTags) ? existingTags : undefined,
+      wallet_levels: walletLevels.length ? walletLevels : Array.isArray(existingWalletLevels) ? existingWalletLevels : undefined,
+      // Old profile_data fields, no longer documented in CRM doc 8:
+      // player_type: playerType,
+      // risk,
+      // deposit_frequency: labelToInt("depositFreq", form.depositFreq?.label),
+      // status,
     },
     basic_info: {
       gender: labelToInt("gender", form.gender),
@@ -362,6 +455,8 @@ export default function MemberEditPage() {
   const [saving, setSaving] = useState(false);
   const [memberName, setMemberName] = useState("Member");
   const [vipTiers, setVipTiers] = useState([]);
+  const [walletVipTiers, setWalletVipTiers] = useState([]);
+  const [stationList, setStationList] = useState([]);
   const [originalMember, setOriginalMember] = useState(null);
 
   useEffect(() => {
@@ -370,18 +465,30 @@ export default function MemberEditPage() {
     const fetchMember = async () => {
       setLoading(true);
       try {
-        const [res, tiersRes] = await Promise.all([
+        const [res, tiersRes, walletTiersRes, stationsRes] = await Promise.all([
           getCrmMemberSingle(memberUuid),
           getCrmVipTiers({ page: 1, page_size: 100 }).catch((err) => {
             console.error("[member-edit] crm vip tiers load failed", err);
             return [];
           }),
+          getWalletVipTiers({ page: 1, page_size: 100 }).catch((err) => {
+            console.error("[member-edit] wallet vip tiers load failed", err);
+            return [];
+          }),
+          getStationList().catch((err) => {
+            console.error("[member-edit] station list load failed", err);
+            return [];
+          }),
         ]);
         if (cancelled) return;
         const tiers = normalizeListResponse(tiersRes);
+        const walletTiers = normalizeListResponse(walletTiersRes);
+        const stations = normalizeListResponse(stationsRes);
         setVipTiers(tiers);
+        setWalletVipTiers(walletTiers);
+        setStationList(stations);
         setOriginalMember(res);
-        setForm(apiToForm(res, tiers));
+        setForm(apiToForm(res, tiers, walletTiers, stations));
         setMemberName(res?.full_name || res?.basic_info?.username || "Member");
       } catch (err) {
         if (cancelled) return;
@@ -412,7 +519,7 @@ export default function MemberEditPage() {
     }
     setSaving(true);
     try {
-      await updateCrmMember(memberUuid, formToApi({ ...form, vipUuid }, vipTiers));
+      await updateCrmMember(memberUuid, formToApi({ ...form, vipUuid }, vipTiers, originalMember));
       router.push(`/admin/retention/members/${memberUuid}`);
     } catch (err) {
       console.error("[member-edit] save failed", err);
@@ -421,7 +528,7 @@ export default function MemberEditPage() {
   };
 
   if (loading) {
-    return <Skeleton.FormPage fields={8} withHeader bare />;
+    return <MemberEditSkeleton />;
   }
 
   return (
@@ -429,7 +536,15 @@ export default function MemberEditPage() {
       <EditHeader name={memberName} />
       <Card>
         <Stepper step={step} onPrev={goPrev} onNext={goNext} onStepClick={goToStep} />
-        {step === 0 && <BasicInfoStep form={form} setField={setField} vipTiers={vipTiers} />}
+        {step === 0 && (
+          <BasicInfoStep
+            form={form}
+            setField={setField}
+            vipTiers={vipTiers}
+            walletVipTiers={walletVipTiers}
+            stationList={stationList}
+          />
+        )}
         {step === 1 && <FinancialInfoStep form={form} setField={setField} />}
         {step === 2 && <GameInfoStep form={form} setField={setField} />}
         <ActionRow
@@ -470,6 +585,95 @@ function EditHeader({ name }) {
           {name}
         </h1>
       </div>
+    </div>
+  );
+}
+
+function SkeletonBlock({ className = "" }) {
+  return (
+    <div
+      className={`animate-pulse rounded-[8px] bg-white/10 ${className}`}
+      style={{ boxShadow: "inset 0 0 0 1px rgba(242,203,122,0.08)" }}
+    />
+  );
+}
+
+function MemberEditSkeleton() {
+  return (
+    <>
+      <div className="flex items-start gap-2 px-2">
+        <SkeletonBlock className="h-14 w-14 shrink-0 rounded-full" />
+        <div className="flex flex-col gap-2">
+          <SkeletonBlock className="h-[14px] w-[88px]" />
+          <SkeletonBlock className="h-[32px] w-[210px]" />
+        </div>
+      </div>
+
+      <Card>
+        <div
+          className="flex items-stretch overflow-hidden rounded-[6px] border border-[#f2cb7a]"
+          style={{ backgroundImage: "linear-gradient(179deg, #11320e 0%, #031101 99.7%)" }}
+        >
+          <SkeletonBlock className="h-[66px] w-14 shrink-0 rounded-none" />
+          <div className="flex flex-1 items-center justify-between gap-3 overflow-hidden px-4 py-3">
+            {STEPS.map((label) => (
+              <div key={label} className="flex min-w-[150px] flex-1 items-center justify-center gap-3">
+                <SkeletonBlock className="h-10 w-10 shrink-0 rounded-full" />
+                <SkeletonBlock className="h-[18px] w-[104px]" />
+              </div>
+            ))}
+          </div>
+          <SkeletonBlock className="h-[66px] w-14 shrink-0 rounded-none" />
+        </div>
+
+        <SkeletonBlock className="h-[34px] w-[170px]" />
+        <div className="flex flex-col gap-2">
+          <SkeletonBlock className="h-[18px] w-[86px]" />
+          <SkeletonBlock className="h-[61px] w-[61px] rounded-full" />
+        </div>
+
+        <div className="grid grid-cols-1 gap-x-10 gap-y-6 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <SkeletonField key={index} />
+          ))}
+          <div className="sm:col-span-2 xl:col-span-3">
+            <div className="flex flex-col gap-2">
+              <SkeletonBlock className="h-[22px] w-[96px]" />
+              <div className="flex flex-col gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <SkeletonField compact />
+                  <SkeletonField compact />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <SkeletonBlock className="h-[26px] w-[120px]" />
+                  <SkeletonBlock className="h-[26px] w-[135px]" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <SkeletonBlock className="h-[34px] w-[130px]" />
+        <div className="grid grid-cols-1 gap-x-10 gap-y-6 sm:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 10 }).map((_, index) => (
+            <SkeletonField key={index} />
+          ))}
+        </div>
+
+        <div className="flex justify-end gap-4">
+          <SkeletonBlock className="h-[43px] w-[102px]" />
+          <SkeletonBlock className="h-[43px] w-[92px]" />
+        </div>
+      </Card>
+    </>
+  );
+}
+
+function SkeletonField({ compact = false }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <SkeletonBlock className="h-[22px] w-[120px]" />
+      <SkeletonBlock className={`${compact ? "h-[44px]" : "h-[46px]"} w-full`} />
     </div>
   );
 }
@@ -675,24 +879,167 @@ function TextArea({ value, onChange, placeholder, rows = 6 }) {
   );
 }
 
-function SelectInput({ value, onChange, options }) {
+function DropdownInput({ value, onChange, options, placeholder = "Select...", disabled = false }) {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef(null);
+  const normalizedOptions = (options || []).filter((opt) => opt?.value);
+  const selected = normalizedOptions.find((opt) => opt.value === value);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
   return (
-    <div className="flex items-center gap-3 rounded-[8px] border border-[#fbeed2] px-4 py-3">
-      <select
-        value={value ?? ""}
-        onChange={(e) => onChange(e.target.value)}
-        className="flex-1 appearance-none bg-transparent text-[12px] font-medium leading-[18px] text-white outline-none [color-scheme:dark]"
+    <div ref={wrapperRef} className="relative">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => !disabled && setOpen((v) => !v)}
+        className={`flex min-h-[44px] w-full items-center gap-3 rounded-[8px] border px-4 py-3 text-left transition ${
+          disabled ? "cursor-not-allowed border-[#fbeed2]/30 opacity-60" : "border-[#fbeed2] hover:border-[#f2cb7a]"
+        }`}
       >
-        <option value="" className="bg-[#05060a] text-white/60">Select...</option>
-        {options.map((opt) => (
-          <option key={opt} value={opt} className="bg-[#05060a] text-white">
-            {opt}
-          </option>
-        ))}
-      </select>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbeed2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="6 15 12 9 18 15" />
-      </svg>
+        <span className={`flex-1 text-[12px] font-medium leading-[18px] ${selected ? "text-white" : "text-white/40"}`}>
+          {selected ? selected.label : placeholder}
+        </span>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="#fbeed2"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ transform: open ? "rotate(180deg)" : undefined, transition: "transform 0.15s" }}
+        >
+          <polyline points="6 15 12 9 18 15" />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-40 mt-1 max-h-[220px] overflow-y-auto rounded-[8px] border border-[#f2cb7a] bg-[#05060a] shadow-[0_12px_24px_rgba(0,0,0,0.55)]">
+          <button
+            type="button"
+            onClick={() => {
+              onChange("");
+              setOpen(false);
+            }}
+            className="flex min-h-[38px] w-full items-center px-3 py-2 text-left text-[12px] font-medium leading-[18px] text-white/50 hover:bg-white/5"
+          >
+            {placeholder}
+          </button>
+          {normalizedOptions.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => {
+                onChange(opt.value);
+                setOpen(false);
+              }}
+              className={`flex min-h-[38px] w-full items-center px-3 py-2 text-left text-[12px] font-medium leading-[18px] hover:bg-white/5 ${
+                opt.value === value ? "text-[#f2cb7a]" : "text-white"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SelectInput({ value, onChange, options, disabled = false }) {
+  return (
+    <DropdownInput
+      value={value}
+      onChange={onChange}
+      disabled={disabled}
+      options={(options || []).map((opt) => ({ value: opt, label: opt }))}
+    />
+  );
+}
+
+function ObjectSelectInput({ value, onChange, options, disabled = false, placeholder = "Select..." }) {
+  return <DropdownInput value={value} onChange={onChange} options={options} disabled={disabled} placeholder={placeholder} />;
+}
+
+function WalletVipFields({ value = {}, onChange, walletVipTiers = [], stationList = [] }) {
+  const walletStations = (stationList || []).filter((station) =>
+    (walletVipTiers || []).some((tier) =>
+      stationCandidates(station).some((candidate) => walletTierStationCandidates(tier).includes(candidate))
+    )
+  );
+  const [selectedStationUuid, setSelectedStationUuid] = useState("");
+
+  useEffect(() => {
+    if (selectedStationUuid || walletStations.length === 0) return;
+    const firstSelected = walletStations.find((station) => value?.[station.uuid]);
+    setSelectedStationUuid((firstSelected || walletStations[0])?.uuid || "");
+  }, [selectedStationUuid, walletStations, value]);
+
+  const updateStationLevel = (stationUuid, tierUuid) => {
+    onChange({
+      ...value,
+      [stationUuid]: tierUuid || undefined,
+    });
+  };
+
+  if (walletStations.length === 0) {
+    return <ReadOnlyValue value="No wallet VIP tiers available" />;
+  }
+
+  const selectedStation = walletStations.find((station) => station.uuid === selectedStationUuid);
+  const selectedStationTiers = selectedStation
+    ? (walletVipTiers || []).filter((tier) =>
+        stationCandidates(selectedStation).some((candidate) => walletTierStationCandidates(tier).includes(candidate))
+      )
+    : [];
+  const selectedCount = Object.values(value || {}).filter(Boolean).length;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="flex flex-col gap-2">
+          <span className="text-[11px] font-medium leading-[16px] text-white/60">Wallet Station</span>
+          <ObjectSelectInput
+            value={selectedStationUuid}
+            onChange={setSelectedStationUuid}
+            options={walletStations
+              .filter((station) => station.uuid)
+              .map((station) => ({ value: station.uuid, label: stationName(station) || station.uuid }))}
+          />
+        </div>
+        <div className="flex flex-col gap-2">
+          <span className="text-[11px] font-medium leading-[16px] text-white/60">Wallet Station VIP</span>
+          <ObjectSelectInput
+            value={selectedStationUuid ? value?.[selectedStationUuid] || "" : ""}
+            onChange={(tierUuid) => updateStationLevel(selectedStationUuid, tierUuid)}
+            disabled={!selectedStationUuid}
+            placeholder={selectedStationUuid ? "Select..." : "Select station first"}
+            options={selectedStationTiers
+              .filter((tier) => tier.uuid)
+              .map((tier) => ({ value: tier.uuid, label: walletTierName(tier) || tier.uuid }))}
+          />
+        </div>
+      </div>
+      {selectedCount > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {walletStations.filter((station) => value?.[station.uuid]).map((station) => {
+            const tier = (walletVipTiers || []).find((item) => item.uuid === value[station.uuid]);
+            return (
+              <span key={station.uuid} className="rounded-[6px] border border-[#f2cb7a]/40 px-2 py-1 text-[11px] font-medium leading-[16px] text-[#f6dda6]">
+                {stationName(station) || station.uuid}: {walletTierName(tier) || "—"}
+              </span>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -970,7 +1317,7 @@ function UserImage({ value, onChange }) {
   );
 }
 
-function BasicInfoStep({ form, setField, vipTiers = [] }) {
+function BasicInfoStep({ form, setField, vipTiers = [], walletVipTiers = [], stationList = [] }) {
   const vipOptionsFromApi = vipTiers.length
     ? vipTiers
         .map((tier) => tier.name || tier.tier_name || tier.vip_tier || tier.level || tier.title)
@@ -1009,6 +1356,16 @@ function BasicInfoStep({ form, setField, vipTiers = [] }) {
             kindFor={statusKind}
           />
         </FieldWrapper>
+        <div className="sm:col-span-2 xl:col-span-3">
+          <FieldWrapper label="Wallet VIP">
+            <WalletVipFields
+              value={form.walletLevels}
+              onChange={(next) => setField("walletLevels", next)}
+              walletVipTiers={walletVipTiers}
+              stationList={stationList}
+            />
+          </FieldWrapper>
+        </div>
       </div>
 
       <SectionTitle>Basic Info</SectionTitle>
@@ -1053,9 +1410,9 @@ function BasicInfoStep({ form, setField, vipTiers = [] }) {
 function ReadOnlyValue({ value, prefix }) {
   const display = value === null || value === undefined || value === "" ? "—" : String(value);
   return (
-    <div className="flex items-center gap-3 rounded-[8px] border border-[#fbeed2]/30 bg-white/5 px-4 py-3">
-      {prefix && <span className="text-[12px] font-bold leading-[18px] text-white/50">{prefix}</span>}
-      <span className="flex-1 text-[12px] font-medium leading-[18px] text-white/50">{display}</span>
+    <div className="flex min-h-[44px] items-center gap-3 rounded-[8px] border border-[#fbeed2] px-4 py-3">
+      {prefix && <span className="text-[12px] font-bold leading-[18px] text-white">{prefix}</span>}
+      <span className="flex-1 text-[12px] font-medium leading-[18px] text-white">{display}</span>
     </div>
   );
 }
@@ -1070,19 +1427,28 @@ function FinancialInfoStep({ form, setField }) {
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-10 gap-y-6">
         <FieldWrapper label="Total Sales">
-          <ReadOnlyValue value={form.totalSales ? `RM ${form.totalSales}` : undefined} />
+          <ReadOnlyValue value={moneyValue(form.totalSales)} />
+        </FieldWrapper>
+        <FieldWrapper label="Total Withdrawal">
+          <ReadOnlyValue value={moneyValue(form.totalWithdrawal)} />
         </FieldWrapper>
         <FieldWrapper label="Total Win/Loss">
-          <ReadOnlyValue value={form.totalWinLoss ? `RM ${form.totalWinLoss}` : undefined} />
+          <ReadOnlyValue value={moneyValue(form.totalWinLoss)} />
+        </FieldWrapper>
+        <FieldWrapper label="Total Bonus">
+          <ReadOnlyValue value={moneyValue(form.totalBonus)} />
         </FieldWrapper>
         <FieldWrapper label="Total Ticket Sales">
           <ReadOnlyValue value={form.totalTicketSales} />
         </FieldWrapper>
+        <FieldWrapper label="Total Withdrawal Ticket">
+          <ReadOnlyValue value={form.totalWithdrawalTicket} />
+        </FieldWrapper>
         <FieldWrapper label="ARPU">
-          <ReadOnlyValue value={form.arpu ? `RM ${form.arpu}` : undefined} />
+          <ReadOnlyValue value={moneyValue(form.arpu)} />
         </FieldWrapper>
         <FieldWrapper label="Average Deposit">
-          <ReadOnlyValue value={form.avgDeposit ? `RM ${form.avgDeposit}` : undefined} />
+          <ReadOnlyValue value={moneyValue(form.avgDeposit)} />
         </FieldWrapper>
         <FieldWrapper label="Last Deposit Date">
           <ReadOnlyValue value={form.lastDepositDate} />

@@ -13,6 +13,7 @@ import {
   getPrioritySummary,
   refreshCrmMembers,
 } from "../../../api/crmApi";
+import { Pagination } from "../../../components/admin/members/DataTable";
 
 // Member Alert page — Figma 69:340. "Overview" KPI strip + Member Follow Up
 // list. The list is the same shape as /admin/retention/members but with a
@@ -21,6 +22,7 @@ import {
 const PAGE_SIZE = 7;
 
 const PRIORITY_OPTIONS = ["High", "Medium", "Low"];
+const BRAND_OPTIONS = ["KG", "LV", "EP", "AB", "UB", "N1"];
 
 const PRIORITY_TO_INT = { High: 1, Medium: 2, Low: 3 };
 
@@ -29,10 +31,11 @@ const PRIORITY_TO_INT = { High: 1, Medium: 2, Low: 3 };
 // button pair respectively; everything else is uniform at 124px.
 const COLUMNS = [
   { key: "name",     label: "Username",       minW: 197 },
+  { key: "brand",    label: "Brand",          minW: 124 },
   { key: "phone",    label: "Phone Number",   minW: 124 },
-  { key: "vip",      label: "VIP Level",      minW: 124 },
-  { key: "sales",    label: "Daily Sales",    minW: 124 },
-  { key: "winloss",  label: "Daily Win/Loss", minW: 124 },
+  { key: "vip",      label: "NS Level",       minW: 124 },
+  { key: "sales",    label: "Total Sales",    minW: 124 },
+  { key: "winloss",  label: "Total Win/Loss", minW: 124 },
   { key: "priority", label: "Priority",       minW: 124 },
   { key: "pic",      label: "Retention",      minW: 124 },
   { key: "action",   label: "Action",         minW: 171, align: "end" },
@@ -215,6 +218,7 @@ function KpiIcon({ name }) {
 }
 
 function FollowUpList() {
+  const [brand, setBrand] = useState("");
   const [priority, setPriority] = useState("");
   const [vip, setVip] = useState("");
   const [retention, setRetention] = useState("");
@@ -244,7 +248,7 @@ function FollowUpList() {
 
   useEffect(() => {
     setPage(1);
-  }, [priority, vip, retention, query]);
+  }, [brand, priority, vip, retention, query]);
 
   const [debouncedQuery, setDebouncedQuery] = useState(query);
   useEffect(() => {
@@ -263,8 +267,9 @@ function FollowUpList() {
         const res = await getCrmMembers({
           page,
           page_size: PAGE_SIZE,
+          brand: brand || undefined,
           priority: priority ? PRIORITY_TO_INT[priority] : undefined,
-          vip_level: vip ? (vipTiers.find((t) => t.name === vip)?.level ?? undefined) : undefined,
+          mrs_vip_level: vip || undefined,
           retention: retentionUuid || undefined,
           search: debouncedQuery || undefined,
         });
@@ -285,13 +290,17 @@ function FollowUpList() {
     return () => {
       cancelled = true;
     };
-  }, [page, priority, vip, retention, pics, debouncedQuery]);
+  }, [page, brand, priority, vip, retention, pics, debouncedQuery]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const startIdx = (safePage - 1) * PAGE_SIZE;
   const showingFrom = total === 0 ? 0 : startIdx + 1;
   const showingTo = Math.min(startIdx + rows.length, total);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   return (
     <section className="flex w-full flex-col overflow-hidden rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
@@ -308,8 +317,9 @@ function FollowUpList() {
           Member Follow Up List
         </h2>
         <div className="flex flex-wrap items-center gap-3">
+          <FilterPill label="Brand" value={brand} onChange={setBrand} options={BRAND_OPTIONS} />
           <FilterPill label="Priority" value={priority} onChange={setPriority} options={PRIORITY_OPTIONS} />
-          <FilterPill label="VIP Level" value={vip} onChange={setVip} options={vipTiers.map((t) => t.name)} />
+          <FilterPill label="NS Level" value={vip} onChange={setVip} options={vipTiers.map((t) => t.name)} />
           <FilterPill label="All Retention" value={retention} onChange={setRetention} options={pics.map((u) => u.full_name || u.username).filter(Boolean)} />
           <SearchInput value={query} onChange={setQuery} />
         </div>
@@ -332,14 +342,14 @@ function FollowUpList() {
         </div>
       </div>
 
-      <PaginationBar
-        from={showingFrom}
-        to={showingTo}
-        total={total}
-        page={safePage}
-        totalPages={totalPages}
-        onPageChange={setPage}
-      />
+      <div className="border-t border-white/5 px-4 pb-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="px-2 pt-4 text-[13px] text-white/70">
+            Showing {showingFrom} to {showingTo} of {total} Results
+          </span>
+          <Pagination currentPage={safePage} totalPages={totalPages} onPageChange={setPage} />
+        </div>
+      </div>
     </section>
   );
 }
@@ -461,22 +471,23 @@ function TableRow({ row }) {
   return (
     <div className="flex w-full items-stretch -mb-px border-b border-white/5">
       <Cell minW={COLUMNS[0].minW}>
-        <Link href={href} className="flex items-center gap-3 hover:opacity-80">
+        <Link href={href} className="flex min-w-0 items-center gap-3 hover:opacity-80">
           <UserAvatar />
-          <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">
+          <span className="min-w-0 break-words text-[12px] font-medium text-white leading-[18px]">
             {row.full_name || row.username}
           </span>
         </Link>
       </Cell>
-      <DataCell value={row.phone_number} minW={COLUMNS[1].minW} />
-      <DataCell value={row.vip_level} minW={COLUMNS[2].minW} />
-      <DataCell value={formatCurrency(row.daily_sales)} minW={COLUMNS[3].minW} />
-      <DataCell value={formatCurrency(row.daily_win_loss)} minW={COLUMNS[4].minW} />
-      <Cell minW={COLUMNS[5].minW}>
+      <DataCell value={row.brand} minW={COLUMNS[1].minW} />
+      <DataCell value={row.phone_number} minW={COLUMNS[2].minW} />
+      <DataCell value={row.ns_level || row.vip_level} minW={COLUMNS[3].minW} />
+      <DataCell value={formatCurrency(row.total_sales ?? row.daily_sales)} minW={COLUMNS[4].minW} />
+      <DataCell value={formatCurrency(row.total_win_lose ?? row.total_winlose ?? row.daily_win_loss)} minW={COLUMNS[5].minW} />
+      <Cell minW={COLUMNS[6].minW}>
         <PriorityBadge value={row.priority} />
       </Cell>
-      <DataCell value={row.retention} minW={COLUMNS[6].minW} />
-      <Cell minW={COLUMNS[7].minW} align="end">
+      <DataCell value={row.retention} minW={COLUMNS[7].minW} />
+      <Cell minW={COLUMNS[8].minW} align="end">
         <div className="flex items-center gap-2">
           <ViewButton href={href} />
           <MoreButton ariaLabel={`More actions for ${row.full_name || row.username}`} />
@@ -661,7 +672,7 @@ function ThreeDotsIcon() {
 function DataCell({ value, minW }) {
   return (
     <Cell minW={minW}>
-      <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">
+      <span className="min-w-0 break-words text-[12px] font-medium text-white leading-[18px]">
         {value ?? "—"}
       </span>
     </Cell>
@@ -671,7 +682,7 @@ function DataCell({ value, minW }) {
 function Cell({ children, minW, align = "start" }) {
   const justify = align === "end" ? "justify-end" : "justify-start";
   return (
-    <div className={`flex flex-1 items-center p-6 ${justify}`} style={{ minWidth: minW }}>
+    <div className={`flex min-w-0 flex-1 items-center overflow-hidden p-6 ${justify}`} style={{ minWidth: minW }}>
       {children}
     </div>
   );

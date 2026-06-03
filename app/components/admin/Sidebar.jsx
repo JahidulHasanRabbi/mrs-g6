@@ -1,11 +1,12 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSidebar } from "../../contexts/SidebarContext";
-import { tokenStorage } from "../../api/tokenStorage";
+import { filterMenuByPermissions, getStoredAdminPermissions } from "../../config/adminPermissions";
+import { onAuthChanged } from "../../api/authEvents";
 
 // Panel-left icon used by the collapse/expand toggle (Radix-style).
 const PanelLeftIcon = ({ className }) => (
@@ -420,7 +421,7 @@ const MenuItem = ({ item, isActive }) => {
       >
         <div
           className={`relative h-5 w-5 shrink-0 flex items-center justify-center ${
-            item.iconNode || item.iconMask ? (isActive ? "text-[#141828]" : "text-white") : ""
+            item.iconNode || item.iconMask ? (isActive ? "text-[#141828]" : "text-[#fbeed2]") : ""
           }`}
         >
           <ItemIcon item={item} sizeClass="w-full h-full" />
@@ -433,10 +434,10 @@ const MenuItem = ({ item, isActive }) => {
 
   const content = (
     <div
-      className={`relative flex items-center gap-2 rounded-[12px] px-3 py-2 transition-colors ${
+      className={`relative flex items-center gap-2 rounded-[12px] px-3 py-2 transition-all duration-200 ${
         isActive
           ? "border-[2.5px] border-[#f2cb7a]"
-          : "border-[2.5px] border-transparent hover:bg-white/5"
+          : "border-[2.5px] border-transparent hover:bg-[#f2cb7a]/8 hover:border-[#f2cb7a]/20"
       } ${item.disabled ? "opacity-40 cursor-not-allowed" : ""}`}
       style={
         isActive
@@ -446,14 +447,14 @@ const MenuItem = ({ item, isActive }) => {
     >
       <div
         className={`relative h-8 w-8 shrink-0 flex items-center justify-center ${
-          item.iconNode || item.iconMask ? (isActive ? "text-[#141828]" : "text-white") : ""
+          item.iconNode || item.iconMask ? (isActive ? "text-[#141828]" : "text-[#fbeed2]") : ""
         }`}
       >
         <ItemIcon item={item} sizeClass="w-[20px] h-[20px]" />
       </div>
       <p
-        className={`text-[14px] font-semibold leading-[21px] tracking-[-1px] whitespace-nowrap ${
-          isActive ? "text-[#141828]" : "text-white"
+        className={`sidebar-inter text-[14px] leading-[21px] tracking-[-1px] whitespace-nowrap ${
+          isActive ? "text-[#141828]" : "text-[#fbeed2]"
         }`}
       >
         {item.label}
@@ -531,10 +532,10 @@ const ExpandableMenuItem = ({ item, activeItem, forceOpen = false }) => {
       {/* Parent header — same row dimensions as a MenuItem */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className={`relative flex w-full items-center gap-2 rounded-[12px] px-3 py-2 transition-colors ${
+        className={`relative flex w-full items-center gap-2 rounded-[12px] px-3 py-2 transition-all duration-200 ${
           isActiveStyle
             ? "border-[2.5px] border-[#f2cb7a]"
-            : "border-[2.5px] border-transparent hover:bg-white/5"
+            : "border-[2.5px] border-transparent hover:bg-[#f2cb7a]/8 hover:border-[#f2cb7a]/20"
         }`}
         style={
           isActiveStyle
@@ -544,14 +545,14 @@ const ExpandableMenuItem = ({ item, activeItem, forceOpen = false }) => {
       >
         <div
           className={`relative h-8 w-8 shrink-0 flex items-center justify-center ${
-            item.iconNode || item.iconMask ? (isActiveStyle ? "text-[#141828]" : "text-white") : ""
+            item.iconNode || item.iconMask ? (isActiveStyle ? "text-[#141828]" : "text-[#fbeed2]") : ""
           }`}
         >
           <ItemIcon item={item} sizeClass="w-[20px] h-[20px]" />
         </div>
         <span
-          className={`flex-1 text-left text-[14px] font-semibold leading-[21px] tracking-[-1px] whitespace-nowrap ${
-            isActiveStyle ? "text-[#141828]" : "text-white"
+          className={`sidebar-inter flex-1 text-left text-[14px] leading-[21px] tracking-[-1px] whitespace-nowrap ${
+            isActiveStyle ? "text-[#141828]" : "text-[#fbeed2]"
           }`}
         >
           {item.label}
@@ -561,7 +562,7 @@ const ExpandableMenuItem = ({ item, activeItem, forceOpen = false }) => {
           height="12"
           viewBox="0 0 24 24"
           fill="none"
-          stroke={isActiveStyle ? "#141828" : "#ffffff"}
+          stroke={isActiveStyle ? "#141828" : "#fbeed2"}
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -590,16 +591,18 @@ const ExpandableMenuItem = ({ item, activeItem, forceOpen = false }) => {
                 return (
                   <Link key={child.id} href={child.href}>
                     <div
-                      className={`flex items-center gap-2 px-3 py-2 rounded-[12px] transition-colors ${
-                        isActive ? "bg-[#f2cb7a]/15" : "hover:bg-white/5"
+                      className={`flex items-center gap-2 px-3 py-2 rounded-[12px] transition-all duration-200 ${
+                        isActive
+                          ? "bg-[#f2cb7a]/15 border-l-2 border-[#f2cb7a]/50"
+                          : "hover:bg-[#f2cb7a]/8"
                       }`}
                     >
-                      <span className={isActive ? "text-[#f2cb7a]" : "text-white"}>
+                      <span className={isActive ? "text-[#f2cb7a]" : "text-[#fbeed2]"}>
                         {(() => { const Icon = CHILD_ICONS[item.id] || BarChartIcon; return <Icon />; })()}
                       </span>
                       <span
-                        className={`text-[13px] font-semibold leading-[20px] tracking-[-1px] ${
-                          isActive ? "text-[#f2cb7a]" : "text-white"
+                        className={`sidebar-inter text-[13px] leading-[20px] tracking-[-1px] ${
+                          isActive ? "text-[#f2cb7a]" : "text-[#fbeed2]"
                         }`}
                       >
                         {child.label}
@@ -618,16 +621,46 @@ const ExpandableMenuItem = ({ item, activeItem, forceOpen = false }) => {
 
 // Section title gradient — Primary 600 → Primary 300 from the Figma tokens.
 const SECTION_TITLE_GRADIENT = "linear-gradient(102deg, #dc9d16 1%, #f2cb7a 98%)";
+const SECTION_STORAGE_PREFIX = "mrs_admin_sidebar_section_";
+
+function getStoredSectionOpen(sectionKey, defaultOpen) {
+  if (typeof window === "undefined") return defaultOpen;
+  try {
+    const stored = localStorage.getItem(`${SECTION_STORAGE_PREFIX}${sectionKey}`);
+    if (stored === null) return defaultOpen;
+    return stored === "true";
+  } catch {
+    return defaultOpen;
+  }
+}
+
+function storeSectionOpen(sectionKey, value) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(`${SECTION_STORAGE_PREFIX}${sectionKey}`, value ? "true" : "false");
+  } catch {
+    // Ignore storage failures; the in-memory section state still works.
+  }
+}
 
 // Collapsible section wrapper — renders a header with the section title
 // and a chevron that toggles visibility of the items inside.
 //
 // When the sidebar is collapsed, the title shows a short prefix (~3 chars +
 // ellipsis) so the section is still distinguishable in the narrow track.
-const CollapsibleSection = ({ title, defaultOpen = true, forceOpen = false, children }) => {
+const CollapsibleSection = ({ title, storageKey, defaultOpen = true, forceOpen = false, children }) => {
   const { collapsed: sidebarCollapsed } = useSidebar();
-  const [open, setOpen] = useState(defaultOpen);
+  const sectionKey = storageKey || title.toLowerCase().replace(/\s+/g, "-");
+  const [open, setOpen] = useState(() => getStoredSectionOpen(sectionKey, defaultOpen));
   const effectivelyOpen = forceOpen || open;
+
+  const toggleSection = () => {
+    setOpen((current) => {
+      const next = !current;
+      storeSectionOpen(sectionKey, next);
+      return next;
+    });
+  };
 
   // First 3 chars + ellipsis when the whole sidebar is squeezed
   const shortTitle = title.length > 3 ? `${title.slice(0, 3)}…` : title;
@@ -636,7 +669,7 @@ const CollapsibleSection = ({ title, defaultOpen = true, forceOpen = false, chil
     <div className="flex flex-col gap-2">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggleSection}
         disabled={forceOpen}
         className={`flex items-center w-full py-1 group ${
           sidebarCollapsed ? "justify-center gap-1 px-0" : "justify-between gap-2 px-0"
@@ -645,7 +678,7 @@ const CollapsibleSection = ({ title, defaultOpen = true, forceOpen = false, chil
         title={sidebarCollapsed ? title : undefined}
       >
         <span
-          className={`font-semibold uppercase whitespace-nowrap tracking-[-1px] leading-[24px] bg-clip-text text-transparent ${
+          className={`sidebar-inter uppercase whitespace-nowrap tracking-[-1px] leading-[24px] bg-clip-text text-transparent ${
             sidebarCollapsed ? "text-[12px]" : "text-[16px]"
           }`}
           style={{ backgroundImage: SECTION_TITLE_GRADIENT }}
@@ -742,32 +775,34 @@ function filterMenuItems(items, query) {
   return result;
 }
 
-const LogoutIcon = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-    <polyline points="16 17 21 12 16 7" />
-    <line x1="21" y1="12" x2="9" y2="12" />
-  </svg>
-);
-
 export default function Sidebar({ activeItem: activeItemProp }) {
   const pathname = usePathname();
   const router = useRouter();
   const activeItem = activeItemProp ?? pathnameToActiveItem(pathname);
   const { collapsed, toggle } = useSidebar();
   const [search, setSearch] = useState("");
+  const [permissions, setPermissions] = useState(() => getStoredAdminPermissions());
 
-  const handleLogout = () => {
-    tokenStorage.clearAdminTokens();
-    router.push("/admin/login");
-  };
   const hasQuery = search.trim().length > 0;
 
+<<<<<<< HEAD
   const mrsItems = filterMenuItems([...MENU_ITEMS, ...SECONDARY_MENU], search);
   const worldCupItems = filterMenuItems(WORLD_CUP_MENU, search);
   const retentionItems = filterMenuItems(RETENTION_MENU, search);
   const settingsItems = filterMenuItems(SETTINGS_MENU, search);
   const noResults = hasQuery && !mrsItems.length && !worldCupItems.length && !retentionItems.length && !settingsItems.length;
+=======
+  useEffect(() => {
+    const refreshPermissions = () => setPermissions(getStoredAdminPermissions());
+    refreshPermissions();
+    return onAuthChanged(refreshPermissions);
+  }, []);
+
+  const mrsItems = filterMenuItems(filterMenuByPermissions([...MENU_ITEMS, ...SECONDARY_MENU], permissions), search);
+  const retentionItems = filterMenuItems(filterMenuByPermissions(RETENTION_MENU, permissions), search);
+  const settingsItems = filterMenuItems(filterMenuByPermissions(SETTINGS_MENU, permissions), search);
+  const noResults = hasQuery && !mrsItems.length && !retentionItems.length && !settingsItems.length;
+>>>>>>> main
 
   return (
     // Sidebar shell — gold border + dark green gradient per Figma 243:6071.
@@ -856,19 +891,19 @@ export default function Sidebar({ activeItem: activeItemProp }) {
             type="button"
             title="Search"
             aria-label="Search"
-            className="mx-auto flex h-10 w-10 items-center justify-center rounded-md border border-[#e9af41]/40 bg-black/40 text-[#e9af41] hover:bg-white/5 transition-colors"
+            className="mx-auto flex h-10 w-10 items-center justify-center rounded-[8px] border border-[#f2cb7a]/40 bg-black/40 text-[#f2cb7a] hover:bg-[#f2cb7a]/8 hover:border-[#f2cb7a]/60 transition-all duration-200"
           >
             <SearchIcon className="h-4 w-4" />
           </button>
         ) : (
-          <div className="flex items-center gap-2 rounded-md border border-[#e9af41]/40 bg-black/40 px-3 py-2">
-            <SearchIcon className="h-4 w-4 text-[#e9af41] shrink-0" />
+          <div className="flex items-center gap-2 rounded-[8px] border border-[#f2cb7a]/40 bg-black/40 px-3 py-2">
+            <SearchIcon className="h-4 w-4 text-[#f2cb7a] shrink-0" />
             <input
               type="search"
-              placeholder="Search menu"
+              placeholder="Search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="flex-1 min-w-0 bg-transparent text-[14px] text-white placeholder-white/40 focus:outline-none"
+              className="sidebar-inter flex-1 min-w-0 bg-transparent text-[14px] text-[#fbeed2] placeholder:text-[#fbeed2]/40 focus:outline-none"
             />
           </div>
         )}
@@ -887,47 +922,28 @@ export default function Sidebar({ activeItem: activeItemProp }) {
         )}
 
         {mrsItems.length > 0 && (
-          <CollapsibleSection title="MRS System" forceOpen={hasQuery}>
+          <CollapsibleSection title="MRS System" storageKey="mrs-system" forceOpen={hasQuery}>
             {mrsItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
           </CollapsibleSection>
         )}
 
         {retentionItems.length > 0 && (
-          <CollapsibleSection title="Retention System" forceOpen={hasQuery}>
+          <CollapsibleSection title="Retention System" storageKey="retention-system" forceOpen={hasQuery}>
             {retentionItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
           </CollapsibleSection>
         )}
 
         {settingsItems.length > 0 && (
-          <CollapsibleSection title="Settings" forceOpen={hasQuery}>
+          <CollapsibleSection title="Settings" storageKey="settings" forceOpen={hasQuery}>
             {settingsItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
           </CollapsibleSection>
         )}
 
         {noResults && !collapsed && (
-          <p className="px-2 py-3 text-center text-[12px] text-white/50">
+          <p className="sidebar-inter px-2 py-3 text-center text-[12px] text-[#fbeed2]/50">
             No matching menu items.
           </p>
         )}
-
-        {/* Logout */}
-        <button
-          type="button"
-          onClick={handleLogout}
-          title="Logout"
-          className={`mt-2 flex w-full items-center gap-2 rounded-[12px] border-[2.5px] border-transparent px-3 py-2 text-red-400 transition-colors hover:border-red-400/40 hover:bg-red-400/10 ${
-            collapsed ? "justify-center" : ""
-          }`}
-        >
-          <div className="relative h-8 w-8 shrink-0 flex items-center justify-center">
-            <LogoutIcon className="w-[20px] h-[20px]" />
-          </div>
-          {!collapsed && (
-            <span className="text-[14px] font-semibold leading-[21px] tracking-[-1px] whitespace-nowrap">
-              Logout
-            </span>
-          )}
-        </button>
       </div>
     </div>
   );

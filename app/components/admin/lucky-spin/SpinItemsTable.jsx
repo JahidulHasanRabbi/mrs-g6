@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { getOptionLabel } from "../../../api/apiOptions";
 import { DataTable } from "../members/DataTable";
-import Button from "../ui/Button";
 
 const COLUMNS = [
   { key: "reward_name", label: "Reward Name", minW: "min-w-[180px]" },
@@ -13,7 +12,14 @@ const COLUMNS = [
   { key: "actions",     label: "Actions",     minW: "min-w-[180px]" },
 ];
 
-export default function SpinItemsTable({ items = [], isLoading = false, onEditClick, onDeleteClick }) {
+export default function SpinItemsTable({
+  items = [],
+  isLoading = false,
+  canEdit = true,
+  canArchive = true,
+  onEditClick,
+  onDeleteClick,
+}) {
   const [sortKey, setSortKey] = useState("reward_name");
   const [sortDir, setSortDir] = useState("asc");
 
@@ -54,13 +60,25 @@ export default function SpinItemsTable({ items = [], isLoading = false, onEditCl
     }
     if (col.key === "actions") {
       return (
-        <div className="flex items-center gap-2">
-          <Button variant="success" size="sm" onClick={() => onEditClick(item)}>
-            Edit
-          </Button>
-          <Button variant="destructive" size="sm" onClick={() => onDeleteClick?.(item)}>
-            Archive
-          </Button>
+        <div className="flex items-center justify-center gap-2">
+          {canArchive && (
+            <button
+              type="button"
+              onClick={() => onDeleteClick?.(item)}
+              className="inline-flex h-[31px] min-w-[78px] items-center justify-center rounded-[6px] bg-[#06b800] px-3 text-[14px] font-bold text-white transition-colors hover:bg-[#05a000]"
+            >
+              Archive
+            </button>
+          )}
+          {canEdit && (
+            <button
+              type="button"
+              onClick={() => onEditClick(item)}
+              className="inline-flex h-[31px] min-w-[70px] items-center justify-center rounded-[6px] border border-[#00a63e] px-3 text-[14px] font-semibold text-[#00a63e] transition-colors hover:bg-[#00a63e]/10"
+            >
+              Edit
+            </button>
+          )}
         </div>
       );
     }
