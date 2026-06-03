@@ -8,7 +8,7 @@ import { COLORS, ICONS } from "./constants";
 // icon chips sit to the right — gold-bordered (i) info badge and the
 // arcade-style hamburger bars. PNGs (not SVG masks) so the embedded gold
 // gradient + inner shadow render as designed.
-function IconButton({ src, onClick, label }) {
+function IconButton({ src, onClick, label, imgStyle }) {
   return (
     <button
       type="button"
@@ -22,34 +22,39 @@ function IconButton({ src, onClick, label }) {
         alt=""
         aria-hidden="true"
         className="block h-9 w-9 select-none"
-        style={{ objectFit: "contain" }}
+        style={{ objectFit: "contain", ...imgStyle }}
         draggable={false}
       />
     </button>
   );
 }
 
-export default function TopHud({ onInfoClick, onMenuClick }) {
+export default function TopHud({ onInfoClick, onMenuClick, onNavMenuClick }) {
   return (
     <div className="flex w-full items-center justify-between p-4">
-      <h1
-        className="whitespace-nowrap font-bold leading-none"
-        style={{
-          fontFamily: "'Anybody', 'Lexend', sans-serif",
-          // 32px at the 475 design width (32/475 ≈ 6.7vw); shrinks on
-          // narrow phones so the title stays on one line instead of
-          // wrapping to "PENALTY / KICK".
-          fontSize: "clamp(22px, 6.7vw, 32px)",
-          letterSpacing: "-1.6px",
-          color: COLORS.primary,
-          textShadow: "0 2px 1px rgba(0,0,0,0.8)",
-        }}
-      >
-        PENALTY KICK
-      </h1>
+      <div className="flex items-center gap-3">
+        <IconButton src={ICONS.menu} onClick={onNavMenuClick} label="Navigation menu" />
+        <h1
+          className="whitespace-nowrap font-bold leading-none"
+          style={{
+            fontFamily: "'Anybody', 'Lexend', sans-serif",
+            fontSize: "clamp(22px, 6.7vw, 32px)",
+            letterSpacing: "-1.6px",
+            color: COLORS.primary,
+            textShadow: "0 2px 1px rgba(0,0,0,0.8)",
+          }}
+        >
+          PENALTY KICK
+        </h1>
+      </div>
       <div className="flex items-center gap-4">
         <IconButton src={ICONS.info} onClick={onInfoClick} label="Info" />
-        <IconButton src={ICONS.menu} onClick={onMenuClick} label="Menu" />
+        <IconButton
+          src={ICONS.history}
+          onClick={onMenuClick}
+          label="History"
+          imgStyle={{ filter: "brightness(0) saturate(100%) invert(74%) sepia(60%) saturate(500%) hue-rotate(5deg) brightness(105%)" }}
+        />
       </div>
     </div>
   );

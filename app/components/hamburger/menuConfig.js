@@ -10,6 +10,7 @@ export const MENU_CONFIG = {
       icon: "/assets/images/mini-game-icon.svg",
     items: [
       { icon: "/assets/images/kasih-spin-icon.png", label: "Lucky Spin", link: "/spin" },
+      { icon: "/assets/penalty-kick/icons/mdi-soccer.svg", label: "Penalty Kick", link: "/penalty-kick" },
       { icon: "/assets/images/coming-soon-icon.png", label: "Coming Soon", link: "/coming-soon", disabled: true },
     ],
   },

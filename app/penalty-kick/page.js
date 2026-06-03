@@ -37,6 +37,7 @@ import {
 
 import { tokenStorage } from "../api/tokenStorage";
 import { useUser } from "../contexts/UserContext";
+import { HamburgerMenu } from "../components/hamburger";
 
 const HISTORY_PAGE_SIZE = 10;
 const ITEM_TYPE_LABELS = {
@@ -149,6 +150,7 @@ export default function PenaltyKickPage() {
     enabled: true,
     maintenanceMode: false,
   });
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [swipeData, setSwipeData] = useState(null);
   const [outcome, setOutcome] = useState(null);
   const [reward, setReward] = useState(null);
@@ -361,6 +363,10 @@ export default function PenaltyKickPage() {
 
       <div className="relative z-10 flex w-full flex-col">
         <TopHud
+          onNavMenuClick={() => {
+            play("tap");
+            setIsMenuOpen(true);
+          }}
           onInfoClick={() => {
             play("tap");
             setDialog(DIALOGS.INFO);
@@ -483,6 +489,8 @@ export default function PenaltyKickPage() {
           </div>
         </div>
       )}
+
+      <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
       <AnimatePresence>
         {dialog && (

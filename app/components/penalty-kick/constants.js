@@ -47,6 +47,7 @@ export const ICONS = {
   // because dialogs (close button, soccer mask, etc.) still reference them.
   info: "/assets/penalty-kick/icons/info-badge.png",
   menu: "/assets/penalty-kick/icons/menu-bars.png",
+  history: "/assets/penalty-kick/icons/material-symbols-flag.svg",
   volumeOn: "/assets/penalty-kick/icons/mdi-volume-high.svg",
   volumeOff: "/assets/penalty-kick/icons/mdi-volume-off.svg",
   play: "/assets/penalty-kick/icons/material-symbols-play-arrow-rounded.svg",
