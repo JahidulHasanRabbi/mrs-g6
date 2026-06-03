@@ -865,7 +865,7 @@ export default function Sidebar({ activeItem: activeItemProp }) {
           a "No matches" hint appears if every section is empty. */}
       <div className={`pb-6 flex w-full flex-col gap-6 ${collapsed ? "px-3" : "px-4"}`}>
         {mrsItems.length > 0 && (
-          <CollapsibleSection title="MRS System" storageKey="mrs-system" forceOpen={hasQuery}>
+          <CollapsibleSection title="MRS System" storageKey="mrs-system" defaultOpen={false} forceOpen={hasQuery}>
             {mrsItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
           </CollapsibleSection>
         )}
