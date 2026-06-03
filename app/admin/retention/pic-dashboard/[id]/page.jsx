@@ -9,7 +9,6 @@ import RefreshControl from "../../../../components/admin/retention/RefreshContro
 import Pagination from "../../../../components/admin/retention/Pagination";
 import FilterDropdown from "../../../../components/admin/retention/FilterDropdown";
 import SearchInput from "../../../../components/admin/retention/SearchInput";
-import DateRangePicker from "../../../../components/admin/retention/DateRangePicker";
 import {
   ASSETS,
   GRAD_DARK,
@@ -129,6 +128,41 @@ function buildKpis(summary) {
   ];
 }
 
+function buildSummaryParams(period, fromDate, toDate) {
+  if (fromDate && toDate) {
+    return { type: 4, from_date: fromDate, to_date: toDate };
+  }
+  if (period === "All") return {};
+  return { type: periodLabelToType(period) };
+}
+
+function toDateInput(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function buildMemberDateParams(period, fromDate, toDate) {
+  if (fromDate && toDate) {
+    return { from_date: fromDate, to_date: toDate };
+  }
+  if (period === "All") return {};
+
+  const today = new Date();
+  if (period === "Daily") {
+    const value = toDateInput(today);
+    return { from_date: value, to_date: value };
+  }
+  if (period === "Monthly") {
+    return { from_date: toDateInput(new Date(today.getFullYear(), today.getMonth(), 1)), to_date: toDateInput(today) };
+  }
+  if (period === "Yearly") {
+    return { from_date: toDateInput(new Date(today.getFullYear(), 0, 1)), to_date: toDateInput(today) };
+  }
+  return {};
+}
+
 export default function PicDetailPage() {
   return (
     <Suspense>
@@ -145,13 +179,16 @@ function PicDetailContent() {
   const slug = typeof params?.id === "string" ? params.id : Array.isArray(params?.id) ? params.id[0] : "";
   const picName = searchParams.get("name") || "Unknown PIC";
   const [picProfile, setPicProfile] = useState(null);
-  const [period, setPeriod] = useState("Daily");
+  const [period, setPeriod] = useState("All");
   const [summary, setSummary] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
 
   const fromDate = searchParams.get("from") || "";
   const toDate = searchParams.get("to") || "";
-  const hasDateRange = !!fromDate && !!toDate;
+  const summaryParams = useMemo(
+    () => buildSummaryParams(period, fromDate, toDate),
+    [period, fromDate, toDate]
+  );
 
   // Switching to a predefined period clears any active date range from the URL.
   const handlePeriodChange = useCallback((newPeriod) => {
@@ -167,10 +204,7 @@ function PicDetailContent() {
     if (!slug) return;
     setSummaryLoading(true);
     try {
-      const apiParams = hasDateRange
-        ? { type: 4, from_date: fromDate, to_date: toDate }
-        : { type: periodLabelToType(period) };
-      const res = await getRetentionSummary(slug, apiParams);
+      const res = await getRetentionSummary(slug, summaryParams);
       setSummary(res || {});
     } catch (err) {
       console.error("[pic-detail] summary failed", err);
@@ -178,7 +212,7 @@ function PicDetailContent() {
     } finally {
       setSummaryLoading(false);
     }
-  }, [period, slug, fromDate, toDate, hasDateRange]);
+  }, [slug, summaryParams]);
 
   useEffect(() => {
     loadSummary();
@@ -211,7 +245,13 @@ function PicDetailContent() {
         toDate={toDate}
       />
       <KpiGrid summary={summary} loading={summaryLoading} />
-      <MemberListSection adminUuid={slug} onRefreshSummary={loadSummary} />
+      <MemberListSection
+        adminUuid={slug}
+        period={period}
+        fromDate={fromDate}
+        toDate={toDate}
+        onRefreshSummary={loadSummary}
+      />
     </>
   );
 }
@@ -233,7 +273,7 @@ function PicProfileHeader({ name, image, period, onPeriodChange, fromDate, toDat
           </h1>
         </div>
       </div>
-      <PeriodToggle period={period} onPeriodChange={onPeriodChange} fromDate={fromDate} toDate={toDate} />
+      <PeriodToggle includeAll period={period} onPeriodChange={onPeriodChange} fromDate={fromDate} toDate={toDate} />
     </div>
   );
 }
@@ -317,7 +357,7 @@ function VipLevelRow({ level, value }) {
   );
 }
 
-function MemberListSection({ adminUuid, onRefreshSummary }) {
+function MemberListSection({ adminUuid, period, fromDate, toDate, onRefreshSummary }) {
   // URL state ------------------------------------------------------------
   // All filter values live in the query string so the view is shareable and
   // browser-back / forward work as expected.  router.replace (not push) keeps
@@ -326,8 +366,6 @@ function MemberListSection({ adminUuid, onRefreshSummary }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const fromDate = searchParams.get("from") ?? "";
-  const toDate = searchParams.get("to") ?? "";
   const level = searchParams.get("level") ?? "all";
   const sort = searchParams.get("sort") ?? "";
   const q = searchParams.get("q") ?? "";
@@ -373,18 +411,18 @@ function MemberListSection({ adminUuid, onRefreshSummary }) {
     [pathname, router, searchParams]
   );
 
-  const handleDateApply = useCallback((from, to) => {
-    updateParams({ from: from || null, to: to || null, page: null });
-  }, [updateParams]);
+  const memberDateParams = useMemo(
+    () => buildMemberDateParams(period, fromDate, toDate),
+    [period, fromDate, toDate]
+  );
 
   const apiParams = useMemo(() => ({
     page,
     page_size: PAGE_SIZE,
-    from_date: fromDate || undefined,
-    to_date: toDate || undefined,
+    ...memberDateParams,
     mrs_vip_level: level !== "all" ? level : undefined,
     search: q || undefined,
-  }), [fromDate, toDate, level, page, q]);
+  }), [memberDateParams, level, page, q]);
 
   const fetchMembers = useCallback(async () => {
     if (!adminUuid) return;
@@ -435,7 +473,6 @@ function MemberListSection({ adminUuid, onRefreshSummary }) {
           Member List
         </h2>
         <div className="flex flex-1 flex-wrap items-center gap-4">
-          <DateRangePicker fromDate={fromDate} toDate={toDate} onApply={handleDateApply} />
           <FilterDropdown
             value={level}
             options={levelOptions}
