@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { GRAD_DARK, GRAD_GOLD } from "../../../components/admin/retention/constants";
+import DateRangePicker from "../../../components/admin/retention/DateRangePicker";
 import Pagination from "../../../components/admin/retention/Pagination";
-import { getCrmActivityLog } from "../../../api/crmApi";
+import { getCrmActivityLog, getCrmUsers } from "../../../api/crmApi";
 
 const PAGE_SIZE = 7;
 
@@ -50,12 +51,12 @@ function PageHeader() {
   );
 }
 
-async function fetchAllPages(fetcher) {
+async function fetchAllPages(fetcher, params = {}) {
   const rows = [];
   let page = 1;
   let hasNext = true;
   while (hasNext) {
-    const res = await fetcher({ page, page_size: 100 });
+    const res = await fetcher({ ...params, page, page_size: 100 });
     const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
     rows.push(...results);
     hasNext = Boolean(res?.next) && results.length > 0;
@@ -84,15 +85,40 @@ function ActivityListSection() {
   const [error, setError] = useState(false);
 
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [pic, setPic] = useState("");
-  const [date, setDate] = useState("");
+  const [picOptions, setPicOptions] = useState([]);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getCrmUsers({ page: 1, page_size: 100 })
+      .then((res) => {
+        if (cancelled) return;
+        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        setPicOptions(results.map((u) => u.username || u.full_name).filter(Boolean).sort());
+      })
+      .catch(() => {
+        if (!cancelled) setPicOptions([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const loadRows = useCallback(async () => {
     setLoading(true);
     setError(false);
     try {
-      const raw = await fetchAllPages(getCrmActivityLog);
+      const username = pic || debouncedSearch || undefined;
+      const raw = await fetchAllPages(getCrmActivityLog, { username });
       setAllRows(raw.map((row, idx) => mapActivityRow(row, idx + 1)));
     } catch {
       setAllRows([]);
@@ -100,33 +126,26 @@ function ActivityListSection() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [debouncedSearch, pic]);
 
   useEffect(() => {
     loadRows();
   }, [loadRows]);
 
-  const picOptions = useMemo(
-    () => [...new Set(allRows.map((r) => r.user).filter((u) => u && u !== "—"))].sort(),
-    [allRows]
-  );
-
   const filtered = useMemo(() => {
     return allRows.filter((row) => {
       if (search) {
         const q = search.toLowerCase();
-        if (
-          !row.user.toLowerCase().includes(q) &&
-          !row.activity.toLowerCase().includes(q)
-        ) return false;
+        if (!row.user.toLowerCase().includes(q)) return false;
       }
-      if (pic && row.user !== pic) return false;
-      if (date && row.rawDate !== date) return false;
+      if (fromDate && row.rawDate && row.rawDate < fromDate) return false;
+      if (toDate && row.rawDate && row.rawDate > toDate) return false;
+      if ((fromDate || toDate) && !row.rawDate) return false;
       return true;
     });
-  }, [allRows, search, pic, date]);
+  }, [allRows, search, fromDate, toDate]);
 
-  useEffect(() => { setPage(1); }, [search, pic, date]);
+  useEffect(() => { setPage(1); }, [search, pic, fromDate, toDate]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -161,7 +180,14 @@ function ActivityListSection() {
             onChange={setPic}
             options={picOptions}
           />
-          <DateFilter value={date} onChange={setDate} />
+          <DateRangePicker
+            fromDate={fromDate}
+            toDate={toDate}
+            onApply={(from, to) => {
+              setFromDate(from || "");
+              setToDate(to || "");
+            }}
+          />
         </div>
       </header>
 
@@ -253,53 +279,6 @@ function FilterDropdown({ label, value, onChange, options }) {
   );
 }
 
-function DateFilter({ value, onChange }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1 rounded-[8px] border border-[#f2cb7a] px-4 py-2"
-        style={{ backgroundImage: GRAD_DARK }}
-      >
-        <CalendarIcon />
-        <span className="text-[12px] font-medium text-[#f6dda6] leading-[18px] whitespace-nowrap">
-          {value || "Select Date"}
-        </span>
-        <ChevronIcon up={open} />
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div
-            className="absolute right-0 top-full mt-1 z-20 rounded-[8px] border border-[#f2cb7a] p-3"
-            style={{ backgroundImage: GRAD_DARK }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <input
-              type="date"
-              value={value}
-              onChange={(e) => { onChange(e.target.value); setOpen(false); }}
-              className="rounded-[6px] border border-[#fbeed2] bg-transparent px-3 py-2 text-[12px] text-white focus:outline-none focus:ring-1 focus:ring-[#eaad2c]"
-              style={{ colorScheme: "dark" }}
-            />
-            {value && (
-              <button
-                type="button"
-                onClick={() => { onChange(""); setOpen(false); }}
-                className="mt-2 block w-full text-center text-[11px] text-[#f6dda6] hover:text-white"
-              >
-                Clear date
-              </button>
-            )}
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
 function TableHeader() {
   return (
     <div className="flex w-full items-stretch" style={{ backgroundImage: GRAD_DARK }}>
@@ -377,17 +356,6 @@ function ChevronIcon({ up }) {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f6dda6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
       style={{ transform: up ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }} aria-hidden="true">
       <polyline points="6 9 12 15 18 9" />
-    </svg>
-  );
-}
-
-function CalendarIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f6dda6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-      <line x1="16" y1="2" x2="16" y2="6" />
-      <line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
     </svg>
   );
 }
