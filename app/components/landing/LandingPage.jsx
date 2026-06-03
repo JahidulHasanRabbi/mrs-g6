@@ -35,49 +35,44 @@ const mono = "font-[family-name:var(--font-jetbrains-mono)]";
 const sora = "font-[family-name:var(--font-sora)]";
 const goldGlowText = { textShadow: "0px 0px 20px #826e00, 0px 0px 10px #ffd700" };
 
-const EASE = [0.22, 1, 0.36, 1]; // expo-out: quick start, gentle landing
-const EASE_SOFT = [0.16, 1, 0.3, 1]; // even softer — for the larger hero blocks
+const EASE = [0.22, 1, 0.36, 1]; // expo-out (an ease-out) — entrances land soft
 
-// Shared entrance variants. `fadeUp` is the per-element reveal; `stagger`
-// orchestrates its children so groups cascade in. MotionConfig (at the page
-// root) makes all of these respect prefers-reduced-motion automatically.
-//
-// The reveals layer a short focus-pull (filter: blur → 0) on top of the
-// rise/scale so elements resolve *into* place rather than just sliding — it
-// reads more premium without being showy. blur is only animated once, on
-// entrance, so the cost is negligible.
+// Entrance variants, tuned to the ui-ux-pro-max §7 Animation rules:
+//  • ease-out for entrances; keep reveals ≤ ~450ms (the rule: avoid >500ms),
+//  • animate transform/opacity only on the bulk of elements (cheap, 60fps) —
+//    no filter/layout props, per `transform-performance` + `excessive-motion`
+//    ("animate 1–2 key elements per view"); the headline is the lone exception,
+//  • stagger children 30–50ms for a snappy cascade, not a slow drip.
+// MotionConfig at the page root makes all of these honour prefers-reduced-motion.
 const fadeUp = {
-  hidden: { opacity: 0, y: 32, filter: "blur(8px)" },
-  visible: {
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transition: { duration: 0.8, ease: EASE_SOFT },
-  },
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE } },
 };
-// Cinematic headline reveal: a touch more travel + a subtle scale settle.
+// The headline is the one showcase element that earns a richer reveal: a brief
+// focus-pull (blur→0) over the rise+scale, kept inside the duration budget.
 const heroTitle = {
-  hidden: { opacity: 0, y: 44, scale: 0.96, filter: "blur(14px)" },
+  hidden: { opacity: 0, y: 32, scale: 0.97, filter: "blur(10px)" },
   visible: {
     opacity: 1,
     y: 0,
     scale: 1,
     filter: "blur(0px)",
-    transition: { duration: 1, ease: EASE_SOFT },
+    transition: { duration: 0.45, ease: EASE },
   },
 };
-// Springy pop with a hint of overshoot — gives badges/logo a tactile snap.
+// Spring physics for badges/logo (`spring-physics` rule) — a quick, tactile pop
+// with light overshoot, tuned to settle fast rather than wobble.
 const popIn = {
-  hidden: { opacity: 0, scale: 0.55 },
+  hidden: { opacity: 0, scale: 0.7 },
   visible: {
     opacity: 1,
     scale: 1,
-    transition: { type: "spring", stiffness: 240, damping: 16, mass: 0.7 },
+    transition: { type: "spring", stiffness: 320, damping: 20, mass: 0.6 },
   },
 };
 const stagger = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.13, delayChildren: 0.12 } },
+  visible: { transition: { staggerChildren: 0.05, delayChildren: 0.05 } },
 };
 // Reveal once, when ~a quarter of the element has scrolled into view.
 const inView = { once: true, amount: 0.25 };
@@ -87,7 +82,7 @@ function Header() {
     <motion.header
       initial={{ y: "-100%", opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.9, ease: EASE_SOFT }}
+      transition={{ duration: 0.45, ease: EASE }}
       className="sticky top-0 z-20 w-full shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1)]"
     >
       <div className="absolute inset-0 bg-gradient-to-r from-[#041502] to-[#1e5119]" />
@@ -192,7 +187,7 @@ function VipTierBar() {
       <motion.div
         variants={{
           hidden: { opacity: 0, y: -16 },
-          visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: EASE } },
+          visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: EASE } },
         }}
         className="relative z-10 -mb-5 rounded-full border-2 border-[rgba(170,141,39,0.8)] bg-[#041202] px-4 py-1.5 drop-shadow-[0px_0px_4px_rgba(255,215,0,0.15)]"
       >
@@ -422,9 +417,9 @@ function GamesSection() {
            * in with a soft blur/rise instead of snapping between games. */}
           <motion.div
             key={current.name}
-            initial={{ opacity: 0, y: 12, filter: "blur(6px)" }}
+            initial={{ opacity: 0, y: 10, filter: "blur(6px)" }}
             animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            transition={{ duration: 0.45, ease: EASE }}
+            transition={{ duration: 0.3, ease: EASE }}
             className="relative flex flex-col gap-2"
           >
             <h3 className={`text-3xl font-bold text-white ${sora}`} style={goldGlowText}>
