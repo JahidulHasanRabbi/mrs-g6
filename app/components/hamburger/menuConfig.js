@@ -10,12 +10,13 @@ export const MENU_CONFIG = {
       icon: "/assets/images/mini-game-icon.svg",
     items: [
       { icon: "/assets/images/kasih-spin-icon.png", label: "Lucky Spin", link: "/spin" },
-      { icon: "/assets/penalty-kick/icons/mdi-soccer.svg", label: "Penalty Kick", link: "/penalty-kick" },
+      { icon: "/assets/penalty-kick/icons/soccer-gold.svg", label: "Penalty Kick", link: "/penalty-kick" },
       { icon: "/assets/images/coming-soon-icon.png", label: "Coming Soon", link: "/coming-soon", disabled: true },
     ],
   },
   mainItems: [
-    { icon: "/assets/images/leaderboard-icon.png", label: "Leaderboard", link: "/leaderboard", disabled: true },
+    { icon: "/assets/images/leaderboard-icon.png", label: "Leaderboard", link: "/leaderboard" },
+    { icon: "/assets/penalty-kick/icons/flag-gold.svg", label: "Missions", link: "/penalty-kick/missions" },
     { icon: "/assets/images/vip-membership-icon.png", label: "VIP Membership", link: "/vip" },
     { icon: "/assets/images/pagcor-mart-icon.png", label: "Mart", link: "/mart" },
   ],

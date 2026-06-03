@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { FooterNav } from "../components/footer";
+import { HamburgerMenu } from "../components/hamburger";
 import { LB_SCREENS, LB_TABS } from "../components/leaderboard/constants";
 import { LBHeader } from "../components/leaderboard/primitives";
 import { getMyProfile, confirmNation } from "../components/leaderboard/mockApi";
@@ -17,6 +18,7 @@ import {
   MyPredictionsPanel,
 } from "../components/leaderboard/RankingScreens";
 import PredictionsList from "../components/leaderboard/PredictionsList";
+import InfoModal from "../components/leaderboard/InfoModal";
 import {
   PrizeTabs,
   CountryPrizesPanel,
@@ -33,6 +35,8 @@ import {
 //   - PREDICTIONS_LIST  (World Cup fixtures with Predict CTAs)
 export default function LeaderboardPage() {
   const [screen, setScreen] = useState(LB_SCREENS.COUNTRIES);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [profile, setProfile] = useState(null);
   const [activeTab, setActiveTab] = useState(LB_TABS.COUNTRIES);
   const [prizeTab, setPrizeTab] = useState("country");
@@ -119,7 +123,10 @@ export default function LeaderboardPage() {
       className="relative flex min-h-[100dvh] w-full flex-col overflow-hidden"
       style={{ background: "radial-gradient(circle at top, #1e2c2a 0%, #121414 55%, #0a0c0c 100%)" }}
     >
-      <LBHeader />
+      <LBHeader
+        onInfoClick={() => setIsInfoOpen(true)}
+        onMenuClick={() => setIsMenuOpen(true)}
+      />
 
       <div className="flex-1 pb-[140px]">
         {screen === LB_SCREENS.NATION_SELECT && (
@@ -200,6 +207,10 @@ export default function LeaderboardPage() {
       </div>
 
       <FooterNav />
+
+      <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+
+      {isInfoOpen && <InfoModal onClose={() => setIsInfoOpen(false)} />}
     </div>
   );
 }

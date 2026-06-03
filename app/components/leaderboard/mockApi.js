@@ -4,12 +4,15 @@
 const fakeLatency = (ms = 250) =>
   new Promise((r) => setTimeout(r, ms));
 
-// Locally-vendored Figma flag PNGs (per CLAUDE.md, Figma MCP asset URLs
-// expire after ~7 days, so we mustn't hot-link). Files live under
-// public/assets/leaderboard/flags/. Codes are ISO-3166 alpha-2, plus
+// Locally-vendored circular flags (HatScripts circle-flags set). The earlier
+// Figma PNG export framed each flag medallion at a different scale inside its
+// 1024px canvas (England filled the canvas, Japan had wide padding), so at a
+// fixed render size the visible flags came out inconsistent. These SVGs are
+// uniformly full-bleed circles, so every flag reads the same size. Files live
+// under public/assets/leaderboard/flags/; codes are ISO-3166 alpha-2, plus
 // `gb-eng` for England.
 export const flagUrl = (iso) =>
-  `/assets/leaderboard/flags/${iso.toLowerCase()}.png`;
+  `/assets/leaderboard/flags/${iso.toLowerCase()}.svg`;
 
 export const COUNTRIES_BY_TIER = {
   "Tier 1 · Global Giants": [
