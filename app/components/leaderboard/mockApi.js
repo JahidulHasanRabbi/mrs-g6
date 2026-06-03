@@ -43,20 +43,34 @@ const COUNTRY_RANKINGS = [
   { rank: 10, code: "us", name: "USA",      points: 1700, users: 340 },
 ];
 
-const PLAYERS_BY_COUNTRY = {
-  es: [
-    { rank: 1, name: "Arek Park",         points: 1250, code: "es" },
-    { rank: 2, name: "Noren Dunk",        points: 1250, code: "es" },
-    { rank: 3, name: "Brazil _lover",     points: 1250, code: "es" },
-    { rank: 4, name: "Messi_fan",         points: 1250, code: "es" },
-    { rank: 5, name: "Mark Nguyen",       points: 1250, code: "es" },
-    { rank: 6, name: "Hyueng Min Son",    points: 1250, code: "es" },
-    { rank: 7, name: "Harry Kane",        points: 1250, code: "es" },
-    { rank: 8, name: "Lionel Messi",      points: 1200, code: "es" },
-    { rank: 9, name: "Cristiano Ronaldo", points: 1150, code: "es" },
-    { rank: 10, name: "Neymar Jr",        points: 1100, code: "es" },
-  ],
-};
+// The per-country "Top Players" drill-down (Figma: Top Players / <COUNTRY>).
+// The designs reuse the same roster of names for every nation, with that
+// nation's flag down the whole list — so we generate each country's list from
+// one roster, stamping every row's `code` with the country so <Flag> matches.
+const TOP_PLAYERS_ROSTER = [
+  { name: "Arek Park",         points: 1250 },
+  { name: "Noren Dunk",        points: 1250 },
+  { name: "Brazil _lover",     points: 1250 },
+  { name: "Messi_fan",         points: 1250 },
+  { name: "Mark Nguyen",       points: 1250 },
+  { name: "Hyueng Min Son",    points: 1250 },
+  { name: "Harry Kane",        points: 1250 },
+  { name: "Lionel Messi",      points: 1200 },
+  { name: "Cristiano Ronaldo", points: 1150 },
+  { name: "Neymar Jr",         points: 1100 },
+];
+
+const playersFor = (code) =>
+  TOP_PLAYERS_ROSTER.map((p, i) => ({ rank: i + 1, ...p, code }));
+
+// Every country surfaced in the rankings / nation picker gets a roster so its
+// drill-down shows the right flag. Add a country here when the backend lands.
+const PLAYERS_BY_COUNTRY = Object.fromEntries(
+  ["br", "fr", "es", "it", "pt", "ar", "de", "gb-eng", "jp", "us"].map((code) => [
+    code,
+    playersFor(code),
+  ]),
+);
 const GLOBAL_PLAYERS = [
   { rank: 1, name: "Arek Park",         points: 1250, code: "br" },
   { rank: 2, name: "Noren Dunk",        points: 890,  code: "fr" },
@@ -145,3 +159,6 @@ export async function getCountryPrizes() { await fakeLatency(160); return COUNTR
 export async function getPlayerPrizes() { await fakeLatency(160); return PLAYER_PRIZES.slice(); }
 export async function getPredictionPrizes() { await fakeLatency(160); return PREDICTION_PRIZES.slice(); }
 export async function confirmNation(code) { await fakeLatency(180); return { ok: true, code }; }
+// Records a winner prediction for a fixture. Mock only — swap for a real
+// endpoint (e.g. memberApi) once the backend exists.
+export async function submitPrediction(group, teamCode) { await fakeLatency(200); return { ok: true, group, teamCode }; }

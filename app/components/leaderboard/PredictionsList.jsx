@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { LB_COLORS } from "./constants";
 import { GlowCard, Flag, Tabs } from "./primitives";
 import { getFixtures } from "./mockApi";
+import PredictModal from "./PredictModal";
 
 function OddsBar({ home, away }) {
   return (
@@ -86,8 +87,10 @@ function SectionHeader({ color, children }) {
   );
 }
 
-export default function PredictionsList({ onPredict, onMyPredictions }) {
+export default function PredictionsList({ onMyPredictions }) {
   const [fixtures, setFixtures] = useState({ upcoming: [], ongoing: [] });
+  // Fixture whose Predict button was tapped — drives the Predict Winner modal.
+  const [predictFixture, setPredictFixture] = useState(null);
   useEffect(() => { getFixtures().then(setFixtures); }, []);
 
   return (
@@ -103,7 +106,7 @@ export default function PredictionsList({ onPredict, onMyPredictions }) {
           <SectionHeader color={LB_COLORS.gold}>Upcoming Matches</SectionHeader>
           <div className="flex flex-col gap-2">
             {fixtures.upcoming.map((f, i) => (
-              <FixtureCard key={`u${i}`} fixture={f} onPredict={onPredict} />
+              <FixtureCard key={`u${i}`} fixture={f} onPredict={setPredictFixture} />
             ))}
           </div>
           <SectionHeader color={LB_COLORS.primary}>Ongoing Matches</SectionHeader>
@@ -114,6 +117,10 @@ export default function PredictionsList({ onPredict, onMyPredictions }) {
           </div>
         </div>
       </GlowCard>
+
+      {predictFixture && (
+        <PredictModal fixture={predictFixture} onClose={() => setPredictFixture(null)} />
+      )}
     </div>
   );
 }
