@@ -185,6 +185,44 @@ export async function getMemberRewardHistory(memberUuid, params = {}) {
   );
 }
 
+// POST /member/<uuid>/kick/
+export async function kick(memberUuid, direction) {
+  return await apiRequest(ENDPOINTS.MEMBER.KICK(memberUuid), {
+    method: 'POST',
+    body: { direction }
+  }, true, 'member');
+}
+
+// GET /member/<uuid>/kick-history/
+export async function getKickHistory(memberUuid, params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.MEMBER.KICK_HISTORY(memberUuid)}${qs}`, {
+    method: 'GET'
+  }, true, 'member');
+}
+
+// POST /member/<uuid>/kick/redeem-all/
+export async function redeemAllKickRewards(memberUuid) {
+  return await apiRequest(ENDPOINTS.MEMBER.KICK_REDEEM_ALL(memberUuid), {
+    method: 'POST'
+  }, true, 'member');
+}
+
+// GET /penalty-kick/game-status/
+export async function getPenaltyKickGameStatus() {
+  return await apiRequest(ENDPOINTS.MEMBER.PENALTY_KICK_GAME_STATUS, {
+    method: 'GET'
+  }, true, 'member');
+}
+
+// Best-effort settings read for token-per-shot display. Game open/maintenance
+// state must come from getPenaltyKickGameStatus() on the member page.
+export async function getPenaltyKickSettings() {
+  return await apiRequest(ENDPOINTS.ADMIN.PENALTY_KICK_SETTINGS, {
+    method: 'GET'
+  }, true, 'member');
+}
+
 // POST /front-view/member-feedback/ - Submit member feedback
 export async function submitFeedback(feedbackData) {
   console.log('memberApi.submitFeedback called with:', feedbackData);

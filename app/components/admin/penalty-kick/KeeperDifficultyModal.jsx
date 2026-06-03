@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ModalShell from "./ModalShell";
 
 const INPUT_BASE =
@@ -27,6 +27,14 @@ export default function KeeperDifficultyModal({ open, onClose, initial, onSave }
   const [medium, setMedium] = useState(initial?.medium ?? 50);
   const [hard, setHard] = useState(initial?.hard ?? 15);
   const [selected, setSelected] = useState(initial?.selected ?? "easy");
+
+  useEffect(() => {
+    if (!open) return;
+    setEasy(initial?.easy ?? 75);
+    setMedium(initial?.medium ?? 50);
+    setHard(initial?.hard ?? 25);
+    setSelected(initial?.selected ?? "easy");
+  }, [initial, open]);
 
   const handleSave = () => {
     onSave?.({ easy: Number(easy), medium: Number(medium), hard: Number(hard), selected });

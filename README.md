@@ -32,6 +32,7 @@ NEXT_PUBLIC_TWITTER_URL=https://twitter.com/
 - `/` - Homepage (default)
 - `/profile` - User profile
 - `/spin` - Lucky spin
+- `/penalty-kick` - Penalty kick
 - `/mart` - Redemption mart
 - `/personal-data` - Personal data form
 - `/vip` - VIP tier details
@@ -47,6 +48,9 @@ http://localhost:3000/auth?id=12345&o=kinggroup44.com&page=/profile
 
 # Login and go to spin page
 http://localhost:3000/auth?id=12345&o=kinggroup44.com&page=/spin
+
+# Login and go to penalty kick page
+http://localhost:3000/auth?id=12345&o=kinggroup44.com&page=/penalty-kick
 
 # Login and go to terms and conditions
 http://localhost:3000/auth?id=12345&o=kinggroup44.com&page=/terms-and-conditions

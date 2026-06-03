@@ -5,7 +5,15 @@ import GreenCta, { OutlinePillCta } from "./GreenCta";
 import { COLORS, ICONS } from "./constants";
 
 export default function GoalDialog({ reward, onKickAgain, onReturn }) {
-  const amount = reward?.credit_amount ?? 2;
+  const itemType = String(reward?.item_type || "").toUpperCase();
+  const amount = reward?.credit_amount ?? reward?.amount ?? reward?.token_amount ?? reward?.score_amount;
+  const rewardText = reward?.reward_name
+    ? amount
+      ? `${reward.reward_name} (${amount})`
+      : reward.reward_name
+    : amount
+      ? `${amount} ${itemType === "TOKEN" ? "Token" : "Reward"}${Number(amount) === 1 ? "" : "s"}`
+      : "a reward";
   return (
     <GlassCard>
       <h3
@@ -52,10 +60,7 @@ export default function GoalDialog({ reward, onKickAgain, onReturn }) {
         className="mb-5 text-[16px]"
         style={{ color: COLORS.textPrimary, fontFamily: "'Lexend', sans-serif" }}
       >
-        You won{" "}
-        <span style={{ color: COLORS.primary, fontWeight: 700 }}>
-          {amount} Token{amount === 1 ? "" : "s"}
-        </span>
+        You won <span style={{ color: COLORS.primary, fontWeight: 700 }}>{rewardText}</span>
       </p>
 
       <div className="flex flex-col gap-3">

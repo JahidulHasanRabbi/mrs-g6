@@ -151,6 +151,10 @@ export async function apiRequest(endpoint, options = {}, requiresAuth = false, t
       throw error;
     }
     
+    if (response.status === 204) {
+      return { success: true };
+    }
+
     try {
       const data = await response.json();
       return data;

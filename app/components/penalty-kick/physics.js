@@ -20,7 +20,8 @@ export function resolveSwipe(path) {
 
   // Aim: horizontal swipe component, normalized so a 120px horizontal
   // travel maps to a full -1..1 goal-line offset.
-  const aim = clamp(dx / 120, -1, 1);
+  const rawAim = dx / 120;
+  const aim = clamp(rawAim, -1, 1);
 
   // Power: average speed in px/ms. Anything over 1.5 px/ms is full power.
   const speed = Math.hypot(dx, dy) / dt;
@@ -37,7 +38,7 @@ export function resolveSwipe(path) {
     curl = clamp(cross / 60, -1, 1);
   }
 
-  return { aim, power, curl, valid: power > 0.15 };
+  return { aim, rawAim, power, curl, valid: power > 0.15 };
 }
 
 // Build a unit-time (0..1) parametric trajectory.

@@ -13,7 +13,13 @@ const TERMS = [
   "Continued use of the game confirms acceptance of all current terms, policies, and future updates or revisions.",
 ];
 
-export default function TermsDialog({ onClose }) {
+export default function TermsDialog({ onClose, termsText }) {
+  const hasApiValue = termsText !== null && termsText !== undefined;
+  const lines = hasApiValue
+    ? String(termsText).split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
+    : TERMS;
+  const isEmptyApiValue = hasApiValue && lines.length === 0;
+
   return (
     <GlassCard>
       <div
@@ -32,17 +38,19 @@ export default function TermsDialog({ onClose }) {
         className="mb-2 text-[10px] leading-[24px]"
         style={{ color: COLORS.textMuted, fontFamily: "'Lexend', sans-serif" }}
       >
-        {TERMS_INTRO}
+        {isEmptyApiValue ? "No terms and conditions available." : hasApiValue ? lines[0] : TERMS_INTRO}
       </p>
 
-      <ol
-        className="mb-5 list-decimal space-y-0 pl-[18px] text-[10px] leading-[24px]"
-        style={{ color: COLORS.textMuted, fontFamily: "'Lexend', sans-serif" }}
-      >
-        {TERMS.map((line, i) => (
-          <li key={i}>{line}</li>
-        ))}
-      </ol>
+      {!isEmptyApiValue && lines.length > 1 && (
+        <ol
+          className="mb-5 list-decimal space-y-0 pl-[18px] text-[10px] leading-[24px]"
+          style={{ color: COLORS.textMuted, fontFamily: "'Lexend', sans-serif" }}
+        >
+          {lines.slice(1).map((line, i) => (
+            <li key={i}>{line}</li>
+          ))}
+        </ol>
+      )}
 
       <GreenCta onClick={onClose} showPlayIcon={false}>
         Close

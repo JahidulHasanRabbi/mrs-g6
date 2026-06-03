@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useToast } from "../../../components/admin/ui/Toast";
+import * as adminApi from "../../../api/adminApi";
 
 const GOLD_BG = "linear-gradient(96deg, #dc9d16 1%, #f2cb7a 98%)";
 
@@ -9,13 +11,25 @@ const INPUT_BASE =
   "w-full rounded-[8px] border border-[#f2cb7a] bg-transparent px-4 py-2.5 text-[14px] text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#e9af41]/40";
 
 const ITEM_TYPES = [
-  { value: "free_credit",  label: "Free Credit" },
-  { value: "min_withdraw", label: "Min withdraw" },
-  { value: "max_withdraw", label: "Max withdraw" },
-  { value: "prize",        label: "Prize" },
-  { value: "token",        label: "Token" },
-  { value: "leaderboard",  label: "Worldcup Leaderboard Score" },
+  { value: "1", label: "Free Credit" },
+  { value: "2", label: "Token" },
+  { value: "3", label: "Prize" },
+  { value: "4", label: "World Cup Score" },
 ];
+
+const TYPE_LABEL_TO_VALUE = {
+  "FREE CREDIT": "1",
+  TOKEN: "2",
+  PRIZE: "3",
+  "WORLD CUP SCORE": "4",
+};
+
+function parseNumber(value) {
+  const cleaned = String(value ?? "").replace(/,/g, "").trim();
+  if (!cleaned) return 0;
+  const parsed = Number(cleaned);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
 
 function Toggle({ checked, onChange, label }) {
   return (
@@ -69,18 +83,57 @@ function ImagePlaceholderIcon() {
 
 export default function AddRewardPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const toast = useToast();
   const fileRef = useRef(null);
+  const rewardId = searchParams.get("id");
+  const isEditing = Boolean(rewardId);
 
   const [form, setForm] = useState({
-    name: "BMW M3",
-    quantity: "3,700",
-    itemType: "free_credit",
-    minWithdraw: "3,700",
-    maxWithdraw: "3,700",
+    name: "",
+    quantity: "",
+    itemType: "1",
+    minWithdraw: "",
+    maxWithdraw: "",
+    tokenAmount: "",
+    scoreAmount: "",
     unlimited: true,
   });
+  const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(isEditing);
+
+  useEffect(() => {
+    if (!rewardId) return;
+    let cancelled = false;
+    async function loadReward() {
+      setLoading(true);
+      try {
+        const item = await adminApi.getPenaltyKickItem(rewardId);
+        if (cancelled) return;
+        setForm({
+          name: item.reward_name || "",
+          quantity: item.unlimited ? "" : String(item.quantity ?? ""),
+          itemType: TYPE_LABEL_TO_VALUE[String(item.item_type || "").toUpperCase()] || String(item.item_type || "1"),
+          minWithdraw: item.min_withdraw ?? "",
+          maxWithdraw: item.max_withdraw ?? "",
+          tokenAmount: item.token_amount ?? "",
+          scoreAmount: item.score_amount ?? "",
+          unlimited: Boolean(item.unlimited),
+        });
+        setImagePreview(item.image || null);
+      } catch (error) {
+        toast.error("Failed to load reward", { description: error?.data?.detail || error?.message });
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    loadReward();
+    return () => {
+      cancelled = true;
+    };
+  }, [rewardId, toast]);
 
   const handleChange = (key) => (e) => {
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
@@ -89,47 +142,86 @@ export default function AddRewardPage() {
   const handleImage = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setImageFile(file);
     const reader = new FileReader();
     reader.onloadend = () => setImagePreview(reader.result);
     reader.readAsDataURL(file);
   };
 
-  const handleSave = async () => {
-    setSaving(true);
-    // TODO: wire to adminApi.createReward when endpoint exists
-    await new Promise((r) => setTimeout(r, 400));
-    setSaving(false);
-    router.push("/admin/penalty-kick");
+  const buildPayload = () => {
+    const payload = {
+      reward_name: form.name.trim(),
+      unlimited: Boolean(form.unlimited),
+      item_type: Number(form.itemType),
+    };
+    if (!form.unlimited) payload.quantity = parseNumber(form.quantity);
+    if (form.itemType === "1") {
+      payload.min_withdraw = String(form.minWithdraw || "0");
+      payload.max_withdraw = String(form.maxWithdraw || "0");
+    }
+    if (form.itemType === "2") payload.token_amount = parseNumber(form.tokenAmount);
+    if (form.itemType === "4") payload.score_amount = parseNumber(form.scoreAmount);
+    if (imageFile) payload.image = imageFile;
+    return payload;
   };
 
+  const handleSave = async () => {
+    if (!form.name.trim()) {
+      toast.warning("Reward name is required");
+      return;
+    }
+    if (!form.unlimited && parseNumber(form.quantity) <= 0) {
+      toast.warning("Quantity is required when unlimited is off");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const payload = buildPayload();
+      if (isEditing) {
+        await adminApi.updatePenaltyKickItem(rewardId, payload);
+        toast.success("Reward updated");
+      } else {
+        await adminApi.createPenaltyKickItem(payload);
+        toast.success("Reward created");
+      }
+      router.push("/admin/penalty-kick");
+    } catch (error) {
+      toast.error(isEditing ? "Failed to update reward" : "Failed to create reward", {
+        description: error?.data?.detail || error?.message,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="rounded-[16px] bg-[#041502] p-6 text-center text-[13px] text-white/60 shadow-[0_-4px_12px_-2px_#dea220]">
+        Loading reward...
+      </div>
+    );
+  }
+
   return (
-    <div
-      className="rounded-[16px] bg-[#041502] p-6 shadow-[0_-4px_12px_-2px_#dea220]"
-    >
+    <div className="rounded-[16px] bg-[#041502] p-6 shadow-[0_-4px_12px_-2px_#dea220]">
       <h2
         className="mb-6 bg-clip-text text-[24px] font-bold leading-[1.2] text-transparent"
-        style={{
-          fontFamily: "'DM Sans', sans-serif",
-          backgroundImage: "linear-gradient(101deg, #dc9d16 1%, #f2cb7a 98%)",
-        }}
+        style={{ fontFamily: "'DM Sans', sans-serif", backgroundImage: GOLD_BG }}
       >
-        Add Reward
+        {isEditing ? "Edit Reward" : "Add Reward"}
       </h2>
 
       <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-3">
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">Reward Name</label>
-          <input
-            type="text"
-            value={form.name}
-            onChange={handleChange("name")}
-            className={INPUT_BASE}
-          />
+          <input type="text" value={form.name} onChange={handleChange("name")} className={INPUT_BASE} />
         </div>
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">Quantity</label>
           <input
-            type="text"
+            type="number"
+            min="1"
             value={form.quantity}
             onChange={handleChange("quantity")}
             disabled={form.unlimited}
@@ -139,11 +231,7 @@ export default function AddRewardPage() {
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">Item Type</label>
           <div className="relative">
-            <select
-              value={form.itemType}
-              onChange={handleChange("itemType")}
-              className={`${INPUT_BASE} appearance-none pr-10`}
-            >
+            <select value={form.itemType} onChange={handleChange("itemType")} className={`${INPUT_BASE} appearance-none pr-10`}>
               {ITEM_TYPES.map((t) => (
                 <option key={t.value} value={t.value} style={{ background: "#041502", color: "white" }}>
                   {t.label}
@@ -156,31 +244,33 @@ export default function AddRewardPage() {
           </div>
         </div>
 
-        <div>
-          <label className="mb-2 block text-[14px] font-semibold text-white">Min withdraw</label>
-          <input
-            type="text"
-            value={form.minWithdraw}
-            onChange={handleChange("minWithdraw")}
-            className={INPUT_BASE}
-          />
-        </div>
-        <div>
-          <label className="mb-2 block text-[14px] font-semibold text-white">Max withdraw</label>
-          <input
-            type="text"
-            value={form.maxWithdraw}
-            onChange={handleChange("maxWithdraw")}
-            className={INPUT_BASE}
-          />
-        </div>
+        {form.itemType === "1" && (
+          <>
+            <div>
+              <label className="mb-2 block text-[14px] font-semibold text-white">Min withdraw</label>
+              <input type="number" min="0" step="0.01" value={form.minWithdraw} onChange={handleChange("minWithdraw")} className={INPUT_BASE} />
+            </div>
+            <div>
+              <label className="mb-2 block text-[14px] font-semibold text-white">Max withdraw</label>
+              <input type="number" min="0" step="0.01" value={form.maxWithdraw} onChange={handleChange("maxWithdraw")} className={INPUT_BASE} />
+            </div>
+          </>
+        )}
+        {form.itemType === "2" && (
+          <div>
+            <label className="mb-2 block text-[14px] font-semibold text-white">Token Amount</label>
+            <input type="number" min="1" value={form.tokenAmount} onChange={handleChange("tokenAmount")} className={INPUT_BASE} />
+          </div>
+        )}
+        {form.itemType === "4" && (
+          <div>
+            <label className="mb-2 block text-[14px] font-semibold text-white">Score Amount</label>
+            <input type="number" min="1" value={form.scoreAmount} onChange={handleChange("scoreAmount")} className={INPUT_BASE} />
+          </div>
+        )}
         <div>
           <label className="mb-4 block text-[14px] font-semibold text-white">Unlimited</label>
-          <Toggle
-            checked={form.unlimited}
-            onChange={(v) => setForm((prev) => ({ ...prev, unlimited: v }))}
-            label="Active"
-          />
+          <Toggle checked={form.unlimited} onChange={(v) => setForm((prev) => ({ ...prev, unlimited: v }))} label="Active" />
         </div>
 
         <div className="md:col-span-3">
@@ -200,13 +290,7 @@ export default function AddRewardPage() {
               </>
             )}
           </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleImage}
-          />
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImage} />
         </div>
       </div>
 
@@ -215,7 +299,7 @@ export default function AddRewardPage() {
           type="button"
           onClick={() => router.push("/admin/penalty-kick")}
           disabled={saving}
-          className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold tracking-[-0.5px] text-[#fbeed2] transition-colors hover:bg-white/5 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold text-[#fbeed2] transition-colors hover:bg-white/5 disabled:opacity-50"
         >
           <BackIcon />
           Back
@@ -224,7 +308,7 @@ export default function AddRewardPage() {
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold tracking-[-0.5px] text-[#141828] transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold text-[#141828] transition-opacity hover:opacity-90 disabled:opacity-50"
           style={{ backgroundImage: GOLD_BG }}
         >
           <CheckIcon />

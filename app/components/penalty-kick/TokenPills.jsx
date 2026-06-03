@@ -2,6 +2,15 @@
 
 import { COLORS, ICONS } from "./constants";
 
+function formatTokenAmount(value) {
+  const amount = typeof value === "number" ? value : Number(String(value ?? "").replace(/,/g, ""));
+  const safeAmount = Number.isFinite(amount) ? amount : 0;
+  return new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(safeAmount);
+}
+
 // Two glass-pill HUD chips that float above the arcade footer. Figma node
 // 569:2158 — gap-between layout, Tokens chip keeps the icon on the LEFT,
 // Token/Shot chip mirrors it (icon on the RIGHT). 142-px fixed Tokens
@@ -18,7 +27,7 @@ function PillBody({ label, value, valueColor, glowColor, align = "left" }) {
         {label}
       </span>
       <span
-        className="text-[18px] font-bold"
+        className="max-w-full text-[17px] font-bold leading-none"
         style={{
           color: valueColor,
           textShadow: glowColor
@@ -72,7 +81,7 @@ export default function TokenPills({ tokens = 0, perShot = 0 }) {
         style={{
           // 142px at the 475 design width; shrinks on narrow phones so the
           // two pills don't collide, with a floor that keeps "24.00" legible.
-          width: "min(142px, 42vw)",
+          width: "min(178px, 46vw)",
           backgroundColor: "rgba(255,255,255,0.1)",
           border: "1px solid rgba(255,255,255,0.2)",
         }}
@@ -80,7 +89,7 @@ export default function TokenPills({ tokens = 0, perShot = 0 }) {
         <PillIcon iconSrc={ICONS.coin} iconBg={COLORS.goldIcon} />
         <PillBody
           label="Tokens"
-          value={tokens.toFixed(2)}
+          value={formatTokenAmount(tokens)}
           valueColor={COLORS.goldText}
           glowColor="rgba(255,221,116,0.4)"
         />
@@ -96,7 +105,7 @@ export default function TokenPills({ tokens = 0, perShot = 0 }) {
       >
         <PillBody
           label="Token/shot"
-          value={perShot.toFixed(2)}
+          value={formatTokenAmount(perShot)}
           valueColor={COLORS.primary}
           glowColor="rgba(84,233,138,0.4)"
           align="right"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ModalShell from "./ModalShell";
 
 function Toggle({ checked, onChange, label }) {
@@ -30,6 +30,22 @@ export default function GameStatusModal({ open, onClose, initial, onSave }) {
   const [gameplay, setGameplay] = useState(initial?.gameplay ?? true);
   const [maintenance, setMaintenance] = useState(initial?.maintenance ?? true);
 
+  useEffect(() => {
+    if (!open) return;
+    setGameplay(initial?.gameplay ?? true);
+    setMaintenance(initial?.maintenance ?? false);
+  }, [initial, open]);
+
+  const handleGameplayChange = (checked) => {
+    setGameplay(checked);
+    if (checked) setMaintenance(false);
+  };
+
+  const handleMaintenanceChange = (checked) => {
+    setMaintenance(checked);
+    if (checked) setGameplay(false);
+  };
+
   const handleSave = () => {
     onSave?.({ gameplay, maintenance });
     onClose?.();
@@ -40,11 +56,11 @@ export default function GameStatusModal({ open, onClose, initial, onSave }) {
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         <div>
           <label className="mb-4 block text-[14px] font-semibold text-white">Gameplay</label>
-          <Toggle checked={gameplay} onChange={setGameplay} label="Open" />
+          <Toggle checked={gameplay} onChange={handleGameplayChange} label="Open" />
         </div>
         <div>
           <label className="mb-4 block text-[14px] font-semibold text-white">Maintenance Mode</label>
-          <Toggle checked={maintenance} onChange={setMaintenance} label="Active" />
+          <Toggle checked={maintenance} onChange={handleMaintenanceChange} label="Active" />
         </div>
       </div>
     </ModalShell>

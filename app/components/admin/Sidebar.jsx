@@ -785,13 +785,6 @@ export default function Sidebar({ activeItem: activeItemProp }) {
 
   const hasQuery = search.trim().length > 0;
 
-<<<<<<< HEAD
-  const mrsItems = filterMenuItems([...MENU_ITEMS, ...SECONDARY_MENU], search);
-  const worldCupItems = filterMenuItems(WORLD_CUP_MENU, search);
-  const retentionItems = filterMenuItems(RETENTION_MENU, search);
-  const settingsItems = filterMenuItems(SETTINGS_MENU, search);
-  const noResults = hasQuery && !mrsItems.length && !worldCupItems.length && !retentionItems.length && !settingsItems.length;
-=======
   useEffect(() => {
     const refreshPermissions = () => setPermissions(getStoredAdminPermissions());
     refreshPermissions();
@@ -799,10 +792,10 @@ export default function Sidebar({ activeItem: activeItemProp }) {
   }, []);
 
   const mrsItems = filterMenuItems(filterMenuByPermissions([...MENU_ITEMS, ...SECONDARY_MENU], permissions), search);
+  const worldCupItems = filterMenuItems(filterMenuByPermissions(WORLD_CUP_MENU, permissions), search);
   const retentionItems = filterMenuItems(filterMenuByPermissions(RETENTION_MENU, permissions), search);
   const settingsItems = filterMenuItems(filterMenuByPermissions(SETTINGS_MENU, permissions), search);
-  const noResults = hasQuery && !mrsItems.length && !retentionItems.length && !settingsItems.length;
->>>>>>> main
+  const noResults = hasQuery && !mrsItems.length && !worldCupItems.length && !retentionItems.length && !settingsItems.length;
 
   return (
     // Sidebar shell — gold border + dark green gradient per Figma 243:6071.

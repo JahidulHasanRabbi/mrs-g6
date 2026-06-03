@@ -611,3 +611,80 @@ export async function archiveFrame(uuid) {
     method: 'PATCH'
   }, true, 'admin');
 }
+
+// ============================================================================
+// PENALTY KICK MANAGEMENT
+// ============================================================================
+
+export async function getPenaltyKickSettings() {
+  return await apiRequest(ENDPOINTS.ADMIN.PENALTY_KICK_SETTINGS, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function updatePenaltyKickSettings(settingsData) {
+  return await apiRequest(ENDPOINTS.ADMIN.PENALTY_KICK_SETTINGS, {
+    method: 'POST',
+    body: settingsData
+  }, true, 'admin');
+}
+
+export async function getPenaltyKickItems(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.PENALTY_KICK_ITEMS}${qs}`, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function getPenaltyKickItem(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.PENALTY_KICK_ITEM(uuid), {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function createPenaltyKickItem(itemData) {
+  return await apiRequest(ENDPOINTS.ADMIN.PENALTY_KICK_ITEMS, {
+    method: 'POST',
+    body: itemData
+  }, true, 'admin');
+}
+
+export async function updatePenaltyKickItem(uuid, itemData) {
+  return await apiRequest(ENDPOINTS.ADMIN.PENALTY_KICK_ITEM(uuid), {
+    method: 'PUT',
+    body: itemData
+  }, true, 'admin');
+}
+
+export async function archivePenaltyKickItem(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.PENALTY_KICK_ITEM_ARCHIVE(uuid), {
+    method: 'PATCH'
+  }, true, 'admin');
+}
+
+export async function getPenaltyKickSequences(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.PENALTY_KICK_SEQUENCES}${qs}`, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function createPenaltyKickSequence(itemOrder, itemUuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.PENALTY_KICK_SEQUENCES, {
+    method: 'POST',
+    body: { item_order: itemOrder, item_uuid: itemUuid }
+  }, true, 'admin');
+}
+
+export async function deletePenaltyKickSequence(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.PENALTY_KICK_SEQUENCE(uuid), {
+    method: 'DELETE'
+  }, true, 'admin');
+}
+
+export async function reorderPenaltyKickSequences(kicks) {
+  return await apiRequest(ENDPOINTS.ADMIN.PENALTY_KICK_SEQUENCE_REORDER, {
+    method: 'PATCH',
+    body: { kicks }
+  }, true, 'admin');
+}

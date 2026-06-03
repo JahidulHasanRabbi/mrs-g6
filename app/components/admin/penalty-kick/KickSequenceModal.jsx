@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ModalShell from "./ModalShell";
 
 const INPUT_BASE =
@@ -9,6 +9,12 @@ const INPUT_BASE =
 export default function KickSequenceModal({ open, onClose, initial, rewards = [], onSave }) {
   const [position, setPosition] = useState(initial?.position ?? 11);
   const [rewardId, setRewardId] = useState(initial?.rewardId ?? rewards[0]?.id ?? "");
+
+  useEffect(() => {
+    if (!open) return;
+    setPosition(initial?.position ?? 1);
+    setRewardId(initial?.rewardId ?? rewards[0]?.id ?? "");
+  }, [initial, open, rewards]);
 
   const handleSave = () => {
     onSave?.({ position: Number(position), rewardId });

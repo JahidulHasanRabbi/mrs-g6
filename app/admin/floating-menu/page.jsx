@@ -18,6 +18,7 @@ const MRS_PAGES = [
   { slug: "/profile",            label: "Profile" },
   { slug: "/mart",               label: "Redemption Mart" },
   { slug: "/spin",               label: "Lucky Spin" },
+  { slug: "/penalty-kick",       label: "Penalty Kick" },
   { slug: "/terms-and-conditions", label: "Terms & Conditions" },
   { slug: "/vip",                label: "VIP" },
 ];

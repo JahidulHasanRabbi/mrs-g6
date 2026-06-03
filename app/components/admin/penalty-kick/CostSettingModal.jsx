@@ -1,10 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ModalShell from "./ModalShell";
 
 export default function CostSettingModal({ open, onClose, initial, onSave }) {
   const [cost, setCost] = useState(initial?.cost ?? "10.00");
+
+  useEffect(() => {
+    if (!open) return;
+    setCost(initial?.cost ?? "10.00");
+  }, [initial, open]);
 
   const handleSave = () => {
     onSave?.({ cost: Number(cost) });

@@ -39,8 +39,13 @@ export default function KickingPhase({ swipe, outcome, onLanded }) {
   // real trajectory once dims updated.
   const [dims, setDims] = useState({ w: 475, h: 720, vh: 844 });
   const finishedRef = useRef(false);
+  const onLandedRef = useRef(onLanded);
   const sizeScale = useResponsiveScale();
   const ballSize = Math.round(BALL_DESIGN_SIZE * sizeScale);
+
+  useEffect(() => {
+    onLandedRef.current = onLanded;
+  }, [onLanded]);
 
   useLayoutEffect(() => {
     const el = surfaceRef.current;
@@ -59,12 +64,12 @@ export default function KickingPhase({ swipe, outcome, onLanded }) {
       if (tt < 1) raf = requestAnimationFrame(tick);
       else if (!finishedRef.current) {
         finishedRef.current = true;
-        onLanded?.();
+        onLandedRef.current?.();
       }
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [onLanded]);
+  }, []);
 
   const trajectory = buildTrajectory({
     width: dims.w,
@@ -139,7 +144,7 @@ export default function KickingPhase({ swipe, outcome, onLanded }) {
             ? 0
             : outcome.outcome === "save"
               ? swipe.aim
-              : -Math.sign(swipe.aim || 0) * 0.6
+              : (outcome.keeperDive ?? 0) * 0.6
         }
         outcome={outcome.offTarget ? "miss" : outcome.outcome}
         delayMs={outcome.saveDelayMs ?? 200}

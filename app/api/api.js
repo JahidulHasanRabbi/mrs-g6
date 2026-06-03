@@ -8,6 +8,10 @@ export const ENDPOINTS = {
     MEMBER_INFO: (uuid) => `/member/members/${uuid}/`,
     MEMBER_TOKENS: (uuid) => `/member/${uuid}/member-tokens/`,
     MEMBER_REWARDS: (uuid) => `/member/${uuid}/member-rewards/`,
+    KICK: (uuid) => `/member/${uuid}/kick/`,
+    KICK_HISTORY: (uuid) => `/member/${uuid}/kick-history/`,
+    KICK_REDEEM_ALL: (uuid) => `/member/${uuid}/kick/redeem-all/`,
+    PENALTY_KICK_GAME_STATUS: '/penalty-kick/game-status/',
     ONE_SPIN: (uuid) => `/member/${uuid}/one-spin/`,
     TEN_SPIN: (uuid) => `/member/${uuid}/ten-spin/`,
     FIFTY_SPIN: (uuid) => `/member/${uuid}/fifty-spin/`,
@@ -85,7 +89,14 @@ export const ENDPOINTS = {
     FLOATING_MENU_ROOT_ICON: '/third-party/floating-menu-root-icon/',
     FRAMES: '/third-party/frame/',
     FRAME_SINGLE: (uuid) => `/third-party/frame/${uuid}/`,
-    FRAME_ARCHIVE: (uuid) => `/third-party/frame/${uuid}/archive/`
+    FRAME_ARCHIVE: (uuid) => `/third-party/frame/${uuid}/archive/`,
+    PENALTY_KICK_SETTINGS: '/penalty-kick/penalty-kick-settings/',
+    PENALTY_KICK_ITEMS: '/penalty-kick/penalty-kick-items/',
+    PENALTY_KICK_ITEM: (uuid) => `/penalty-kick/penalty-kick-items/${uuid}/`,
+    PENALTY_KICK_ITEM_ARCHIVE: (uuid) => `/penalty-kick/penalty-kick-items/${uuid}/archive/`,
+    PENALTY_KICK_SEQUENCES: '/penalty-kick/kick-sequences/',
+    PENALTY_KICK_SEQUENCE: (uuid) => `/penalty-kick/kick-sequences/${uuid}/`,
+    PENALTY_KICK_SEQUENCE_REORDER: '/penalty-kick/kick-sequences/change-kick-sequences/'
   },
   EXTERNAL: {
     SPECIAL_CODE: '/third-party/special-codes/',
