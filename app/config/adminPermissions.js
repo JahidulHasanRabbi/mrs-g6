@@ -29,6 +29,9 @@ export const ADMIN_PERMISSIONS = {
 
 export const MENU_PERMISSION_BY_ID = {
   "lucky-spin": [ADMIN_PERMISSIONS.VIEW_LUCKY_SPIN_PRIZES],
+  "prize-settings": [ADMIN_PERMISSIONS.VIEW_LUCKY_SPIN_PRIZES],
+  "user-logs": [ADMIN_PERMISSIONS.VIEW_LUCKY_SPIN_PRIZES],
+  "daily-limits": [ADMIN_PERMISSIONS.VIEW_LUCKY_SPIN_PRIZES],
   "vip": [ADMIN_PERMISSIONS.VIEW_MRS_TIER, ADMIN_PERMISSIONS.VIEW_WALLET_TIER],
   "wallet-site-vip": [ADMIN_PERMISSIONS.VIEW_WALLET_TIER],
   "mrs-vip-level": [ADMIN_PERMISSIONS.VIEW_MRS_TIER],
@@ -39,7 +42,7 @@ export const MENU_PERMISSION_BY_ID = {
 };
 
 export const ADMIN_ROUTE_RULES = [
-  { pattern: /^\/admin\/lucky-spin(?:\/prize-settings)?\/?$/, any: [ADMIN_PERMISSIONS.VIEW_LUCKY_SPIN_PRIZES] },
+  { pattern: /^\/admin\/lucky-spin(?:\/(?:prize-settings|user-logs|daily-limits))?\/?$/, any: [ADMIN_PERMISSIONS.VIEW_LUCKY_SPIN_PRIZES] },
   { pattern: /^\/admin\/vip-tiers\/?$/, any: [ADMIN_PERMISSIONS.VIEW_MRS_TIER] },
   { pattern: /^\/admin\/wallet-site-vip\/?$/, any: [ADMIN_PERMISSIONS.VIEW_WALLET_TIER] },
   { pattern: /^\/admin\/mrs-vip\/?$/, any: [ADMIN_PERMISSIONS.VIEW_MRS_TIER] },

@@ -88,9 +88,9 @@
 
 [Member Assignment \- GET	25](#member-assignment---get)
 
-[Member Assignment \- POST/PUT	25](#member-assignment---post/put)
+[Member Assignment \- POST/PUT	25](#member-assignment---put)
 
-[Member Assignment \- Set Deposit \- Patch	26](#member-assignment---set-deposit---patch)
+[Member Assignment \- Set Deposit \- Patch	26](#heading=h.fvc8xk9awof9)
 
 # Initial Notes {#initial-notes}
 
@@ -385,7 +385,7 @@ Query parameters
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | page | Int | No | For Pagination |
 | **2** | page\_size | Int | No | For Pagination |
-| **3** | priority | int | Yes |  |
+| **3** | priority | str | Yes | “inactive”, “low”, “medium”, “high” |
 | **4** | wallet\_vip\_level | str | Yes | Fuzzy |
 | **5** | mrs\_vip\_level | str | Yes | Fuzzy |
 | **6** | retention | int | Yes |  |
@@ -526,6 +526,75 @@ Game Info Input
 | **10** | reactivation\_trigger | Multiple Input | No | (Will have choices later) |
 | **11** | note | Text | Yes |  |
 
+### Assign Member to PIC \- PATCH
+
+/crm-members/members/\<member\_uuid\>/assign-to-pic/ PATCH
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | pic\_uuid | uuid | No |  |
+
+### Member FollowUp \- PATCH
+
+/crm-members/members/\<member\_uuid\>/follow-up/ PATCH
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | follow\_up\_remark | str | No |  |
+
+### 
+
+## Member List \- By Admin PIC
+
+/crm-members/\<admin\_uuid\>/admin-members/ GET  
+Query parameters
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | page | Int | No | For Pagination |
+| **2** | page\_size | Int | No | For Pagination |
+| **3** | priority | int | Yes |  |
+| **4** | wallet\_vip\_level | str | Yes | Fuzzy |
+| **5** | mrs\_vip\_level | str | Yes | Fuzzy |
+| **6** | retention | int | Yes |  |
+| **7** | search | str | Yes | For Name and Phone Number, fuzzy |
+
+Output (Is Paginated)
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | uuid | UUID | No |  |
+| **2** | full\_name | Str | No |  |
+| **3** | username | Str | No |  |
+| **4** | phone\_number | Str | No |  |
+| **5** | vip\_level | Str | No |  |
+| **6** | daily\_sales | Str(Decimal) | No |  |
+| **7** | daily\_win\_loss | Str(Decimal) | No |  |
+| **8** | priority | Str | No |  |
+| **9** | retention | Str | No |  |
+
+## Member FollowUp
+
+/crm-members/follow-up/ GET  
+Query parameters
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | page | Int | No | For Pagination |
+| **2** | page\_size | Int | No | For Pagination |
+| **3** | pic\_uuid | uuid | Yes |  |
+| **4** | member\_uuid | uuid | Yes |  |
+| **5** | start\_date end\_date | date date | Yes |  |
+
+Output
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | uuid | uuid | No |  |
+| **2** | datetime | datetime | No |  |
+| **3** | pic | str | No |  |
+| **4** | follow\_up\_remark | str | No |  |
+
 # Retention Alert System {#retention-alert-system}
 
 ## Priority Summary \- GET {#priority-summary---get}
@@ -645,30 +714,33 @@ Amount output
 ## Retention Member List \- GET {#retention-member-list---get}
 
 /crm-members/retention-members/ GET  
+Only returns member with priority  
 Query parameters
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | page | Int | No | For Pagination |
 | **2** | page\_size | Int | No | For Pagination |
-| **3** | from\_date | Date | Yes |  |
-| **4** | to\_date | Date | Yes |  |
-| **5** | vip\_level | int | Yes |  |
-| **6** | from\_sales | int | Yes |  |
-| **7** | to\_sales | Int | Yes |  |
-| **8** | search | str | Yes | For Name and Phone Number, fuzzy |
+| **3** | priority | str | Yes | “inactive” “low” “medium” “high” |
+| **4** | mrs\_vip\_level | str | Yes | Fuzzy |
+| **5** | wallet\_vip\_level | Str | Yes | Fuzzy |
+| **6** | retention | uuid | Yes | PIC uuid |
+| **7** | search | str | Yes | Fuzzy for phone and full name |
 
 Output (Is Paginated)
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | uuid | uuid | No |  |
-| **2** | username | str | No |  |
-| **3** | phone\_number | str | No |  |
-| **4** | level | str | No |  |
-| **5** | total\_sales | Str (Decimal) | No |  |
-| **6** | total\_winlose | Str (Decimal) | No |  |
-| **7** | last\_deposit | Date | No |  |
+| **2** | full\_name | str | No |  |
+| **3** | username | str | No |  |
+| **4** | brand | str | No |  |
+| **5** | phone\_number | str | No |  |
+| **6** | vip\_level | str | No |  |
+| **7** | daily\_sales | str | No |  |
+| **8** | daily\_win\_loss | str | No |  |
+| **9** | priority | str | No |  |
+| **10** | retention | str | No |  |
 
 For single get, use Member Single \- GET  
 For refresh, use Refresh Members \- POST
@@ -694,35 +766,23 @@ Output (Is Paginated)
 | **1** | uuid | uuid | No |  |
 | **2** | full\_name | str | No |  |
 | **3** | level | str | No |  |
-| **4** | target\_members | int | No |  |
+| **4** | no\_of\_members | int | No |  |
 | **5** | retain\_criteria | Str (decimal) | No |  |
 | **6** | upgrade\_criteria | Str (decimal) | No |  |
 | **7** | retention\_target | Int | No |  |
 | **8** | status | str |  |  |
-| **9** | pic\_uuid | UUID |  |  |
 
-### Member Assignment \- POST/PUT {#member-assignment---post/put}
+### Member Assignment \- PUT {#member-assignment---put}
 
-/crm-admins/assignments/ POST  
 /crm-admins/assignments/\<uuid\>/ PUT  
 Input
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | name | str | No |  |
+| **1** | level\_name | str | No |  |
 | **2** | status | int | No | 1 \= Active 2 \= Inactive |
 | **3** | retain\_criteria | Str (Decimal) | No |  |
 | **4** | upgrade\_criteria | Str (Decimal) | No |  |
-| **5** | pic\_uuid | uuid | No | /admins/users/ GET, use their uuid |
-
-### Member Assignment \- Set Deposit \- Patch {#member-assignment---set-deposit---patch}
-
-/crm-admins/assignments/set-target/ PATCH  
-Input
-
-| \# | Property/Field | Data Type | Nullable | Description |
-| ----: | :---- | :---- | :---- | :---- |
-| **1** | pic\_uuid | uuid | No | /admins/users/ GET, use their uuid |
-| **2** | deposit | Str (Decimal) | No |  |
+| **5** | retention\_target | Str (Decimal) | No | /admins/users/ GET, use their uuid |
 
 ### 

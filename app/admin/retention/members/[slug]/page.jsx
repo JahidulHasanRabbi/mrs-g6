@@ -8,9 +8,8 @@ import { GRAD_GOLD } from "../../../../components/admin/retention/constants";
 import {
   AlertHistorySection,
   FollowUpCreateModal,
-  MOCK_FOLLOWUP_HISTORY,
 } from "../../../../components/admin/retention/FollowUpComponents";
-import { getCrmMemberSingle, patchCrmMember } from "../../../../api/crmApi";
+import { getCrmFollowUps, getCrmMemberSingle, patchCrmMember, patchCrmMemberFollowUp } from "../../../../api/crmApi";
 import { getVipTierList, getWalletVipTiers, getStationList } from "../../../../api/adminApi";
 
 const TAG_STYLES = {
@@ -22,51 +21,6 @@ const TAG_STYLES = {
 };
 
 const ACTIVE_BRANDS = ["KG", "AB", "EP", "LV", "UB", "N1"];
-
-const MOCK_PROFILE_DATA = {
-  uuid: "mock-001",
-  full_name: "Ah Chong 88",
-  vip_level: "VIP 4",
-  priority: "High",
-  date_joined: "2026-05-27",
-  customer_data: {
-    username: "Ah Chong 88",
-    phone_number: "+6012-309 8765",
-    gender: "Male",
-    date_of_birth: "1990-08-12",
-    age: 35,
-    nationality: "Malaysia",
-    home_address: "Kuala Lumpur",
-    marital_status: "Single",
-    job: "Business Owner",
-    hobby: "Slots",
-    mrs_level: "VIP 4",
-    ns_level: "NS 2",
-    total_withdrawal: 3200,
-  },
-  financial_info: {
-    total_sales: 9999.88,
-    total_win_lose: 1023.13,
-    total_sales_ticket: 18,
-    arpu: 555.55,
-    average_deposit: 900,
-    last_deposit_date: "2026-05-27",
-    payment_method: "Bank Transfer",
-  },
-  gaming_info: {
-    game_preference: "Slot",
-    provider_preference: "Pragmatic Play",
-    play_time_pattern: "Night",
-    average_bet_size: "RM 20",
-    player_type: "VIP",
-    risk_style: "High",
-    deposit_frequency_style: "Weekly",
-    deposit_trigger: "Bonus",
-    churn_risk_reason: "Follow up required",
-    reactivation_trigger: "TG",
-    note: "Mock preview profile for alert follow-up development.",
-  },
-};
 
 const BRAND_COLORS = {
   N1: { bg: "#FBBF24", text: "#141828", border: "#FBBF24" }, // yellow
@@ -219,18 +173,13 @@ export default function MemberProfilePage() {
   const [activeModal, setActiveModal] = useState(null);
   const [walletVipTiers, setWalletVipTiers] = useState([]);
   const [stationList, setStationList] = useState([]);
-  const [alertHistory, setAlertHistory] = useState(MOCK_FOLLOWUP_HISTORY);
+  const [alertHistory, setAlertHistory] = useState([]);
+  const [alertLoading, setAlertLoading] = useState(false);
+  const [alertError, setAlertError] = useState("");
+  const [alertSubmitting, setAlertSubmitting] = useState(false);
 
   useEffect(() => {
     if (!memberUuid) return;
-    if (memberUuid === MOCK_PROFILE_DATA.uuid) {
-      setLoading(false);
-      setError(null);
-      setData(MOCK_PROFILE_DATA);
-      setWalletVipTiers([]);
-      setStationList([]);
-      return;
-    }
     let cancelled = false;
     const fetchAll = async () => {
       setLoading(true);
@@ -255,6 +204,35 @@ export default function MemberProfilePage() {
       }
     };
     fetchAll();
+    return () => {
+      cancelled = true;
+    };
+  }, [memberUuid, refreshKey]);
+
+  useEffect(() => {
+    if (!memberUuid) {
+      setAlertHistory([]);
+      return;
+    }
+    let cancelled = false;
+    const fetchFollowUps = async () => {
+      setAlertLoading(true);
+      setAlertError("");
+      try {
+        const res = await getCrmFollowUps({ page: 1, page_size: 50, member_uuid: memberUuid });
+        if (cancelled) return;
+        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        setAlertHistory(results);
+      } catch (err) {
+        if (cancelled) return;
+        console.error("[member-profile] follow-up fetch failed", err);
+        setAlertError("Failed to load follow-up history.");
+        setAlertHistory([]);
+      } finally {
+        if (!cancelled) setAlertLoading(false);
+      }
+    };
+    fetchFollowUps();
     return () => {
       cancelled = true;
     };
@@ -347,7 +325,7 @@ export default function MemberProfilePage() {
       <StatsRow stats={stats} />
       <InfoGrid basicInfo={basicInfo} financialInfo={financialInfo} gamingInfo={gamingInfo} />
       <NotesCard notes={show(data?.gaming_info?.note || data?.notes, "No notes available.")} />
-      <AlertHistorySection memberName={profileName} history={alertHistory} />
+      <AlertHistorySection memberName={profileName} history={alertHistory} loading={alertLoading} error={alertError} />
 
       {activeModal === "note" && (
         <NoteModal
@@ -375,13 +353,28 @@ export default function MemberProfilePage() {
           title="Add Alert"
           showPriority
           initialPriority={profilePriority}
+          submitting={alertSubmitting}
+          submitError={alertError}
           onClose={() => setActiveModal(null)}
-          onSubmit={(entry) => {
-            if (entry.priority) {
-              setData((prev) => (prev ? { ...prev, priority: entry.priority } : prev));
+          onSubmit={async (entry) => {
+            if (alertSubmitting) return;
+            setAlertSubmitting(true);
+            setAlertError("");
+            try {
+              await patchCrmMemberFollowUp(memberUuid, {
+                follow_up_remark: entry.follow_up_remark || entry.note || "",
+              });
+              if (entry.priority) {
+                setData((prev) => (prev ? { ...prev, priority: entry.priority } : prev));
+              }
+              setActiveModal(null);
+              setRefreshKey((k) => k + 1);
+            } catch (err) {
+              console.error("[member-profile] follow-up save failed", err);
+              setAlertError("Failed to save follow-up. Please try again.");
+            } finally {
+              setAlertSubmitting(false);
             }
-            setAlertHistory((prev) => [entry, ...prev]);
-            setActiveModal(null);
           }}
         />
       )}

@@ -116,6 +116,9 @@ export const ENDPOINTS = {
     // RETENTION_MEMBERS: '/crm-members/retention-profile/',
     RETENTION_MEMBERS: '/crm-members/retention-members/',
     ADMIN_MEMBERS: (adminUuid) => `/crm-members/${adminUuid}/admin-members/`,
+    FOLLOW_UPS: '/crm-members/follow-up/',
+    MEMBER_ASSIGN_TO_PIC: (memberUuid) => `/crm-members/members/${memberUuid}/assign-to-pic/`,
+    MEMBER_FOLLOW_UP: (memberUuid) => `/crm-members/members/${memberUuid}/follow-up/`,
     // Dashboard
     DASHBOARD_SUMMARY: '/crm-admins/dashboard-summary/',
     DASHBOARD_DETAILS: '/crm-admins/dashboard-details/',
