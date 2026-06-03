@@ -1,4 +1,4 @@
-import { Inter, Geist, Geist_Mono, Montserrat, DM_Sans } from "next/font/google";
+import { Inter, Geist, Geist_Mono, Montserrat, DM_Sans, JetBrains_Mono, Sora } from "next/font/google";
 import "./globals.css";
 
 /**
@@ -46,6 +46,18 @@ const dmSans = DM_Sans({
   weight: ["700"],
 });
 
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
+  subsets: ["latin"],
+  weight: ["400", "700", "800"],
+});
+
+const sora = Sora({
+  variable: "--font-sora",
+  subsets: ["latin"],
+  weight: ["400", "700", "800"],
+});
+
 export const metadata = {
   title: "VIP Access | Claim Your Elite Benefits & Rewards",
   description: "Access your exclusive member dashboard. Log in now to claim your daily benefits, unlock rewards, and compete in our latest mini-games!",
@@ -66,7 +78,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${montserrat.variable} ${dmSans.variable} antialiased bg-black`}
+        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${montserrat.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${sora.variable} antialiased bg-black`}
         style={{ fontFamily: '"Times New Roman", serif' }}
       >
         <ToastProvider>
