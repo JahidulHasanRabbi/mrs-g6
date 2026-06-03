@@ -347,7 +347,10 @@ function GamesSection() {
         <div
           ref={trackRef}
           onTransitionEnd={handleTransitionEnd}
-          className="flex items-center gap-6 py-12 lg:gap-10"
+          // Vertical padding must clear the *scaled* active card (1.35×) plus its
+          // label — the viewport's overflow-hidden (which hides the off-screen
+          // loop cards) would otherwise clip them. py-20 leaves headroom.
+          className="flex items-center gap-6 py-20 lg:gap-10"
           style={{
             transform: `translateX(${offset}px)`,
             transition: animate ? "transform 500ms ease-out" : "none",
