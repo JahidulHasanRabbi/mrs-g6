@@ -17,6 +17,7 @@ import {
 } from "../../../../components/admin/retention/constants";
 import {
   getAdminMembers,
+  getCrmVipTiers,
   getCrmUserSingle,
   getRetentionSummary,
   periodLabelToType,
@@ -53,14 +54,7 @@ const KPIS = [
 
 const PAGE_SIZE = 7;
 
-const LEVEL_OPTIONS = [
-  { value: "all",   label: "All level" },
-  { value: "VIP 1", label: "VIP 1" },
-  { value: "VIP 2", label: "VIP 2" },
-  { value: "VIP 3", label: "VIP 3" },
-  { value: "VIP 4", label: "VIP 4" },
-  { value: "VIP 5", label: "VIP 5" },
-];
+const DEFAULT_LEVEL_OPTIONS = [{ value: "all", label: "All level" }];
 
 const SORT_OPTIONS = [
   { value: "hl", label: "Sales (H-L)" },
@@ -78,11 +72,6 @@ function formatCurrency(value) {
   const num = parseFloat(value);
   if (Number.isNaN(num)) return `RM ${value}`;
   return `RM ${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-}
-
-function vipLabelToInt(label) {
-  const n = parseInt(String(label).replace(/[^0-9]/g, ""), 10);
-  return Number.isFinite(n) ? n : undefined;
 }
 
 function formatDate(value) {
@@ -348,6 +337,27 @@ function MemberListSection({ adminUuid, onRefreshSummary }) {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [levelOptions, setLevelOptions] = useState(DEFAULT_LEVEL_OPTIONS);
+
+  useEffect(() => {
+    let cancelled = false;
+    getCrmVipTiers({ page: 1, page_size: 100 })
+      .then((res) => {
+        if (cancelled) return;
+        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        const options = results
+          .map((tier) => tier.name || tier.tier_name || tier.level || tier.vip_level || tier.title)
+          .filter(Boolean)
+          .map((name) => ({ value: name, label: name }));
+        setLevelOptions([...DEFAULT_LEVEL_OPTIONS, ...options]);
+      })
+      .catch(() => {
+        if (!cancelled) setLevelOptions(DEFAULT_LEVEL_OPTIONS);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Single helper for swapping any param while preserving the rest.
   const updateParams = useCallback(
@@ -372,7 +382,7 @@ function MemberListSection({ adminUuid, onRefreshSummary }) {
     page_size: PAGE_SIZE,
     from_date: fromDate || undefined,
     to_date: toDate || undefined,
-    vip_level: level !== "all" ? vipLabelToInt(level) : undefined,
+    mrs_vip_level: level !== "all" ? level : undefined,
     search: q || undefined,
   }), [fromDate, toDate, level, page, q]);
 
@@ -428,7 +438,7 @@ function MemberListSection({ adminUuid, onRefreshSummary }) {
           <DateRangePicker fromDate={fromDate} toDate={toDate} onApply={handleDateApply} />
           <FilterDropdown
             value={level}
-            options={LEVEL_OPTIONS}
+            options={levelOptions}
             placeholder="All level"
             onChange={(v) => updateParams({ level: v === "all" ? null : v, page: null })}
           />
