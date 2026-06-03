@@ -56,7 +56,10 @@ Output
 | **4** | cost\_per\_kick | Int | No | Tokens deducted per kick |
 | **5** | goalkeeper\_difficulty | Int | No | 1 = EASY  2 = MEDIUM  3 = HARD |
 | **6** | goalkeeper\_difficulty\_display | Str | No |  |
-| **7** | description | Str | No |  |
+| **7** | easy\_probability | Int | No | Goal % when difficulty = EASY. Default 75 |
+| **8** | medium\_probability | Int | No | Goal % when difficulty = MEDIUM. Default 50 |
+| **9** | hard\_probability | Int | No | Goal % when difficulty = HARD. Default 25 |
+| **10** | description | Str | No |  |
 
 ## Penalty Kick Settings - POST
 
@@ -71,8 +74,11 @@ Input
 | **1** | game\_status | Int | Yes | 1 = OPEN  2 = CLOSE |
 | **2** | maintenance\_mode | Bool | Yes |  |
 | **3** | cost\_per\_kick | Int | Yes | Min value: 1 |
-| **4** | goalkeeper\_difficulty | Int | Yes | 1 = EASY (75% goal)  2 = MEDIUM (50% goal)  3 = HARD (25% goal) |
-| **5** | description | Str | Yes |  |
+| **4** | goalkeeper\_difficulty | Int | Yes | 1 = EASY  2 = MEDIUM  3 = HARD |
+| **5** | easy\_probability | Int | Yes | 1–100. Goal % when difficulty = EASY |
+| **6** | medium\_probability | Int | Yes | 1–100. Goal % when difficulty = MEDIUM |
+| **7** | hard\_probability | Int | Yes | 1–100. Goal % when difficulty = HARD |
+| **8** | description | Str | Yes |  |
 
 Returns same fields as GET
 

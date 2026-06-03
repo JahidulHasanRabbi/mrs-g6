@@ -38,7 +38,12 @@ function mapReward(item) {
 function mapSettings(data = {}) {
   const selected = DIFFICULTY_TO_KEY[data.goalkeeper_difficulty] || "easy";
   return {
-    keeper: { easy: 75, medium: 50, hard: 25, selected },
+    keeper: {
+      easy: data.easy_probability ?? 75,
+      medium: data.medium_probability ?? 50,
+      hard: data.hard_probability ?? 25,
+      selected,
+    },
     cost: { cost: Number(data.cost_per_kick ?? 10) },
     status: {
       gameplay: Number(data.game_status ?? 1) === 1,
@@ -389,7 +394,12 @@ export default function PenaltyKickPage() {
         onClose={() => setKeeperOpen(false)}
         onSave={async (payload) => {
           try {
-            await saveSettings({ goalkeeper_difficulty: KEY_TO_DIFFICULTY[payload.selected] || 1 }, "Keeper difficulty saved");
+            await saveSettings({
+              goalkeeper_difficulty: KEY_TO_DIFFICULTY[payload.selected] || 1,
+              easy_probability: payload.easy,
+              medium_probability: payload.medium,
+              hard_probability: payload.hard,
+            }, "Keeper difficulty saved");
           } catch (error) {
             toast.error("Failed to save keeper difficulty", { description: error?.data?.detail || error?.message });
           }
