@@ -136,7 +136,7 @@ export default function PenaltyKickPage() {
   // muted/toggleMuted destructured but unused — the Figma header dropped the
   // mute toggle. Audio still works (and respects the persisted-mute flag the
   // hook owns); the toggle can be reintroduced from a sub-menu later if needed.
-  const { play } = useAudio();
+  const { play, stop } = useAudio();
 
   const [phase, setPhase] = useState(PHASES.LOADING);
   const [dialog, setDialog] = useState(null);
@@ -327,13 +327,16 @@ export default function PenaltyKickPage() {
   }, [config.enabled, play]);
 
   const handleKickAgain = useCallback(() => {
+    // Cut the goal celebration short — it's a multi-second cheer and would
+    // otherwise keep playing over the next shot.
+    stop("goal");
     setDialog(null);
     setKickError(null);
     setSwipeData(null);
     setOutcome(null);
     setReward(null);
     setPhase(PHASES.READY);
-  }, []);
+  }, [stop]);
 
   const handleReturnToWebsite = useCallback(() => {
     const savedO = tokenStorage.getRedirectO?.();

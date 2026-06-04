@@ -43,6 +43,18 @@ export function useAudio() {
     } catch {}
   }, [muted]);
 
+  // Halt a clip mid-playback and rewind it. Needed for the long goal-cheer:
+  // when the player hits "Kick Again" the celebration should cut out instead
+  // of bleeding over into the next shot.
+  const stop = useCallback((name) => {
+    const el = audiosRef.current[name];
+    if (!el) return;
+    try {
+      el.pause();
+      el.currentTime = 0;
+    } catch {}
+  }, []);
+
   const toggleMuted = useCallback(() => {
     setMuted((prev) => {
       const next = !prev;
@@ -51,5 +63,5 @@ export function useAudio() {
     });
   }, []);
 
-  return { play, muted, toggleMuted };
+  return { play, stop, muted, toggleMuted };
 }
