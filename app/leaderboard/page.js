@@ -52,22 +52,29 @@ export default function LeaderboardPage() {
         typeof window !== "undefined" &&
         new URLSearchParams(window.location.search).get("fresh") === "1";
       const next = fresh ? { ...p, hasNation: false, hasOnboarded: false } : p;
+      // The render gate derives Onboarding → Nation Select → My Profile from
+      // these flags (see `needsOnboarding` / `needsNation` / `unlocked`), so
+      // no screen state needs to be set here — a customer without a nation
+      // cannot reach My Profile.
       setProfile(next);
-      if (!next.hasNation) setScreen(LB_SCREENS.NATION_SELECT);
-      else if (!next.hasOnboarded) setScreen(LB_SCREENS.ONBOARDING);
     });
   }, []);
 
+  // Nation Select is the last gate before the profile/leaderboard view, so
+  // confirming a country drops the user straight into "My Profile".
   const handleConfirmNation = useCallback(async (country) => {
     await confirmNation(country.code);
     setProfile((p) => ({ ...p, hasNation: true, countryCode: country.code, countryName: country.name }));
-    setScreen(LB_SCREENS.ONBOARDING);
+    setActiveTab(LB_TABS.COUNTRIES);
+    setScreen(LB_SCREENS.COUNTRIES);
   }, []);
 
+  // Onboarding's "Join Now" completes the intro carousel and advances to
+  // Nation Select (a country must be chosen before reaching My Profile).
   const handleJoinNow = useCallback(() => {
     setProfile((p) => p ? { ...p, hasOnboarded: true } : p);
-    setScreen(LB_SCREENS.PREDICTIONS_LIST);
-  }, []);
+    setScreen(profile?.hasNation ? LB_SCREENS.COUNTRIES : LB_SCREENS.NATION_SELECT);
+  }, [profile?.hasNation]);
 
   const onTabChange = (tab) => {
     setActiveTab(tab);
@@ -118,6 +125,14 @@ export default function LeaderboardPage() {
     screen === LB_SCREENS.PRIZE_PLAYERS ||
     screen === LB_SCREENS.PRIZE_PREDICTIONS;
 
+  // Hard gate: onboarding and nation selection are driven by the profile
+  // flags, not by `screen`, so no in-page navigation can leak the profile.
+  // My Profile (and everything past it) only renders once the customer has
+  // both onboarded AND chosen a country.
+  const needsOnboarding = profile && !profile.hasOnboarded;
+  const needsNation = profile && profile.hasOnboarded && !profile.hasNation;
+  const unlocked = profile && profile.hasOnboarded && profile.hasNation;
+
   return (
     <div
       className="relative flex min-h-[100dvh] w-full flex-col overflow-hidden"
@@ -129,80 +144,84 @@ export default function LeaderboardPage() {
       />
 
       <div className="flex-1 pb-[140px]">
-        {screen === LB_SCREENS.NATION_SELECT && (
-          <NationSelect onConfirm={handleConfirmNation} />
-        )}
-
-        {screen === LB_SCREENS.ONBOARDING && (
+        {needsOnboarding && (
           <Onboarding onJoinNow={handleJoinNow} />
         )}
 
-        {isLeaderboardTabbed && profile && (
-          <div className="flex flex-col items-center gap-6 px-4 pb-8 pt-2">
-            <ProfileCard profile={profile} />
-            <PredictToWinCard onJoinNow={() => setScreen(LB_SCREENS.PREDICTIONS_LIST)} />
-            <LeaderboardTabs activeTab={activeTab} onTabChange={onTabChange} />
-
-            {screen === LB_SCREENS.COUNTRIES && (
-              <CountriesPanel
-                myCountryCode={profile.countryCode}
-                onCountrySelect={(c) => {
-                  setSelectedCountry(c);
-                  setScreen(LB_SCREENS.MY_COUNTRY);
-                }}
-                onViewPrize={openPrizePool}
-              />
-            )}
-            {screen === LB_SCREENS.GLOBAL_PLAYERS && (
-              <GlobalPlayersPanel myPlayerName={profile.name} onViewPrize={openPrizePool} />
-            )}
-            {screen === LB_SCREENS.MY_COUNTRY && selectedCountry && (
-              <MyCountryPanel
-                country={selectedCountry}
-                onChangeCountry={() => setScreen(LB_SCREENS.COUNTRIES)}
-                onViewPrize={openPrizePool}
-              />
-            )}
-            {screen === LB_SCREENS.MY_PREDICTIONS && (
-              <MyPredictionsPanel onViewPrize={openPrizePool} />
-            )}
-          </div>
+        {needsNation && (
+          <NationSelect onConfirm={handleConfirmNation} />
         )}
 
-        {screen === LB_SCREENS.PREDICTIONS_LIST && (
-          <PredictionsList
-            onMyPredictions={() => {
-              setActiveTab(LB_TABS.PREDICTIONS);
-              setScreen(LB_SCREENS.MY_PREDICTIONS);
-            }}
-          />
-        )}
+        {unlocked && (
+          <>
+            {isLeaderboardTabbed && (
+              <div className="flex flex-col items-center gap-6 px-4 pb-8 pt-2">
+                <ProfileCard profile={profile} />
+                <PredictToWinCard onJoinNow={() => setScreen(LB_SCREENS.PREDICTIONS_LIST)} />
+                <LeaderboardTabs activeTab={activeTab} onTabChange={onTabChange} />
 
-        {isPrizeTabbed && (
-          <div className="flex flex-col items-center gap-3 px-4 pb-8 pt-2">
-            <PrizeTabs active={prizeTab} onChange={onPrizeTabChange} />
-            {screen === LB_SCREENS.PRIZE_COUNTRY && (
-              <CountryPrizesPanel
-                onViewLeaderboards={backToLeaderboards}
-                onViewDetails={(prize) => {
-                  setSelectedPrize(prize);
-                  setScreen(LB_SCREENS.PRIZE_INFO);
+                {screen === LB_SCREENS.COUNTRIES && (
+                  <CountriesPanel
+                    myCountryCode={profile.countryCode}
+                    onCountrySelect={(c) => {
+                      setSelectedCountry(c);
+                      setScreen(LB_SCREENS.MY_COUNTRY);
+                    }}
+                    onViewPrize={openPrizePool}
+                  />
+                )}
+                {screen === LB_SCREENS.GLOBAL_PLAYERS && (
+                  <GlobalPlayersPanel myPlayerName={profile.name} onViewPrize={openPrizePool} />
+                )}
+                {screen === LB_SCREENS.MY_COUNTRY && selectedCountry && (
+                  <MyCountryPanel
+                    country={selectedCountry}
+                    onChangeCountry={() => setScreen(LB_SCREENS.COUNTRIES)}
+                    onViewPrize={openPrizePool}
+                  />
+                )}
+                {screen === LB_SCREENS.MY_PREDICTIONS && (
+                  <MyPredictionsPanel onViewPrize={openPrizePool} />
+                )}
+              </div>
+            )}
+
+            {screen === LB_SCREENS.PREDICTIONS_LIST && (
+              <PredictionsList
+                onMyPredictions={() => {
+                  setActiveTab(LB_TABS.PREDICTIONS);
+                  setScreen(LB_SCREENS.MY_PREDICTIONS);
                 }}
               />
             )}
-            {screen === LB_SCREENS.PRIZE_PLAYERS && (
-              <PlayerPrizesPanel onViewLeaderboards={backToLeaderboards} />
-            )}
-            {screen === LB_SCREENS.PRIZE_PREDICTIONS && (
-              <PredictionPrizesPanel onViewPredictions={backToLeaderboards} />
-            )}
-          </div>
-        )}
 
-        {screen === LB_SCREENS.PRIZE_INFO && (
-          <div className="flex flex-col items-center gap-3 px-4 pb-8 pt-2">
-            <PrizeInfo prize={selectedPrize} onBack={() => setScreen(LB_SCREENS.PRIZE_COUNTRY)} />
-          </div>
+            {isPrizeTabbed && (
+              <div className="flex flex-col items-center gap-3 px-4 pb-8 pt-2">
+                <PrizeTabs active={prizeTab} onChange={onPrizeTabChange} />
+                {screen === LB_SCREENS.PRIZE_COUNTRY && (
+                  <CountryPrizesPanel
+                    onViewLeaderboards={backToLeaderboards}
+                    onViewDetails={(prize) => {
+                      setSelectedPrize(prize);
+                      setScreen(LB_SCREENS.PRIZE_INFO);
+                    }}
+                  />
+                )}
+                {screen === LB_SCREENS.PRIZE_PLAYERS && (
+                  <PlayerPrizesPanel onViewLeaderboards={backToLeaderboards} />
+                )}
+                {screen === LB_SCREENS.PRIZE_PREDICTIONS && (
+                  <PredictionPrizesPanel onViewPredictions={backToLeaderboards} />
+                )}
+              </div>
+            )}
+
+            {screen === LB_SCREENS.PRIZE_INFO && (
+              <div className="flex flex-col items-center gap-3 px-4 pb-8 pt-2">
+                <PrizeInfo prize={selectedPrize} onBack={() => setScreen(LB_SCREENS.PRIZE_COUNTRY)} />
+              </div>
+            )}
+          </>
         )}
       </div>
 

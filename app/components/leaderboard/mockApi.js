@@ -97,12 +97,14 @@ const MY_PROFILE = {
   totalPoints: 1250,
   totalPredictions: 15,
   totalWins: 12,
-  // Flip to false to land on the first-time NATION_SELECT / ONBOARDING
-  // screens. Default true so returning users go straight to the
-  // leaderboard. URL param ?fresh=1 also forces the first-time flow
-  // (handled in page.js).
-  hasNation: true,
-  hasOnboarded: true,
+  // Default to a brand-new customer so the required first-time flow is the
+  // default experience: Onboarding ("Become Top 10") → Nation Select
+  // ("Choose Your Nation") → My Profile. A customer cannot reach My Profile
+  // until both flags are true (the render gate in page.js enforces this).
+  // Flip either to true to simulate a returning customer; ?fresh=1 always
+  // forces the first-time flow regardless of these defaults.
+  hasNation: false,
+  hasOnboarded: false,
 };
 
 const FIXTURES = {
