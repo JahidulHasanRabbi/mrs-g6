@@ -5,7 +5,7 @@ import { FooterNav } from "../components/footer";
 import { HamburgerMenu } from "../components/hamburger";
 import { LB_SCREENS, LB_TABS } from "../components/leaderboard/constants";
 import { LBHeader } from "../components/leaderboard/primitives";
-import { getMyProfile, confirmNation } from "../components/leaderboard/mockApi";
+import { getMyProfile, confirmNation, clearNationSelection } from "../components/leaderboard/mockApi";
 import ProfileCard from "../components/leaderboard/ProfileCard";
 import PredictToWinCard from "../components/leaderboard/PredictToWinCard";
 import NationSelect from "../components/leaderboard/NationSelect";
@@ -51,6 +51,9 @@ export default function LeaderboardPage() {
       const fresh =
         typeof window !== "undefined" &&
         new URLSearchParams(window.location.search).get("fresh") === "1";
+      // ?fresh=1 also wipes any saved selection so the first-time flow is
+      // fully repeatable for QA / design.
+      if (fresh) clearNationSelection();
       const next = fresh ? { ...p, hasNation: false, hasOnboarded: false } : p;
       // The render gate derives Onboarding → Nation Select → My Profile from
       // these flags (see `needsOnboarding` / `needsNation` / `unlocked`), so
@@ -63,8 +66,8 @@ export default function LeaderboardPage() {
   // Nation Select is the last gate before the profile/leaderboard view, so
   // confirming a country drops the user straight into "My Profile".
   const handleConfirmNation = useCallback(async (country) => {
-    await confirmNation(country.code);
-    setProfile((p) => ({ ...p, hasNation: true, countryCode: country.code, countryName: country.name }));
+    await confirmNation(country.code, country.name);
+    setProfile((p) => ({ ...p, hasNation: true, hasOnboarded: true, countryCode: country.code, countryName: country.name }));
     setActiveTab(LB_TABS.COUNTRIES);
     setScreen(LB_SCREENS.COUNTRIES);
   }, []);

@@ -154,7 +154,36 @@ const PREDICTION_PRIZES = [
   { position: "7th", condition: "1 Consecutive Win",   reward: "20 TOKEN SPIN", type: "tokens" },
 ];
 
-export async function getMyProfile() { await fakeLatency(150); return { ...MY_PROFILE }; }
+// Persist the country selection so a customer who has chosen a nation goes
+// straight to My Profile on every later visit (and across full reloads),
+// while a customer who hasn't keeps seeing Onboarding → Nation Select.
+// Mock-only: a real backend would return these flags on the profile.
+const NATION_STORAGE_KEY = "mrs_lb_nation";
+
+function readNationPatch() {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(NATION_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearNationSelection() {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(NATION_STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+export async function getMyProfile() {
+  await fakeLatency(150);
+  // A saved selection overrides the (new-customer) defaults.
+  return { ...MY_PROFILE, ...(readNationPatch() ?? {}) };
+}
 export async function getCountryRankings() { await fakeLatency(220); return COUNTRY_RANKINGS.slice(); }
 export async function getGlobalPlayers() { await fakeLatency(220); return GLOBAL_PLAYERS.slice(); }
 export async function getPlayersByCountry(code) { await fakeLatency(220); return (PLAYERS_BY_COUNTRY[code] ?? PLAYERS_BY_COUNTRY.es).slice(); }
@@ -163,7 +192,22 @@ export async function getMyPredictions() { await fakeLatency(180); return MY_PRE
 export async function getCountryPrizes() { await fakeLatency(160); return COUNTRY_PRIZES.slice(); }
 export async function getPlayerPrizes() { await fakeLatency(160); return PLAYER_PRIZES.slice(); }
 export async function getPredictionPrizes() { await fakeLatency(160); return PREDICTION_PRIZES.slice(); }
-export async function confirmNation(code) { await fakeLatency(180); return { ok: true, code }; }
+export async function confirmNation(code, name) {
+  await fakeLatency(180);
+  // Persist so every subsequent leaderboard visit skips the intro and lands
+  // on My Profile directly.
+  if (typeof window !== "undefined") {
+    try {
+      window.localStorage.setItem(
+        NATION_STORAGE_KEY,
+        JSON.stringify({ hasNation: true, hasOnboarded: true, countryCode: code, countryName: name }),
+      );
+    } catch {
+      /* ignore */
+    }
+  }
+  return { ok: true, code };
+}
 // Records a winner prediction for a fixture. Mock only — swap for a real
 // endpoint (e.g. memberApi) once the backend exists.
 export async function submitPrediction(group, teamCode) { await fakeLatency(200); return { ok: true, group, teamCode }; }
