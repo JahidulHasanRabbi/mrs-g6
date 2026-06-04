@@ -10,6 +10,16 @@ function rankColor(rank) {
   return LB_COLORS.textWhite;
 }
 
+function maskName(name) {
+  if (!name) return name;
+  const chars = [...name];
+  if (chars.length <= 2) return `${chars[0]}•`;
+  const head = chars.slice(0, 2).join("");
+  const tail = chars[chars.length - 1];
+  const middle = "•".repeat(Math.max(3, chars.length - 3));
+  return head + middle + tail;
+}
+
 function rowStyle(highlight) {
   if (highlight) {
     return {
@@ -21,8 +31,9 @@ function rowStyle(highlight) {
   return { background: LB_COLORS.panelLight };
 }
 
-export function RankingRow({ rank, code, name, points, trail, highlight }) {
+export function RankingRow({ rank, code, name, points, trail, highlight, mask }) {
   const color = rankColor(rank);
+  const displayName = mask ? maskName(name) : name;
   return (
     <div
       className="flex w-full items-center gap-3 rounded-[8px] px-2 py-3"
@@ -33,7 +44,7 @@ export function RankingRow({ rank, code, name, points, trail, highlight }) {
       </div>
       <div className="flex flex-1 items-center gap-2">
         <span className="truncate text-[14px]" style={{ color, fontFamily: "'Lexend',sans-serif" }}>
-          {name}
+          {displayName}
         </span>
         {code && <Flag code={code} size={24} />}
       </div>

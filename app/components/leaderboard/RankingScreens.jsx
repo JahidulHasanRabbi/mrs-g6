@@ -72,12 +72,12 @@ export function GlobalPlayersPanel({ myPlayerName, onViewPrize }) {
           <RankingHeader
             columns={[
               { label: "RANK", width: "26px" },
-              { label: "PLAYERS", flex: "1 0 0", align: "right" },
+              { label: "PLAYERS", flex: "1 0 0", align: "left" },
               { label: "POINTS", width: "60px", align: "center" },
             ]}
           />
           {rows.map((p) => (
-            <RankingRow key={p.rank} rank={p.rank} code={p.code} name={p.name} points={p.points} highlight={p.name === myPlayerName} />
+            <RankingRow key={p.rank} rank={p.rank} code={p.code} name={p.name} points={p.points} highlight={p.name === myPlayerName} mask />
           ))}
         </div>
         <GreenButton onClick={onViewPrize} size="sm">View Prize Pool</GreenButton>
@@ -122,12 +122,12 @@ export function MyCountryPanel({ country, onViewPrize, onChangeCountry }) {
           <RankingHeader
             columns={[
               { label: "RANK", width: "26px" },
-              { label: "PLAYERS", flex: "1 0 0", align: "right" },
+              { label: "PLAYERS", flex: "1 0 0", align: "left" },
               { label: "POINTS", width: "60px", align: "center" },
             ]}
           />
           {rows.map((p) => (
-            <RankingRow key={p.rank} rank={p.rank} code={p.code} name={p.name} points={p.points} />
+            <RankingRow key={p.rank} rank={p.rank} code={p.code} name={p.name} points={p.points} mask />
           ))}
         </div>
         <GreenButton onClick={onViewPrize} size="sm">View Prize Pool</GreenButton>

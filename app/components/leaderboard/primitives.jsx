@@ -5,7 +5,14 @@ import { flagUrl } from "./mockApi";
 
 export function LBHeader({ onInfoClick, onMenuClick, title = "LEADERBOARDS" }) {
   return (
-    <div className="flex items-center justify-between p-4">
+    <div className="flex items-center gap-3 p-4">
+      <button aria-label="Menu" onClick={onMenuClick} className="grid h-9 w-9 shrink-0 place-items-center">
+        <span className="flex flex-col gap-1">
+          <span className="block h-[3px] w-5 rounded" style={{ background: "#FFDD74" }} />
+          <span className="block h-[3px] w-5 rounded" style={{ background: "#FFDD74" }} />
+          <span className="block h-[3px] w-5 rounded" style={{ background: "#FFDD74" }} />
+        </span>
+      </button>
       <h1
         className="flex-1 text-[28px] font-bold uppercase"
         style={{
@@ -18,31 +25,22 @@ export function LBHeader({ onInfoClick, onMenuClick, title = "LEADERBOARDS" }) {
       >
         {title}
       </h1>
-      <div className="flex items-center gap-3">
-        <button
-          aria-label="Info"
-          onClick={onInfoClick}
-          className="grid h-9 w-9 place-items-center rounded-full"
-          style={{
-            border: "2px solid #EBBF01",
-            color: "#FFDD74",
-            background: "transparent",
-            fontFamily: "'Lexend',serif",
-            fontStyle: "italic",
-            fontSize: 18,
-            fontWeight: 700,
-          }}
-        >
-          i
-        </button>
-        <button aria-label="Menu" onClick={onMenuClick} className="grid h-9 w-9 place-items-center">
-          <span className="flex flex-col gap-1">
-            <span className="block h-[3px] w-5 rounded" style={{ background: "#FFDD74" }} />
-            <span className="block h-[3px] w-5 rounded" style={{ background: "#FFDD74" }} />
-            <span className="block h-[3px] w-5 rounded" style={{ background: "#FFDD74" }} />
-          </span>
-        </button>
-      </div>
+      <button
+        aria-label="Info"
+        onClick={onInfoClick}
+        className="grid h-9 w-9 shrink-0 place-items-center rounded-full"
+        style={{
+          border: "2px solid #EBBF01",
+          color: "#FFDD74",
+          background: "transparent",
+          fontFamily: "'Lexend',serif",
+          fontStyle: "italic",
+          fontSize: 18,
+          fontWeight: 700,
+        }}
+      >
+        i
+      </button>
     </div>
   );
 }
