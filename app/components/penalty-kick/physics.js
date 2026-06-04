@@ -79,6 +79,12 @@ export function resolveSwipe(path) {
 // every device.
 const GOAL_BASE_VH = 0.48;
 const BALL_REST_VH = 0.24;
+// Floor (px from surface bottom) for the resting/kick-start ball, mirroring
+// `bottom: max(24vh, 200px)` on the ReadyPhase ball. On short viewports 24vh
+// dropped the ball onto the token pills; the floor lifts it clear. Keep this
+// equal to the px term in ReadyPhase.jsx so the kick starts where the resting
+// ball sat (no vertical pop at the phase swap).
+const BALL_REST_FLOOR_PX = 200;
 // Keeper shoulder (the marked target stripe) sits ~105 px above the goal
 // base at the 475-px design width. Expressed as a fraction of surface
 // width (105 / 475) so it tracks the keeper's now-fluid height — the ball
@@ -110,11 +116,12 @@ export function buildTrajectory({
   const endX = width / 2 + aim * goalHalfWidth * horizontalScale;
 
   const startX = width / 2;
-  // startY aligns with the ReadyPhase ball at bottom: 24vh (the surface
-  // bottom is the viewport bottom — the footer overlays it). Converting to
-  // a top-anchored Y keeps the kicking ball exactly where the resting ball
-  // was, so there's no vertical jump at the phase swap.
-  const startY = height - BALL_REST_VH * vh;
+  // startY aligns with the ReadyPhase ball at bottom: max(24vh, 200px) (the
+  // surface bottom is the viewport bottom — the footer overlays it).
+  // Converting to a top-anchored Y keeps the kicking ball exactly where the
+  // resting ball was, so there's no vertical jump at the phase swap.
+  const restFromBottom = Math.max(BALL_REST_VH * vh, BALL_REST_FLOOR_PX);
+  const startY = height - restFromBottom;
   // Goal base at 48vh from the bottom (matches GoalFrame/Keeper). Convert
   // to a top-anchored Y (the ball uses `top`) and lift to the keeper's
   // shoulder so the ball lands on the goal mouth on every device.

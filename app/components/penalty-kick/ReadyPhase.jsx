@@ -62,9 +62,13 @@ export default function ReadyPhase({ surfaceHandlers, setSurface }) {
         size={ballSize}
         style={{
           left: "50%",
-          // 24vh keeps the penalty-spot ball clear of the token pills +
-          // footer at the bottom of the scene (the pills sit ~15vh up).
-          bottom: "24vh",
+          // 24vh gives an airy gap to the goal on tall phones. The 200px floor
+          // stops the ball dropping into the token pills on short devices —
+          // the pills top out ~182px from the bottom (fixed px), so below an
+          // ~833px viewport 24vh alone landed the ball on top of them. Must
+          // stay in sync with BALL_REST_FLOOR_PX in physics.js so the kicking
+          // ball starts where the resting ball sat (no pop on swipe).
+          bottom: "max(24vh, 200px)",
           marginTop: 0,
           zIndex: 10,
         }}
