@@ -7,6 +7,12 @@ function storeAdminSession(response) {
   if (response.access && response.refresh) {
     tokenStorage.setAdminTokens(response.access, response.refresh);
   }
+  if (response.id || response.uuid || response.username) {
+    tokenStorage.setAdminIdentity({
+      uuid: response.id || response.uuid,
+      username: response.username
+    });
+  }
   if (response.role) {
     tokenStorage.setAdminRole(response.role);
   }

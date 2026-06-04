@@ -84,6 +84,24 @@ function show(value, fallback = "—") {
   return value === null || value === undefined || value === "" ? fallback : String(value);
 }
 
+function formatDateOnly(value, fallback = "—") {
+  if (value === null || value === undefined || value === "") return fallback;
+  const raw = String(value);
+
+  const ymd = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (ymd) return `${ymd[3]}/${ymd[2]}/${ymd[1]}`;
+
+  const dmy = raw.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
+  if (dmy) return `${dmy[1]}/${dmy[2]}/${dmy[3]}`;
+
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return raw;
+  const dd = String(date.getDate()).padStart(2, "0");
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const yyyy = date.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+
 function inferTags(data) {
   const tags = [];
   const vip = data?.customer_data?.mrs_level || data?.customer_data?.vip_level || data?.vip_level;
@@ -255,7 +273,7 @@ export default function MemberProfilePage() {
     Username: show(customer?.username || basic?.username),
     Phone: show(customer?.phone_number || basic?.phone_number),
     Gender: show(customer?.gender || basic?.gender),
-    "Date of Birth": show(customer?.date_of_birth || basic?.date_of_birth),
+    "Date of Birth": formatDateOnly(customer?.date_of_birth || basic?.date_of_birth),
     Age: show(customer?.age ?? basic?.age),
     Nationality: show(customer?.nationality || basic?.nationality),
     "Home Address": show(customer?.home_address || basic?.home_address),
@@ -273,7 +291,7 @@ export default function MemberProfilePage() {
     "Total Withdrawal Ticket": show(data?.financial_info?.total_withdrawal_ticket),
     ARPU: formatCurrency(data?.financial_info?.arpu),
     "Average Deposit": formatCurrency(data?.financial_info?.average_deposit),
-    "Last Deposit Date": show(data?.financial_info?.last_deposit_date),
+    "Last Deposit Date": formatDateOnly(data?.financial_info?.last_deposit_date),
     "Payment Method": show(data?.financial_info?.payment_method),
   };
 
@@ -311,7 +329,7 @@ export default function MemberProfilePage() {
       <ProfileHeader
         name={profileName}
         tags={inferTags(data)}
-        dateJoined={show(customer?.date_joined || data?.date_joined)}
+        dateJoined={formatDateOnly(customer?.date_joined || data?.date_joined)}
         slug={memberUuid}
         activeBrands={activeBrands}
         onNoteOpen={() => setActiveModal("note")}

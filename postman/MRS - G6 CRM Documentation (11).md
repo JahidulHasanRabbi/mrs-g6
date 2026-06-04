@@ -779,7 +779,7 @@ Input
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | level\_name | str | No |  |
+| **1** | name | str | No |  |
 | **2** | status | int | No | 1 \= Active 2 \= Inactive |
 | **3** | retain\_criteria | Str (Decimal) | No |  |
 | **4** | upgrade\_criteria | Str (Decimal) | No |  |
