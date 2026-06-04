@@ -38,6 +38,7 @@ import {
 import { tokenStorage } from "../api/tokenStorage";
 import { useUser } from "../contexts/UserContext";
 import { HamburgerMenu } from "../components/hamburger";
+import { preloadGameAssets } from "../components/penalty-kick/assets";
 
 const HISTORY_PAGE_SIZE = 10;
 const ITEM_TYPE_LABELS = {
@@ -156,6 +157,14 @@ export default function PenaltyKickPage() {
   const [reward, setReward] = useState(null);
   const [kickError, setKickError] = useState(null);
   const pendingKickRef = useRef(false);
+
+  // Warm the keeper flipbook + ball into cache while the loading/launch
+  // screens are up, so the first dive's per-frame <img> swaps are cache hits
+  // instead of on-demand fetches that can't finish inside the 130ms frame
+  // window on slow 4G (the cause of the keeper freezing / skipping frames).
+  useEffect(() => {
+    preloadGameAssets();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
