@@ -155,7 +155,7 @@ function HeaderRow({ period, onPeriodChange, fromDate, toDate }) {
 
 function KpiGrid({ summary, loading }) {
   return (
-    <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
       {KPI_META.map((meta) => {
         if (loading) return <KpiCardSkeleton key={meta.id} />;
         const raw = summary?.[meta.key];
@@ -204,10 +204,12 @@ function KpiCardSkeleton() {
   );
 }
 
-// KPI value size mirrors the User Access Management reference (38px / 44px).
-// Currency tiles can carry long values, so the value still wraps via
-// `overflow-wrap` rather than clipping or forcing the card wider.
-const KPI_VALUE_SIZE = "text-[38px] leading-[44px]";
+// KPI value size targets the User Access Management reference (38px). This
+// dashboard packs 8 tiles carrying long currency strings ("RM 10,677,327.5"),
+// so the grid stays at 2 columns until 2xl (≥1536px, wide enough to fit 4
+// big-value tiles), and the value scales with the viewport so it stays on one
+// line instead of wrapping mid-number.
+const KPI_VALUE_FONT = "clamp(22px, 1.7vw, 34px)";
 
 function KpiCard({ kpi }) {
   const isCurrency = !!kpi.valuePrefix;
@@ -240,15 +242,17 @@ function KpiCard({ kpi }) {
             style={{
               backgroundImage: GRAD_GOLD,
               fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+              fontSize: KPI_VALUE_FONT,
+              lineHeight: "1.2",
             }}
           >
             {isCurrency ? (
-              <span className={`flex min-w-0 items-baseline gap-1 tabular-nums ${KPI_VALUE_SIZE}`}>
+              <span className="flex min-w-0 items-baseline gap-1 tabular-nums whitespace-nowrap">
                 <span className="shrink-0 text-[0.7em]">{kpi.valuePrefix}</span>
                 <span className="min-w-0 [overflow-wrap:anywhere]">{kpi.value}</span>
               </span>
             ) : (
-              <span className={`block [overflow-wrap:anywhere] tabular-nums ${KPI_VALUE_SIZE}`}>
+              <span className="block [overflow-wrap:anywhere] tabular-nums">
                 {kpi.value}
               </span>
             )}
