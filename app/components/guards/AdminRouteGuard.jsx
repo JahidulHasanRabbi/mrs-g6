@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { tokenStorage } from '../../api/tokenStorage';
 import { verifyToken, refreshToken } from '../../api/adminApi';
 import { canAccessAdminRoute, getStoredAdminPermissions } from '../../config/adminPermissions';
+
+const AdminGuardContext = createContext(false);
 
 async function attemptRefresh() {
   const storedRefresh = tokenStorage.getAdminRefreshToken();
@@ -43,12 +45,14 @@ function AdminGuardLoading() {
  * data sections instead.
  */
 export function AdminRouteGuard({ children /* , skeleton (deprecated) */ }) {
+  const alreadyGuarded = useContext(AdminGuardContext);
   const router = useRouter();
   const pathname = usePathname();
   const verifiedRef = useRef(false);
   const [tokenState, setTokenState] = useState(null); // null | 'present' | 'absent'
 
   useEffect(() => {
+    if (alreadyGuarded) return;
     if (verifiedRef.current) return;
     verifiedRef.current = true;
 
@@ -82,22 +86,28 @@ export function AdminRouteGuard({ children /* , skeleton (deprecated) */ }) {
         }
       });
     });
-  }, [router]);
+  }, [alreadyGuarded, router]);
 
   useEffect(() => {
+    if (alreadyGuarded) return;
     if (tokenState !== 'present') return;
 
     const permissions = getStoredAdminPermissions();
     if (!canAccessAdminRoute(pathname, permissions)) {
       router.replace('/admin');
     }
-  }, [pathname, router, tokenState]);
+  }, [alreadyGuarded, pathname, router, tokenState]);
 
+  if (alreadyGuarded) return children;
   if (tokenState === null) return <AdminGuardLoading />;
   if (tokenState === 'absent') return <AdminGuardLoading />;
   if (tokenState === 'present' && !canAccessAdminRoute(pathname, getStoredAdminPermissions())) {
     return <AdminGuardLoading />;
   }
 
-  return children;
+  return (
+    <AdminGuardContext.Provider value>
+      {children}
+    </AdminGuardContext.Provider>
+  );
 }

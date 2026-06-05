@@ -223,9 +223,33 @@ function dateToInput(value) {
   if (!value) return "";
   const raw = String(value);
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  const ymdWithTime = raw.match(/^(\d{4})-(\d{2})-(\d{2})[T\s]/);
+  if (ymdWithTime) return `${ymdWithTime[1]}-${ymdWithTime[2]}-${ymdWithTime[3]}`;
   const match = raw.match(/^(\d{2})-(\d{2})-(\d{4})$/);
-  if (!match) return raw;
-  return `${match[3]}-${match[2]}-${match[1]}`;
+  if (match) return `${match[3]}-${match[2]}-${match[1]}`;
+  const slashMatch = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (slashMatch) return `${slashMatch[3]}-${slashMatch[2]}-${slashMatch[1]}`;
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return raw;
+  const yyyy = parsed.getFullYear();
+  const mm = String(parsed.getMonth() + 1).padStart(2, "0");
+  const dd = String(parsed.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function formatDateOnly(value, fallback = "—") {
+  if (value === null || value === undefined || value === "") return fallback;
+  const raw = String(value);
+  const inputDate = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (inputDate) return `${inputDate[3]}/${inputDate[2]}/${inputDate[1]}`;
+  const displayDate = raw.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
+  if (displayDate) return `${displayDate[1]}/${displayDate[2]}/${displayDate[3]}`;
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return raw;
+  const dd = String(parsed.getDate()).padStart(2, "0");
+  const mm = String(parsed.getMonth() + 1).padStart(2, "0");
+  const yyyy = parsed.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
 }
 
 function parseBetSize(value) {
@@ -371,7 +395,7 @@ function apiToForm(data, vipTiers = [], walletVipTiers = [], stationList = []) {
     totalWithdrawalTicket: f.total_withdrawal_ticket ?? "",
     arpu: f.arpu ?? "",
     avgDeposit: f.average_deposit ?? "",
-    lastDepositDate: f.last_deposit_date || "",
+    lastDepositDate: formatDateOnly(f.last_deposit_date, ""),
     paymentMethod: f.payment_method || "",
 
     gamePreference: g.game_preference || "",
@@ -807,14 +831,27 @@ function FieldWrapper({ label, children, span = 1 }) {
 }
 
 function TextInput({ value, onChange, leftIcon, type = "text" }) {
+  const inputRef = useRef(null);
+  const isDate = type === "date";
+  const openDatePicker = () => {
+    if (!isDate) return;
+    inputRef.current?.showPicker?.();
+    inputRef.current?.focus();
+  };
+
   return (
-    <div className="flex items-center gap-3 rounded-[8px] border border-[#fbeed2] px-4 py-3">
+    <div
+      className={`flex items-center gap-3 rounded-[8px] border border-[#fbeed2] px-4 py-3 ${isDate ? "cursor-pointer" : ""}`}
+      onClick={openDatePicker}
+    >
       {leftIcon}
       <input
+        ref={inputRef}
         type={type}
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value)}
-        className="flex-1 bg-transparent text-[12px] font-medium leading-[18px] text-white outline-none placeholder:text-white/40 [color-scheme:dark]"
+        lang={isDate ? "en-GB" : undefined}
+        className={`flex-1 bg-transparent text-[12px] font-medium leading-[18px] text-white outline-none placeholder:text-white/40 [color-scheme:dark] ${isDate ? "cursor-pointer" : ""}`}
       />
     </div>
   );

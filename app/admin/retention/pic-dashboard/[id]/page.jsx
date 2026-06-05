@@ -5,11 +5,9 @@ import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import PeriodToggle from "../../../../components/admin/retention/PeriodToggle";
-import RefreshControl from "../../../../components/admin/retention/RefreshControl";
 import Pagination from "../../../../components/admin/retention/Pagination";
 import FilterDropdown from "../../../../components/admin/retention/FilterDropdown";
 import SearchInput from "../../../../components/admin/retention/SearchInput";
-import DateRangePicker from "../../../../components/admin/retention/DateRangePicker";
 import {
   ASSETS,
   GRAD_DARK,
@@ -17,10 +15,10 @@ import {
 } from "../../../../components/admin/retention/constants";
 import {
   getAdminMembers,
+  getCrmVipTiers,
   getCrmUserSingle,
   getRetentionSummary,
   periodLabelToType,
-  refreshCrmMembers,
 } from "../../../../api/crmApi";
 
 // PIC detail view — shows per-PIC breakdown of members + a member list.
@@ -53,14 +51,7 @@ const KPIS = [
 
 const PAGE_SIZE = 7;
 
-const LEVEL_OPTIONS = [
-  { value: "all",   label: "All level" },
-  { value: "VIP 1", label: "VIP 1" },
-  { value: "VIP 2", label: "VIP 2" },
-  { value: "VIP 3", label: "VIP 3" },
-  { value: "VIP 4", label: "VIP 4" },
-  { value: "VIP 5", label: "VIP 5" },
-];
+const DEFAULT_LEVEL_OPTIONS = [{ value: "all", label: "All level" }];
 
 const SORT_OPTIONS = [
   { value: "hl", label: "Sales (H-L)" },
@@ -78,11 +69,6 @@ function formatCurrency(value) {
   const num = parseFloat(value);
   if (Number.isNaN(num)) return `RM ${value}`;
   return `RM ${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-}
-
-function vipLabelToInt(label) {
-  const n = parseInt(String(label).replace(/[^0-9]/g, ""), 10);
-  return Number.isFinite(n) ? n : undefined;
 }
 
 function formatDate(value) {
@@ -140,6 +126,41 @@ function buildKpis(summary) {
   ];
 }
 
+function buildSummaryParams(period, fromDate, toDate) {
+  if (fromDate && toDate) {
+    return { type: 4, from_date: fromDate, to_date: toDate };
+  }
+  if (period === "All") return {};
+  return { type: periodLabelToType(period) };
+}
+
+function toDateInput(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function buildMemberDateParams(period, fromDate, toDate) {
+  if (fromDate && toDate) {
+    return { from_date: fromDate, to_date: toDate };
+  }
+  if (period === "All") return {};
+
+  const today = new Date();
+  if (period === "Daily") {
+    const value = toDateInput(today);
+    return { from_date: value, to_date: value };
+  }
+  if (period === "Monthly") {
+    return { from_date: toDateInput(new Date(today.getFullYear(), today.getMonth(), 1)), to_date: toDateInput(today) };
+  }
+  if (period === "Yearly") {
+    return { from_date: toDateInput(new Date(today.getFullYear(), 0, 1)), to_date: toDateInput(today) };
+  }
+  return {};
+}
+
 export default function PicDetailPage() {
   return (
     <Suspense>
@@ -156,13 +177,16 @@ function PicDetailContent() {
   const slug = typeof params?.id === "string" ? params.id : Array.isArray(params?.id) ? params.id[0] : "";
   const picName = searchParams.get("name") || "Unknown PIC";
   const [picProfile, setPicProfile] = useState(null);
-  const [period, setPeriod] = useState("Daily");
+  const [period, setPeriod] = useState("All");
   const [summary, setSummary] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
 
   const fromDate = searchParams.get("from") || "";
   const toDate = searchParams.get("to") || "";
-  const hasDateRange = !!fromDate && !!toDate;
+  const summaryParams = useMemo(
+    () => buildSummaryParams(period, fromDate, toDate),
+    [period, fromDate, toDate]
+  );
 
   // Switching to a predefined period clears any active date range from the URL.
   const handlePeriodChange = useCallback((newPeriod) => {
@@ -178,10 +202,7 @@ function PicDetailContent() {
     if (!slug) return;
     setSummaryLoading(true);
     try {
-      const apiParams = hasDateRange
-        ? { type: 4, from_date: fromDate, to_date: toDate }
-        : { type: periodLabelToType(period) };
-      const res = await getRetentionSummary(slug, apiParams);
+      const res = await getRetentionSummary(slug, summaryParams);
       setSummary(res || {});
     } catch (err) {
       console.error("[pic-detail] summary failed", err);
@@ -189,7 +210,7 @@ function PicDetailContent() {
     } finally {
       setSummaryLoading(false);
     }
-  }, [period, slug, fromDate, toDate, hasDateRange]);
+  }, [slug, summaryParams]);
 
   useEffect(() => {
     loadSummary();
@@ -222,7 +243,12 @@ function PicDetailContent() {
         toDate={toDate}
       />
       <KpiGrid summary={summary} loading={summaryLoading} />
-      <MemberListSection adminUuid={slug} onRefreshSummary={loadSummary} />
+      <MemberListSection
+        adminUuid={slug}
+        period={period}
+        fromDate={fromDate}
+        toDate={toDate}
+      />
     </>
   );
 }
@@ -244,7 +270,7 @@ function PicProfileHeader({ name, image, period, onPeriodChange, fromDate, toDat
           </h1>
         </div>
       </div>
-      <PeriodToggle period={period} onPeriodChange={onPeriodChange} fromDate={fromDate} toDate={toDate} />
+      <PeriodToggle includeAll period={period} onPeriodChange={onPeriodChange} fromDate={fromDate} toDate={toDate} />
     </div>
   );
 }
@@ -328,7 +354,7 @@ function VipLevelRow({ level, value }) {
   );
 }
 
-function MemberListSection({ adminUuid, onRefreshSummary }) {
+function MemberListSection({ adminUuid, period, fromDate, toDate }) {
   // URL state ------------------------------------------------------------
   // All filter values live in the query string so the view is shareable and
   // browser-back / forward work as expected.  router.replace (not push) keeps
@@ -337,8 +363,6 @@ function MemberListSection({ adminUuid, onRefreshSummary }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const fromDate = searchParams.get("from") ?? "";
-  const toDate = searchParams.get("to") ?? "";
   const level = searchParams.get("level") ?? "all";
   const sort = searchParams.get("sort") ?? "";
   const q = searchParams.get("q") ?? "";
@@ -347,7 +371,27 @@ function MemberListSection({ adminUuid, onRefreshSummary }) {
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  const [levelOptions, setLevelOptions] = useState(DEFAULT_LEVEL_OPTIONS);
+
+  useEffect(() => {
+    let cancelled = false;
+    getCrmVipTiers({ page: 1, page_size: 100 })
+      .then((res) => {
+        if (cancelled) return;
+        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        const options = results
+          .map((tier) => tier.name || tier.tier_name || tier.level || tier.vip_level || tier.title)
+          .filter(Boolean)
+          .map((name) => ({ value: name, label: name }));
+        setLevelOptions([...DEFAULT_LEVEL_OPTIONS, ...options]);
+      })
+      .catch(() => {
+        if (!cancelled) setLevelOptions(DEFAULT_LEVEL_OPTIONS);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Single helper for swapping any param while preserving the rest.
   const updateParams = useCallback(
@@ -363,18 +407,18 @@ function MemberListSection({ adminUuid, onRefreshSummary }) {
     [pathname, router, searchParams]
   );
 
-  const handleDateApply = useCallback((from, to) => {
-    updateParams({ from: from || null, to: to || null, page: null });
-  }, [updateParams]);
+  const memberDateParams = useMemo(
+    () => buildMemberDateParams(period, fromDate, toDate),
+    [period, fromDate, toDate]
+  );
 
   const apiParams = useMemo(() => ({
     page,
     page_size: PAGE_SIZE,
-    from_date: fromDate || undefined,
-    to_date: toDate || undefined,
-    vip_level: level !== "all" ? vipLabelToInt(level) : undefined,
+    ...memberDateParams,
+    mrs_vip_level: level !== "all" ? level : undefined,
     search: q || undefined,
-  }), [fromDate, toDate, level, page, q]);
+  }), [memberDateParams, level, page, q]);
 
   const fetchMembers = useCallback(async () => {
     if (!adminUuid) return;
@@ -399,19 +443,6 @@ function MemberListSection({ adminUuid, onRefreshSummary }) {
     fetchMembers();
   }, [fetchMembers]);
 
-  const handleRefresh = useCallback(async () => {
-    if (refreshing) return;
-    setRefreshing(true);
-    try {
-      await refreshCrmMembers();
-      await Promise.all([fetchMembers(), onRefreshSummary?.()]);
-    } catch (err) {
-      console.error("[pic-detail] refresh failed", err);
-    } finally {
-      setRefreshing(false);
-    }
-  }, [fetchMembers, onRefreshSummary, refreshing]);
-
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const startIdx = (safePage - 1) * PAGE_SIZE;
@@ -425,10 +456,9 @@ function MemberListSection({ adminUuid, onRefreshSummary }) {
           Member List
         </h2>
         <div className="flex flex-1 flex-wrap items-center gap-4">
-          <DateRangePicker fromDate={fromDate} toDate={toDate} onApply={handleDateApply} />
           <FilterDropdown
             value={level}
-            options={LEVEL_OPTIONS}
+            options={levelOptions}
             placeholder="All level"
             onChange={(v) => updateParams({ level: v === "all" ? null : v, page: null })}
           />
@@ -444,7 +474,6 @@ function MemberListSection({ adminUuid, onRefreshSummary }) {
             onChange={(v) => updateParams({ q: v, page: null })}
           />
         </div>
-        <RefreshControl onRefresh={handleRefresh} disabled={refreshing} />
       </header>
       <div className="flex w-full flex-col overflow-hidden rounded-b-[16px]">
         <div className="w-full overflow-x-auto scrollbar-admin">

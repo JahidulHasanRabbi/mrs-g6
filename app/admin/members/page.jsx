@@ -58,6 +58,7 @@ function formatDateTime(dateString) {
   if (!dateString) return "N/A";
   try {
     const d = new Date(dateString);
+    if (Number.isNaN(d.getTime())) return dateString;
     const dd = String(d.getDate()).padStart(2, "0");
     const mm = String(d.getMonth() + 1).padStart(2, "0");
     const yyyy = d.getFullYear();
@@ -69,6 +70,44 @@ function formatDateTime(dateString) {
   } catch {
     return dateString;
   }
+}
+
+function formatDateOnly(dateString) {
+  if (!dateString) return "N/A";
+  const raw = String(dateString);
+  const ymd = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (ymd) return `${ymd[3]}/${ymd[2]}/${ymd[1]}`;
+
+  const dmy = raw.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
+  if (dmy) return `${dmy[1]}/${dmy[2]}/${dmy[3]}`;
+
+  try {
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return raw;
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  } catch {
+    return raw;
+  }
+}
+
+function dateToInputValue(dateString) {
+  if (!dateString) return "";
+  const raw = String(dateString);
+  const ymd = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (ymd) return `${ymd[1]}-${ymd[2]}-${ymd[3]}`;
+
+  const dmy = raw.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
+  if (dmy) return `${dmy[3]}-${dmy[2]}-${dmy[1]}`;
+
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return raw;
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 function toDateOnly(dateString) {
@@ -148,7 +187,7 @@ function ViewMemberModal({ member, onClose, onNavigate }) {
                 { label: "Full Name:", value: profile?.full_name || "N/A" },
                 { label: "Email:", value: profile?.email || "N/A" },
                 { label: "Gender:", value: profile?.gender || "N/A" },
-                { label: "DOB:", value: profile?.date_of_birth ? new Date(profile.date_of_birth).toLocaleDateString('en-GB') : "N/A" },
+                { label: "DOB:", value: formatDateOnly(profile?.date_of_birth) },
                 { label: "Hobby:", value: profile?.hobby || "N/A" },
                 { label: "MRS VIP Tier:", value: profile?.vip_tier || member.tier || "N/A" },
               ].map((row) => (
@@ -256,7 +295,7 @@ function EditMemberModal({ member, onClose, onSave }) {
           full_name: fetchedProfile.full_name || "",
           email: fetchedProfile.email || "",
           gender: genderOption?.value || "",
-          date_of_birth: fetchedProfile.date_of_birth || "",
+          date_of_birth: dateToInputValue(fetchedProfile.date_of_birth),
           hobby: hobbyOption?.value || "",
           mrs_vip_tier_uuid: tiersData.find(t => t.name === fetchedProfile.vip_tier)?.uuid || "",
           profile_picture: fetchedProfile.profile_picture || null
@@ -424,6 +463,8 @@ function EditMemberModal({ member, onClose, onSave }) {
                       type={f.type}
                       value={form[f.key]}
                       onChange={(e) => handleChange(f.key, e.target.value)}
+                      lang={f.type === "date" ? "en-GB" : undefined}
+                      onClick={(e) => f.type === "date" && e.currentTarget.showPicker?.()}
                       className="flex-1 h-[38px] rounded px-3 bg-[#b0b0b0] text-[#333] text-[14px] outline-none focus:ring-2 focus:ring-[#e9af41]/40 placeholder:text-[#666] [color-scheme:light]"
                     />
                   )}

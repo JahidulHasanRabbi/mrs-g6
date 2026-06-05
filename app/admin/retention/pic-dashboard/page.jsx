@@ -1,10 +1,9 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import PeriodToggle from "../../../components/admin/retention/PeriodToggle";
-import RefreshControl from "../../../components/admin/retention/RefreshControl";
 import Pagination from "../../../components/admin/retention/Pagination";
 import {
   ASSETS,
@@ -16,7 +15,6 @@ import {
   getCrmDashboardSummary,
   getCrmDashboardDetails,
   periodLabelToType,
-  refreshCrmMembers,
 } from "../../../api/crmApi";
 
 // PIC Dashboard — overview KPIs + paginated PIC performance table.
@@ -62,6 +60,14 @@ function formatPercent(value) {
   return `${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}%`;
 }
 
+function buildPeriodParams(period, fromDate, toDate) {
+  if (fromDate && toDate) {
+    return { type: 4, from_date: fromDate, to_date: toDate };
+  }
+  if (period === "All") return {};
+  return { type: periodLabelToType(period) };
+}
+
 // Chrome (auth guard, main wrapper, topbar) lives in
 // app/admin/retention/layout.jsx — pages here only render their own content.
 export default function PicDashboardPage() {
@@ -77,12 +83,16 @@ function PicDashboardContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [period, setPeriod] = useState("Daily");
+  const [period, setPeriod] = useState("All");
   const [summary, setSummary] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
 
   const fromDate = searchParams.get("from") || "";
   const toDate = searchParams.get("to") || "";
+  const periodParams = useMemo(
+    () => buildPeriodParams(period, fromDate, toDate),
+    [period, fromDate, toDate]
+  );
 
   // When a predefined period is selected, clear any active date range
   const handlePeriodChange = useCallback((newPeriod) => {
@@ -97,7 +107,7 @@ function PicDashboardContent() {
   const loadSummary = useCallback(async () => {
     setSummaryLoading(true);
     try {
-      const res = await getCrmDashboardSummary();
+      const res = await getCrmDashboardSummary(periodParams);
       setSummary(res || {});
     } catch (err) {
       console.error("[pic-dashboard] summary failed", err);
@@ -105,7 +115,7 @@ function PicDashboardContent() {
     } finally {
       setSummaryLoading(false);
     }
-  }, []);
+  }, [periodParams]);
 
   useEffect(() => {
     loadSummary();
@@ -115,7 +125,7 @@ function PicDashboardContent() {
     <>
       <HeaderRow period={period} onPeriodChange={handlePeriodChange} fromDate={fromDate} toDate={toDate} />
       <KpiGrid summary={summary} loading={summaryLoading} />
-      <PerformanceSummary period={period} fromDate={fromDate} toDate={toDate} onRefreshSummary={loadSummary} />
+      <PerformanceSummary periodParams={periodParams} />
     </>
   );
 }
@@ -133,7 +143,7 @@ function HeaderRow({ period, onPeriodChange, fromDate, toDate }) {
         </h1>
       </div>
       <Suspense fallback={null}>
-        <PeriodToggle period={period} onPeriodChange={onPeriodChange} />
+        <PeriodToggle includeAll period={period} onPeriodChange={onPeriodChange} />
       </Suspense>
     </div>
   );
@@ -190,6 +200,12 @@ function KpiCardSkeleton() {
   );
 }
 
+// Single value size shared by every KPI tile (currency and plain alike) so the
+// numbers stay visually consistent across the grid. Sized so the longest
+// currency value still fits its card without clipping.
+const KPI_VALUE_SIZE =
+  "text-[20px] sm:text-[24px] xl:text-[20px] 2xl:text-[22px] [@media(min-width:1700px)]:text-[26px]";
+
 function KpiCard({ kpi }) {
   const isCurrency = !!kpi.valuePrefix;
   return (
@@ -224,16 +240,12 @@ function KpiCard({ kpi }) {
             }}
           >
             {isCurrency ? (
-              <span className="flex items-baseline gap-1 whitespace-nowrap tabular-nums">
-                <span className="text-[14px] sm:text-[20px] xl:text-[14px] 2xl:text-[20px] [@media(min-width:1700px)]:text-[26px]">
-                  {kpi.valuePrefix}
-                </span>
-                <span className="text-[20px] sm:text-[28px] xl:text-[20px] 2xl:text-[26px] [@media(min-width:1700px)]:text-[34px]">
-                  {kpi.value}
-                </span>
+              <span className={`flex min-w-0 items-baseline gap-1 tabular-nums ${KPI_VALUE_SIZE}`}>
+                <span className="shrink-0 text-[0.7em]">{kpi.valuePrefix}</span>
+                <span className="min-w-0 [overflow-wrap:anywhere]">{kpi.value}</span>
               </span>
             ) : (
-              <span className="block text-[26px] sm:text-[34px] xl:text-[26px] 2xl:text-[32px] [@media(min-width:1700px)]:text-[38px] tabular-nums">
+              <span className={`block [overflow-wrap:anywhere] tabular-nums ${KPI_VALUE_SIZE}`}>
                 {kpi.value}
               </span>
             )}
@@ -244,31 +256,22 @@ function KpiCard({ kpi }) {
   );
 }
 
-function PerformanceSummary({ period, fromDate, toDate, onRefreshSummary }) {
+function PerformanceSummary({ periodParams }) {
   const [page, setPage] = useState(1);
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const hasDateRange = !!fromDate && !!toDate;
 
   // Reset to page 1 when the period or date range changes
   useEffect(() => {
     setPage(1);
-  }, [period, fromDate, toDate]);
+  }, [periodParams]);
 
   const fetchDetails = useCallback(async () => {
     setLoading(true);
     try {
       const params = { page, page_size: PAGE_SIZE };
-      if (hasDateRange) {
-        params.type = 4;
-        params.from_date = fromDate;
-        params.to_date = toDate;
-      } else {
-        params.type = periodLabelToType(period);
-      }
+      Object.assign(params, periodParams);
       const res = await getCrmDashboardDetails(params);
       const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
       setRows(results);
@@ -280,24 +283,11 @@ function PerformanceSummary({ period, fromDate, toDate, onRefreshSummary }) {
     } finally {
       setLoading(false);
     }
-  }, [page, period, fromDate, toDate, hasDateRange]);
+  }, [page, periodParams]);
 
   useEffect(() => {
     fetchDetails();
   }, [fetchDetails]);
-
-  const handleRefresh = useCallback(async () => {
-    if (refreshing) return;
-    setRefreshing(true);
-    try {
-      await refreshCrmMembers();
-      await Promise.all([fetchDetails(), onRefreshSummary?.()]);
-    } catch (err) {
-      console.error("[pic-dashboard] refresh failed", err);
-    } finally {
-      setRefreshing(false);
-    }
-  }, [refreshing, fetchDetails, onRefreshSummary]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -311,7 +301,6 @@ function PerformanceSummary({ period, fromDate, toDate, onRefreshSummary }) {
         <h2 className="h-7 text-white" style={{ letterSpacing: "-2px" }}>
           Performance Summary
         </h2>
-        <RefreshControl onRefresh={handleRefresh} />
       </header>
       <div className="w-full overflow-x-auto">
         <div className="flex min-w-[960px] w-full flex-col">

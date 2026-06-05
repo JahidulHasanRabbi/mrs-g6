@@ -15,7 +15,7 @@ export default function SettingsLayout({ children }) {
   return (
     <AdminRouteGuard>
       <main className="xl:admin-content-pl min-h-screen px-6 py-6 xl:pr-12">
-        {children}
+        <div className="flex flex-col gap-4">{children}</div>
       </main>
     </AdminRouteGuard>
   );

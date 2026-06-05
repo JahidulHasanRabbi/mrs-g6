@@ -1,19 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import RefreshControl from "../../../components/admin/retention/RefreshControl";
 import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
-import { ASSETS, GRAD_DARK, GRAD_GOLD } from "../../../components/admin/retention/constants";
+import { GRAD_DARK, GRAD_GOLD } from "../../../components/admin/retention/constants";
 import {
-  getCrmMembers,
+  assignCrmMemberToPic,
+  getRetentionMembers,
   getCrmUsers,
   getCrmVipTiers,
   getPrioritySummary,
-  refreshCrmMembers,
+  patchCrmMemberFollowUp,
 } from "../../../api/crmApi";
-import { Pagination } from "../../../components/admin/members/DataTable";
+import { FollowUpCreateModal } from "../../../components/admin/retention/FollowUpComponents";
+import Pagination from "../../../components/admin/retention/Pagination";
 
 // Member Alert page — Figma 69:340. "Overview" KPI strip + Member Follow Up
 // list. The list is the same shape as /admin/retention/members but with a
@@ -21,10 +22,8 @@ import { Pagination } from "../../../components/admin/members/DataTable";
 
 const PAGE_SIZE = 7;
 
-const PRIORITY_OPTIONS = ["High", "Medium", "Low"];
+const PRIORITY_OPTIONS = ["High", "Medium", "Low", "Inactive"];
 const BRAND_OPTIONS = ["KG", "LV", "EP", "AB", "UB", "N1"];
-
-const PRIORITY_TO_INT = { High: 1, Medium: 2, Low: 3 };
 
 // Column widths from Figma 69:340 (frame ids 87:6604 etc). Username and
 // Action are wider to accommodate the avatar+name and the View + more-menu
@@ -68,7 +67,6 @@ function formatCurrency(value) {
 export default function MemberAlertPage() {
   const [summary, setSummary] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
 
   const loadSummary = useCallback(async () => {
     setSummaryLoading(true);
@@ -87,30 +85,16 @@ export default function MemberAlertPage() {
     loadSummary();
   }, [loadSummary]);
 
-  // POST refresh-members, then refresh the summary so KPIs reflect new state.
-  const handleRefresh = useCallback(async () => {
-    if (refreshing) return;
-    setRefreshing(true);
-    try {
-      await refreshCrmMembers();
-      await loadSummary();
-    } catch (err) {
-      console.error("[member-alert] refresh failed", err);
-    } finally {
-      setRefreshing(false);
-    }
-  }, [refreshing, loadSummary]);
-
   return (
     <>
-      <OverviewHeader onRefresh={handleRefresh} />
+      <OverviewHeader />
       <KpiRow summary={summary} loading={summaryLoading} />
-      <FollowUpList onRefresh={handleRefresh} />
+      <FollowUpList />
     </>
   );
 }
 
-function OverviewHeader({ onRefresh }) {
+function OverviewHeader() {
   return (
     <div className="flex flex-wrap items-end justify-between gap-4 px-2">
       <div className="flex flex-col gap-1">
@@ -128,7 +112,6 @@ function OverviewHeader({ onRefresh }) {
           Overview
         </h1>
       </div>
-      <RefreshControl onRefresh={onRefresh} />
     </div>
   );
 }
@@ -230,6 +213,7 @@ function FollowUpList() {
   const [loading, setLoading] = useState(false);
   const [pics, setPics] = useState([]);
   const [vipTiers, setVipTiers] = useState([]);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     getCrmUsers({ page: 1, page_size: 100 })
@@ -264,11 +248,11 @@ function FollowUpList() {
         const retentionUuid = retention
           ? pics.find((u) => (u.full_name || u.username) === retention)?.uuid
           : undefined;
-        const res = await getCrmMembers({
+        const res = await getRetentionMembers({
           page,
           page_size: PAGE_SIZE,
           brand: brand || undefined,
-          priority: priority ? PRIORITY_TO_INT[priority] : undefined,
+          priority: priority ? priority.toLowerCase() : undefined,
           mrs_vip_level: vip || undefined,
           retention: retentionUuid || undefined,
           search: debouncedQuery || undefined,
@@ -290,7 +274,7 @@ function FollowUpList() {
     return () => {
       cancelled = true;
     };
-  }, [page, brand, priority, vip, retention, pics, debouncedQuery]);
+  }, [page, brand, priority, vip, retention, pics, debouncedQuery, reloadKey]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -330,34 +314,65 @@ function FollowUpList() {
           <TableHeader />
           <div className="flex w-full flex-col">
             {loading ? (
-              <LoadingRow />
+              Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonRow key={i} />)
             ) : rows.length === 0 ? (
               <EmptyRow />
             ) : (
               rows.map((row, idx) => (
-                <TableRow key={`${row.uuid || row.username || "member"}-${idx}`} row={row} />
+                <TableRow
+                  key={`${row.uuid || row.username || "member"}-${idx}`}
+                  row={row}
+                  pics={pics}
+                  onChanged={() => setReloadKey((k) => k + 1)}
+                />
               ))
             )}
           </div>
         </div>
       </div>
 
-      <div className="border-t border-white/5 px-4 pb-2">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="px-2 pt-4 text-[13px] text-white/70">
-            Showing {showingFrom} to {showingTo} of {total} Results
-          </span>
-          <Pagination currentPage={safePage} totalPages={totalPages} onPageChange={setPage} />
-        </div>
-      </div>
+      <Pagination
+        from={showingFrom}
+        to={showingTo}
+        total={total}
+        pageCount={totalPages}
+        currentPage={safePage}
+        onPageChange={setPage}
+      />
     </section>
   );
 }
 
-function LoadingRow() {
+function SkeletonBar({ width = "60%" }) {
   return (
-    <div className="px-6 py-12 text-center text-[12px] text-white/60">
-      Loading...
+    <span
+      className="relative block h-3 overflow-hidden rounded bg-white/[0.07] before:absolute before:inset-0 before:-translate-x-full before:animate-[skeleton-shimmer_1.4s_ease-in-out_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/[0.1] before:to-transparent"
+      style={{ width }}
+    />
+  );
+}
+
+function SkeletonCircle() {
+  return (
+    <span className="relative block h-8 w-8 shrink-0 overflow-hidden rounded-full bg-white/[0.07] before:absolute before:inset-0 before:-translate-x-full before:animate-[skeleton-shimmer_1.4s_ease-in-out_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/[0.1] before:to-transparent" />
+  );
+}
+
+function SkeletonRow() {
+  return (
+    <div className="flex w-full items-center border-b border-white/5">
+      <div className="flex items-center gap-3 p-6" style={{ minWidth: COLUMNS[0].minW }}>
+        <SkeletonCircle />
+        <SkeletonBar width="70%" />
+      </div>
+      {COLUMNS.slice(1, -1).map((col) => (
+        <div key={col.key} className="flex flex-1 items-center p-6" style={{ minWidth: col.minW }}>
+          <SkeletonBar width="55%" />
+        </div>
+      ))}
+      <div className="flex items-center justify-end p-6" style={{ minWidth: COLUMNS[COLUMNS.length - 1].minW }}>
+        <span className="relative block h-8 w-[76px] overflow-hidden rounded-[8px] bg-[#e9af41]/20 before:absolute before:inset-0 before:-translate-x-full before:animate-[skeleton-shimmer_1.4s_ease-in-out_infinite] before:bg-gradient-to-r before:from-transparent before:via-[#e9af41]/30 before:to-transparent" />
+      </div>
     </div>
   );
 }
@@ -465,7 +480,7 @@ function TableHeader() {
   );
 }
 
-function TableRow({ row }) {
+function TableRow({ row, pics, onChanged }) {
   // Route by the member's real UUID — the [slug] page accepts it transparently.
   const href = `/admin/retention/members/${row.uuid}`;
   return (
@@ -490,7 +505,12 @@ function TableRow({ row }) {
       <Cell minW={COLUMNS[8].minW} align="end">
         <div className="flex items-center gap-2">
           <ViewButton href={href} />
-          <MoreButton ariaLabel={`More actions for ${row.full_name || row.username}`} />
+          <MoreButton
+            row={row}
+            pics={pics}
+            onChanged={onChanged}
+            ariaLabel={`More actions for ${row.full_name || row.username}`}
+          />
         </div>
       </Cell>
     </div>
@@ -516,12 +536,33 @@ function ViewButton({ href }) {
 // cream-colored status dropdown (In Progress / Resolve / Snooze / Remark)
 // per the design. Status is local to each row; eventually this hooks into
 // adminApi.updateMemberAlertStatus(id, status).
-const STATUS_OPTIONS = ["In Progress", "Resolve", "Snooze", "Remark"];
+const STATUS_OPTIONS = ["In Progress", "Resolve", "Snooze", "Remark", "Assign PIC"];
 
-function MoreButton({ ariaLabel }) {
+function MoreButton({ row, pics, onChanged, ariaLabel }) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState("Snooze");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [remarkOpen, setRemarkOpen] = useState(false);
+  const [assignOpen, setAssignOpen] = useState(false);
   const buttonRef = useRef(null);
+
+  const submitRemark = async (remark) => {
+    if (!row?.uuid || saving) return false;
+    setSaving(true);
+    setError("");
+    try {
+      await patchCrmMemberFollowUp(row.uuid, { follow_up_remark: remark });
+      onChanged?.();
+      return true;
+    } catch (err) {
+      console.error("[member-alert] follow-up action failed", err);
+      setError("Action failed.");
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="relative">
@@ -541,13 +582,109 @@ function MoreButton({ ariaLabel }) {
         <StatusMenu
           anchorRef={buttonRef}
           status={status}
-          onSelect={(next) => {
+          onSelect={async (next) => {
             setStatus(next);
             setOpen(false);
+            if (next === "Assign PIC") {
+              setAssignOpen(true);
+              return;
+            }
+            if (next === "Remark") {
+              setRemarkOpen(true);
+              return;
+            }
+            await submitRemark(`Alert status: ${next}`);
           }}
           onClose={() => setOpen(false)}
         />
       )}
+      {saving ? (
+        <span className="absolute right-0 top-full mt-1 whitespace-nowrap text-[10px] text-white/50">Saving...</span>
+      ) : error ? (
+        <span className="absolute right-0 top-full mt-1 whitespace-nowrap text-[10px] text-[#fb3748]">{error}</span>
+      ) : null}
+      {remarkOpen ? (
+        <FollowUpCreateModal
+          memberName={row?.full_name || row?.username || "Member"}
+          title="Add Remark"
+          fixedActionType="Others"
+          submitting={saving}
+          submitError={error}
+          onClose={() => setRemarkOpen(false)}
+          onSubmit={async (entry) => {
+            const ok = await submitRemark(entry.follow_up_remark || entry.note || "");
+            if (ok) setRemarkOpen(false);
+          }}
+        />
+      ) : null}
+      {assignOpen ? (
+        <AssignPicModal
+          member={row}
+          pics={pics}
+          saving={saving}
+          error={error}
+          onClose={() => setAssignOpen(false)}
+          onSubmit={async (picUuid) => {
+            if (!row?.uuid || !picUuid || saving) return;
+            setSaving(true);
+            setError("");
+            try {
+              await assignCrmMemberToPic(row.uuid, { pic_uuid: picUuid });
+              setAssignOpen(false);
+              onChanged?.();
+            } catch (err) {
+              console.error("[member-alert] assign PIC failed", err);
+              setError("Assign failed.");
+            } finally {
+              setSaving(false);
+            }
+          }}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function AssignPicModal({ member, pics, saving, error, onClose, onSubmit }) {
+  const [picUuid, setPicUuid] = useState("");
+  const name = member?.full_name || member?.username || "Member";
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center px-4" style={{ backgroundColor: "rgba(0,0,0,0.65)" }}>
+      <div className="fixed inset-0" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-md rounded-[16px] bg-[#05060a] p-6 shadow-[0_0_3px_0_#dea220]">
+        <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
+          <h3 className="text-[18px] font-bold text-[#f6dda6]">Assign PIC - {name}</h3>
+          <button type="button" onClick={onClose} className="text-[20px] leading-none text-white/50 hover:text-white">x</button>
+        </div>
+        <label className="mt-5 block text-[12px] font-medium text-[#fbeed2]">PIC</label>
+        <select
+          value={picUuid}
+          onChange={(e) => setPicUuid(e.target.value)}
+          className="mt-2 w-full rounded-[8px] border border-[#f2cb7a] bg-[#141828] px-3 py-2 text-[13px] text-white outline-none"
+        >
+          <option value="">Select PIC</option>
+          {(pics || []).map((pic) => (
+            <option key={pic.uuid} value={pic.uuid}>
+              {pic.full_name || pic.username || pic.uuid}
+            </option>
+          ))}
+        </select>
+        {error ? <p className="mt-2 text-[12px] text-[#fb3748]">{error}</p> : null}
+        <div className="mt-6 flex justify-end gap-3 border-t border-white/10 pt-5">
+          <button type="button" onClick={onClose} disabled={saving} className="rounded-[8px] border border-[#d00416] px-5 py-2 text-[12px] font-medium text-[#d00416]">
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => onSubmit(picUuid)}
+            disabled={saving || !picUuid}
+            className="rounded-[8px] border border-[#f2cb7a] px-5 py-2 text-[12px] font-medium text-[#141828] disabled:opacity-50"
+            style={{ backgroundImage: GRAD_GOLD }}
+          >
+            {saving ? "Saving..." : "Assign"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -702,96 +839,3 @@ function UserAvatar() {
   );
 }
 
-function buildPageItems(currentPage, totalPages) {
-  if (totalPages <= 7) {
-    return Array.from({ length: totalPages }, (_, i) => i + 1);
-  }
-  const items = [1];
-  const start = Math.max(2, currentPage - 1);
-  const end = Math.min(totalPages - 1, currentPage + 1);
-  if (start > 2) items.push("ellipsis-l");
-  for (let p = start; p <= end; p += 1) items.push(p);
-  if (end < totalPages - 1) items.push("ellipsis-r");
-  items.push(totalPages);
-  return items;
-}
-
-function PaginationBar({ from, to, total, page, totalPages, onPageChange }) {
-  const items = buildPageItems(page, totalPages);
-  const prevDisabled = page <= 1;
-  const nextDisabled = page >= totalPages;
-  return (
-    <div className="flex min-h-[44px] w-full items-center justify-between gap-3 flex-wrap px-6 py-3">
-      <span className="text-[8px] text-white leading-[12px]">
-        Showing {from} to {to} of {total} Results
-      </span>
-      <div className="flex items-center gap-[5.5px]">
-        <PageButton
-          onClick={() => onPageChange(Math.max(1, page - 1))}
-          disabled={prevDisabled}
-          ariaLabel="Previous page"
-        >
-          <PageChevron direction="left" />
-        </PageButton>
-        {items.map((item) =>
-          typeof item === "number" ? (
-            <PageNumber
-              key={item}
-              value={item}
-              active={item === page}
-              onClick={() => onPageChange(item)}
-            />
-          ) : (
-            <span key={item} className="text-[8px] text-white leading-[12px]">....</span>
-          )
-        )}
-        <PageButton
-          onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-          disabled={nextDisabled}
-          ariaLabel="Next page"
-        >
-          <PageChevron direction="right" />
-        </PageButton>
-      </div>
-    </div>
-  );
-}
-
-function PageNumber({ value, active, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex h-[18px] w-[18px] items-center justify-center rounded-[4px] text-[8px] text-white leading-[12px] ${
-        active ? "bg-[#eaad2c]" : "border border-[#eaad2c] hover:bg-[#eaad2c]/20"
-      }`}
-    >
-      {value}
-    </button>
-  );
-}
-
-function PageButton({ children, onClick, ariaLabel, disabled }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={ariaLabel}
-      disabled={disabled}
-      className={`flex h-[18px] w-[18px] items-center justify-center rounded-[4px] border border-[#eaad2c] ${
-        disabled ? "opacity-40 cursor-not-allowed" : "hover:bg-[#eaad2c]/20"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
-function PageChevron({ direction }) {
-  const rotate = direction === "left" ? "rotate(180deg)" : "rotate(0deg)";
-  return (
-    <svg width="6" height="10" viewBox="0 0 6 10" fill="none" style={{ transform: rotate }}>
-      <path d="M1 1l4 4-4 4" stroke="#eaad2c" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}

@@ -396,6 +396,21 @@ const ItemIcon = ({ item, sizeClass }) => {
   return <img src={item.icon} alt="" className={`${sizeClass} object-contain`} />;
 };
 
+// Shared active highlight. Every active row/square renders this same element
+// with the same `layoutId`, so when the route changes Framer Motion animates
+// the gold pill sliding from the previously-active item to the new one — the
+// sidebar's counterpart to the content slide in app/admin/layout.jsx.
+const ACTIVE_PILL_LAYOUT_ID = "sidebar-active-pill";
+const ActivePill = () => (
+  <motion.span
+    aria-hidden="true"
+    layoutId={ACTIVE_PILL_LAYOUT_ID}
+    className="absolute inset-0 z-0 rounded-[12px] border-[2.5px] border-[#f2cb7a]"
+    style={{ backgroundImage: "linear-gradient(105deg, #dc9d16 1%, #f2cb7a 98%)" }}
+    transition={{ type: "spring", stiffness: 420, damping: 36 }}
+  />
+);
+
 // Spec from Figma 231:3393 — items/nav item:
 //   - rounded-[12px] container, 12px horizontal / 8px vertical padding
 //   - 32px icon container with the actual glyph centered at 18-20px
@@ -408,19 +423,15 @@ const MenuItem = ({ item, isActive }) => {
     const content = (
       <div
         title={item.label}
-        className={`relative mx-auto flex h-10 w-10 items-center justify-center rounded-[12px] transition-all duration-200 ${
+        className={`relative isolate mx-auto flex h-10 w-10 items-center justify-center rounded-[12px] transition-all duration-200 ${
           isActive
-            ? "border-[2.5px] border-[#f2cb7a]"
+            ? ""
             : "border border-transparent hover:border-[#f2cb7a]/40 hover:bg-white/5"
         } ${item.disabled ? "opacity-40 cursor-not-allowed" : ""}`}
-        style={
-          isActive
-            ? { backgroundImage: "linear-gradient(105deg, #dc9d16 1%, #f2cb7a 98%)" }
-            : undefined
-        }
       >
+        {isActive && <ActivePill />}
         <div
-          className={`relative h-5 w-5 shrink-0 flex items-center justify-center ${
+          className={`relative z-10 h-5 w-5 shrink-0 flex items-center justify-center ${
             item.iconNode || item.iconMask ? (isActive ? "text-[#141828]" : "text-[#fbeed2]") : ""
           }`}
         >
@@ -434,26 +445,22 @@ const MenuItem = ({ item, isActive }) => {
 
   const content = (
     <div
-      className={`relative flex items-center gap-2 rounded-[12px] px-3 py-2 transition-all duration-200 ${
+      className={`relative isolate flex items-center gap-2 rounded-[12px] px-3 py-2 transition-all duration-200 border-[2.5px] border-transparent ${
         isActive
-          ? "border-[2.5px] border-[#f2cb7a]"
-          : "border-[2.5px] border-transparent hover:bg-[#f2cb7a]/8 hover:border-[#f2cb7a]/20"
+          ? ""
+          : "hover:bg-[#f2cb7a]/8 hover:border-[#f2cb7a]/20"
       } ${item.disabled ? "opacity-40 cursor-not-allowed" : ""}`}
-      style={
-        isActive
-          ? { backgroundImage: "linear-gradient(105deg, #dc9d16 1%, #f2cb7a 98%)" }
-          : undefined
-      }
     >
+      {isActive && <ActivePill />}
       <div
-        className={`relative h-8 w-8 shrink-0 flex items-center justify-center ${
+        className={`relative z-10 h-8 w-8 shrink-0 flex items-center justify-center ${
           item.iconNode || item.iconMask ? (isActive ? "text-[#141828]" : "text-[#fbeed2]") : ""
         }`}
       >
         <ItemIcon item={item} sizeClass="w-[20px] h-[20px]" />
       </div>
       <p
-        className={`sidebar-inter text-[14px] leading-[21px] tracking-[-1px] whitespace-nowrap ${
+        className={`sidebar-inter relative z-10 text-[14px] leading-[21px] tracking-[-1px] whitespace-nowrap ${
           isActive ? "text-[#141828]" : "text-[#fbeed2]"
         }`}
       >
@@ -532,26 +539,22 @@ const ExpandableMenuItem = ({ item, activeItem, forceOpen = false }) => {
       {/* Parent header — same row dimensions as a MenuItem */}
       <button
         onClick={() => setOpen((v) => !v)}
-        className={`relative flex w-full items-center gap-2 rounded-[12px] px-3 py-2 transition-all duration-200 ${
+        className={`relative isolate flex w-full items-center gap-2 rounded-[12px] px-3 py-2 transition-all duration-200 border-[2.5px] border-transparent ${
           isActiveStyle
-            ? "border-[2.5px] border-[#f2cb7a]"
-            : "border-[2.5px] border-transparent hover:bg-[#f2cb7a]/8 hover:border-[#f2cb7a]/20"
+            ? ""
+            : "hover:bg-[#f2cb7a]/8 hover:border-[#f2cb7a]/20"
         }`}
-        style={
-          isActiveStyle
-            ? { backgroundImage: "linear-gradient(105deg, #dc9d16 1%, #f2cb7a 98%)" }
-            : undefined
-        }
       >
+        {isActiveStyle && <ActivePill />}
         <div
-          className={`relative h-8 w-8 shrink-0 flex items-center justify-center ${
+          className={`relative z-10 h-8 w-8 shrink-0 flex items-center justify-center ${
             item.iconNode || item.iconMask ? (isActiveStyle ? "text-[#141828]" : "text-[#fbeed2]") : ""
           }`}
         >
           <ItemIcon item={item} sizeClass="w-[20px] h-[20px]" />
         </div>
         <span
-          className={`sidebar-inter flex-1 text-left text-[14px] leading-[21px] tracking-[-1px] whitespace-nowrap ${
+          className={`sidebar-inter relative z-10 flex-1 text-left text-[14px] leading-[21px] tracking-[-1px] whitespace-nowrap ${
             isActiveStyle ? "text-[#141828]" : "text-[#fbeed2]"
           }`}
         >
@@ -566,6 +569,7 @@ const ExpandableMenuItem = ({ item, activeItem, forceOpen = false }) => {
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
+          className="relative z-10"
           animate={{ rotate: effectivelyOpen ? 180 : 0 }}
           transition={collapseTransition}
         >
@@ -811,7 +815,7 @@ export default function Sidebar({ activeItem: activeItemProp }) {
           Background matches the top of the shell's diagonal gradient so the
           scrolling content doesn't peek through. */}
       <div
-        className="sticky top-0 z-10"
+        className="sticky top-0 z-20"
         style={{
           background: "linear-gradient(143deg, #11320e 0%, #0d2a0b 100%)",
         }}
@@ -915,7 +919,7 @@ export default function Sidebar({ activeItem: activeItemProp }) {
         )}
 
         {mrsItems.length > 0 && (
-          <CollapsibleSection title="MRS System" storageKey="mrs-system" forceOpen={hasQuery}>
+          <CollapsibleSection title="MRS System" storageKey="mrs-system" defaultOpen={false} forceOpen={hasQuery}>
             {mrsItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
           </CollapsibleSection>
         )}

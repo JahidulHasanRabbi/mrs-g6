@@ -5,19 +5,24 @@
 // emits (1=High, 2=Medium, 3=Low). Unknown values render as a neutral pill so
 // the table still aligns.
 
-const PRIORITY_LABELS = { 1: "High", 2: "Medium", 3: "Low" };
+const PRIORITY_LABELS = { 1: "High", 2: "Medium", 3: "Low", 4: "Inactive" };
 
 const PRIORITY_COLORS = {
-  High:   { bg: "#fb3748", color: "#ffffff" },
-  Medium: { bg: "#ffe9bc", color: "#a86b00" },
-  Low:    { bg: "#84ebb4", color: "#179451" },
+  High:     { bg: "#fb3748", color: "#ffffff" },
+  Medium:   { bg: "#ffe9bc", color: "#a86b00" },
+  Low:      { bg: "#84ebb4", color: "#179451" },
+  Inactive: { bg: "#3a4255", color: "#a0aec0" },
 };
 
+// API may return "Low Priority", "High Priority", "Medium Priority", or plain "Low" etc.
 function normalize(value) {
   if (value === null || value === undefined || value === "") return null;
   if (typeof value === "number") return PRIORITY_LABELS[value] || null;
   const str = String(value).trim();
   if (PRIORITY_COLORS[str]) return str;
+  // Strip " Priority" suffix: "Low Priority" → "Low"
+  const stripped = str.replace(/\s*priority$/i, "").trim();
+  if (PRIORITY_COLORS[stripped]) return stripped;
   const asInt = Number.parseInt(str, 10);
   return Number.isFinite(asInt) ? PRIORITY_LABELS[asInt] || null : null;
 }

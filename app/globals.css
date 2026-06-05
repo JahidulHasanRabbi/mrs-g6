@@ -149,6 +149,7 @@
   100% { transform: rotate(360deg); }
 }
 
+
 /* Interactive elements show a pointer cursor on hover.
  * Tailwind v4's preflight no longer sets this — adding it back broadly so
  * buttons, links, and other clickable elements feel clickable by default.

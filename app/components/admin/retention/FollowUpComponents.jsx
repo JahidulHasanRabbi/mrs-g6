@@ -7,15 +7,6 @@ import { GRAD_DARK, GRAD_GOLD } from "./constants";
 export const ACTION_TYPES = ["TG", "WA", "Bonus", "Event", "LiveChat", "Others"];
 const PRIORITY_TYPES = ["High", "Medium", "Low"];
 
-export const MOCK_FOLLOWUP_HISTORY = [
-  { uuid: "fh-001", action_type: "TG", note: "", pic: "Sarah", datetime: "2026-05-27 09:15" },
-  { uuid: "fh-002", action_type: "WA", note: "", pic: "Eddie", datetime: "2026-05-26 14:30" },
-  { uuid: "fh-003", action_type: "Others", note: "Called but member did not pick up. Will retry tomorrow.", pic: "Sarah", datetime: "2026-05-25 18:05" },
-  { uuid: "fh-004", action_type: "Bonus", note: "", pic: "Zoey", datetime: "2026-05-24 11:20" },
-  { uuid: "fh-005", action_type: "Event", note: "", pic: "Sarah", datetime: "2026-05-23 09:00" },
-  { uuid: "fh-006", action_type: "LiveChat", note: "Member interested in new slot games.", pic: "Candy", datetime: "2026-05-22 16:45" },
-];
-
 const ACTION_COLORS = {
   TG: { bg: "#173f73", color: "#64a1ff", ring: "#4188ff" },
   WA: { bg: "#07502a", color: "#9affc8", ring: "#84ebb4" },
@@ -40,11 +31,21 @@ const STATUS_COLORS = {
 
 function formatDisplayDate(value) {
   if (!value) return "-";
-  const [date = "", time = ""] = String(value).split(" ");
+  const text = String(value).replace("T", " ");
+  const [date = "", timeRaw = ""] = text.split(" ");
+  const time = timeRaw ? timeRaw.slice(0, 5) : "";
   const [year, month, day] = date.split("-");
   const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const monthLabel = months[Number(month) - 1] || month;
   return `${Number(day)} ${monthLabel} ${year}${time ? `, ${time}` : ""}`;
+}
+
+function entryAction(entry) {
+  return entry?.action_type || entry?.action || "Others";
+}
+
+function entryRemark(entry) {
+  return entry?.follow_up_remark || entry?.remark || entry?.note || "";
 }
 
 function currentDateTime() {
@@ -103,13 +104,15 @@ export function FollowUpCreateModal({
   title = "Add Follow Up",
   showPriority = false,
   initialPriority = "High",
+  submitting = false,
+  submitError = "",
 }) {
   const [actionType, setActionType] = useState(fixedActionType);
   const [priority, setPriority] = useState(initialPriority || "High");
   const [note, setNote] = useState("");
 
   const noteRequired = actionType === "Others";
-  const submitDisabled = !actionType || (showPriority && !priority) || (noteRequired && !note.trim());
+  const submitDisabled = submitting || !actionType || (showPriority && !priority) || (noteRequired && !note.trim());
 
   const handleSubmit = () => {
     if (submitDisabled) return;
@@ -118,6 +121,11 @@ export function FollowUpCreateModal({
       action_type: actionType,
       priority: showPriority ? priority : undefined,
       note: actionType === "Others" ? note.trim() : note.trim(),
+      follow_up_remark: [
+        actionType ? `Action: ${actionType}` : "",
+        showPriority && priority ? `Priority: ${priority}` : "",
+        note.trim(),
+      ].filter(Boolean).join(" | "),
       pic: "Sarah",
       datetime: currentDateTime(),
     });
@@ -196,6 +204,10 @@ export function FollowUpCreateModal({
         </div>
       ) : null}
 
+      {submitError ? (
+        <p className="mt-4 text-[12px] text-[#fb3748]">{submitError}</p>
+      ) : null}
+
       <div className="mt-6 flex justify-end gap-3 border-t border-white/10 pt-5">
         <button
           type="button"
@@ -211,7 +223,7 @@ export function FollowUpCreateModal({
           className="rounded-[8px] border border-[#f2cb7a] px-5 py-2 text-[12px] font-medium text-[#141828] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
           style={{ backgroundImage: GRAD_GOLD }}
         >
-          Confirm
+          {submitting ? "Saving..." : "Confirm"}
         </button>
       </div>
     </ModalOverlay>
@@ -281,7 +293,7 @@ export function AlertViewModal({ member, onClose, onSnooze }) {
   );
 }
 
-export function AlertHistorySection({ memberName, history }) {
+export function AlertHistorySection({ memberName, history, loading = false, error = "" }) {
   const [open, setOpen] = useState(true);
   const [detail, setDetail] = useState(null);
   const [fullOpen, setFullOpen] = useState(false);
@@ -297,7 +309,11 @@ export function AlertHistorySection({ memberName, history }) {
         <div className={`grid transition-all duration-200 ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
           <div className="overflow-hidden">
             <div className="mt-4 flex flex-col gap-2">
-              {visible.length === 0 ? (
+              {loading ? (
+                <p className="py-4 text-center text-[12px] text-white/40">Loading followup history...</p>
+              ) : error ? (
+                <p className="py-4 text-center text-[12px] text-[#fb3748]">{error}</p>
+              ) : visible.length === 0 ? (
                 <p className="py-4 text-center text-[12px] text-white/30">No followup history yet.</p>
               ) : (
                 visible.map((entry) => (
@@ -331,6 +347,7 @@ export function AlertHistorySection({ memberName, history }) {
 }
 
 export function AlertHistoryDetailModal({ entry, onClose }) {
+  const remark = entryRemark(entry);
   return (
     <ModalOverlay onClose={onClose} zClass="z-[70]">
       <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
@@ -339,13 +356,13 @@ export function AlertHistoryDetailModal({ entry, onClose }) {
       </div>
       <div className="mt-5 grid grid-cols-[80px_1fr] gap-3">
         <DetailLabel>Action:</DetailLabel>
-        <div><ActionTypeChip type={entry.action_type} /></div>
+        <div><ActionTypeChip type={entryAction(entry)} /></div>
         <DetailLabel>By:</DetailLabel>
         <DetailValue>{entry.pic}</DetailValue>
         <DetailLabel>Date:</DetailLabel>
         <DetailValue>{formatDisplayDate(entry.datetime)}</DetailValue>
         <DetailLabel>Note:</DetailLabel>
-        <DetailValue>{entry.note || "-"}</DetailValue>
+        <DetailValue>{remark || "-"}</DetailValue>
       </div>
     </ModalOverlay>
   );
@@ -390,7 +407,9 @@ function HistoryList({ history }) {
 
 function HistoryRow({ entry, onClick, compact = false }) {
   const Wrapper = onClick ? "button" : "div";
-  const palette = ACTION_COLORS[entry.action_type] || ACTION_COLORS.Others;
+  const action = entryAction(entry);
+  const remark = entryRemark(entry);
+  const palette = ACTION_COLORS[action] || ACTION_COLORS.Others;
   return (
     <Wrapper
       type={onClick ? "button" : undefined}
@@ -399,13 +418,13 @@ function HistoryRow({ entry, onClick, compact = false }) {
       style={{ backgroundColor: "#090b10", borderColor: "rgba(242,203,122,0.18)", borderLeftColor: palette.ring, borderLeftWidth: 3 }}
     >
       <div className="flex flex-wrap items-center gap-2">
-        <ActionTypeChip type={entry.action_type} />
+        <ActionTypeChip type={action} />
         <span className="text-[12px] font-medium text-white">{entry.pic}</span>
         <span className="text-[11px] text-white/50">- {formatDisplayDate(entry.datetime)}</span>
       </div>
-      {entry.note ? (
+      {remark ? (
         <p className={`mt-1 pl-1 text-[12px] italic text-white/60 ${compact ? "truncate" : "text-white/70"}`}>
-          {entry.note}
+          {remark}
         </p>
       ) : null}
     </Wrapper>

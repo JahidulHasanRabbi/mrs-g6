@@ -11,10 +11,7 @@ const A = "/assets/admin/pic-dashboard";
 const GRAD_DARK = "linear-gradient(178deg, #141828 0%, #333333 99.7%)";
 const PAGE_SIZE = 7;
 
-const PRIORITY_OPTIONS = ["High", "Medium", "Low"];
-
-// UI label → API integer.
-const PRIORITY_TO_INT = { High: 1, Medium: 2, Low: 3 };
+const PRIORITY_OPTIONS = ["High", "Medium", "Low", "Inactive"];
 
 const COLUMNS = [
   { key: "name",     label: "Username",       minW: 180 },
@@ -87,7 +84,7 @@ export default function RetentionMembersPage() {
         const res = await getCrmMembers({
           page,
           page_size: PAGE_SIZE,
-          priority: priority ? PRIORITY_TO_INT[priority] : undefined,
+          priority: priority ? priority.toLowerCase() : undefined,
           mrs_vip_level: vip || undefined,
           retention: retentionUser?.id ?? retentionUser?.uuid ?? undefined,
           search: debouncedQuery || undefined,

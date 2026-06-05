@@ -134,6 +134,31 @@ export async function refreshCrmMembers() {
   return await apiRequest(ENDPOINTS.CRM.REFRESH_MEMBERS, { method: 'POST' }, true, 'admin');
 }
 
+// GET /crm-members/follow-up/
+// params: { page, page_size, pic_uuid, member_uuid, start_date, end_date }
+export async function getCrmFollowUps(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.CRM.FOLLOW_UPS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+// PATCH /crm-members/members/<uuid>/assign-to-pic/
+// body: { pic_uuid }
+export async function assignCrmMemberToPic(memberUuid, data) {
+  return await apiRequest(ENDPOINTS.CRM.MEMBER_ASSIGN_TO_PIC(memberUuid), {
+    method: 'PATCH',
+    body: data
+  }, true, 'admin');
+}
+
+// PATCH /crm-members/members/<uuid>/follow-up/
+// body: { follow_up_remark }
+export async function patchCrmMemberFollowUp(memberUuid, data) {
+  return await apiRequest(ENDPOINTS.CRM.MEMBER_FOLLOW_UP(memberUuid), {
+    method: 'PATCH',
+    body: data
+  }, true, 'admin');
+}
+
 // ──────────────────────── Retention Profile ──────────────────────
 
 // GET /crm-members/retention-summary/<admin_uuid>/
@@ -143,8 +168,8 @@ export async function getRetentionSummary(adminUuid, params = {}) {
   return await apiRequest(`${ENDPOINTS.CRM.RETENTION_SUMMARY(adminUuid)}${qs}`, { method: 'GET' }, true, 'admin');
 }
 
-// GET /crm-members/retention-members/  (paginated)
-// params: { page, page_size, from_date, to_date, vip_level, from_sales, to_sales, search }
+// GET /crm-members/retention-members/  (paginated) — only members with priority set
+// params: { page, page_size, priority ("inactive"|"low"|"medium"|"high"), mrs_vip_level, wallet_vip_level, retention (PIC uuid), search, brand }
 export async function getRetentionMembers(params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.CRM.RETENTION_MEMBERS}${qs}`, { method: 'GET' }, true, 'admin');
@@ -160,8 +185,10 @@ export async function getAdminMembers(adminUuid, params = {}) {
 // ─────────────────────────── Dashboard ───────────────────────────
 
 // GET /crm-admins/dashboard-summary/
-export async function getCrmDashboardSummary() {
-  return await apiRequest(ENDPOINTS.CRM.DASHBOARD_SUMMARY, { method: 'GET' }, true, 'admin');
+// params: { type, from_date, to_date }
+export async function getCrmDashboardSummary(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.CRM.DASHBOARD_SUMMARY}${qs}`, { method: 'GET' }, true, 'admin');
 }
 
 // GET /crm-admins/dashboard-details/  (paginated)

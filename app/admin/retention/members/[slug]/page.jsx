@@ -3,14 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import PeriodToggle from "../../../../components/admin/retention/PeriodToggle";
 import { GRAD_GOLD } from "../../../../components/admin/retention/constants";
 import {
   AlertHistorySection,
   FollowUpCreateModal,
-  MOCK_FOLLOWUP_HISTORY,
 } from "../../../../components/admin/retention/FollowUpComponents";
-import { getCrmMemberSingle, patchCrmMember } from "../../../../api/crmApi";
+import { getCrmFollowUps, getCrmMemberSingle, patchCrmMember, patchCrmMemberFollowUp, refreshCrmMembers } from "../../../../api/crmApi";
 import { getVipTierList, getWalletVipTiers, getStationList } from "../../../../api/adminApi";
 
 const TAG_STYLES = {
@@ -22,51 +20,6 @@ const TAG_STYLES = {
 };
 
 const ACTIVE_BRANDS = ["KG", "AB", "EP", "LV", "UB", "N1"];
-
-const MOCK_PROFILE_DATA = {
-  uuid: "mock-001",
-  full_name: "Ah Chong 88",
-  vip_level: "VIP 4",
-  priority: "High",
-  date_joined: "2026-05-27",
-  customer_data: {
-    username: "Ah Chong 88",
-    phone_number: "+6012-309 8765",
-    gender: "Male",
-    date_of_birth: "1990-08-12",
-    age: 35,
-    nationality: "Malaysia",
-    home_address: "Kuala Lumpur",
-    marital_status: "Single",
-    job: "Business Owner",
-    hobby: "Slots",
-    mrs_level: "VIP 4",
-    ns_level: "NS 2",
-    total_withdrawal: 3200,
-  },
-  financial_info: {
-    total_sales: 9999.88,
-    total_win_lose: 1023.13,
-    total_sales_ticket: 18,
-    arpu: 555.55,
-    average_deposit: 900,
-    last_deposit_date: "2026-05-27",
-    payment_method: "Bank Transfer",
-  },
-  gaming_info: {
-    game_preference: "Slot",
-    provider_preference: "Pragmatic Play",
-    play_time_pattern: "Night",
-    average_bet_size: "RM 20",
-    player_type: "VIP",
-    risk_style: "High",
-    deposit_frequency_style: "Weekly",
-    deposit_trigger: "Bonus",
-    churn_risk_reason: "Follow up required",
-    reactivation_trigger: "TG",
-    note: "Mock preview profile for alert follow-up development.",
-  },
-};
 
 const BRAND_COLORS = {
   N1: { bg: "#FBBF24", text: "#141828", border: "#FBBF24" }, // yellow
@@ -129,6 +82,24 @@ function formatCurrency(value) {
 
 function show(value, fallback = "—") {
   return value === null || value === undefined || value === "" ? fallback : String(value);
+}
+
+function formatDateOnly(value, fallback = "—") {
+  if (value === null || value === undefined || value === "") return fallback;
+  const raw = String(value);
+
+  const ymd = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (ymd) return `${ymd[3]}/${ymd[2]}/${ymd[1]}`;
+
+  const dmy = raw.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
+  if (dmy) return `${dmy[1]}/${dmy[2]}/${dmy[3]}`;
+
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return raw;
+  const dd = String(date.getDate()).padStart(2, "0");
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const yyyy = date.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
 }
 
 function inferTags(data) {
@@ -211,7 +182,6 @@ function buildWalletLevels(memberData, walletVipTiers, stationList) {
 export default function MemberProfilePage() {
   const params = useParams();
   const memberUuid = typeof params?.slug === "string" ? params.slug : Array.isArray(params?.slug) ? params.slug[0] : "";
-  const [period, setPeriod] = useState("Daily");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -219,18 +189,14 @@ export default function MemberProfilePage() {
   const [activeModal, setActiveModal] = useState(null);
   const [walletVipTiers, setWalletVipTiers] = useState([]);
   const [stationList, setStationList] = useState([]);
-  const [alertHistory, setAlertHistory] = useState(MOCK_FOLLOWUP_HISTORY);
+  const [alertHistory, setAlertHistory] = useState([]);
+  const [alertLoading, setAlertLoading] = useState(false);
+  const [alertError, setAlertError] = useState("");
+  const [alertSubmitting, setAlertSubmitting] = useState(false);
+  const [bonusUpdating, setBonusUpdating] = useState(false);
 
   useEffect(() => {
     if (!memberUuid) return;
-    if (memberUuid === MOCK_PROFILE_DATA.uuid) {
-      setLoading(false);
-      setError(null);
-      setData(MOCK_PROFILE_DATA);
-      setWalletVipTiers([]);
-      setStationList([]);
-      return;
-    }
     let cancelled = false;
     const fetchAll = async () => {
       setLoading(true);
@@ -260,6 +226,35 @@ export default function MemberProfilePage() {
     };
   }, [memberUuid, refreshKey]);
 
+  useEffect(() => {
+    if (!memberUuid) {
+      setAlertHistory([]);
+      return;
+    }
+    let cancelled = false;
+    const fetchFollowUps = async () => {
+      setAlertLoading(true);
+      setAlertError("");
+      try {
+        const res = await getCrmFollowUps({ page: 1, page_size: 50, member_uuid: memberUuid });
+        if (cancelled) return;
+        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        setAlertHistory(results);
+      } catch (err) {
+        if (cancelled) return;
+        console.error("[member-profile] follow-up fetch failed", err);
+        setAlertError("Failed to load follow-up history.");
+        setAlertHistory([]);
+      } finally {
+        if (!cancelled) setAlertLoading(false);
+      }
+    };
+    fetchFollowUps();
+    return () => {
+      cancelled = true;
+    };
+  }, [memberUuid, refreshKey]);
+
   if (loading) {
     return <MemberProfileSkeleton />;
   }
@@ -279,7 +274,7 @@ export default function MemberProfilePage() {
     Username: show(customer?.username || basic?.username),
     Phone: show(customer?.phone_number || basic?.phone_number),
     Gender: show(customer?.gender || basic?.gender),
-    "Date of Birth": show(customer?.date_of_birth || basic?.date_of_birth),
+    "Date of Birth": formatDateOnly(customer?.date_of_birth || basic?.date_of_birth),
     Age: show(customer?.age ?? basic?.age),
     Nationality: show(customer?.nationality || basic?.nationality),
     "Home Address": show(customer?.home_address || basic?.home_address),
@@ -297,7 +292,7 @@ export default function MemberProfilePage() {
     "Total Withdrawal Ticket": show(data?.financial_info?.total_withdrawal_ticket),
     ARPU: formatCurrency(data?.financial_info?.arpu),
     "Average Deposit": formatCurrency(data?.financial_info?.average_deposit),
-    "Last Deposit Date": show(data?.financial_info?.last_deposit_date),
+    "Last Deposit Date": formatDateOnly(data?.financial_info?.last_deposit_date),
     "Payment Method": show(data?.financial_info?.payment_method),
   };
 
@@ -328,6 +323,21 @@ export default function MemberProfilePage() {
     setRefreshKey((k) => k + 1);
   };
 
+  // "Update Bonus" (3-dots menu): trigger a server-side member refresh, then
+  // re-pull this member so the bonus/financial figures reflect the latest.
+  // Intentionally lightweight — the PIC can spam it; there is no throttle.
+  const handleUpdateBonus = async () => {
+    setBonusUpdating(true);
+    try {
+      await refreshCrmMembers();
+    } catch (err) {
+      console.error("[member-profile] update bonus failed", err);
+    } finally {
+      setBonusUpdating(false);
+      setRefreshKey((k) => k + 1);
+    }
+  };
+
   const profileName = data?.full_name || basic?.username || "Member";
   const profilePriority = data?.priority || "High";
   return (
@@ -335,19 +345,19 @@ export default function MemberProfilePage() {
       <ProfileHeader
         name={profileName}
         tags={inferTags(data)}
-        dateJoined={show(customer?.date_joined || data?.date_joined)}
+        dateJoined={formatDateOnly(customer?.date_joined || data?.date_joined)}
         slug={memberUuid}
-        period={period}
-        onPeriodChange={setPeriod}
         activeBrands={activeBrands}
         onNoteOpen={() => setActiveModal("note")}
         onVipOpen={() => setActiveModal("vip")}
         onAlertOpen={() => setActiveModal("alert")}
+        onUpdateBonus={handleUpdateBonus}
+        bonusUpdating={bonusUpdating}
       />
       <StatsRow stats={stats} />
       <InfoGrid basicInfo={basicInfo} financialInfo={financialInfo} gamingInfo={gamingInfo} />
       <NotesCard notes={show(data?.gaming_info?.note || data?.notes, "No notes available.")} />
-      <AlertHistorySection memberName={profileName} history={alertHistory} />
+      <AlertHistorySection memberName={profileName} history={alertHistory} loading={alertLoading} error={alertError} />
 
       {activeModal === "note" && (
         <NoteModal
@@ -375,13 +385,28 @@ export default function MemberProfilePage() {
           title="Add Alert"
           showPriority
           initialPriority={profilePriority}
+          submitting={alertSubmitting}
+          submitError={alertError}
           onClose={() => setActiveModal(null)}
-          onSubmit={(entry) => {
-            if (entry.priority) {
-              setData((prev) => (prev ? { ...prev, priority: entry.priority } : prev));
+          onSubmit={async (entry) => {
+            if (alertSubmitting) return;
+            setAlertSubmitting(true);
+            setAlertError("");
+            try {
+              await patchCrmMemberFollowUp(memberUuid, {
+                follow_up_remark: entry.follow_up_remark || entry.note || "",
+              });
+              if (entry.priority) {
+                setData((prev) => (prev ? { ...prev, priority: entry.priority } : prev));
+              }
+              setActiveModal(null);
+              setRefreshKey((k) => k + 1);
+            } catch (err) {
+              console.error("[member-profile] follow-up save failed", err);
+              setAlertError("Failed to save follow-up. Please try again.");
+            } finally {
+              setAlertSubmitting(false);
             }
-            setAlertHistory((prev) => [entry, ...prev]);
-            setActiveModal(null);
           }}
         />
       )}
@@ -389,7 +414,7 @@ export default function MemberProfilePage() {
   );
 }
 
-function ProfileHeader({ name, tags, dateJoined, slug, period, onPeriodChange, activeBrands, onNoteOpen, onVipOpen, onAlertOpen }) {
+function ProfileHeader({ name, tags, dateJoined, slug, activeBrands, onNoteOpen, onVipOpen, onAlertOpen, onUpdateBonus, bonusUpdating }) {
   return (
     <div className="flex flex-col gap-4 px-2 md:flex-row md:flex-wrap md:items-start md:justify-between md:gap-6">
       <div className="flex flex-col gap-3">
@@ -439,14 +464,11 @@ function ProfileHeader({ name, tags, dateJoined, slug, period, onPeriodChange, a
               <EditIcon />
               <span className="text-[12px] font-medium leading-[18px] text-[#141828]">Edit Profile</span>
             </Link>
-            <MoreOptionsMenu onNoteOpen={onNoteOpen} onVipOpen={onVipOpen} onAlertOpen={onAlertOpen} />
+            <MoreOptionsMenu onNoteOpen={onNoteOpen} onVipOpen={onVipOpen} onAlertOpen={onAlertOpen} onUpdateBonus={onUpdateBonus} bonusUpdating={bonusUpdating} />
           </div>
         </div>
       </div>
       <ActiveBrandsRow active={activeBrands} />
-      <div className="flex items-center gap-2">
-        <PeriodToggle period={period} onPeriodChange={onPeriodChange} />
-      </div>
     </div>
   );
 }
@@ -482,19 +504,20 @@ function ActiveBrandsRow({ active }) {
 }
 
 const MORE_OPTIONS = [
-  // { key: "send-bonus",       label: "Send Bonus" },
+  { key: "update-bonus",     label: "Update Bonus" },
   { key: "add-note",         label: "Add Note" },
   { key: "change-vip-level", label: "Change VIP Level" },
   { key: "alert",            label: "Alert", danger: true },
   // { key: "block-customer",   label: "Block Customer", danger: true },
 ];
 
-function MoreOptionsMenu({ onNoteOpen, onVipOpen, onAlertOpen }) {
+function MoreOptionsMenu({ onNoteOpen, onVipOpen, onAlertOpen, onUpdateBonus, bonusUpdating }) {
   const [open, setOpen] = useState(false);
 
   const handleSelect = (key) => {
     setOpen(false);
-    if (key === "add-note") onNoteOpen();
+    if (key === "update-bonus") onUpdateBonus?.();
+    else if (key === "add-note") onNoteOpen();
     else if (key === "change-vip-level") onVipOpen();
     else if (key === "alert") onAlertOpen();
   };
@@ -510,7 +533,11 @@ function MoreOptionsMenu({ onNoteOpen, onVipOpen, onAlertOpen }) {
         className="flex h-[34px] w-[34px] items-center justify-center rounded-[8px] border-2 border-[#f2cb7a] transition hover:brightness-110"
         style={{ backgroundImage: GRAD_GOLD }}
       >
-        <DotsIcon />
+        {bonusUpdating ? (
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#141828]/30 border-t-[#141828]" />
+        ) : (
+          <DotsIcon />
+        )}
       </button>
       {open ? (
         <>

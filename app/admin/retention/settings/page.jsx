@@ -3,27 +3,21 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Pagination from "../../../components/admin/retention/Pagination";
-import SetTargetModal from "../../../components/admin/retention/SetTargetModal";
 import {
   ASSETS,
   GRAD_DARK,
   GRAD_GOLD,
 } from "../../../components/admin/retention/constants";
 import {
-  createCrmAssignment,
   getCrmAssignments,
-  setCrmAssignmentTarget,
   statusLabelToInt,
   updateCrmAssignment,
-  getCrmUsers,
 } from "../../../api/crmApi";
 
 // Retention Settings — Member Assignment.
-// Three views toggled by ?view=:
-//   - default       → assignment table + actions (Retention Set Target / Add Member level)
-//   - ?view=add     → inline "Add Member Level" form with Back/Save
-//   - ?view=edit&id=X → same form, prefilled from row X, saves back to it
-// The Set Target action opens a portal-rendered modal.
+// Two views toggled by ?view=:
+//   - default          → assignment table (Edit button per row)
+//   - ?view=edit&id=X  → edit form, prefilled from row X; saves level, criteria, retention target, and PIC
 
 const STATUSES = ["Active", "Inactive"];
 
@@ -55,38 +49,10 @@ function normalizeAssignmentStatus(value) {
   return value || "Inactive";
 }
 
-function isUuid(value) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ""));
-}
-
 function firstPresent(...values) {
   return values.find((value) => value !== null && value !== undefined && String(value) !== "") || "";
 }
 
-function normalizePic(user) {
-  const uuid = firstPresent(
-    user?.uuid,
-    user?.id,
-    user?.admin_uuid,
-    user?.user_uuid,
-    user?.pic_uuid,
-    user?.admin?.uuid,
-    user?.user?.uuid
-  );
-
-  return {
-    ...user,
-    uuid,
-    isValidUuid: isUuid(uuid),
-    label: user?.full_name || user?.name || user?.username || uuid || "Unknown PIC",
-  };
-}
-
-function invalidPicMessage(pic) {
-  const label = pic?.label || "selected PIC";
-  const uuid = pic?.uuid || "empty";
-  return `Cannot save: ${label} has invalid pic_uuid "${uuid}". The assignment API requires a real UUID, but /admins/users/ returned this value.`;
-}
 
 function mapAssignment(row, idx = 0) {
   return {
@@ -114,20 +80,12 @@ function rowToFormValues(row) {
     status: row.status,
     retain: stripCurrency(row.retain),
     upgrade: stripCurrency(row.upgrade),
+    target: stripCurrency(row.target),
     picUuid: row.picUuid,
     pic: row.name,
   };
 }
 
-function applyFormToRow(row, values) {
-  return {
-    ...row,
-    level: values.name,
-    status: values.status,
-    retain: `RM ${values.retain.replace(/^RM\s*/i, "")}`,
-    upgrade: values.upgrade,
-  };
-}
 
 export default function RetentionSettingsPage() {
   return (
@@ -144,17 +102,6 @@ function RetentionSettingsPageInner() {
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
-  // PIC list from GET /admins/users/ — each entry has { uuid, full_name, ... }
-  const [pics, setPics] = useState([]);
-
-  useEffect(() => {
-    getCrmUsers({ page: 1, page_size: 100 })
-      .then((res) => {
-        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
-        setPics(results.map(normalizePic).filter((pic) => pic.uuid));
-      })
-      .catch((err) => console.error("[retention-settings] users load failed", err));
-  }, []);
 
   const loadAssignments = useCallback(async () => {
     setLoading(true);
@@ -187,30 +134,23 @@ function RetentionSettingsPageInner() {
 
   const handleSave = useCallback(
     async (values) => {
-      // Look up PIC UUID from the real users list (GET /admins/users/)
-      const selectedPic = pics.find((u) => u.uuid === values.picUuid);
-      const picUuid = selectedPic?.uuid || values.picUuid;
-      if (!picUuid) {
-        alert("Cannot save: please select a valid PIC from the list.");
-        return;
-      }
       const payload = {
         name: values.name,
         status: statusLabelToInt(values.status),
         retain_criteria: stripCurrency(values.retain),
         upgrade_criteria: stripCurrency(values.upgrade),
-        pic_uuid: picUuid,
+        retention_target: stripCurrency(values.target),
+        pic_uuid: editingRow?.picUuid,
       };
       try {
         if (editingRow?.uuid) await updateCrmAssignment(editingRow.uuid, payload);
-        else await createCrmAssignment(payload);
         await loadAssignments();
       } catch (err) {
         console.error("[retention-settings] save failed", err);
         throw err;
       }
     },
-    [editingRow, loadAssignments, pics]
+    [editingRow, loadAssignments]
   );
 
   return (
@@ -222,7 +162,6 @@ function RetentionSettingsPageInner() {
           total={total}
           page={page}
           loading={loading}
-          pics={pics}
           onAssignmentsChanged={loadAssignments}
         />
       ) : (
@@ -231,7 +170,6 @@ function RetentionSettingsPageInner() {
           mode={mode}
           initialValues={editingRow ? rowToFormValues(editingRow) : null}
           onSave={handleSave}
-          pics={pics}
         />
       )}
     </>
@@ -252,18 +190,10 @@ function PageHeader() {
   );
 }
 
-function AssignmentListSection({ rows, total, page, loading, pics = [], onAssignmentsChanged }) {
+function AssignmentListSection({ rows, total, page, loading, onAssignmentsChanged }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [targetOpen, setTargetOpen] = useState(false);
-
-  const goToAddView = useCallback(() => {
-    const next = new URLSearchParams(searchParams.toString());
-    next.set("view", "add");
-    next.delete("id");
-    router.push(`${pathname}?${next.toString()}`);
-  }, [pathname, router, searchParams]);
 
   const goToEditView = useCallback(
     (id) => {
@@ -274,27 +204,6 @@ function AssignmentListSection({ rows, total, page, loading, pics = [], onAssign
     },
     [pathname, router, searchParams]
   );
-
-  const handleSaveTarget = useCallback(async (payload) => {
-    const selectedPic = pics.find(
-      (u) => u.uuid === payload.picUuid || u.label === payload.pic
-    );
-    const picUuid = payload.picUuid || selectedPic?.uuid;
-    if (!picUuid) {
-      alert("Cannot set target: please select a valid PIC from the list.");
-      return;
-    }
-    try {
-      await setCrmAssignmentTarget({
-        pic_uuid: picUuid,
-        deposit: stripCurrency(payload.target),
-      });
-      await onAssignmentsChanged?.();
-    } catch (err) {
-      console.error("[retention-settings] set target failed", err);
-      throw err;
-    }
-  }, [onAssignmentsChanged, pics]);
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
@@ -308,24 +217,6 @@ function AssignmentListSection({ rows, total, page, loading, pics = [], onAssign
         <h2 className="h-7 flex-1 text-white" style={{ letterSpacing: "-2px" }}>
           Assignment List
         </h2>
-        <button
-          type="button"
-          onClick={() => setTargetOpen(true)}
-          className="flex items-center justify-center gap-2 rounded-[8px] border border-[#f2cb7a] px-5 py-2 text-[14px] font-medium text-white transition hover:bg-white/5"
-          style={{ backgroundImage: GRAD_DARK }}
-        >
-          <TargetGlyph />
-          Retention Set Target
-        </button>
-        <button
-          type="button"
-          onClick={goToAddView}
-          className="flex items-center justify-center gap-2 rounded-[8px] border border-[#f2cb7a] px-5 py-2 text-[14px] font-semibold text-[#152044] transition hover:brightness-110"
-          style={{ backgroundImage: GRAD_GOLD }}
-        >
-          <PlusGlyph />
-          Add Member Assignment
-        </button>
       </header>
 
       <div className="w-full overflow-x-auto scrollbar-admin">
@@ -360,12 +251,6 @@ function AssignmentListSection({ rows, total, page, loading, pics = [], onAssign
           }}
         />
 
-      <SetTargetModal
-        isOpen={targetOpen}
-        onClose={() => setTargetOpen(false)}
-        onSave={handleSaveTarget}
-        pics={pics}
-      />
     </section>
   );
 }
@@ -483,7 +368,7 @@ function SkeletonCircle() {
   );
 }
 
-function MemberLevelForm({ mode, initialValues, onSave, pics }) {
+function MemberLevelForm({ mode, initialValues, onSave }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -496,14 +381,9 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
   const [status, setStatus] = useState(() => initialValues?.status ?? "Active");
   const [retain, setRetain] = useState(() => initialValues?.retain ?? "10,000");
   const [upgrade, setUpgrade] = useState(() => initialValues?.upgrade ?? "1,000");
-  const picOptions = pics?.length ? pics : [];
-  const [picUuid, setPicUuid] = useState(() => initialValues?.picUuid ?? picOptions[0]?.uuid ?? "");
+  const [target, setTarget] = useState(() => initialValues?.target ?? "");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
-
-  useEffect(() => {
-    if (!picUuid && picOptions[0]?.uuid) setPicUuid(picOptions[0].uuid);
-  }, [picOptions, picUuid]);
 
   const goBack = useCallback(() => {
     const next = new URLSearchParams(searchParams.toString());
@@ -517,14 +397,14 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
     setSaving(true);
     setSaveError("");
     try {
-      await onSave({ name, status, retain, upgrade, picUuid });
+      await onSave({ name, status, retain, upgrade, target });
       goBack();
     } catch {
       setSaveError("Failed to save assignment. Please check the values and try again.");
     } finally {
       setSaving(false);
     }
-  }, [name, status, retain, upgrade, picUuid, onSave, goBack]);
+  }, [name, status, retain, upgrade, target, onSave, goBack]);
 
   return (
     <section className="flex w-full flex-col gap-6 rounded-[16px] bg-[#041502] p-8 shadow-[0_-4px_12px_-2px_#dea220]">
@@ -554,8 +434,8 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
         <FormField label="Upgrade Criteria">
           <RmInput value={upgrade} onChange={setUpgrade} />
         </FormField>
-        <FormField label="Choose PIC">
-          <PicSelect value={picUuid} onChange={setPicUuid} options={picOptions} />
+        <FormField label="Retention Target">
+          <RmInput value={target} onChange={setTarget} />
         </FormField>
       </div>
 
@@ -588,10 +468,6 @@ function MemberLevelForm({ mode, initialValues, onSave, pics }) {
       </div>
     </section>
   );
-}
-
-function PicSelect({ value, onChange, options }) {
-  return <CustomSelect value={value} onChange={onChange} options={options.map((pic) => ({ value: pic.uuid, label: pic.label }))} placeholder="Choose PIC" />;
 }
 
 function FormField({ label, children }) {
@@ -696,23 +572,6 @@ function ChevronGlyph({ open }) {
 
 // ── Inline SVG glyphs ──────────────────────────────────────────────────
 
-function TargetGlyph() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.4" />
-      <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.4" />
-      <circle cx="8" cy="8" r="0.8" fill="currentColor" />
-    </svg>
-  );
-}
-
-function PlusGlyph() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <path d="M7 2v10M2 7h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
 
 function PencilGlyph() {
   return (

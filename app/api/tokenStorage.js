@@ -17,6 +17,8 @@ export const STORAGE_KEYS = {
   ADMIN_ACCESS_TOKEN: 'mrs_admin_access_token',
   ADMIN_REFRESH_TOKEN: 'mrs_admin_refresh_token',
   ADMIN_TOKEN_EXPIRY: 'mrs_admin_token_expiry',
+  ADMIN_UUID: 'mrs_admin_uuid',
+  ADMIN_USERNAME: 'mrs_admin_username',
   ADMIN_ROLE: 'mrs_admin_role',
   ADMIN_PERMISSIONS: 'mrs_admin_permissions',
   REDIRECT_O: 'mrs_redirect_o',
@@ -128,10 +130,34 @@ export const tokenStorage = {
       localStorage.removeItem(STORAGE_KEYS.ADMIN_ACCESS_TOKEN);
       localStorage.removeItem(STORAGE_KEYS.ADMIN_REFRESH_TOKEN);
       localStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN_EXPIRY);
+      localStorage.removeItem(STORAGE_KEYS.ADMIN_UUID);
+      localStorage.removeItem(STORAGE_KEYS.ADMIN_USERNAME);
       localStorage.removeItem(STORAGE_KEYS.ADMIN_ROLE);
       localStorage.removeItem(STORAGE_KEYS.ADMIN_PERMISSIONS);
       dispatchAuthChanged();
     }
+  },
+
+  setAdminIdentity: ({ uuid, username }) => {
+    if (typeof window !== 'undefined') {
+      if (uuid) localStorage.setItem(STORAGE_KEYS.ADMIN_UUID, uuid);
+      if (username) localStorage.setItem(STORAGE_KEYS.ADMIN_USERNAME, username);
+      dispatchAuthChanged();
+    }
+  },
+
+  getAdminUuid: () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(STORAGE_KEYS.ADMIN_UUID);
+    }
+    return null;
+  },
+
+  getAdminUsername: () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(STORAGE_KEYS.ADMIN_USERNAME);
+    }
+    return null;
   },
 
   setAdminRole: (role) => {
