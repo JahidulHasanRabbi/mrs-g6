@@ -179,10 +179,16 @@ function RetentionSettingsContent() {
 function PageHeader() {
   return (
     <div className="flex flex-col gap-1 px-2">
-      <span className="b-4 text-white leading-[18px]">ADMIN DASHBOARD</span>
+      <span className="text-[12px] font-medium leading-[18px] text-white">ADMIN DASHBOARD</span>
       <h1
-        className="h-4 bg-clip-text text-transparent whitespace-nowrap"
-        style={{ backgroundImage: GRAD_GOLD }}
+        className="bg-clip-text text-transparent font-bold whitespace-nowrap"
+        style={{
+          backgroundImage: GRAD_GOLD,
+          fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+          fontSize: "clamp(32px, 5vw, 46px)",
+          lineHeight: "1.2",
+          letterSpacing: "-1px",
+        }}
       >
         Member Assignment
       </h1>
@@ -214,7 +220,15 @@ function AssignmentListSection({ rows, total, page, loading, onAssignmentsChange
   return (
     <section className="flex w-full flex-col overflow-clip rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
       <header className="flex flex-wrap items-center gap-4 p-6 w-full">
-        <h2 className="h-7 flex-1 text-white" style={{ letterSpacing: "-2px" }}>
+        <h2
+          className="flex-1 text-white font-bold whitespace-nowrap"
+          style={{
+            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+            fontSize: "26px",
+            lineHeight: "39px",
+            letterSpacing: "-2px",
+          }}
+        >
           Assignment List
         </h2>
       </header>

@@ -134,10 +134,16 @@ function HeaderRow({ period, onPeriodChange, fromDate, toDate }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-3 px-1 sm:px-2">
       <div className="flex flex-col gap-1">
-        <span className="b-4 text-white leading-[18px]">OVERVIEW</span>
+        <span className="text-[12px] font-medium leading-[18px] text-white">OVERVIEW</span>
         <h1
-          className="h-4 bg-clip-text text-transparent"
-          style={{ backgroundImage: GRAD_GOLD }}
+          className="bg-clip-text text-transparent font-bold whitespace-nowrap"
+          style={{
+            backgroundImage: GRAD_GOLD,
+            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+            fontSize: "clamp(32px, 5vw, 46px)",
+            lineHeight: "1.2",
+            letterSpacing: "-1px",
+          }}
         >
           Dashboard
         </h1>
@@ -149,7 +155,7 @@ function HeaderRow({ period, onPeriodChange, fromDate, toDate }) {
 
 function KpiGrid({ summary, loading }) {
   return (
-    <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
+    <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {KPI_META.map((meta) => {
         if (loading) return <KpiCardSkeleton key={meta.id} />;
         const raw = summary?.[meta.key];
@@ -184,54 +190,53 @@ function SkeletonBlock({ className = "" }) {
 function KpiCardSkeleton() {
   return (
     <div
-      className="flex flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-3 sm:p-5 xl:p-3 2xl:p-5 [@media(min-width:1700px)]:p-6"
+      className="flex flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-6"
       style={{ backgroundImage: GRAD_CARD }}
     >
-      <div className="flex w-full items-start gap-2 sm:gap-4 xl:gap-2 2xl:gap-4">
-        <SkeletonBlock className="h-9 w-9 shrink-0 rounded-[4px] sm:h-12 sm:w-12 xl:h-9 xl:w-9 2xl:h-11 2xl:w-11 [@media(min-width:1700px)]:h-12 [@media(min-width:1700px)]:w-12" />
+      <div className="flex w-full items-start gap-4">
+        <SkeletonBlock className="h-12 w-12 shrink-0 rounded-[4px]" />
         <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <SkeletonBlock className="h-[14px] w-[72%]" />
-          <SkeletonBlock className="h-[32px] w-[58%]" />
+          <SkeletonBlock className="h-[18px] w-[72%]" />
+          <SkeletonBlock className="h-[38px] w-[58%]" />
         </div>
       </div>
     </div>
   );
 }
 
-// Single value size shared by every KPI tile (currency and plain alike) so the
-// numbers stay visually consistent across the grid. Sized so the longest
-// currency value still fits its card without clipping.
-const KPI_VALUE_SIZE =
-  "text-[20px] sm:text-[24px] xl:text-[20px] 2xl:text-[22px] [@media(min-width:1700px)]:text-[26px]";
+// KPI value size mirrors the User Access Management reference (38px / 44px).
+// Currency tiles can carry long values, so the value still wraps via
+// `overflow-wrap` rather than clipping or forcing the card wider.
+const KPI_VALUE_SIZE = "text-[38px] leading-[44px]";
 
 function KpiCard({ kpi }) {
   const isCurrency = !!kpi.valuePrefix;
   return (
     <div
-      className="flex flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-3 sm:p-5 xl:p-3 2xl:p-5 [@media(min-width:1700px)]:p-6"
+      className="flex flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-6"
       style={{ backgroundImage: GRAD_CARD }}
     >
-      <div className="flex w-full items-start gap-2 sm:gap-4 xl:gap-2 2xl:gap-4">
+      <div className="flex w-full items-start gap-4">
         <div
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px] drop-shadow-[0_0_3px_rgba(222,162,32,0.5)] sm:h-12 sm:w-12 xl:h-9 xl:w-9 2xl:h-11 2xl:w-11 [@media(min-width:1700px)]:h-12 [@media(min-width:1700px)]:w-12"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[4px] drop-shadow-[0_0_3px_rgba(222,162,32,0.5)]"
           style={{ backgroundImage: GRAD_DARK }}
         >
           <img
             src={kpi.icon}
             alt=""
-            className="h-5 w-5 sm:h-6 sm:w-6 xl:h-5 xl:w-5 2xl:h-6 2xl:w-6"
+            className="h-6 w-6"
             style={{ maxWidth: kpi.iconSize, maxHeight: kpi.iconSize }}
           />
         </div>
         <div className="flex min-w-0 flex-1 flex-col">
           <p
-            className="b-2 text-[11px] sm:text-[13px] xl:text-[11px] 2xl:text-[13px] font-semibold uppercase leading-[1.15] text-[#f6dda6]"
-            style={{ letterSpacing: "-0.5px" }}
+            className="text-[16px] font-semibold uppercase leading-[24px] text-[#f6dda6]"
+            style={{ letterSpacing: "-1px" }}
           >
             {kpi.label}
           </p>
           <p
-            className="bg-clip-text font-bold text-transparent leading-[1.2]"
+            className="bg-clip-text font-bold text-transparent"
             style={{
               backgroundImage: GRAD_GOLD,
               fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
@@ -296,7 +301,15 @@ function PerformanceSummary({ periodParams }) {
   return (
     <section className="flex w-full flex-col overflow-clip rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
       <header className="flex flex-wrap items-center justify-between gap-3 p-4 sm:p-6 w-full">
-        <h2 className="h-7 text-white" style={{ letterSpacing: "-2px" }}>
+        <h2
+          className="text-white font-bold whitespace-nowrap"
+          style={{
+            fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+            fontSize: "26px",
+            lineHeight: "39px",
+            letterSpacing: "-2px",
+          }}
+        >
           Performance Summary
         </h2>
       </header>
