@@ -7,7 +7,9 @@
 // rendered size by scripts/optimize-penalty-assets.js. This cut the set from
 // ~5.8MB to ~0.8MB so the keeper flipbook's dive frames load in time on slow
 // 4G instead of fetching mid-dive (which made the keeper freeze/skip frames).
-// Source PNGs are kept in the repo as the regeneration input for that script.
+// Only the WebP files are committed — the source PNGs are not. To regenerate,
+// re-export the PNGs from Figma into public/assets/penalty-kick/ at the paths
+// the optimizer expects, then run the script (it overwrites the WebP in place).
 
 export const IMAGES = {
   ballPng: "/assets/penalty-kick/ball/Football.webp",
