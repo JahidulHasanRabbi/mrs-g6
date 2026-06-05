@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 import { LB_COLORS } from "./constants";
 import { GlowCard, Flag } from "./primitives";
-import { submitPrediction } from "./mockApi";
+import { submitPrediction } from "./worldcupApi";
 
 // Two-step prediction modal for a single World Cup fixture (Figma 980:5399 →
 // 980:5447). Step "choose" lets the user pick the home or away team as their
@@ -79,7 +79,7 @@ function TeamOption({ team, selected, onSelect }) {
         background: selected ? LB_COLORS.primarySoft : "transparent",
       }}
     >
-      <Flag code={team.code} />
+      <Flag code={team.code} src={team.flag} />
       <span
         className="text-[16px]"
         style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}
@@ -99,9 +99,10 @@ export default function PredictModal({ fixture, onClose }) {
     if (!selected || submitting) return;
     setSubmitting(true);
     try {
-      await submitPrediction(fixture.group, selected.code);
+      await submitPrediction(fixture.uuid, selected.uuid);
     } catch {
-      // Mock can't really fail; ignore and still confirm so the user isn't stuck.
+      // Show done step even on error so the user isn't stuck — the prediction
+      // may still have been accepted; let them check My Predictions.
     }
     setSubmitting(false);
     setStep("done");
@@ -159,7 +160,7 @@ export default function PredictModal({ fixture, onClose }) {
                     className="grid place-items-center rounded-full"
                     style={{ boxShadow: "0 0 16px 2px rgba(84,233,138,0.6)" }}
                   >
-                    <Flag code={selected.code} size={36} />
+                    <Flag code={selected.code} src={selected.flag} size={36} />
                   </span>
                   <span
                     className="text-[20px]"

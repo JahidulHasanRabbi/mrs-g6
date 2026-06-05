@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import { LB_COLORS } from "./constants";
 import { SectionBadge, Flag } from "./primitives";
+import { useUser } from "../../contexts/UserContext";
 
 function StatRow({ icon, label, children }) {
   return (
@@ -47,6 +49,8 @@ const PctIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none
 const TrophyIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 4h10v4a5 5 0 1 1-10 0V4z"/><path d="M5 4H3v3a3 3 0 0 0 4 3M19 4h2v3a3 3 0 0 1-4 3"/><path d="M9 14v3h6v-3M8 20h8"/></svg>;
 
 export default function ProfileCard({ profile }) {
+  const { profilePicture } = useUser();
+
   return (
     <div
       className="w-full max-w-[358px] rounded-[12px] p-[17px] backdrop-blur-[10px]"
@@ -55,13 +59,22 @@ export default function ProfileCard({ profile }) {
       <div className="flex flex-col items-center gap-6">
         <SectionBadge align="left">My Profile</SectionBadge>
 
+        {profilePicture && (
+          <div
+            className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full"
+            style={{ border: `2px solid ${LB_COLORS.borderSoft}` }}
+          >
+            <Image src={profilePicture} alt="Profile" fill className="object-cover" sizes="64px" />
+          </div>
+        )}
+
         <div className="flex w-full gap-6">
           <div className="flex flex-1 flex-col gap-4">
             <StatRow icon={<UserIcon />} label="Player">
               <span style={{ color: "#fff", fontSize: 14, fontFamily: "'Lexend',sans-serif", lineHeight: "24px" }}>
                 {profile.name}
               </span>
-              <span className="ml-3"><Flag code={profile.countryCode} /></span>
+              <span className="ml-3"><Flag code={profile.countryCode} src={profile.countryFlag} /></span>
             </StatRow>
 
             <StatRow icon={<RankIcon />} label="Global Rank">

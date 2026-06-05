@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 
 import PitchBackground from "../components/penalty-kick/PitchBackground";
@@ -31,9 +32,12 @@ import {
   getPenaltyKickGameStatus,
   getPenaltyKickSettings,
   getKickHistory,
+  getWorldCupProfile,
   kick,
   redeemAllKickRewards,
 } from "../api/memberApi";
+import { confirmNation } from "../components/leaderboard/worldcupApi";
+import NationSelect from "../components/leaderboard/NationSelect";
 
 import { tokenStorage } from "../api/tokenStorage";
 import { useUser } from "../contexts/UserContext";
@@ -132,6 +136,7 @@ function mapHistoryRow(row) {
 }
 
 export default function PenaltyKickPage() {
+  const router = useRouter();
   const { userData, refreshUserData } = useUser();
   // muted/toggleMuted destructured but unused — the Figma header dropped the
   // mute toggle. Audio still works (and respects the persisted-mute flag the
@@ -156,6 +161,10 @@ export default function PenaltyKickPage() {
   const [outcome, setOutcome] = useState(null);
   const [reward, setReward] = useState(null);
   const [kickError, setKickError] = useState(null);
+  const [kickErrorNeedsCountry, setKickErrorNeedsCountry] = useState(false);
+  const [needsCountry, setNeedsCountry] = useState(false);
+  const [countryConfirmError, setCountryConfirmError] = useState(null);
+  const needsCountryRef = useRef(false);
   const pendingKickRef = useRef(false);
 
   // Warm the keeper flipbook + ball into cache while the loading/launch
@@ -183,6 +192,18 @@ export default function PenaltyKickPage() {
           }
         } catch (err) {
           console.warn("penalty kick game status unavailable", err);
+        }
+
+        // Check if user has a World Cup country. If not, show country selection
+        // before the game starts so the first kick never fails with a country error.
+        try {
+          const wcProfile = await getWorldCupProfile(memberUuid);
+          if (!cancelled && !wcProfile.country_uuid) {
+            needsCountryRef.current = true;
+            setNeedsCountry(true);
+          }
+        } catch {
+          // Don't block the game if this check fails
         }
       }
 
@@ -272,13 +293,14 @@ export default function PenaltyKickPage() {
         }
       } catch (err) {
         console.error("kick failed", err);
-        const rawDetail = err?.data?.detail || err?.message || "Unable to complete this kick.";
+        const rawDetail = err?.data?.details || err?.data?.detail || err?.message || "Unable to complete this kick.";
         const detail = String(rawDetail).toLowerCase();
         if (err?.status === 400 && (detail.includes("maintenance") || detail.includes("close") || detail.includes("status"))) {
           setConfig((prev) => ({ ...prev, enabled: false, maintenanceMode: detail.includes("maintenance") }));
         }
         pendingKickRef.current = false;
         setKickError(String(rawDetail));
+        setKickErrorNeedsCountry(detail.includes("country"));
         setDialog(DIALOGS.FAIL);
         return;
       }
@@ -326,12 +348,27 @@ export default function PenaltyKickPage() {
     setPhase(PHASES.READY);
   }, [config.enabled, play]);
 
+  const handleCountryConfirmed = useCallback(async (country) => {
+    setCountryConfirmError(null);
+    try {
+      await confirmNation(country.uuid);
+      needsCountryRef.current = false;
+      setNeedsCountry(false);
+      // Clear the kick-error country flag too — user has now selected a country
+      setKickErrorNeedsCountry(false);
+      setKickError(null);
+    } catch (err) {
+      setCountryConfirmError(err?.data?.detail || err?.data?.details || err?.message || "Failed to save country. Please try again.");
+    }
+  }, []);
+
   const handleKickAgain = useCallback(() => {
     // Cut the goal celebration short — it's a multi-second cheer and would
     // otherwise keep playing over the next shot.
     stop("goal");
     setDialog(null);
     setKickError(null);
+    setKickErrorNeedsCountry(false);
     setSwipeData(null);
     setOutcome(null);
     setReward(null);
@@ -504,6 +541,16 @@ export default function PenaltyKickPage() {
 
       <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
+      {/* Country selection overlay — shown when user has no World Cup country */}
+      {needsCountry && (
+        <div
+          className="fixed inset-0 z-[60] overflow-y-auto"
+          style={{ background: "rgba(0,0,0,0.92)" }}
+        >
+          <NationSelect onConfirm={handleCountryConfirmed} error={countryConfirmError} />
+        </div>
+      )}
+
       <AnimatePresence>
         {dialog && (
           <motion.div
@@ -541,14 +588,17 @@ export default function PenaltyKickPage() {
             )}
             {dialog === DIALOGS.FAIL && (
               <FailDialog
-                // "miss" → off-target subline ("Ball went wide..."),
-                // "save" (or anything else) → keeper-read subline.
                 reason={kickError ? "error" : outcome?.outcome === "miss" ? "miss" : "save"}
-                title={kickError ? "Kick failed" : undefined}
+                title={kickErrorNeedsCountry ? "Country required" : kickError ? "Kick failed" : undefined}
                 message={kickError || undefined}
+                kickAgainLabel={kickErrorNeedsCountry ? "Choose Country" : "Kick Again?"}
                 onKickAgain={() => {
                   play("tap");
-                  handleKickAgain();
+                  if (kickErrorNeedsCountry) {
+                    router.push("/leaderboard");
+                  } else {
+                    handleKickAgain();
+                  }
                 }}
                 onReturn={handleReturnToWebsite}
               />

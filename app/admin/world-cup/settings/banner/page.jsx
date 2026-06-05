@@ -3,7 +3,25 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import FormChrome, { INPUT_BASE } from "../../../../components/admin/world-cup/FormChrome";
-import { useWorldCupSettings } from "../../../../contexts/WorldCupSettingsContext";
+import {
+  getWorldCupBanner,
+  createWorldCupBanner,
+  updateWorldCupBanner,
+} from "../../../../api/adminApi";
+
+const LOCATION_OPTIONS = [
+  { value: 1, label: "Home" },
+  { value: 2, label: "Lobby" },
+  { value: 3, label: "Prediction" },
+];
+
+function ChevronIcon() {
+  return (
+    <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e9af41" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
 
 function ImagePlaceholder() {
   return (
@@ -18,64 +36,85 @@ function ImagePlaceholder() {
 function BannerForm() {
   const router = useRouter();
   const params = useSearchParams();
-  const editingId = params.get("id");
-
-  const { banners, upsertBanner } = useWorldCupSettings();
-  const existing = editingId ? banners.find((b) => b.id === editingId) : null;
+  const editingUuid = params.get("uuid");
 
   const [form, setForm] = useState({
-    id: editingId || "",
-    title: "BECOME TOP 10 PLAYERS",
-    label: "Exclusive Rewards",
-    section: "Real-time Rankings",
-    subtitle: "Join a country to start earning XP and climbing the ranks!",
-    description: "Live leaderboard allows players to get real-time updates on their rankings and see where they stand among others.",
-    image: null,
+    title: "",
+    label: "",
+    section: "",
+    subtitle: "",
+    description: "",
+    location: 1,
+    imageFile: null,
   });
   const [imagePreview, setImagePreview] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
   const fileRef = useRef(null);
 
   useEffect(() => {
-    if (existing) {
-      setForm({
-        id: existing.id,
-        title: existing.title || "",
-        label: existing.label || "",
-        section: existing.section || "",
-        subtitle: existing.subtitle || "",
-        description: existing.description || "",
-        image: existing.image || null,
-      });
-      setImagePreview(existing.image || null);
+    if (editingUuid) {
+      getWorldCupBanner(editingUuid).then((b) => {
+        setForm({
+          title: b.title ?? "",
+          label: b.label_text ?? "",
+          section: b.section_title ?? "",
+          subtitle: b.subtitle ?? "",
+          description: b.description ?? "",
+          location: b.location ?? 1,
+          imageFile: null,
+        });
+        setImagePreview(b.image || null);
+      }).catch(() => {});
     }
-  }, [existing]);
+  }, [editingUuid]);
 
   const set = (k) => (e) => setForm((p) => ({ ...p, [k]: e.target.value }));
 
   const onImage = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setForm((p) => ({ ...p, imageFile: file }));
     const reader = new FileReader();
     reader.onloadend = () => setImagePreview(reader.result);
     reader.readAsDataURL(file);
   };
 
   const onSave = async () => {
+    if (!form.title) { setError("Banner title is required."); return; }
     setSaving(true);
-    upsertBanner({ ...form, image: imagePreview });
-    await new Promise((r) => setTimeout(r, 200));
-    setSaving(false);
-    router.push("/admin/world-cup/settings");
+    setError("");
+    try {
+      const payload = new FormData();
+      payload.append("title", form.title);
+      if (form.label) payload.append("label_text", form.label);
+      if (form.section) payload.append("section_title", form.section);
+      if (form.subtitle) payload.append("subtitle", form.subtitle);
+      if (form.description) payload.append("description", form.description);
+      payload.append("location", form.location);
+      if (form.imageFile) payload.append("image", form.imageFile);
+
+      if (editingUuid) {
+        await updateWorldCupBanner(editingUuid, payload);
+      } else {
+        await createWorldCupBanner(payload);
+      }
+      router.push("/admin/world-cup/settings");
+    } catch (e) {
+      setError(e?.message ?? "Failed to save.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <FormChrome
-      title={editingId ? "Edit Banner Information" : "Add Banner Information"}
+      title={editingUuid ? "Edit Banner Information" : "Add Banner Information"}
       onBack={() => router.push("/admin/world-cup/settings")}
       onSave={onSave}
       saving={saving}
     >
+      {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
       <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-3">
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">Banner Title</label>
@@ -90,6 +129,21 @@ function BannerForm() {
           <input type="text" value={form.section} onChange={set("section")} className={INPUT_BASE} />
         </div>
 
+        <div>
+          <label className="mb-2 block text-[14px] font-semibold text-white">Location</label>
+          <div className="relative">
+            <select
+              value={form.location}
+              onChange={(e) => setForm((p) => ({ ...p, location: Number(e.target.value) }))}
+              className={`${INPUT_BASE} appearance-none pr-10`}
+            >
+              {LOCATION_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value} style={{ background: "#041502", color: "white" }}>{o.label}</option>
+              ))}
+            </select>
+            <ChevronIcon />
+          </div>
+        </div>
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">Choose Image</label>
           <button
@@ -111,21 +165,11 @@ function BannerForm() {
         </div>
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">Banner Subtitle</label>
-          <textarea
-            value={form.subtitle}
-            onChange={set("subtitle")}
-            rows={4}
-            className={`${INPUT_BASE} resize-none`}
-          />
+          <textarea value={form.subtitle} onChange={set("subtitle")} rows={4} className={`${INPUT_BASE} resize-none`} />
         </div>
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">Description</label>
-          <textarea
-            value={form.description}
-            onChange={set("description")}
-            rows={4}
-            className={`${INPUT_BASE} resize-none`}
-          />
+          <textarea value={form.description} onChange={set("description")} rows={4} className={`${INPUT_BASE} resize-none`} />
         </div>
       </div>
     </FormChrome>

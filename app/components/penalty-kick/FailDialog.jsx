@@ -11,6 +11,7 @@ export default function FailDialog({
   reason = "save",
   title,
   message,
+  kickAgainLabel = "Kick Again?",
 }) {
   const isMiss = reason === "miss";
   const isError = reason === "error";
@@ -38,7 +39,7 @@ export default function FailDialog({
       </p>
 
       <div className="flex flex-col gap-3">
-        <GreenCta onClick={onKickAgain}>Kick Again?</GreenCta>
+        <GreenCta onClick={onKickAgain}>{kickAgainLabel}</GreenCta>
         <OutlinePillCta onClick={onReturn}>Return to website</OutlinePillCta>
       </div>
     </GlassCard>

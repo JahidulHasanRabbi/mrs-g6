@@ -4,15 +4,8 @@
 const fakeLatency = (ms = 250) =>
   new Promise((r) => setTimeout(r, ms));
 
-// Locally-vendored circular flags (HatScripts circle-flags set). The earlier
-// Figma PNG export framed each flag medallion at a different scale inside its
-// 1024px canvas (England filled the canvas, Japan had wide padding), so at a
-// fixed render size the visible flags came out inconsistent. These SVGs are
-// uniformly full-bleed circles, so every flag reads the same size. Files live
-// under public/assets/leaderboard/flags/; codes are ISO-3166 alpha-2, plus
-// `gb-eng` for England.
-export const flagUrl = (iso) =>
-  `/assets/leaderboard/flags/${iso.toLowerCase()}.svg`;
+// flagUrl moved to primitives.jsx; re-exported here for backward compat.
+export { flagUrl } from "./primitives";
 
 export const COUNTRIES_BY_TIER = {
   "Tier 1 · Global Giants": [

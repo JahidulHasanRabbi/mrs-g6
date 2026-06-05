@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { LB_COLORS } from "./constants";
 import { GlowCard, Flag, Tabs } from "./primitives";
-import { getFixtures } from "./mockApi";
+import { getFixtures } from "./worldcupApi";
 import PredictModal from "./PredictModal";
 
 function OddsBar({ home, away }) {
@@ -35,7 +35,7 @@ function FixtureCard({ fixture, onPredict }) {
         </div>
         <div className="flex h-[39px] w-full items-center gap-4">
           <div className="flex flex-1 items-center gap-2">
-            <Flag code={fixture.home.code} />
+            <Flag code={fixture.home.code} src={fixture.home.flag} />
             <span className="text-[12px]" style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}>
               {fixture.home.name}
             </span>
@@ -47,7 +47,7 @@ function FixtureCard({ fixture, onPredict }) {
             <span className="text-[12px]" style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}>
               {fixture.away.name}
             </span>
-            <Flag code={fixture.away.code} />
+            <Flag code={fixture.away.code} src={fixture.away.flag} />
           </div>
         </div>
         <div className="text-[12px]" style={{ color: LB_COLORS.blueTier, fontFamily: "'Lexend',sans-serif" }}>

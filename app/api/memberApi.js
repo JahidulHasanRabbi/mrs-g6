@@ -201,6 +201,14 @@ export async function getKickHistory(memberUuid, params = {}) {
   }, true, 'member');
 }
 
+// GET /member/<uuid>/kick-full-history/  (all kicks: goals + saves)
+export async function getKickFullHistory(memberUuid, params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.MEMBER.KICK_FULL_HISTORY(memberUuid)}${qs}`, {
+    method: 'GET'
+  }, true, 'member');
+}
+
 // POST /member/<uuid>/kick/redeem-all/
 export async function redeemAllKickRewards(memberUuid) {
   return await apiRequest(ENDPOINTS.MEMBER.KICK_REDEEM_ALL(memberUuid), {
@@ -245,4 +253,123 @@ export async function getPublicFrames(params = {}) {
   return await apiRequest(`${ENDPOINTS.ADMIN.FRAMES}${qs}`, {
     method: 'GET'
   }, true, 'member'); // Requires member authentication
+}
+
+// ============================================================================
+// WORLD CUP - MEMBER / USER
+// ============================================================================
+
+// GET /worldcup/country-list/  (public, grouped by tier)
+export async function getWorldCupCountryList(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.WORLDCUP_USER.COUNTRY_LIST}${qs}`, {
+    method: 'GET'
+  }, false);
+}
+
+// GET /worldcup/info/
+export async function getWorldCupInfo() {
+  return await apiRequest(ENDPOINTS.WORLDCUP_USER.INFO, {
+    method: 'GET'
+  }, false);
+}
+
+// GET /worldcup/banner-list/
+export async function getWorldCupBannerList(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.WORLDCUP_USER.BANNER_LIST}${qs}`, {
+    method: 'GET'
+  }, false);
+}
+
+// GET /worldcup/prize-pool/
+export async function getWorldCupPrizePool(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.WORLDCUP_USER.PRIZE_POOL}${qs}`, {
+    method: 'GET'
+  }, false);
+}
+
+// GET /worldcup/leaderboard/countries/
+export async function getWorldCupLeaderboardCountries(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.WORLDCUP_USER.LEADERBOARD_COUNTRIES}${qs}`, {
+    method: 'GET'
+  }, true, 'member');
+}
+
+// GET /worldcup/leaderboard/players/  (?country=<uuid> to filter by country)
+export async function getWorldCupLeaderboardPlayers(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.WORLDCUP_USER.LEADERBOARD_PLAYERS}${qs}`, {
+    method: 'GET'
+  }, true, 'member');
+}
+
+// GET /worldcup/leaderboard/top-per-country/
+export async function getWorldCupTopPerCountry() {
+  return await apiRequest(ENDPOINTS.WORLDCUP_USER.LEADERBOARD_TOP_PER_COUNTRY, {
+    method: 'GET'
+  }, true, 'member');
+}
+
+// GET /worldcup/match-list/
+export async function getWorldCupMatchList(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.WORLDCUP_USER.MATCH_LIST}${qs}`, {
+    method: 'GET'
+  }, true, 'member');
+}
+
+// GET /worldcup/<member_uuid>/profile/
+export async function getWorldCupProfile(memberUuid) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_USER.PROFILE(memberUuid), {
+    method: 'GET'
+  }, true, 'member');
+}
+
+// POST /worldcup/<member_uuid>/choose-country/
+export async function chooseWorldCupCountry(memberUuid, countryUuid) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_USER.CHOOSE_COUNTRY(memberUuid), {
+    method: 'POST',
+    body: { country_uuid: countryUuid }
+  }, true, 'member');
+}
+
+// POST /worldcup/<member_uuid>/predict/
+export async function submitWorldCupPrediction(memberUuid, matchUuid, teamUuid) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_USER.PREDICT(memberUuid), {
+    method: 'POST',
+    body: { match_uuid: matchUuid, team_uuid: teamUuid }
+  }, true, 'member');
+}
+
+// GET /worldcup/<member_uuid>/predictions/
+export async function getWorldCupPredictions(memberUuid, params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.WORLDCUP_USER.PREDICTIONS(memberUuid)}${qs}`, {
+    method: 'GET'
+  }, true, 'member');
+}
+
+// GET /worldcup/<member_uuid>/match-predictions/
+export async function getWorldCupMatchPredictions(memberUuid) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_USER.MATCH_PREDICTIONS(memberUuid), {
+    method: 'GET'
+  }, true, 'member');
+}
+
+// GET /worldcup/<member_uuid>/prediction-status/
+export async function getWorldCupPredictionStatus(memberUuid) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_USER.PREDICTION_STATUS(memberUuid), {
+    method: 'GET'
+  }, true, 'member');
+}
+
+// GET /worldcup/<member_uuid>/matches/<match_uuid>/my-prediction/
+// Returns empty body (HTTP 200) if not predicted — callers must handle null.
+export async function getWorldCupMyPrediction(memberUuid, matchUuid) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_USER.MY_PREDICTION(memberUuid, matchUuid), {
+    method: 'GET'
+  }, true, 'member');
 }

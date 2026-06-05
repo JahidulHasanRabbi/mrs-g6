@@ -31,7 +31,7 @@ function rowStyle(highlight) {
   return { background: LB_COLORS.panelLight };
 }
 
-export function RankingRow({ rank, code, name, points, trail, highlight, mask }) {
+export function RankingRow({ rank, code, flag, name, points, trail, highlight, mask }) {
   const color = rankColor(rank);
   const displayName = mask ? maskName(name) : name;
   return (
@@ -46,7 +46,7 @@ export function RankingRow({ rank, code, name, points, trail, highlight, mask })
         <span className="truncate text-[14px]" style={{ color, fontFamily: "'Lexend',sans-serif" }}>
           {displayName}
         </span>
-        {code && <Flag code={code} size={24} />}
+        {(code || flag) && <Flag code={code} src={flag} size={24} />}
       </div>
       {typeof points === "number" && (
         <div className="w-[60px] text-center text-[12px]" style={{ color: "#fff", fontFamily: "'Lexend',sans-serif" }}>

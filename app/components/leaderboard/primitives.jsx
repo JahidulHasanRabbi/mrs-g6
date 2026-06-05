@@ -1,7 +1,9 @@
 "use client";
 
 import { LB_COLORS } from "./constants";
-import { flagUrl } from "./mockApi";
+
+export const flagUrl = (iso) =>
+  `/assets/leaderboard/flags/${iso.toLowerCase()}.svg`;
 
 export function LBHeader({ onInfoClick, onMenuClick, title = "LEADERBOARDS" }) {
   return (
@@ -98,12 +100,12 @@ export function SectionBadge({ children, align = "center", size = "sm" }) {
   );
 }
 
-export function Flag({ code, size = 28 }) {
-  // Figma-vendored flag thumbnails are already circular, so no overflow
-  // mask or zoom needed — just render the PNG at the requested size.
+export function Flag({ code, src, size = 28 }) {
+  const imgSrc = src || (code ? flagUrl(code) : null);
+  if (!imgSrc) return <span style={{ width: size, height: size, display: "inline-block" }} />;
   return (
     <img
-      src={flagUrl(code)}
+      src={imgSrc}
       alt=""
       draggable={false}
       className="shrink-0 rounded-full"

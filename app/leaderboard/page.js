@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useUser } from "../contexts/UserContext";
 import { FooterNav } from "../components/footer";
 import { HamburgerMenu } from "../components/hamburger";
 import { LB_SCREENS, LB_TABS } from "../components/leaderboard/constants";
 import { LBHeader } from "../components/leaderboard/primitives";
-import { getMyProfile, confirmNation, clearNationSelection } from "../components/leaderboard/mockApi";
+import { getMyProfile, confirmNation, clearNationSelection } from "../components/leaderboard/worldcupApi";
 import ProfileCard from "../components/leaderboard/ProfileCard";
 import PredictToWinCard from "../components/leaderboard/PredictToWinCard";
 import NationSelect from "../components/leaderboard/NationSelect";
@@ -34,42 +35,61 @@ import {
 //   - Prize tabs:       PRIZE_COUNTRY / PRIZE_PLAYERS / PRIZE_PREDICTIONS (+ PRIZE_INFO detail)
 //   - PREDICTIONS_LIST  (World Cup fixtures with Predict CTAs)
 export default function LeaderboardPage() {
+  const { authReady, memberUuid } = useUser();
   const [screen, setScreen] = useState(LB_SCREENS.COUNTRIES);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [profile, setProfile] = useState(null);
+  const [confirmError, setConfirmError] = useState(null);
   const [activeTab, setActiveTab] = useState(LB_TABS.COUNTRIES);
   const [prizeTab, setPrizeTab] = useState("country");
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedPrize, setSelectedPrize] = useState(null);
 
   useEffect(() => {
-    getMyProfile().then((p) => {
-      // ?fresh=1 forces the first-time flow regardless of mock flags.
-      // Lets QA / design walk through Nation Select + Onboarding without
-      // touching mockApi defaults.
-      const fresh =
-        typeof window !== "undefined" &&
-        new URLSearchParams(window.location.search).get("fresh") === "1";
-      // ?fresh=1 also wipes any saved selection so the first-time flow is
-      // fully repeatable for QA / design.
-      if (fresh) clearNationSelection();
-      const next = fresh ? { ...p, hasNation: false, hasOnboarded: false } : p;
-      // The render gate derives Onboarding → Nation Select → My Profile from
-      // these flags (see `needsOnboarding` / `needsNation` / `unlocked`), so
-      // no screen state needs to be set here — a customer without a nation
-      // cannot reach My Profile.
-      setProfile(next);
-    });
-  }, []);
+    if (!authReady || !memberUuid) return;
+    getMyProfile()
+      .then((p) => {
+        const fresh =
+          typeof window !== "undefined" &&
+          new URLSearchParams(window.location.search).get("fresh") === "1";
+        if (fresh) clearNationSelection();
+        const next = fresh ? { ...p, hasNation: false, hasOnboarded: false } : p;
+        setProfile(next);
+      })
+      .catch((err) => {
+        // 401 → auth system will clear tokens; any other failure (404 for
+        // new users, network error) → start the onboarding flow from scratch.
+        if (err?.status !== 401) {
+          setProfile({
+            name: "", hasNation: false, hasOnboarded: false,
+            totalPoints: 0, globalRank: 0, countryRank: 0,
+            winningStreak: 0, totalPredictions: 0, totalWins: 0,
+            countryCode: null, countryName: null, countryFlag: null,
+          });
+        }
+      });
+  }, [authReady, memberUuid]);
 
   // Nation Select is the last gate before the profile/leaderboard view, so
   // confirming a country drops the user straight into "My Profile".
   const handleConfirmNation = useCallback(async (country) => {
-    await confirmNation(country.code, country.name);
-    setProfile((p) => ({ ...p, hasNation: true, hasOnboarded: true, countryCode: country.code, countryName: country.name }));
-    setActiveTab(LB_TABS.COUNTRIES);
-    setScreen(LB_SCREENS.COUNTRIES);
+    setConfirmError(null);
+    try {
+      const result = await confirmNation(country.uuid);
+      setProfile((p) => ({
+        ...p,
+        hasNation: true,
+        hasOnboarded: true,
+        countryCode: result.country_code ?? country.code,
+        countryName: result.country_name ?? country.name,
+        countryFlag: result.country_flag ?? country.flag,
+      }));
+      setActiveTab(LB_TABS.COUNTRIES);
+      setScreen(LB_SCREENS.COUNTRIES);
+    } catch (err) {
+      setConfirmError(err?.data?.detail || err?.data?.details || err?.message || "Failed to save country. Please try again.");
+    }
   }, []);
 
   // Onboarding's "Join Now" completes the intro carousel and advances to
@@ -152,7 +172,7 @@ export default function LeaderboardPage() {
         )}
 
         {needsNation && (
-          <NationSelect onConfirm={handleConfirmNation} />
+          <NationSelect onConfirm={handleConfirmNation} error={confirmError} />
         )}
 
         {unlocked && (

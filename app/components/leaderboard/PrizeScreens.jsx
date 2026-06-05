@@ -7,7 +7,7 @@ import {
   getCountryPrizes,
   getPlayerPrizes,
   getPredictionPrizes,
-} from "./mockApi";
+} from "./worldcupApi";
 
 export function PrizeTabs({ active, onChange }) {
   return (
@@ -19,7 +19,13 @@ export function PrizeTabs({ active, onChange }) {
   );
 }
 
-function CarPlaceholder({ label }) {
+function PrizePlaceholder({ name, image }) {
+  if (image) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={image} alt={name} className="h-[160px] w-full rounded-[4px] object-cover" />
+    );
+  }
   return (
     <div
       className="grid h-[160px] w-full place-items-center rounded-[4px]"
@@ -29,7 +35,7 @@ function CarPlaceholder({ label }) {
       }}
     >
       <span className="text-[14px]" style={{ color: LB_COLORS.textMuted, fontFamily: "'Lexend',sans-serif", letterSpacing: 1 }}>
-        {label}
+        {name ?? "Prize"}
       </span>
     </div>
   );
@@ -56,7 +62,7 @@ export function CountryPrizesPanel({ onViewLeaderboards, onViewDetails }) {
 
         {rows.map((row) => (
           <div key={row.rank} className="flex w-full flex-col items-center gap-3 rounded-[8px] p-2" style={{ background: LB_COLORS.panelLight }}>
-            <CarPlaceholder label={row.car} />
+            <PrizePlaceholder name={row.name} image={row.image} />
             <div className="flex flex-col items-center gap-2">
               <span aria-hidden="true" style={{ fontSize: 28 }}>🏆</span>
               <span style={{ color: placeColor(row.rank), fontFamily: "'Lexend',sans-serif", fontWeight: 600 }}>
@@ -66,7 +72,7 @@ export function CountryPrizesPanel({ onViewLeaderboards, onViewDetails }) {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <Flag code={row.code} />
+              <Flag code={row.code} src={row.flag} />
               <span className="text-[14px]" style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}>
                 {row.name}
               </span>
@@ -119,7 +125,7 @@ export function PlayerPrizesPanel({ onViewLeaderboards, onViewDetails }) {
                 <span className="truncate text-[14px]" style={{ color: placeColor(p.rank), fontFamily: "'Lexend',sans-serif" }}>
                   {p.name}
                 </span>
-                <Flag code={p.code} size={24} />
+                {(p.code || p.flag) && <Flag code={p.code} src={p.flag} size={24} />}
               </div>
               <button
                 onClick={() => onViewDetails?.(p)}
@@ -192,7 +198,7 @@ export function PrizeInfo({ prize, onBack }) {
       <div className="flex flex-col items-center gap-4">
         <SectionBadge size="lg">Prize Pool</SectionBadge>
         <div className="flex w-full flex-col gap-3 rounded-[8px] p-2" style={{ background: LB_COLORS.panelLight }}>
-          <CarPlaceholder label={prize?.car ?? "Grand Prize"} />
+          <PrizePlaceholder name={prize?.name ?? "Grand Prize"} image={prize?.image} />
           <p className="text-[14px]" style={{ color: LB_COLORS.textMuted, fontFamily: "'Lexend',sans-serif", lineHeight: "22px" }}>
             Live leaderboard allows players to get real-time updates on their rankings and see where they stand among others.
           </p>
@@ -204,9 +210,9 @@ export function PrizeInfo({ prize, onBack }) {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              {prize?.code && <Flag code={prize.code} />}
+              {(prize?.code || prize?.flag) && <Flag code={prize.code} src={prize.flag} />}
               <span className="text-[12px]" style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}>
-                {prize?.name ?? "BRAZIL"}
+                {prize?.name ?? ""}
               </span>
             </div>
           </div>

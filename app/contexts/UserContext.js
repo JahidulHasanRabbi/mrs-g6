@@ -34,6 +34,7 @@ export function UserProvider({ children }) {
   const [availableFrames, setAvailableFrames] = useState([]);
   const [allVipTiers, setAllVipTiers] = useState([]);
   const [isLoadingFrames, setIsLoadingFrames] = useState(true);
+  const [authReady, setAuthReady] = useState(false);
 
   // Load frames from API when user logs in
   useEffect(() => {
@@ -118,18 +119,13 @@ export function UserProvider({ children }) {
 
   // Check for memberUuid changes natively via events
   useEffect(() => {
-    // Check immediately on mount
-    const uuid = tokenStorage.getMemberUuid();
-    if (uuid !== memberUuid) {
-      setMemberUuid(uuid);
-    }
+    const uuid = tokenStorage.getMemberUuid(); // validates token expiry internally
+    if (uuid !== memberUuid) setMemberUuid(uuid);
+    setAuthReady(true);
 
-    // Subscribe to auth events (dispatched when tokens are set/cleared)
     const unsubscribe = onAuthChanged(() => {
       const newUuid = tokenStorage.getMemberUuid();
-      if (newUuid !== memberUuid) {
-        setMemberUuid(newUuid);
-      }
+      if (newUuid !== memberUuid) setMemberUuid(newUuid);
     });
 
     return () => unsubscribe();
@@ -251,6 +247,8 @@ export function UserProvider({ children }) {
 
   return (
     <UserContext.Provider value={{
+      authReady,
+      memberUuid,
       userData,
       profilePicture,
       profileData,
