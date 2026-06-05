@@ -22,6 +22,28 @@ const easeOut = (t) => 1 - Math.pow(1 - t, 2.2);
 // How many degrees the ball spins over the full flight (≈1.5 revolutions).
 const BALL_SPIN_DEG = 540;
 
+// Return the true pixel value of CSS `100vh`.
+//
+// The goal and keeper are anchored with CSS `bottom: 48vh` (and the resting
+// ball with `bottom: max(24vh, 200px)`), so the ball trajectory MUST resolve
+// its goal-line / start anchors against the same basis. On mobile browsers
+// `vh` resolves against the LARGE viewport (URL bar hidden) and stays constant
+// while the URL bar shows/hides — whereas `window.innerHeight` shrinks when the
+// URL bar is visible. Reading `window.innerHeight` therefore put the ball's
+// landing point below the keeper's hand whenever the URL bar was on screen
+// (the bug); full-screen happened to work only because the two values matched.
+// Measuring an off-screen `100vh` probe yields the exact pixel value CSS uses.
+function measureViewportVh() {
+  if (typeof document === "undefined") return window.innerHeight;
+  const probe = document.createElement("div");
+  probe.style.cssText =
+    "position:fixed;top:0;left:0;width:0;height:100vh;visibility:hidden;pointer-events:none;";
+  document.body.appendChild(probe);
+  const px = probe.getBoundingClientRect().height;
+  document.body.removeChild(probe);
+  return px || window.innerHeight;
+}
+
 // Plays the ball trajectory + keeper dive then calls onLanded.
 //
 //   swipe   — { aim, power, curl }
@@ -51,7 +73,7 @@ export default function KickingPhase({ swipe, outcome, onLanded }) {
     const el = surfaceRef.current;
     if (el) {
       const rect = el.getBoundingClientRect();
-      setDims({ w: rect.width, h: rect.height, vh: window.innerHeight });
+      setDims({ w: rect.width, h: rect.height, vh: measureViewportVh() });
     }
   }, []);
 
