@@ -104,9 +104,9 @@ function OverviewHeader() {
           style={{
             backgroundImage: GRAD_GOLD,
             fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
-            fontSize: "26px",
-            lineHeight: "39px",
-            letterSpacing: "-2px",
+            fontSize: "clamp(32px, 5vw, 46px)",
+            lineHeight: "1.2",
+            letterSpacing: "-1px",
           }}
         >
           Overview
