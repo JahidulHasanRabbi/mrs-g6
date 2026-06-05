@@ -18,7 +18,7 @@ export default function RetentionLayout({ children }) {
   return (
     <AdminRouteGuard>
       <main className="min-h-screen px-4 py-4 sm:px-6 sm:py-6 xl:admin-content-pl xl:pr-12">
-        {children}
+        <div className="flex flex-col gap-4">{children}</div>
       </main>
     </AdminRouteGuard>
   );
