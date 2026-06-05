@@ -26,8 +26,19 @@ function AdminShellLoading() {
   );
 }
 
+// Content slide on nav change — keyed by pathname so it replays whenever the
+// sidebar selection changes. Enters from above and drops into place
+// (top → bottom). The sidebar and topbar live outside this wrapper so they
+// stay put while only the page body animates.
+const CONTENT_SLIDE = {
+  initial: { opacity: 0, y: -48 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] },
+};
+
 function AdminLayoutInner({ children }) {
   const { collapsed } = useSidebar();
+  const pathname = usePathname();
   const width = collapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED;
 
   return (
@@ -52,7 +63,15 @@ function AdminLayoutInner({ children }) {
         <RetentionTopBar />
       </div>
 
-      {children}
+      <motion.div
+        key={pathname}
+        initial={CONTENT_SLIDE.initial}
+        animate={CONTENT_SLIDE.animate}
+        transition={CONTENT_SLIDE.transition}
+        style={{ willChange: "transform, opacity" }}
+      >
+        {children}
+      </motion.div>
     </div>
   );
 }

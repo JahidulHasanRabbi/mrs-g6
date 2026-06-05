@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import PeriodToggle from "../../../../components/admin/retention/PeriodToggle";
-import RefreshControl from "../../../../components/admin/retention/RefreshControl";
 import Pagination from "../../../../components/admin/retention/Pagination";
 import FilterDropdown from "../../../../components/admin/retention/FilterDropdown";
 import SearchInput from "../../../../components/admin/retention/SearchInput";
@@ -20,7 +19,6 @@ import {
   getCrmUserSingle,
   getRetentionSummary,
   periodLabelToType,
-  refreshCrmMembers,
 } from "../../../../api/crmApi";
 
 // PIC detail view — shows per-PIC breakdown of members + a member list.
@@ -250,7 +248,6 @@ function PicDetailContent() {
         period={period}
         fromDate={fromDate}
         toDate={toDate}
-        onRefreshSummary={loadSummary}
       />
     </>
   );
@@ -357,7 +354,7 @@ function VipLevelRow({ level, value }) {
   );
 }
 
-function MemberListSection({ adminUuid, period, fromDate, toDate, onRefreshSummary }) {
+function MemberListSection({ adminUuid, period, fromDate, toDate }) {
   // URL state ------------------------------------------------------------
   // All filter values live in the query string so the view is shareable and
   // browser-back / forward work as expected.  router.replace (not push) keeps
@@ -374,7 +371,6 @@ function MemberListSection({ adminUuid, period, fromDate, toDate, onRefreshSumma
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const [levelOptions, setLevelOptions] = useState(DEFAULT_LEVEL_OPTIONS);
 
   useEffect(() => {
@@ -447,19 +443,6 @@ function MemberListSection({ adminUuid, period, fromDate, toDate, onRefreshSumma
     fetchMembers();
   }, [fetchMembers]);
 
-  const handleRefresh = useCallback(async () => {
-    if (refreshing) return;
-    setRefreshing(true);
-    try {
-      await refreshCrmMembers();
-      await Promise.all([fetchMembers(), onRefreshSummary?.()]);
-    } catch (err) {
-      console.error("[pic-detail] refresh failed", err);
-    } finally {
-      setRefreshing(false);
-    }
-  }, [fetchMembers, onRefreshSummary, refreshing]);
-
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
   const startIdx = (safePage - 1) * PAGE_SIZE;
@@ -491,7 +474,6 @@ function MemberListSection({ adminUuid, period, fromDate, toDate, onRefreshSumma
             onChange={(v) => updateParams({ q: v, page: null })}
           />
         </div>
-        <RefreshControl onRefresh={handleRefresh} disabled={refreshing} />
       </header>
       <div className="flex w-full flex-col overflow-hidden rounded-b-[16px]">
         <div className="w-full overflow-x-auto scrollbar-admin">

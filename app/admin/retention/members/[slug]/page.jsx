@@ -8,7 +8,7 @@ import {
   AlertHistorySection,
   FollowUpCreateModal,
 } from "../../../../components/admin/retention/FollowUpComponents";
-import { getCrmFollowUps, getCrmMemberSingle, patchCrmMember, patchCrmMemberFollowUp } from "../../../../api/crmApi";
+import { getCrmFollowUps, getCrmMemberSingle, patchCrmMember, patchCrmMemberFollowUp, refreshCrmMembers } from "../../../../api/crmApi";
 import { getVipTierList, getWalletVipTiers, getStationList } from "../../../../api/adminApi";
 
 const TAG_STYLES = {
@@ -193,6 +193,7 @@ export default function MemberProfilePage() {
   const [alertLoading, setAlertLoading] = useState(false);
   const [alertError, setAlertError] = useState("");
   const [alertSubmitting, setAlertSubmitting] = useState(false);
+  const [bonusUpdating, setBonusUpdating] = useState(false);
 
   useEffect(() => {
     if (!memberUuid) return;
@@ -322,6 +323,21 @@ export default function MemberProfilePage() {
     setRefreshKey((k) => k + 1);
   };
 
+  // "Update Bonus" (3-dots menu): trigger a server-side member refresh, then
+  // re-pull this member so the bonus/financial figures reflect the latest.
+  // Intentionally lightweight — the PIC can spam it; there is no throttle.
+  const handleUpdateBonus = async () => {
+    setBonusUpdating(true);
+    try {
+      await refreshCrmMembers();
+    } catch (err) {
+      console.error("[member-profile] update bonus failed", err);
+    } finally {
+      setBonusUpdating(false);
+      setRefreshKey((k) => k + 1);
+    }
+  };
+
   const profileName = data?.full_name || basic?.username || "Member";
   const profilePriority = data?.priority || "High";
   return (
@@ -335,6 +351,8 @@ export default function MemberProfilePage() {
         onNoteOpen={() => setActiveModal("note")}
         onVipOpen={() => setActiveModal("vip")}
         onAlertOpen={() => setActiveModal("alert")}
+        onUpdateBonus={handleUpdateBonus}
+        bonusUpdating={bonusUpdating}
       />
       <StatsRow stats={stats} />
       <InfoGrid basicInfo={basicInfo} financialInfo={financialInfo} gamingInfo={gamingInfo} />
@@ -396,7 +414,7 @@ export default function MemberProfilePage() {
   );
 }
 
-function ProfileHeader({ name, tags, dateJoined, slug, activeBrands, onNoteOpen, onVipOpen, onAlertOpen }) {
+function ProfileHeader({ name, tags, dateJoined, slug, activeBrands, onNoteOpen, onVipOpen, onAlertOpen, onUpdateBonus, bonusUpdating }) {
   return (
     <div className="flex flex-col gap-4 px-2 md:flex-row md:flex-wrap md:items-start md:justify-between md:gap-6">
       <div className="flex flex-col gap-3">
@@ -446,7 +464,7 @@ function ProfileHeader({ name, tags, dateJoined, slug, activeBrands, onNoteOpen,
               <EditIcon />
               <span className="text-[12px] font-medium leading-[18px] text-[#141828]">Edit Profile</span>
             </Link>
-            <MoreOptionsMenu onNoteOpen={onNoteOpen} onVipOpen={onVipOpen} onAlertOpen={onAlertOpen} />
+            <MoreOptionsMenu onNoteOpen={onNoteOpen} onVipOpen={onVipOpen} onAlertOpen={onAlertOpen} onUpdateBonus={onUpdateBonus} bonusUpdating={bonusUpdating} />
           </div>
         </div>
       </div>
@@ -486,19 +504,20 @@ function ActiveBrandsRow({ active }) {
 }
 
 const MORE_OPTIONS = [
-  // { key: "send-bonus",       label: "Send Bonus" },
+  { key: "update-bonus",     label: "Update Bonus" },
   { key: "add-note",         label: "Add Note" },
   { key: "change-vip-level", label: "Change VIP Level" },
   { key: "alert",            label: "Alert", danger: true },
   // { key: "block-customer",   label: "Block Customer", danger: true },
 ];
 
-function MoreOptionsMenu({ onNoteOpen, onVipOpen, onAlertOpen }) {
+function MoreOptionsMenu({ onNoteOpen, onVipOpen, onAlertOpen, onUpdateBonus, bonusUpdating }) {
   const [open, setOpen] = useState(false);
 
   const handleSelect = (key) => {
     setOpen(false);
-    if (key === "add-note") onNoteOpen();
+    if (key === "update-bonus") onUpdateBonus?.();
+    else if (key === "add-note") onNoteOpen();
     else if (key === "change-vip-level") onVipOpen();
     else if (key === "alert") onAlertOpen();
   };
@@ -514,7 +533,11 @@ function MoreOptionsMenu({ onNoteOpen, onVipOpen, onAlertOpen }) {
         className="flex h-[34px] w-[34px] items-center justify-center rounded-[8px] border-2 border-[#f2cb7a] transition hover:brightness-110"
         style={{ backgroundImage: GRAD_GOLD }}
       >
-        <DotsIcon />
+        {bonusUpdating ? (
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#141828]/30 border-t-[#141828]" />
+        ) : (
+          <DotsIcon />
+        )}
       </button>
       {open ? (
         <>

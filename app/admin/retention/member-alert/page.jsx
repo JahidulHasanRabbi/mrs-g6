@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import RefreshControl from "../../../components/admin/retention/RefreshControl";
 import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
 import { GRAD_DARK, GRAD_GOLD } from "../../../components/admin/retention/constants";
 import {
@@ -13,7 +12,6 @@ import {
   getCrmVipTiers,
   getPrioritySummary,
   patchCrmMemberFollowUp,
-  refreshCrmMembers,
 } from "../../../api/crmApi";
 import { FollowUpCreateModal } from "../../../components/admin/retention/FollowUpComponents";
 import Pagination from "../../../components/admin/retention/Pagination";
@@ -69,7 +67,6 @@ function formatCurrency(value) {
 export default function MemberAlertPage() {
   const [summary, setSummary] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
 
   const loadSummary = useCallback(async () => {
     setSummaryLoading(true);
@@ -88,30 +85,16 @@ export default function MemberAlertPage() {
     loadSummary();
   }, [loadSummary]);
 
-  // POST refresh-members, then refresh the summary so KPIs reflect new state.
-  const handleRefresh = useCallback(async () => {
-    if (refreshing) return;
-    setRefreshing(true);
-    try {
-      await refreshCrmMembers();
-      await loadSummary();
-    } catch (err) {
-      console.error("[member-alert] refresh failed", err);
-    } finally {
-      setRefreshing(false);
-    }
-  }, [refreshing, loadSummary]);
-
   return (
     <>
-      <OverviewHeader onRefresh={handleRefresh} />
+      <OverviewHeader />
       <KpiRow summary={summary} loading={summaryLoading} />
-      <FollowUpList onRefresh={handleRefresh} />
+      <FollowUpList />
     </>
   );
 }
 
-function OverviewHeader({ onRefresh }) {
+function OverviewHeader() {
   return (
     <div className="flex flex-wrap items-end justify-between gap-4 px-2">
       <div className="flex flex-col gap-1">
@@ -129,7 +112,6 @@ function OverviewHeader({ onRefresh }) {
           Overview
         </h1>
       </div>
-      <RefreshControl onRefresh={onRefresh} />
     </div>
   );
 }
