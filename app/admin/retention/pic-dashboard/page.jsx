@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, Suspense } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import PeriodToggle from "../../../components/admin/retention/PeriodToggle";
@@ -25,14 +25,14 @@ import {
 const PAGE_SIZE = 7;
 
 const KPI_META = [
-  { id: "members",       label: "Total Members",                key: "total_members",                icon: `${ASSETS}/kpi-members.svg`, iconSize: 24, type: "number" },
-  { id: "active",        label: "Active Members",               key: "active_members",               icon: `${ASSETS}/kpi-active.svg`,  iconSize: 24, type: "number" },
-  { id: "sales",         label: "Total Sales",                  key: "total_sales",                  icon: `${ASSETS}/kpi-sales.svg`,   iconSize: 24, type: "currency" },
-  { id: "winlose",       label: "Total Win/Lose",               key: "total_win_lose",               icon: `${ASSETS}/kpi-winlose.svg`, iconSize: 28, type: "currency" },
-  { id: "sales-tickets", label: "Total Sales Ticket",           key: "total_sales_tickets",          icon: `${ASSETS}/kpi-sales.svg`,   iconSize: 24, type: "number" },
-  { id: "bonus",         label: "Total Bonus Given",            key: "total_bonus_given",            icon: `${ASSETS}/kpi-sales.svg`,   iconSize: 24, type: "currency" },
+  { id: "members", label: "Total Members", key: "total_members", icon: `${ASSETS}/kpi-members.svg`, iconSize: 24, type: "number" },
+  { id: "active", label: "Active Members", key: "active_members", icon: `${ASSETS}/kpi-active.svg`, iconSize: 24, type: "number" },
+  { id: "sales", label: "Total Sales", key: "total_sales", icon: `${ASSETS}/kpi-sales.svg`, iconSize: 24, type: "currency" },
+  { id: "winlose", label: "Total Win/Lose", key: "total_win_lose", icon: `${ASSETS}/kpi-winlose.svg`, iconSize: 28, type: "currency" },
+  { id: "sales-tickets", label: "Total Sales Ticket", key: "total_sales_tickets", icon: `${ASSETS}/kpi-sales.svg`, iconSize: 24, type: "number" },
+  { id: "bonus", label: "Total Bonus Given", key: "total_bonus_given", icon: `${ASSETS}/kpi-sales.svg`, iconSize: 24, type: "currency" },
   { id: "bonus-percent", label: "Total Bonus Given Percentage", key: "total_bonus_given_percentage", icon: `${ASSETS}/kpi-winlose.svg`, iconSize: 28, type: "percent" },
-  { id: "win-rate",      label: "Total Win Rate",               key: "total_win_rate",               icon: `${ASSETS}/kpi-winlose.svg`, iconSize: 28, type: "percent" },
+  { id: "win-rate", label: "Total Win Rate", key: "total_win_rate", icon: `${ASSETS}/kpi-winlose.svg`, iconSize: 28, type: "percent" },
 ];
 
 function formatNumber(value) {
@@ -148,14 +148,16 @@ function HeaderRow({ period, onPeriodChange, fromDate, toDate }) {
           Dashboard
         </h1>
       </div>
-      <PeriodToggle includeAll period={period} onPeriodChange={onPeriodChange} fromDate={fromDate} toDate={toDate} />
+      <Suspense fallback={null}>
+        <PeriodToggle includeAll period={period} onPeriodChange={onPeriodChange} />
+      </Suspense>
     </div>
   );
 }
 
 function KpiGrid({ summary, loading }) {
   return (
-    <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
+    <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {KPI_META.map((meta) => {
         if (loading) return <KpiCardSkeleton key={meta.id} />;
         const raw = summary?.[meta.key];
@@ -190,50 +192,50 @@ function SkeletonBlock({ className = "" }) {
 function KpiCardSkeleton() {
   return (
     <div
-      className="flex flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-6"
+      className="flex flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-5"
       style={{ backgroundImage: GRAD_CARD }}
     >
-      <div className="flex w-full items-start gap-4">
-        <SkeletonBlock className="h-12 w-12 shrink-0 rounded-[4px]" />
+      <div className="flex w-full items-start gap-3">
+        <SkeletonBlock className="h-10 w-10 shrink-0 rounded-[4px]" />
         <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <SkeletonBlock className="h-[18px] w-[72%]" />
-          <SkeletonBlock className="h-[38px] w-[58%]" />
+          <SkeletonBlock className="h-[14px] w-[72%]" />
+          <SkeletonBlock className="h-[28px] w-[58%]" />
         </div>
       </div>
     </div>
   );
 }
 
-// KPI value size targets the User Access Management reference (38px). This
-// dashboard packs 8 tiles carrying long currency strings ("RM 10,677,327.5"),
-// so the grid stays at 2 columns until 2xl (≥1536px, wide enough to fit 4
-// big-value tiles), and the value scales with the viewport so it stays on one
-// line instead of wrapping mid-number.
-const KPI_VALUE_FONT = "clamp(22px, 1.7vw, 34px)";
+// This dashboard packs 8 tiles carrying long currency strings
+// ("RM 10,677,327.5"), so the grid goes to 4 columns at xl (≥1280px) to fill
+// 18-inch displays, and the value scales with the viewport so it stays on one
+// line instead of clipping or wrapping mid-number. Sizes are kept compact so
+// four big-value tiles fit a row without truncation.
+const KPI_VALUE_FONT = "clamp(18px, 1.25vw, 26px)";
 
 function KpiCard({ kpi }) {
   const isCurrency = !!kpi.valuePrefix;
   return (
     <div
-      className="flex flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-6"
+      className="flex flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-5"
       style={{ backgroundImage: GRAD_CARD }}
     >
-      <div className="flex w-full items-start gap-4">
+      <div className="flex w-full items-start gap-3">
         <div
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[4px] drop-shadow-[0_0_3px_rgba(222,162,32,0.5)]"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] drop-shadow-[0_0_3px_rgba(222,162,32,0.5)]"
           style={{ backgroundImage: GRAD_DARK }}
         >
           <img
             src={kpi.icon}
             alt=""
-            className="h-6 w-6"
+            className="h-5 w-5"
             style={{ maxWidth: kpi.iconSize, maxHeight: kpi.iconSize }}
           />
         </div>
         <div className="flex min-w-0 flex-1 flex-col">
           <p
-            className="text-[16px] font-semibold uppercase leading-[24px] text-[#f6dda6]"
-            style={{ letterSpacing: "-1px" }}
+            className="text-[12px] font-semibold uppercase leading-[18px] text-[#f6dda6]"
+            style={{ letterSpacing: "-0.5px" }}
           >
             {kpi.label}
           </p>
