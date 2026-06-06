@@ -659,10 +659,6 @@ function FloatingMenuContent() {
         adminApi.getFloatingMenuRootIcons(),
         adminApi.getStationList(),
       ]);
-      console.log('Floating Menus:', menusData);
-      console.log('Root Icons:', rootIconsData);
-      console.log('Stations:', stationsData);
-      
       // Handle paginated response
       const menusArray = Array.isArray(menusData) ? menusData : (menusData?.results || []);
       const rootIconsArray = Array.isArray(rootIconsData) ? rootIconsData : (rootIconsData?.results || []);

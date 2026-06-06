@@ -92,11 +92,12 @@ function SectionHeader({ color, children }) {
 export default function PredictionsList({ onMyPredictions }) {
   const [fixtures, setFixtures] = useState({ upcoming: [], ongoing: [] });
   const [predictedMap, setPredictedMap] = useState({});
+  const [loadError, setLoadError] = useState(false);
   // Fixture whose Predict button was tapped — drives the Predict Winner modal.
   const [predictFixture, setPredictFixture] = useState(null);
 
   useEffect(() => {
-    getFixtures().then(setFixtures).catch(() => {});
+    getFixtures().then(setFixtures).catch(() => setLoadError(true));
     getMatchPredictionsMap().then(setPredictedMap).catch(() => {});
   }, []);
 
@@ -110,6 +111,11 @@ export default function PredictionsList({ onMyPredictions }) {
 
       <GlowCard>
         <div className="flex flex-col gap-4">
+          {loadError && (
+            <p className="text-center text-[13px]" style={{ color: "#ff6b6b", fontFamily: "'Lexend',sans-serif" }}>
+              Failed to load fixtures. Please try again later.
+            </p>
+          )}
           <SectionHeader color={LB_COLORS.gold}>Upcoming Matches</SectionHeader>
           <div className="flex flex-col gap-2">
             {fixtures.upcoming.map((f, i) => (

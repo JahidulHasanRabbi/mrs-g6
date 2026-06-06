@@ -58,8 +58,10 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     if (!authReady || !memberUuid) return;
+    let cancelled = false;
     getMyProfile()
       .then((p) => {
+        if (cancelled) return;
         const fresh =
           typeof window !== "undefined" &&
           new URLSearchParams(window.location.search).get("fresh") === "1";
@@ -68,6 +70,7 @@ export default function LeaderboardPage() {
         setProfile(next);
       })
       .catch((err) => {
+        if (cancelled) return;
         // 401 → auth system will clear tokens; any other failure (404 for
         // new users, network error) → start the onboarding flow from scratch.
         if (err?.status !== 401) {
@@ -79,20 +82,23 @@ export default function LeaderboardPage() {
           });
         }
       });
+    return () => { cancelled = true; };
   }, [authReady, memberUuid]);
 
   // Prefetch all three leaderboard datasets in parallel so tabs are instant.
   useEffect(() => {
     if (!authReady || !memberUuid) return;
+    let cancelled = false;
     getCountryRankings()
-      .then((rows) => setCountriesData({ rows, loading: false }))
-      .catch(() => setCountriesData({ rows: [], loading: false }));
+      .then((rows) => { if (!cancelled) setCountriesData({ rows, loading: false }); })
+      .catch(() => { if (!cancelled) setCountriesData({ rows: [], loading: false }); });
     getGlobalPlayers()
-      .then((rows) => setPlayersData({ rows, loading: false }))
-      .catch(() => setPlayersData({ rows: [], loading: false }));
+      .then((rows) => { if (!cancelled) setPlayersData({ rows, loading: false }); })
+      .catch(() => { if (!cancelled) setPlayersData({ rows: [], loading: false }); });
     getMyPredictions()
-      .then((rows) => setPredictionsData({ rows, loading: false }))
-      .catch(() => setPredictionsData({ rows: [], loading: false }));
+      .then((rows) => { if (!cancelled) setPredictionsData({ rows, loading: false }); })
+      .catch(() => { if (!cancelled) setPredictionsData({ rows: [], loading: false }); });
+    return () => { cancelled = true; };
   }, [authReady, memberUuid]);
 
   // Nation Select is the last gate before the profile/leaderboard view, so
@@ -171,7 +177,8 @@ export default function LeaderboardPage() {
   const isPrizeTabbed =
     screen === LB_SCREENS.PRIZE_COUNTRY ||
     screen === LB_SCREENS.PRIZE_PLAYERS ||
-    screen === LB_SCREENS.PRIZE_PREDICTIONS;
+    screen === LB_SCREENS.PRIZE_PREDICTIONS ||
+    screen === LB_SCREENS.PRIZE_INFO;
 
   // Hard gate: onboarding and nation selection are driven by the profile
   // flags, not by `screen`, so no in-page navigation can leak the profile.
@@ -256,7 +263,9 @@ export default function LeaderboardPage() {
 
             {isPrizeTabbed && (
               <div className="flex flex-col items-center gap-3 px-4 pb-8 pt-2">
-                <PrizeTabs active={prizeTab} onChange={onPrizeTabChange} />
+                {screen !== LB_SCREENS.PRIZE_INFO && (
+                  <PrizeTabs active={prizeTab} onChange={onPrizeTabChange} />
+                )}
                 {screen === LB_SCREENS.PRIZE_COUNTRY && (
                   <CountryPrizesPanel
                     onViewLeaderboards={backToLeaderboards}
@@ -267,17 +276,20 @@ export default function LeaderboardPage() {
                   />
                 )}
                 {screen === LB_SCREENS.PRIZE_PLAYERS && (
-                  <PlayerPrizesPanel onViewLeaderboards={backToLeaderboards} />
+                  <PlayerPrizesPanel
+                    onViewLeaderboards={backToLeaderboards}
+                    onViewDetails={(prize) => {
+                      setSelectedPrize(prize);
+                      setScreen(LB_SCREENS.PRIZE_INFO);
+                    }}
+                  />
                 )}
                 {screen === LB_SCREENS.PRIZE_PREDICTIONS && (
                   <PredictionPrizesPanel onViewPredictions={backToLeaderboards} />
                 )}
-              </div>
-            )}
-
-            {screen === LB_SCREENS.PRIZE_INFO && (
-              <div className="flex flex-col items-center gap-3 px-4 pb-8 pt-2">
-                <PrizeInfo prize={selectedPrize} onBack={() => setScreen(LB_SCREENS.PRIZE_COUNTRY)} />
+                {screen === LB_SCREENS.PRIZE_INFO && (
+                  <PrizeInfo prize={selectedPrize} onBack={() => setScreen(prizeTab === "players" ? LB_SCREENS.PRIZE_PLAYERS : LB_SCREENS.PRIZE_COUNTRY)} />
+                )}
               </div>
             )}
           </>

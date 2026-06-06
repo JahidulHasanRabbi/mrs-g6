@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { LB_COLORS } from "./constants";
 
 export const flagUrl = (iso) =>
@@ -8,7 +9,7 @@ export const flagUrl = (iso) =>
 export function LBHeader({ onInfoClick, onMenuClick, title = "LEADERBOARDS" }) {
   return (
     <div className="flex items-center gap-3 p-4">
-      <button aria-label="Menu" onClick={onMenuClick} className="grid h-9 w-9 shrink-0 place-items-center">
+      <button type="button" aria-label="Menu" onClick={onMenuClick} className="grid h-9 w-9 shrink-0 place-items-center">
         <span className="flex flex-col gap-1">
           <span className="block h-[3px] w-5 rounded" style={{ background: "#FFDD74" }} />
           <span className="block h-[3px] w-5 rounded" style={{ background: "#FFDD74" }} />
@@ -28,6 +29,7 @@ export function LBHeader({ onInfoClick, onMenuClick, title = "LEADERBOARDS" }) {
         {title}
       </h1>
       <button
+        type="button"
         aria-label="Info"
         onClick={onInfoClick}
         className="grid h-9 w-9 shrink-0 place-items-center rounded-full"
@@ -101,12 +103,13 @@ export function SectionBadge({ children, align = "center", size = "sm" }) {
 }
 
 export function Flag({ code, src, size = 28 }) {
+  const [failed, setFailed] = useState(false);
   const imgSrc = src || (code ? flagUrl(code) : null);
   const label = code ? String(code).slice(0, 3).toUpperCase() : "?";
   const fontSize = Math.floor(size * 0.36);
   const fallbackStyle = { display: "inline-flex", alignItems: "center", justifyContent: "center", width: size, height: size, borderRadius: "50%", background: "rgba(255,255,255,0.1)", color: "#fff", fontSize, fontFamily: "'Lexend',sans-serif", flexShrink: 0 };
 
-  if (!imgSrc) return <span style={fallbackStyle}>{label}</span>;
+  if (!imgSrc || failed) return <span style={fallbackStyle}>{label}</span>;
 
   return (
     <img
@@ -115,12 +118,7 @@ export function Flag({ code, src, size = 28 }) {
       draggable={false}
       className="shrink-0 rounded-full"
       style={{ width: size, height: size, objectFit: "cover" }}
-      onError={(e) => {
-        e.currentTarget.replaceWith(Object.assign(document.createElement("span"), {
-          textContent: label,
-          style: `display:inline-flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;border-radius:50%;background:rgba(255,255,255,0.1);color:#fff;font-size:${fontSize}px;font-family:'Lexend',sans-serif;flex-shrink:0`,
-        }));
-      }}
+      onError={() => setFailed(true)}
     />
   );
 }
@@ -139,6 +137,7 @@ export function Tabs({ tabs, activeIndex, onChange }) {
         const active = i === activeIndex;
         return (
           <button
+            type="button"
             key={label}
             onClick={() => onChange(i)}
             className="flex-1 rounded-[8px] py-2 text-[12px]"
@@ -162,6 +161,7 @@ export function GreenButton({ children, onClick, variant = "primary", size = "lg
   const padding = size === "sm" ? "py-2 text-[12px]" : "py-4 text-[16px]";
   return (
     <button
+      type="button"
       onClick={onClick}
       className={`w-full rounded-[8px] uppercase ${padding}`}
       style={{
@@ -177,19 +177,23 @@ export function GreenButton({ children, onClick, variant = "primary", size = "lg
   );
 }
 
-export function HeroButton({ children, onClick }) {
+export function HeroButton({ children, onClick, disabled }) {
   return (
     <button
-      onClick={onClick}
+      type="button"
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
       className="w-full rounded-[12px] py-4 uppercase"
       style={{
         background: "#54E98A",
         color: "#003919",
-        boxShadow: "0 4px 0 rgba(0,0,0,0.3)",
+        boxShadow: disabled ? "none" : "0 4px 0 rgba(0,0,0,0.3)",
         fontFamily: "'Anybody','Lexend',sans-serif",
         fontWeight: 700,
         fontSize: 22,
         lineHeight: "28.8px",
+        opacity: disabled ? 0.4 : 1,
+        cursor: disabled ? "not-allowed" : "pointer",
       }}
     >
       {children}

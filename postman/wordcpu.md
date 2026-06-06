@@ -2,6 +2,27 @@
 
 Base path: `/worldcup/`
 
+All endpoints require JWT authentication.
+
+---
+
+## Country Reference
+
+Countries are represented as integers throughout all APIs. There are no country UUIDs, codes, or flags.
+
+| ID | Country | Tier |
+| --- | --- | --- |
+| 1 | Spain | 1 |
+| 2 | France | 1 |
+| 3 | England | 1 |
+| 4 | Brazil | 1 |
+| 5 | Argentina | 1 |
+| 6 | Portugal | 2 |
+| 7 | Germany | 2 |
+| 8 | Netherlands | 2 |
+| 9 | Morocco | 3 |
+| 10 | Japan | 3 |
+
 ---
 
 # USER PAGE
@@ -37,12 +58,8 @@ Country Object
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | uuid | UUID | No |  |
-| **2** | code | Str | No | e.g. "MYS" |
-| **3** | name | Str | No |  |
-| **4** | flag | Image | Yes |  |
-| **5** | tier | Int | No |  |
-| **6** | tier\_display | Str | No | e.g. "Tier 1" |
+| **1** | id | Int | No | Country ID (1–10) |
+| **2** | name | Str | No | e.g. "Spain" |
 
 ---
 
@@ -69,7 +86,7 @@ Query Parameters
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | location | Int | Yes | 1 = Home, 2 = Lobby, 3 = Prediction |
 
-Output
+Output (list)
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
@@ -80,8 +97,8 @@ Output
 | **5** | section\_title | Str | No |  |
 | **6** | description | Str | No |  |
 | **7** | image | Image | Yes |  |
-| **8** | location | Int | No |  |
-| **9** | location\_display | Str | No | e.g. "Home" |
+| **8** | location | Int | No | 1 = Home, 2 = Lobby, 3 = Prediction |
+| **9** | location\_display | Str | No | e.g. "HOME" |
 
 ---
 
@@ -94,7 +111,7 @@ Query Parameters
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | type | Str | Yes | `prediction`, `top-country`, or `global-top-player` |
-| **2** | country | UUID | Yes | Filter by country UUID |
+| **2** | country | Int | Yes | Filter by country ID (1–10) |
 
 ### /worldcup/prize-pool/{uuid}/ GET
 
@@ -106,22 +123,23 @@ Output (both endpoints, single object or list)
 | **2** | reward\_name | Str | No |  |
 | **3** | quantity | Int | No |  |
 | **4** | item\_type | Int | No | See Item Type Enum below |
-| **5** | item\_type\_display | Str | No |  |
-| **6** | country\_uuid | UUID | Yes | Only for top-country prizes |
-| **7** | country\_code | Str | Yes |  |
-| **8** | country\_flag | Image | Yes |  |
-| **9** | country\_tier | Int | Yes |  |
-| **10** | description | Str | No |  |
-| **11** | image | Image | Yes |  |
-| **12** | position | Int | Yes | Display order |
-| **13** | win\_condition | Int | Yes | Streak milestone (for prediction prizes) |
-| **14** | token\_amount | Int | Yes | Token reward amount (for prediction prizes) |
+| **5** | item\_type\_display | Str | No | e.g. "PREDICTION" |
+| **6** | country | Int | Yes | Country ID. Only for top-country prizes |
+| **7** | description | Str | No |  |
+| **8** | image | Image | Yes |  |
+| **9** | position | Int | Yes | Display order |
+| **10** | win\_condition | Int | Yes | Consecutive wins required (prediction prizes) |
+| **11** | token\_amount | Int | Yes | Token reward amount (prediction prizes) |
 
 | ID | Item Type |
-| ----- | ----- |
-| 1 | Prediction |
-| 2 | Top Country |
-| 3 | Global Top Player |
+| --- | --- |
+| 1 | PREDICTION |
+| 2 | TOP COUNTRY |
+| 3 | GLOBAL TOP PLAYER |
+
+**PREDICTION prize delivery** — determined by `token_amount`:
+- `token_amount` is set → system automatically credits tokens to the member on match settle
+- `token_amount` is null → system logs a `MemberReward` record for staff to fulfil manually (physical prize e.g. Galaxy Buds, phone)
 
 ---
 
@@ -134,12 +152,10 @@ Paginated output
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | rank | Int | No |  |
-| **2** | uuid | UUID | No |  |
-| **3** | code | Str | No |  |
-| **4** | name | Str | No |  |
-| **5** | flag | Image | Yes |  |
-| **6** | total\_points | Int | No |  |
-| **7** | total\_users | Int | No |  |
+| **2** | country | Int | No | Country ID (1–10) |
+| **3** | country\_name | Str | No | e.g. "Brazil" |
+| **4** | total\_points | Int | No | Combined real + dummy floor |
+| **5** | total\_users | Int | No | Combined real + dummy floor |
 
 ### /worldcup/leaderboard/players/ GET
 
@@ -147,7 +163,7 @@ Query Parameters
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | country | UUID | Yes | Filter by country UUID |
+| **1** | country | Int | Yes | Filter by country ID (1–10) |
 
 Paginated output
 
@@ -155,28 +171,25 @@ Paginated output
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | rank | Int | No |  |
 | **2** | player\_name | Str | No |  |
-| **3** | country\_uuid | UUID | No |  |
+| **3** | country | Int | No | Country ID (1–10) |
 | **4** | country\_name | Str | No |  |
-| **5** | country\_code | Str | No |  |
-| **6** | flag | Image | Yes |  |
-| **7** | total\_points | Int | No |  |
-| **8** | total\_prediction | Int | No |  |
-| **9** | total\_win | Int | No |  |
-| **10** | winning\_streak | Int | No |  |
+| **5** | total\_points | Int | No |  |
+| **6** | total\_prediction | Int | No |  |
+| **7** | total\_win | Int | No |  |
+| **8** | winning\_streak | Int | No |  |
 
 ### /worldcup/leaderboard/top-per-country/ GET
 
-Returns the single top player for each active country.
+Returns the single top player for each country that has at least one player. Not paginated.
 
-Output
+Output (list)
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | country\_uuid | UUID | No |  |
-| **2** | country\_code | Str | No |  |
-| **3** | country\_flag | Image | Yes |  |
-| **4** | player\_name | Str | No |  |
-| **5** | total\_points | Int | No |  |
+| **1** | country | Int | No | Country ID (1–10) |
+| **2** | country\_name | Str | No |  |
+| **3** | player\_name | Str | No |  |
+| **4** | total\_points | Int | No |  |
 
 ---
 
@@ -190,24 +203,22 @@ Input
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | country\_uuid | UUID | No | From /worldcup/country-list/ |
+| **1** | country | Int | No | Country ID (1–10) |
 
 Output
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | player\_name | Str | No |  |
-| **2** | country\_uuid | UUID | No |  |
-| **3** | country\_code | Str | No |  |
-| **4** | country\_name | Str | No |  |
-| **5** | country\_flag | Image | Yes |  |
-| **6** | total\_points | Int | No |  |
-| **7** | global\_rank | Int | Yes | Null until member has points |
-| **8** | country\_rank | Int | Yes | Null until member has points |
-| **9** | total\_predictions | Int | No |  |
-| **10** | total\_wins | Int | No |  |
-| **11** | current\_streak | Int | No |  |
-| **12** | best\_streak | Int | No |  |
+| **2** | country | Int | No | Country ID |
+| **3** | country\_name | Str | No |  |
+| **4** | total\_points | Int | No | Always 0 on first selection |
+| **5** | global\_rank | Int | Yes | Null until member has points |
+| **6** | country\_rank | Int | Yes | Null until member has points |
+| **7** | total\_predictions | Int | No |  |
+| **8** | total\_wins | Int | No |  |
+| **9** | current\_streak | Int | No |  |
+| **10** | best\_streak | Int | No |  |
 
 ---
 
@@ -222,17 +233,15 @@ Output
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | player\_name | Str | No |  |
-| **2** | country\_uuid | UUID | Yes |  |
-| **3** | country\_code | Str | Yes |  |
-| **4** | country\_name | Str | Yes |  |
-| **5** | country\_flag | Image | Yes |  |
-| **6** | total\_points | Int | No |  |
-| **7** | global\_rank | Int | Yes | Null if no points yet |
-| **8** | country\_rank | Int | Yes | Null if no points yet |
-| **9** | total\_predictions | Int | No |  |
-| **10** | total\_wins | Int | No |  |
-| **11** | current\_streak | Int | No |  |
-| **12** | best\_streak | Int | No |  |
+| **2** | country | Int | Yes | Null if no country chosen |
+| **3** | country\_name | Str | Yes | Null if no country chosen |
+| **4** | total\_points | Int | No | 0 if no country chosen |
+| **5** | global\_rank | Int | Yes | Null if no points yet |
+| **6** | country\_rank | Int | Yes | Null if no points yet |
+| **7** | total\_predictions | Int | No |  |
+| **8** | total\_wins | Int | No |  |
+| **9** | current\_streak | Int | No |  |
+| **10** | best\_streak | Int | No |  |
 
 ---
 
@@ -246,25 +255,19 @@ Query Parameters
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | status | Str | Yes | `upcoming`, `closed`, or `settled` |
 
-Output (list)
+Output (list, ordered by kickoff\_at asc)
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | uuid | UUID | No |  |
-| **2** | group\_label | Str | No | e.g. "Group A" |
-| **3** | team\_home\_uuid | UUID | No |  |
-| **4** | team\_home\_name | Str | No |  |
-| **5** | team\_home\_flag | Image | Yes |  |
-| **6** | team\_away\_uuid | UUID | No |  |
-| **7** | team\_away\_name | Str | No |  |
-| **8** | team\_away\_flag | Image | Yes |  |
-| **9** | kickoff\_at | Datetime | No |  |
-| **10** | status | Int | No | 1 = Upcoming, 2 = Closed, 3 = Settled |
-| **11** | status\_display | Str | No |  |
-| **12** | winner\_uuid | UUID | Yes | Null until settled |
-| **13** | winner\_name | Str | Yes | Null until settled |
-| **14** | winner\_flag | Image | Yes | Null until settled |
-| **15** | settled\_at | Datetime | Yes | Null until settled |
+| **2** | group\_label | Str | No | e.g. "GROUP A" |
+| **3** | team\_home | Int | No | Country ID |
+| **4** | team\_away | Int | No | Country ID |
+| **5** | kickoff\_at | Datetime | No |  |
+| **6** | status | Int | No | 1 = Upcoming, 2 = Closed, 3 = Settled |
+| **7** | status\_display | Str | No | e.g. "UPCOMING" |
+| **8** | winner | Int | Yes | Country ID. Null until settled |
+| **9** | settled\_at | Datetime | Yes | Null until settled |
 
 ### /worldcup/match-list/{match\_uuid}/ GET
 
@@ -276,14 +279,14 @@ Same output as single match object above.
 
 ### /worldcup/{member\_uuid}/predict/ POST
 
-Requires member to have chosen a country. Requires current month deposit ≥ RM300. Cannot predict on a closed or settled match.
+Requires member to have chosen a country. Requires current month deposit ≥ RM300. Cannot predict on a closed or settled match or after kickoff. Member must not be locked (lost last prediction without depositing RM50 to unlock).
 
 Input
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | match\_uuid | UUID | No |  |
-| **2** | team\_uuid | UUID | No | Must be one of the two teams in the match |
+| **2** | team | Int | No | Country ID. Must be one of the two teams in the match |
 
 Output
 
@@ -291,7 +294,7 @@ Output
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | uuid | UUID | No | Prediction UUID |
 | **2** | match\_uuid | UUID | No |  |
-| **3** | predicted\_team\_uuid | UUID | No |  |
+| **3** | predicted\_team | Int | No | Country ID |
 | **4** | predicted\_team\_name | Str | No |  |
 | **5** | state | Int | No | 1 = Pending |
 | **6** | state\_display | Str | No | "PENDING" |
@@ -299,7 +302,7 @@ Output
 
 ### /worldcup/{member\_uuid}/predictions/ GET
 
-Paginated list of all the member's predictions.
+Paginated list of all the member's predictions, ordered by created desc.
 
 Output (paginated)
 
@@ -307,45 +310,41 @@ Output (paginated)
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | uuid | UUID | No |  |
 | **2** | match\_uuid | UUID | No |  |
-| **3** | match\_status | Int | No |  |
+| **3** | match\_status | Int | No | 1/2/3 |
 | **4** | match\_status\_display | Str | No |  |
 | **5** | match\_kickoff\_at | Datetime | No |  |
-| **6** | team\_home\_uuid | UUID | No |  |
-| **7** | team\_home\_name | Str | No |  |
-| **8** | team\_away\_uuid | UUID | No |  |
-| **9** | team\_away\_name | Str | No |  |
-| **10** | winner\_uuid | UUID | Yes | Null until match settled |
-| **11** | winner\_name | Str | Yes | Null until match settled |
-| **12** | predicted\_team\_uuid | UUID | No |  |
-| **13** | predicted\_team\_name | Str | No |  |
-| **14** | state | Int | No | See State Enum below |
-| **15** | state\_display | Str | No |  |
-| **16** | settled\_at | Datetime | Yes |  |
-| **17** | created | Datetime | No |  |
+| **6** | team\_home | Int | No | Country ID |
+| **7** | team\_away | Int | No | Country ID |
+| **8** | winner | Int | Yes | Country ID. Null until match settled |
+| **9** | predicted\_team | Int | No | Country ID |
+| **10** | state | Int | No | See State Enum below |
+| **11** | state\_display | Str | No |  |
+| **12** | settled\_at | Datetime | Yes |  |
+| **13** | created | Datetime | No |  |
 
 | ID | Prediction State |
-| ----- | ----- |
-| 1 | Pending |
-| 2 | Win |
-| 3 | Lose |
+| --- | --- |
+| 1 | PENDING |
+| 2 | WIN |
+| 3 | LOSE |
 
 ### /worldcup/{member\_uuid}/matches/{match\_uuid}/my-prediction/ GET
 
-Returns the member's prediction for a specific match. Returns an **empty body** (HTTP 200, Content-Length: 0) if the member has not predicted for this match — not JSON null. Frontend must check for empty body before attempting to parse.
+Returns the member's prediction for a specific match, or `null` data if the member has not predicted for this match.
 
-Output — same as single prediction object from `/predictions/` above, or empty body.
+Output — same shape as single prediction object from `/predictions/` above, or `null`.
 
 ### /worldcup/{member\_uuid}/match-predictions/ GET
 
-Lightweight map of all the member's predictions — match UUID to prediction state. Useful to check which matches the member has already predicted on.
+Lightweight map of all the member's predictions — useful for checking which matches the member has already predicted on.
 
-Output (list)
+Output (list, not paginated)
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | prediction\_uuid | UUID | No |  |
 | **2** | match\_uuid | UUID | No |  |
-| **3** | state | Int | No |  |
+| **3** | state | Int | No | 1/2/3 |
 | **4** | state\_display | Str | No |  |
 
 ### /worldcup/{member\_uuid}/prediction-status/ GET
@@ -355,8 +354,8 @@ Output
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | eligible | Bool | No | True if current month deposit ≥ RM300 |
-| **2** | monthly\_deposit | Str (Decimal) | No | Current month total deposit |
-| **3** | is\_locked | Bool | No | True if member lost and must deposit RM50 to unlock |
+| **2** | monthly\_deposit | Str (Decimal) | No | Current month total deposit e.g. "350.00" |
+| **3** | is\_locked | Bool | No | True if member lost last prediction and must deposit RM50 |
 | **4** | needs\_deposit | Bool | No | Same as is\_locked |
 | **5** | current\_streak | Int | No |  |
 | **6** | best\_streak | Int | No |  |
@@ -386,37 +385,6 @@ Input
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | information | Str | Yes |  |
-
----
-
-## Countries
-
-### /worldcup/countries/ GET
-
-### /worldcup/countries/{uuid}/ GET
-
-Query Parameters (list only)
-
-| \# | Property/Field | Data Type | Nullable | Description |
-| ----: | :---- | :---- | :---- | :---- |
-| **1** | tier | Int | Yes | Filter by tier |
-
-Output — same as Country Object (see User Page — Country List).
-
-### /worldcup/countries/ POST
-
-### /worldcup/countries/{uuid}/ PUT (partial supported)
-
-Input
-
-| \# | Property/Field | Data Type | Nullable | Description |
-| ----: | :---- | :---- | :---- | :---- |
-| **1** | code | Str | No (create) / Yes (update) | Auto-uppercased. Must be unique. |
-| **2** | name | Str | No (create) / Yes (update) |  |
-| **3** | flag | Image | Yes |  |
-| **4** | tier | Int | No (create) / Yes (update) | 1, 2, or 3 |
-
-### /worldcup/countries/{uuid}/archive/ PATCH
 
 ---
 
@@ -459,7 +427,7 @@ Query Parameters (list only)
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | type | Int | Yes | 1 = Prediction, 2 = Top Country, 3 = Global Top Player |
-| **2** | country | UUID | Yes | Filter by country UUID |
+| **2** | country | Int | Yes | Filter by country ID (1–10) |
 
 Output — same as Prize Pool Object (see User Page — Prize Pool).
 
@@ -474,11 +442,11 @@ Input
 | **1** | reward\_name | Str | No (create) / Yes (update) |  |
 | **2** | quantity | Int | Yes | Default 0 |
 | **3** | item\_type | Int | No (create) / Yes (update) | 1 = Prediction, 2 = Top Country, 3 = Global Top Player |
-| **4** | country\_uuid | UUID | Yes | Required for Top Country prizes |
+| **4** | country | Int | Yes | Country ID (1–10). Use for Top Country prizes |
 | **5** | description | Str | Yes |  |
 | **6** | image | Image | Yes |  |
 | **7** | position | Int | Yes | Display order |
-| **8** | win\_condition | Int | Yes | Streak number for prediction prizes (e.g. 1, 2, 3…) |
+| **8** | win\_condition | Int | Yes | Consecutive wins required (prediction prizes) |
 | **9** | token\_amount | Int | Yes | Token reward for prediction prizes |
 
 ### /worldcup/reward-items/{uuid}/archive/ PATCH
@@ -509,25 +477,31 @@ Input
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | team\_home\_uuid | UUID | No (create) / Yes (update) | Country UUID |
-| **2** | team\_away\_uuid | UUID | No (create) / Yes (update) | Country UUID. Must differ from home. |
-| **3** | group\_label | Str | Yes | e.g. "Group A" |
+| **1** | team\_home | Int | No (create) / Yes (update) | Country ID (1–10). Must differ from team\_away |
+| **2** | team\_away | Int | No (create) / Yes (update) | Country ID (1–10). Must differ from team\_home |
+| **3** | group\_label | Str | Yes | e.g. "GROUP A" |
 | **4** | kickoff\_at | Datetime | No (create) / Yes (update) |  |
-| **5** | status | Int | Yes | 1 = Upcoming, 2 = Closed |
+| **5** | status | Int | Yes | 1 = Upcoming, 2 = Closed. Default 1. Cannot set to 3 via this endpoint |
 
 ### /worldcup/matches/{uuid}/archive/ PATCH
 
-Cannot archive a match that has pending predictions.
+Cannot archive a match that has pending predictions (state = 1).
 
 ### /worldcup/matches/{uuid}/settle/ POST
 
-Transitions match from Closed (2) to Settled (3). Cannot settle an Upcoming (status = 1) match.
+Transitions match from Closed (2) to Settled (3). Cannot settle an Upcoming (status = 1) match or a match already settled.
+
+On settle the system automatically:
+- Marks all pending predictions WIN or LOSE
+- Updates each member's streak, total\_wins, and best\_streak
+- Locks any member who predicted wrong (is\_locked = true, must deposit RM50 to unlock)
+- Awards streak prizes: token prizes → credited immediately; physical prizes → logged as MemberReward for staff fulfilment
 
 Input
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | winner\_uuid | UUID | No | Must be one of the two teams in the match |
+| **1** | winner | Int | No | Country ID. Must be one of the two teams in the match |
 
 Output — Match Object with status = 3.
 
@@ -543,7 +517,7 @@ Query Parameters (list only)
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | country | UUID | Yes | Filter by country UUID |
+| **1** | country | Int | Yes | Filter by country ID (1–10) |
 
 Output
 
@@ -551,13 +525,11 @@ Output
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | uuid | UUID | No |  |
 | **2** | player\_name | Str | No |  |
-| **3** | country\_uuid | UUID | No |  |
-| **4** | country\_code | Str | No |  |
-| **5** | country\_flag | Image | Yes |  |
-| **6** | total\_points | Int | No |  |
-| **7** | total\_prediction | Int | No |  |
-| **8** | total\_win | Int | No |  |
-| **9** | winning\_streak | Int | No |  |
+| **3** | country | Int | No | Country ID (1–10) |
+| **4** | total\_points | Int | No |  |
+| **5** | total\_prediction | Int | No |  |
+| **6** | total\_win | Int | No |  |
+| **7** | winning\_streak | Int | No |  |
 
 ### /worldcup/dummy-players/ POST
 
@@ -568,7 +540,7 @@ Input
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | player\_name | Str | No (create) / Yes (update) |  |
-| **2** | country\_uuid | UUID | No (create) / Yes (update) |  |
+| **2** | country | Int | No (create) / Yes (update) | Country ID (1–10) |
 | **3** | total\_points | Int | Yes | Default 0 |
 | **4** | total\_prediction | Int | Yes | Default 0 |
 | **5** | total\_win | Int | Yes | Default 0 |
@@ -580,6 +552,8 @@ Input
 
 ## Dummy Countries
 
+Dummy country rows set a **floor/minimum** for that country in the country leaderboard. If real data already exceeds the dummy value, real data shows instead. Enter the total you want the country to display — not an additional amount to add on top.
+
 ### /worldcup/dummy-countries/ GET
 
 ### /worldcup/dummy-countries/{uuid}/ GET
@@ -589,11 +563,9 @@ Output
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | uuid | UUID | No |  |
-| **2** | country\_uuid | UUID | No |  |
-| **3** | country\_code | Str | No |  |
-| **4** | country\_flag | Image | Yes |  |
-| **5** | total\_points | Int | No |  |
-| **6** | total\_users | Int | No |  |
+| **2** | country | Int | No | Country ID (1–10) |
+| **3** | total\_points | Int | No | Floor value for points |
+| **4** | total\_users | Int | No | Floor value for user count |
 
 ### /worldcup/dummy-countries/ POST
 
@@ -603,7 +575,7 @@ Input
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | country\_uuid | UUID | No (create) / Yes (update) |  |
+| **1** | country | Int | No (create) / Yes (update) | Country ID (1–10) |
 | **2** | total\_points | Int | Yes | Default 0 |
 | **3** | total\_users | Int | Yes | Default 0 |
 
@@ -619,7 +591,7 @@ Query Parameters
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | scope | Str | Yes | `country` for country board, omit for player board |
-| **2** | country | UUID | Yes | Filter players by country (player board only) |
+| **1** | scope | Str | Yes | `country` for country board. Any other value or omit for player board |
+| **2** | country | Int | Yes | Filter players by country ID (player board only) |
 
-Output — same format as `/worldcup/leaderboard/countries/` or `/worldcup/leaderboard/players/` respectively.
+Output — same format as `/worldcup/leaderboard/countries/` (scope=country) or `/worldcup/leaderboard/players/` (player board). Paginated.

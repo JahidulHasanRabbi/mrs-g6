@@ -28,7 +28,7 @@ function StatRow({ icon, label, children }) {
 
 const RankValue = ({ value, suffix = "th" }) => (
   <span style={{ color: LB_COLORS.rankGreen, fontFamily: "'Lexend',sans-serif", fontWeight: 700, lineHeight: "24px" }}>
-    <span style={{ fontSize: 16 }}>#{value.toLocaleString()}</span>
+    <span style={{ fontSize: 16 }}>#{(value ?? 0).toLocaleString()}</span>
     <span style={{ fontSize: 12, fontWeight: 500 }}>{suffix}</span>
   </span>
 );
@@ -88,19 +88,19 @@ export default function ProfileCard({ profile }) {
             </StatRow>
 
             <StatRow icon={<FireIcon />} label="Winning Streak">
-              <StatValue>{profile.winningStreak}</StatValue>
+              <StatValue>{profile.winningStreak ?? 0}</StatValue>
             </StatRow>
           </div>
 
           <div className="flex flex-1 flex-col gap-4">
             <StatRow icon={<CoinIcon />} label="Your Total Points">
-              <StatValue>{profile.totalPoints.toLocaleString()}</StatValue>
+              <StatValue>{(profile.totalPoints ?? 0).toLocaleString()}</StatValue>
             </StatRow>
             <StatRow icon={<PctIcon />} label="Total Predictions">
-              <StatValue>{profile.totalPredictions}</StatValue>
+              <StatValue>{profile.totalPredictions ?? 0}</StatValue>
             </StatRow>
             <StatRow icon={<TrophyIcon />} label="Total Wins">
-              <StatValue>{profile.totalWins}</StatValue>
+              <StatValue>{profile.totalWins ?? 0}</StatValue>
             </StatRow>
           </div>
         </div>

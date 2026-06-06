@@ -194,10 +194,7 @@ export async function deleteLuckySpinSequence(uuid) {
 }
 
 export async function changeSpinSequencesOrder(luckySpins) {
-  console.log('changeSpinSequencesOrder called with:', luckySpins);
   const payload = { lucky_spins: luckySpins };
-  console.log('Sending payload:', JSON.stringify(payload, null, 2));
-  
   const response = await fetch(`${BASE_URL}${ENDPOINTS.ADMIN.CHANGE_SPIN_SEQUENCES}`, {
     method: 'PATCH',
     headers: {

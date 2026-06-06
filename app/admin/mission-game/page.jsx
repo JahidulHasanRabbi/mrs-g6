@@ -75,7 +75,7 @@ export default function MissionGamePage() {
         <MissionsTable
           missions={pageMissions}
           onEdit={(m) => router.push(`/admin/mission-game/add?id=${m.id}`)}
-          onArchive={(m) => console.log("archive", m)}
+          onArchive={() => {}}
         />
       </div>
 

@@ -126,9 +126,6 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
         submitData.image = imageFile;
       }
 
-      console.log('Submitting redemption item:', submitData);
-      console.log('Mode:', mode);
-      
       await onSubmit(submitData);
     } catch (err) {
       console.error('Form submission error:', err);

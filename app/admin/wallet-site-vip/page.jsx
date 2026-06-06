@@ -384,8 +384,6 @@ function WalletSiteVipContent() {
         adminApi.getWalletVipTiers(params),
         adminApi.getStationList(),
       ]);
-      console.log('Wallet VIP Tiers:', tiersData);
-      console.log('Stations Data:', stationsData);
       setTiers(tiersData);
       setStations(stationsData);
       setCurrentPage(1); // Reset to first page on search

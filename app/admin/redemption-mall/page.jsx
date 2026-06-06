@@ -61,10 +61,7 @@ function RedemptionMallContent() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      // Load redemption items
-      console.log('Loading redemption items...');
       const itemsData = await adminApi.getRedemptionItems();
-      console.log('Redemption items response:', itemsData);
       setItems(Array.isArray(itemsData) ? itemsData : (itemsData?.results || []));
       
       // Load mart tiers for dropdown
@@ -94,19 +91,11 @@ function RedemptionMallContent() {
   const close = () => setDialog({ open: false, mode: "create", item: null });
 
   const handleSubmit = async (formData) => {
-    console.log('Page handleSubmit called with:', formData);
-    console.log('Dialog mode:', dialog.mode);
-    console.log('Dialog item:', dialog.item);
-    
     try {
       if (dialog.mode === "create") {
-        console.log('Calling createRedemptionItem...');
-        const result = await adminApi.createRedemptionItem(formData);
-        console.log('Create result:', result);
+        await adminApi.createRedemptionItem(formData);
       } else {
-        console.log('Calling updateRedemptionItem with uuid:', dialog.item.uuid);
-        const result = await adminApi.updateRedemptionItem(dialog.item.uuid, formData);
-        console.log('Update result:', result);
+        await adminApi.updateRedemptionItem(dialog.item.uuid, formData);
       }
       await loadData(); // Reload data after successful operation
       close();

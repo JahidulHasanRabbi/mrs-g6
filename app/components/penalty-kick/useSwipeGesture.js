@@ -53,9 +53,9 @@ export function useSwipeGesture({ enabled, onComplete }) {
       try { e.currentTarget.releasePointerCapture?.(e.pointerId); } catch {}
       const path = pathRef.current.slice();
       pathRef.current = [];
-      onComplete?.(path);
+      if (enabled) onComplete?.(path);
     },
-    [onComplete],
+    [enabled, onComplete],
   );
 
   return {

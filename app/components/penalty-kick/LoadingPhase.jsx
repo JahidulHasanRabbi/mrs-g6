@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import GreenCta from "./GreenCta";
 import HeroDisc from "./HeroDisc";
@@ -8,6 +8,8 @@ import { COLORS, DURATIONS } from "./constants";
 
 export default function LoadingPhase({ onComplete }) {
   const [progress, setProgress] = useState(0);
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => { onCompleteRef.current = onComplete; });
 
   useEffect(() => {
     const start = performance.now();
@@ -16,11 +18,11 @@ export default function LoadingPhase({ onComplete }) {
       const t = Math.min(1, (now - start) / DURATIONS.loadingMs);
       setProgress(Math.round(t * 100));
       if (t < 1) raf = requestAnimationFrame(tick);
-      else onComplete?.();
+      else onCompleteRef.current?.();
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [onComplete]);
+  }, []); // run once — onCompleteRef always holds the latest callback
 
   return (
     <div className="flex w-full flex-col items-center justify-center px-6 py-10">

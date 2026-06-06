@@ -65,8 +65,6 @@ export function UserProvider({ children }) {
           ? tiersResponse
           : (tiersResponse?.results || []);
 
-        console.log('API returned frames:', framesData.length, framesData);
-
         // Map API frames to internal structure
         const mappedFrames = framesData.map((apiFrame, index) => 
           mapApiFrameToInternal(apiFrame, index)
@@ -80,7 +78,6 @@ export function UserProvider({ children }) {
 
         setAllVipTiers(tiersData);
         
-        console.log('Loaded frames from API:', mappedFrames.length);
       } catch (error) {
         console.error('Failed to load frames from API, using legacy frames:', error);
         // Fallback to legacy frames is already set in profileFrames.js

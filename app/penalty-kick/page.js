@@ -167,6 +167,10 @@ export default function PenaltyKickPage() {
   const needsCountryRef = useRef(false);
   const pendingKickRef = useRef(false);
 
+  // Reset the kick gate on unmount so re-mounting the page after
+  // navigating away mid-animation never leaves it permanently locked.
+  useEffect(() => () => { pendingKickRef.current = false; }, []);
+
   // Warm the keeper flipbook + ball into cache while the loading/launch
   // screens are up, so the first dive's per-frame <img> swaps are cache hits
   // instead of on-demand fetches that can't finish inside the 130ms frame
@@ -383,7 +387,7 @@ export default function PenaltyKickPage() {
       window.location.href = "/promotion";
       return;
     }
-    const base = savedO.startsWith("http") ? savedO : `https://${savedO}`;
+    const base = String(savedO).startsWith("http") ? savedO : `https://${savedO}`;
     window.location.href = `${base.replace(/\/$/, "")}/promotion`;
   }, []);
 
@@ -424,7 +428,7 @@ export default function PenaltyKickPage() {
           }}
           onMenuClick={() => {
             play("tap");
-            loadHistoryPage(historyPage);
+            loadHistoryPage(1);
             setDialog(DIALOGS.HISTORY);
           }}
         />
@@ -597,6 +601,7 @@ export default function PenaltyKickPage() {
                 onKickAgain={() => {
                   play("tap");
                   if (kickErrorNeedsCountry) {
+                    setDialog(null);
                     router.push("/leaderboard");
                   } else {
                     handleKickAgain();
@@ -629,6 +634,7 @@ export default function PenaltyKickPage() {
             {dialog === DIALOGS.HISTORY && (
               <HistoryDialog
                 rows={history}
+                total={historyTotal}
                 currentPage={historyPage}
                 totalPages={Math.max(1, Math.ceil(historyTotal / HISTORY_PAGE_SIZE))}
                 onPageChange={loadHistoryPage}

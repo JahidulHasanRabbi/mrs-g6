@@ -127,7 +127,6 @@ function FrameFormModal({ frame, onClose, onSave, vipTiers }) {
         submitData.vip_tier_uuid = form.vip_tier_uuid;
       }
 
-      console.log('Submitting frame data:', submitData);
       await onSave(submitData);
       onClose();
     } catch (err) {
@@ -404,9 +403,6 @@ function FrameSettingContent() {
         adminApi.getFrames(),
         adminApi.getVipTiers(),
       ]);
-      console.log('Frames:', framesData);
-      console.log('VIP Tiers:', tiersData);
-      
       // Handle paginated response
       const framesArray = Array.isArray(framesData) ? framesData : (framesData?.results || []);
       const tiersArray = Array.isArray(tiersData) ? tiersData : (tiersData?.results || []);

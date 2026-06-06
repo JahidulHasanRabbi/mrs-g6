@@ -31,7 +31,6 @@ function ExternalApiContent() {
     setIsLoading(true);
     try {
       const codesData = await externalApi.getSpecialCode();
-      console.log('Special Codes:', codesData);
       setSpecialCodes(codesData || []);
       
       // Auto-select first code if available

@@ -14,6 +14,7 @@ const TIER_COLOR = {
 function CountryTile({ country, selected, onClick }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className="flex items-center gap-2 rounded-[12px] p-[14px]"
       style={{
@@ -112,7 +113,7 @@ export default function NationSelect({ onConfirm, error }) {
             </p>
           )}
           <div className="w-full pt-3">
-            <HeroButton onClick={() => selected && onConfirm(selected)}>
+            <HeroButton onClick={() => onConfirm(selected)} disabled={!selected}>
               CONFIRM SELECTION
             </HeroButton>
           </div>

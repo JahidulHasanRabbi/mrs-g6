@@ -114,6 +114,7 @@ function mapPrizeRow(r) {
 
 export default function HistoryDialog({
   rows = [],
+  total = 0,
   currentPage = 1,
   totalPages = 1,
   onPageChange,
@@ -125,6 +126,7 @@ export default function HistoryDialog({
   const [prizePage, setPrizePage] = useState(1);
   const [prizeTotal, setPrizeTotal] = useState(0);
   const [prizeLoading, setPrizeLoading] = useState(false);
+  const [prizeFailed, setPrizeFailed] = useState(false);
 
   const loadPrizePage = useCallback(async (page) => {
     const memberUuid = tokenStorage.getMemberUuid();
@@ -135,18 +137,20 @@ export default function HistoryDialog({
       setPrizeRows((res?.results || []).map(mapPrizeRow));
       setPrizeTotal(Number(res?.count ?? 0));
       setPrizePage(page);
+      setPrizeFailed(false);
     } catch {
       setPrizeRows([]);
+      setPrizeFailed(true);
     } finally {
       setPrizeLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (activeTab === "prize" && prizeRows.length === 0 && !prizeLoading) {
+    if (activeTab === "prize" && prizeRows.length === 0 && !prizeLoading && !prizeFailed) {
       loadPrizePage(1);
     }
-  }, [activeTab, prizeRows.length, prizeLoading, loadPrizePage]);
+  }, [activeTab, prizeRows.length, prizeLoading, prizeFailed, loadPrizePage]);
 
   const prizeTotalPages = Math.max(1, Math.ceil(prizeTotal / PRIZE_PAGE_SIZE));
   const hasRedeemableRows = rows.length > 0;
@@ -182,7 +186,7 @@ export default function HistoryDialog({
             fontFamily: "'Lexend', sans-serif",
           }}
         >
-          {activeTab === "game" ? `${rows.length} rewards` : `${prizeTotal} total`}
+          {activeTab === "game" ? `${total} rewards` : `${prizeTotal} total`}
         </span>
       </div>
 

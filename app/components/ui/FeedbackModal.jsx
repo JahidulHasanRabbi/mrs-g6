@@ -32,13 +32,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
   }, [onClose, reset]);
 
   const submitFeedback = useCallback(async ({ rating, message }) => {
-    console.log('submitFeedback called with:', { rating, message });
-    
-    // Get member UUID from token storage
     const memberUuid = tokenStorage.getMemberUuid();
-    
-    console.log('Member UUID:', memberUuid);
-    
     if (!memberUuid) {
       throw new Error('Member not logged in');
     }
@@ -47,13 +41,9 @@ export default function FeedbackModal({ isOpen, onClose }) {
       member_uuid: memberUuid,
       feedback: `Rating: ${rating}/5\n\n${message}`
     };
-    
-    console.log('Submitting feedback data:', feedbackData);
 
-    // Submit to API
     try {
       const result = await submitFeedbackApi(feedbackData);
-      console.log('Feedback submitted successfully:', result);
       return result;
     } catch (error) {
       console.error('Error submitting feedback:', error);
@@ -74,9 +64,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
     setIsSubmitting(true);
     setError(null);
     try {
-      console.log('handleSubmit: Starting submission...');
       await submitFeedback({ rating, message: message.trim() });
-      console.log('handleSubmit: Submission successful');
       setSubmitted(true);
     } catch (err) {
       console.error('handleSubmit: Error caught:', err);

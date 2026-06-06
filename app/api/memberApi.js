@@ -233,7 +233,6 @@ export async function getPenaltyKickSettings() {
 
 // POST /front-view/member-feedback/ - Submit member feedback
 export async function submitFeedback(feedbackData) {
-  console.log('memberApi.submitFeedback called with:', feedbackData);
   return await apiRequest('/front-view/member-feedback/', {
     method: 'POST',
     body: feedbackData  // apiClient will handle JSON.stringify

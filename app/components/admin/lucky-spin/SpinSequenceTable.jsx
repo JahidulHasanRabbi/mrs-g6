@@ -45,7 +45,6 @@ export default function SpinSequenceTable({
       { item_order: sequence.item_order, sequence_uuid: prevSequence.uuid }
     ];
     
-    console.log('Move Up payload:', payload);
     await onReorder(payload);
   };
 
@@ -59,7 +58,6 @@ export default function SpinSequenceTable({
       { item_order: sequence.item_order, sequence_uuid: nextSequence.uuid }
     ];
     
-    console.log('Move Down payload:', payload);
     await onReorder(payload);
   };
 

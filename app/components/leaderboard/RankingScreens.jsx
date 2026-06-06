@@ -106,8 +106,8 @@ export function CountriesPanel({ myCountryCode, onCountrySelect, onViewPrize, ro
           />
           {loading
             ? Array.from({ length: 6 }, (_, i) => <SkeletonRow key={i} index={i} hasTrail />)
-            : rows.map((c) => (
-              <button key={c.rank} type="button" onClick={() => onCountrySelect?.(c)} className="w-full text-left">
+            : rows.map((c, i) => (
+              <button key={c.uuid ?? `${c.rank}-${i}`} type="button" onClick={() => onCountrySelect?.(c)} className="w-full text-left">
                 <RankingRow rank={c.rank} code={c.code} name={c.name} points={c.points} trail={c.users} highlight={c.code === myCountryCode} />
               </button>
             ))
@@ -143,8 +143,8 @@ export function GlobalPlayersPanel({ myPlayerName, onViewPrize, rows: propRows, 
           />
           {loading
             ? Array.from({ length: 6 }, (_, i) => <SkeletonRow key={i} index={i} />)
-            : rows.map((p) => (
-              <RankingRow key={p.rank} rank={p.rank} code={p.code} name={p.name} points={p.points} highlight={p.name === myPlayerName} mask />
+            : rows.map((p, i) => (
+              <RankingRow key={p.uuid ?? `${p.rank}-${i}`} rank={p.rank} code={p.code} name={p.name} points={p.points} highlight={p.name === myPlayerName} mask />
             ))
           }
         </div>

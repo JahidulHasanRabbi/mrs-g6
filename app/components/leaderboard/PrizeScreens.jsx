@@ -53,7 +53,7 @@ function placeSuffix(rank) {
 
 export function CountryPrizesPanel({ onViewLeaderboards, onViewDetails }) {
   const [rows, setRows] = useState([]);
-  useEffect(() => { getCountryPrizes().then(setRows); }, []);
+  useEffect(() => { getCountryPrizes().then(setRows).catch(() => {}); }, []);
 
   return (
     <Panel>
@@ -78,6 +78,7 @@ export function CountryPrizesPanel({ onViewLeaderboards, onViewDetails }) {
               </span>
             </div>
             <button
+              type="button"
               onClick={() => onViewDetails?.(row)}
               className="w-full rounded-[8px] py-2 text-[14px]"
               style={{ border: `1px solid ${LB_COLORS.primary}`, color: LB_COLORS.primary, fontFamily: "'Lexend',sans-serif" }}
@@ -95,7 +96,7 @@ export function CountryPrizesPanel({ onViewLeaderboards, onViewDetails }) {
 
 export function PlayerPrizesPanel({ onViewLeaderboards, onViewDetails }) {
   const [rows, setRows] = useState([]);
-  useEffect(() => { getPlayerPrizes().then(setRows); }, []);
+  useEffect(() => { getPlayerPrizes().then(setRows).catch(() => {}); }, []);
 
   return (
     <Panel>
@@ -146,7 +147,7 @@ export function PlayerPrizesPanel({ onViewLeaderboards, onViewDetails }) {
 
 export function PredictionPrizesPanel({ onViewPredictions }) {
   const [rows, setRows] = useState([]);
-  useEffect(() => { getPredictionPrizes().then(setRows); }, []);
+  useEffect(() => { getPredictionPrizes().then(setRows).catch(() => {}); }, []);
 
   return (
     <Panel>
@@ -217,6 +218,7 @@ export function PrizeInfo({ prize, onBack }) {
             </div>
           </div>
           <button
+            type="button"
             onClick={onBack}
             className="w-full rounded-[8px] py-2 text-[14px]"
             style={{ background: "#2ECC71", color: "#005027", fontFamily: "'Lexend',sans-serif" }}

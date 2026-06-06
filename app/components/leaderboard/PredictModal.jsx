@@ -100,11 +100,13 @@ export default function PredictModal({ fixture, onClose, onPredicted }) {
     setSubmitting(true);
     try {
       await submitPrediction(fixture.uuid, selected.id);
-      onPredicted?.(fixture.uuid);
     } catch {
       // Show done step even on error so the user isn't stuck — the prediction
       // may still have been accepted; let them check My Predictions.
     }
+    // Mark as predicted regardless of success/failure so the button
+    // doesn't stay active and the user can't submit the same match twice.
+    onPredicted?.(fixture.uuid);
     setSubmitting(false);
     setStep("done");
   };
