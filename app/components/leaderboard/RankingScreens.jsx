@@ -9,7 +9,55 @@ import {
   getGlobalPlayers,
   getPlayersByCountry,
   getMyPredictions,
-} from "./mockApi";
+} from "./worldcupApi";
+
+const SKEL_WIDTHS = ["58%", "72%", "45%", "65%", "52%", "68%"];
+
+const SKEL_BG = "rgba(255,255,255,0.07)";
+
+function SkeletonRow({ index, hasTrail = false }) {
+  return (
+    <div
+      className="flex w-full items-center gap-3 rounded-[8px] px-2 py-3"
+      style={{ background: LB_COLORS.panelLight }}
+    >
+      <div className="h-4 w-7 shrink-0 animate-pulse rounded-[4px]" style={{ background: SKEL_BG }} />
+      <div className="flex flex-1 items-center gap-2">
+        <div className="h-6 w-6 shrink-0 animate-pulse rounded-full" style={{ background: SKEL_BG }} />
+        <div
+          className="h-3.5 animate-pulse rounded-[4px]"
+          style={{ background: SKEL_BG, width: SKEL_WIDTHS[index % SKEL_WIDTHS.length] }}
+        />
+      </div>
+      <div className="h-3.5 w-[60px] shrink-0 animate-pulse rounded-[4px]" style={{ background: SKEL_BG }} />
+      {hasTrail && (
+        <div className="h-3.5 w-[40px] shrink-0 animate-pulse rounded-[4px]" style={{ background: SKEL_BG }} />
+      )}
+    </div>
+  );
+}
+
+function PredictionSkeletonRow({ index }) {
+  return (
+    <div
+      className="flex w-full items-center gap-3 rounded-[8px] px-2 py-3"
+      style={{ background: LB_COLORS.panelLight }}
+    >
+      <div className="h-4 w-7 shrink-0 animate-pulse rounded-[4px]" style={{ background: SKEL_BG }} />
+      <div className="flex flex-1 flex-col gap-[5px]">
+        <div className="flex items-center gap-2">
+          <div className="h-6 w-6 shrink-0 animate-pulse rounded-full" style={{ background: SKEL_BG }} />
+          <div
+            className="h-3.5 animate-pulse rounded-[4px]"
+            style={{ background: SKEL_BG, width: SKEL_WIDTHS[index % SKEL_WIDTHS.length] }}
+          />
+        </div>
+        <div className="h-3 animate-pulse rounded-[4px]" style={{ background: "rgba(255,255,255,0.04)", width: "65%" }} />
+      </div>
+      <div className="h-6 w-[51px] shrink-0 animate-pulse rounded-[8px]" style={{ background: SKEL_BG }} />
+    </div>
+  );
+}
 
 const TAB_LABELS = ["All Countries", "Global Top Players", "My Predictions"];
 
@@ -32,9 +80,16 @@ export function LeaderboardTabs({ activeTab, onTabChange }) {
   );
 }
 
-export function CountriesPanel({ myCountryCode, onCountrySelect, onViewPrize }) {
-  const [rows, setRows] = useState([]);
-  useEffect(() => { getCountryRankings().then(setRows); }, []);
+export function CountriesPanel({ myCountryCode, onCountrySelect, onViewPrize, rows: propRows, loading: propLoading }) {
+  const [ownRows, setOwnRows] = useState([]);
+  const [ownLoading, setOwnLoading] = useState(true);
+  const hasPreload = propRows !== undefined;
+  const rows = hasPreload ? propRows : ownRows;
+  const loading = hasPreload ? !!propLoading : ownLoading;
+  useEffect(() => {
+    if (hasPreload) return;
+    getCountryRankings().then(setOwnRows).catch(() => {}).finally(() => setOwnLoading(false));
+  }, [hasPreload]);
 
   return (
     <Panel>
@@ -49,11 +104,14 @@ export function CountriesPanel({ myCountryCode, onCountrySelect, onViewPrize }) 
               { label: "USERS", width: "40px", align: "right" },
             ]}
           />
-          {rows.map((c) => (
-            <button key={c.rank} type="button" onClick={() => onCountrySelect?.(c)} className="w-full text-left">
-              <RankingRow rank={c.rank} code={c.code} name={c.name} points={c.points} trail={c.users} highlight={c.code === myCountryCode} />
-            </button>
-          ))}
+          {loading
+            ? Array.from({ length: 6 }, (_, i) => <SkeletonRow key={i} index={i} hasTrail />)
+            : rows.map((c) => (
+              <button key={c.rank} type="button" onClick={() => onCountrySelect?.(c)} className="w-full text-left">
+                <RankingRow rank={c.rank} code={c.code} name={c.name} points={c.points} trail={c.users} highlight={c.code === myCountryCode} />
+              </button>
+            ))
+          }
         </div>
         <GreenButton onClick={onViewPrize} size="sm">View Prize Pool</GreenButton>
       </div>
@@ -61,9 +119,16 @@ export function CountriesPanel({ myCountryCode, onCountrySelect, onViewPrize }) 
   );
 }
 
-export function GlobalPlayersPanel({ myPlayerName, onViewPrize }) {
-  const [rows, setRows] = useState([]);
-  useEffect(() => { getGlobalPlayers().then(setRows); }, []);
+export function GlobalPlayersPanel({ myPlayerName, onViewPrize, rows: propRows, loading: propLoading }) {
+  const [ownRows, setOwnRows] = useState([]);
+  const [ownLoading, setOwnLoading] = useState(true);
+  const hasPreload = propRows !== undefined;
+  const rows = hasPreload ? propRows : ownRows;
+  const loading = hasPreload ? !!propLoading : ownLoading;
+  useEffect(() => {
+    if (hasPreload) return;
+    getGlobalPlayers().then(setOwnRows).catch(() => {}).finally(() => setOwnLoading(false));
+  }, [hasPreload]);
   return (
     <Panel>
       <div className="flex flex-col items-center gap-4">
@@ -76,9 +141,12 @@ export function GlobalPlayersPanel({ myPlayerName, onViewPrize }) {
               { label: "POINTS", width: "60px", align: "center" },
             ]}
           />
-          {rows.map((p) => (
-            <RankingRow key={p.rank} rank={p.rank} code={p.code} name={p.name} points={p.points} highlight={p.name === myPlayerName} mask />
-          ))}
+          {loading
+            ? Array.from({ length: 6 }, (_, i) => <SkeletonRow key={i} index={i} />)
+            : rows.map((p) => (
+              <RankingRow key={p.rank} rank={p.rank} code={p.code} name={p.name} points={p.points} highlight={p.name === myPlayerName} mask />
+            ))
+          }
         </div>
         <GreenButton onClick={onViewPrize} size="sm">View Prize Pool</GreenButton>
       </div>
@@ -88,7 +156,11 @@ export function GlobalPlayersPanel({ myPlayerName, onViewPrize }) {
 
 export function MyCountryPanel({ country, onViewPrize, onChangeCountry }) {
   const [rows, setRows] = useState([]);
-  useEffect(() => { getPlayersByCountry(country.code).then(setRows); }, [country.code]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    setLoading(true);
+    getPlayersByCountry(country.id).then(setRows).catch(() => {}).finally(() => setLoading(false));
+  }, [country.id]);
 
   return (
     <Panel>
@@ -126,9 +198,12 @@ export function MyCountryPanel({ country, onViewPrize, onChangeCountry }) {
               { label: "POINTS", width: "60px", align: "center" },
             ]}
           />
-          {rows.map((p) => (
-            <RankingRow key={p.rank} rank={p.rank} code={p.code} name={p.name} points={p.points} mask />
-          ))}
+          {loading
+            ? Array.from({ length: 5 }, (_, i) => <SkeletonRow key={i} index={i} />)
+            : rows.map((p) => (
+              <RankingRow key={p.rank} rank={p.rank} code={p.code} name={p.name} points={p.points} mask />
+            ))
+          }
         </div>
         <GreenButton onClick={onViewPrize} size="sm">View Prize Pool</GreenButton>
       </div>
@@ -136,9 +211,16 @@ export function MyCountryPanel({ country, onViewPrize, onChangeCountry }) {
   );
 }
 
-export function MyPredictionsPanel({ onViewPrize }) {
-  const [rows, setRows] = useState([]);
-  useEffect(() => { getMyPredictions().then(setRows); }, []);
+export function MyPredictionsPanel({ onViewPrize, rows: propRows, loading: propLoading }) {
+  const [ownRows, setOwnRows] = useState([]);
+  const [ownLoading, setOwnLoading] = useState(true);
+  const hasPreload = propRows !== undefined;
+  const rows = hasPreload ? propRows : ownRows;
+  const loading = hasPreload ? !!propLoading : ownLoading;
+  useEffect(() => {
+    if (hasPreload) return;
+    getMyPredictions().then(setOwnRows).catch(() => {}).finally(() => setOwnLoading(false));
+  }, [hasPreload]);
 
   return (
     <Panel>
@@ -152,34 +234,51 @@ export function MyPredictionsPanel({ onViewPrize }) {
             <div className="w-[51px] text-[10px] uppercase" style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}>RESULT</div>
           </div>
 
-          {rows.map((p) => (
-            <div
-              key={p.match}
-              className="flex w-full items-center gap-3 rounded-[8px] px-2 py-3"
-              style={{ background: LB_COLORS.panelLight }}
-            >
-              <div className="w-7 text-[14px]" style={{ color: "#fff", fontFamily: "'Lexend',sans-serif" }}>
-                #{p.match}
-              </div>
-              <div className="flex flex-1 items-center gap-2">
-                <Flag code={p.team.code} size={24} />
-                <span className="text-[12px]" style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}>
-                  {p.team.name}
-                </span>
-              </div>
+          {loading
+            ? Array.from({ length: 4 }, (_, i) => <PredictionSkeletonRow key={i} index={i} />)
+            : rows.map((p) => {
+            const resultStyle =
+              p.result === "win"
+                ? { bg: "rgba(84,233,138,0.15)", color: LB_COLORS.primary, label: "Win" }
+                : p.result === "loss"
+                ? { bg: "rgba(255,59,48,0.15)", color: LB_COLORS.red, label: "Loss" }
+                : { bg: "rgba(255,255,255,0.08)", color: LB_COLORS.textMuted, label: "Pending" };
+            return (
               <div
-                className="grid h-6 w-[51px] place-items-center rounded-[8px]"
-                style={{
-                  background: p.result === "win" ? "rgba(84,233,138,0.15)" : "rgba(255,59,48,0.15)",
-                  color: p.result === "win" ? LB_COLORS.primary : LB_COLORS.red,
-                  fontFamily: "'Lexend',sans-serif",
-                  fontSize: 12,
-                }}
+                key={p.uuid ?? p.match}
+                className="flex w-full items-center gap-3 rounded-[8px] px-2 py-3"
+                style={{ background: LB_COLORS.panelLight }}
               >
-                {p.result === "win" ? "Win" : "Loss"}
+                <div className="w-7 text-[14px]" style={{ color: "#fff", fontFamily: "'Lexend',sans-serif" }}>
+                  #{p.match}
+                </div>
+                <div className="flex flex-1 flex-col gap-[2px]">
+                  <div className="flex items-center gap-2">
+                    <Flag code={p.team.code} size={24} />
+                    <span className="text-[12px]" style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}>
+                      {p.team.name}
+                    </span>
+                  </div>
+                  {p.homeName && p.awayName && (
+                    <span className="text-[10px]" style={{ color: LB_COLORS.textMuted, fontFamily: "'Lexend',sans-serif" }}>
+                      {p.homeName} vs {p.awayName}
+                    </span>
+                  )}
+                </div>
+                <div
+                  className="grid h-6 w-[51px] place-items-center rounded-[8px]"
+                  style={{
+                    background: resultStyle.bg,
+                    color: resultStyle.color,
+                    fontFamily: "'Lexend',sans-serif",
+                    fontSize: 12,
+                  }}
+                >
+                  {resultStyle.label}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <GreenButton onClick={onViewPrize} size="sm">View Prize Pool</GreenButton>

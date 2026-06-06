@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { LB_COLORS } from "./constants";
 import { SectionBadge, Flag } from "./primitives";
 import { useUser } from "../../contexts/UserContext";
@@ -60,12 +59,12 @@ export default function ProfileCard({ profile }) {
         <SectionBadge align="left">My Profile</SectionBadge>
 
         {profilePicture && (
-          <div
-            className="relative h-16 w-16 shrink-0 overflow-hidden rounded-full"
+          <img
+            src={profilePicture}
+            alt="Profile"
+            className="h-16 w-16 shrink-0 rounded-full object-cover"
             style={{ border: `2px solid ${LB_COLORS.borderSoft}` }}
-          >
-            <Image src={profilePicture} alt="Profile" fill className="object-cover" sizes="64px" />
-          </div>
+          />
         )}
 
         <div className="flex w-full gap-6">

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { LB_COLORS } from "./constants";
 import { GlowCard, Flag, Tabs } from "./primitives";
-import { getFixtures } from "./worldcupApi";
+import { getFixtures, getMatchPredictionsMap } from "./worldcupApi";
 import PredictModal from "./PredictModal";
 
 function OddsBar({ home, away }) {
@@ -23,7 +23,8 @@ function OddsBar({ home, away }) {
   );
 }
 
-function FixtureCard({ fixture, onPredict }) {
+function FixtureCard({ fixture, onPredict, alreadyPredicted }) {
+  const isDisabled = fixture.locked || alreadyPredicted;
   return (
     <div
       className="flex w-full flex-col items-center gap-6 rounded-[12px] p-[17px]"
@@ -58,20 +59,21 @@ function FixtureCard({ fixture, onPredict }) {
       <OddsBar home={fixture.homeOdds} away={fixture.awayOdds} />
 
       <button
-        onClick={() => !fixture.locked && onPredict?.(fixture)}
-        disabled={fixture.locked}
+        onClick={() => !isDisabled && onPredict?.(fixture)}
+        disabled={isDisabled}
         className="h-[44px] w-full rounded-[12px] uppercase"
         style={{
-          background: LB_COLORS.primary,
-          color: LB_COLORS.primaryDeep,
-          opacity: fixture.locked ? 0.5 : 1,
+          background: alreadyPredicted ? "transparent" : LB_COLORS.primary,
+          border: alreadyPredicted ? `1px solid ${LB_COLORS.primary}` : "none",
+          color: alreadyPredicted ? LB_COLORS.primary : LB_COLORS.primaryDeep,
+          opacity: fixture.locked && !alreadyPredicted ? 0.5 : 1,
           fontFamily: "'Anybody','Lexend',sans-serif",
           fontWeight: 700,
           fontSize: 14,
-          boxShadow: "0 4px 0 rgba(0,0,0,0.3)",
+          boxShadow: alreadyPredicted ? "none" : "0 4px 0 rgba(0,0,0,0.3)",
         }}
       >
-        Predict
+        {alreadyPredicted ? "Predicted" : "Predict"}
       </button>
     </div>
   );
@@ -89,9 +91,14 @@ function SectionHeader({ color, children }) {
 
 export default function PredictionsList({ onMyPredictions }) {
   const [fixtures, setFixtures] = useState({ upcoming: [], ongoing: [] });
+  const [predictedMap, setPredictedMap] = useState({});
   // Fixture whose Predict button was tapped — drives the Predict Winner modal.
   const [predictFixture, setPredictFixture] = useState(null);
-  useEffect(() => { getFixtures().then(setFixtures); }, []);
+
+  useEffect(() => {
+    getFixtures().then(setFixtures).catch(() => {});
+    getMatchPredictionsMap().then(setPredictedMap).catch(() => {});
+  }, []);
 
   return (
     <div className="flex flex-col items-center gap-6 px-4 pb-8 pt-2">
@@ -106,20 +113,35 @@ export default function PredictionsList({ onMyPredictions }) {
           <SectionHeader color={LB_COLORS.gold}>Upcoming Matches</SectionHeader>
           <div className="flex flex-col gap-2">
             {fixtures.upcoming.map((f, i) => (
-              <FixtureCard key={`u${i}`} fixture={f} onPredict={setPredictFixture} />
+              <FixtureCard
+                key={`u${i}`}
+                fixture={f}
+                onPredict={setPredictFixture}
+                alreadyPredicted={!!predictedMap[f.uuid]}
+              />
             ))}
           </div>
           <SectionHeader color={LB_COLORS.primary}>Ongoing Matches</SectionHeader>
           <div className="flex flex-col gap-2">
             {fixtures.ongoing.map((f, i) => (
-              <FixtureCard key={`o${i}`} fixture={f} />
+              <FixtureCard
+                key={`o${i}`}
+                fixture={f}
+                alreadyPredicted={!!predictedMap[f.uuid]}
+              />
             ))}
           </div>
         </div>
       </GlowCard>
 
       {predictFixture && (
-        <PredictModal fixture={predictFixture} onClose={() => setPredictFixture(null)} />
+        <PredictModal
+          fixture={predictFixture}
+          onClose={() => setPredictFixture(null)}
+          onPredicted={(matchUuid) => {
+            setPredictedMap((prev) => ({ ...prev, [matchUuid]: { state: 1 } }));
+          }}
+        />
       )}
     </div>
   );

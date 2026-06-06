@@ -198,7 +198,7 @@ export default function PenaltyKickPage() {
         // before the game starts so the first kick never fails with a country error.
         try {
           const wcProfile = await getWorldCupProfile(memberUuid);
-          if (!cancelled && !wcProfile.country_uuid) {
+          if (!cancelled && (wcProfile.country === null || wcProfile.country === undefined)) {
             needsCountryRef.current = true;
             setNeedsCountry(true);
           }
@@ -207,17 +207,19 @@ export default function PenaltyKickPage() {
         }
       }
 
-      try {
-        const settings = await getPenaltyKickSettings();
-        if (!cancelled) {
-          setConfig((prev) => ({
-            ...prev,
-            tokenPerShot: Number(settings?.cost_per_kick ?? prev.tokenPerShot),
-            difficulty: String(settings?.goalkeeper_difficulty_display || prev.difficulty).toLowerCase(),
-          }));
+      if (memberUuid) {
+        try {
+          const settings = await getPenaltyKickSettings();
+          if (!cancelled) {
+            setConfig((prev) => ({
+              ...prev,
+              tokenPerShot: Number(settings?.cost_per_kick ?? prev.tokenPerShot),
+              difficulty: String(settings?.goalkeeper_difficulty_display || prev.difficulty).toLowerCase(),
+            }));
+          }
+        } catch (err) {
+          console.warn("penalty kick settings unavailable for token display", err);
         }
-      } catch (err) {
-        console.warn("penalty kick settings unavailable for token display", err);
       }
 
       if (memberUuid) {
@@ -351,7 +353,7 @@ export default function PenaltyKickPage() {
   const handleCountryConfirmed = useCallback(async (country) => {
     setCountryConfirmError(null);
     try {
-      await confirmNation(country.uuid);
+      await confirmNation(country.id);
       needsCountryRef.current = false;
       setNeedsCountry(false);
       // Clear the kick-error country flag too — user has now selected a country

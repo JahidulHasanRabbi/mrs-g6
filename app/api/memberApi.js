@@ -259,19 +259,19 @@ export async function getPublicFrames(params = {}) {
 // WORLD CUP - MEMBER / USER
 // ============================================================================
 
-// GET /worldcup/country-list/  (public, grouped by tier)
+// GET /worldcup/country-list/
 export async function getWorldCupCountryList(params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.WORLDCUP_USER.COUNTRY_LIST}${qs}`, {
     method: 'GET'
-  }, false);
+  }, true, 'member');
 }
 
 // GET /worldcup/info/
 export async function getWorldCupInfo() {
   return await apiRequest(ENDPOINTS.WORLDCUP_USER.INFO, {
     method: 'GET'
-  }, false);
+  }, true, 'member');
 }
 
 // GET /worldcup/banner-list/
@@ -279,7 +279,7 @@ export async function getWorldCupBannerList(params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.WORLDCUP_USER.BANNER_LIST}${qs}`, {
     method: 'GET'
-  }, false);
+  }, true, 'member');
 }
 
 // GET /worldcup/prize-pool/
@@ -287,7 +287,7 @@ export async function getWorldCupPrizePool(params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.WORLDCUP_USER.PRIZE_POOL}${qs}`, {
     method: 'GET'
-  }, false);
+  }, true, 'member');
 }
 
 // GET /worldcup/leaderboard/countries/
@@ -329,18 +329,18 @@ export async function getWorldCupProfile(memberUuid) {
 }
 
 // POST /worldcup/<member_uuid>/choose-country/
-export async function chooseWorldCupCountry(memberUuid, countryUuid) {
+export async function chooseWorldCupCountry(memberUuid, countryId) {
   return await apiRequest(ENDPOINTS.WORLDCUP_USER.CHOOSE_COUNTRY(memberUuid), {
     method: 'POST',
-    body: { country_uuid: countryUuid }
+    body: { country: countryId }
   }, true, 'member');
 }
 
 // POST /worldcup/<member_uuid>/predict/
-export async function submitWorldCupPrediction(memberUuid, matchUuid, teamUuid) {
+export async function submitWorldCupPrediction(memberUuid, matchUuid, teamId) {
   return await apiRequest(ENDPOINTS.WORLDCUP_USER.PREDICT(memberUuid), {
     method: 'POST',
-    body: { match_uuid: matchUuid, team_uuid: teamUuid }
+    body: { match_uuid: matchUuid, team: teamId }
   }, true, 'member');
 }
 

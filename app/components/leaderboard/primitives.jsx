@@ -102,14 +102,25 @@ export function SectionBadge({ children, align = "center", size = "sm" }) {
 
 export function Flag({ code, src, size = 28 }) {
   const imgSrc = src || (code ? flagUrl(code) : null);
-  if (!imgSrc) return <span style={{ width: size, height: size, display: "inline-block" }} />;
+  const label = code ? String(code).slice(0, 3).toUpperCase() : "?";
+  const fontSize = Math.floor(size * 0.36);
+  const fallbackStyle = { display: "inline-flex", alignItems: "center", justifyContent: "center", width: size, height: size, borderRadius: "50%", background: "rgba(255,255,255,0.1)", color: "#fff", fontSize, fontFamily: "'Lexend',sans-serif", flexShrink: 0 };
+
+  if (!imgSrc) return <span style={fallbackStyle}>{label}</span>;
+
   return (
     <img
       src={imgSrc}
-      alt=""
+      alt={label}
       draggable={false}
       className="shrink-0 rounded-full"
       style={{ width: size, height: size, objectFit: "cover" }}
+      onError={(e) => {
+        e.currentTarget.replaceWith(Object.assign(document.createElement("span"), {
+          textContent: label,
+          style: `display:inline-flex;align-items:center;justify-content:center;width:${size}px;height:${size}px;border-radius:50%;background:rgba(255,255,255,0.1);color:#fff;font-size:${fontSize}px;font-family:'Lexend',sans-serif;flex-shrink:0`,
+        }));
+      }}
     />
   );
 }

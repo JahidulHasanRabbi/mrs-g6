@@ -11,8 +11,10 @@ import {
   chooseWorldCupCountry,
   submitWorldCupPrediction,
   getWorldCupPredictions,
+  getWorldCupMatchPredictions,
 } from "../../api/memberApi";
 import { tokenStorage } from "../../api/tokenStorage";
+import { COUNTRY_MAP, countryCode, countryName } from "../../lib/worldcupCountries";
 
 // localStorage key for tracking whether the onboarding intro was shown.
 // The API does not persist this — it's a one-time UI gate.
@@ -34,13 +36,14 @@ function markOnboarded() {
 export async function getMyProfile() {
   const memberUuid = tokenStorage.getMemberUuid();
   const data = await getWorldCupProfile(memberUuid);
-  const hasNation = data.country_uuid !== null && data.country_uuid !== undefined;
+  const hasNation = data.country !== null && data.country !== undefined;
   const hasOnboarded = hasNation || readOnboarded();
   return {
     name: data.player_name,
-    countryCode: data.country_code,
-    countryName: data.country_name,
-    countryFlag: data.country_flag,
+    countryId: data.country ?? null,
+    countryCode: countryCode(data.country),
+    countryName: data.country_name ?? countryName(data.country),
+    countryFlag: null,
     totalPoints: data.total_points ?? 0,
     globalRank: data.global_rank ?? 0,
     countryRank: data.country_rank ?? 0,
@@ -54,11 +57,15 @@ export async function getMyProfile() {
 
 // Called after the user completes nation selection; posts to API then persists
 // the onboarded flag locally so the intro carousel is never shown again.
-export async function confirmNation(countryUuid) {
+export async function confirmNation(countryId) {
   const memberUuid = tokenStorage.getMemberUuid();
-  const data = await chooseWorldCupCountry(memberUuid, countryUuid);
+  const data = await chooseWorldCupCountry(memberUuid, countryId);
   markOnboarded();
-  return data;
+  return {
+    country: data.country,
+    country_name: data.country_name,
+    country_code: countryCode(data.country),
+  };
 }
 
 export function clearNationSelection() {
@@ -80,16 +87,15 @@ const TIER_LABELS = {
 
 export async function getCountriesByTier() {
   const data = await getWorldCupCountryList();
-  // data: { tiers: [{ tier, count, countries: [{ uuid, code, name, flag, tier, tier_display }] }] }
+  // data: { tiers: [{ tier, count, countries: [{ id, name }] }] }
   const result = {};
   for (const t of data.tiers ?? []) {
     const label = TIER_LABELS[t.tier] ?? `Tier ${t.tier}`;
     result[label] = (t.countries ?? []).map((c) => ({
-      uuid: c.uuid,
-      code: c.code,
+      id: c.id,
+      code: countryCode(c.id),
       name: c.name,
-      flag: c.flag,
-      tier: c.tier,
+      tier: t.tier,
     }));
   }
   return result;
@@ -103,10 +109,9 @@ export async function getCountryRankings() {
   const data = await getWorldCupLeaderboardCountries();
   return (data.results ?? data ?? []).map((c) => ({
     rank: c.rank,
-    uuid: c.uuid,
-    code: c.code,
-    name: c.name,
-    flag: c.flag,
+    id: c.country,
+    code: countryCode(c.country),
+    name: c.country_name ?? countryName(c.country),
     points: c.total_points ?? 0,
     users: c.total_users ?? 0,
   }));
@@ -117,20 +122,18 @@ export async function getGlobalPlayers() {
   return (data.results ?? data ?? []).map((p) => ({
     rank: p.rank,
     name: p.player_name,
-    code: p.country_code,
-    flag: p.flag,
-    countryUuid: p.country_uuid,
+    code: countryCode(p.country),
+    countryId: p.country,
     points: p.total_points ?? 0,
   }));
 }
 
-export async function getPlayersByCountry(countryUuid) {
-  const data = await getWorldCupLeaderboardPlayers({ country: countryUuid });
+export async function getPlayersByCountry(countryId) {
+  const data = await getWorldCupLeaderboardPlayers({ country: countryId });
   return (data.results ?? data ?? []).map((p) => ({
     rank: p.rank,
     name: p.player_name,
-    code: p.country_code,
-    flag: p.flag,
+    code: countryCode(p.country),
     points: p.total_points ?? 0,
   }));
 }
@@ -147,8 +150,7 @@ export async function getCountryPrizes() {
     name: r.reward_name,
     description: r.description,
     image: r.image,
-    code: r.country_code,
-    flag: r.country_flag,
+    code: countryCode(r.country),
     quantity: r.quantity,
   }));
 }
@@ -189,20 +191,20 @@ export async function getFixtures() {
   const upcoming = [];
   const ongoing = [];
   for (const m of matches) {
+    const homeInfo = COUNTRY_MAP[m.team_home] ?? { name: String(m.team_home), code: null };
+    const awayInfo = COUNTRY_MAP[m.team_away] ?? { name: String(m.team_away), code: null };
     const fixture = {
       uuid: m.uuid,
       group: m.group_label ?? "",
       home: {
-        uuid: m.team_home_uuid,
-        code: m.team_home_flag ? "" : (m.team_home_name ?? "").slice(0, 3).toUpperCase(),
-        name: m.team_home_name,
-        flag: m.team_home_flag,
+        id: m.team_home,
+        code: homeInfo.code,
+        name: homeInfo.name,
       },
       away: {
-        uuid: m.team_away_uuid,
-        code: m.team_away_flag ? "" : (m.team_away_name ?? "").slice(0, 3).toUpperCase(),
-        name: m.team_away_name,
-        flag: m.team_away_flag,
+        id: m.team_away,
+        code: awayInfo.code,
+        name: awayInfo.name,
       },
       date: m.kickoff_at ? formatKickoff(m.kickoff_at) : "",
       homeOdds: 50,
@@ -227,23 +229,37 @@ export async function getMyPredictions() {
   return items.map((p, i) => ({
     match: i + 1,
     uuid: p.uuid,
+    matchUuid: p.match_uuid,
     team: {
-      uuid: p.predicted_team_uuid,
+      id: p.predicted_team,
       name: p.predicted_team_name,
-      flag: null,
-      code: "",
+      code: countryCode(p.predicted_team),
     },
+    homeName: COUNTRY_MAP[p.team_home]?.name ?? String(p.team_home ?? ""),
+    awayName: COUNTRY_MAP[p.team_away]?.name ?? String(p.team_away ?? ""),
     result: p.state === 2 ? "win" : p.state === 3 ? "loss" : "pending",
   }));
+}
+
+// Lightweight map of already-predicted match UUIDs → prediction state.
+// Used by PredictionsList to disable the Predict button on already-predicted matches.
+export async function getMatchPredictionsMap() {
+  const memberUuid = tokenStorage.getMemberUuid();
+  const data = await getWorldCupMatchPredictions(memberUuid);
+  const map = {};
+  for (const p of (Array.isArray(data) ? data : [])) {
+    map[p.match_uuid] = { predictionUuid: p.prediction_uuid, state: p.state };
+  }
+  return map;
 }
 
 // ---------------------------------------------------------------------------
 // Submit prediction
 // ---------------------------------------------------------------------------
 
-export async function submitPrediction(matchUuid, teamUuid) {
+export async function submitPrediction(matchUuid, teamId) {
   const memberUuid = tokenStorage.getMemberUuid();
-  return await submitWorldCupPrediction(memberUuid, matchUuid, teamUuid);
+  return await submitWorldCupPrediction(memberUuid, matchUuid, teamId);
 }
 
 // ---------------------------------------------------------------------------

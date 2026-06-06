@@ -6,7 +6,14 @@ import { FooterNav } from "../components/footer";
 import { HamburgerMenu } from "../components/hamburger";
 import { LB_SCREENS, LB_TABS } from "../components/leaderboard/constants";
 import { LBHeader } from "../components/leaderboard/primitives";
-import { getMyProfile, confirmNation, clearNationSelection } from "../components/leaderboard/worldcupApi";
+import {
+  getMyProfile,
+  confirmNation,
+  clearNationSelection,
+  getCountryRankings,
+  getGlobalPlayers,
+  getMyPredictions,
+} from "../components/leaderboard/worldcupApi";
 import ProfileCard from "../components/leaderboard/ProfileCard";
 import PredictToWinCard from "../components/leaderboard/PredictToWinCard";
 import NationSelect from "../components/leaderboard/NationSelect";
@@ -45,6 +52,9 @@ export default function LeaderboardPage() {
   const [prizeTab, setPrizeTab] = useState("country");
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedPrize, setSelectedPrize] = useState(null);
+  const [countriesData, setCountriesData] = useState({ rows: [], loading: true });
+  const [playersData, setPlayersData] = useState({ rows: [], loading: true });
+  const [predictionsData, setPredictionsData] = useState({ rows: [], loading: true });
 
   useEffect(() => {
     if (!authReady || !memberUuid) return;
@@ -71,19 +81,34 @@ export default function LeaderboardPage() {
       });
   }, [authReady, memberUuid]);
 
+  // Prefetch all three leaderboard datasets in parallel so tabs are instant.
+  useEffect(() => {
+    if (!authReady || !memberUuid) return;
+    getCountryRankings()
+      .then((rows) => setCountriesData({ rows, loading: false }))
+      .catch(() => setCountriesData({ rows: [], loading: false }));
+    getGlobalPlayers()
+      .then((rows) => setPlayersData({ rows, loading: false }))
+      .catch(() => setPlayersData({ rows: [], loading: false }));
+    getMyPredictions()
+      .then((rows) => setPredictionsData({ rows, loading: false }))
+      .catch(() => setPredictionsData({ rows: [], loading: false }));
+  }, [authReady, memberUuid]);
+
   // Nation Select is the last gate before the profile/leaderboard view, so
   // confirming a country drops the user straight into "My Profile".
   const handleConfirmNation = useCallback(async (country) => {
     setConfirmError(null);
     try {
-      const result = await confirmNation(country.uuid);
+      const result = await confirmNation(country.id);
       setProfile((p) => ({
         ...p,
         hasNation: true,
         hasOnboarded: true,
-        countryCode: result.country_code ?? country.code,
-        countryName: result.country_name ?? country.name,
-        countryFlag: result.country_flag ?? country.flag,
+        countryId: result.country,
+        countryCode: result.country_code,
+        countryName: result.country_name,
+        countryFlag: null,
       }));
       setActiveTab(LB_TABS.COUNTRIES);
       setScreen(LB_SCREENS.COUNTRIES);
@@ -191,10 +216,17 @@ export default function LeaderboardPage() {
                       setScreen(LB_SCREENS.MY_COUNTRY);
                     }}
                     onViewPrize={openPrizePool}
+                    rows={countriesData.rows}
+                    loading={countriesData.loading}
                   />
                 )}
                 {screen === LB_SCREENS.GLOBAL_PLAYERS && (
-                  <GlobalPlayersPanel myPlayerName={profile.name} onViewPrize={openPrizePool} />
+                  <GlobalPlayersPanel
+                    myPlayerName={profile.name}
+                    onViewPrize={openPrizePool}
+                    rows={playersData.rows}
+                    loading={playersData.loading}
+                  />
                 )}
                 {screen === LB_SCREENS.MY_COUNTRY && selectedCountry && (
                   <MyCountryPanel
@@ -204,7 +236,11 @@ export default function LeaderboardPage() {
                   />
                 )}
                 {screen === LB_SCREENS.MY_PREDICTIONS && (
-                  <MyPredictionsPanel onViewPrize={openPrizePool} />
+                  <MyPredictionsPanel
+                    onViewPrize={openPrizePool}
+                    rows={predictionsData.rows}
+                    loading={predictionsData.loading}
+                  />
                 )}
               </div>
             )}

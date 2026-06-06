@@ -11,13 +11,15 @@ function rankColor(rank) {
 }
 
 function maskName(name) {
-  if (!name) return name;
-  const chars = [...name];
-  if (chars.length <= 2) return `${chars[0]}•`;
-  const head = chars.slice(0, 2).join("");
-  const tail = chars[chars.length - 1];
-  const middle = "•".repeat(Math.max(3, chars.length - 3));
-  return head + middle + tail;
+  const trimmed = (name || "").trim();
+  if (!trimmed) return "A***s";
+  const chars = [...trimmed];
+  if (chars.length === 1) return `${chars[0]}***`;
+  if (chars.length === 2) return `${chars[0]}*${chars[1]}`;
+  const first = chars[0];
+  const last = chars[chars.length - 1];
+  const stars = "*".repeat(Math.max(3, Math.min(chars.length - 2, 5)));
+  return `${first}${stars}${last}`;
 }
 
 function rowStyle(highlight) {

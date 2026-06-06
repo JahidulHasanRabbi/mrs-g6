@@ -90,7 +90,7 @@ function TeamOption({ team, selected, onSelect }) {
   );
 }
 
-export default function PredictModal({ fixture, onClose }) {
+export default function PredictModal({ fixture, onClose, onPredicted }) {
   const [step, setStep] = useState("choose");
   const [selected, setSelected] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -99,7 +99,8 @@ export default function PredictModal({ fixture, onClose }) {
     if (!selected || submitting) return;
     setSubmitting(true);
     try {
-      await submitPrediction(fixture.uuid, selected.uuid);
+      await submitPrediction(fixture.uuid, selected.id);
+      onPredicted?.(fixture.uuid);
     } catch {
       // Show done step even on error so the user isn't stuck — the prediction
       // may still have been accepted; let them check My Predictions.
@@ -141,8 +142,8 @@ export default function PredictModal({ fixture, onClose }) {
                     Choose a country below as your predicted winner
                   </ModalSubtitle>
                 </div>
-                <TeamOption team={fixture.home} selected={selected?.code === fixture.home.code} onSelect={setSelected} />
-                <TeamOption team={fixture.away} selected={selected?.code === fixture.away.code} onSelect={setSelected} />
+                <TeamOption team={fixture.home} selected={selected?.id === fixture.home.id} onSelect={setSelected} />
+                <TeamOption team={fixture.away} selected={selected?.id === fixture.away.id} onSelect={setSelected} />
                 <div className="pt-2">
                   <GreenCta onClick={handlePredict} disabled={!selected || submitting}>
                     Predict

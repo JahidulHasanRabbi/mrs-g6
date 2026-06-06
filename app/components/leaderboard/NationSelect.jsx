@@ -94,9 +94,9 @@ export default function NationSelect({ onConfirm, error }) {
                   <div className="grid grid-cols-2 gap-2">
                     {items.map((c) => (
                       <CountryTile
-                        key={c.uuid ?? c.code}
+                        key={c.id}
                         country={c}
-                        selected={selected?.uuid === c.uuid}
+                        selected={selected?.id === c.id}
                         onClick={() => setSelected(c)}
                       />
                     ))}

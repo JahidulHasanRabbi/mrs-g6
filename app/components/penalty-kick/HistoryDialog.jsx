@@ -1,8 +1,20 @@
 "use client";
 
+import { useEffect, useState, useCallback } from "react";
 import GlassCard from "./GlassCard";
 import GreenCta from "./GreenCta";
 import { COLORS, ICONS } from "./constants";
+import { getMemberRewardHistory } from "../../api/memberApi";
+import { tokenStorage } from "../../api/tokenStorage";
+
+const PRIZE_PAGE_SIZE = 10;
+
+const ITEM_TYPE_DISPLAY = {
+  "TOKEN": "Token",
+  "FREE CREDIT": "Credit",
+  "PRIZE": "Prize",
+  "WORLD CUP SCORE": "Score",
+};
 
 function formatAmount(value) {
   const amount = Number(value ?? 0);
@@ -13,7 +25,8 @@ function formatAmount(value) {
 function HistoryRow({ row }) {
   const amount = Number(row.amount ?? 0);
   const hasAmount = Number.isFinite(amount) && amount > 0;
-  const amountText = hasAmount ? `+${formatAmount(amount)}` : "Pending";
+  const typeLabel = ITEM_TYPE_DISPLAY[String(row.sub || "").toUpperCase()] || row.sub || "—";
+  const amountText = hasAmount ? `+${formatAmount(amount)}` : typeLabel;
 
   return (
     <div
@@ -88,6 +101,17 @@ function PageButton({ children, disabled, onClick, label }) {
   );
 }
 
+function mapPrizeRow(r) {
+  const amount = Number(r.amount ?? 0);
+  return {
+    id: r.uuid,
+    label: r.reward_name || "Reward",
+    sub: r.item_type || "PRIZE",
+    amount: Number.isFinite(amount) ? amount : 0,
+    claimed: false,
+  };
+}
+
 export default function HistoryDialog({
   rows = [],
   currentPage = 1,
@@ -96,7 +120,41 @@ export default function HistoryDialog({
   onClose,
   onRedeemAll,
 }) {
+  const [activeTab, setActiveTab] = useState("game");
+  const [prizeRows, setPrizeRows] = useState([]);
+  const [prizePage, setPrizePage] = useState(1);
+  const [prizeTotal, setPrizeTotal] = useState(0);
+  const [prizeLoading, setPrizeLoading] = useState(false);
+
+  const loadPrizePage = useCallback(async (page) => {
+    const memberUuid = tokenStorage.getMemberUuid();
+    if (!memberUuid) return;
+    setPrizeLoading(true);
+    try {
+      const res = await getMemberRewardHistory(memberUuid, { page, page_size: PRIZE_PAGE_SIZE });
+      setPrizeRows((res?.results || []).map(mapPrizeRow));
+      setPrizeTotal(Number(res?.count ?? 0));
+      setPrizePage(page);
+    } catch {
+      setPrizeRows([]);
+    } finally {
+      setPrizeLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "prize" && prizeRows.length === 0 && !prizeLoading) {
+      loadPrizePage(1);
+    }
+  }, [activeTab, prizeRows.length, prizeLoading, loadPrizePage]);
+
+  const prizeTotalPages = Math.max(1, Math.ceil(prizeTotal / PRIZE_PAGE_SIZE));
   const hasRedeemableRows = rows.length > 0;
+
+  const activeRows = activeTab === "game" ? rows : prizeRows;
+  const activeCurrentPage = activeTab === "game" ? currentPage : prizePage;
+  const activeTotalPages = activeTab === "game" ? totalPages : prizeTotalPages;
+  const handlePageChange = activeTab === "game" ? onPageChange : loadPrizePage;
 
   return (
     <GlassCard
@@ -104,7 +162,7 @@ export default function HistoryDialog({
       style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.38), 0 0 34px rgba(84,233,138,0.08)" }}
     >
       <div
-        className="mb-4 flex items-center justify-between rounded-[10px] px-4 py-3"
+        className="mb-3 flex items-center justify-between rounded-[10px] px-4 py-3"
         style={{
           background: "linear-gradient(90deg, rgba(84,233,138,0.16), rgba(84,233,138,0.06))",
           border: "1px solid rgba(84,233,138,0.10)",
@@ -114,7 +172,7 @@ export default function HistoryDialog({
           className="text-[15px] font-bold uppercase tracking-[0.8px]"
           style={{ color: COLORS.primary, fontFamily: "'Lexend', sans-serif" }}
         >
-          Game History
+          {activeTab === "game" ? "Game History" : "Prize History"}
         </h3>
         <span
           className="rounded-full px-2.5 py-1 text-[10px] font-semibold"
@@ -124,35 +182,63 @@ export default function HistoryDialog({
             fontFamily: "'Lexend', sans-serif",
           }}
         >
-          {rows.length} rewards
+          {activeTab === "game" ? `${rows.length} rewards` : `${prizeTotal} total`}
         </span>
+      </div>
+
+      <div className="mb-3 flex gap-2">
+        {["game", "prize"].map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => setActiveTab(tab)}
+            className="flex-1 rounded-[8px] py-2 text-[11px] font-semibold uppercase tracking-[0.5px] transition-colors"
+            style={{
+              background: activeTab === tab ? "rgba(84,233,138,0.12)" : "rgba(255,255,255,0.04)",
+              border: `1px solid ${activeTab === tab ? "rgba(84,233,138,0.35)" : "rgba(255,255,255,0.08)"}`,
+              color: activeTab === tab ? COLORS.primary : "rgba(255,255,255,0.45)",
+              fontFamily: "'Lexend', sans-serif",
+            }}
+          >
+            {tab === "game" ? "Game History" : "Prize History"}
+          </button>
+        ))}
       </div>
 
       <div className="relative mb-4">
         <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-4 bg-gradient-to-b from-[#101812] to-transparent" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-5 bg-gradient-to-t from-[#101812] to-transparent" />
-        <div className="history-scroll flex max-h-[312px] flex-col gap-2 overflow-y-auto pr-1">
-          {rows.length === 0 ? (
+        <div className="history-scroll flex max-h-[260px] flex-col gap-2 overflow-y-auto pr-1">
+          {prizeLoading && activeTab === "prize" ? (
             <div className="rounded-[10px] border border-white/[0.06] bg-white/[0.035] px-4 py-8 text-center">
               <p
                 className="text-[13px]"
                 style={{ color: COLORS.textMuted, fontFamily: "'Lexend', sans-serif" }}
               >
-                No rewards waiting to redeem.
+                Loading...
+              </p>
+            </div>
+          ) : activeRows.length === 0 ? (
+            <div className="rounded-[10px] border border-white/[0.06] bg-white/[0.035] px-4 py-8 text-center">
+              <p
+                className="text-[13px]"
+                style={{ color: COLORS.textMuted, fontFamily: "'Lexend', sans-serif" }}
+              >
+                {activeTab === "game" ? "No rewards waiting to redeem." : "No prize history yet."}
               </p>
             </div>
           ) : (
-            rows.map((r) => <HistoryRow key={r.id} row={r} />)
+            activeRows.map((r) => <HistoryRow key={r.id} row={r} />)
           )}
         </div>
       </div>
 
-      {totalPages > 1 && (
+      {activeTotalPages > 1 && (
         <div className="mb-4 flex items-center justify-center gap-3">
           <PageButton
             label="Previous page"
-            onClick={() => onPageChange?.(currentPage - 1)}
-            disabled={currentPage <= 1}
+            onClick={() => handlePageChange?.(activeCurrentPage - 1)}
+            disabled={activeCurrentPage <= 1}
           >
             {"<"}
           </PageButton>
@@ -160,36 +246,38 @@ export default function HistoryDialog({
             className="min-w-[58px] text-center text-[12px] font-semibold"
             style={{ color: COLORS.textMuted, fontFamily: "'Lexend', sans-serif" }}
           >
-            {currentPage} / {totalPages}
+            {activeCurrentPage} / {activeTotalPages}
           </span>
           <PageButton
             label="Next page"
-            onClick={() => onPageChange?.(currentPage + 1)}
-            disabled={currentPage >= totalPages}
+            onClick={() => handlePageChange?.(activeCurrentPage + 1)}
+            disabled={activeCurrentPage >= activeTotalPages}
           >
             {">"}
           </PageButton>
         </div>
       )}
 
-      {hasRedeemableRows ? (
-        <GreenCta onClick={onRedeemAll} showPlayIcon={false} className="py-3.5 text-[15px]">
-          Redeem All
-        </GreenCta>
-      ) : (
-        <button
-          type="button"
-          disabled
-          className="inline-flex w-full cursor-not-allowed items-center justify-center rounded-[8px] px-5 py-3.5 text-[15px] font-bold uppercase tracking-wide"
-          style={{
-            backgroundColor: "rgba(132, 143, 137, 0.38)",
-            color: "rgba(255,255,255,0.45)",
-            boxShadow: "0 4px 0 rgba(55, 62, 58, 0.65)",
-            fontFamily: "'Lexend', sans-serif",
-          }}
-        >
-          Redeem All
-        </button>
+      {activeTab === "game" && (
+        hasRedeemableRows ? (
+          <GreenCta onClick={onRedeemAll} showPlayIcon={false} className="py-3.5 text-[15px]">
+            Redeem All
+          </GreenCta>
+        ) : (
+          <button
+            type="button"
+            disabled
+            className="inline-flex w-full cursor-not-allowed items-center justify-center rounded-[8px] px-5 py-3.5 text-[15px] font-bold uppercase tracking-wide"
+            style={{
+              backgroundColor: "rgba(132, 143, 137, 0.38)",
+              color: "rgba(255,255,255,0.45)",
+              boxShadow: "0 4px 0 rgba(55, 62, 58, 0.65)",
+              fontFamily: "'Lexend', sans-serif",
+            }}
+          >
+            Redeem All
+          </button>
+        )
       )}
 
       <style jsx>{`
