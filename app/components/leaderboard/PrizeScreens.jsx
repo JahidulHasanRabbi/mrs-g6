@@ -9,6 +9,53 @@ import {
   getPredictionPrizes,
 } from "./worldcupApi";
 
+const SKEL_BG = "rgba(255,255,255,0.07)";
+
+function CountryPrizeSkeleton() {
+  return (
+    <div className="flex w-full flex-col items-center gap-3 rounded-[8px] p-2" style={{ background: LB_COLORS.panelLight }}>
+      <div className="h-[160px] w-full animate-pulse rounded-[4px]" style={{ background: SKEL_BG }} />
+      <div className="flex flex-col items-center gap-2">
+        <div className="h-7 w-7 animate-pulse rounded-full" style={{ background: SKEL_BG }} />
+        <div className="h-4 w-20 animate-pulse rounded-[4px]" style={{ background: SKEL_BG }} />
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="h-6 w-6 animate-pulse rounded-full" style={{ background: SKEL_BG }} />
+        <div className="h-4 w-28 animate-pulse rounded-[4px]" style={{ background: SKEL_BG }} />
+      </div>
+      <div className="h-9 w-full animate-pulse rounded-[8px]" style={{ background: SKEL_BG }} />
+    </div>
+  );
+}
+
+function PlayerPrizeSkeleton({ index }) {
+  const widths = ["55%", "70%", "45%", "65%"];
+  return (
+    <div className="flex w-full items-center gap-3 rounded-[8px] px-2 py-3" style={{ background: LB_COLORS.panelLight }}>
+      <div className="h-4 w-7 shrink-0 animate-pulse rounded-[4px]" style={{ background: SKEL_BG }} />
+      <div className="flex flex-1 items-center gap-2">
+        <div className="h-3.5 animate-pulse rounded-[4px]" style={{ background: SKEL_BG, width: widths[index % widths.length] }} />
+      </div>
+      <div className="h-[44px] w-[71px] shrink-0 animate-pulse rounded-[4px]" style={{ background: SKEL_BG }} />
+    </div>
+  );
+}
+
+function PredictionPrizeSkeleton() {
+  return (
+    <div className="flex w-full items-center gap-3 rounded-[8px] px-2 py-3" style={{ background: LB_COLORS.panelLight }}>
+      <div className="h-4 w-[48px] shrink-0 animate-pulse rounded-[4px]" style={{ background: SKEL_BG }} />
+      <div className="flex flex-1 justify-center">
+        <div className="h-3.5 w-3/4 animate-pulse rounded-[4px]" style={{ background: SKEL_BG }} />
+      </div>
+      <div className="flex w-[75px] flex-col items-center gap-1">
+        <div className="h-7 w-7 animate-pulse rounded-full" style={{ background: SKEL_BG }} />
+        <div className="h-3 w-14 animate-pulse rounded-[4px]" style={{ background: SKEL_BG }} />
+      </div>
+    </div>
+  );
+}
+
 export function PrizeTabs({ active, onChange }) {
   return (
     <Tabs
@@ -53,14 +100,17 @@ function placeSuffix(rank) {
 
 export function CountryPrizesPanel({ onViewLeaderboards, onViewDetails }) {
   const [rows, setRows] = useState([]);
-  useEffect(() => { getCountryPrizes().then(setRows).catch(() => {}); }, []);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => { getCountryPrizes().then(setRows).catch(() => {}).finally(() => setLoading(false)); }, []);
 
   return (
     <Panel>
       <div className="flex flex-col items-center gap-4">
         <SectionBadge size="lg">Prize Pool</SectionBadge>
 
-        {rows.map((row) => (
+        {loading
+          ? Array.from({ length: 3 }, (_, i) => <CountryPrizeSkeleton key={i} />)
+          : rows.map((row) => (
           <div key={row.rank} className="flex w-full flex-col items-center gap-3 rounded-[8px] p-2" style={{ background: LB_COLORS.panelLight }}>
             <PrizePlaceholder name={row.name} image={row.image} />
             <div className="flex flex-col items-center gap-2">
@@ -96,7 +146,8 @@ export function CountryPrizesPanel({ onViewLeaderboards, onViewDetails }) {
 
 export function PlayerPrizesPanel({ onViewLeaderboards, onViewDetails }) {
   const [rows, setRows] = useState([]);
-  useEffect(() => { getPlayerPrizes().then(setRows).catch(() => {}); }, []);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => { getPlayerPrizes().then(setRows).catch(() => {}).finally(() => setLoading(false)); }, []);
 
   return (
     <Panel>
@@ -109,7 +160,9 @@ export function PlayerPrizesPanel({ onViewLeaderboards, onViewDetails }) {
             <div className="flex-1 text-[10px] uppercase" style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}>PLAYERS</div>
             <div className="w-[70px] text-center text-[10px] uppercase" style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}>PRIZE</div>
           </div>
-          {rows.map((p) => (
+          {loading
+            ? Array.from({ length: 5 }, (_, i) => <PlayerPrizeSkeleton key={i} index={i} />)
+            : rows.map((p) => (
             <div
               key={p.rank}
               className="flex w-full items-center gap-3 rounded-[8px] px-2 py-3"
@@ -147,7 +200,8 @@ export function PlayerPrizesPanel({ onViewLeaderboards, onViewDetails }) {
 
 export function PredictionPrizesPanel({ onViewPredictions }) {
   const [rows, setRows] = useState([]);
-  useEffect(() => { getPredictionPrizes().then(setRows).catch(() => {}); }, []);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => { getPredictionPrizes().then(setRows).catch(() => {}).finally(() => setLoading(false)); }, []);
 
   return (
     <Panel>
@@ -161,7 +215,9 @@ export function PredictionPrizesPanel({ onViewPredictions }) {
             <div className="w-[75px] text-center text-[10px] uppercase" style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}>PRIZE</div>
           </div>
 
-          {rows.map((r, i) => {
+          {loading
+            ? Array.from({ length: 4 }, (_, i) => <PredictionPrizeSkeleton key={i} />)
+            : rows.map((r, i) => {
             const rank = i + 1;
             const color = placeColor(rank);
             return (
