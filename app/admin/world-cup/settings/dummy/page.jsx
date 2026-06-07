@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import FormChrome, { INPUT_BASE } from "../../../../components/admin/world-cup/FormChrome";
+import { normalizeCountryOptions } from "../../../../components/admin/world-cup/countryOptions";
 import {
   getWorldCupCountries,
   getWorldCupDummyPlayer,
@@ -23,9 +24,12 @@ function CountrySelect({ value, onChange, countries }) {
     <div className="relative">
       <select value={value} onChange={(e) => onChange(e.target.value)} className={`${INPUT_BASE} appearance-none pr-10`}>
         <option value="" style={{ background: "#041502", color: "white" }}>— Select country —</option>
-        {countries.map((c) => (
-          <option key={c.uuid} value={c.uuid} style={{ background: "#041502", color: "white" }}>{c.name}</option>
-        ))}
+        {countries.map((c) => {
+          const countryValue = c.id ?? c.country ?? c.uuid;
+          return (
+            <option key={countryValue} value={countryValue} style={{ background: "#041502", color: "white" }}>{c.name}</option>
+          );
+        })}
       </select>
       <ChevronIcon />
     </div>
@@ -50,13 +54,15 @@ function DummyForm() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    getWorldCupCountries().then((d) => setCountryOptions(d.results ?? d ?? [])).catch(() => {});
+    getWorldCupCountries().then((d) => setCountryOptions(normalizeCountryOptions(d))).catch(() => {
+      setCountryOptions(normalizeCountryOptions([]));
+    });
 
     if (editingUuid) {
       getWorldCupDummyPlayer(editingUuid).then((d) => {
         setForm({
           name: d.player_name ?? "",
-          countryUuid: d.country_uuid ?? "",
+          countryUuid: d.country ?? d.country_uuid ?? "",
           totalPoints: String(d.total_points ?? ""),
           totalPrediction: String(d.total_prediction ?? ""),
           totalWin: String(d.total_win ?? ""),
@@ -78,7 +84,7 @@ function DummyForm() {
     try {
       const payload = {
         player_name: form.name,
-        country_uuid: form.countryUuid,
+        country: form.countryUuid,
         total_points: toNum(form.totalPoints),
         total_prediction: toNum(form.totalPrediction),
         total_win: toNum(form.totalWin),

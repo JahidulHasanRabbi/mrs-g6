@@ -86,10 +86,15 @@ const TIER_LABELS = {
 };
 
 export async function getCountriesByTier() {
-  const data = await getWorldCupCountryList();
+  let data;
+  try {
+    data = await getWorldCupCountryList();
+  } catch {
+    data = null;
+  }
   // data: { tiers: [{ tier, count, countries: [{ id, name }] }] }
   const result = {};
-  for (const t of data.tiers ?? []) {
+  for (const t of data?.tiers ?? []) {
     const label = TIER_LABELS[t.tier] ?? `Tier ${t.tier}`;
     result[label] = (t.countries ?? []).map((c) => ({
       id: c.id,
@@ -97,6 +102,18 @@ export async function getCountriesByTier() {
       name: c.name,
       tier: t.tier,
     }));
+  }
+  if (Object.keys(result).length > 0) return result;
+
+  for (const [id, country] of Object.entries(COUNTRY_MAP)) {
+    const label = TIER_LABELS[country.tier] ?? `Tier ${country.tier}`;
+    if (!result[label]) result[label] = [];
+    result[label].push({
+      id: Number(id),
+      code: country.code,
+      name: country.name,
+      tier: country.tier,
+    });
   }
   return result;
 }

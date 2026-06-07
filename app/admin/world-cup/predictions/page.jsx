@@ -5,27 +5,36 @@ import { useRouter } from "next/navigation";
 import { Pagination } from "../../../components/admin/members/DataTable";
 import SettingsSection from "../../../components/admin/world-cup/SettingsSection";
 import MatchesTable from "../../../components/admin/world-cup/MatchesTable";
-import { getWorldCupMatches } from "../../../api/adminApi";
+import { normalizeCountryOptions } from "../../../components/admin/world-cup/countryOptions";
+import { getWorldCupCountries, getWorldCupMatches } from "../../../api/adminApi";
 
 const PAGE_SIZE = 7;
 
 const STATUS_DISPLAY = { 1: "Upcoming", 2: "Ongoing", 3: "Ended" };
 
-function normalizeMatch(m) {
+function countryName(value, countriesById) {
+  if (value == null || value === "") return "";
+  return countriesById.get(String(value)) ?? String(value);
+}
+
+function normalizeMatch(m, countriesById = new Map()) {
   const kickoff = m.kickoff_at ? new Date(m.kickoff_at) : null;
+  const teamHome = m.team_home ?? m.team_home_uuid;
+  const teamAway = m.team_away ?? m.team_away_uuid;
+  const winner = m.winner ?? m.winner_uuid;
   return {
     id: m.uuid,
     uuid: m.uuid,
     matchNo: m.group_label ?? "",
-    team1: m.team_home_name ?? "",
-    team2: m.team_away_name ?? "",
-    team1Uuid: m.team_home_uuid,
-    team2Uuid: m.team_away_uuid,
+    team1: m.team_home_name ?? countryName(teamHome, countriesById),
+    team2: m.team_away_name ?? countryName(teamAway, countriesById),
+    team1Uuid: teamHome,
+    team2Uuid: teamAway,
     date: kickoff ? kickoff.toISOString().slice(0, 10) : "",
     time: kickoff ? kickoff.toTimeString().slice(0, 5) : "",
     predictionA: "-",
     predictionB: "-",
-    winner: m.winner_name ?? "",
+    winner: m.winner_name ?? countryName(winner, countriesById),
     status: STATUS_DISPLAY[m.status] ?? "Upcoming",
     _raw: m,
   };
@@ -37,9 +46,16 @@ export default function PredictionsPage() {
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    getWorldCupMatches().then((d) => {
-      setMatches((d.results ?? d ?? []).map(normalizeMatch));
-    }).catch(() => {});
+    Promise.all([
+      getWorldCupCountries().catch(() => []),
+      getWorldCupMatches().catch(() => []),
+    ]).then(([countriesRes, matchesRes]) => {
+      const countries = normalizeCountryOptions(countriesRes);
+      const countriesById = new Map(
+        countries.map((c) => [String(c.id ?? c.country ?? c.uuid), c.name]),
+      );
+      setMatches((matchesRes.results ?? matchesRes ?? []).map((m) => normalizeMatch(m, countriesById)));
+    });
   }, []);
 
   const total = matches.length;

@@ -776,7 +776,7 @@ export async function archiveWorldCupMatch(uuid) {
   return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.MATCH_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
 }
 export async function settleWorldCupMatch(uuid, winnerUuid) {
-  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.MATCH_SETTLE(uuid), { method: 'POST', body: { winner_uuid: winnerUuid } }, true, 'admin');
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.MATCH_SETTLE(uuid), { method: 'POST', body: { winner: winnerUuid } }, true, 'admin');
 }
 
 // Dummy Players CRUD

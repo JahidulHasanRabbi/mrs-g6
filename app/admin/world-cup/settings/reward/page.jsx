@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import FormChrome, { INPUT_BASE } from "../../../../components/admin/world-cup/FormChrome";
+import { normalizeCountryOptions } from "../../../../components/admin/world-cup/countryOptions";
 import {
   getWorldCupCountries,
   getWorldCupRewardItem,
@@ -43,9 +44,12 @@ function CountrySelect({ value, onChange, countries }) {
     <div className="relative">
       <select value={value} onChange={(e) => onChange(e.target.value)} className={`${INPUT_BASE} appearance-none pr-10`}>
         <option value="" style={{ background: "#041502", color: "white" }}>— None —</option>
-        {countries.map((c) => (
-          <option key={c.uuid} value={c.uuid} style={{ background: "#041502", color: "white" }}>{c.name}</option>
-        ))}
+        {countries.map((c) => {
+          const countryValue = c.id ?? c.country ?? c.uuid;
+          return (
+            <option key={countryValue} value={countryValue} style={{ background: "#041502", color: "white" }}>{c.name}</option>
+          );
+        })}
       </select>
       <ChevronIcon />
     </div>
@@ -82,7 +86,9 @@ function RewardForm() {
   const fileRef = useRef(null);
 
   useEffect(() => {
-    getWorldCupCountries().then((d) => setCountryOptions(d.results ?? d ?? [])).catch(() => {});
+    getWorldCupCountries().then((d) => setCountryOptions(normalizeCountryOptions(d))).catch(() => {
+      setCountryOptions(normalizeCountryOptions([]));
+    });
 
     if (editingUuid) {
       getWorldCupRewardItem(editingUuid).then((r) => {
@@ -90,7 +96,7 @@ function RewardForm() {
           name: r.reward_name ?? "",
           quantity: String(r.quantity ?? ""),
           itemType: r.item_type ?? 2,
-          countryUuid: r.country_uuid ?? "",
+          countryUuid: r.country ?? r.country_uuid ?? "",
           description: r.description ?? "",
           imageFile: null,
         });
@@ -119,7 +125,7 @@ function RewardForm() {
       payload.append("reward_name", form.name);
       payload.append("quantity", Number(String(form.quantity).replace(/[,\s]/g, "")) || 0);
       payload.append("item_type", form.itemType);
-      if (form.countryUuid) payload.append("country_uuid", form.countryUuid);
+      if (form.countryUuid) payload.append("country", form.countryUuid);
       if (form.description) payload.append("description", form.description);
       if (form.imageFile) payload.append("image", form.imageFile);
 

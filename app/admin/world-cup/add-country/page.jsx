@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import FormChrome, { INPUT_BASE } from "../../../components/admin/world-cup/FormChrome";
+import { normalizeCountryOptions } from "../../../components/admin/world-cup/countryOptions";
 import {
   getWorldCupCountries,
   getWorldCupDummyCountry,
@@ -27,11 +28,14 @@ function CountrySelect({ value, onChange, countries }) {
         className={`${INPUT_BASE} appearance-none pr-10`}
       >
         <option value="" style={{ background: "#041502", color: "white" }}>— Select country —</option>
-        {countries.map((c) => (
-          <option key={c.uuid} value={c.uuid} style={{ background: "#041502", color: "white" }}>
-            {c.name}
-          </option>
-        ))}
+        {countries.map((c) => {
+          const countryValue = c.id ?? c.country ?? c.uuid;
+          return (
+            <option key={countryValue} value={countryValue} style={{ background: "#041502", color: "white" }}>
+              {c.name}
+            </option>
+          );
+        })}
       </select>
       <ChevronIcon />
     </div>
@@ -54,13 +58,15 @@ function AddCountryForm() {
 
   useEffect(() => {
     getWorldCupCountries().then((d) => {
-      setCountryOptions(d.results ?? d ?? []);
-    }).catch(() => {});
+      setCountryOptions(normalizeCountryOptions(d));
+    }).catch(() => {
+      setCountryOptions(normalizeCountryOptions([]));
+    });
 
     if (editingUuid) {
       getWorldCupDummyCountry(editingUuid).then((d) => {
         setForm({
-          countryUuid: d.country_uuid ?? "",
+          countryUuid: d.country ?? d.country_uuid ?? "",
           totalPoints: String(d.total_points ?? ""),
           totalUsers: String(d.total_users ?? ""),
         });
@@ -78,7 +84,7 @@ function AddCountryForm() {
     setError("");
     try {
       const payload = {
-        country_uuid: form.countryUuid,
+        country: form.countryUuid,
         total_points: toNum(form.totalPoints),
         total_users: toNum(form.totalUsers),
       };

@@ -8,9 +8,11 @@ import BannerTable from "../../../components/admin/world-cup/BannerTable";
 import RewardTable from "../../../components/admin/world-cup/RewardTable";
 import PlayerTable from "../../../components/admin/world-cup/PlayerTable";
 import ConfirmArchive from "../../../components/admin/world-cup/ConfirmArchive";
+import { normalizeCountryOptions } from "../../../components/admin/world-cup/countryOptions";
 import {
   getWorldCupBanners,
   archiveWorldCupBanner,
+  getWorldCupCountries,
   getWorldCupRewardItems,
   archiveWorldCupRewardItem,
   getWorldCupDummyPlayers,
@@ -45,25 +47,30 @@ function normalizeBanner(b) {
   };
 }
 
-function normalizeReward(r) {
+function countryName(value, countriesById) {
+  if (value == null || value === "") return "";
+  return countriesById.get(String(value)) ?? String(value);
+}
+
+function normalizeReward(r, countriesById = new Map()) {
   return {
     id: r.uuid,
     uuid: r.uuid,
     name: r.reward_name,
     quantity: r.quantity,
     itemType: r.item_type_display ?? String(r.item_type),
-    country: r.country_code ?? r.country_name ?? "",
+    country: r.country_name ?? r.country_code ?? countryName(r.country, countriesById),
     description: r.description,
     image: r.image,
   };
 }
 
-function normalizePlayer(p) {
+function normalizePlayer(p, countriesById = new Map()) {
   return {
     id: p.uuid,
     uuid: p.uuid,
     name: p.player_name,
-    country: p.country_code ?? p.country_name ?? "",
+    country: p.country_name ?? p.country_code ?? countryName(p.country, countriesById),
     totalPoints: p.total_points ?? 0,
     totalWin: p.total_win ?? 0,
     winningStreak: p.winning_streak ?? 0,
@@ -85,9 +92,20 @@ export default function WorldCupSettingsPage() {
   const [archiveTarget, setArchiveTarget] = useState(null);
 
   useEffect(() => {
-    getWorldCupBanners().then((d) => setBanners((d.results ?? d ?? []).map(normalizeBanner))).catch(() => {});
-    getWorldCupRewardItems().then((d) => setRewards((d.results ?? d ?? []).map(normalizeReward))).catch(() => {});
-    getWorldCupDummyPlayers().then((d) => setPlayers((d.results ?? d ?? []).map(normalizePlayer))).catch(() => {});
+    Promise.all([
+      getWorldCupCountries().catch(() => []),
+      getWorldCupBanners().catch(() => []),
+      getWorldCupRewardItems().catch(() => []),
+      getWorldCupDummyPlayers().catch(() => []),
+    ]).then(([countriesRes, bannersRes, rewardsRes, playersRes]) => {
+      const countries = normalizeCountryOptions(countriesRes);
+      const countriesById = new Map(
+        countries.map((c) => [String(c.id ?? c.country ?? c.uuid), c.name]),
+      );
+      setBanners((bannersRes.results ?? bannersRes ?? []).map(normalizeBanner));
+      setRewards((rewardsRes.results ?? rewardsRes ?? []).map((r) => normalizeReward(r, countriesById)));
+      setPlayers((playersRes.results ?? playersRes ?? []).map((p) => normalizePlayer(p, countriesById)));
+    });
   }, []);
 
   const pagedBanners = useMemo(() => banners.slice((bannerPage - 1) * PAGE_SIZE, bannerPage * PAGE_SIZE), [banners, bannerPage]);

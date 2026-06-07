@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import FormChrome, { INPUT_BASE } from "../../../../components/admin/world-cup/FormChrome";
+import { normalizeCountryOptions } from "../../../../components/admin/world-cup/countryOptions";
 import {
   getWorldCupCountries,
   getWorldCupMatch,
@@ -46,13 +47,20 @@ function CountrySelect({ value, onChange, countries, placeholder }) {
     <div className="relative">
       <select value={value} onChange={(e) => onChange(e.target.value)} className={`${INPUT_BASE} appearance-none pr-10`}>
         {placeholder && <option value="" style={{ background: "#041502", color: "white" }}>{placeholder}</option>}
-        {countries.map((c) => (
-          <option key={c.uuid} value={c.uuid} style={{ background: "#041502", color: "white" }}>{c.name}</option>
-        ))}
+        {countries.map((c) => {
+          const countryValue = c.id ?? c.country ?? c.uuid;
+          return (
+            <option key={countryValue} value={countryValue} style={{ background: "#041502", color: "white" }}>{c.name}</option>
+          );
+        })}
       </select>
       <ChevronIcon />
     </div>
   );
+}
+
+function countryValue(country) {
+  return country?.id ?? country?.country ?? country?.uuid;
 }
 
 function MatchForm() {
@@ -76,7 +84,9 @@ function MatchForm() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    getWorldCupCountries().then((d) => setCountryOptions(d.results ?? d ?? [])).catch(() => {});
+    getWorldCupCountries().then((d) => setCountryOptions(normalizeCountryOptions(d))).catch(() => {
+      setCountryOptions(normalizeCountryOptions([]));
+    });
 
     if (editingUuid) {
       getWorldCupMatch(editingUuid).then((m) => {
@@ -84,19 +94,36 @@ function MatchForm() {
         setIsSettled(m.status === 3);
         setForm({
           groupLabel: m.group_label ?? "",
-          team1Uuid: m.team_home_uuid ?? "",
-          team2Uuid: m.team_away_uuid ?? "",
+          team1Uuid: m.team_home ?? m.team_home_uuid ?? "",
+          team2Uuid: m.team_away ?? m.team_away_uuid ?? "",
           date: kickoff ? kickoff.toISOString().slice(0, 10) : "",
           timeH: kickoff ? String(kickoff.getHours()).padStart(2, "0") : "12",
           timeM: kickoff ? String(kickoff.getMinutes()).padStart(2, "0") : "00",
           status: m.status === 3 ? 2 : (m.status ?? 1),
-          winnerUuid: m.winner_uuid ?? "",
+          winnerUuid: m.winner ?? m.winner_uuid ?? "",
         });
       }).catch(() => {});
     }
   }, [editingUuid]);
 
   const set = (k) => (v) => setForm((p) => ({ ...p, [k]: typeof v === "object" && v?.target ? v.target.value : v }));
+  const setTeam = (key, otherKey) => (v) => {
+    const nextValue = typeof v === "object" && v?.target ? v.target.value : v;
+    setForm((p) => {
+      const otherValue = String(p[otherKey]) === String(nextValue) ? "" : p[otherKey];
+      const nextTeam1 = key === "team1Uuid" ? nextValue : otherValue;
+      const nextTeam2 = key === "team2Uuid" ? nextValue : otherValue;
+      const winnerStillValid =
+        String(p.winnerUuid) === String(nextTeam1) ||
+        String(p.winnerUuid) === String(nextTeam2);
+      return {
+        ...p,
+        [key]: nextValue,
+        [otherKey]: otherValue,
+        winnerUuid: winnerStillValid ? p.winnerUuid : "",
+      };
+    });
+  };
 
   const buildKickoff = () => {
     if (!form.date) return null;
@@ -110,8 +137,8 @@ function MatchForm() {
     setError("");
     try {
       const payload = {
-        team_home_uuid: form.team1Uuid,
-        team_away_uuid: form.team2Uuid,
+        team_home: form.team1Uuid,
+        team_away: form.team2Uuid,
         group_label: form.groupLabel || undefined,
         kickoff_at: buildKickoff(),
         status: Number(form.status),
@@ -125,8 +152,9 @@ function MatchForm() {
         savedUuid = result.uuid;
       }
 
-      // If user picked a winner, settle the match.
-      if (form.winnerUuid && savedUuid) {
+      // If user picked a winner, settle the match. Backend requires the match
+      // to be closed/ongoing before a winner can be declared.
+      if (form.winnerUuid && savedUuid && Number(form.status) === 2) {
         await settleWorldCupMatch(savedUuid, form.winnerUuid);
       }
 
@@ -140,8 +168,10 @@ function MatchForm() {
 
   // Teams available in the winner dropdown (only when we have both teams).
   const winnerOptions = countryOptions.filter(
-    (c) => c.uuid === form.team1Uuid || c.uuid === form.team2Uuid,
+    (c) => String(countryValue(c)) === String(form.team1Uuid) || String(countryValue(c)) === String(form.team2Uuid),
   );
+  const team1Options = countryOptions.filter((c) => String(countryValue(c)) !== String(form.team2Uuid));
+  const team2Options = countryOptions.filter((c) => String(countryValue(c)) !== String(form.team1Uuid));
 
   return (
     <FormChrome
@@ -161,11 +191,11 @@ function MatchForm() {
         </div>
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">Country 1 (Home)</label>
-          <CountrySelect value={form.team1Uuid} onChange={set("team1Uuid")} countries={countryOptions} placeholder="— Select —" />
+          <CountrySelect value={form.team1Uuid} onChange={setTeam("team1Uuid", "team2Uuid")} countries={team1Options} placeholder="— Select —" />
         </div>
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">Country 2 (Away)</label>
-          <CountrySelect value={form.team2Uuid} onChange={set("team2Uuid")} countries={countryOptions} placeholder="— Select —" />
+          <CountrySelect value={form.team2Uuid} onChange={setTeam("team2Uuid", "team1Uuid")} countries={team2Options} placeholder="— Select —" />
         </div>
 
         <div>
@@ -194,10 +224,13 @@ function MatchForm() {
           <label className="mb-2 block text-[14px] font-semibold text-white">Declare Winner (settles match)</label>
           <CountrySelect
             value={form.winnerUuid}
-            onChange={set("winnerUuid")}
+            onChange={Number(form.status) === 2 ? set("winnerUuid") : () => {}}
             countries={winnerOptions}
             placeholder="— No winner yet —"
           />
+          <p className="mt-2 text-[11px] leading-[16px] text-white/55">
+            Match status must be Ongoing before declaring a winner.
+          </p>
         </div>
       </div>
     </FormChrome>
