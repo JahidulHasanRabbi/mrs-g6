@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import PlayerTable from "./PlayerTable";
 import CountryRankingTable from "./CountryRankingTable";
 
@@ -144,24 +144,24 @@ function FilterDropdown({ label, value, options, onChange }) {
   );
 }
 
-const WIN_OPTIONS = [
+export const WIN_OPTIONS = [
   { value: "all", label: "All" },
   { value: "gte10", label: "≥ 10" },
   { value: "gte20", label: "≥ 20" },
   { value: "gte30", label: "≥ 30" },
 ];
 
-const STREAK_OPTIONS = [
+export const STREAK_OPTIONS = [
   { value: "all", label: "All" },
   { value: "gte5", label: "≥ 5" },
   { value: "gte10", label: "≥ 10" },
   { value: "gte15", label: "≥ 15" },
 ];
 
-function thresholdFor(value) {
-  if (!value || value === "all") return 0;
+export function thresholdFor(value) {
+  if (!value || value === "all") return undefined;
   const m = value.match(/gte(\d+)/);
-  return m ? Number(m[1]) : 0;
+  return m ? Number(m[1]) : undefined;
 }
 
 export default function RealTimeRanking({
@@ -169,36 +169,17 @@ export default function RealTimeRanking({
   onChangeView,
   players,
   countries,
-  onEditPlayer,
-  onEditCountry,
+  winFilter,
+  streakFilter,
+  onChangeWinFilter,
+  onChangeStreakFilter,
+  refreshing,
+  onRefresh,
   onAddRanking,
   onAddCountry,
 }) {
-  const [winFilter, setWinFilter] = useState("all");
-  const [streakFilter, setStreakFilter] = useState("all");
-  const [refreshing, setRefreshing] = useState(false);
-
   const isGlobal = view === "global";
-
-  const filteredPlayers = useMemo(() => {
-    const winMin = thresholdFor(winFilter);
-    const streakMin = thresholdFor(streakFilter);
-    if (!winMin && !streakMin) return players;
-    return players.filter(
-      (p) => (p.totalWin ?? 0) >= winMin && (p.winningStreak ?? 0) >= streakMin,
-    );
-  }, [players, winFilter, streakFilter]);
-
-  const onRefresh = () => {
-    if (refreshing) return;
-    setRefreshing(true);
-    setWinFilter("all");
-    setStreakFilter("all");
-    setTimeout(() => setRefreshing(false), 600);
-  };
-
-  const visibleTotal = isGlobal ? filteredPlayers.length : countries.length;
-  const baseTotal = isGlobal ? players.length : countries.length;
+  const visibleTotal = isGlobal ? players.length : countries.length;
 
   return (
     <section className="overflow-hidden rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
@@ -220,19 +201,19 @@ export default function RealTimeRanking({
                   label="Total Win"
                   value={winFilter}
                   options={WIN_OPTIONS}
-                  onChange={setWinFilter}
+                  onChange={onChangeWinFilter}
                 />
                 <FilterDropdown
                   label="Winning Streak"
                   value={streakFilter}
                   options={STREAK_OPTIONS}
-                  onChange={setStreakFilter}
+                  onChange={onChangeStreakFilter}
                 />
-                <span className="hidden text-[11px] text-white/60 sm:inline">
-                  Showing {visibleTotal} of {baseTotal}
-                </span>
               </>
             )}
+            <span className="hidden text-[11px] text-white/60 sm:inline">
+              Showing {visibleTotal}
+            </span>
             <button
               type="button"
               onClick={onRefresh}
@@ -257,9 +238,9 @@ export default function RealTimeRanking({
 
       <div className="px-2 pb-2">
         {isGlobal ? (
-          <PlayerTable players={filteredPlayers} onEdit={onEditPlayer} />
+          <PlayerTable players={players} />
         ) : (
-          <CountryRankingTable countries={countries} onEdit={onEditCountry} />
+          <CountryRankingTable countries={countries} />
         )}
       </div>
     </section>

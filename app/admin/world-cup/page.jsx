@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import DashboardMetrics from "../../components/admin/world-cup/DashboardMetrics";
-import RealTimeRanking from "../../components/admin/world-cup/RealTimeRanking";
-import { getWorldCupRanking } from "../../api/adminApi";
+import RealTimeRanking, { thresholdFor } from "../../components/admin/world-cup/RealTimeRanking";
+import { getWorldCupRankingRealtime } from "../../api/adminApi";
+import { periodFilterParams } from "../../components/admin/world-cup/periodFilters";
 
 function normalizePlayer(p) {
   return {
@@ -33,31 +34,68 @@ function normalizeCountry(c) {
 export default function WorldCupDashboardPage() {
   const router = useRouter();
   const [view, setView] = useState("global");
+  const [period, setPeriod] = useState("All");
+  const [range, setRange] = useState({ from: null, to: null });
+  const [winFilter, setWinFilter] = useState("all");
+  const [streakFilter, setStreakFilter] = useState("all");
   const [players, setPlayers] = useState([]);
   const [countries, setCountries] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const filterParams = periodFilterParams(period, range);
+  // total_win/winning_streak thresholds only apply to the player board
+  const winMin = thresholdFor(winFilter);
+  const streakMin = thresholdFor(streakFilter);
+
+  const loadRanking = () => {
+    setRefreshing(true);
+    const playerParams = { ...filterParams };
+    if (winMin != null) playerParams.total_win = winMin;
+    if (streakMin != null) playerParams.winning_streak = streakMin;
+
+    Promise.all([
+      getWorldCupRankingRealtime(playerParams).then((d) => {
+        const rows = d.results ?? d ?? [];
+        setPlayers(rows.map(normalizePlayer));
+      }).catch(() => {}),
+      getWorldCupRankingRealtime({ ...filterParams, scope: "country" }).then((d) => {
+        const rows = d.results ?? d ?? [];
+        setCountries(rows.map(normalizeCountry));
+      }).catch(() => {}),
+    ]).finally(() => setRefreshing(false));
+  };
 
   useEffect(() => {
-    getWorldCupRanking().then((d) => {
-      const rows = d.results ?? d ?? [];
-      setPlayers(rows.map(normalizePlayer));
-    }).catch(() => {});
+    loadRanking();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [period, range.from, range.to, winFilter, streakFilter]);
 
-    getWorldCupRanking({ scope: "country" }).then((d) => {
-      const rows = d.results ?? d ?? [];
-      setCountries(rows.map(normalizeCountry));
-    }).catch(() => {});
-  }, []);
+  const onRefresh = () => {
+    if (refreshing) return;
+    setWinFilter("all");
+    setStreakFilter("all");
+    loadRanking();
+  };
 
   return (
     <div className="flex flex-col gap-6">
-      <DashboardMetrics />
+      <DashboardMetrics
+        period={period}
+        range={range}
+        onPeriodChange={setPeriod}
+        onRangeChange={setRange}
+      />
       <RealTimeRanking
         view={view}
         onChangeView={setView}
         players={players}
         countries={countries}
-        onEditPlayer={(p) => router.push(`/admin/world-cup/add-ranking?uuid=${p._raw.uuid ?? ""}`)}
-        onEditCountry={(c) => router.push(`/admin/world-cup/add-country?uuid=${c._raw.uuid ?? ""}`)}
+        winFilter={winFilter}
+        streakFilter={streakFilter}
+        onChangeWinFilter={setWinFilter}
+        onChangeStreakFilter={setStreakFilter}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         onAddRanking={() => router.push("/admin/world-cup/add-ranking")}
         onAddCountry={() => router.push("/admin/world-cup/add-country")}
       />

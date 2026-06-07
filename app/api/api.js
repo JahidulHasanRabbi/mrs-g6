@@ -145,6 +145,8 @@ export const ENDPOINTS = {
     DUMMY_COUNTRY: (uuid) => `/worldcup/dummy-countries/${uuid}/`,
     DUMMY_COUNTRY_ARCHIVE: (uuid) => `/worldcup/dummy-countries/${uuid}/archive/`,
     RANKING: '/worldcup/ranking/',
+    RANKING_REALTIME: '/worldcup/ranking/realtime/',
+    DASHBOARD_KPI: '/worldcup/dashboard/kpi/',
   },
   CRM: {
     // User Access Panel

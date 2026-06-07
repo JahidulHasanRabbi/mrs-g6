@@ -1,7 +1,5 @@
 "use client";
 
-import RowActions from "./RowActions";
-
 const HEADER_BG = "linear-gradient(180deg, #141828 0%, #333333 99.75%)";
 
 function fmt(n) {
@@ -9,7 +7,7 @@ function fmt(n) {
   return Number(n).toLocaleString("en-US");
 }
 
-export default function PlayerTable({ players = [], onEdit, onArchive }) {
+export default function PlayerTable({ players = [] }) {
   return (
     <div className="overflow-hidden rounded-[12px] border border-white/5">
       <div className="overflow-x-auto">
@@ -24,13 +22,12 @@ export default function PlayerTable({ players = [], onEdit, onArchive }) {
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Total Prediction</th>
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Total Win</th>
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Winning Streak</th>
-              <th className="px-5 py-4 text-right text-[13px] font-semibold text-[#fbeed2]">Action</th>
             </tr>
           </thead>
           <tbody>
             {players.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-5 py-10 text-center text-[13px] text-white/50">
+                <td colSpan={8} className="px-5 py-10 text-center text-[13px] text-white/50">
                   No dummy player data yet.
                 </td>
               </tr>
@@ -45,13 +42,6 @@ export default function PlayerTable({ players = [], onEdit, onArchive }) {
                   <td className="px-5 py-5 text-[12px] text-white">{p.totalPrediction}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{p.totalWin}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{p.winningStreak}</td>
-                  <td className="px-5 py-5">
-                    <RowActions
-                      onEdit={() => onEdit?.(p)}
-                      onArchive={() => onArchive?.(p)}
-                      showArchive={false}
-                    />
-                  </td>
                 </tr>
               ))
             )}

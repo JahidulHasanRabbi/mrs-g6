@@ -1,7 +1,5 @@
 "use client";
 
-import RowActions from "./RowActions";
-
 const HEADER_BG = "linear-gradient(180deg, #141828 0%, #333333 99.75%)";
 
 function fmt(n) {
@@ -9,7 +7,7 @@ function fmt(n) {
   return Number(n).toLocaleString("en-US");
 }
 
-export default function CountryRankingTable({ countries = [], onEdit }) {
+export default function CountryRankingTable({ countries = [] }) {
   return (
     <div className="overflow-hidden rounded-[12px] border border-white/5">
       <div className="overflow-x-auto">
@@ -20,13 +18,12 @@ export default function CountryRankingTable({ countries = [], onEdit }) {
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Country</th>
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Total Points</th>
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Total Users</th>
-              <th className="px-5 py-4 text-right text-[13px] font-semibold text-[#fbeed2]">Action</th>
             </tr>
           </thead>
           <tbody>
             {countries.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-5 py-10 text-center text-[13px] text-white/50">
+                <td colSpan={4} className="px-5 py-10 text-center text-[13px] text-white/50">
                   No country rankings yet.
                 </td>
               </tr>
@@ -37,9 +34,6 @@ export default function CountryRankingTable({ countries = [], onEdit }) {
                   <td className="px-5 py-5 text-[12px] text-white">{c.country}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{fmt(c.totalPoints)}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{fmt(c.totalUsers)}</td>
-                  <td className="px-5 py-5">
-                    <RowActions onEdit={() => onEdit?.(c)} showArchive={false} />
-                  </td>
                 </tr>
               ))
             )}

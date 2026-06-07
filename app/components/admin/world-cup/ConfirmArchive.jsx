@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 
 const GOLD_BG = "linear-gradient(96deg, #dc9d16 1%, #f2cb7a 98%)";
 
@@ -17,15 +18,15 @@ export default function ConfirmArchive({ open, title, message, onConfirm, onCanc
     };
   }, [open, busy, onCancel]);
 
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
-  return (
+  const dialog = (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
       <button
         type="button"
         aria-label="Close confirmation"
         onClick={busy ? undefined : onCancel}
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/70"
       />
       <div className="relative w-full max-w-[460px] rounded-[16px] border border-[#f2cb7a]/40 bg-[#041502] p-6 shadow-[0_-4px_24px_-2px_rgba(222,162,32,0.45)]">
         <h2
@@ -60,4 +61,6 @@ export default function ConfirmArchive({ open, title, message, onConfirm, onCanc
       </div>
     </div>
   );
+
+  return createPortal(dialog, document.body);
 }

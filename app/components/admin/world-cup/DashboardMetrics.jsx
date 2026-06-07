@@ -1,13 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import RangePicker from "../RangePicker";
+import { getWorldCupDashboardKpi } from "../../../api/adminApi";
+import { PERIOD_OPTIONS, periodFilterParams } from "./periodFilters";
 
 const ASSETS = "/assets/admin/world-cup";
 const GOLD_BG = "linear-gradient(96deg, #dc9d16 1%, #f2cb7a 98%)";
 const GOLD_TEXT_BG = "linear-gradient(106deg, #dc9d16 1%, #f2cb7a 98%)";
 const CARD_BG = "linear-gradient(178deg, #11320e 0%, #031101 99.749%)";
 const ICON_TILE_BG = "linear-gradient(175deg, #141828 0%, #333333 99.749%)";
+
+// KPI values can run long (e.g. "RM 1,234,567.89"); scale the value font with
+// the viewport — same approach as the PIC dashboard's KpiCard — so big numbers
+// stay on one line instead of clipping or overflowing the card.
+const KPI_VALUE_FONT = "clamp(20px, 1.7vw, 30px)";
+
+function kpiValueFont(value, currency) {
+  const length = `${currency ? `${currency} ` : ""}${value ?? ""}`.length;
+  if (length >= 14) return "clamp(16px, 1.15vw, 23px)";
+  if (length >= 12) return "clamp(18px, 1.35vw, 26px)";
+  return KPI_VALUE_FONT;
+}
 
 function CalendarIcon({ size = 14, stroke = "currentColor" }) {
   return (
@@ -39,14 +53,16 @@ function RefreshIcon({ size = 20, spinning = false }) {
   );
 }
 
-function MetricCard({ icon, iconSize = 24, label, value, currency, trend }) {
-  const trendUp = trend === "up";
+function MetricCard({ icon, iconSize = 24, label, value, currency, changePercent, changeDirection }) {
+  const hasComparison = changePercent != null && changeDirection != null;
+  const trendUp = changeDirection !== 2;
+  const valueFont = kpiValueFont(value, currency);
   return (
     <div
-      className="flex flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-6"
+      className="flex h-full flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-6"
       style={{ backgroundImage: CARD_BG }}
     >
-      <div className="flex w-full items-start gap-4">
+      <div className="flex w-full flex-1 items-start gap-4">
         <div
           className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[4px]"
           style={{
@@ -73,42 +89,54 @@ function MetricCard({ icon, iconSize = 24, label, value, currency, trend }) {
               fontFamily: "'DM Sans', sans-serif",
               fontWeight: 700,
               backgroundImage: GOLD_TEXT_BG,
+              fontSize: valueFont,
+              lineHeight: "1.2",
             }}
           >
-            {currency && (
-              <span className="text-[26px] leading-[39px]">{currency} </span>
+            {currency ? (
+              <span className="flex min-w-0 max-w-full items-baseline gap-1 overflow-visible tabular-nums whitespace-nowrap">
+                <span className="shrink-0 text-[0.7em]">{currency}</span>
+                <span className="min-w-0 shrink">{value}</span>
+              </span>
+            ) : (
+              <span className="block max-w-full overflow-visible tabular-nums whitespace-nowrap">{value}</span>
             )}
-            <span className="text-[38px] leading-[44px]">{value}</span>
           </p>
         </div>
       </div>
-      <div className="flex items-center gap-1 pt-3">
-        <img
-          src={`${ASSETS}/${trendUp ? "trend-up.svg" : "trend-down.svg"}`}
-          alt=""
-          width={11.667}
-          height={7}
-          style={trendUp ? undefined : { transform: "scaleY(-1)" }}
-        />
-        <p className="text-[10px] leading-[15px]" style={{ fontFamily: "'Inter', sans-serif" }}>
-          <span className={trendUp ? "text-[#84ebb4]" : "text-[#fb3748]"}>12% </span>
-          <span className="capitalize text-white">increase from last month</span>
-        </p>
+      <div className="mt-auto flex min-h-[18px] items-center gap-1 pt-3">
+        {hasComparison ? (
+          <>
+            <img
+              src={`${ASSETS}/${trendUp ? "trend-up.svg" : "trend-down.svg"}`}
+              alt=""
+              width={11.667}
+              height={7}
+              style={trendUp ? undefined : { transform: "scaleY(-1)" }}
+            />
+            <p className="text-[10px] leading-[15px]" style={{ fontFamily: "'Inter', sans-serif" }}>
+              <span className={trendUp ? "text-[#84ebb4]" : "text-[#fb3748]"}>{Math.abs(changePercent)}% </span>
+              <span className="capitalize text-white">{trendUp ? "increase" : "decrease"} from previous period</span>
+            </p>
+          </>
+        ) : (
+          <p className="text-[10px] leading-[15px] text-white/50" style={{ fontFamily: "'Inter', sans-serif" }}>
+            All-time total
+          </p>
+        )}
       </div>
     </div>
   );
 }
 
 const METRICS = [
-  { icon: "dollar-circle.svg",  iconSize: 28, label: "Total Sales",                value: "281",   currency: "RM", trend: "up"   },
-  { icon: "users-multiple.svg", iconSize: 24, label: "Total Users (Participants)", value: "281",                  trend: "down" },
-  { icon: "user-add.svg",       iconSize: 24, label: "New Depositing Users",       value: "81",                   trend: "down" },
-  { icon: "user-online.svg",    iconSize: 24, label: "Returning Depositing Users", value: "1,281",                trend: "down" },
-  { icon: "football.svg",       iconSize: 24, label: "Prediction Users",           value: "202",                  trend: "down" },
-  { icon: "cup.svg",            iconSize: 24, label: "Predicted Matches",          value: "72",                   trend: "up"   },
+  { key: "total_sales",               icon: "dollar-circle.svg",  iconSize: 28, label: "Total Sales",                currency: "RM" },
+  { key: "total_participants",        icon: "users-multiple.svg", iconSize: 24, label: "Total Users (Participants)" },
+  { key: "new_depositing_users",      icon: "user-add.svg",       iconSize: 24, label: "New Depositing Users" },
+  { key: "returning_depositing_users",icon: "user-online.svg",    iconSize: 24, label: "Returning Depositing Users" },
+  { key: "prediction_users",          icon: "football.svg",       iconSize: 24, label: "Prediction Users" },
+  { key: "predicted_matches",         icon: "cup.svg",            iconSize: 24, label: "Predicted Matches" },
 ];
-
-const PERIODS = ["Daily", "Monthly", "Yearly"];
 
 function formatRange(from, to) {
   if (!from || !to) return "Date Range";
@@ -118,26 +146,46 @@ function formatRange(from, to) {
   return `${fmt(f)} – ${fmt(t)}`;
 }
 
-export default function DashboardMetrics() {
-  const [period, setPeriod] = useState("Daily");
-  const [range, setRange] = useState({ from: null, to: null });
+function formatKpiValue(raw, key) {
+  if (raw == null) return "0";
+  const n = Number(raw);
+  if (key === "total_sales") {
+    return n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  return n.toLocaleString("en-US");
+}
+
+export default function DashboardMetrics({ period, range, onPeriodChange, onRangeChange }) {
+  const [kpi, setKpi] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const hasRange = !!range.from && !!range.to;
 
+  const loadKpi = () => {
+    setRefreshing(true);
+    getWorldCupDashboardKpi(periodFilterParams(period, range))
+      .then(setKpi)
+      .catch(() => {})
+      .finally(() => setRefreshing(false));
+  };
+
+  useEffect(() => {
+    loadKpi();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [period, range.from, range.to]);
+
   const onRefresh = () => {
     if (refreshing) return;
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 600);
+    loadKpi();
   };
 
   const onApplyRange = (from, to) => {
     if (from && to) {
-      setRange({ from, to });
-      setPeriod("Date");
+      onRangeChange({ from, to });
+      onPeriodChange("Date");
     } else {
-      setRange({ from: null, to: null });
-      setPeriod("Daily");
+      onRangeChange({ from: null, to: null });
+      onPeriodChange("All");
     }
   };
 
@@ -146,17 +194,17 @@ export default function DashboardMetrics() {
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       <div className="flex flex-wrap items-center justify-end gap-2">
         <div className="inline-flex items-center gap-1 rounded-[10px] border border-white/10 bg-[#0c1018] p-1">
-          {PERIODS.map((p) => {
+          {PERIOD_OPTIONS.map((p) => {
             const active = !hasRange && period === p;
             return (
               <button
                 key={p}
                 type="button"
                 onClick={() => {
-                  setPeriod(p);
-                  setRange({ from: null, to: null });
+                  onPeriodChange(p);
+                  onRangeChange({ from: null, to: null });
                 }}
-                className={`rounded-[8px] px-3 py-1.5 text-[12px] font-semibold transition-opacity ${
+                className={`inline-flex min-h-[32px] items-center rounded-[8px] border border-[#e9af41] px-3 text-[12px] leading-[18px] font-semibold transition-opacity ${
                   active ? "text-[#141828]" : "text-white/80 hover:text-white"
                 }`}
                 style={active ? { backgroundImage: GOLD_BG } : undefined}
@@ -176,7 +224,7 @@ export default function DashboardMetrics() {
                 <button
                   type="button"
                   onClick={open}
-                  className={`inline-flex items-center gap-1.5 rounded-[8px] px-3 py-1.5 text-[12px] font-semibold transition-opacity ${
+                  className={`inline-flex min-h-[32px] items-center gap-1.5 rounded-[8px] border border-[#e9af41] px-3 text-[12px] leading-[18px] font-semibold transition-opacity ${
                     active ? "text-[#141828]" : "text-white/80 hover:text-white"
                   }`}
                   style={active ? { backgroundImage: GOLD_BG } : undefined}
@@ -199,9 +247,21 @@ export default function DashboardMetrics() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {METRICS.map((m) => (
-          <MetricCard key={m.label} {...m} />
-        ))}
+        {METRICS.map((m) => {
+          const entry = kpi?.[m.key];
+          return (
+            <MetricCard
+              key={m.label}
+              icon={m.icon}
+              iconSize={m.iconSize}
+              label={m.label}
+              currency={m.currency}
+              value={formatKpiValue(entry?.value, m.key)}
+              changePercent={entry?.change_percent}
+              changeDirection={entry?.change_direction}
+            />
+          );
+        })}
       </div>
     </section>
   );

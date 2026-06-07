@@ -820,3 +820,16 @@ export async function getWorldCupRanking(params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.WORLDCUP_ADMIN.RANKING}${qs}`, { method: 'GET' }, true, 'admin');
 }
+
+// GET /worldcup/ranking/realtime/  (real members only; supports scope, country,
+// period, from_date/to_date, total_win, winning_streak)
+export async function getWorldCupRankingRealtime(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.WORLDCUP_ADMIN.RANKING_REALTIME}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+// GET /worldcup/dashboard/kpi/  (period: 1=daily, 2=monthly, 3=yearly; or from_date/to_date)
+export async function getWorldCupDashboardKpi(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.WORLDCUP_ADMIN.DASHBOARD_KPI}${qs}`, { method: 'GET' }, true, 'admin');
+}
