@@ -254,10 +254,7 @@ export default function LeaderboardPage() {
 
             {screen === LB_SCREENS.PREDICTIONS_LIST && (
               <PredictionsList
-                onMyPredictions={() => {
-                  setActiveTab(LB_TABS.PREDICTIONS);
-                  setScreen(LB_SCREENS.MY_PREDICTIONS);
-                }}
+                predictions={predictionsData}
               />
             )}
 

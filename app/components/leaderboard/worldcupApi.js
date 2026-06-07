@@ -190,6 +190,7 @@ export async function getFixtures() {
   const matches = data.results ?? data ?? [];
   const upcoming = [];
   const ongoing = [];
+  const settled = [];
   for (const m of matches) {
     const homeInfo = COUNTRY_MAP[m.team_home] ?? { name: String(m.team_home), code: null };
     const awayInfo = COUNTRY_MAP[m.team_away] ?? { name: String(m.team_away), code: null };
@@ -211,11 +212,13 @@ export async function getFixtures() {
       awayOdds: 50,
       locked: m.status !== 1,
       status: m.status,
+      winner: m.winner ?? null,
     };
     if (m.status === 1) upcoming.push(fixture);
     else if (m.status === 2) ongoing.push(fixture);
+    else if (m.status === 3) settled.push(fixture);
   }
-  return { upcoming, ongoing };
+  return { upcoming, ongoing, settled };
 }
 
 // ---------------------------------------------------------------------------
@@ -232,7 +235,7 @@ export async function getMyPredictions() {
     matchUuid: p.match_uuid,
     team: {
       id: p.predicted_team,
-      name: p.predicted_team_name,
+      name: COUNTRY_MAP[p.predicted_team]?.name ?? "",
       code: countryCode(p.predicted_team),
     },
     homeName: COUNTRY_MAP[p.team_home]?.name ?? String(p.team_home ?? ""),

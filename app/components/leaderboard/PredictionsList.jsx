@@ -3,8 +3,33 @@
 import { useEffect, useState } from "react";
 import { LB_COLORS } from "./constants";
 import { GlowCard, Flag, Tabs } from "./primitives";
-import { getFixtures, getMatchPredictionsMap } from "./worldcupApi";
+import { getFixtures, getMatchPredictionsMap, getMyPredictions } from "./worldcupApi";
 import PredictModal from "./PredictModal";
+
+const SKEL_BG = "rgba(255,255,255,0.07)";
+const SKEL_WIDTHS = ["58%", "72%", "45%", "65%", "52%", "68%"];
+
+function PredictionSkeletonRow({ index }) {
+  return (
+    <div
+      className="flex w-full items-center gap-3 rounded-[8px] px-2 py-3"
+      style={{ background: LB_COLORS.panelLight }}
+    >
+      <div className="h-4 w-7 shrink-0 animate-pulse rounded-[4px]" style={{ background: SKEL_BG }} />
+      <div className="flex flex-1 flex-col gap-[5px]">
+        <div className="flex items-center gap-2">
+          <div className="h-6 w-6 shrink-0 animate-pulse rounded-full" style={{ background: SKEL_BG }} />
+          <div
+            className="h-3.5 animate-pulse rounded-[4px]"
+            style={{ background: SKEL_BG, width: SKEL_WIDTHS[index % SKEL_WIDTHS.length] }}
+          />
+        </div>
+        <div className="h-3 animate-pulse rounded-[4px]" style={{ background: "rgba(255,255,255,0.04)", width: "65%" }} />
+      </div>
+      <div className="h-6 w-[51px] shrink-0 animate-pulse rounded-[8px]" style={{ background: SKEL_BG }} />
+    </div>
+  );
+}
 
 function OddsBar({ home, away }) {
   return (
@@ -89,56 +114,140 @@ function SectionHeader({ color, children }) {
   );
 }
 
-export default function PredictionsList({ onMyPredictions }) {
-  const [fixtures, setFixtures] = useState({ upcoming: [], ongoing: [] });
+export default function PredictionsList({ predictions: propPredictions }) {
+  const [activeTab, setActiveTab] = useState(0);
+  const [fixtures, setFixtures] = useState({ upcoming: [], ongoing: [], settled: [] });
   const [predictedMap, setPredictedMap] = useState({});
   const [loadError, setLoadError] = useState(false);
-  // Fixture whose Predict button was tapped — drives the Predict Winner modal.
   const [predictFixture, setPredictFixture] = useState(null);
+
+  const hasPropPredictions = propPredictions !== undefined;
+  const [ownRows, setOwnRows] = useState([]);
+  const [ownLoading, setOwnLoading] = useState(false);
+  const myRows = hasPropPredictions ? (propPredictions.rows ?? []) : ownRows;
+  const myLoading = hasPropPredictions ? !!propPredictions.loading : ownLoading;
 
   useEffect(() => {
     getFixtures().then(setFixtures).catch(() => setLoadError(true));
     getMatchPredictionsMap().then(setPredictedMap).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (activeTab !== 1 || hasPropPredictions) return;
+    setOwnLoading(true);
+    getMyPredictions().then(setOwnRows).catch(() => {}).finally(() => setOwnLoading(false));
+  }, [activeTab, hasPropPredictions]);
+
   return (
     <div className="flex flex-col items-center gap-6 px-4 pb-8 pt-2">
       <Tabs
         tabs={["World Cup Fixtures", "My Predictions"]}
-        activeIndex={0}
-        onChange={(i) => i === 1 && onMyPredictions?.()}
+        activeIndex={activeTab}
+        onChange={setActiveTab}
       />
 
-      <GlowCard>
-        <div className="flex flex-col gap-4">
-          {loadError && (
-            <p className="text-center text-[13px]" style={{ color: "#ff6b6b", fontFamily: "'Lexend',sans-serif" }}>
-              Failed to load fixtures. Please try again later.
-            </p>
-          )}
-          <SectionHeader color={LB_COLORS.gold}>Upcoming Matches</SectionHeader>
-          <div className="flex flex-col gap-2">
-            {fixtures.upcoming.map((f, i) => (
-              <FixtureCard
-                key={`u${i}`}
-                fixture={f}
-                onPredict={setPredictFixture}
-                alreadyPredicted={!!predictedMap[f.uuid]}
-              />
-            ))}
+      {activeTab === 0 ? (
+        <GlowCard>
+          <div className="flex flex-col gap-4">
+            {loadError && (
+              <p className="text-center text-[13px]" style={{ color: "#ff6b6b", fontFamily: "'Lexend',sans-serif" }}>
+                Failed to load fixtures. Please try again later.
+              </p>
+            )}
+            <SectionHeader color={LB_COLORS.gold}>Upcoming Matches</SectionHeader>
+            <div className="flex flex-col gap-2">
+              {fixtures.upcoming.map((f, i) => (
+                <FixtureCard
+                  key={`u${i}`}
+                  fixture={f}
+                  onPredict={setPredictFixture}
+                  alreadyPredicted={!!predictedMap[f.uuid]}
+                />
+              ))}
+            </div>
+            <SectionHeader color={LB_COLORS.primary}>Ongoing Matches</SectionHeader>
+            <div className="flex flex-col gap-2">
+              {fixtures.ongoing.map((f, i) => (
+                <FixtureCard
+                  key={`o${i}`}
+                  fixture={f}
+                  alreadyPredicted={!!predictedMap[f.uuid]}
+                />
+              ))}
+            </div>
+            {fixtures.settled.length > 0 && (
+              <>
+                <SectionHeader color={LB_COLORS.textMuted}>Ended Matches</SectionHeader>
+                <div className="flex flex-col gap-2">
+                  {fixtures.settled.map((f, i) => (
+                    <FixtureCard
+                      key={`s${i}`}
+                      fixture={f}
+                      alreadyPredicted={!!predictedMap[f.uuid]}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
-          <SectionHeader color={LB_COLORS.primary}>Ongoing Matches</SectionHeader>
-          <div className="flex flex-col gap-2">
-            {fixtures.ongoing.map((f, i) => (
-              <FixtureCard
-                key={`o${i}`}
-                fixture={f}
-                alreadyPredicted={!!predictedMap[f.uuid]}
-              />
-            ))}
+        </GlowCard>
+      ) : (
+        <GlowCard>
+          <div className="flex w-full flex-col gap-2">
+            <div className="flex items-center gap-3 px-1">
+              <div className="w-7 text-[10px] uppercase" style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}>MATCH</div>
+              <div className="flex-1 text-[10px] uppercase" style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}>MY PREDICTION</div>
+              <div className="w-[51px] text-[10px] uppercase" style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}>RESULT</div>
+            </div>
+            {myLoading
+              ? Array.from({ length: 4 }, (_, i) => <PredictionSkeletonRow key={i} index={i} />)
+              : myRows.map((p) => {
+                const resultStyle =
+                  p.result === "win"
+                    ? { bg: "rgba(84,233,138,0.15)", color: LB_COLORS.primary, label: "Win" }
+                    : p.result === "loss"
+                    ? { bg: "rgba(255,59,48,0.15)", color: LB_COLORS.red, label: "Loss" }
+                    : { bg: "rgba(255,255,255,0.08)", color: LB_COLORS.textMuted, label: "Pending" };
+                return (
+                  <div
+                    key={p.uuid ?? p.match}
+                    className="flex w-full items-center gap-3 rounded-[8px] px-2 py-3"
+                    style={{ background: LB_COLORS.panelLight }}
+                  >
+                    <div className="w-7 text-[14px]" style={{ color: "#fff", fontFamily: "'Lexend',sans-serif" }}>
+                      #{p.match}
+                    </div>
+                    <div className="flex flex-1 flex-col gap-[2px]">
+                      <div className="flex items-center gap-2">
+                        <Flag code={p.team.code} size={24} />
+                        <span className="text-[12px]" style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}>
+                          {p.team.name}
+                        </span>
+                      </div>
+                      {p.homeName && p.awayName && (
+                        <span className="text-[10px]" style={{ color: LB_COLORS.textMuted, fontFamily: "'Lexend',sans-serif" }}>
+                          {p.homeName} vs {p.awayName}
+                        </span>
+                      )}
+                    </div>
+                    <div
+                      className="grid h-6 w-[51px] place-items-center rounded-[8px]"
+                      style={{
+                        background: resultStyle.bg,
+                        color: resultStyle.color,
+                        fontFamily: "'Lexend',sans-serif",
+                        fontSize: 12,
+                      }}
+                    >
+                      {resultStyle.label}
+                    </div>
+                  </div>
+                );
+              })
+            }
           </div>
-        </div>
-      </GlowCard>
+        </GlowCard>
+      )}
 
       {predictFixture && (
         <PredictModal
