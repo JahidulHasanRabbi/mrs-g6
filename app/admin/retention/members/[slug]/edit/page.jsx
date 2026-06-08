@@ -1169,24 +1169,16 @@ function TagSelectField({ value, onChange, kind, options, kindFor }) {
       </button>
       {open && (
         <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-[220px] overflow-y-auto rounded-[8px] border border-[#f2cb7a] bg-[#05060a] shadow-lg">
-          {options.map((opt) => {
-            const optPalette = paletteFor(opt);
-            return (
-              <button
-                key={opt}
-                type="button"
-                onClick={() => { onChange({ kind: resolveKind(opt), label: opt }); setOpen(false); }}
-                className="flex w-full items-center px-3 py-2 text-left text-[12px] font-medium text-[#f6dda6] hover:bg-white/5"
-              >
-                <span
-                  className="inline-flex items-center rounded-[4px] px-1 text-[12px] font-medium leading-[18px]"
-                  style={{ backgroundColor: optPalette.bg, color: optPalette.color }}
-                >
-                  {opt}
-                </span>
-              </button>
-            );
-          })}
+          {options.map((opt) => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => { onChange({ kind: resolveKind(opt), label: opt }); setOpen(false); }}
+              className="flex w-full items-center px-3 py-2 text-left text-[12px] font-medium leading-[18px] text-[#f6dda6] hover:bg-white/5"
+            >
+              {opt}
+            </button>
+          ))}
         </div>
       )}
     </div>
@@ -1290,13 +1282,12 @@ function MultiTagSelectField({ value = [], onChange, kind, options, kindFor }) {
         <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-[220px] overflow-y-auto rounded-[8px] border border-[#f2cb7a] bg-[#05060a] shadow-lg">
           {options.map((opt) => {
             const checked = selectedLabels.includes(opt);
-            const optPalette = paletteFor(opt);
             return (
               <button
                 key={opt}
                 type="button"
                 onClick={() => toggle(opt)}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] font-medium hover:bg-white/5"
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] font-medium leading-[18px] text-[#f6dda6] hover:bg-white/5"
               >
                 <span
                   className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[3px] border ${
@@ -1309,12 +1300,7 @@ function MultiTagSelectField({ value = [], onChange, kind, options, kindFor }) {
                     </svg>
                   )}
                 </span>
-                <span
-                  className="inline-flex items-center rounded-[4px] px-1 text-[12px] font-medium leading-[18px]"
-                  style={{ backgroundColor: optPalette.bg, color: optPalette.color }}
-                >
-                  {opt}
-                </span>
+                <span>{opt}</span>
               </button>
             );
           })}
