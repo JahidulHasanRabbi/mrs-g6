@@ -30,10 +30,10 @@ function formatNumber(value) {
 }
 
 function formatCurrency(value) {
-  if (value === null || value === undefined || value === "") return "RM 0";
+  if (value === null || value === undefined || value === "") return "RM 0.00";
   const num = parseFloat(value);
   if (Number.isNaN(num)) return `RM ${value}`;
-  return `RM ${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  return `RM ${num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function stripCurrency(value) {

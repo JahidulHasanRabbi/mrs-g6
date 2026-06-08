@@ -1,12 +1,13 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSidebar } from "../../contexts/SidebarContext";
 import { filterMenuByPermissions, getStoredAdminPermissions } from "../../config/adminPermissions";
 import { onAuthChanged } from "../../api/authEvents";
+import { getPrioritySummary } from "../../api/crmApi";
 
 // Panel-left icon used by the collapse/expand toggle (Radix-style).
 const PanelLeftIcon = ({ className }) => (
@@ -411,6 +412,18 @@ const ActivePill = () => (
   />
 );
 
+// Red attention dot rendered when a sidebar item has pending work that needs
+// the admin's attention (currently: Member Alert when there are flagged
+// members). The slight outer glow lifts it off the dark sidebar background.
+const RedDot = ({ corner = false }) => (
+  <span
+    aria-label="Has alerts"
+    className={`pointer-events-none z-10 h-2 w-2 rounded-full bg-[#fb3748] shadow-[0_0_6px_rgba(251,55,72,0.7)] ${
+      corner ? "absolute right-1 top-1" : "relative ml-auto shrink-0"
+    }`}
+  />
+);
+
 // Spec from Figma 231:3393 — items/nav item:
 //   - rounded-[12px] container, 12px horizontal / 8px vertical padding
 //   - 32px icon container with the actual glyph centered at 18-20px
@@ -437,6 +450,7 @@ const MenuItem = ({ item, isActive }) => {
         >
           <ItemIcon item={item} sizeClass="w-full h-full" />
         </div>
+        {item._hasAlert && <RedDot corner />}
       </div>
     );
     if (item.disabled) return <div className="cursor-not-allowed">{content}</div>;
@@ -466,6 +480,7 @@ const MenuItem = ({ item, isActive }) => {
       >
         {item.label}
       </p>
+      {item._hasAlert && <RedDot />}
     </div>
   );
 
@@ -505,15 +520,42 @@ const ExpandableMenuItem = ({ item, activeItem, forceOpen = false }) => {
   const [open, setOpen] = useState(isAnyChildActive);
   const effectivelyOpen = forceOpen || open;
 
-  // When the sidebar is collapsed, render the parent as a plain icon-only
-  // button and hide the children entirely — the nested label list has nowhere
-  // to live in 56px of width. Clicking it still routes to the parent href.
+  // Collapsed-mode hover flyout — anchors a small popover to the right of the
+  // icon listing this item's children. The inline submenu has no room in the
+  // 56px column, so a fixed-position flyout is the standard pattern (VS Code /
+  // GitHub style).
+  const wrapperRef = useRef(null);
+  const [flyoutOpen, setFlyoutOpen] = useState(false);
+  const [flyoutPos, setFlyoutPos] = useState({ top: 0, left: 0 });
+  const closeTimerRef = useRef(null);
+
+  const cancelClose = () => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  };
+
+  const openFlyout = () => {
+    cancelClose();
+    const r = wrapperRef.current?.getBoundingClientRect();
+    if (r) setFlyoutPos({ top: r.top, left: r.right + 12 });
+    setFlyoutOpen(true);
+  };
+
+  const scheduleClose = () => {
+    cancelClose();
+    closeTimerRef.current = setTimeout(() => setFlyoutOpen(false), 180);
+  };
+
+  useEffect(() => () => cancelClose(), []);
+
   if (collapsed) {
     const square = (
       <div
         title={item.label}
         className={`relative mx-auto flex h-10 w-10 items-center justify-center rounded-[10px] border transition-all duration-200 ${
-          isAnyChildActive
+          isAnyChildActive || flyoutOpen
             ? "border-[#e9af41] bg-[rgba(232,181,88,0.14)] shadow-[0_0_24px_rgba(231,196,87,0.22)]"
             : "border-transparent hover:border-[rgba(233,175,65,0.35)] hover:bg-white/5"
         }`}
@@ -527,7 +569,73 @@ const ExpandableMenuItem = ({ item, activeItem, forceOpen = false }) => {
         </div>
       </div>
     );
-    return item.href ? <Link href={item.href}>{square}</Link> : square;
+    const ChildIcon = CHILD_ICONS[item.id] || BarChartIcon;
+    return (
+      <div
+        ref={wrapperRef}
+        onMouseEnter={openFlyout}
+        onMouseLeave={scheduleClose}
+      >
+        {item.href ? <Link href={item.href}>{square}</Link> : square}
+        <AnimatePresence>
+          {flyoutOpen && (
+            <motion.div
+              key="flyout"
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -8 }}
+              transition={{ duration: 0.15, ease: [0.4, 0, 0.2, 1] }}
+              onMouseEnter={cancelClose}
+              onMouseLeave={scheduleClose}
+              className="fixed z-[90] w-56 rounded-[12px] border border-[#f2cb7a] shadow-2xl"
+              style={{
+                top: flyoutPos.top,
+                left: flyoutPos.left,
+                background: "linear-gradient(143deg, #11320e 0%, #031101 99.749%)",
+              }}
+              role="menu"
+              aria-label={item.label}
+            >
+              <div className="px-3 py-2 border-b border-[#f2cb7a]/20">
+                <span
+                  className="sidebar-inter text-[12px] uppercase tracking-[-0.5px] bg-clip-text text-transparent"
+                  style={{ backgroundImage: SECTION_TITLE_GRADIENT }}
+                >
+                  {item.label}
+                </span>
+              </div>
+              <div className="p-2">
+                {item.children.map((child) => {
+                  const isActive = child.id === activeItem;
+                  return (
+                    <Link
+                      key={child.id}
+                      href={child.href}
+                      onClick={() => setFlyoutOpen(false)}
+                    >
+                      <div
+                        className={`flex items-center gap-2 rounded-[8px] px-3 py-2 transition-colors ${
+                          isActive
+                            ? "bg-[#f2cb7a]/15 text-[#f2cb7a]"
+                            : "text-[#fbeed2] hover:bg-[#f2cb7a]/8"
+                        }`}
+                      >
+                        <span className={isActive ? "text-[#f2cb7a]" : "text-[#fbeed2]"}>
+                          <ChildIcon />
+                        </span>
+                        <span className="sidebar-inter text-[13px] leading-[20px] tracking-[-1px]">
+                          {child.label}
+                        </span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
   }
 
   // Header background: full gold gradient only when a child page is actually
@@ -666,8 +774,12 @@ const CollapsibleSection = ({ title, storageKey, defaultOpen = true, forceOpen =
     });
   };
 
-  // First 3 chars + ellipsis when the whole sidebar is squeezed
-  const shortTitle = title.length > 3 ? `${title.slice(0, 3)}…` : title;
+  // In collapsed mode the section header has no room for readable text and
+  // toggling a section you can't name is pointless — just render the items
+  // directly. The parent's gap-6 still separates groups visually.
+  if (sidebarCollapsed) {
+    return <div className="flex flex-col gap-2">{children}</div>;
+  }
 
   return (
     <div className="flex flex-col gap-2">
@@ -675,23 +787,18 @@ const CollapsibleSection = ({ title, storageKey, defaultOpen = true, forceOpen =
         type="button"
         onClick={toggleSection}
         disabled={forceOpen}
-        className={`flex items-center w-full py-1 group ${
-          sidebarCollapsed ? "justify-center gap-1 px-0" : "justify-between gap-2 px-0"
-        }`}
+        className="flex items-center w-full py-1 group justify-between gap-2 px-0"
         aria-expanded={effectivelyOpen}
-        title={sidebarCollapsed ? title : undefined}
       >
         <span
-          className={`sidebar-inter uppercase whitespace-nowrap tracking-[-1px] leading-[24px] bg-clip-text text-transparent ${
-            sidebarCollapsed ? "text-[12px]" : "text-[16px]"
-          }`}
+          className="sidebar-inter uppercase whitespace-nowrap tracking-[-1px] leading-[24px] bg-clip-text text-transparent text-[16px]"
           style={{ backgroundImage: SECTION_TITLE_GRADIENT }}
         >
-          {sidebarCollapsed ? shortTitle : title}
+          {title}
         </span>
         <motion.svg
-          width={sidebarCollapsed ? 10 : 12}
-          height={sidebarCollapsed ? 10 : 12}
+          width={12}
+          height={12}
           viewBox="0 0 24 24"
           fill="none"
           stroke="#f2cb7a"
@@ -786,6 +893,18 @@ export default function Sidebar({ activeItem: activeItemProp }) {
   const { collapsed, toggle } = useSidebar();
   const [search, setSearch] = useState("");
   const [permissions, setPermissions] = useState(() => getStoredAdminPermissions());
+  // Sidebar items keyed to a boolean — true means render the red attention dot.
+  // Currently driven only by getPrioritySummary for the Member Alert row, but
+  // shaped as a map so future alert sources can plug in without restructuring.
+  const [alertItems, setAlertItems] = useState({});
+
+  // Collapsed-mode search popover. When the sidebar is collapsed, the search
+  // icon opens a floating panel anchored beside it; the sidebar stays narrow.
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchPos, setSearchPos] = useState({ top: 0, left: 0 });
+  const searchBtnRef = useRef(null);
+  const popoverRef = useRef(null);
+  const popoverInputRef = useRef(null);
 
   const hasQuery = search.trim().length > 0;
 
@@ -795,11 +914,104 @@ export default function Sidebar({ activeItem: activeItemProp }) {
     return onAuthChanged(refreshPermissions);
   }, []);
 
-  const mrsItems = filterMenuItems(filterMenuByPermissions([...MENU_ITEMS, ...SECONDARY_MENU], permissions), search);
-  const worldCupItems = filterMenuItems(filterMenuByPermissions(WORLD_CUP_MENU, permissions), search);
-  const retentionItems = filterMenuItems(filterMenuByPermissions(RETENTION_MENU, permissions), search);
-  const settingsItems = filterMenuItems(filterMenuByPermissions(SETTINGS_MENU, permissions), search);
-  const noResults = hasQuery && !mrsItems.length && !worldCupItems.length && !retentionItems.length && !settingsItems.length;
+  // Poll the priority summary so the Member Alert row gets a red dot whenever
+  // any member is sitting in a follow-up bucket (high / medium / low / inactive).
+  // The endpoint requires an admin token; if the user isn't logged in or the
+  // backend errors, we silently skip — the sidebar must not break.
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await getPrioritySummary();
+        if (cancelled) return;
+        const pending =
+          Number(res?.high_priority || 0) +
+          Number(res?.medium_priority || 0) +
+          Number(res?.low_priority || 0) +
+          Number(res?.inactive_members || 0);
+        setAlertItems((prev) => ({
+          ...prev,
+          "retention-member-alert": pending > 0,
+        }));
+      } catch {
+        // Sidebar should not surface API failures.
+      }
+    };
+    load();
+    const interval = setInterval(load, 60000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
+  const openCollapsedSearch = () => {
+    const r = searchBtnRef.current?.getBoundingClientRect();
+    if (r) setSearchPos({ top: r.top, left: r.right + 12 });
+    setSearchOpen(true);
+  };
+
+  const closeSearch = () => {
+    setSearchOpen(false);
+    setSearch("");
+  };
+
+  // Focus the popover input as soon as it mounts.
+  useEffect(() => {
+    if (searchOpen && popoverInputRef.current) {
+      popoverInputRef.current.focus();
+    }
+  }, [searchOpen]);
+
+  // Esc to close + click-outside to dismiss the popover.
+  useEffect(() => {
+    if (!searchOpen) return;
+    const onKey = (e) => { if (e.key === "Escape") closeSearch(); };
+    const onDown = (e) => {
+      if (popoverRef.current?.contains(e.target)) return;
+      if (searchBtnRef.current?.contains(e.target)) return;
+      closeSearch();
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("mousedown", onDown);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("mousedown", onDown);
+    };
+  }, [searchOpen]);
+
+  // Close the popover automatically if the user expands the sidebar; the
+  // inline input there takes over.
+  useEffect(() => {
+    if (!collapsed) setSearchOpen(false);
+  }, [collapsed]);
+
+  // Inline filtering only applies to the expanded sidebar (its input lives
+  // there). In collapsed mode the popover handles its own filtering, so the
+  // underlying icon list stays intact.
+  const inlineQuery = collapsed ? "" : search;
+  const mrsItems = filterMenuItems(filterMenuByPermissions([...MENU_ITEMS, ...SECONDARY_MENU], permissions), inlineQuery);
+  const worldCupItems = filterMenuItems(filterMenuByPermissions(WORLD_CUP_MENU, permissions), inlineQuery);
+  const retentionItems = filterMenuItems(filterMenuByPermissions(RETENTION_MENU, permissions), inlineQuery)
+    .map((item) => (alertItems[item.id] ? { ...item, _hasAlert: true } : item));
+  const settingsItems = filterMenuItems(filterMenuByPermissions(SETTINGS_MENU, permissions), inlineQuery);
+  const noResults = hasQuery && !collapsed && !mrsItems.length && !worldCupItems.length && !retentionItems.length && !settingsItems.length;
+
+  // Popover sections — independently filtered so opening the dialog doesn't
+  // disturb the collapsed sidebar behind it.
+  const popoverSections = collapsed && searchOpen
+    ? [
+        { title: "World Cup Leaderboards", items: filterMenuItems(filterMenuByPermissions(WORLD_CUP_MENU, permissions), search) },
+        { title: "MRS System", items: filterMenuItems(filterMenuByPermissions([...MENU_ITEMS, ...SECONDARY_MENU], permissions), search) },
+        {
+          title: "Retention System",
+          items: filterMenuItems(filterMenuByPermissions(RETENTION_MENU, permissions), search)
+            .map((item) => (alertItems[item.id] ? { ...item, _hasAlert: true } : item)),
+        },
+        { title: "Settings", items: filterMenuItems(filterMenuByPermissions(SETTINGS_MENU, permissions), search) },
+      ].filter((s) => s.items.length > 0)
+    : [];
+  const popoverEmpty = collapsed && searchOpen && hasQuery && popoverSections.length === 0;
 
   return (
     // Sidebar shell — gold border + dark green gradient per Figma 243:6071.
@@ -885,10 +1097,17 @@ export default function Sidebar({ activeItem: activeItemProp }) {
       <div className={`pb-4 ${collapsed ? "px-2" : "px-4"}`}>
         {collapsed ? (
           <button
+            ref={searchBtnRef}
             type="button"
+            onClick={openCollapsedSearch}
             title="Search"
-            aria-label="Search"
-            className="mx-auto flex h-10 w-10 items-center justify-center rounded-[8px] border border-[#f2cb7a]/40 bg-black/40 text-[#f2cb7a] hover:bg-[#f2cb7a]/8 hover:border-[#f2cb7a]/60 transition-all duration-200"
+            aria-label="Open search"
+            aria-expanded={searchOpen}
+            className={`mx-auto flex h-10 w-10 items-center justify-center rounded-[8px] border bg-black/40 transition-all duration-200 ${
+              searchOpen
+                ? "border-[#f2cb7a] text-[#f2cb7a] bg-[#f2cb7a]/10"
+                : "border-[#f2cb7a]/40 text-[#f2cb7a] hover:bg-[#f2cb7a]/8 hover:border-[#f2cb7a]/60"
+            }`}
           >
             <SearchIcon className="h-4 w-4" />
           </button>
@@ -908,33 +1127,48 @@ export default function Sidebar({ activeItem: activeItemProp }) {
       </div>
       {/* /sticky top region */}
 
-      {/* Menu Items — three collapsible sections, gap-[24px] per Figma.
-          When the search has a query, empty sections collapse out of view and
-          a "No matches" hint appears if every section is empty. */}
-      <div className={`pb-6 flex w-full flex-col gap-6 ${collapsed ? "px-3" : "px-4"}`}>
-        {worldCupItems.length > 0 && (
-          <CollapsibleSection title="World Cup Leaderboards" forceOpen={hasQuery}>
-            {worldCupItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
-          </CollapsibleSection>
-        )}
-
-        {mrsItems.length > 0 && (
-          <CollapsibleSection title="MRS System" storageKey="mrs-system" defaultOpen={false} forceOpen={hasQuery}>
-            {mrsItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
-          </CollapsibleSection>
-        )}
-
-        {retentionItems.length > 0 && (
-          <CollapsibleSection title="Retention System" storageKey="retention-system" forceOpen={hasQuery}>
-            {retentionItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
-          </CollapsibleSection>
-        )}
-
-        {settingsItems.length > 0 && (
-          <CollapsibleSection title="Settings" storageKey="settings" forceOpen={hasQuery}>
-            {settingsItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
-          </CollapsibleSection>
-        )}
+      {/* Menu Items — gap-[24px] between sections per Figma when expanded.
+          In collapsed mode, gap shrinks and a thin gold divider sits between
+          adjacent sections so the icon-only column still telegraphs the group
+          boundaries. */}
+      <div className={`pb-6 flex w-full flex-col ${collapsed ? "gap-3 px-3" : "gap-6 px-4"}`}>
+        {(() => {
+          const blocks = [
+            worldCupItems.length > 0 && (
+              <CollapsibleSection key="wc" title="World Cup Leaderboards" forceOpen={hasQuery}>
+                {worldCupItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
+              </CollapsibleSection>
+            ),
+            mrsItems.length > 0 && (
+              <CollapsibleSection key="mrs" title="MRS System" storageKey="mrs-system" defaultOpen={false} forceOpen={hasQuery}>
+                {mrsItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
+              </CollapsibleSection>
+            ),
+            retentionItems.length > 0 && (
+              <CollapsibleSection key="rt" title="Retention System" storageKey="retention-system" forceOpen={hasQuery}>
+                {retentionItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
+              </CollapsibleSection>
+            ),
+            settingsItems.length > 0 && (
+              <CollapsibleSection key="st" title="Settings" storageKey="settings" forceOpen={hasQuery}>
+                {settingsItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
+              </CollapsibleSection>
+            ),
+          ].filter(Boolean);
+          if (!collapsed) return blocks;
+          return blocks.flatMap((section, i) =>
+            i === 0
+              ? [section]
+              : [
+                  <div
+                    key={`divider-${section.key}`}
+                    aria-hidden="true"
+                    className="mx-2 h-px bg-[#f2cb7a]/30"
+                  />,
+                  section,
+                ]
+          );
+        })()}
 
         {noResults && !collapsed && (
           <p className="sidebar-inter px-2 py-3 text-center text-[12px] text-[#fbeed2]/50">
@@ -942,6 +1176,117 @@ export default function Sidebar({ activeItem: activeItemProp }) {
           </p>
         )}
       </div>
+
+      <AnimatePresence>
+        {collapsed && searchOpen && (
+          <motion.div
+            ref={popoverRef}
+            key="search-popover"
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -8 }}
+            transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+            className="fixed z-[100] w-72 rounded-[12px] border border-[#f2cb7a] shadow-2xl"
+            style={{
+              top: searchPos.top,
+              left: searchPos.left,
+              background: "linear-gradient(143deg, #11320e 0%, #031101 99.749%)",
+            }}
+            role="dialog"
+            aria-label="Search menu"
+          >
+            <div className="p-3 border-b border-[#f2cb7a]/20">
+              <div className="flex items-center gap-2 rounded-[8px] border border-[#f2cb7a]/40 bg-black/40 px-3 py-2">
+                <SearchIcon className="h-4 w-4 text-[#f2cb7a] shrink-0" />
+                <input
+                  ref={popoverInputRef}
+                  type="search"
+                  placeholder="Search menu"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="sidebar-inter flex-1 min-w-0 bg-transparent text-[14px] text-[#fbeed2] placeholder:text-[#fbeed2]/40 focus:outline-none"
+                />
+              </div>
+            </div>
+            <div className="scrollbar-admin max-h-[60vh] overflow-y-auto p-2">
+              {popoverEmpty && (
+                <p className="sidebar-inter px-3 py-6 text-center text-[12px] text-[#fbeed2]/50">
+                  No matching menu items.
+                </p>
+              )}
+              {!hasQuery && !popoverEmpty && popoverSections.length === 0 && (
+                <p className="sidebar-inter px-3 py-6 text-center text-[12px] text-[#fbeed2]/50">
+                  Start typing to search.
+                </p>
+              )}
+              {popoverSections.map((section) => (
+                <div key={section.title} className="mb-2 last:mb-0">
+                  <p
+                    className="sidebar-inter px-3 py-1 text-[11px] uppercase tracking-[-0.5px] bg-clip-text text-transparent"
+                    style={{ backgroundImage: SECTION_TITLE_GRADIENT }}
+                  >
+                    {section.title}
+                  </p>
+                  {section.items.flatMap((item) => {
+                    const rows = [];
+                    const showChildrenAsRows = item.children && item._forceOpen;
+                    if (showChildrenAsRows) {
+                      for (const child of item.children) {
+                        rows.push(
+                          <Link
+                            key={`${item.id}-${child.id}`}
+                            href={child.href}
+                            onClick={closeSearch}
+                          >
+                            <div
+                              className={`flex items-center gap-2 rounded-[8px] px-3 py-2 transition-colors ${
+                                child.id === activeItem
+                                  ? "bg-[#f2cb7a]/15 text-[#f2cb7a]"
+                                  : "text-[#fbeed2] hover:bg-[#f2cb7a]/8"
+                              }`}
+                            >
+                              <div className={`h-4 w-4 shrink-0 flex items-center justify-center ${item.iconNode || item.iconMask ? "text-current" : ""}`}>
+                                <ItemIcon item={item} sizeClass="w-full h-full" />
+                              </div>
+                              <span className="sidebar-inter text-[13px] leading-[20px] tracking-[-1px]">
+                                <span className="opacity-60">{item.label}</span>
+                                <span className="opacity-40 px-1">/</span>
+                                {child.label}
+                              </span>
+                            </div>
+                          </Link>
+                        );
+                      }
+                    } else {
+                      const isActive = isPrimaryActive(item.id, activeItem);
+                      rows.push(
+                        <Link key={item.id} href={item.href} onClick={closeSearch}>
+                          <div
+                            className={`flex items-center gap-2 rounded-[8px] px-3 py-2 transition-colors ${
+                              isActive
+                                ? "bg-[#f2cb7a]/15 text-[#f2cb7a]"
+                                : "text-[#fbeed2] hover:bg-[#f2cb7a]/8"
+                            }`}
+                          >
+                            <div className={`h-4 w-4 shrink-0 flex items-center justify-center ${item.iconNode || item.iconMask ? "text-current" : ""}`}>
+                              <ItemIcon item={item} sizeClass="w-full h-full" />
+                            </div>
+                            <span className="sidebar-inter text-[13px] leading-[20px] tracking-[-1px]">
+                              {item.label}
+                            </span>
+                            {item._hasAlert && <RedDot />}
+                          </div>
+                        </Link>
+                      );
+                    }
+                    return rows;
+                  })}
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -32,7 +32,7 @@ function normalizeCountry(c) {
 
 export default function WorldCupDashboardPage() {
   const [view, setView] = useState("global");
-  const [period, setPeriod] = useState("All");
+  const [period, setPeriod] = useState("Daily");
   const [range, setRange] = useState({ from: null, to: null });
   const [winFilter, setWinFilter] = useState("all");
   const [streakFilter, setStreakFilter] = useState("all");

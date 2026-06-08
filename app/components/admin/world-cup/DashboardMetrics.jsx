@@ -185,7 +185,7 @@ export default function DashboardMetrics({ period, range, onPeriodChange, onRang
       onPeriodChange("Date");
     } else {
       onRangeChange({ from: null, to: null });
-      onPeriodChange("All");
+      onPeriodChange("Daily");
     }
   };
 

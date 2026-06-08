@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import PriorityBadge from "./PriorityBadge";
 import { GRAD_DARK, GRAD_GOLD } from "./constants";
 
@@ -432,13 +433,22 @@ function HistoryRow({ entry, onClick, compact = false }) {
 }
 
 function ModalOverlay({ children, onClose, zClass = "z-50" }) {
-  return (
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return createPortal(
     <div className={`fixed inset-0 ${zClass} flex items-center justify-center px-4`} style={{ backgroundColor: "rgba(0,0,0,0.65)" }}>
       <div className="fixed inset-0" onClick={onClose} />
       <div className="relative z-10 w-full max-w-lg rounded-[16px] bg-[#05060a] p-6 shadow-[0_0_3px_0_#dea220]">
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

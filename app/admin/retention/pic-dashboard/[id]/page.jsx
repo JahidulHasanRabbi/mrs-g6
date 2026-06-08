@@ -8,6 +8,7 @@ import PeriodToggle from "../../../../components/admin/retention/PeriodToggle";
 import Pagination from "../../../../components/admin/retention/Pagination";
 import FilterDropdown from "../../../../components/admin/retention/FilterDropdown";
 import SearchInput from "../../../../components/admin/retention/SearchInput";
+import LoadingOverlay from "../../../../components/admin/ui/LoadingOverlay";
 import {
   ASSETS,
   GRAD_DARK,
@@ -65,10 +66,10 @@ function formatNumber(value) {
 }
 
 function formatCurrency(value) {
-  if (value === null || value === undefined || value === "") return "RM 0";
+  if (value === null || value === undefined || value === "") return "RM 0.00";
   const num = parseFloat(value);
   if (Number.isNaN(num)) return `RM ${value}`;
-  return `RM ${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  return `RM ${num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function formatDate(value) {
@@ -130,7 +131,6 @@ function buildSummaryParams(period, fromDate, toDate) {
   if (fromDate && toDate) {
     return { type: 4, from_date: fromDate, to_date: toDate };
   }
-  if (period === "All") return {};
   return { type: periodLabelToType(period) };
 }
 
@@ -145,18 +145,26 @@ function buildMemberDateParams(period, fromDate, toDate) {
   if (fromDate && toDate) {
     return { from_date: fromDate, to_date: toDate };
   }
-  if (period === "All") return {};
 
   const today = new Date();
   if (period === "Daily") {
     const value = toDateInput(today);
     return { from_date: value, to_date: value };
   }
+  // Monthly / Yearly span the *entire* current month or year per product spec
+  // (15 May → 1–31 May; 1 June → 1–30 June; 1 Jan 2027 → 1 Jan – 31 Dec 2027),
+  // not month-to-date or year-to-date.
   if (period === "Monthly") {
-    return { from_date: toDateInput(new Date(today.getFullYear(), today.getMonth(), 1)), to_date: toDateInput(today) };
+    return {
+      from_date: toDateInput(new Date(today.getFullYear(), today.getMonth(), 1)),
+      to_date: toDateInput(new Date(today.getFullYear(), today.getMonth() + 1, 0)),
+    };
   }
   if (period === "Yearly") {
-    return { from_date: toDateInput(new Date(today.getFullYear(), 0, 1)), to_date: toDateInput(today) };
+    return {
+      from_date: toDateInput(new Date(today.getFullYear(), 0, 1)),
+      to_date: toDateInput(new Date(today.getFullYear(), 11, 31)),
+    };
   }
   return {};
 }
@@ -177,7 +185,7 @@ function PicDetailContent() {
   const slug = typeof params?.id === "string" ? params.id : Array.isArray(params?.id) ? params.id[0] : "";
   const picName = searchParams.get("name") || "Unknown PIC";
   const [picProfile, setPicProfile] = useState(null);
-  const [period, setPeriod] = useState("All");
+  const [period, setPeriod] = useState("Daily");
   const [summary, setSummary] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
 
@@ -242,7 +250,10 @@ function PicDetailContent() {
         fromDate={fromDate}
         toDate={toDate}
       />
-      <KpiGrid summary={summary} loading={summaryLoading} />
+      <div className="relative">
+        <KpiGrid summary={summary} loading={summaryLoading} />
+        {summaryLoading && <LoadingOverlay label="Loading..." />}
+      </div>
       <MemberListSection
         adminUuid={slug}
         period={period}
@@ -270,7 +281,7 @@ function PicProfileHeader({ name, image, period, onPeriodChange, fromDate, toDat
           </h1>
         </div>
       </div>
-      <PeriodToggle includeAll period={period} onPeriodChange={onPeriodChange} fromDate={fromDate} toDate={toDate} />
+      <PeriodToggle period={period} onPeriodChange={onPeriodChange} fromDate={fromDate} toDate={toDate} />
     </div>
   );
 }
@@ -503,6 +514,7 @@ function MemberListSection({ adminUuid, period, fromDate, toDate }) {
           onPageChange={(nextPage) => updateParams({ page: nextPage > 1 ? nextPage : null })}
         />
       </div>
+      {loading && <LoadingOverlay label="Loading..." />}
     </section>
   );
 }
@@ -567,7 +579,7 @@ function MemberTableRow({ member }) {
       <div className="flex flex-1 min-w-0 items-center self-stretch">
         <div className="flex h-full flex-1 flex-col justify-center p-6">
           <span
-            className="inline-flex w-fit items-center rounded-[12px] px-3 py-1 b-6 text-[#05060a] whitespace-nowrap"
+            className="inline-flex w-fit items-center rounded-[12px] px-3 py-1 b-4 font-semibold text-[#05060a] whitespace-nowrap"
             style={{ backgroundImage: GRAD_GOLD }}
           >
             {member.level || member.vip_level || "—"}

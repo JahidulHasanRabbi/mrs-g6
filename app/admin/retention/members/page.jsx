@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { getCrmMembers, getCrmUsers, getCrmVipTiers } from "../../../api/crmApi";
 import { Pagination } from "../../../components/admin/members/DataTable";
 import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
+import LoadingOverlay from "../../../components/admin/ui/LoadingOverlay";
 
 const A = "/assets/admin/pic-dashboard";
 
@@ -27,18 +29,57 @@ const COLUMNS = [
 const TABLE_MIN_WIDTH = COLUMNS.reduce((sum, c) => sum + c.minW, 0);
 
 function formatCurrency(value) {
-  if (value === null || value === undefined || value === "") return "RM 0";
+  if (value === null || value === undefined || value === "") return "RM 0.00";
   const num = parseFloat(value);
   if (Number.isNaN(num)) return `RM ${value}`;
-  return `RM ${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  return `RM ${num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export default function RetentionMembersPage() {
+  return (
+    <Suspense>
+      <RetentionMembersContent />
+    </Suspense>
+  );
+}
+
+function RetentionMembersContent() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Page lives in the URL — drilling into a member and returning (browser
+  // back / clicking the member's name) lands on the same page. Filter
+  // changes still reset to page 1 via setPage(1). No local state for page,
+  // so nothing can race with the URL.
+  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
   const [priority, setPriority] = useState("");
   const [vip, setVip] = useState("");
   const [pic, setPic] = useState("");
   const [query, setQuery] = useState("");
-  const [page, setPage] = useState(1);
+
+  const setPage = (next) => {
+    const value = typeof next === "function" ? next(page) : next;
+    const params = new URLSearchParams(searchParams.toString());
+    if (value > 1) params.set("page", String(value));
+    else params.delete("page");
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
+
+  // Filter changes must also reset to page 1. Inline this into the onChange
+  // handlers — a useEffect-based reset gets double-fired by React Strict Mode
+  // in dev and would clobber the URL's page param on mount.
+  const resetToPage1 = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("page");
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
+  const handlePriority = (v) => { setPriority(v); resetToPage1(); };
+  const handleVip = (v) => { setVip(v); resetToPage1(); };
+  const handlePic = (v) => { setPic(v); resetToPage1(); };
+  const handleQuery = (v) => { setQuery(v); resetToPage1(); };
 
   const [pics, setPics] = useState([]);
   const [vipTiers, setVipTiers] = useState([]); // [{ name, level }]
@@ -60,11 +101,6 @@ export default function RetentionMembersPage() {
       })
       .catch(() => setVipTiers([]));
   }, []);
-
-  // Reset to page 1 when any filter changes.
-  useEffect(() => {
-    setPage(1);
-  }, [priority, vip, pic, query]);
 
   // Debounce search to avoid hammering the API on every keystroke.
   const [debouncedQuery, setDebouncedQuery] = useState(query);
@@ -114,15 +150,21 @@ export default function RetentionMembersPage() {
   const showingFrom = total === 0 ? 0 : startIdx + 1;
   const showingTo = Math.min(startIdx + rows.length, total);
 
+  // Clamp page to range, but only AFTER a fetch has completed — otherwise
+  // the initial render (total=0 → totalPages=1) would clobber a URL like
+  // `?page=4` before the data arrives, dropping the user back to page 1.
   useEffect(() => {
+    if (loading) return;
+    if (total === 0) return;
     if (page > totalPages) setPage(totalPages);
-  }, [page, totalPages]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, total, totalPages]);
 
   return (
     <section className="relative flex w-full flex-col rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
-      <header className="flex flex-col gap-4 p-6 w-full md:flex-row md:flex-wrap md:items-center">
+      <header className="flex flex-col gap-4 p-6 w-full xl:flex-row xl:flex-wrap xl:items-center">
         <h1
-          className="text-white font-bold whitespace-nowrap md:flex-1 md:min-w-0"
+          className="text-white font-bold xl:flex-1 xl:min-w-0"
           style={{
             fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
             fontSize: "26px",
@@ -133,10 +175,10 @@ export default function RetentionMembersPage() {
           Member List
         </h1>
         <div className="flex flex-wrap items-center gap-3">
-          <FilterDropdown label="Priority" value={priority} onChange={setPriority} options={PRIORITY_OPTIONS} />
-          <FilterDropdown label="VIP Level" value={vip} onChange={setVip} options={vipTiers.map((t) => t.name)} />
-          <FilterDropdown label="All PIC" value={pic} onChange={setPic} options={pics.map((u) => u.full_name || u.username).filter(Boolean)} />
-          <SearchInput value={query} onChange={setQuery} />
+          <FilterDropdown label="Priority" value={priority} onChange={handlePriority} options={PRIORITY_OPTIONS} />
+          <FilterDropdown label="VIP Level" value={vip} onChange={handleVip} options={vipTiers.map((t) => t.name)} />
+          <FilterDropdown label="All PIC" value={pic} onChange={handlePic} options={pics.map((u) => u.full_name || u.username).filter(Boolean)} />
+          <SearchInput value={query} onChange={handleQuery} />
         </div>
       </header>
 
@@ -165,6 +207,7 @@ export default function RetentionMembersPage() {
           <Pagination currentPage={safePage} totalPages={totalPages} onPageChange={setPage} />
         </div>
       </div>
+      {loading && <LoadingOverlay label="Loading..." />}
     </section>
   );
 }

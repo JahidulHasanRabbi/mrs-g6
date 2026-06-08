@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import PeriodToggle from "../../../components/admin/retention/PeriodToggle";
 import Pagination from "../../../components/admin/retention/Pagination";
+import LoadingOverlay from "../../../components/admin/ui/LoadingOverlay";
 import {
   ASSETS,
   GRAD_DARK,
@@ -41,14 +42,14 @@ function formatNumber(value) {
 }
 
 function formatCurrency(value) {
-  if (value === null || value === undefined || value === "") return "0";
+  if (value === null || value === undefined || value === "") return "0.00";
   const num = parseFloat(value);
   if (Number.isNaN(num)) return String(value);
-  return num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function formatRmCurrency(value) {
-  if (value === null || value === undefined || value === "") return "RM 0";
+  if (value === null || value === undefined || value === "") return "RM 0.00";
   return `RM ${formatCurrency(value)}`;
 }
 
@@ -64,7 +65,6 @@ function buildPeriodParams(period, fromDate, toDate) {
   if (fromDate && toDate) {
     return { type: 4, from_date: fromDate, to_date: toDate };
   }
-  if (period === "All") return {};
   return { type: periodLabelToType(period) };
 }
 
@@ -83,7 +83,7 @@ function PicDashboardContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [period, setPeriod] = useState("All");
+  const [period, setPeriod] = useState("Daily");
   const [summary, setSummary] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
 
@@ -124,7 +124,10 @@ function PicDashboardContent() {
   return (
     <>
       <HeaderRow period={period} onPeriodChange={handlePeriodChange} fromDate={fromDate} toDate={toDate} />
-      <KpiGrid summary={summary} loading={summaryLoading} />
+      <div className="relative">
+        <KpiGrid summary={summary} loading={summaryLoading} />
+        {summaryLoading && <LoadingOverlay label="Loading..." />}
+      </div>
       <PerformanceSummary periodParams={periodParams} />
     </>
   );
@@ -149,7 +152,7 @@ function HeaderRow({ period, onPeriodChange, fromDate, toDate }) {
         </h1>
       </div>
       <Suspense fallback={null}>
-        <PeriodToggle includeAll period={period} onPeriodChange={onPeriodChange} />
+        <PeriodToggle period={period} onPeriodChange={onPeriodChange} />
       </Suspense>
     </div>
   );
@@ -192,10 +195,10 @@ function SkeletonBlock({ className = "" }) {
 function KpiCardSkeleton() {
   return (
     <div
-      className="flex flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-5"
+      className="flex flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-4"
       style={{ backgroundImage: GRAD_CARD }}
     >
-      <div className="flex w-full items-start gap-3">
+      <div className="flex w-full items-start gap-2">
         <SkeletonBlock className="h-10 w-10 shrink-0 rounded-[4px]" />
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <SkeletonBlock className="h-[14px] w-[72%]" />
@@ -207,20 +210,21 @@ function KpiCardSkeleton() {
 }
 
 // This dashboard packs 8 tiles carrying long currency strings
-// ("RM 10,677,327.5"), so the grid goes to 4 columns at xl (≥1280px) to fill
+// ("RM 10,677,327.50"), so the grid goes to 4 columns at xl (≥1280px) to fill
 // 18-inch displays, and the value scales with the viewport so it stays on one
 // line instead of clipping or wrapping mid-number. Sizes are kept compact so
-// four big-value tiles fit a row without truncation.
-const KPI_VALUE_FONT = "clamp(18px, 1.25vw, 26px)";
+// four big-value tiles fit a row without truncation. The min in the clamp is
+// tuned so 17-char strings (RM + 2 decimals) clear the narrowest 4-col width.
+const KPI_VALUE_FONT = "clamp(14px, 1.1vw, 24px)";
 
 function KpiCard({ kpi }) {
   const isCurrency = !!kpi.valuePrefix;
   return (
     <div
-      className="flex flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-5"
+      className="flex flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-4"
       style={{ backgroundImage: GRAD_CARD }}
     >
-      <div className="flex w-full items-start gap-3">
+      <div className="flex w-full items-start gap-2">
         <div
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] drop-shadow-[0_0_3px_rgba(222,162,32,0.5)]"
           style={{ backgroundImage: GRAD_DARK }}
@@ -283,8 +287,17 @@ function PerformanceSummary({ periodParams }) {
       Object.assign(params, periodParams);
       const res = await getCrmDashboardDetails(params);
       const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
-      setRows(results);
-      setTotal(Number.isFinite(res?.count) ? res.count : results.length);
+      // Filter "ghost" PICs — rows with no identifying info (no name and no
+      // uuid). They render as "—" with zeroed stats and a dead View link,
+      // which is just visual noise. If a tenant has 2 real PICs, the table
+      // should show 2 rows.
+      const realPics = results.filter((r) => (r?.full_name || r?.username) && r?.uuid);
+      const ghostCount = results.length - realPics.length;
+      setRows(realPics);
+      const backendTotal = Number.isFinite(res?.count) ? res.count : results.length;
+      // Subtract ghosts from the backend count so pagination reflects what
+      // the user actually sees.
+      setTotal(Math.max(0, backendTotal - ghostCount));
     } catch (err) {
       console.error("[pic-dashboard] details failed", err);
       setRows([]);
@@ -305,7 +318,7 @@ function PerformanceSummary({ periodParams }) {
   const showingTo = Math.min(startIdx + rows.length, total);
 
   return (
-    <section className="flex w-full flex-col overflow-clip rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
+    <section className="relative flex w-full flex-col overflow-clip rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
       <header className="flex flex-wrap items-center justify-between gap-3 p-4 sm:p-6 w-full">
         <h2
           className="text-white font-bold whitespace-nowrap"
@@ -341,6 +354,7 @@ function PerformanceSummary({ periodParams }) {
         pageCount={totalPages}
         onPageChange={setPage}
       />
+      {loading && <LoadingOverlay label="Loading..." />}
     </section>
   );
 }
@@ -393,7 +407,7 @@ function TableRow({ row }) {
           <span className="b-4 text-white whitespace-nowrap">{row.full_name || "—"}</span>
           {row.vip_level ? (
             <span
-              className="flex items-center rounded-[12px] px-3 py-1 b-6 text-[#05060a] whitespace-nowrap"
+              className="flex items-center rounded-[12px] px-3 py-1 b-4 font-semibold text-[#05060a] whitespace-nowrap"
               style={{ backgroundImage: GRAD_GOLD }}
             >
               {row.vip_level}
