@@ -27,6 +27,7 @@ import {
 } from "../components/leaderboard/RankingScreens";
 import PredictionsList from "../components/leaderboard/PredictionsList";
 import InfoModal from "../components/leaderboard/InfoModal";
+import NoticeModal from "../components/leaderboard/NoticeModal";
 import {
   PrizeTabs,
   CountryPrizesPanel,
@@ -46,6 +47,7 @@ export default function LeaderboardPage() {
   const [screen, setScreen] = useState(LB_SCREENS.COUNTRIES);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [joinBlocked, setJoinBlocked] = useState(false);
   const [profile, setProfile] = useState(null);
   const [confirmError, setConfirmError] = useState(null);
   const [activeTab, setActiveTab] = useState(LB_TABS.COUNTRIES);
@@ -212,7 +214,16 @@ export default function LeaderboardPage() {
             {isLeaderboardTabbed && (
               <div className="flex flex-col items-center gap-6 px-4 pb-8 pt-2">
                 <ProfileCard profile={profile} />
-                <PredictToWinCard onJoinNow={() => setScreen(LB_SCREENS.PREDICTIONS_LIST)} />
+                <PredictToWinCard
+                  onJoinNow={() => {
+                    // Spec slide 74: members need ≥ 3,000 total points to join predictions.
+                    if ((profile.totalPoints ?? 0) < 3000) {
+                      setJoinBlocked(true);
+                      return;
+                    }
+                    setScreen(LB_SCREENS.PREDICTIONS_LIST);
+                  }}
+                />
                 <LeaderboardTabs activeTab={activeTab} onTabChange={onTabChange} />
 
                 {screen === LB_SCREENS.COUNTRIES && (
@@ -298,6 +309,14 @@ export default function LeaderboardPage() {
       <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
       {isInfoOpen && <InfoModal onClose={() => setIsInfoOpen(false)} />}
+
+      {joinBlocked && (
+        <NoticeModal
+          title="3,000 Points Required"
+          message="You need at least 3,000 total points to join this prediction."
+          onClose={() => setJoinBlocked(false)}
+        />
+      )}
     </div>
   );
 }

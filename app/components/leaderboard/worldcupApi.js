@@ -39,7 +39,8 @@ export async function getMyProfile() {
   const hasNation = data.country !== null && data.country !== undefined;
   const hasOnboarded = hasNation || readOnboarded();
   return {
-    name: data.player_name,
+    // TODO: API currently returns player_name as "" — hardcode until it's mapped server-side.
+    name: data.player_name || "John Doe",
     countryId: data.country ?? null,
     countryCode: countryCode(data.country),
     countryName: data.country_name ?? countryName(data.country),

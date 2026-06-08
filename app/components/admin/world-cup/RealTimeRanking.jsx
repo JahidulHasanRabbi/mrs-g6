@@ -175,8 +175,6 @@ export default function RealTimeRanking({
   onChangeStreakFilter,
   refreshing,
   onRefresh,
-  onAddRanking,
-  onAddCountry,
 }) {
   const isGlobal = view === "global";
   const visibleTotal = isGlobal ? players.length : countries.length;
@@ -222,15 +220,6 @@ export default function RealTimeRanking({
             >
               <RefreshIcon spinning={refreshing} />
               Refresh
-            </button>
-            <button
-              type="button"
-              onClick={isGlobal ? onAddRanking : onAddCountry}
-              className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-4 py-2 text-[12px] font-semibold tracking-[-0.5px] text-[#141828] transition-opacity hover:opacity-90"
-              style={{ backgroundImage: GOLD_BG }}
-            >
-              <PlusIcon />
-              {isGlobal ? "Add Ranking" : "Add Country"}
             </button>
           </div>
         </div>

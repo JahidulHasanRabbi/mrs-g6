@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import DashboardMetrics from "../../components/admin/world-cup/DashboardMetrics";
 import RealTimeRanking, { thresholdFor } from "../../components/admin/world-cup/RealTimeRanking";
 import { getWorldCupRankingRealtime } from "../../api/adminApi";
@@ -32,7 +31,6 @@ function normalizeCountry(c) {
 }
 
 export default function WorldCupDashboardPage() {
-  const router = useRouter();
   const [view, setView] = useState("global");
   const [period, setPeriod] = useState("All");
   const [range, setRange] = useState({ from: null, to: null });
@@ -96,8 +94,6 @@ export default function WorldCupDashboardPage() {
         onChangeStreakFilter={setStreakFilter}
         refreshing={refreshing}
         onRefresh={onRefresh}
-        onAddRanking={() => router.push("/admin/world-cup/add-ranking")}
-        onAddCountry={() => router.push("/admin/world-cup/add-country")}
       />
     </div>
   );
