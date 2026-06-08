@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { LB_COLORS } from "./constants";
-import { GlowCard, Flag, Tabs } from "./primitives";
+import { GlowCard, Flag, GreenButton, Tabs } from "./primitives";
 import { getFixtures, getMatchPredictionsMap, getMyPredictions } from "./worldcupApi";
 import PredictModal from "./PredictModal";
 
@@ -114,7 +114,7 @@ function SectionHeader({ color, children }) {
   );
 }
 
-export default function PredictionsList({ predictions: propPredictions }) {
+export default function PredictionsList({ predictions: propPredictions, onViewPrize }) {
   const [activeTab, setActiveTab] = useState(0);
   const [fixtures, setFixtures] = useState({ upcoming: [], ongoing: [], settled: [] });
   const [predictedMap, setPredictedMap] = useState({});
@@ -245,6 +245,9 @@ export default function PredictionsList({ predictions: propPredictions }) {
                 );
               })
             }
+            <div className="pt-3">
+              <GreenButton onClick={onViewPrize} size="sm">View Prize Pool</GreenButton>
+            </div>
           </div>
         </GlowCard>
       )}

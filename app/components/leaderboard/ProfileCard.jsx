@@ -6,7 +6,7 @@ import { useUser } from "../../contexts/UserContext";
 
 function StatRow({ icon, label, children }) {
   return (
-    <div className="flex w-full items-end gap-2">
+    <div className="flex min-w-0 w-full items-end gap-2">
       <div
         className="grid h-8 w-8 shrink-0 place-items-center rounded-lg"
         style={{ background: LB_COLORS.primarySoft20, color: LB_COLORS.primary }}
@@ -20,7 +20,7 @@ function StatRow({ icon, label, children }) {
         >
           {label}
         </div>
-        <div className="flex items-center">{children}</div>
+        <div className="flex min-w-0 w-full items-center">{children}</div>
       </div>
     </div>
   );
@@ -47,8 +47,18 @@ const CoinIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="non
 const PctIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="1.5" fill="currentColor"/><circle cx="15" cy="15" r="1.5" fill="currentColor"/><path d="M6 18 18 6"/></svg>;
 const TrophyIcon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 4h10v4a5 5 0 1 1-10 0V4z"/><path d="M5 4H3v3a3 3 0 0 0 4 3M19 4h2v3a3 3 0 0 1-4 3"/><path d="M9 14v3h6v-3M8 20h8"/></svg>;
 
+function maskPlayerName(name) {
+  const trimmed = (name || "").trim();
+  if (!trimmed) return "Pla***";
+  const chars = [...trimmed];
+  if (chars.length <= 2) return `${chars[0]}***`;
+  const visible = Math.max(1, Math.floor(chars.length / 2));
+  return `${chars.slice(0, visible).join("")}${"*".repeat(Math.max(3, chars.length - visible))}`;
+}
+
 export default function ProfileCard({ profile }) {
   const { profilePicture } = useUser();
+  const displayName = maskPlayerName(profile.name);
 
   return (
     <div
@@ -67,38 +77,60 @@ export default function ProfileCard({ profile }) {
           />
         )}
 
-        <div className="flex w-full gap-6">
-          <div className="flex flex-1 flex-col gap-4">
-            <StatRow icon={<UserIcon />} label="Player">
-              <span style={{ color: "#fff", fontSize: 14, fontFamily: "'Lexend',sans-serif", lineHeight: "24px" }}>
-                {profile.name}
-              </span>
-              <span className="ml-3"><Flag code={profile.countryCode} src={profile.countryFlag} /></span>
-            </StatRow>
+        <div className="flex w-full flex-col gap-4">
+          <div className="w-full min-w-0 rounded-[8px] border border-white/5 bg-white/[0.02] p-3">
+            <div className="flex w-full min-w-0 items-end gap-2">
+              <div
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg"
+                style={{ background: LB_COLORS.primarySoft20, color: LB_COLORS.primary }}
+              >
+                <UserIcon />
+              </div>
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <div
+                  className="text-[10px] leading-[14px]"
+                  style={{ color: LB_COLORS.textMuted, fontFamily: "'Lexend',sans-serif" }}
+                >
+                  Player
+                </div>
+                <div className="flex w-full min-w-0 items-center">
+                  <span
+                    className="block min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap"
+                    title={displayName}
+                    style={{ color: "#fff", fontSize: 14, fontFamily: "'Lexend',sans-serif", lineHeight: "24px" }}
+                  >
+                    {displayName}
+                  </span>
+                  <span className="ml-3 shrink-0"><Flag code={profile.countryCode} src={profile.countryFlag} /></span>
+                </div>
+              </div>
+            </div>
+          </div>
 
+          <div className="grid w-full grid-cols-2 gap-x-6 gap-y-4">
             <StatRow icon={<RankIcon />} label="Global Rank">
               <RankValue value={profile.globalRank} />
             </StatRow>
 
+            <StatRow icon={<CoinIcon />} label="Your Total Points">
+              <StatValue>{(profile.totalPoints ?? 0).toLocaleString()}</StatValue>
+            </StatRow>
+
             <StatRow icon={<FlagIcon />} label="Country Rank">
               <RankValue value={profile.countryRank} />
-              <span className="ml-2" style={{ color: "#fff", fontSize: 12, fontFamily: "'Lexend',sans-serif", lineHeight: "24px" }}>
+              <span className="ml-2 min-w-0 truncate whitespace-nowrap" style={{ color: "#fff", fontSize: 12, fontFamily: "'Lexend',sans-serif", lineHeight: "24px" }}>
                 ({profile.countryName})
               </span>
+            </StatRow>
+
+            <StatRow icon={<PctIcon />} label="Total Predictions">
+              <StatValue>{profile.totalPredictions ?? 0}</StatValue>
             </StatRow>
 
             <StatRow icon={<FireIcon />} label="Winning Streak">
               <StatValue>{profile.winningStreak ?? 0}</StatValue>
             </StatRow>
-          </div>
 
-          <div className="flex flex-1 flex-col gap-4">
-            <StatRow icon={<CoinIcon />} label="Your Total Points">
-              <StatValue>{(profile.totalPoints ?? 0).toLocaleString()}</StatValue>
-            </StatRow>
-            <StatRow icon={<PctIcon />} label="Total Predictions">
-              <StatValue>{profile.totalPredictions ?? 0}</StatValue>
-            </StatRow>
             <StatRow icon={<TrophyIcon />} label="Total Wins">
               <StatValue>{profile.totalWins ?? 0}</StatValue>
             </StatRow>

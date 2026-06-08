@@ -292,6 +292,7 @@ function LeaderboardPageInner() {
             {screen === LB_SCREENS.PREDICTIONS_LIST && (
               <PredictionsList
                 predictions={predictionsData}
+                onViewPrize={() => navigate("prize-predictions")}
               />
             )}
 
