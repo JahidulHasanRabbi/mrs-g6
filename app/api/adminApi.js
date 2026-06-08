@@ -815,12 +815,6 @@ export async function archiveWorldCupDummyCountry(uuid) {
   return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.DUMMY_COUNTRY_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
 }
 
-// GET /worldcup/ranking/  (?scope=country for country board; ?country=<uuid> for player filter)
-export async function getWorldCupRanking(params = {}) {
-  const qs = buildQueryParams(params);
-  return await apiRequest(`${ENDPOINTS.WORLDCUP_ADMIN.RANKING}${qs}`, { method: 'GET' }, true, 'admin');
-}
-
 // GET /worldcup/ranking/realtime/  (real members only; supports scope, country,
 // period, from_date/to_date, total_win, winning_streak)
 export async function getWorldCupRankingRealtime(params = {}) {

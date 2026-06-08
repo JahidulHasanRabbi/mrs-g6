@@ -8,6 +8,7 @@ import {
   getWorldCupPrizePool,
   getWorldCupMatchList,
   getWorldCupProfile,
+  getProfile,
   chooseWorldCupCountry,
   submitWorldCupPrediction,
   getWorldCupPredictions,
@@ -35,12 +36,17 @@ function markOnboarded() {
 
 export async function getMyProfile() {
   const memberUuid = tokenStorage.getMemberUuid();
-  const data = await getWorldCupProfile(memberUuid);
+  const [worldCupResult, memberProfileResult] = await Promise.allSettled([
+    getWorldCupProfile(memberUuid),
+    getProfile(memberUuid),
+  ]);
+  if (worldCupResult.status === "rejected") throw worldCupResult.reason;
+  const data = worldCupResult.value;
+  const memberProfile = memberProfileResult.status === "fulfilled" ? memberProfileResult.value : null;
   const hasNation = data.country !== null && data.country !== undefined;
   const hasOnboarded = hasNation || readOnboarded();
   return {
-    // TODO: API currently returns player_name as "" — hardcode until it's mapped server-side.
-    name: data.player_name || "John Doe",
+    name: playerDisplayName(data, memberProfile),
     countryId: data.country ?? null,
     countryCode: countryCode(data.country),
     countryName: data.country_name ?? countryName(data.country),
@@ -138,8 +144,8 @@ export async function getCountryRankings() {
 export async function getGlobalPlayers() {
   const data = await getWorldCupLeaderboardPlayers();
   return (data.results ?? data ?? []).map((p) => ({
-    rank: p.rank,
-    name: p.player_name,
+    rank: p.global_rank,
+    name: playerDisplayName(p),
     code: countryCode(p.country),
     countryId: p.country,
     points: p.total_points ?? 0,
@@ -149,8 +155,8 @@ export async function getGlobalPlayers() {
 export async function getPlayersByCountry(countryId) {
   const data = await getWorldCupLeaderboardPlayers({ country: countryId });
   return (data.results ?? data ?? []).map((p) => ({
-    rank: p.rank,
-    name: p.player_name,
+    rank: p.country_rank ?? p.global_rank,
+    name: playerDisplayName(p),
     code: countryCode(p.country),
     points: p.total_points ?? 0,
   }));
@@ -291,6 +297,23 @@ function ordinal(n) {
   const s = ["th", "st", "nd", "rd"];
   const v = n % 100;
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+function firstNonBlank(...values) {
+  for (const value of values) {
+    if (typeof value !== "string") continue;
+    const trimmed = value.trim();
+    if (trimmed) return trimmed;
+  }
+  return "";
+}
+
+function playerDisplayName(row, memberProfile = null) {
+  return firstNonBlank(
+    row?.player_name,
+    row?.full_name,
+    memberProfile?.full_name,
+  ) || "Player";
 }
 
 function formatKickoff(iso) {

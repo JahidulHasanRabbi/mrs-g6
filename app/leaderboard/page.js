@@ -24,7 +24,6 @@ import {
   CountriesPanel,
   GlobalPlayersPanel,
   MyCountryPanel,
-  MyPredictionsPanel,
 } from "../components/leaderboard/RankingScreens";
 import PredictionsList from "../components/leaderboard/PredictionsList";
 import InfoModal from "../components/leaderboard/InfoModal";
@@ -44,7 +43,6 @@ import {
 const SCREEN_FROM_VIEW = {
   home: LB_SCREENS.COUNTRIES,
   players: LB_SCREENS.GLOBAL_PLAYERS,
-  predictions: LB_SCREENS.MY_PREDICTIONS,
   country: LB_SCREENS.MY_COUNTRY,
   fixtures: LB_SCREENS.PREDICTIONS_LIST,
   "prize-country": LB_SCREENS.PRIZE_COUNTRY,
@@ -57,7 +55,6 @@ const TAB_FROM_VIEW = {
   home: LB_TABS.COUNTRIES,
   country: LB_TABS.COUNTRIES,
   players: LB_TABS.PLAYERS,
-  predictions: LB_TABS.PREDICTIONS,
 };
 
 // `pt` (prize tab) is a secondary param so PRIZE_INFO can remember which
@@ -189,7 +186,6 @@ function LeaderboardPageInner() {
 
   const onTabChange = (tab) => {
     if (tab === LB_TABS.PLAYERS) navigate("players");
-    else if (tab === LB_TABS.PREDICTIONS) navigate("predictions");
     else navigate("home");
   };
 
@@ -199,7 +195,6 @@ function LeaderboardPageInner() {
 
   const openPrizePool = () => {
     if (activeTab === LB_TABS.PLAYERS) navigate("prize-players");
-    else if (activeTab === LB_TABS.PREDICTIONS) navigate("prize-predictions");
     else navigate("prize-country");
   };
 
@@ -212,7 +207,6 @@ function LeaderboardPageInner() {
   const isLeaderboardTabbed =
     screen === LB_SCREENS.COUNTRIES ||
     screen === LB_SCREENS.GLOBAL_PLAYERS ||
-    screen === LB_SCREENS.MY_PREDICTIONS ||
     screen === LB_SCREENS.MY_COUNTRY;
 
   const isPrizeTabbed =
@@ -290,13 +284,6 @@ function LeaderboardPageInner() {
                     country={selectedCountry}
                     onChangeCountry={() => navigate("home")}
                     onViewPrize={openPrizePool}
-                  />
-                )}
-                {screen === LB_SCREENS.MY_PREDICTIONS && (
-                  <MyPredictionsPanel
-                    onViewPrize={openPrizePool}
-                    rows={predictionsData.rows}
-                    loading={predictionsData.loading}
                   />
                 )}
               </div>

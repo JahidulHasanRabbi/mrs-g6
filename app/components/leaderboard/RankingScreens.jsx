@@ -59,12 +59,11 @@ function PredictionSkeletonRow({ index }) {
   );
 }
 
-const TAB_LABELS = ["All Countries", "Global Top Players", "My Predictions"];
+const TAB_LABELS = ["All Countries", "Global Top Players"];
 
 export function LeaderboardTabs({ activeTab, onTabChange }) {
   const index =
-    activeTab === LB_TABS.COUNTRIES ? 0 :
-    activeTab === LB_TABS.PLAYERS   ? 1 : 2;
+    activeTab === LB_TABS.PLAYERS ? 1 : 0;
   return (
     <Tabs
       tabs={TAB_LABELS}
@@ -72,8 +71,7 @@ export function LeaderboardTabs({ activeTab, onTabChange }) {
       onChange={(i) => {
         onTabChange(
           i === 0 ? LB_TABS.COUNTRIES :
-          i === 1 ? LB_TABS.PLAYERS   :
-                    LB_TABS.PREDICTIONS,
+                    LB_TABS.PLAYERS,
         );
       }}
     />
