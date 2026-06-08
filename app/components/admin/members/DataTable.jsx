@@ -1,5 +1,7 @@
 ﻿"use client";
 
+import { useState } from "react";
+
 /**
  * Sort indicator arrows — highlights gold when active.
  */
@@ -92,6 +94,52 @@ export function Pagination({ currentPage, totalPages, onPageChange }) {
         className=" text-[13px] text-white/70 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed px-2 py-1 italic"
       >
         Next
+      </button>
+
+      {totalPages > 7 && (
+        <GoToPage totalPages={totalPages} onPageChange={onPageChange} />
+      )}
+    </div>
+  );
+}
+
+function GoToPage({ totalPages, onPageChange }) {
+  const [value, setValue] = useState("");
+
+  const submit = () => {
+    const n = parseInt(value, 10);
+    if (!Number.isFinite(n)) return;
+    const clamped = Math.min(totalPages, Math.max(1, n));
+    onPageChange(clamped);
+    setValue("");
+  };
+
+  return (
+    <div className="ml-2 flex items-center gap-1.5">
+      <span className="text-[13px] text-white/60">Go to</span>
+      <input
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        value={value}
+        onChange={(e) => setValue(e.target.value.replace(/[^0-9]/g, ""))}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            submit();
+          }
+        }}
+        placeholder={String(totalPages)}
+        aria-label={`Go to page (1 to ${totalPages})`}
+        className="h-[28px] w-[52px] rounded border border-white/15 bg-transparent px-2 text-center text-[13px] text-white placeholder:text-white/30 focus:border-[#e9af41] focus:outline-none"
+      />
+      <button
+        type="button"
+        onClick={submit}
+        disabled={!value}
+        className="h-[28px] rounded border border-[#e9af41] px-2 text-[12px] font-medium text-[#e9af41] hover:bg-[#e9af41]/10 disabled:opacity-40 disabled:cursor-not-allowed"
+      >
+        Go
       </button>
     </div>
   );

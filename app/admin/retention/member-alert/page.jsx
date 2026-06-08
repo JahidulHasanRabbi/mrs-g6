@@ -15,6 +15,7 @@ import {
 } from "../../../api/crmApi";
 import { FollowUpCreateModal } from "../../../components/admin/retention/FollowUpComponents";
 import Pagination from "../../../components/admin/retention/Pagination";
+import LoadingOverlay from "../../../components/admin/ui/LoadingOverlay";
 
 // Member Alert page — Figma 69:340. "Overview" KPI strip + Member Follow Up
 // list. The list is the same shape as /admin/retention/members but with a
@@ -58,10 +59,10 @@ function formatNumber(value) {
 }
 
 function formatCurrency(value) {
-  if (value === null || value === undefined || value === "") return "RM 0";
+  if (value === null || value === undefined || value === "") return "RM 0.00";
   const num = parseFloat(value);
   if (Number.isNaN(num)) return `RM ${value}`;
-  return `RM ${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  return `RM ${num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export default function MemberAlertPage() {
@@ -88,7 +89,10 @@ export default function MemberAlertPage() {
   return (
     <>
       <OverviewHeader />
-      <KpiRow summary={summary} loading={summaryLoading} />
+      <div className="relative">
+        <KpiRow summary={summary} loading={summaryLoading} />
+        {summaryLoading && <LoadingOverlay label="Loading..." />}
+      </div>
       <FollowUpList />
     </>
   );
@@ -287,10 +291,10 @@ function FollowUpList() {
   }, [page, totalPages]);
 
   return (
-    <section className="flex w-full flex-col overflow-hidden rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
-      <header className="flex flex-col gap-4 p-6 w-full md:flex-row md:flex-wrap md:items-center">
+    <section className="relative flex w-full flex-col rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
+      <header className="flex flex-col gap-4 p-6 w-full xl:flex-row xl:flex-wrap xl:items-center">
         <h2
-          className="text-white font-bold whitespace-nowrap md:flex-1 md:min-w-0"
+          className="text-white font-bold xl:flex-1 xl:min-w-0"
           style={{
             fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
             fontSize: "26px",
@@ -339,6 +343,7 @@ function FollowUpList() {
         currentPage={safePage}
         onPageChange={setPage}
       />
+      {loading && <LoadingOverlay label="Loading..." />}
     </section>
   );
 }

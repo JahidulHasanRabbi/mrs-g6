@@ -74,8 +74,6 @@ export function AdminRouteGuard({ children /* , skeleton (deprecated) */ }) {
 
     // Background verify - non-blocking.
     verifyToken(token).catch((error) => {
-      console.log('[AdminRouteGuard] background token verify failed:', error?.message);
-
       attemptRefresh().then((refreshed) => {
         if (refreshed) {
           setTokenState('present');

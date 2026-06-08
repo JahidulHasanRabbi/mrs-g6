@@ -47,6 +47,20 @@ export const tokenStorage = {
 
   getMemberUuid: () => {
     if (typeof window !== 'undefined') {
+      const token = localStorage.getItem(STORAGE_KEYS.MEMBER_ACCESS_TOKEN);
+      const expiry = localStorage.getItem(STORAGE_KEYS.MEMBER_TOKEN_EXPIRY);
+      // If a token exists but is expired, clear the whole session.
+      // This mirrors getMemberAccessToken()'s expiry check so any caller
+      // that reads UUID directly cannot fire APIs with a stale session.
+      if (token && expiry) {
+        const expiryTime = parseInt(expiry, 10);
+        if (Date.now() >= expiryTime) {
+          tokenStorage.clearMemberTokens();
+          return null;
+        }
+      }
+      // No token = not authenticated; UUID alone is useless.
+      if (!token) return null;
       return localStorage.getItem(STORAGE_KEYS.MEMBER_UUID);
     }
     return null;

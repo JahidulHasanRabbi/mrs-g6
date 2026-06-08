@@ -1,5 +1,7 @@
 "use client";
 
+import LoadingOverlay from "../admin/ui/LoadingOverlay";
+
 // Loading spinner component (kept for legacy callers that haven't migrated to skeletons yet)
 function LoadingSpinner({ size = "medium" }) {
   const sizeClasses = {
@@ -23,14 +25,23 @@ function LoadingSpinner({ size = "medium" }) {
  * Wrapper that shows a loading state while data is fetching.
  *
  * Pass `skeleton={<Skeleton.TablePage .../>}` (or any page-shaped skeleton)
- * to render a structural preview instead of the legacy spinner — much better
- * perceived performance and signals what's about to load.
+ * to render a structural preview — and the Lottie spinner overlay rides on
+ * top of it so the user sees both the layout preview AND a clear "loading"
+ * indicator that blocks pointer events on the skeleton region.
  *
- * If `skeleton` is omitted, falls back to the spinner so existing callers keep working.
+ * If `skeleton` is omitted, falls back to the legacy spinner so existing
+ * call sites keep working.
  */
 export function LoadingState({ isLoading, children, skeleton, message }) {
   if (isLoading) {
-    if (skeleton) return skeleton;
+    if (skeleton) {
+      return (
+        <div className="relative">
+          {skeleton}
+          <LoadingOverlay label={message || "Loading..."} />
+        </div>
+      );
+    }
     return (
       <div className="flex flex-col items-center justify-center p-8 gap-3">
         <LoadingSpinner size="large" />

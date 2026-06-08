@@ -30,9 +30,23 @@ export default function AppLayout({ children }) {
   const isHomePage = pathname === "/";
   const isSpinPage = pathname === "/spin";
   const isTermsPage = pathname === "/terms-and-conditions";
+  // The whole Penalty Kick section (the game at /penalty-kick plus the
+  // Missions sub-page at /penalty-kick/missions) is self-contained — each
+  // screen draws its own header + FooterNav over a full-bleed backdrop.
+  const isPenaltyKickPage =
+    pathname === "/penalty-kick" || pathname?.startsWith("/penalty-kick/");
+  const isLeaderboardPage = pathname === "/leaderboard";
 
   // Don't show layout on home page
   if (isHomePage) {
+    return <>{children}</>;
+  }
+
+  // Penalty Kick and Leaderboard each draw their own top HUD + bottom
+  // FooterNav and need a full-bleed surface — skip the global header/
+  // footer chrome here so we don't end up with two stacked headers
+  // (the global hamburger + the page's "LEADERBOARDS" bar).
+  if (isPenaltyKickPage || isLeaderboardPage) {
     return <>{children}</>;
   }
 

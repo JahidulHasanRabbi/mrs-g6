@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, Suspense } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Pagination from "../../../components/admin/retention/Pagination";
 import {
@@ -30,10 +30,10 @@ function formatNumber(value) {
 }
 
 function formatCurrency(value) {
-  if (value === null || value === undefined || value === "") return "RM 0";
+  if (value === null || value === undefined || value === "") return "RM 0.00";
   const num = parseFloat(value);
   if (Number.isNaN(num)) return `RM ${value}`;
-  return `RM ${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  return `RM ${num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function stripCurrency(value) {
@@ -89,13 +89,13 @@ function rowToFormValues(row) {
 
 export default function RetentionSettingsPage() {
   return (
-    <Suspense>
-      <RetentionSettingsContent />
+    <Suspense fallback={null}>
+      <RetentionSettingsPageInner />
     </Suspense>
   );
 }
 
-function RetentionSettingsContent() {
+function RetentionSettingsPageInner() {
   const searchParams = useSearchParams();
   const pageParam = parseInt(searchParams.get("page") || "1", 10);
   const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;

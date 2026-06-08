@@ -18,6 +18,7 @@ const MRS_PAGES = [
   { slug: "/profile",            label: "Profile" },
   { slug: "/mart",               label: "Redemption Mart" },
   { slug: "/spin",               label: "Lucky Spin" },
+  { slug: "/penalty-kick",       label: "Penalty Kick" },
   { slug: "/terms-and-conditions", label: "Terms & Conditions" },
   { slug: "/vip",                label: "VIP" },
 ];
@@ -658,10 +659,6 @@ function FloatingMenuContent() {
         adminApi.getFloatingMenuRootIcons(),
         adminApi.getStationList(),
       ]);
-      console.log('Floating Menus:', menusData);
-      console.log('Root Icons:', rootIconsData);
-      console.log('Stations:', stationsData);
-      
       // Handle paginated response
       const menusArray = Array.isArray(menusData) ? menusData : (menusData?.results || []);
       const rootIconsArray = Array.isArray(rootIconsData) ? rootIconsData : (rootIconsData?.results || []);

@@ -26,7 +26,7 @@ import { getPublicBanners } from "@/app/api/memberApi";
  * @param {boolean} props.isOpen - Menu open state
  * @param {() => void} props.onClose - Close handler
  */
-function HamburgerMenu({ isOpen, onClose }) {
+function HamburgerMenu({ isOpen, onClose, side = "left" }) {
   useHamburgerMenu(isOpen, onClose);
 
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -106,8 +106,11 @@ function HamburgerMenu({ isOpen, onClose }) {
           {/* Sidebar */}
           <div className="fixed inset-0 z-50 left-1/2 w-full max-w-[475px] -translate-x-1/2 pointer-events-none">
             <motion.aside
-              {...ANIMATION_CONFIG.sidebar}
-              className="pointer-events-auto absolute top-0 left-0 h-dvh w-[220px] overflow-y-auto overscroll-contain"
+              initial={{ x: side === "right" ? "100%" : "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: side === "right" ? "100%" : "-100%" }}
+              transition={ANIMATION_CONFIG.sidebar.transition}
+              className={`pointer-events-auto absolute top-0 ${side === "right" ? "right-0" : "left-0"} h-dvh w-[220px] overflow-y-auto overscroll-contain`}
               style={{
                 scrollbarGutter: "stable",
                 backgroundColor: THEME_CONFIG.background,

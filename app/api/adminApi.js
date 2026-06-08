@@ -194,10 +194,7 @@ export async function deleteLuckySpinSequence(uuid) {
 }
 
 export async function changeSpinSequencesOrder(luckySpins) {
-  console.log('changeSpinSequencesOrder called with:', luckySpins);
   const payload = { lucky_spins: luckySpins };
-  console.log('Sending payload:', JSON.stringify(payload, null, 2));
-  
   const response = await fetch(`${BASE_URL}${ENDPOINTS.ADMIN.CHANGE_SPIN_SEQUENCES}`, {
     method: 'PATCH',
     headers: {
@@ -616,4 +613,223 @@ export async function archiveFrame(uuid) {
   return await apiRequest(ENDPOINTS.ADMIN.FRAME_ARCHIVE(uuid), {
     method: 'PATCH'
   }, true, 'admin');
+}
+
+// ============================================================================
+// PENALTY KICK MANAGEMENT
+// ============================================================================
+
+export async function getPenaltyKickSettings() {
+  return await apiRequest(ENDPOINTS.ADMIN.PENALTY_KICK_SETTINGS, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function updatePenaltyKickSettings(settingsData) {
+  return await apiRequest(ENDPOINTS.ADMIN.PENALTY_KICK_SETTINGS, {
+    method: 'POST',
+    body: settingsData
+  }, true, 'admin');
+}
+
+export async function getPenaltyKickItems(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.PENALTY_KICK_ITEMS}${qs}`, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function getPenaltyKickItem(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.PENALTY_KICK_ITEM(uuid), {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function createPenaltyKickItem(itemData) {
+  return await apiRequest(ENDPOINTS.ADMIN.PENALTY_KICK_ITEMS, {
+    method: 'POST',
+    body: itemData
+  }, true, 'admin');
+}
+
+export async function updatePenaltyKickItem(uuid, itemData) {
+  return await apiRequest(ENDPOINTS.ADMIN.PENALTY_KICK_ITEM(uuid), {
+    method: 'PUT',
+    body: itemData
+  }, true, 'admin');
+}
+
+export async function archivePenaltyKickItem(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.PENALTY_KICK_ITEM_ARCHIVE(uuid), {
+    method: 'PATCH'
+  }, true, 'admin');
+}
+
+export async function getPenaltyKickSequences(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.PENALTY_KICK_SEQUENCES}${qs}`, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function createPenaltyKickSequence(itemOrder, itemUuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.PENALTY_KICK_SEQUENCES, {
+    method: 'POST',
+    body: { item_order: itemOrder, item_uuid: itemUuid }
+  }, true, 'admin');
+}
+
+export async function deletePenaltyKickSequence(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.PENALTY_KICK_SEQUENCE(uuid), {
+    method: 'DELETE'
+  }, true, 'admin');
+}
+
+export async function reorderPenaltyKickSequences(kicks) {
+  return await apiRequest(ENDPOINTS.ADMIN.PENALTY_KICK_SEQUENCE_REORDER, {
+    method: 'PATCH',
+    body: { kicks }
+  }, true, 'admin');
+}
+
+// ============================================================================
+// WORLD CUP - ADMIN
+// ============================================================================
+
+// GET/POST /worldcup/settings/
+export async function getWorldCupSettings() {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.SETTINGS, { method: 'GET' }, true, 'admin');
+}
+export async function updateWorldCupSettings(data) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.SETTINGS, { method: 'POST', body: data }, true, 'admin');
+}
+
+// Countries CRUD
+export async function getWorldCupCountries(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.WORLDCUP_ADMIN.COUNTRIES}${qs}`, { method: 'GET' }, true, 'admin');
+}
+export async function getWorldCupCountry(uuid) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.COUNTRY(uuid), { method: 'GET' }, true, 'admin');
+}
+export async function createWorldCupCountry(data) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.COUNTRIES, { method: 'POST', body: data }, true, 'admin');
+}
+export async function updateWorldCupCountry(uuid, data) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.COUNTRY(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+export async function archiveWorldCupCountry(uuid) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.COUNTRY_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
+// Banners CRUD
+export async function getWorldCupBanners(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.WORLDCUP_ADMIN.BANNERS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+export async function getWorldCupBanner(uuid) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.BANNER(uuid), { method: 'GET' }, true, 'admin');
+}
+export async function createWorldCupBanner(data) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.BANNERS, { method: 'POST', body: data }, true, 'admin');
+}
+export async function updateWorldCupBanner(uuid, data) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.BANNER(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+export async function archiveWorldCupBanner(uuid) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.BANNER_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
+// Reward Items CRUD
+export async function getWorldCupRewardItems(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.WORLDCUP_ADMIN.REWARD_ITEMS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+export async function getWorldCupRewardItem(uuid) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.REWARD_ITEM(uuid), { method: 'GET' }, true, 'admin');
+}
+export async function createWorldCupRewardItem(data) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.REWARD_ITEMS, { method: 'POST', body: data }, true, 'admin');
+}
+export async function updateWorldCupRewardItem(uuid, data) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.REWARD_ITEM(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+export async function archiveWorldCupRewardItem(uuid) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.REWARD_ITEM_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
+// Matches CRUD
+export async function getWorldCupMatches(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.WORLDCUP_ADMIN.MATCHES}${qs}`, { method: 'GET' }, true, 'admin');
+}
+export async function getWorldCupMatch(uuid) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.MATCH(uuid), { method: 'GET' }, true, 'admin');
+}
+export async function createWorldCupMatch(data) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.MATCHES, { method: 'POST', body: data }, true, 'admin');
+}
+export async function updateWorldCupMatch(uuid, data) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.MATCH(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+export async function archiveWorldCupMatch(uuid) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.MATCH_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+export async function settleWorldCupMatch(uuid, winnerUuid) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.MATCH_SETTLE(uuid), { method: 'POST', body: { winner: winnerUuid } }, true, 'admin');
+}
+
+// Dummy Players CRUD
+export async function getWorldCupDummyPlayers(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.WORLDCUP_ADMIN.DUMMY_PLAYERS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+export async function getWorldCupDummyPlayer(uuid) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.DUMMY_PLAYER(uuid), { method: 'GET' }, true, 'admin');
+}
+export async function createWorldCupDummyPlayer(data) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.DUMMY_PLAYERS, { method: 'POST', body: data }, true, 'admin');
+}
+export async function updateWorldCupDummyPlayer(uuid, data) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.DUMMY_PLAYER(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+export async function archiveWorldCupDummyPlayer(uuid) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.DUMMY_PLAYER_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
+// Dummy Countries CRUD
+export async function getWorldCupDummyCountries(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.WORLDCUP_ADMIN.DUMMY_COUNTRIES}${qs}`, { method: 'GET' }, true, 'admin');
+}
+export async function getWorldCupDummyCountry(uuid) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.DUMMY_COUNTRY(uuid), { method: 'GET' }, true, 'admin');
+}
+export async function createWorldCupDummyCountry(data) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.DUMMY_COUNTRIES, { method: 'POST', body: data }, true, 'admin');
+}
+export async function updateWorldCupDummyCountry(uuid, data) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.DUMMY_COUNTRY(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+export async function archiveWorldCupDummyCountry(uuid) {
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.DUMMY_COUNTRY_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
+// GET /worldcup/ranking/  (?scope=country for country board; ?country=<uuid> for player filter)
+export async function getWorldCupRanking(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.WORLDCUP_ADMIN.RANKING}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+// GET /worldcup/ranking/realtime/  (real members only; supports scope, country,
+// period, from_date/to_date, total_win, winning_streak)
+export async function getWorldCupRankingRealtime(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.WORLDCUP_ADMIN.RANKING_REALTIME}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+// GET /worldcup/dashboard/kpi/  (period: 1=daily, 2=monthly, 3=yearly; or from_date/to_date)
+export async function getWorldCupDashboardKpi(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.WORLDCUP_ADMIN.DASHBOARD_KPI}${qs}`, { method: 'GET' }, true, 'admin');
 }

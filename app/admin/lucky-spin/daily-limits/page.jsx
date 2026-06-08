@@ -9,9 +9,9 @@ export default function DailyLimitsPage() {
 
   return (
     <div className="rounded-xl border border-white/10 bg-white/[0.03] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
-      <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-        <div className="flex items-center gap-[12px]">
-          <div className="border border-[#f2c36b] border-solid flex gap-[6px] items-center justify-center px-[8px] py-[6px] rounded-[4px] shrink-0 w-[817px]">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 px-6 py-4">
+        <div className="flex items-center gap-[12px] flex-1 min-w-[240px]">
+          <div className="border border-[#f2c36b] border-solid flex gap-[6px] items-center justify-center px-[8px] py-[6px] rounded-[4px] flex-1 min-w-0">
             <div className="relative shrink-0 size-[32px]">
               <img
                 src="/assets/admin/lucky-spin/searchicon.png"
@@ -19,7 +19,7 @@ export default function DailyLimitsPage() {
                 className="absolute inset-0 h-full w-full object-contain"
               />
             </div>
-            <p className="flex-1 text-[12px] text-white leading-[1.3]">Search..</p>
+            <p className="flex-1 min-w-0 text-[12px] text-white leading-[1.3]">Search..</p>
           </div>
 
           <button className="flex items-center justify-center p-[6px] rounded-[8px] shrink-0" type="button">
@@ -33,11 +33,11 @@ export default function DailyLimitsPage() {
           </button>
         </div>
 
-        <div className="flex gap-[34px] items-center whitespace-nowrap">
+        <div className="flex flex-wrap gap-x-[16px] xl:gap-x-[34px] gap-y-2 items-center">
           <button
             type="button"
             onClick={() => setActiveTab("member-activity")}
-            className={`capitalize text-[20px] font-bold leading-[1.2] p-[5px] border-b ${
+            className={`capitalize text-[14px] lg:text-[16px] xl:text-[20px] font-bold leading-[1.2] p-[5px] border-b whitespace-nowrap ${
               activeTab === "member-activity"
                 ? "border-[#f2c36b] text-white"
                 : "border-transparent text-white"
@@ -48,7 +48,7 @@ export default function DailyLimitsPage() {
           <button
             type="button"
             onClick={() => setActiveTab("daily-limits")}
-            className={`capitalize text-[20px] font-bold leading-[1.2] p-[5px] ${
+            className={`capitalize text-[14px] lg:text-[16px] xl:text-[20px] font-bold leading-[1.2] p-[5px] whitespace-nowrap ${
               activeTab === "daily-limits"
                 ? "border-b border-[#f2c36b] text-white"
                 : "text-white"

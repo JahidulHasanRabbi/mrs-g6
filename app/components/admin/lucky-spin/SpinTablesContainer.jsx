@@ -160,7 +160,6 @@ export default function SpinTablesContainer() {
     setError(null);
     
     try {
-      console.log('Reordering sequences with payload:', luckySpins);
       await adminApi.changeSpinSequencesOrder(luckySpins);
       await loadSpinSequences();
     } catch (err) {

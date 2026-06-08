@@ -343,8 +343,6 @@ function EditMemberModal({ member, onClose, onSave }) {
         updateData.profile_picture = profilePictureFile;
       }
 
-      console.log('Sending update data:', updateData);
-
       await updateMember(member.uuid, updateData);
       onSave?.(updateData);
       onClose();
@@ -552,16 +550,8 @@ function MembersContent() {
           getVipTierList(),
           getStationList()
         ]);
-        console.log('VIP Tiers:', tiersData);
-        console.log('Stations:', stationsData);
-        
-        // Handle if response is paginated (has results array) or direct array
         const tiers = Array.isArray(tiersData) ? tiersData : (tiersData?.results || []);
         const stations = Array.isArray(stationsData) ? stationsData : (stationsData?.results || []);
-        
-        console.log('Processed Tiers:', tiers);
-        console.log('Processed Stations:', stations);
-        
         setVipTiers(tiers);
         setStations(stations);
       } catch (err) {

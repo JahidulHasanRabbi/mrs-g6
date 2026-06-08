@@ -41,9 +41,7 @@ function MartTiersContent() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      console.log('Loading mart tiers...');
       const tiersData = await adminApi.getRedemptionTiers();
-      console.log('Mart tiers response:', tiersData);
       setTiers(Array.isArray(tiersData) ? tiersData : (tiersData?.results || []));
     } catch (err) {
       console.error('Failed to load mart tiers:', err);

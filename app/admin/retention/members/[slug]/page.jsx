@@ -9,7 +9,7 @@ import {
   AlertHistorySection,
   FollowUpCreateModal,
 } from "../../../../components/admin/retention/FollowUpComponents";
-import { getCrmFollowUps, getCrmMemberSingle, patchCrmMember, patchCrmMemberFollowUp, refreshCrmMember } from "../../../../api/crmApi";
+import { assignCrmMemberToPic, getCrmFollowUps, getCrmMemberSingle, getCrmUsers, patchCrmMember, patchCrmMemberFollowUp, refreshCrmMember } from "../../../../api/crmApi";
 import { getVipTierList, getWalletVipTiers, getStationList } from "../../../../api/adminApi";
 
 const TAG_STYLES = {
@@ -79,6 +79,13 @@ function formatCurrency(value) {
   const [, sign, integer, decimal = ""] = match;
   const grouped = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return `RM ${sign}${grouped}${decimal}`;
+}
+
+// True when a `formatCurrency` result represents a negative amount (e.g.
+// "RM -7,610.15"). Used to flip the value-cell color to red in StatCard
+// and InfoRow so losses pop visually.
+function isNegativeCurrency(value) {
+  return typeof value === "string" && /^RM\s+-/.test(value);
 }
 
 function show(value, fallback = "—") {
@@ -374,6 +381,7 @@ export default function MemberProfilePage() {
         onNoteOpen={() => setActiveModal("note")}
         onVipOpen={() => setActiveModal("vip")}
         onAlertOpen={() => setActiveModal("alert")}
+        onAssignPicOpen={() => setActiveModal("assign-pic")}
         onUpdateBonus={handleUpdateBonus}
         bonusUpdating={bonusUpdating}
       />
@@ -405,9 +413,7 @@ export default function MemberProfilePage() {
       {activeModal === "alert" && (
         <FollowUpCreateModal
           memberName={profileName}
-          title="Add Alert"
-          showPriority
-          initialPriority={profilePriority}
+          title="Add Follow Up"
           submitting={alertSubmitting}
           submitError={alertError}
           onClose={() => setActiveModal(null)}
@@ -419,9 +425,6 @@ export default function MemberProfilePage() {
               await patchCrmMemberFollowUp(memberUuid, {
                 follow_up_remark: entry.follow_up_remark || entry.note || "",
               });
-              if (entry.priority) {
-                setData((prev) => (prev ? { ...prev, priority: entry.priority } : prev));
-              }
               setActiveModal(null);
               setRefreshKey((k) => k + 1);
             } catch (err) {
@@ -431,6 +434,14 @@ export default function MemberProfilePage() {
               setAlertSubmitting(false);
             }
           }}
+        />
+      )}
+      {activeModal === "assign-pic" && (
+        <AssignPicModal
+          memberUuid={memberUuid}
+          currentPic={data?.retention || data?.retention_full_name}
+          onClose={() => setActiveModal(null)}
+          onSaved={handleSaved}
         />
       )}
       {bonusResult && (
@@ -443,7 +454,7 @@ export default function MemberProfilePage() {
   );
 }
 
-function ProfileHeader({ name, tags, dateJoined, slug, activeBrands, onNoteOpen, onVipOpen, onAlertOpen, onUpdateBonus, bonusUpdating }) {
+function ProfileHeader({ name, tags, dateJoined, slug, activeBrands, onNoteOpen, onVipOpen, onAlertOpen, onAssignPicOpen, onUpdateBonus, bonusUpdating }) {
   return (
     <div className="flex flex-col gap-4 px-2 md:flex-row md:flex-wrap md:items-start md:justify-between md:gap-6">
       <div className="flex flex-col gap-3">
@@ -493,7 +504,7 @@ function ProfileHeader({ name, tags, dateJoined, slug, activeBrands, onNoteOpen,
               <EditIcon />
               <span className="text-[12px] font-medium leading-[18px] text-[#141828]">Edit Profile</span>
             </Link>
-            <MoreOptionsMenu onNoteOpen={onNoteOpen} onVipOpen={onVipOpen} onAlertOpen={onAlertOpen} onUpdateBonus={onUpdateBonus} bonusUpdating={bonusUpdating} />
+            <MoreOptionsMenu onNoteOpen={onNoteOpen} onVipOpen={onVipOpen} onAlertOpen={onAlertOpen} onAssignPicOpen={onAssignPicOpen} onUpdateBonus={onUpdateBonus} bonusUpdating={bonusUpdating} />
           </div>
         </div>
       </div>
@@ -535,20 +546,21 @@ function ActiveBrandsRow({ active }) {
 const MORE_OPTIONS = [
   { key: "update-bonus",     label: "Update Bonus" },
   { key: "add-note",         label: "Add Note" },
-  { key: "change-vip-level", label: "Change VIP Level" },
-  { key: "alert",            label: "Alert", danger: true },
-  // { key: "block-customer",   label: "Block Customer", danger: true },
+  { key: "assign-pic",       label: "Assign PIC" },
+  { key: "change-vip",       label: "Change VIP" },
+  { key: "follow-up",        label: "Follow Up", danger: true },
 ];
 
-function MoreOptionsMenu({ onNoteOpen, onVipOpen, onAlertOpen, onUpdateBonus, bonusUpdating }) {
+function MoreOptionsMenu({ onNoteOpen, onVipOpen, onAlertOpen, onAssignPicOpen, onUpdateBonus, bonusUpdating }) {
   const [open, setOpen] = useState(false);
 
   const handleSelect = (key) => {
     setOpen(false);
     if (key === "update-bonus") onUpdateBonus?.();
     else if (key === "add-note") onNoteOpen();
-    else if (key === "change-vip-level") onVipOpen();
-    else if (key === "alert") onAlertOpen();
+    else if (key === "assign-pic") onAssignPicOpen();
+    else if (key === "change-vip") onVipOpen();
+    else if (key === "follow-up") onAlertOpen();
   };
 
   return (
@@ -766,7 +778,7 @@ function NoteModal({ memberUuid, initialNote, onClose, onSaved }) {
 
   return (
     <ModalOverlay onClose={onClose}>
-      <ModalTitle>Add Note</ModalTitle>
+      <ModalTitle>{initialNote ? "Update Note" : "Add Note"}</ModalTitle>
       <label className="block text-[14px] font-medium text-[#f6dda6] leading-[21px] mb-2">
         Note
       </label>
@@ -782,6 +794,67 @@ function NoteModal({ memberUuid, initialNote, onClose, onSaved }) {
       {saveError && (
         <p className="mt-2 text-[12px] text-[#fb3748]">{saveError}</p>
       )}
+      <ModalActions onClose={onClose} onSave={handleSave} saving={saving} />
+    </ModalOverlay>
+  );
+}
+
+function AssignPicModal({ memberUuid, currentPic, onClose, onSaved }) {
+  const [pics, setPics] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedPicUuid, setSelectedPicUuid] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getCrmUsers({ page: 1, page_size: 100 })
+      .then((res) => {
+        if (cancelled) return;
+        setPics(normalizeListResponse(res));
+      })
+      .catch((err) => console.error("[assign-pic-modal] users load failed", err))
+      .finally(() => !cancelled && setLoading(false));
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleSave = async () => {
+    if (saving || !selectedPicUuid) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      await assignCrmMemberToPic(memberUuid, { pic_uuid: selectedPicUuid });
+      onSaved();
+    } catch (err) {
+      console.error("[assign-pic-modal] save failed", err);
+      setSaveError("Failed to assign PIC. Please try again.");
+      setSaving(false);
+    }
+  };
+
+  return (
+    <ModalOverlay onClose={onClose}>
+      <ModalTitle>Assign PIC</ModalTitle>
+      {currentPic ? (
+        <div className="mb-4">
+          <p className="text-[11px] text-white/50 mb-1">Current PIC</p>
+          <span className="text-[13px] text-white">{currentPic}</span>
+        </div>
+      ) : null}
+      <p className="text-[14px] font-medium text-[#f6dda6] leading-[21px] mb-2">Select PIC</p>
+      {loading ? (
+        <div className="rounded-[8px] border border-[#fbeed2]/30 px-4 py-3 text-[12px] text-white/40">Loading...</div>
+      ) : (
+        <StyledSelect
+          value={selectedPicUuid}
+          onChange={setSelectedPicUuid}
+          placeholder="Select a PIC..."
+          options={pics
+            .map((u) => ({ value: u.uuid || u.id, label: u.full_name || u.username || u.email || u.uuid }))
+            .filter((o) => o.value)}
+        />
+      )}
+      {saveError && <p className="mt-2 text-[12px] text-[#fb3748]">{saveError}</p>}
       <ModalActions onClose={onClose} onSave={handleSave} saving={saving} />
     </ModalOverlay>
   );
@@ -862,11 +935,11 @@ function VipModal({ memberUuid, memberData, currentVipLabel, walletVipTiers, sta
 
   return (
     <ModalOverlay onClose={onClose}>
-      <ModalTitle>Change VIP Level</ModalTitle>
+      <ModalTitle>Change VIP</ModalTitle>
 
-      {/* MRS VIP Section */}
+      {/* NS VIP Section */}
       <div className="mb-5">
-        <p className="text-[14px] font-medium text-[#f6dda6] leading-[21px] mb-2">MRS VIP Level</p>
+        <p className="text-[14px] font-medium text-[#f6dda6] leading-[21px] mb-2">NS VIP Level</p>
         {currentVipLabel && (
           <div className="mb-3">
             <p className="text-[11px] text-white/50 mb-1">Current</p>
@@ -881,7 +954,7 @@ function VipModal({ memberUuid, memberData, currentVipLabel, walletVipTiers, sta
           <StyledSelect
             value={selectedMrsUuid || ""}
             onChange={(v) => setSelectedMrsUuid(v || null)}
-            placeholder="Select MRS VIP..."
+            placeholder="Select NS VIP..."
             options={mrsTiers.map((t) => ({ value: t.uuid, label: t.name || t.tier_name || t.uuid }))}
           />
         )}
@@ -986,6 +1059,7 @@ function StatsRow({ stats }) {
 }
 
 function StatCard({ label, value }) {
+  const negative = isNegativeCurrency(value);
   return (
     <div
       className="flex flex-col gap-2 border border-[#05060a] p-2"
@@ -998,7 +1072,7 @@ function StatCard({ label, value }) {
         {label}
       </p>
       <p
-        className="text-[14px] font-semibold text-white leading-[21px] whitespace-nowrap"
+        className={`text-[14px] font-semibold leading-[21px] whitespace-nowrap ${negative ? "text-[#fb3748]" : "text-white"}`}
         style={{ letterSpacing: "-1px" }}
       >
         {value}
@@ -1036,6 +1110,7 @@ function InfoCard({ title, data }) {
 }
 
 function InfoRow({ label, value }) {
+  const negative = isNegativeCurrency(value);
   return (
     <div className="flex items-start gap-3">
       <span
@@ -1044,7 +1119,7 @@ function InfoRow({ label, value }) {
       >
         {label}
       </span>
-      <span className="max-w-[55%] break-words text-right text-[12px] font-medium text-[#84ebb4] leading-[18px]">
+      <span className={`max-w-[55%] break-words text-right text-[12px] font-medium leading-[18px] ${negative ? "text-[#fb3748]" : "text-[#84ebb4]"}`}>
         {value}
       </span>
     </div>

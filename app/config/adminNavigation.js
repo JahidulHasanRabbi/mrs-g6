@@ -39,6 +39,12 @@ export const ADMIN_NAVIGATION = [
     id: 'lucky-spin'
   },
   {
+    label: 'Penalty Kick',
+    path: '/admin/penalty-kick',
+    enabled: true,
+    id: 'penalty-kick'
+  },
+  {
     label: 'Points Redemption Mall',
     path: '/admin/redemption-mall',
     enabled: true,

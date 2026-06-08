@@ -54,7 +54,7 @@ export default function CheckInBoard() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [memberInfo, setMemberInfo] = useState(null);
   const [checkinSettings, setCheckinSettings] = useState(null);
-  const { refreshUserData } = useUser();
+  const { refreshUserData, authReady, memberUuid } = useUser();
 
   useEffect(() => {
     const preload = (src) =>
@@ -87,7 +87,6 @@ export default function CheckInBoard() {
   useEffect(() => {
     const fetchMemberInfo = async () => {
       try {
-        const memberUuid = tokenStorage.getMemberUuid();
         if (!memberUuid) return;
 
         setIsLoading(true);
@@ -133,23 +132,24 @@ export default function CheckInBoard() {
       }
     };
 
+    if (!authReady || !memberUuid) return;
     fetchMemberInfo();
-  }, []);
+  }, [authReady, memberUuid]);
 
   // Fetch check-in settings
   useEffect(() => {
+    if (!authReady || !memberUuid) return;
     const fetchCheckinSettings = async () => {
       try {
         const settings = await getCheckinSettings();
         setCheckinSettings(settings);
       } catch (err) {
         console.error("Failed to fetch check-in settings:", err);
-        // Use default values if API fails
       }
     };
 
     fetchCheckinSettings();
-  }, []);
+  }, [authReady, memberUuid]);
 
   const days = useMemo(
     () => {

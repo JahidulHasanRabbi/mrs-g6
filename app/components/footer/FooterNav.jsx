@@ -11,9 +11,15 @@ import { FOOTER_CONFIG, FOOTER_THEME } from './footerConfig';
  * FooterNavItem Component
  * Individual footer navigation item with icon and label
  */
+// Footer items are sized in px for the 475-px design width. On narrower
+// phones those fixed sizes crowd the 5 items + labels (see the cramped
+// "LEADERBOARD"/"LIVECHAT" labels on a 320-wide device). `fluid` expresses
+// each px size as `min(Npx, (N/475)vw)`: identical at ≥475, shrinks below.
+const fluid = (px) => `min(${px}px, ${((px / 475) * 100).toFixed(2)}vw)`;
+
 const FooterNavItem = memo(({ item, isActive, onAction }) => {
   const { icon, label, link, width, height, isCenter, action } = item;
-  
+
   const handleClick = async (e) => {
     if (action && onAction) {
       e.preventDefault();
@@ -36,8 +42,8 @@ const FooterNavItem = memo(({ item, isActive, onAction }) => {
         className="relative flex items-center justify-center"
         style={
           isCenter
-            ? { width: `${width}px`, height: `${height}px` }
-            : { height: `${height}px` }
+            ? { width: fluid(width), height: fluid(height) }
+            : { height: fluid(height) }
         }
         whileHover={!isCenter ? {
           rotate: [0, -10, 10, -10, 0],
@@ -54,7 +60,7 @@ const FooterNavItem = memo(({ item, isActive, onAction }) => {
           style={
             isCenter
               ? { width: "100%", height: "100%" }
-              : { height: `${height}px`, width: "auto" }
+              : { height: fluid(height), width: "auto" }
           }
         />
       </motion.div>
@@ -63,7 +69,9 @@ const FooterNavItem = memo(({ item, isActive, onAction }) => {
         style={{
           fontFamily: '"Times New Roman", serif',
           color: isActive ? FOOTER_THEME.textColorActive : FOOTER_THEME.textColor,
-          fontSize: isCenter ? '10px' : '8px',
+          // Fluid on the 475 basis so long labels ("LEADERBOARD") don't
+          // crowd their neighbours on narrow phones.
+          fontSize: isCenter ? 'clamp(8px, 2.1vw, 10px)' : 'clamp(6.5px, 1.69vw, 8px)',
         }}
         whileHover={{
           scale: 1.05,

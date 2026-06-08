@@ -98,11 +98,16 @@ export async function apiRequest(endpoint, options = {}, requiresAuth = false, t
   }
   
   if (requiresAuth) {
-    const accessToken = tokenType === 'admin' 
-      ? tokenStorage.getAdminAccessToken() 
+    const accessToken = tokenType === 'admin'
+      ? tokenStorage.getAdminAccessToken()
       : tokenStorage.getMemberAccessToken();
     if (accessToken) {
       headers['Authorization'] = `Bearer ${accessToken}`;
+    } else if (tokenType === 'member') {
+      // No valid member token — skip the network roundtrip.
+      // The server would return 401 anyway. Admin path proceeds without
+      // the header so its 401 handler can attempt a token refresh.
+      throw { message: 'Not authenticated', status: 401, data: null };
     }
   }
   
@@ -151,6 +156,10 @@ export async function apiRequest(endpoint, options = {}, requiresAuth = false, t
       throw error;
     }
     
+    if (response.status === 204) {
+      return { success: true };
+    }
+
     try {
       const data = await response.json();
       return data;
