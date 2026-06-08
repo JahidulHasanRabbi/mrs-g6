@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useUser } from "../contexts/UserContext";
 import { FooterNav } from "../components/footer";
 import { HamburgerMenu } from "../components/hamburger";
@@ -36,22 +37,66 @@ import {
   PrizeInfo,
 } from "../components/leaderboard/PrizeScreens";
 
-// /leaderboard root. The 11 Figma screens collapse into:
-//   - NATION_SELECT  (first-time country picker)
-//   - ONBOARDING     (4-slide "Become Top 10" carousel)
-//   - Leaderboard tabs: COUNTRIES / GLOBAL_PLAYERS / MY_PREDICTIONS (+ MY_COUNTRY drill-in)
-//   - Prize tabs:       PRIZE_COUNTRY / PRIZE_PLAYERS / PRIZE_PREDICTIONS (+ PRIZE_INFO detail)
-//   - PREDICTIONS_LIST  (World Cup fixtures with Predict CTAs)
-export default function LeaderboardPage() {
+// URL → in-page screen. `view` query param is the single source of nav truth
+// so browser back/forward unwinds through the user's path instead of leaving
+// the route entirely. Modals (PredictModal, InfoModal, NoticeModal) stay as
+// transient state — they are not navigation.
+const SCREEN_FROM_VIEW = {
+  home: LB_SCREENS.COUNTRIES,
+  players: LB_SCREENS.GLOBAL_PLAYERS,
+  predictions: LB_SCREENS.MY_PREDICTIONS,
+  country: LB_SCREENS.MY_COUNTRY,
+  fixtures: LB_SCREENS.PREDICTIONS_LIST,
+  "prize-country": LB_SCREENS.PRIZE_COUNTRY,
+  "prize-players": LB_SCREENS.PRIZE_PLAYERS,
+  "prize-predictions": LB_SCREENS.PRIZE_PREDICTIONS,
+  "prize-info": LB_SCREENS.PRIZE_INFO,
+};
+
+const TAB_FROM_VIEW = {
+  home: LB_TABS.COUNTRIES,
+  country: LB_TABS.COUNTRIES,
+  players: LB_TABS.PLAYERS,
+  predictions: LB_TABS.PREDICTIONS,
+};
+
+// `pt` (prize tab) is a secondary param so PRIZE_INFO can remember which
+// prize-pool tab the user came from, even when browser-back lands them there.
+const DEFAULT_PRIZE_TAB = "country";
+
+function LeaderboardPageInner() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const view = searchParams.get("view") || "home";
+  const ptParam = searchParams.get("pt");
+  const screen = SCREEN_FROM_VIEW[view] ?? LB_SCREENS.COUNTRIES;
+  const activeTab = TAB_FROM_VIEW[view] ?? LB_TABS.COUNTRIES;
+  const prizeTab =
+    view === "prize-players" ? "players" :
+    view === "prize-predictions" ? "predictions" :
+    view === "prize-country" ? "country" :
+    view === "prize-info" ? (ptParam || DEFAULT_PRIZE_TAB) :
+    DEFAULT_PRIZE_TAB;
+
+  const navigate = useCallback(
+    (nextView, extra) => {
+      const params = new URLSearchParams();
+      if (nextView && nextView !== "home") params.set("view", nextView);
+      if (extra?.pt) params.set("pt", extra.pt);
+      const qs = params.toString();
+      router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [router, pathname],
+  );
+
   const { authReady, memberUuid } = useUser();
-  const [screen, setScreen] = useState(LB_SCREENS.COUNTRIES);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [joinBlocked, setJoinBlocked] = useState(false);
   const [profile, setProfile] = useState(null);
   const [confirmError, setConfirmError] = useState(null);
-  const [activeTab, setActiveTab] = useState(LB_TABS.COUNTRIES);
-  const [prizeTab, setPrizeTab] = useState("country");
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedPrize, setSelectedPrize] = useState(null);
   const [countriesData, setCountriesData] = useState({ rows: [], loading: true });
@@ -103,6 +148,19 @@ export default function LeaderboardPage() {
     return () => { cancelled = true; };
   }, [authReady, memberUuid]);
 
+  // If the URL points at a screen that needs transient state we don't have
+  // (e.g. ?view=country after a reload), kick back to a safe view via replace
+  // so we don't pollute history with a dead entry.
+  useEffect(() => {
+    if (view === "country" && !selectedCountry) {
+      router.replace(pathname, { scroll: false });
+    } else if (view === "prize-info" && !selectedPrize) {
+      const params = new URLSearchParams();
+      params.set("view", prizeTab === "players" ? "prize-players" : prizeTab === "predictions" ? "prize-predictions" : "prize-country");
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    }
+  }, [view, selectedCountry, selectedPrize, prizeTab, router, pathname]);
+
   // Nation Select is the last gate before the profile/leaderboard view, so
   // confirming a country drops the user straight into "My Profile".
   const handleConfirmNation = useCallback(async (country) => {
@@ -118,56 +176,37 @@ export default function LeaderboardPage() {
         countryName: result.country_name,
         countryFlag: null,
       }));
-      setActiveTab(LB_TABS.COUNTRIES);
-      setScreen(LB_SCREENS.COUNTRIES);
     } catch (err) {
       setConfirmError(err?.data?.detail || err?.data?.details || err?.message || "Failed to save country. Please try again.");
     }
   }, []);
 
-  // Onboarding's "Join Now" completes the intro carousel and advances to
-  // Nation Select (a country must be chosen before reaching My Profile).
+  // Onboarding's "Join Now" completes the intro carousel; the gates below
+  // (needsOnboarding / needsNation / unlocked) route the user from here.
   const handleJoinNow = useCallback(() => {
     setProfile((p) => p ? { ...p, hasOnboarded: true } : p);
-    setScreen(profile?.hasNation ? LB_SCREENS.COUNTRIES : LB_SCREENS.NATION_SELECT);
-  }, [profile?.hasNation]);
+  }, []);
 
   const onTabChange = (tab) => {
-    setActiveTab(tab);
-    if (tab === LB_TABS.COUNTRIES) setScreen(LB_SCREENS.COUNTRIES);
-    else if (tab === LB_TABS.PLAYERS) setScreen(LB_SCREENS.GLOBAL_PLAYERS);
-    else setScreen(LB_SCREENS.MY_PREDICTIONS);
+    if (tab === LB_TABS.PLAYERS) navigate("players");
+    else if (tab === LB_TABS.PREDICTIONS) navigate("predictions");
+    else navigate("home");
   };
 
   const onPrizeTabChange = (t) => {
-    setPrizeTab(t);
-    setScreen(
-      t === "country" ? LB_SCREENS.PRIZE_COUNTRY :
-      t === "players" ? LB_SCREENS.PRIZE_PLAYERS :
-                        LB_SCREENS.PRIZE_PREDICTIONS,
-    );
+    navigate(t === "players" ? "prize-players" : t === "predictions" ? "prize-predictions" : "prize-country");
   };
 
   const openPrizePool = () => {
-    if (activeTab === LB_TABS.COUNTRIES) {
-      setPrizeTab("country");
-      setScreen(LB_SCREENS.PRIZE_COUNTRY);
-    } else if (activeTab === LB_TABS.PLAYERS) {
-      setPrizeTab("players");
-      setScreen(LB_SCREENS.PRIZE_PLAYERS);
-    } else {
-      setPrizeTab("predictions");
-      setScreen(LB_SCREENS.PRIZE_PREDICTIONS);
-    }
+    if (activeTab === LB_TABS.PLAYERS) navigate("prize-players");
+    else if (activeTab === LB_TABS.PREDICTIONS) navigate("prize-predictions");
+    else navigate("prize-country");
   };
+
   const backToLeaderboards = () => {
-    if (prizeTab === "country") {
-      setActiveTab(LB_TABS.COUNTRIES); setScreen(LB_SCREENS.COUNTRIES);
-    } else if (prizeTab === "players") {
-      setActiveTab(LB_TABS.PLAYERS); setScreen(LB_SCREENS.GLOBAL_PLAYERS);
-    } else {
-      setActiveTab(LB_TABS.PREDICTIONS); setScreen(LB_SCREENS.MY_PREDICTIONS);
-    }
+    if (prizeTab === "players") navigate("players");
+    else if (prizeTab === "predictions") navigate("predictions");
+    else navigate("home");
   };
 
   const isLeaderboardTabbed =
@@ -216,12 +255,12 @@ export default function LeaderboardPage() {
                 <ProfileCard profile={profile} />
                 <PredictToWinCard
                   onJoinNow={() => {
-                    // Spec slide 74: members need ≥ 3,000 total points to join predictions.
+                    // Spec slide 10: members need ≥ 3,000 total points to join predictions.
                     if ((profile.totalPoints ?? 0) < 3000) {
                       setJoinBlocked(true);
                       return;
                     }
-                    setScreen(LB_SCREENS.PREDICTIONS_LIST);
+                    navigate("fixtures");
                   }}
                 />
                 <LeaderboardTabs activeTab={activeTab} onTabChange={onTabChange} />
@@ -231,7 +270,7 @@ export default function LeaderboardPage() {
                     myCountryCode={profile.countryCode}
                     onCountrySelect={(c) => {
                       setSelectedCountry(c);
-                      setScreen(LB_SCREENS.MY_COUNTRY);
+                      navigate("country");
                     }}
                     onViewPrize={openPrizePool}
                     rows={countriesData.rows}
@@ -249,7 +288,7 @@ export default function LeaderboardPage() {
                 {screen === LB_SCREENS.MY_COUNTRY && selectedCountry && (
                   <MyCountryPanel
                     country={selectedCountry}
-                    onChangeCountry={() => setScreen(LB_SCREENS.COUNTRIES)}
+                    onChangeCountry={() => navigate("home")}
                     onViewPrize={openPrizePool}
                   />
                 )}
@@ -279,7 +318,7 @@ export default function LeaderboardPage() {
                     onViewLeaderboards={backToLeaderboards}
                     onViewDetails={(prize) => {
                       setSelectedPrize(prize);
-                      setScreen(LB_SCREENS.PRIZE_INFO);
+                      navigate("prize-info", { pt: "country" });
                     }}
                   />
                 )}
@@ -288,15 +327,15 @@ export default function LeaderboardPage() {
                     onViewLeaderboards={backToLeaderboards}
                     onViewDetails={(prize) => {
                       setSelectedPrize(prize);
-                      setScreen(LB_SCREENS.PRIZE_INFO);
+                      navigate("prize-info", { pt: "players" });
                     }}
                   />
                 )}
                 {screen === LB_SCREENS.PRIZE_PREDICTIONS && (
                   <PredictionPrizesPanel onViewPredictions={backToLeaderboards} />
                 )}
-                {screen === LB_SCREENS.PRIZE_INFO && (
-                  <PrizeInfo prize={selectedPrize} onBack={() => setScreen(prizeTab === "players" ? LB_SCREENS.PRIZE_PLAYERS : LB_SCREENS.PRIZE_COUNTRY)} />
+                {screen === LB_SCREENS.PRIZE_INFO && selectedPrize && (
+                  <PrizeInfo prize={selectedPrize} onBack={() => router.back()} />
                 )}
               </div>
             )}
@@ -318,5 +357,15 @@ export default function LeaderboardPage() {
         />
       )}
     </div>
+  );
+}
+
+// useSearchParams() requires a Suspense boundary at the route level when the
+// page opts out of static rendering, which this client component does.
+export default function LeaderboardPage() {
+  return (
+    <Suspense fallback={null}>
+      <LeaderboardPageInner />
+    </Suspense>
   );
 }
