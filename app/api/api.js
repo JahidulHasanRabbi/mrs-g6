@@ -163,6 +163,7 @@ export const ENDPOINTS = {
     // Member Profile
     MEMBERS: '/crm-members/members/',
     MEMBER_SINGLE: (uuid) => `/crm-members/members/${uuid}/`,
+    MEMBER_REFRESH: (uuid) => `/crm-members/${uuid}/refresh/`,
     // Retention Alert System
     PRIORITY_SUMMARY: '/crm-members/priority-summary/',
     REFRESH_MEMBERS: '/crm-members/refresh-members/',

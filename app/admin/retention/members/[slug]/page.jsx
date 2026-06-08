@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { GRAD_GOLD } from "../../../../components/admin/retention/constants";
@@ -8,7 +9,7 @@ import {
   AlertHistorySection,
   FollowUpCreateModal,
 } from "../../../../components/admin/retention/FollowUpComponents";
-import { getCrmFollowUps, getCrmMemberSingle, patchCrmMember, patchCrmMemberFollowUp, refreshCrmMembers } from "../../../../api/crmApi";
+import { getCrmFollowUps, getCrmMemberSingle, patchCrmMember, patchCrmMemberFollowUp, refreshCrmMember } from "../../../../api/crmApi";
 import { getVipTierList, getWalletVipTiers, getStationList } from "../../../../api/adminApi";
 
 const TAG_STYLES = {
@@ -194,6 +195,7 @@ export default function MemberProfilePage() {
   const [alertError, setAlertError] = useState("");
   const [alertSubmitting, setAlertSubmitting] = useState(false);
   const [bonusUpdating, setBonusUpdating] = useState(false);
+  const [bonusResult, setBonusResult] = useState(null);
 
   useEffect(() => {
     if (!memberUuid) return;
@@ -327,14 +329,35 @@ export default function MemberProfilePage() {
   // re-pull this member so the bonus/financial figures reflect the latest.
   // Intentionally lightweight — the PIC can spam it; there is no throttle.
   const handleUpdateBonus = async () => {
+    if (bonusUpdating || !memberUuid) return;
     setBonusUpdating(true);
+    setBonusResult(null);
     try {
-      await refreshCrmMembers();
+      const res = await refreshCrmMember(memberUuid);
+      if (res?.status === "ERROR") {
+        setBonusResult({
+          status: "error",
+          title: "Update Bonus Failed",
+          message: res?.error_message || "Failed to refresh member bonus data. Please try again.",
+        });
+        return;
+      }
+      setBonusResult({
+        status: "success",
+        title: "Bonus Updated",
+        message: "Member bonus data has been refreshed successfully.",
+      });
+      setRefreshKey((k) => k + 1);
     } catch (err) {
       console.error("[member-profile] update bonus failed", err);
+      const detail = err?.data?.detail || err?.data?.message || err?.message;
+      setBonusResult({
+        status: "error",
+        title: "Update Bonus Failed",
+        message: detail || "Failed to refresh member bonus data. Please try again.",
+      });
     } finally {
       setBonusUpdating(false);
-      setRefreshKey((k) => k + 1);
     }
   };
 
@@ -408,6 +431,12 @@ export default function MemberProfilePage() {
               setAlertSubmitting(false);
             }
           }}
+        />
+      )}
+      {bonusResult && (
+        <ResultModal
+          result={bonusResult}
+          onClose={() => setBonusResult(null)}
         />
       )}
     </>
@@ -568,8 +597,16 @@ function MoreOptionsMenu({ onNoteOpen, onVipOpen, onAlertOpen, onUpdateBonus, bo
 }
 
 function ModalOverlay({ onClose, children }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ backgroundColor: "rgba(0,0,0,0.65)" }}>
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4" style={{ backgroundColor: "rgba(0,0,0,0.65)" }}>
       <div className="fixed inset-0" onClick={onClose} />
       <div
         className="relative z-10 w-full max-w-lg rounded-[16px] p-8 shadow-[0_0_3px_0_#dea220]"
@@ -577,7 +614,8 @@ function ModalOverlay({ onClose, children }) {
       >
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -595,6 +633,33 @@ function ModalTitle({ children }) {
     >
       {children}
     </h2>
+  );
+}
+
+function ResultModal({ result, onClose }) {
+  const isSuccess = result?.status === "success";
+
+  return (
+    <ModalOverlay onClose={onClose}>
+      <ModalTitle>{result?.title || (isSuccess ? "Success" : "Failed")}</ModalTitle>
+      <p className="text-[14px] font-medium leading-[21px] text-white/75">
+        {result?.message}
+      </p>
+      <div className="mt-6 flex justify-end">
+        <button
+          type="button"
+          onClick={onClose}
+          className={`flex items-center justify-center rounded-[8px] border-2 px-6 py-2 text-[14px] font-semibold leading-[21px] transition ${
+            isSuccess
+              ? "border-[#f2cb7a] text-[#141828] hover:brightness-110"
+              : "border-[#d00416] text-[#d00416] hover:bg-[#d00416]/10"
+          }`}
+          style={isSuccess ? { backgroundImage: GRAD_GOLD, letterSpacing: "-1px" } : { letterSpacing: "-1px" }}
+        >
+          OK
+        </button>
+      </div>
+    </ModalOverlay>
   );
 }
 
