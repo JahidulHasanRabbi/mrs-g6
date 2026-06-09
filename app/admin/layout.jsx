@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import Sidebar from "../components/admin/Sidebar";
 import RetentionTopBar from "../components/admin/retention/RetentionTopBar";
 import { AdminRouteGuard } from "../components/guards/AdminRouteGuard";
@@ -36,10 +36,39 @@ const CONTENT_SLIDE = {
   transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] },
 };
 
+// Hamburger glyph for the mobile drawer toggle (shown below the xl breakpoint
+// where the fixed desktop sidebar is hidden).
+function MenuIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="18" x2="21" y2="18" />
+    </svg>
+  );
+}
+
 function AdminLayoutInner({ children }) {
   const { collapsed } = useSidebar();
   const pathname = usePathname();
   const width = collapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED;
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close the mobile drawer whenever the route changes — tapping a menu item
+  // navigates, so the drawer should get out of the way.
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // Lock background scroll while the drawer is open.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [mobileOpen]);
 
   return (
     // Expose the current sidebar width as a CSS variable. Admin pages use the
@@ -59,8 +88,46 @@ function AdminLayoutInner({ children }) {
         <Sidebar />
       </motion.aside>
 
+      {/* Mobile drawer — below xl the fixed sidebar is hidden, so the same
+          Sidebar slides in over the content with a tap-to-dismiss backdrop. */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <div className="xl:hidden">
+            <motion.div
+              className="fixed inset-0 z-40 bg-black/60"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setMobileOpen(false)}
+            />
+            <motion.aside
+              className="fixed left-2 top-2 bottom-2 z-50 w-[326px] max-w-[85vw]"
+              initial={{ x: "-110%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-110%" }}
+              transition={SIDEBAR_TRANSITION}
+            >
+              <Sidebar />
+            </motion.aside>
+          </div>
+        )}
+      </AnimatePresence>
+
       <div className="px-4 pt-4 sm:px-6 sm:pt-6 xl:admin-content-pl xl:pr-12">
-        <RetentionTopBar />
+        <div className="flex items-stretch gap-3">
+          <button
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open menu"
+            className="flex shrink-0 items-center justify-center rounded-[12px] border border-[#f2cb7a]/40 bg-[#141828] px-3 text-[#e9af41] transition-colors hover:bg-white/5 xl:hidden"
+          >
+            <MenuIcon />
+          </button>
+          <div className="min-w-0 flex-1">
+            <RetentionTopBar />
+          </div>
+        </div>
       </div>
 
       <motion.div

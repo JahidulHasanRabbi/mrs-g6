@@ -63,6 +63,7 @@ function pathnameToActiveItem(pathname) {
   if (pathname.startsWith("/admin/settings/role-management")) return "settings-role-management";
   if (pathname.startsWith("/admin/settings/user-activity-log")) return "settings-user-activity-log";
   if (pathname.startsWith("/admin/settings/login-requests")) return "settings-login-requests";
+  if (pathname.startsWith("/admin/settings/promotions")) return "settings-promotions";
   if (pathname.startsWith("/admin/members")) return "member-list";
   if (pathname.startsWith("/admin/redemption")) return "redemption";
   if (pathname.startsWith("/admin/checkin-settings")) return "checkin-settings";
@@ -139,6 +140,14 @@ const LoginRequestIcon = ({ className }) => (
     <path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" />
     <polyline points="17 8 21 12 17 16" />
     <line x1="13" y1="12" x2="21" y2="12" />
+  </svg>
+);
+
+// Price tag — represents "promotions"
+const PromotionIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+    <line x1="7" y1="7" x2="7.01" y2="7" />
   </svg>
 );
 
@@ -279,6 +288,13 @@ const SETTINGS_MENU = [
     label: "Login Requests",
     iconNode: LoginRequestIcon,
     href: "/admin/settings/login-requests",
+    disabled: false,
+  },
+  {
+    id: "settings-promotions",
+    label: "Promotions",
+    iconNode: PromotionIcon,
+    href: "/admin/settings/promotions",
     disabled: false,
   },
 ];

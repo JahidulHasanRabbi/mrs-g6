@@ -106,7 +106,12 @@ export const ENDPOINTS = {
     PENALTY_KICK_ITEM_ARCHIVE: (uuid) => `/penalty-kick/penalty-kick-items/${uuid}/archive/`,
     PENALTY_KICK_SEQUENCES: '/penalty-kick/kick-sequences/',
     PENALTY_KICK_SEQUENCE: (uuid) => `/penalty-kick/kick-sequences/${uuid}/`,
-    PENALTY_KICK_SEQUENCE_REORDER: '/penalty-kick/kick-sequences/change-kick-sequences/'
+    PENALTY_KICK_SEQUENCE_REORDER: '/penalty-kick/kick-sequences/change-kick-sequences/',
+    // TODO(promotions): backend endpoint not yet documented in postman/ — these
+    // paths are a stub so the Settings → Promotions UI can be wired end-to-end.
+    // Confirm the real path/payload and update before relying on save/list.
+    PROMOTIONS: '/settings/promotions/',
+    PROMOTION_SINGLE: (uuid) => `/settings/promotions/${uuid}/`
   },
   EXTERNAL: {
     SPECIAL_CODE: '/third-party/special-codes/',
