@@ -240,6 +240,8 @@ export function MyPredictionsPanel({ onViewPrize, rows: propRows, loading: propL
                 ? { bg: "rgba(84,233,138,0.15)", color: LB_COLORS.primary, label: "Win" }
                 : p.result === "loss"
                 ? { bg: "rgba(255,59,48,0.15)", color: LB_COLORS.red, label: "Loss" }
+                : p.result === "draw"
+                ? { bg: "rgba(233,175,65,0.16)", color: LB_COLORS.gold, label: "Draw" }
                 : { bg: "rgba(255,255,255,0.08)", color: LB_COLORS.textMuted, label: "Pending" };
             return (
               <div
@@ -260,6 +262,19 @@ export function MyPredictionsPanel({ onViewPrize, rows: propRows, loading: propL
                   {p.homeName && p.awayName && (
                     <span className="text-[10px]" style={{ color: LB_COLORS.textMuted, fontFamily: "'Lexend',sans-serif" }}>
                       {p.homeName} vs {p.awayName}
+                    </span>
+                  )}
+                  {(p.winnerTeam?.name || p.winnerLabel) && (
+                    <span className="flex min-w-0 items-center gap-1 text-[10px]" style={{ color: LB_COLORS.textMuted, fontFamily: "'Lexend',sans-serif" }}>
+                      <span className="shrink-0">Winner:</span>
+                      {p.winnerTeam?.name ? (
+                        <>
+                          <Flag code={p.winnerTeam.code} size={16} />
+                          <span className="truncate">{p.winnerTeam.name}</span>
+                        </>
+                      ) : (
+                        <span style={{ color: LB_COLORS.gold }}>{p.winnerLabel}</span>
+                      )}
                     </span>
                   )}
                 </div>

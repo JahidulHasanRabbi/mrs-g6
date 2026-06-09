@@ -107,6 +107,28 @@ export async function archiveVipTier(tierUuid) {
   }, true, 'admin');
 }
 
+// Mission Management
+export async function getMissions(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.MISSION.MISSIONS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+export async function getMission(uuid) {
+  return await apiRequest(ENDPOINTS.MISSION.MISSION(uuid), { method: 'GET' }, true, 'admin');
+}
+
+export async function createMission(data) {
+  return await apiRequest(ENDPOINTS.MISSION.MISSIONS, { method: 'POST', body: data }, true, 'admin');
+}
+
+export async function updateMission(uuid, data) {
+  return await apiRequest(ENDPOINTS.MISSION.MISSION(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+
+export async function archiveMission(uuid) {
+  return await apiRequest(ENDPOINTS.MISSION.ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
 export async function getLuckySpinItems() {
   return await apiRequest(ENDPOINTS.ADMIN.LUCKY_SPIN_ITEMS, {
     method: 'GET'
@@ -709,6 +731,9 @@ export async function getWorldCupCountries(params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.WORLDCUP_ADMIN.COUNTRIES}${qs}`, { method: 'GET' }, true, 'admin');
 }
+export async function getWorldCupMatchCountries() {
+  return await apiRequest(ENDPOINTS.WORLDCUP_USER.MATCH_COUNTRY_LIST, { method: 'GET' }, true, 'admin');
+}
 export async function getWorldCupCountry(uuid) {
   return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.COUNTRY(uuid), { method: 'GET' }, true, 'admin');
 }
@@ -776,7 +801,8 @@ export async function archiveWorldCupMatch(uuid) {
   return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.MATCH_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
 }
 export async function settleWorldCupMatch(uuid, winnerUuid) {
-  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.MATCH_SETTLE(uuid), { method: 'POST', body: { winner: winnerUuid } }, true, 'admin');
+  const winner = Number(winnerUuid);
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.MATCH_SETTLE(uuid), { method: 'POST', body: { winner } }, true, 'admin');
 }
 
 // Dummy Players CRUD

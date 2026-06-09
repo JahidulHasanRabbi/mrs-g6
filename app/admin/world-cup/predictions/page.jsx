@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { Pagination } from "../../../components/admin/members/DataTable";
 import SettingsSection from "../../../components/admin/world-cup/SettingsSection";
 import MatchesTable from "../../../components/admin/world-cup/MatchesTable";
-import { normalizeCountryOptions } from "../../../components/admin/world-cup/countryOptions";
-import { getWorldCupCountries, getWorldCupMatches } from "../../../api/adminApi";
+import { normalizeMatchCountryOptions } from "../../../components/admin/world-cup/countryOptions";
+import { getWorldCupMatchCountries, getWorldCupMatches } from "../../../api/adminApi";
 
 const PAGE_SIZE = 7;
 
@@ -22,6 +22,7 @@ function normalizeMatch(m, countriesById = new Map()) {
   const teamHome = m.team_home ?? m.team_home_uuid;
   const teamAway = m.team_away ?? m.team_away_uuid;
   const winner = m.winner ?? m.winner_uuid;
+  const isDraw = Number(m.status) === 3 && (winner === null || winner === undefined || winner === "");
   return {
     id: m.uuid,
     uuid: m.uuid,
@@ -34,7 +35,7 @@ function normalizeMatch(m, countriesById = new Map()) {
     time: kickoff ? kickoff.toTimeString().slice(0, 5) : "",
     predictionA: "-",
     predictionB: "-",
-    winner: m.winner_name ?? countryName(winner, countriesById),
+    winner: isDraw ? "Draw" : (m.winner_name ?? countryName(winner, countriesById)),
     status: STATUS_DISPLAY[m.status] ?? "Upcoming",
     _raw: m,
   };
@@ -47,10 +48,10 @@ export default function PredictionsPage() {
 
   useEffect(() => {
     Promise.all([
-      getWorldCupCountries().catch(() => []),
+      getWorldCupMatchCountries().catch(() => []),
       getWorldCupMatches().catch(() => []),
     ]).then(([countriesRes, matchesRes]) => {
-      const countries = normalizeCountryOptions(countriesRes);
+      const countries = normalizeMatchCountryOptions(countriesRes);
       const countriesById = new Map(
         countries.map((c) => [String(c.id ?? c.country ?? c.uuid), c.name]),
       );

@@ -94,21 +94,31 @@ export default function PredictModal({ fixture, onClose, onPredicted }) {
   const [step, setStep] = useState("choose");
   const [selected, setSelected] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   const handlePredict = async () => {
     if (!selected || submitting) return;
     setSubmitting(true);
+    setError("");
     try {
       await submitPrediction(fixture.uuid, selected.id);
-    } catch {
+      onPredicted?.(fixture.uuid, selected);
+      setStep("done");
+    } catch (err) {
+      setError(
+        err?.data?.detail ||
+        err?.data?.details ||
+        err?.message ||
+        "Unable to submit prediction. Please try again.",
+      );
+      setSubmitting(false);
+      return;
       // Show done step even on error so the user isn't stuck — the prediction
       // may still have been accepted; let them check My Predictions.
     }
     // Mark as predicted regardless of success/failure so the button
     // doesn't stay active and the user can't submit the same match twice.
-    onPredicted?.(fixture.uuid);
     setSubmitting(false);
-    setStep("done");
   };
 
   return (
@@ -146,6 +156,11 @@ export default function PredictModal({ fixture, onClose, onPredicted }) {
                 </div>
                 <TeamOption team={fixture.home} selected={selected?.id === fixture.home.id} onSelect={setSelected} />
                 <TeamOption team={fixture.away} selected={selected?.id === fixture.away.id} onSelect={setSelected} />
+                {error && (
+                  <p className="text-center text-[12px]" style={{ color: LB_COLORS.red, fontFamily: "'Lexend',sans-serif" }}>
+                    {error}
+                  </p>
+                )}
                 <div className="pt-2">
                   <GreenCta onClick={handlePredict} disabled={!selected || submitting}>
                     Predict
