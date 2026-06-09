@@ -17,9 +17,35 @@ import {
   archiveWorldCupRewardItem,
   getWorldCupDummyPlayers,
   archiveWorldCupDummyPlayer,
+  getWorldCupSettings,
+  updateWorldCupSettings,
 } from "../../../api/adminApi";
 
 const PAGE_SIZE = 7;
+
+function MaintenanceToggle({ checked, onChange, saving }) {
+  return (
+    <div className="flex items-center gap-3 rounded-[8px] border border-white/10 bg-white/[0.03] px-4 py-2">
+      <span className="text-[13px] text-[#fbeed2]">Leaderboard Maintenance</span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        disabled={saving}
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-[24px] w-[44px] shrink-0 cursor-pointer items-center rounded-full transition-colors disabled:opacity-50 ${
+          checked ? "bg-[#e9af41]" : "bg-white/15"
+        }`}
+      >
+        <span
+          className={`inline-block h-[18px] w-[18px] transform rounded-full bg-white shadow transition-transform ${
+            checked ? "translate-x-[23px]" : "translate-x-[3px]"
+          }`}
+        />
+      </button>
+    </div>
+  );
+}
 
 function PaginatedFooter({ total, page, setPage }) {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -90,6 +116,26 @@ export default function WorldCupSettingsPage() {
   const [playerPage, setPlayerPage] = useState(1);
 
   const [archiveTarget, setArchiveTarget] = useState(null);
+  const [maintenance, setMaintenance] = useState(false);
+  const [savingMaintenance, setSavingMaintenance] = useState(false);
+
+  useEffect(() => {
+    getWorldCupSettings()
+      .then((s) => setMaintenance(Boolean(s?.maintenance_mode)))
+      .catch(() => {});
+  }, []);
+
+  const handleMaintenanceChange = async (value) => {
+    setMaintenance(value);
+    setSavingMaintenance(true);
+    try {
+      await updateWorldCupSettings({ maintenance_mode: value });
+    } catch {
+      setMaintenance(!value);
+    } finally {
+      setSavingMaintenance(false);
+    }
+  };
 
   useEffect(() => {
     Promise.all([
@@ -134,6 +180,17 @@ export default function WorldCupSettingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between rounded-[16px] bg-[#041502] px-6 py-4 shadow-[0_-4px_12px_-2px_#dea220]">
+        <h2 className="text-[18px] font-bold text-white" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+          World Cup Settings
+        </h2>
+        <MaintenanceToggle
+          checked={maintenance}
+          onChange={handleMaintenanceChange}
+          saving={savingMaintenance}
+        />
+      </div>
+
       <SettingsSection
         title="Banner Information"
         addLabel="Add Banner Information"

@@ -46,8 +46,8 @@ function mapSettings(data = {}) {
     },
     cost: { cost: Number(data.cost_per_kick ?? 10) },
     status: {
-      gameplay: Number(data.game_status ?? 1) === 1,
       maintenance: Boolean(data.maintenance_mode),
+      gameplay: Number(data.game_status ?? 1) === 1 && !data.maintenance_mode,
     },
   };
 }

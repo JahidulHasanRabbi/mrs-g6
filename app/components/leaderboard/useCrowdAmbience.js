@@ -11,18 +11,30 @@ const VOLUME = 0.4;
 
 // Plays the football song on loop. The returned `muted` flag drives a header
 // toggle.
-export function useCrowdAmbience() {
+export function useCrowdAmbience({ disabled = false } = {}) {
   const audioRef = useRef(null);
   const [muted, setMuted] = useState(false);
   const mutedRef = useRef(false);
+  const disabledRef = useRef(disabled);
 
   const play = useCallback(() => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || disabledRef.current) return;
     return audio.play();
   }, []);
 
   useEffect(() => {
+    disabledRef.current = disabled;
+    const audio = audioRef.current;
+    if (disabled && audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+  }, [disabled]);
+
+  useEffect(() => {
+    if (disabled) return undefined;
+
     const audio = new Audio(TRACK);
     audio.volume = VOLUME;
     audio.preload = "auto";
@@ -35,7 +47,7 @@ export function useCrowdAmbience() {
     const startOnInteraction = () => {
       if (started) return;
       started = true;
-      if (!mutedRef.current) play()?.catch(() => {});
+      if (!mutedRef.current && !disabledRef.current) play()?.catch(() => {});
       removeInteractionListeners();
     };
     const removeInteractionListeners = () => {
@@ -59,7 +71,7 @@ export function useCrowdAmbience() {
       audio.src = "";
       audioRef.current = null;
     };
-  }, [play]);
+  }, [disabled, play]);
 
   const toggleMuted = useCallback(() => {
     setMuted((prev) => {

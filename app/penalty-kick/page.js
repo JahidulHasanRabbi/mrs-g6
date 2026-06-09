@@ -533,7 +533,7 @@ export default function PenaltyKickPage() {
       <FooterNav />
 
       {!config.enabled && (
-        <div className="absolute inset-x-0 top-0 bottom-[100px] z-30 grid place-items-center bg-black/70 px-6 backdrop-blur-md">
+        <div className="absolute inset-x-0 top-[68px] bottom-[100px] z-30 grid place-items-center bg-black/70 px-6 backdrop-blur-md">
           <div className="w-full max-w-[360px] rounded-[16px] border border-white/15 bg-[#071906]/95 px-6 py-7 text-center shadow-[0_16px_50px_rgba(0,0,0,0.45)]">
             <p
               className="text-[20px] font-bold"

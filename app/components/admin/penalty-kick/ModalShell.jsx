@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 
 const GOLD_BG =
   "linear-gradient(96deg, #dc9d16 1%, #f2cb7a 98%)";
@@ -57,7 +58,7 @@ export default function ModalShell({
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
@@ -107,6 +108,7 @@ export default function ModalShell({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -28,12 +28,13 @@ function Toggle({ checked, onChange, label }) {
 
 export default function GameStatusModal({ open, onClose, initial, onSave }) {
   const [gameplay, setGameplay] = useState(initial?.gameplay ?? true);
-  const [maintenance, setMaintenance] = useState(initial?.maintenance ?? true);
+  const [maintenance, setMaintenance] = useState(initial?.maintenance ?? false);
 
   useEffect(() => {
     if (!open) return;
-    setGameplay(initial?.gameplay ?? true);
-    setMaintenance(initial?.maintenance ?? false);
+    const maint = Boolean(initial?.maintenance);
+    setMaintenance(maint);
+    setGameplay(maint ? false : Boolean(initial?.gameplay ?? true));
   }, [initial, open]);
 
   const handleGameplayChange = (checked) => {

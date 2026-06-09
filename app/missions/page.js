@@ -19,6 +19,7 @@ import {
   getMissionProgressHistory,
   getMyMissions,
   joinMission,
+  getFeatureStatus,
 } from "../api/memberApi";
 import {
   MISSION_CATEGORY_BY_TAB,
@@ -129,6 +130,8 @@ export default function MissionsPage() {
   const [actionId, setActionId] = useState(null);
   const [error, setError] = useState("");
   const [history, setHistory] = useState(null);
+  const [maintenance, setMaintenance] = useState(null);
+  const isMaintenance = maintenance === true;
 
   const changeTab = (id) => {
     if (id === activeTab) return;
@@ -139,6 +142,7 @@ export default function MissionsPage() {
   const balance = formatTokens(userData?.balance);
 
   const loadMissions = () => {
+    if (maintenance !== false) return;
     setLoading(true);
     setError("");
     getMyMissions({ category: MISSION_CATEGORY_BY_TAB[activeTab], page_size: 100 })
@@ -154,9 +158,29 @@ export default function MissionsPage() {
   };
 
   useEffect(() => {
+    getFeatureStatus()
+      .then((s) => setMaintenance(Number(s?.mission) === 2))
+      .catch(() => setMaintenance(false));
+  }, []);
+
+  useEffect(() => {
+    if (maintenance !== false) return;
     loadMissions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+  }, [activeTab, maintenance]);
+
+  useEffect(() => {
+    if (!isMaintenance || typeof document === "undefined") return undefined;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    window.scrollTo({ top: 0, left: 0 });
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, [isMaintenance]);
 
   const visibleMissions = useMemo(
     () => missions.filter((m) => m.tab === activeTab),
@@ -164,6 +188,7 @@ export default function MissionsPage() {
   );
 
   const handleJoin = async (id) => {
+    if (isMaintenance) return;
     setActionId(id);
     setError("");
     try {
@@ -177,6 +202,7 @@ export default function MissionsPage() {
   };
 
   const handleClaim = async (id) => {
+    if (isMaintenance) return;
     setActionId(id);
     setError("");
     try {
@@ -191,6 +217,7 @@ export default function MissionsPage() {
   };
 
   const loadHistory = async () => {
+    if (isMaintenance) return;
     setError("");
     try {
       const data = await getMissionProgressHistory({ page_size: 20 });
@@ -405,6 +432,28 @@ export default function MissionsPage() {
       <FooterNav />
 
       <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+
+      {isMaintenance && (
+        <div className="fixed inset-x-0 top-[56px] bottom-[100px] z-30 grid place-items-center bg-black/70 px-6 backdrop-blur-md">
+          <div
+            className="w-full max-w-[360px] rounded-[16px] border border-white/15 px-6 py-7 text-center shadow-[0_16px_50px_rgba(0,0,0,0.45)]"
+            style={{ backgroundColor: "rgba(7,25,13,0.95)" }}
+          >
+            <p
+              className="text-[20px] font-bold"
+              style={{ color: MISSION_COLORS.goldDeep, fontFamily: "'Lexend', sans-serif" }}
+            >
+              Missions are under maintenance
+            </p>
+            <p
+              className="mt-3 text-[12px] leading-5"
+              style={{ color: MISSION_COLORS.muted, fontFamily: "'Lexend', sans-serif" }}
+            >
+              Please check back later.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

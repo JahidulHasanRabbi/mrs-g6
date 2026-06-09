@@ -235,6 +235,13 @@ export async function redeemAllKickRewards(memberUuid) {
   }, true, 'member');
 }
 
+// GET /front-view/feature-status/ — combined mission/leaderboard/penalty-kick status
+export async function getFeatureStatus() {
+  return await apiRequest(ENDPOINTS.FRONT_VIEW.FEATURE_STATUS, {
+    method: 'GET'
+  }, true, 'member');
+}
+
 // GET /penalty-kick/game-status/
 export async function getPenaltyKickGameStatus() {
   return await apiRequest(ENDPOINTS.MEMBER.PENALTY_KICK_GAME_STATUS, {

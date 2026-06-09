@@ -28,7 +28,8 @@ export const ENDPOINTS = {
     WINNING_LIST: '/front-view/winning-list/',
     TOTAL_USERS: '/front-view/total-users/',
     ACTIVE_USERS: '/front-view/active-users/',
-    DAILY_CHECK_IN: '/front-view/daily-check-in/'
+    DAILY_CHECK_IN: '/front-view/daily-check-in/',
+    FEATURE_STATUS: '/front-view/feature-status/'
   },
   SETTINGS: {
     PUBLIC_BANNERS: '/settings/banners/public/'
@@ -111,7 +112,8 @@ export const ENDPOINTS = {
     // paths are a stub so the Settings → Promotions UI can be wired end-to-end.
     // Confirm the real path/payload and update before relying on save/list.
     PROMOTIONS: '/settings/promotions/',
-    PROMOTION_SINGLE: (uuid) => `/settings/promotions/${uuid}/`
+    PROMOTION_SINGLE: (uuid) => `/settings/promotions/${uuid}/`,
+    MISSION_SETTINGS: '/mission/settings/'
   },
   EXTERNAL: {
     SPECIAL_CODE: '/third-party/special-codes/',

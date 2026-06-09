@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pagination } from "../../components/admin/members/DataTable";
 import MissionsTable from "../../components/admin/mission-game/MissionsTable";
-import { archiveMission, getMissions } from "../../api/adminApi";
+import { archiveMission, getMissions, getMissionSettings, updateMissionSettings } from "../../api/adminApi";
 import {
   MISSION_ACTION_LABELS,
   MISSION_CATEGORY_LABELS,
@@ -51,12 +51,38 @@ function LevelIcon() {
   );
 }
 
+function MaintenanceToggle({ checked, onChange, saving }) {
+  return (
+    <div className="flex items-center gap-3 rounded-[8px] border border-white/10 bg-white/[0.03] px-4 py-2">
+      <span className="text-[13px] text-[#fbeed2]">Maintenance Mode</span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        disabled={saving}
+        onClick={() => onChange(!checked)}
+        className={`relative inline-flex h-[24px] w-[44px] shrink-0 cursor-pointer items-center rounded-full transition-colors disabled:opacity-50 ${
+          checked ? "bg-[#e9af41]" : "bg-white/15"
+        }`}
+      >
+        <span
+          className={`inline-block h-[18px] w-[18px] transform rounded-full bg-white shadow transition-transform ${
+            checked ? "translate-x-[23px]" : "translate-x-[3px]"
+          }`}
+        />
+      </button>
+    </div>
+  );
+}
+
 export default function MissionGamePage() {
   const router = useRouter();
   const [missions, setMissions] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [maintenance, setMaintenance] = useState(false);
+  const [savingMaintenance, setSavingMaintenance] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -80,6 +106,24 @@ export default function MissionGamePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
+  useEffect(() => {
+    getMissionSettings()
+      .then((s) => setMaintenance(Boolean(s?.maintenance_mode)))
+      .catch(() => {});
+  }, []);
+
+  const handleMaintenanceChange = async (value) => {
+    setMaintenance(value);
+    setSavingMaintenance(true);
+    try {
+      await updateMissionSettings({ maintenance_mode: value });
+    } catch {
+      setMaintenance(!value);
+    } finally {
+      setSavingMaintenance(false);
+    }
+  };
+
   const handleArchive = async (mission) => {
     if (!mission?.uuid) return;
     if (!window.confirm(`Archive "${mission.name}"?`)) return;
@@ -96,15 +140,22 @@ export default function MissionGamePage() {
         >
           Missions
         </h2>
-        <button
-          type="button"
-          onClick={() => router.push("/admin/mission-game/add")}
-          className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold tracking-[-0.5px] text-[#141828] transition-opacity hover:opacity-90"
-          style={{ backgroundImage: GOLD_BG }}
-        >
-          <LevelIcon />
-          Add Mission
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <MaintenanceToggle
+            checked={maintenance}
+            onChange={handleMaintenanceChange}
+            saving={savingMaintenance}
+          />
+          <button
+            type="button"
+            onClick={() => router.push("/admin/mission-game/add")}
+            className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold tracking-[-0.5px] text-[#141828] transition-opacity hover:opacity-90"
+            style={{ backgroundImage: GOLD_BG }}
+          >
+            <LevelIcon />
+            Add Mission
+          </button>
+        </div>
       </div>
 
       <div className="px-2 pb-2">

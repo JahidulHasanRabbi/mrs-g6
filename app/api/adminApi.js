@@ -661,6 +661,23 @@ export async function archiveFrame(uuid) {
 }
 
 // ============================================================================
+// MISSION SETTINGS
+// ============================================================================
+
+export async function getMissionSettings() {
+  return await apiRequest(ENDPOINTS.ADMIN.MISSION_SETTINGS, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function updateMissionSettings(data) {
+  return await apiRequest(ENDPOINTS.ADMIN.MISSION_SETTINGS, {
+    method: 'POST',
+    body: data
+  }, true, 'admin');
+}
+
+// ============================================================================
 // PENALTY KICK MANAGEMENT
 // ============================================================================
 

@@ -17,6 +17,7 @@ import {
   getMyPredictions,
   getPredictionEligibility,
 } from "../components/leaderboard/worldcupApi";
+import { getFeatureStatus } from "../api/memberApi";
 import ProfileCard from "../components/leaderboard/ProfileCard";
 import PredictToWinCard from "../components/leaderboard/PredictToWinCard";
 import NationSelect from "../components/leaderboard/NationSelect";
@@ -91,8 +92,10 @@ function LeaderboardPageInner() {
   );
 
   const { authReady, memberUuid } = useUser();
-  const { muted, toggleMuted } = useCrowdAmbience();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [maintenance, setMaintenance] = useState(null);
+  const isMaintenance = maintenance === true;
+  const { muted, toggleMuted } = useCrowdAmbience({ disabled: maintenance !== false });
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [joinBlocked, setJoinBlocked] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -105,6 +108,26 @@ function LeaderboardPageInner() {
   const [predictionEligibility, setPredictionEligibility] = useState(null);
 
   useEffect(() => {
+    getFeatureStatus()
+      .then((s) => setMaintenance(Number(s?.leaderboard) === 2))
+      .catch(() => setMaintenance(false));
+  }, []);
+
+  useEffect(() => {
+    if (!isMaintenance || typeof document === "undefined") return undefined;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    window.scrollTo({ top: 0, left: 0 });
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, [isMaintenance]);
+
+  useEffect(() => {
+    if (maintenance !== false) return;
     if (!authReady || !memberUuid) return;
     let cancelled = false;
     getMyProfile()
@@ -131,10 +154,11 @@ function LeaderboardPageInner() {
         }
       });
     return () => { cancelled = true; };
-  }, [authReady, memberUuid]);
+  }, [authReady, memberUuid, maintenance]);
 
   // Prefetch all three leaderboard datasets in parallel so tabs are instant.
   useEffect(() => {
+    if (maintenance !== false) return;
     if (!authReady || !memberUuid) return;
     let cancelled = false;
     getCountryRankings()
@@ -150,12 +174,13 @@ function LeaderboardPageInner() {
       .then((status) => { if (!cancelled) setPredictionEligibility(status); })
       .catch(() => { if (!cancelled) setPredictionEligibility(null); });
     return () => { cancelled = true; };
-  }, [authReady, memberUuid]);
+  }, [authReady, memberUuid, maintenance]);
 
   // If the URL points at a screen that needs transient state we don't have
   // (e.g. ?view=country after a reload), kick back to a safe view via replace
   // so we don't pollute history with a dead entry.
   useEffect(() => {
+    if (maintenance !== false) return;
     if (view === "country" && !selectedCountry) {
       router.replace(pathname, { scroll: false });
     } else if (view === "prize-info" && !selectedPrize) {
@@ -163,7 +188,7 @@ function LeaderboardPageInner() {
       params.set("view", prizeTab === "players" ? "prize-players" : prizeTab === "predictions" ? "prize-predictions" : "prize-country");
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     }
-  }, [view, selectedCountry, selectedPrize, prizeTab, router, pathname]);
+  }, [view, selectedCountry, selectedPrize, prizeTab, router, pathname, maintenance]);
 
   // Nation Select is the last gate before the profile/leaderboard view, so
   // confirming a country drops the user straight into "My Profile".
@@ -368,6 +393,28 @@ function LeaderboardPageInner() {
       <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
 
       {isInfoOpen && <InfoModal onClose={() => setIsInfoOpen(false)} />}
+
+      {isMaintenance && (
+        <div className="fixed inset-x-0 top-[68px] bottom-[100px] z-30 grid place-items-center bg-black/70 px-6 backdrop-blur-md">
+          <div
+            className="w-full max-w-[360px] rounded-[16px] border border-white/15 px-6 py-7 text-center shadow-[0_16px_50px_rgba(0,0,0,0.45)]"
+            style={{ backgroundColor: "rgba(7,25,13,0.95)" }}
+          >
+            <p
+              className="text-[20px] font-bold"
+              style={{ color: "#E9AF41", fontFamily: "'Lexend', sans-serif" }}
+            >
+              Leaderboard is under maintenance
+            </p>
+            <p
+              className="mt-3 text-[12px] leading-5"
+              style={{ color: "#a8bdb4", fontFamily: "'Lexend', sans-serif" }}
+            >
+              Please check back later.
+            </p>
+          </div>
+        </div>
+      )}
 
       {joinBlocked && (
         <NoticeModal
