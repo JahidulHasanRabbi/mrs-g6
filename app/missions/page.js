@@ -87,7 +87,7 @@ function mapMission(row) {
 }
 
 export default function MissionsPage() {
-  const { userData } = useUser();
+  const { userData, refreshUserData } = useUser();
   const [activeTab, setActiveTab] = useState("daily");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   // Sign of the last tab move (+1 → moved right, -1 → moved left) so the
@@ -151,6 +151,7 @@ export default function MissionsPage() {
     try {
       await claimMissionReward(id);
       loadMissions();
+      refreshUserData?.().catch(() => {});
     } catch (err) {
       setError(err?.data?.detail || err?.message || "Failed to claim reward.");
     } finally {
