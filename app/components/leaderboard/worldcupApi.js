@@ -111,12 +111,14 @@ export async function getCountriesByTier() {
   const result = {};
   for (const t of data?.tiers ?? []) {
     const label = TIER_LABELS[t.tier] ?? `Tier ${t.tier}`;
-    result[label] = (t.countries ?? []).map((c) => ({
-      id: c.id,
-      code: countryCode(c.id),
-      name: c.name,
-      tier: t.tier,
-    }));
+    result[label] = (t.countries ?? [])
+      .map((c) => ({
+        id: c.id,
+        code: countryCode(c.id),
+        name: c.name,
+        tier: t.tier,
+      }))
+      .sort((a, b) => Number(a.id) - Number(b.id));
   }
   if (Object.keys(result).length > 0) return result;
 

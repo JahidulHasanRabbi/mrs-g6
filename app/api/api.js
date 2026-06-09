@@ -122,6 +122,7 @@ export const ENDPOINTS = {
   },
   WORLDCUP_USER: {
     COUNTRY_LIST: '/worldcup/country-list/',
+    MATCH_COUNTRY_LIST: '/worldcup/match-country-list/',
     INFO: '/worldcup/info/',
     BANNER_LIST: '/worldcup/banner-list/',
     PRIZE_POOL: '/worldcup/prize-pool/',

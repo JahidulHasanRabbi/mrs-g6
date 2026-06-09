@@ -773,8 +773,8 @@ export async function getWorldCupCountries(params = {}) {
   return await apiRequest(`${ENDPOINTS.WORLDCUP_USER.COUNTRY_LIST}${qs}`, { method: 'GET' }, true, 'admin');
 }
 export async function getWorldCupMatchCountries() {
-  // Countries are just 1-10, use the country-list endpoint
-  return await apiRequest(ENDPOINTS.WORLDCUP_USER.COUNTRY_LIST, { method: 'GET' }, true, 'admin');
+  // Match creation and prediction use the separate 48-country reference list.
+  return await apiRequest(ENDPOINTS.WORLDCUP_USER.MATCH_COUNTRY_LIST, { method: 'GET' }, true, 'admin');
 }
 
 // Banners CRUD

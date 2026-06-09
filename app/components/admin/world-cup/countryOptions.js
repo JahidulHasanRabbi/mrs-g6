@@ -23,7 +23,9 @@ export function normalizeCountryOptions(response) {
     })
     .filter(Boolean);
 
-  if (normalized.length > 0) return normalized;
+  if (normalized.length > 0) {
+    return normalized.sort((a, b) => Number(a.id) - Number(b.id));
+  }
 
   return Object.entries(LEADERBOARD_COUNTRY_MAP).map(([id, country]) => ({
     id: Number(id),

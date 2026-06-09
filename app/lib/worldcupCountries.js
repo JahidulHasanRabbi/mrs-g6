@@ -6,13 +6,13 @@ export const LEADERBOARD_COUNTRY_MAP = {
   1: { name: "Spain", code: "es", tier: 1 },
   2: { name: "France", code: "fr", tier: 1 },
   3: { name: "England", code: "gb-eng", tier: 1 },
-  4: { name: "Brazil", code: "br", tier: 1 },
-  5: { name: "Argentina", code: "ar", tier: 1 },
-  6: { name: "Portugal", code: "pt", tier: 2 },
+  4: { name: "Argentina", code: "ar", tier: 1 },
+  5: { name: "Portugal", code: "pt", tier: 1 },
+  6: { name: "Brazil", code: "br", tier: 1 },
   7: { name: "Germany", code: "de", tier: 2 },
   8: { name: "Netherlands", code: "nl", tier: 2 },
-  9: { name: "Morocco", code: "ma", tier: 3 },
-  10: { name: "Japan", code: "jp", tier: 3 },
+  9: { name: "Norway", code: "no", tier: 3 },
+  10: { name: "Belgium", code: "be", tier: 3 },
 };
 
 export const MATCH_COUNTRY_MAP = {
