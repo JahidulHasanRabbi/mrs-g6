@@ -7,6 +7,7 @@ import { FooterNav } from "../components/footer";
 import { HamburgerMenu } from "../components/hamburger";
 import { LB_SCREENS, LB_TABS } from "../components/leaderboard/constants";
 import { LBHeader } from "../components/leaderboard/primitives";
+import { useCrowdAmbience } from "../components/leaderboard/useCrowdAmbience";
 import {
   getMyProfile,
   confirmNation,
@@ -89,6 +90,7 @@ function LeaderboardPageInner() {
   );
 
   const { authReady, memberUuid } = useUser();
+  const { muted, toggleMuted } = useCrowdAmbience();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [joinBlocked, setJoinBlocked] = useState(false);
@@ -231,6 +233,8 @@ function LeaderboardPageInner() {
       <LBHeader
         onInfoClick={() => setIsInfoOpen(true)}
         onMenuClick={() => setIsMenuOpen(true)}
+        onSoundToggle={toggleMuted}
+        soundMuted={muted}
       />
 
       <div className="flex-1 pb-[140px]">
