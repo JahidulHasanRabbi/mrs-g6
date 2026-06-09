@@ -52,7 +52,17 @@ const KPIS = [
 
 const PAGE_SIZE = 7;
 
-const DEFAULT_LEVEL_OPTIONS = [{ value: "all", label: "All level" }];
+// Standardised Member List filters: Wallet Level · MRS Level · Sales · Brand ·
+// Name/Phone. Wallet/MRS level options are sourced from the VIP-tier endpoint;
+// Brand uses the same six-brand set the Member Alert list uses.
+const DEFAULT_WALLET_LEVEL_OPTIONS = [{ value: "all", label: "All Wallet Level" }];
+const DEFAULT_MRS_LEVEL_OPTIONS = [{ value: "all", label: "All MRS Level" }];
+
+const BRAND_CODES = ["KG", "LV", "EP", "AB", "UB", "N1"];
+const BRAND_FILTER_OPTIONS = [
+  { value: "all", label: "All Brand" },
+  ...BRAND_CODES.map((code) => ({ value: code, label: code })),
+];
 
 const SORT_OPTIONS = [
   { value: "hl", label: "Sales (H-L)" },
@@ -374,7 +384,9 @@ function MemberListSection({ adminUuid, period, fromDate, toDate }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const walletLevel = searchParams.get("wallet") ?? "all";
   const level = searchParams.get("level") ?? "all";
+  const brand = searchParams.get("brand") ?? "all";
   const sort = searchParams.get("sort") ?? "";
   const q = searchParams.get("q") ?? "";
   const pageParam = parseInt(searchParams.get("page") || "1", 10);
@@ -382,7 +394,11 @@ function MemberListSection({ adminUuid, period, fromDate, toDate }) {
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [levelOptions, setLevelOptions] = useState(DEFAULT_LEVEL_OPTIONS);
+  const [tierOptions, setTierOptions] = useState([]);
+
+  // VIP tiers feed both the Wallet Level and MRS Level dropdowns.
+  const walletOptions = useMemo(() => [...DEFAULT_WALLET_LEVEL_OPTIONS, ...tierOptions], [tierOptions]);
+  const mrsOptions = useMemo(() => [...DEFAULT_MRS_LEVEL_OPTIONS, ...tierOptions], [tierOptions]);
 
   useEffect(() => {
     let cancelled = false;
@@ -394,10 +410,10 @@ function MemberListSection({ adminUuid, period, fromDate, toDate }) {
           .map((tier) => tier.name || tier.tier_name || tier.level || tier.vip_level || tier.title)
           .filter(Boolean)
           .map((name) => ({ value: name, label: name }));
-        setLevelOptions([...DEFAULT_LEVEL_OPTIONS, ...options]);
+        setTierOptions(options);
       })
       .catch(() => {
-        if (!cancelled) setLevelOptions(DEFAULT_LEVEL_OPTIONS);
+        if (!cancelled) setTierOptions([]);
       });
     return () => {
       cancelled = true;
@@ -427,9 +443,11 @@ function MemberListSection({ adminUuid, period, fromDate, toDate }) {
     page,
     page_size: PAGE_SIZE,
     ...memberDateParams,
+    wallet_vip_level: walletLevel !== "all" ? walletLevel : undefined,
     mrs_vip_level: level !== "all" ? level : undefined,
+    brand: brand !== "all" ? brand : undefined,
     search: q || undefined,
-  }), [memberDateParams, level, page, q]);
+  }), [memberDateParams, walletLevel, level, brand, page, q]);
 
   const fetchMembers = useCallback(async () => {
     if (!adminUuid) return;
@@ -468,9 +486,15 @@ function MemberListSection({ adminUuid, period, fromDate, toDate }) {
         </h2>
         <div className="flex flex-1 flex-wrap items-center gap-4">
           <FilterDropdown
+            value={walletLevel}
+            options={walletOptions}
+            placeholder="All Wallet Level"
+            onChange={(v) => updateParams({ wallet: v === "all" ? null : v, page: null })}
+          />
+          <FilterDropdown
             value={level}
-            options={levelOptions}
-            placeholder="All level"
+            options={mrsOptions}
+            placeholder="All MRS Level"
             onChange={(v) => updateParams({ level: v === "all" ? null : v, page: null })}
           />
           <FilterDropdown
@@ -478,6 +502,12 @@ function MemberListSection({ adminUuid, period, fromDate, toDate }) {
             options={SORT_OPTIONS}
             placeholder="Sales (H-L)"
             onChange={(v) => updateParams({ sort: v, page: null })}
+          />
+          <FilterDropdown
+            value={brand}
+            options={BRAND_FILTER_OPTIONS}
+            placeholder="All Brand"
+            onChange={(v) => updateParams({ brand: v === "all" ? null : v, page: null })}
           />
           <SearchInput
             value={q}
