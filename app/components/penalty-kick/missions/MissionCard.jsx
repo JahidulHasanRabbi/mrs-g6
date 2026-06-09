@@ -34,10 +34,11 @@ function MissionIcon({ icon }) {
   );
 }
 
-export default function MissionCard({ mission, onClaim }) {
+export default function MissionCard({ mission, onClaim, onJoin, actionLoading }) {
   const { icon, title, reward, badge, progress, status } = mission;
   const completed = status === "completed";
   const claimed = mission.claimed;
+  const joined = mission.joined;
   const pct =
     progress.total > 0
       ? Math.min(100, (progress.current / progress.total) * 100)
@@ -141,12 +142,15 @@ export default function MissionCard({ mission, onClaim }) {
         </div>
       </div>
 
-      {/* Action: claimable when the mission is complete, otherwise locked */}
+      {/* Action: manual join is optional because backend may auto-join on the first qualifying action. */}
       <GoldButton
-        disabled={!completed || claimed}
-        onClick={() => onClaim?.(mission.id)}
+        disabled={actionLoading || claimed || (joined && !completed)}
+        onClick={() => {
+          if (!joined) onJoin?.(mission.id);
+          else if (completed) onClaim?.(mission.id);
+        }}
       >
-        {claimed ? "Claimed" : completed ? "Claim" : "Locked"}
+        {actionLoading ? "Loading..." : claimed ? "Claimed" : !joined ? "Join" : completed ? "Claim" : "In Progress"}
       </GoldButton>
     </div>
   );

@@ -50,6 +50,25 @@ export async function claimWelcomeGift(memberUuid) {
   }, true, 'member');
 }
 
+// Mission Game
+export async function getMyMissions(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.MISSION.MY_MISSIONS}${qs}`, { method: 'GET' }, true, 'member');
+}
+
+export async function joinMission(uuid) {
+  return await apiRequest(ENDPOINTS.MISSION.JOIN(uuid), { method: 'POST' }, true, 'member');
+}
+
+export async function claimMissionReward(uuid) {
+  return await apiRequest(ENDPOINTS.MISSION.CLAIM(uuid), { method: 'POST' }, true, 'member');
+}
+
+export async function getMissionProgressHistory(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.MISSION.PROGRESS_HISTORY}${qs}`, { method: 'GET' }, true, 'member');
+}
+
 // GET /member/{uuid}/profile/
 export async function getProfile(memberUuid) {
   return await apiRequest(ENDPOINTS.MEMBER.PROFILE(memberUuid), {
@@ -262,6 +281,13 @@ export async function getPublicFrames(params = {}) {
 export async function getWorldCupCountryList(params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.WORLDCUP_USER.COUNTRY_LIST}${qs}`, {
+    method: 'GET'
+  }, true, 'member');
+}
+
+// GET /worldcup/match-country-list/
+export async function getWorldCupMatchCountryList() {
+  return await apiRequest(ENDPOINTS.WORLDCUP_USER.MATCH_COUNTRY_LIST, {
     method: 'GET'
   }, true, 'member');
 }

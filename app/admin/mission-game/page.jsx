@@ -1,26 +1,37 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pagination } from "../../components/admin/members/DataTable";
 import MissionsTable from "../../components/admin/mission-game/MissionsTable";
+import { archiveMission, getMissions } from "../../api/adminApi";
+import {
+  MISSION_ACTION_LABELS,
+  MISSION_CATEGORY_LABELS,
+  MISSION_RESET_TYPE_LABELS,
+  MISSION_TYPE_LABELS,
+} from "../../config/missionOptions";
 
 const GOLD_BG = "linear-gradient(101deg, #dc9d16 1%, #f2cb7a 98%)";
-
 const PAGE_SIZE = 7;
 
-const SEED_MISSIONS = [
-  { id: "1", name: "BMW Car",           category: 34053,  description: "Elite",    missionType: "Elite",    resetType: "Elite",    condition: "Elite",    reward: "Elite",    limitControl: "Elite"   },
-  { id: "2", name: "Porsche 911",       category: 101200, description: "Super",    missionType: "Super",    resetType: "Super",    condition: "Super",    reward: "Super",    limitControl: "Super"   },
-  { id: "3", name: "Ford Mustang",      category: 27155,  description: "Sport",    missionType: "Sport",    resetType: "Sport",    condition: "Sport",    reward: "Sport",    limitControl: "Sport"   },
-  { id: "4", name: "Tesla Model 3",     category: 39990,  description: "Premium",  missionType: "Premium",  resetType: "Premium",  condition: "Premium",  reward: "Premium",  limitControl: "Premium" },
-  { id: "5", name: "Audi Sedan",        category: 42500,  description: "Luxury",   missionType: "Luxury",   resetType: "Luxury",   condition: "Luxury",   reward: "Luxury",   limitControl: "Luxury"  },
-  { id: "6", name: "Mercedes-Benz C-Class", category: 41600, description: "Advanced", missionType: "Advanced", resetType: "Advanced", condition: "Advanced", reward: "Advanced", limitControl: "Advanced" },
-  { id: "7", name: "BMW Car",           category: 34053,  description: "Elite",    missionType: "Elite",    resetType: "Elite",    condition: "Elite",    reward: "Elite",    limitControl: "Elite"   },
-];
+function normalizeMission(m) {
+  return {
+    id: m.uuid,
+    uuid: m.uuid,
+    name: m.mission_name,
+    category: MISSION_CATEGORY_LABELS[m.category] ?? m.category,
+    description: m.description || "-",
+    missionType: MISSION_TYPE_LABELS[m.mission_type] ?? m.mission_type,
+    resetType: MISSION_RESET_TYPE_LABELS[m.reset_type] ?? m.reset_type,
+    condition: MISSION_ACTION_LABELS[m.condition_action] ?? m.condition_action,
+    reward: `${Number(m.reward_token_quantity ?? 0).toLocaleString("en-US")} Tokens`,
+    limitControl: m.limit_control == null ? "Unlimited" : m.limit_control,
+    target: m.accumulate_target,
+    _raw: m,
+  };
+}
 
-// Figma `icon-park-outline:level` — downloaded to public/assets/admin/icons.
-// Rendered via CSS mask so it tints with the button's text color.
 function LevelIcon() {
   return (
     <span
@@ -42,14 +53,39 @@ function LevelIcon() {
 
 export default function MissionGamePage() {
   const router = useRouter();
-  const [missions] = useState(SEED_MISSIONS);
+  const [missions, setMissions] = useState([]);
+  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
 
-  const totalPages = Math.max(1, Math.ceil(missions.length / PAGE_SIZE));
-  const pageMissions = useMemo(
-    () => missions.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [missions, page],
-  );
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  const loadMissions = () => {
+    setLoading(true);
+    getMissions({ page, page_size: PAGE_SIZE })
+      .then((data) => {
+        const rows = data.results ?? data ?? [];
+        setMissions(rows.map(normalizeMission));
+        setTotal(data.count ?? rows.length);
+      })
+      .catch(() => {
+        setMissions([]);
+        setTotal(0);
+      })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadMissions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
+
+  const handleArchive = async (mission) => {
+    if (!mission?.uuid) return;
+    if (!window.confirm(`Archive "${mission.name}"?`)) return;
+    await archiveMission(mission.uuid);
+    loadMissions();
+  };
 
   return (
     <div className="rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
@@ -73,15 +109,16 @@ export default function MissionGamePage() {
 
       <div className="px-2 pb-2">
         <MissionsTable
-          missions={pageMissions}
-          onEdit={(m) => router.push(`/admin/mission-game/add?id=${m.id}`)}
-          onArchive={() => {}}
+          missions={missions}
+          loading={loading}
+          onEdit={(m) => router.push(`/admin/mission-game/add?uuid=${m.uuid}`)}
+          onArchive={handleArchive}
         />
       </div>
 
       <div className="flex items-center justify-between px-6 py-3">
         <p className="text-[10px] text-white/80">
-          Showing {(page - 1) * PAGE_SIZE + 1} to {Math.min(page * PAGE_SIZE, missions.length)} of {missions.length} Results
+          Showing {total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1} to {Math.min(page * PAGE_SIZE, total)} of {total} Results
         </p>
         <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
       </div>

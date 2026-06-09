@@ -33,6 +33,15 @@ export const ENDPOINTS = {
   SETTINGS: {
     PUBLIC_BANNERS: '/settings/banners/public/'
   },
+  MISSION: {
+    MISSIONS: '/mission/missions/',
+    MISSION: (uuid) => `/mission/missions/${uuid}/`,
+    ARCHIVE: (uuid) => `/mission/missions/${uuid}/archive/`,
+    MY_MISSIONS: '/mission/missions/my-missions/',
+    JOIN: (uuid) => `/mission/missions/${uuid}/join/`,
+    CLAIM: (uuid) => `/mission/missions/${uuid}/claim/`,
+    PROGRESS_HISTORY: '/mission/missions/progress-history/',
+  },
   ADMIN: {
     // Previous admin login API:
     // LOGIN: '/login/admin-access-token/',
@@ -97,7 +106,12 @@ export const ENDPOINTS = {
     PENALTY_KICK_ITEM_ARCHIVE: (uuid) => `/penalty-kick/penalty-kick-items/${uuid}/archive/`,
     PENALTY_KICK_SEQUENCES: '/penalty-kick/kick-sequences/',
     PENALTY_KICK_SEQUENCE: (uuid) => `/penalty-kick/kick-sequences/${uuid}/`,
-    PENALTY_KICK_SEQUENCE_REORDER: '/penalty-kick/kick-sequences/change-kick-sequences/'
+    PENALTY_KICK_SEQUENCE_REORDER: '/penalty-kick/kick-sequences/change-kick-sequences/',
+    // TODO(promotions): backend endpoint not yet documented in postman/ — these
+    // paths are a stub so the Settings → Promotions UI can be wired end-to-end.
+    // Confirm the real path/payload and update before relying on save/list.
+    PROMOTIONS: '/settings/promotions/',
+    PROMOTION_SINGLE: (uuid) => `/settings/promotions/${uuid}/`
   },
   EXTERNAL: {
     SPECIAL_CODE: '/third-party/special-codes/',
@@ -106,6 +120,7 @@ export const ENDPOINTS = {
   },
   WORLDCUP_USER: {
     COUNTRY_LIST: '/worldcup/country-list/',
+    MATCH_COUNTRY_LIST: '/worldcup/match-country-list/',
     INFO: '/worldcup/info/',
     BANNER_LIST: '/worldcup/banner-list/',
     PRIZE_POOL: '/worldcup/prize-pool/',
@@ -144,7 +159,6 @@ export const ENDPOINTS = {
     DUMMY_COUNTRIES: '/worldcup/dummy-countries/',
     DUMMY_COUNTRY: (uuid) => `/worldcup/dummy-countries/${uuid}/`,
     DUMMY_COUNTRY_ARCHIVE: (uuid) => `/worldcup/dummy-countries/${uuid}/archive/`,
-    RANKING: '/worldcup/ranking/',
     RANKING_REALTIME: '/worldcup/ranking/realtime/',
     DASHBOARD_KPI: '/worldcup/dashboard/kpi/',
   },

@@ -107,6 +107,28 @@ export async function archiveVipTier(tierUuid) {
   }, true, 'admin');
 }
 
+// Mission Management
+export async function getMissions(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.MISSION.MISSIONS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+export async function getMission(uuid) {
+  return await apiRequest(ENDPOINTS.MISSION.MISSION(uuid), { method: 'GET' }, true, 'admin');
+}
+
+export async function createMission(data) {
+  return await apiRequest(ENDPOINTS.MISSION.MISSIONS, { method: 'POST', body: data }, true, 'admin');
+}
+
+export async function updateMission(uuid, data) {
+  return await apiRequest(ENDPOINTS.MISSION.MISSION(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+
+export async function archiveMission(uuid) {
+  return await apiRequest(ENDPOINTS.MISSION.ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
 export async function getLuckySpinItems() {
   return await apiRequest(ENDPOINTS.ADMIN.LUCKY_SPIN_ITEMS, {
     method: 'GET'
@@ -376,6 +398,29 @@ export async function updateMember(memberUuid, data) {
 // GET /front-view/station-list/ - For station filter dropdowns
 export async function getStationList() {
   return await apiRequest(ENDPOINTS.ADMIN.STATION_LIST, { method: 'GET' }, true, 'admin');
+}
+
+// Promotions (Settings → Promotions)
+// NOTE: backend endpoint is stubbed in ENDPOINTS.ADMIN — see TODO in api.js.
+// Payload shape (name, promotion_id, station_uuids[]) is provisional; confirm
+// against the real spec before treating list/save as production-ready.
+export async function getPromotions(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.PROMOTIONS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+export async function createPromotion(data) {
+  return await apiRequest(ENDPOINTS.ADMIN.PROMOTIONS, {
+    method: 'POST',
+    body: data
+  }, true, 'admin');
+}
+
+export async function updatePromotion(uuid, data) {
+  return await apiRequest(ENDPOINTS.ADMIN.PROMOTION_SINGLE(uuid), {
+    method: 'PUT',
+    body: data
+  }, true, 'admin');
 }
 
 // GET /member/vip-tier/ - reusable for filter dropdowns
@@ -709,6 +754,9 @@ export async function getWorldCupCountries(params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.WORLDCUP_ADMIN.COUNTRIES}${qs}`, { method: 'GET' }, true, 'admin');
 }
+export async function getWorldCupMatchCountries() {
+  return await apiRequest(ENDPOINTS.WORLDCUP_USER.MATCH_COUNTRY_LIST, { method: 'GET' }, true, 'admin');
+}
 export async function getWorldCupCountry(uuid) {
   return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.COUNTRY(uuid), { method: 'GET' }, true, 'admin');
 }
@@ -776,7 +824,8 @@ export async function archiveWorldCupMatch(uuid) {
   return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.MATCH_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
 }
 export async function settleWorldCupMatch(uuid, winnerUuid) {
-  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.MATCH_SETTLE(uuid), { method: 'POST', body: { winner: winnerUuid } }, true, 'admin');
+  const winner = Number(winnerUuid);
+  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.MATCH_SETTLE(uuid), { method: 'POST', body: { winner } }, true, 'admin');
 }
 
 // Dummy Players CRUD
@@ -813,12 +862,6 @@ export async function updateWorldCupDummyCountry(uuid, data) {
 }
 export async function archiveWorldCupDummyCountry(uuid) {
   return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.DUMMY_COUNTRY_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
-}
-
-// GET /worldcup/ranking/  (?scope=country for country board; ?country=<uuid> for player filter)
-export async function getWorldCupRanking(params = {}) {
-  const qs = buildQueryParams(params);
-  return await apiRequest(`${ENDPOINTS.WORLDCUP_ADMIN.RANKING}${qs}`, { method: 'GET' }, true, 'admin');
 }
 
 // GET /worldcup/ranking/realtime/  (real members only; supports scope, country,

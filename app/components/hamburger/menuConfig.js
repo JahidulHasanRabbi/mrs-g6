@@ -16,7 +16,7 @@ export const MENU_CONFIG = {
   },
   mainItems: [
     { icon: "/assets/images/leaderboard-icon.png", label: "Leaderboard", link: "/leaderboard" },
-    { icon: "/assets/penalty-kick/icons/flag-gold.svg", label: "Missions", link: "/penalty-kick/missions" },
+    { icon: "/assets/penalty-kick/icons/flag-gold.svg", label: "Missions", link: "/missions" },
     { icon: "/assets/images/vip-membership-icon.png", label: "VIP Membership", link: "/vip" },
     { icon: "/assets/images/pagcor-mart-icon.png", label: "Mart", link: "/mart" },
   ],

@@ -58,7 +58,7 @@ function ActionMenu({ onEdit, onArchive }) {
   );
 }
 
-export default function MissionsTable({ missions = [], onEdit, onArchive }) {
+export default function MissionsTable({ missions = [], loading = false, onEdit, onArchive }) {
   return (
     <div className="overflow-hidden rounded-[12px] border border-white/5">
       <div className="overflow-x-auto">
@@ -76,15 +76,22 @@ export default function MissionsTable({ missions = [], onEdit, onArchive }) {
               <th className="px-5 py-4 text-[13px] font-semibold tracking-[-0.5px] text-[#fbeed2]">Mission Type</th>
               <th className="px-5 py-4 text-[13px] font-semibold tracking-[-0.5px] text-[#fbeed2]">Reset Type</th>
               <th className="px-5 py-4 text-[13px] font-semibold tracking-[-0.5px] text-[#fbeed2]">Condition</th>
+              <th className="px-5 py-4 text-[13px] font-semibold tracking-[-0.5px] text-[#fbeed2]">Target</th>
               <th className="px-5 py-4 text-[13px] font-semibold tracking-[-0.5px] text-[#fbeed2]">Reward</th>
               <th className="px-5 py-4 text-[13px] font-semibold tracking-[-0.5px] text-[#fbeed2]">Limit Control</th>
               <th className="px-5 py-4 text-right text-[13px] font-semibold tracking-[-0.5px] text-[#fbeed2]">Action</th>
             </tr>
           </thead>
           <tbody>
-            {missions.length === 0 ? (
+            {loading ? (
               <tr>
-                <td colSpan={9} className="px-5 py-10 text-center text-[13px] text-white/50">
+                <td colSpan={10} className="px-5 py-10 text-center text-[13px] text-white/50">
+                  Loading missions...
+                </td>
+              </tr>
+            ) : missions.length === 0 ? (
+              <tr>
+                <td colSpan={10} className="px-5 py-10 text-center text-[13px] text-white/50">
                   No missions yet. Click "Add Mission" to create one.
                 </td>
               </tr>
@@ -92,11 +99,12 @@ export default function MissionsTable({ missions = [], onEdit, onArchive }) {
               missions.map((m) => (
                 <tr key={m.id} className="border-b border-white/5 last:border-b-0 hover:bg-white/[0.02]">
                   <td className="px-5 py-5 text-[12px] text-white">{m.name}</td>
-                  <td className="px-5 py-5 text-[12px] text-white">{Number(m.category ?? 0).toLocaleString("en-US")}</td>
+                  <td className="px-5 py-5 text-[12px] text-white">{m.category}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{m.description}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{m.missionType}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{m.resetType}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{m.condition}</td>
+                  <td className="px-5 py-5 text-[12px] text-white">{m.target}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{m.reward}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{m.limitControl}</td>
                   <td className="px-5 py-5 text-right">

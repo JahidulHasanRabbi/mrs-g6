@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
@@ -25,20 +25,49 @@ const PAGE_SIZE = 7;
 
 const PRIORITY_OPTIONS = ["High", "Medium", "Low", "Inactive"];
 const BRAND_OPTIONS = ["KG", "LV", "EP", "AB", "UB", "N1"];
+const SALES_SORT_OPTIONS = ["High to Low", "Low to High"];
+const WINLOSS_SORT_OPTIONS = ["High to Low", "Low to High"];
+
+// Whether a PIC carries the Retention role — the "All Retention" filter should
+// only list those (spec #10). Backend ultimately decides; until it exposes a
+// flag we accept several likely shapes and fall back to showing everyone.
+function hasRetentionRole(pic) {
+  if (!pic) return false;
+  if (pic.is_retention || pic.has_retention_role || pic.retention_role) return true;
+  const role = pic.role || pic.role_name || "";
+  if (typeof role === "string" && role.toLowerCase().includes("retention")) return true;
+  const roles = pic.roles || pic.role_names;
+  if (Array.isArray(roles)) {
+    return roles.some((r) => String(r?.name || r).toLowerCase().includes("retention"));
+  }
+  return false;
+}
+
+function memberSalesValue(row) {
+  return parseFloat(row?.total_sales ?? row?.daily_sales ?? 0) || 0;
+}
+
+function memberWinLossValue(row) {
+  return parseFloat(row?.total_win_lose ?? row?.total_winlose ?? row?.daily_win_loss ?? 0) || 0;
+}
 
 // Column widths from Figma 69:340 (frame ids 87:6604 etc). Username and
 // Action are wider to accommodate the avatar+name and the View + more-menu
-// button pair respectively; everything else is uniform at 124px.
+// button pair respectively; everything else is uniform at 124px. The three
+// follow-up columns (spec #8) sit before Action.
 const COLUMNS = [
-  { key: "name",     label: "Username",       minW: 197 },
-  { key: "brand",    label: "Brand",          minW: 124 },
-  { key: "phone",    label: "Phone Number",   minW: 124 },
-  { key: "vip",      label: "NS Level",       minW: 124 },
-  { key: "sales",    label: "Total Sales",    minW: 124 },
-  { key: "winloss",  label: "Total Win/Loss", minW: 124 },
-  { key: "priority", label: "Priority",       minW: 124 },
-  { key: "pic",      label: "Retention",      minW: 124 },
-  { key: "action",   label: "Action",         minW: 171, align: "end" },
+  { key: "name",        label: "Username",            minW: 197 },
+  { key: "brand",       label: "Brand",               minW: 124 },
+  { key: "phone",       label: "Phone Number",        minW: 124 },
+  { key: "vip",         label: "MRS Level",           minW: 124 },
+  { key: "sales",       label: "Total Sales",         minW: 124 },
+  { key: "winloss",     label: "Total Win/Loss",      minW: 124 },
+  { key: "priority",    label: "Priority",            minW: 124 },
+  { key: "pic",         label: "Retention",           minW: 124 },
+  { key: "followed_by", label: "Last Followed Up By",   minW: 150 },
+  { key: "followed_at", label: "Last Followed Up Date", minW: 160 },
+  { key: "follow_stat", label: "Follow Up Status",      minW: 150 },
+  { key: "action",      label: "Action",              minW: 171, align: "end" },
 ];
 
 const TABLE_MIN_WIDTH = COLUMNS.reduce((sum, c) => sum + c.minW, 0);
@@ -205,12 +234,21 @@ function KpiIcon({ name }) {
 }
 
 function FollowUpList() {
+  const [walletLevel, setWalletLevel] = useState("");
   const [brand, setBrand] = useState("");
   const [priority, setPriority] = useState("");
   const [vip, setVip] = useState("");
   const [retention, setRetention] = useState("");
   const [query, setQuery] = useState("");
+  const [date, setDate] = useState("");
+  // Sales / Win-Loss sorts are mutually exclusive — picking one clears the
+  // other so the table has a single, unambiguous order.
+  const [salesSort, setSalesSort] = useState("");
+  const [winSort, setWinSort] = useState("");
   const [page, setPage] = useState(1);
+
+  const pickSalesSort = useCallback((v) => { setSalesSort(v); setWinSort(""); }, []);
+  const pickWinSort = useCallback((v) => { setWinSort(v); setSalesSort(""); }, []);
 
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
@@ -234,9 +272,16 @@ function FollowUpList() {
       .catch(() => setVipTiers([]));
   }, []);
 
+  // Only PICs holding the Retention role populate the "All Retention" filter
+  // (spec #10). If the backend exposes no role data yet, fall back to all PICs.
+  const retentionPics = useMemo(() => {
+    const withRole = pics.filter(hasRetentionRole);
+    return withRole.length > 0 ? withRole : pics;
+  }, [pics]);
+
   useEffect(() => {
     setPage(1);
-  }, [brand, priority, vip, retention, query]);
+  }, [walletLevel, brand, priority, vip, retention, query, date]);
 
   const [debouncedQuery, setDebouncedQuery] = useState(query);
   useEffect(() => {
@@ -252,14 +297,24 @@ function FollowUpList() {
         const retentionUuid = retention
           ? pics.find((u) => (u.full_name || u.username) === retention)?.uuid
           : undefined;
+        // Ordering for sales / win-loss — sent so the backend can order across
+        // the full result set; the current page is also sorted client-side
+        // below as an immediate fallback.
+        let ordering;
+        if (salesSort) ordering = salesSort === "High to Low" ? "-total_sales" : "total_sales";
+        else if (winSort) ordering = winSort === "High to Low" ? "-total_win_lose" : "total_win_lose";
         const res = await getRetentionMembers({
           page,
           page_size: PAGE_SIZE,
+          wallet_vip_level: walletLevel || undefined,
           brand: brand || undefined,
           priority: priority ? priority.toLowerCase() : undefined,
           mrs_vip_level: vip || undefined,
           retention: retentionUuid || undefined,
           search: debouncedQuery || undefined,
+          // Single-day filter only — no range (spec #7).
+          date: date || undefined,
+          ordering,
         });
         if (cancelled) return;
         const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
@@ -278,7 +333,20 @@ function FollowUpList() {
     return () => {
       cancelled = true;
     };
-  }, [page, brand, priority, vip, retention, pics, debouncedQuery, reloadKey]);
+  }, [page, walletLevel, brand, priority, vip, retention, pics, debouncedQuery, date, salesSort, winSort, reloadKey]);
+
+  // Client-side sort of the current page (backend ordering covers cross-page).
+  const sortedRows = useMemo(() => {
+    if (salesSort) {
+      const dir = salesSort === "High to Low" ? -1 : 1;
+      return [...rows].sort((a, b) => (memberSalesValue(a) - memberSalesValue(b)) * dir);
+    }
+    if (winSort) {
+      const dir = winSort === "High to Low" ? -1 : 1;
+      return [...rows].sort((a, b) => (memberWinLossValue(a) - memberWinLossValue(b)) * dir);
+    }
+    return rows;
+  }, [rows, salesSort, winSort]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -292,9 +360,9 @@ function FollowUpList() {
 
   return (
     <section className="relative flex w-full flex-col rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
-      <header className="flex flex-col gap-4 p-6 w-full xl:flex-row xl:flex-wrap xl:items-center">
+      <header className="flex flex-col gap-4 p-6 w-full">
         <h2
-          className="text-white font-bold xl:flex-1 xl:min-w-0"
+          className="text-white font-bold whitespace-nowrap"
           style={{
             fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
             fontSize: "26px",
@@ -305,10 +373,14 @@ function FollowUpList() {
           Member Follow Up List
         </h2>
         <div className="flex flex-wrap items-center gap-3">
-          <FilterPill label="Brand" value={brand} onChange={setBrand} options={BRAND_OPTIONS} />
+          <FilterPill label="Wallet Level" value={walletLevel} onChange={setWalletLevel} options={vipTiers.map((t) => t.name)} />
+          <FilterPill label="MRS Level" value={vip} onChange={setVip} options={vipTiers.map((t) => t.name)} />
           <FilterPill label="Priority" value={priority} onChange={setPriority} options={PRIORITY_OPTIONS} />
-          <FilterPill label="NS Level" value={vip} onChange={setVip} options={vipTiers.map((t) => t.name)} />
-          <FilterPill label="All Retention" value={retention} onChange={setRetention} options={pics.map((u) => u.full_name || u.username).filter(Boolean)} />
+          <FilterPill label="Sales (H-L)" value={salesSort} onChange={pickSalesSort} options={SALES_SORT_OPTIONS} />
+          <FilterPill label="Win/Lose (H-L)" value={winSort} onChange={pickWinSort} options={WINLOSS_SORT_OPTIONS} />
+          <FilterPill label="Brand" value={brand} onChange={setBrand} options={BRAND_OPTIONS} />
+          <FilterPill label="All Retention" value={retention} onChange={setRetention} options={retentionPics.map((u) => u.full_name || u.username).filter(Boolean)} />
+          <DayPicker value={date} onChange={setDate} />
           <SearchInput value={query} onChange={setQuery} />
         </div>
       </header>
@@ -319,10 +391,10 @@ function FollowUpList() {
           <div className="flex w-full flex-col">
             {loading ? (
               Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonRow key={i} />)
-            ) : rows.length === 0 ? (
+            ) : sortedRows.length === 0 ? (
               <EmptyRow />
             ) : (
-              rows.map((row, idx) => (
+              sortedRows.map((row, idx) => (
                 <TableRow
                   key={`${row.uuid || row.username || "member"}-${idx}`}
                   row={row}
@@ -467,6 +539,84 @@ function SearchInput({ value, onChange }) {
   );
 }
 
+// Single-day filter only — no range (spec #7). A native date input keeps it to
+// one calendar day and is the lightest control that does the job.
+function DayPicker({ value, onChange }) {
+  return (
+    <div
+      className="flex items-center gap-2 rounded-[8px] border border-[#f2cb7a] px-3 py-2"
+      style={{ backgroundImage: GRAD_DARK }}
+    >
+      <input
+        type="date"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label="Filter by day"
+        className="bg-transparent text-[12px] font-medium text-[#f6dda6] focus:outline-none [color-scheme:dark]"
+      />
+      {value ? (
+        <button
+          type="button"
+          onClick={() => onChange("")}
+          aria-label="Clear date"
+          className="text-[12px] leading-none text-[#f6dda6]/70 hover:text-[#f6dda6]"
+        >
+          ✕
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+// Follow Up Status (spec #8): Completed (done) · Pending (not yet) · Missed
+// (not done and the day has rolled past midnight). Derived from the backend
+// `follow_up_status` when present; otherwise inferred from last-followed-up.
+const FOLLOW_STATUS_COLORS = {
+  Completed: { bg: "#003920", color: "#84ebb4" },
+  Pending: { bg: "#3d2e00", color: "#eaad2c" },
+  Missed: { bg: "#4a0d12", color: "#fb6f7d" },
+};
+
+function deriveFollowStatus(row) {
+  const raw = row?.follow_up_status || row?.followup_status;
+  if (raw) {
+    const norm = String(raw).toLowerCase();
+    if (norm.startsWith("complet")) return "Completed";
+    if (norm.startsWith("miss")) return "Missed";
+    if (norm.startsWith("pend")) return "Pending";
+  }
+  const last = row?.last_followed_up_at || row?.last_follow_up_at || row?.last_action_at;
+  return last ? "Completed" : "Pending";
+}
+
+function FollowUpStatusBadge({ row }) {
+  const status = deriveFollowStatus(row);
+  const palette = FOLLOW_STATUS_COLORS[status] || FOLLOW_STATUS_COLORS.Pending;
+  return (
+    <span
+      className="inline-flex items-center rounded-[4px] px-2.5 py-1 text-[12px] font-semibold leading-[18px] whitespace-nowrap"
+      style={{ backgroundColor: palette.bg, color: palette.color }}
+    >
+      {status}
+    </span>
+  );
+}
+
+function followedUpBy(row) {
+  return row?.last_followed_up_by || row?.last_follow_up_by || row?.last_action_by || "—";
+}
+
+function followedUpDate(row) {
+  const raw = row?.last_followed_up_at || row?.last_follow_up_at || row?.last_action_at;
+  if (!raw) return "—";
+  const text = String(raw).replace("T", " ");
+  const [d = "", t = ""] = text.split(" ");
+  const [y, m, day] = d.split("-");
+  if (!y) return String(raw);
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${Number(day)} ${months[Number(m) - 1] || m} ${y}${t ? `, ${t.slice(0, 5)}` : ""}`;
+}
+
 function TableHeader() {
   return (
     <div className="flex w-full items-stretch" style={{ backgroundImage: GRAD_DARK }}>
@@ -507,7 +657,12 @@ function TableRow({ row, pics, onChanged }) {
         <PriorityBadge value={row.priority} />
       </Cell>
       <DataCell value={row.retention} minW={COLUMNS[7].minW} />
-      <Cell minW={COLUMNS[8].minW} align="end">
+      <DataCell value={followedUpBy(row)} minW={COLUMNS[8].minW} />
+      <DataCell value={followedUpDate(row)} minW={COLUMNS[9].minW} />
+      <Cell minW={COLUMNS[10].minW}>
+        <FollowUpStatusBadge row={row} />
+      </Cell>
+      <Cell minW={COLUMNS[11].minW} align="end">
         <div className="flex items-center gap-2">
           <ViewButton href={href} />
           <MoreButton
@@ -538,19 +693,24 @@ function ViewButton({ href }) {
 }
 
 // Square 34×34 icon button — gold gradient, dark three-dots glyph. Opens a
-// cream-colored status dropdown (In Progress / Resolve / Snooze / Remark)
-// per the design. Status is local to each row; eventually this hooks into
-// adminApi.updateMemberAlertStatus(id, status).
-const STATUS_OPTIONS = ["In Progress", "Resolve", "Snooze", "Remark", "Assign PIC"];
+// cream-colored dropdown with exactly three actions (spec #11):
+//   Follow Up  → action picker (TG/WA/Bonus/Event/LiveChat/Others→fill-up)
+//   Add Note   → shows the existing note and updates it (was "Remark")
+//   Assign PIC → choose which PIC owns the member
+const STATUS_OPTIONS = ["Follow Up", "Add Note", "Assign PIC"];
 
 function MoreButton({ row, pics, onChanged, ariaLabel }) {
   const [open, setOpen] = useState(false);
-  const [status, setStatus] = useState("Snooze");
+  const [status, setStatus] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [remarkOpen, setRemarkOpen] = useState(false);
+  const [followUpOpen, setFollowUpOpen] = useState(false);
+  const [noteOpen, setNoteOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
   const buttonRef = useRef(null);
+
+  // Existing note shown when editing via "Add Note".
+  const existingNote = row?.note || row?.follow_up_remark || row?.last_remark || row?.remark || "";
 
   const submitRemark = async (remark) => {
     if (!row?.uuid || saving) return false;
@@ -587,18 +747,12 @@ function MoreButton({ row, pics, onChanged, ariaLabel }) {
         <StatusMenu
           anchorRef={buttonRef}
           status={status}
-          onSelect={async (next) => {
+          onSelect={(next) => {
             setStatus(next);
             setOpen(false);
-            if (next === "Assign PIC") {
-              setAssignOpen(true);
-              return;
-            }
-            if (next === "Remark") {
-              setRemarkOpen(true);
-              return;
-            }
-            await submitRemark(`Alert status: ${next}`);
+            if (next === "Assign PIC") setAssignOpen(true);
+            else if (next === "Add Note") setNoteOpen(true);
+            else if (next === "Follow Up") setFollowUpOpen(true);
           }}
           onClose={() => setOpen(false)}
         />
@@ -608,17 +762,31 @@ function MoreButton({ row, pics, onChanged, ariaLabel }) {
       ) : error ? (
         <span className="absolute right-0 top-full mt-1 whitespace-nowrap text-[10px] text-[#fb3748]">{error}</span>
       ) : null}
-      {remarkOpen ? (
+      {followUpOpen ? (
         <FollowUpCreateModal
           memberName={row?.full_name || row?.username || "Member"}
-          title="Add Remark"
-          fixedActionType="Others"
+          title="Follow Up"
           submitting={saving}
           submitError={error}
-          onClose={() => setRemarkOpen(false)}
+          onClose={() => setFollowUpOpen(false)}
           onSubmit={async (entry) => {
             const ok = await submitRemark(entry.follow_up_remark || entry.note || "");
-            if (ok) setRemarkOpen(false);
+            if (ok) setFollowUpOpen(false);
+          }}
+        />
+      ) : null}
+      {noteOpen ? (
+        <FollowUpCreateModal
+          memberName={row?.full_name || row?.username || "Member"}
+          title="Add Note"
+          fixedActionType="Others"
+          initialNote={existingNote}
+          submitting={saving}
+          submitError={error}
+          onClose={() => setNoteOpen(false)}
+          onSubmit={async (entry) => {
+            const ok = await submitRemark(entry.note || entry.follow_up_remark || "");
+            if (ok) setNoteOpen(false);
           }}
         />
       ) : null}

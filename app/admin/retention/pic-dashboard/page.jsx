@@ -5,12 +5,17 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import PeriodToggle from "../../../components/admin/retention/PeriodToggle";
 import Pagination from "../../../components/admin/retention/Pagination";
+import KpiBreakdownModal from "../../../components/admin/retention/KpiBreakdownModal";
 import LoadingOverlay from "../../../components/admin/ui/LoadingOverlay";
 import {
   ASSETS,
   GRAD_DARK,
   GRAD_GOLD,
   GRAD_CARD,
+  GRAD_GREEN,
+  GRAD_RED,
+  ACHIEVEMENT_GREEN,
+  ACHIEVEMENT_RED,
 } from "../../../components/admin/retention/constants";
 import {
   getCrmDashboardSummary,
@@ -61,6 +66,51 @@ function formatPercent(value) {
   return `${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}%`;
 }
 
+// The six brands every KPI breaks down into — same station codes the PIC
+// Profile cards use. Always rendered in this order so the popup is stable even
+// when a brand is missing from the response.
+const BRANDS = ["KG", "LV", "EP", "AB", "UB", "N1"];
+
+function formatByType(type, raw) {
+  if (type === "currency") return formatRmCurrency(raw);
+  if (type === "percent") return formatPercent(raw);
+  return formatNumber(raw);
+}
+
+function zeroByType(type) {
+  return formatByType(type, 0);
+}
+
+// Pull the per-brand split for one KPI out of the dashboard summary. The
+// overview endpoint currently returns only flat totals, so until the backend
+// adds a per-brand split this returns []. It accepts the same station-keyed
+// shape the retention-summary endpoint already uses ([{ station, amount }] /
+// [{ station, members }]) under a handful of likely keys, so whichever field
+// the backend ships, the popup lights up without further frontend changes.
+function getBreakdownRows(summary, meta) {
+  if (!summary) return [];
+  const candidates = [
+    summary[`${meta.key}_breakdown`],
+    summary[`${meta.key}_per_brand`],
+    summary[`${meta.key}_by_brand`],
+    summary[`${meta.key}_by_station`],
+    summary.breakdown?.[meta.key],
+    // future-proof: backend may switch the bare key to a station list (as
+    // retention-summary does) and move the scalar to `<key>__total`.
+    Array.isArray(summary[meta.key]) ? summary[meta.key] : undefined,
+  ];
+  const list = candidates.find((c) => Array.isArray(c) && c.length > 0);
+  if (!list) return [];
+  return list
+    .map((entry) => {
+      const brand = entry?.station ?? entry?.brand ?? entry?.name ?? entry?.level;
+      const raw = entry?.amount ?? entry?.members ?? entry?.value ?? entry?.count ?? entry?.total;
+      if (!brand) return null;
+      return { brand: String(brand), value: formatByType(meta.type, raw) };
+    })
+    .filter(Boolean);
+}
+
 function buildPeriodParams(period, fromDate, toDate) {
   if (fromDate && toDate) {
     return { type: 4, from_date: fromDate, to_date: toDate };
@@ -86,6 +136,7 @@ function PicDashboardContent() {
   const [period, setPeriod] = useState("Daily");
   const [summary, setSummary] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
+  const [activeKpi, setActiveKpi] = useState(null);
 
   const fromDate = searchParams.get("from") || "";
   const toDate = searchParams.get("to") || "";
@@ -125,10 +176,17 @@ function PicDashboardContent() {
     <>
       <HeaderRow period={period} onPeriodChange={handlePeriodChange} fromDate={fromDate} toDate={toDate} />
       <div className="relative">
-        <KpiGrid summary={summary} loading={summaryLoading} />
+        <KpiGrid summary={summary} loading={summaryLoading} onSelect={setActiveKpi} />
         {summaryLoading && <LoadingOverlay label="Loading..." />}
       </div>
       <PerformanceSummary periodParams={periodParams} />
+      <KpiBreakdownModal
+        isOpen={!!activeKpi}
+        onClose={() => setActiveKpi(null)}
+        kpi={activeKpi}
+        brands={BRANDS}
+        rows={activeKpi ? getBreakdownRows(summary, activeKpi.meta) : []}
+      />
     </>
   );
 }
@@ -158,7 +216,7 @@ function HeaderRow({ period, onPeriodChange, fromDate, toDate }) {
   );
 }
 
-function KpiGrid({ summary, loading }) {
+function KpiGrid({ summary, loading, onSelect }) {
   return (
     <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {KPI_META.map((meta) => {
@@ -168,14 +226,23 @@ function KpiGrid({ summary, loading }) {
         if (meta.type === "currency") value = formatCurrency(raw);
         else if (meta.type === "percent") value = formatPercent(raw);
         else value = formatNumber(raw);
+        const kpi = {
+          ...meta,
+          value,
+          valuePrefix: meta.type === "currency" ? "RM" : undefined,
+        };
         return (
           <KpiCard
             key={meta.id}
-            kpi={{
-              ...meta,
-              value,
-              valuePrefix: meta.type === "currency" ? "RM" : undefined,
-            }}
+            kpi={kpi}
+            onSelect={() =>
+              onSelect?.({
+                label: meta.label,
+                meta,
+                total: formatByType(meta.type, raw),
+                zero: zeroByType(meta.type),
+              })
+            }
           />
         );
       })}
@@ -195,14 +262,14 @@ function SkeletonBlock({ className = "" }) {
 function KpiCardSkeleton() {
   return (
     <div
-      className="flex flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-4"
+      className="flex flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-6"
       style={{ backgroundImage: GRAD_CARD }}
     >
-      <div className="flex w-full items-start gap-2">
-        <SkeletonBlock className="h-10 w-10 shrink-0 rounded-[4px]" />
+      <div className="flex w-full items-start gap-3">
+        <SkeletonBlock className="h-12 w-12 shrink-0 rounded-[6px]" />
         <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <SkeletonBlock className="h-[14px] w-[72%]" />
-          <SkeletonBlock className="h-[28px] w-[58%]" />
+          <SkeletonBlock className="h-[16px] w-[72%]" />
+          <SkeletonBlock className="h-[32px] w-[58%]" />
         </div>
       </div>
     </div>
@@ -215,57 +282,56 @@ function KpiCardSkeleton() {
 // line instead of clipping or wrapping mid-number. Sizes are kept compact so
 // four big-value tiles fit a row without truncation. The min in the clamp is
 // tuned so 17-char strings (RM + 2 decimals) clear the narrowest 4-col width.
-const KPI_VALUE_FONT = "clamp(14px, 1.1vw, 24px)";
-
-function KpiCard({ kpi }) {
+function KpiCard({ kpi, onSelect }) {
   const isCurrency = !!kpi.valuePrefix;
   return (
-    <div
-      className="flex flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-4"
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-label={`View ${kpi.label} brand breakdown`}
+      className="flex flex-col gap-3 rounded-[16px] border-2 border-[#05060a] p-4 text-left transition hover:border-[#f2cb7a]/40 hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f2cb7a]/60 cursor-pointer"
       style={{ backgroundImage: GRAD_CARD }}
     >
-      <div className="flex w-full items-start gap-2">
+      <div className="flex w-full items-center gap-2.5">
         <div
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px] drop-shadow-[0_0_3px_rgba(222,162,32,0.5)]"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[6px] drop-shadow-[0_0_3px_rgba(222,162,32,0.5)]"
           style={{ backgroundImage: GRAD_DARK }}
         >
           <img
             src={kpi.icon}
             alt=""
             className="h-5 w-5"
-            style={{ maxWidth: kpi.iconSize, maxHeight: kpi.iconSize }}
+            style={{ maxWidth: 20, maxHeight: 20 }}
           />
         </div>
-        <div className="flex min-w-0 flex-1 flex-col">
-          <p
-            className="text-[12px] font-semibold uppercase leading-[18px] text-[#f6dda6]"
-            style={{ letterSpacing: "-0.5px" }}
-          >
-            {kpi.label}
-          </p>
-          <p
-            className="bg-clip-text font-bold text-transparent"
-            style={{
-              backgroundImage: GRAD_GOLD,
-              fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-              fontSize: KPI_VALUE_FONT,
-              lineHeight: "1.2",
-            }}
-          >
-            {isCurrency ? (
-              <span className="flex min-w-0 items-baseline gap-1 tabular-nums whitespace-nowrap">
-                <span className="shrink-0 text-[0.7em]">{kpi.valuePrefix}</span>
-                <span className="min-w-0 [overflow-wrap:anywhere]">{kpi.value}</span>
-              </span>
-            ) : (
-              <span className="block [overflow-wrap:anywhere] tabular-nums">
-                {kpi.value}
-              </span>
-            )}
-          </p>
-        </div>
+        <p
+          className="min-w-0 flex-1 text-[12px] font-semibold uppercase leading-[15px] text-[#f6dda6]"
+          style={{ letterSpacing: "-0.3px" }}
+        >
+          {kpi.label}
+        </p>
       </div>
-    </div>
+      {/* One uniform, viewport-scaled size for every card. The value spans the
+          full card width and the clamp shrinks with the viewport, so long
+          currency totals still fit at the narrowest 4-col width without clipping. */}
+      <p
+        className="block w-full overflow-hidden text-ellipsis whitespace-nowrap bg-clip-text font-bold text-transparent tabular-nums"
+        style={{
+          backgroundImage: GRAD_GOLD,
+          fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+          fontSize: "clamp(20px, 1.7vw, 30px)",
+          lineHeight: "1.2",
+        }}
+      >
+        {isCurrency ? (
+          <>
+            <span className="text-[0.7em]">{kpi.valuePrefix}</span> {kpi.value}
+          </>
+        ) : (
+          kpi.value
+        )}
+      </p>
+    </button>
   );
 }
 
@@ -359,6 +425,10 @@ function PerformanceSummary({ periodParams }) {
   );
 }
 
+// Monthly Target / Achievement always reflect the current calendar month
+// (backend filters the data); surface the month name so the column is unambiguous.
+const CURRENT_MONTH = new Date().toLocaleDateString("en-US", { month: "long" });
+
 function TableHeader() {
   return (
     <div className="flex w-full items-start justify-between" style={{ backgroundImage: GRAD_DARK }}>
@@ -366,8 +436,8 @@ function TableHeader() {
       <HeaderCell label="Total Members" />
       <HeaderCell label="Total Sales" />
       <HeaderCell label="Total Win/Lose" />
-      <HeaderCell label="Monthly Target" />
-      <HeaderCell label="Achievement" align="center" />
+      <HeaderCell label={`Monthly Target (${CURRENT_MONTH})`} />
+      <HeaderCell label={`Achievement (${CURRENT_MONTH})`} align="center" />
       <HeaderCell label="Action" align="end" />
     </div>
   );
@@ -392,6 +462,8 @@ function TableRow({ row }) {
   // percentage (0–100). Coerce safely so a string like "40.5" still works.
   const achievementNum = parseFloat(achievementRaw);
   const achievementPct = Number.isFinite(achievementNum) ? achievementNum : 0;
+  // Below target reads red, at/above target reads green.
+  const metTarget = achievementPct >= 100;
 
   return (
     <div className="flex w-full items-center -mb-px border-b border-white/5">
@@ -421,8 +493,13 @@ function TableRow({ row }) {
       <DataCell value={formatRmCurrency(target)} />
       <div className="flex flex-1 min-w-0 items-center self-stretch">
         <div className="flex h-full flex-1 flex-col items-center justify-center gap-2 p-6">
-          <span className="b-5 capitalize text-white">{achievementPct}%</span>
-          <ProgressBar pct={achievementPct} />
+          <span
+            className="b-5 capitalize font-semibold"
+            style={{ color: metTarget ? ACHIEVEMENT_GREEN : ACHIEVEMENT_RED }}
+          >
+            {achievementPct}%
+          </span>
+          <ProgressBar pct={achievementPct} metTarget={metTarget} />
         </div>
       </div>
       <div className="flex flex-1 min-w-0 items-center self-stretch justify-end">
@@ -472,13 +549,13 @@ function DataCell({ value }) {
   );
 }
 
-function ProgressBar({ pct }) {
+function ProgressBar({ pct, metTarget }) {
   const clamped = Math.max(0, Math.min(100, pct));
   return (
     <div className="relative h-[2px] w-full overflow-hidden rounded-full bg-white/15">
       <div
         className="absolute inset-y-0 left-0 rounded-full"
-        style={{ width: `${clamped}%`, backgroundImage: GRAD_GOLD }}
+        style={{ width: `${clamped}%`, backgroundImage: metTarget ? GRAD_GREEN : GRAD_RED }}
       />
     </div>
   );

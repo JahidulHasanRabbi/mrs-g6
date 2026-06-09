@@ -12,6 +12,8 @@ function normalizePlayer(p) {
     name: p.player_name,
     country: p.country_name,
     totalPoints: p.total_points ?? 0,
+    countryRank: p.country_rank,
+    globalRank: p.global_rank,
     totalWin: p.total_win ?? 0,
     winningStreak: p.winning_streak ?? 0,
     totalPrediction: p.total_prediction ?? 0,

@@ -10,4 +10,10 @@ export const GRAD_DARK = "linear-gradient(178deg, #141828 0%, #333333 99.7%)";
 export const GRAD_GOLD = "linear-gradient(99deg, #DC9D16 1%, #F2CB7A 98%)";
 export const GRAD_CARD = "linear-gradient(178deg, #11320e 0%, #031101 99.7%)";
 
+// Achievement thresholds: below target reads red, at/above target reads green.
+export const GRAD_GREEN = "linear-gradient(99deg, #16A34A 1%, #4ADE80 98%)";
+export const GRAD_RED = "linear-gradient(99deg, #DC2626 1%, #F87171 98%)";
+export const ACHIEVEMENT_GREEN = "#4ADE80";
+export const ACHIEVEMENT_RED = "#F87171";
+
 export const PERIODS = ["Daily", "Monthly", "Yearly"];

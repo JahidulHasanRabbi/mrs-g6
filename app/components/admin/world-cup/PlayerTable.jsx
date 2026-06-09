@@ -8,17 +8,20 @@ function fmt(n) {
 }
 
 export default function PlayerTable({ players = [] }) {
+  const hasRankColumns = players.some((p) => p.countryRank != null || p.globalRank != null);
+  const emptyColSpan = hasRankColumns ? 8 : 6;
+
   return (
     <div className="overflow-hidden rounded-[12px] border border-white/5">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1200px]">
+        <table className={`w-full ${hasRankColumns ? "min-w-[1200px]" : "min-w-[960px]"}`}>
           <thead>
             <tr style={{ backgroundImage: HEADER_BG }} className="text-left">
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Player Name</th>
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Country</th>
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Total Points</th>
-              <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Country Rank</th>
-              <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Global Rank</th>
+              {hasRankColumns && <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Country Rank</th>}
+              {hasRankColumns && <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Global Rank</th>}
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Total Prediction</th>
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Total Win</th>
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Winning Streak</th>
@@ -27,8 +30,8 @@ export default function PlayerTable({ players = [] }) {
           <tbody>
             {players.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-5 py-10 text-center text-[13px] text-white/50">
-                  No dummy player data yet.
+                <td colSpan={emptyColSpan} className="px-5 py-10 text-center text-[13px] text-white/50">
+                  No player data yet.
                 </td>
               </tr>
             ) : (
@@ -37,8 +40,8 @@ export default function PlayerTable({ players = [] }) {
                   <td className="px-5 py-5 text-[12px] text-white">{p.name}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{p.country}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{fmt(p.totalPoints)}</td>
-                  <td className="px-5 py-5 text-[12px] text-white">#{fmt(p.countryRank)}</td>
-                  <td className="px-5 py-5 text-[12px] text-white">#{fmt(p.globalRank)}</td>
+                  {hasRankColumns && <td className="px-5 py-5 text-[12px] text-white">#{fmt(p.countryRank)}</td>}
+                  {hasRankColumns && <td className="px-5 py-5 text-[12px] text-white">#{fmt(p.globalRank)}</td>}
                   <td className="px-5 py-5 text-[12px] text-white">{p.totalPrediction}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{p.totalWin}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{p.winningStreak}</td>

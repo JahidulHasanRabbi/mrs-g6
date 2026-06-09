@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { LB_COLORS } from "./constants";
-import { GlowCard, Flag, Tabs } from "./primitives";
+import { GlowCard, Flag, GreenButton, Tabs } from "./primitives";
 import { getFixtures, getMatchPredictionsMap, getMyPredictions } from "./worldcupApi";
 import PredictModal from "./PredictModal";
 
@@ -48,8 +48,19 @@ function OddsBar({ home, away }) {
   );
 }
 
-function FixtureCard({ fixture, onPredict, alreadyPredicted }) {
+function FixtureCard({ fixture, onPredict, prediction }) {
+  const alreadyPredicted = !!prediction;
+  const predictedTeam = prediction?.team;
+  const winnerTeam = fixture.winnerTeam;
+  const showWinner = fixture.status === 3;
   const isDisabled = fixture.locked || alreadyPredicted;
+  const actionLabel = alreadyPredicted
+    ? "Predicted"
+    : fixture.status === 3
+    ? "Ended"
+    : fixture.locked
+    ? "Closed"
+    : "Predict";
   return (
     <div
       className="flex w-full flex-col items-center gap-6 rounded-[12px] p-[17px]"
@@ -83,6 +94,50 @@ function FixtureCard({ fixture, onPredict, alreadyPredicted }) {
 
       <OddsBar home={fixture.homeOdds} away={fixture.awayOdds} />
 
+      {predictedTeam?.name && (
+        <div
+          className="flex w-full items-center justify-between gap-3 rounded-[8px] px-3 py-2"
+          style={{ background: "rgba(84,233,138,0.08)", border: `1px solid ${LB_COLORS.borderGreen30}` }}
+        >
+          <span className="text-[11px] uppercase" style={{ color: LB_COLORS.textMuted, fontFamily: "'Lexend',sans-serif" }}>
+            My Prediction
+          </span>
+          <span className="flex min-w-0 items-center gap-2">
+            <Flag code={predictedTeam.code} src={predictedTeam.flag} size={22} />
+            <span className="truncate text-[12px]" style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}>
+              {predictedTeam.name}
+            </span>
+          </span>
+        </div>
+      )}
+
+      {showWinner && (
+        <div
+          className="flex w-full items-center justify-between gap-3 rounded-[8px] px-3 py-2"
+          style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${LB_COLORS.borderSoft}` }}
+        >
+          <span className="text-[11px] uppercase" style={{ color: LB_COLORS.textMuted, fontFamily: "'Lexend',sans-serif" }}>
+            Winner
+          </span>
+          {fixture.isDraw ? (
+            <span className="text-[12px]" style={{ color: LB_COLORS.gold, fontFamily: "'Lexend',sans-serif" }}>
+              Draw
+            </span>
+          ) : winnerTeam?.name ? (
+            <span className="flex min-w-0 items-center gap-2">
+              <Flag code={winnerTeam.code} size={22} />
+              <span className="truncate text-[12px]" style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}>
+                {winnerTeam.name}
+              </span>
+            </span>
+          ) : (
+            <span className="text-[12px]" style={{ color: LB_COLORS.textMuted, fontFamily: "'Lexend',sans-serif" }}>
+              -
+            </span>
+          )}
+        </div>
+      )}
+
       <button
         onClick={() => !isDisabled && onPredict?.(fixture)}
         disabled={isDisabled}
@@ -98,7 +153,7 @@ function FixtureCard({ fixture, onPredict, alreadyPredicted }) {
           boxShadow: alreadyPredicted ? "none" : "0 4px 0 rgba(0,0,0,0.3)",
         }}
       >
-        {alreadyPredicted ? "Predicted" : "Predict"}
+        {actionLabel}
       </button>
     </div>
   );
@@ -114,7 +169,7 @@ function SectionHeader({ color, children }) {
   );
 }
 
-export default function PredictionsList({ predictions: propPredictions }) {
+export default function PredictionsList({ predictions: propPredictions, onViewPrize }) {
   const [activeTab, setActiveTab] = useState(0);
   const [fixtures, setFixtures] = useState({ upcoming: [], ongoing: [], settled: [] });
   const [predictedMap, setPredictedMap] = useState({});
@@ -161,7 +216,7 @@ export default function PredictionsList({ predictions: propPredictions }) {
                   key={`u${i}`}
                   fixture={f}
                   onPredict={setPredictFixture}
-                  alreadyPredicted={!!predictedMap[f.uuid]}
+                  prediction={predictedMap[f.uuid]}
                 />
               ))}
             </div>
@@ -171,7 +226,7 @@ export default function PredictionsList({ predictions: propPredictions }) {
                 <FixtureCard
                   key={`o${i}`}
                   fixture={f}
-                  alreadyPredicted={!!predictedMap[f.uuid]}
+                  prediction={predictedMap[f.uuid]}
                 />
               ))}
             </div>
@@ -183,7 +238,7 @@ export default function PredictionsList({ predictions: propPredictions }) {
                     <FixtureCard
                       key={`s${i}`}
                       fixture={f}
-                      alreadyPredicted={!!predictedMap[f.uuid]}
+                      prediction={predictedMap[f.uuid]}
                     />
                   ))}
                 </div>
@@ -207,6 +262,8 @@ export default function PredictionsList({ predictions: propPredictions }) {
                     ? { bg: "rgba(84,233,138,0.15)", color: LB_COLORS.primary, label: "Win" }
                     : p.result === "loss"
                     ? { bg: "rgba(255,59,48,0.15)", color: LB_COLORS.red, label: "Loss" }
+                    : p.result === "draw"
+                    ? { bg: "rgba(233,175,65,0.16)", color: LB_COLORS.gold, label: "Draw" }
                     : { bg: "rgba(255,255,255,0.08)", color: LB_COLORS.textMuted, label: "Pending" };
                 return (
                   <div
@@ -229,6 +286,19 @@ export default function PredictionsList({ predictions: propPredictions }) {
                           {p.homeName} vs {p.awayName}
                         </span>
                       )}
+                      {(p.winnerTeam?.name || p.winnerLabel) && (
+                        <span className="flex min-w-0 items-center gap-1 text-[10px]" style={{ color: LB_COLORS.textMuted, fontFamily: "'Lexend',sans-serif" }}>
+                          <span className="shrink-0">Winner:</span>
+                          {p.winnerTeam?.name ? (
+                            <>
+                              <Flag code={p.winnerTeam.code} size={16} />
+                              <span className="truncate">{p.winnerTeam.name}</span>
+                            </>
+                          ) : (
+                            <span style={{ color: LB_COLORS.gold }}>{p.winnerLabel}</span>
+                          )}
+                        </span>
+                      )}
                     </div>
                     <div
                       className="grid h-6 w-[51px] place-items-center rounded-[8px]"
@@ -245,6 +315,9 @@ export default function PredictionsList({ predictions: propPredictions }) {
                 );
               })
             }
+            <div className="pt-3">
+              <GreenButton onClick={onViewPrize} size="sm">View Prize Pool</GreenButton>
+            </div>
           </div>
         </GlowCard>
       )}
@@ -253,8 +326,8 @@ export default function PredictionsList({ predictions: propPredictions }) {
         <PredictModal
           fixture={predictFixture}
           onClose={() => setPredictFixture(null)}
-          onPredicted={(matchUuid) => {
-            setPredictedMap((prev) => ({ ...prev, [matchUuid]: { state: 1 } }));
+          onPredicted={(matchUuid, team) => {
+            setPredictedMap((prev) => ({ ...prev, [matchUuid]: { state: 1, team } }));
           }}
         />
       )}

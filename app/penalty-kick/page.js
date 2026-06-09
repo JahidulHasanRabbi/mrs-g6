@@ -52,6 +52,12 @@ const ITEM_TYPE_LABELS = {
   4: "WORLD CUP SCORE",
 };
 
+function itemTypeLabel(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  return ITEM_TYPE_LABELS[Number(raw)] || raw.toUpperCase();
+}
+
 function hashString(value = "") {
   return String(value)
     .split("")
@@ -104,7 +110,7 @@ function mapKickResponse(response, resolved) {
     ? {
         uuid: response?.item_uuid,
         reward_name: response?.reward_name,
-        item_type: ITEM_TYPE_LABELS[Number(response?.item_type)] || response?.item_type,
+        item_type: itemTypeLabel(response?.item_type),
         image: response?.image,
         amount: response?.amount,
         credit_amount: response?.amount,
@@ -131,7 +137,7 @@ function mapHistoryRow(row) {
     amount: Number.isFinite(amount) ? amount : 0,
     claimed: false,
     label: row.reward_name || "Scored a goal",
-    sub: row.item_type || "Tap to claim!",
+    sub: itemTypeLabel(row.item_type) || "Tap to claim!",
   };
 }
 

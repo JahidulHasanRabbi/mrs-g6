@@ -6,7 +6,25 @@ import { LB_COLORS } from "./constants";
 export const flagUrl = (iso) =>
   `/assets/leaderboard/flags/${iso.toLowerCase()}.svg`;
 
-export function LBHeader({ onInfoClick, onMenuClick, title = "LEADERBOARDS" }) {
+function SoundIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor" />
+      <path d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8 8 0 0 1 0 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function MuteIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor" />
+      <path d="m16 9 5 6M21 9l-5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function LBHeader({ onInfoClick, onMenuClick, onSoundToggle, soundMuted = false, title = "LEADERBOARDS" }) {
   return (
     <div className="flex items-center gap-3 p-4">
       <button type="button" aria-label="Menu" onClick={onMenuClick} className="grid h-9 w-9 shrink-0 place-items-center">
@@ -28,6 +46,18 @@ export function LBHeader({ onInfoClick, onMenuClick, title = "LEADERBOARDS" }) {
       >
         {title}
       </h1>
+      {onSoundToggle && (
+        <button
+          type="button"
+          aria-label={soundMuted ? "Unmute crowd sound" : "Mute crowd sound"}
+          aria-pressed={soundMuted}
+          onClick={onSoundToggle}
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-full"
+          style={{ border: "2px solid #EBBF01", color: "#FFDD74", background: "transparent" }}
+        >
+          {soundMuted ? <MuteIcon /> : <SoundIcon />}
+        </button>
+      )}
       <button
         type="button"
         aria-label="Info"

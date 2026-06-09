@@ -7,6 +7,7 @@ import { FooterNav } from "../components/footer";
 import { HamburgerMenu } from "../components/hamburger";
 import { LB_SCREENS, LB_TABS } from "../components/leaderboard/constants";
 import { LBHeader } from "../components/leaderboard/primitives";
+import { useCrowdAmbience } from "../components/leaderboard/useCrowdAmbience";
 import {
   getMyProfile,
   confirmNation,
@@ -14,6 +15,7 @@ import {
   getCountryRankings,
   getGlobalPlayers,
   getMyPredictions,
+  getPredictionEligibility,
 } from "../components/leaderboard/worldcupApi";
 import ProfileCard from "../components/leaderboard/ProfileCard";
 import PredictToWinCard from "../components/leaderboard/PredictToWinCard";
@@ -24,7 +26,6 @@ import {
   CountriesPanel,
   GlobalPlayersPanel,
   MyCountryPanel,
-  MyPredictionsPanel,
 } from "../components/leaderboard/RankingScreens";
 import PredictionsList from "../components/leaderboard/PredictionsList";
 import InfoModal from "../components/leaderboard/InfoModal";
@@ -44,7 +45,6 @@ import {
 const SCREEN_FROM_VIEW = {
   home: LB_SCREENS.COUNTRIES,
   players: LB_SCREENS.GLOBAL_PLAYERS,
-  predictions: LB_SCREENS.MY_PREDICTIONS,
   country: LB_SCREENS.MY_COUNTRY,
   fixtures: LB_SCREENS.PREDICTIONS_LIST,
   "prize-country": LB_SCREENS.PRIZE_COUNTRY,
@@ -57,7 +57,6 @@ const TAB_FROM_VIEW = {
   home: LB_TABS.COUNTRIES,
   country: LB_TABS.COUNTRIES,
   players: LB_TABS.PLAYERS,
-  predictions: LB_TABS.PREDICTIONS,
 };
 
 // `pt` (prize tab) is a secondary param so PRIZE_INFO can remember which
@@ -92,9 +91,10 @@ function LeaderboardPageInner() {
   );
 
   const { authReady, memberUuid } = useUser();
+  const { muted, toggleMuted } = useCrowdAmbience();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
-  const [joinBlocked, setJoinBlocked] = useState(false);
+  const [joinBlocked, setJoinBlocked] = useState(null);
   const [profile, setProfile] = useState(null);
   const [confirmError, setConfirmError] = useState(null);
   const [selectedCountry, setSelectedCountry] = useState(null);
@@ -102,6 +102,7 @@ function LeaderboardPageInner() {
   const [countriesData, setCountriesData] = useState({ rows: [], loading: true });
   const [playersData, setPlayersData] = useState({ rows: [], loading: true });
   const [predictionsData, setPredictionsData] = useState({ rows: [], loading: true });
+  const [predictionEligibility, setPredictionEligibility] = useState(null);
 
   useEffect(() => {
     if (!authReady || !memberUuid) return;
@@ -145,6 +146,9 @@ function LeaderboardPageInner() {
     getMyPredictions()
       .then((rows) => { if (!cancelled) setPredictionsData({ rows, loading: false }); })
       .catch(() => { if (!cancelled) setPredictionsData({ rows: [], loading: false }); });
+    getPredictionEligibility()
+      .then((status) => { if (!cancelled) setPredictionEligibility(status); })
+      .catch(() => { if (!cancelled) setPredictionEligibility(null); });
     return () => { cancelled = true; };
   }, [authReady, memberUuid]);
 
@@ -189,7 +193,6 @@ function LeaderboardPageInner() {
 
   const onTabChange = (tab) => {
     if (tab === LB_TABS.PLAYERS) navigate("players");
-    else if (tab === LB_TABS.PREDICTIONS) navigate("predictions");
     else navigate("home");
   };
 
@@ -199,7 +202,6 @@ function LeaderboardPageInner() {
 
   const openPrizePool = () => {
     if (activeTab === LB_TABS.PLAYERS) navigate("prize-players");
-    else if (activeTab === LB_TABS.PREDICTIONS) navigate("prize-predictions");
     else navigate("prize-country");
   };
 
@@ -212,7 +214,6 @@ function LeaderboardPageInner() {
   const isLeaderboardTabbed =
     screen === LB_SCREENS.COUNTRIES ||
     screen === LB_SCREENS.GLOBAL_PLAYERS ||
-    screen === LB_SCREENS.MY_PREDICTIONS ||
     screen === LB_SCREENS.MY_COUNTRY;
 
   const isPrizeTabbed =
@@ -237,6 +238,8 @@ function LeaderboardPageInner() {
       <LBHeader
         onInfoClick={() => setIsInfoOpen(true)}
         onMenuClick={() => setIsMenuOpen(true)}
+        onSoundToggle={toggleMuted}
+        soundMuted={muted}
       />
 
       <div className="flex-1 pb-[140px]">
@@ -254,13 +257,36 @@ function LeaderboardPageInner() {
               <div className="flex flex-col items-center gap-6 px-4 pb-8 pt-2">
                 <ProfileCard profile={profile} />
                 <PredictToWinCard
-                  onJoinNow={() => {
-                    // Spec slide 10: members need ≥ 3,000 total points to join predictions.
-                    if ((profile.totalPoints ?? 0) < 3000) {
-                      setJoinBlocked(true);
-                      return;
+                  eligibility={predictionEligibility}
+                  onJoinNow={async () => {
+                    try {
+                      const status = await getPredictionEligibility();
+                      setPredictionEligibility(status);
+                      const totalPoints = Number(status?.total_points ?? profile.totalPoints ?? 0);
+                      const requiredPoints = Number(status?.required_points ?? 3000);
+                      if (!status?.eligible || totalPoints < requiredPoints) {
+                        const additional = Math.max(0, requiredPoints - totalPoints);
+                        setJoinBlocked({
+                          title: `${requiredPoints.toLocaleString()} Points Required`,
+                          message: additional > 0
+                            ? `You need to accumulate an additional ${additional.toLocaleString()} points before you can participate again.`
+                            : `You need at least ${requiredPoints.toLocaleString()} total points to join this prediction.`,
+                        });
+                        return;
+                      }
+                      navigate("fixtures");
+                    } catch {
+                      const totalPoints = Number(profile.totalPoints ?? 0);
+                      if (totalPoints < 3000) {
+                        const additional = 3000 - totalPoints;
+                        setJoinBlocked({
+                          title: "3,000 Points Required",
+                          message: `You need to accumulate an additional ${additional.toLocaleString()} points before you can participate again.`,
+                        });
+                        return;
+                      }
+                      navigate("fixtures");
                     }
-                    navigate("fixtures");
                   }}
                 />
                 <LeaderboardTabs activeTab={activeTab} onTabChange={onTabChange} />
@@ -292,19 +318,13 @@ function LeaderboardPageInner() {
                     onViewPrize={openPrizePool}
                   />
                 )}
-                {screen === LB_SCREENS.MY_PREDICTIONS && (
-                  <MyPredictionsPanel
-                    onViewPrize={openPrizePool}
-                    rows={predictionsData.rows}
-                    loading={predictionsData.loading}
-                  />
-                )}
               </div>
             )}
 
             {screen === LB_SCREENS.PREDICTIONS_LIST && (
               <PredictionsList
                 predictions={predictionsData}
+                onViewPrize={() => navigate("prize-predictions")}
               />
             )}
 
@@ -351,9 +371,9 @@ function LeaderboardPageInner() {
 
       {joinBlocked && (
         <NoticeModal
-          title="3,000 Points Required"
-          message="You need at least 3,000 total points to join this prediction."
-          onClose={() => setJoinBlocked(false)}
+          title={joinBlocked.title}
+          message={joinBlocked.message}
+          onClose={() => setJoinBlocked(null)}
         />
       )}
     </div>

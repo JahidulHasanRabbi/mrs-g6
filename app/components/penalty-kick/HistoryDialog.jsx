@@ -10,9 +10,13 @@ import { tokenStorage } from "../../api/tokenStorage";
 const PRIZE_PAGE_SIZE = 10;
 
 const ITEM_TYPE_DISPLAY = {
+  "1": "Credit",
   "TOKEN": "Token",
+  "2": "Token",
   "FREE CREDIT": "Credit",
+  "3": "Prize",
   "PRIZE": "Prize",
+  "4": "Score",
   "WORLD CUP SCORE": "Score",
 };
 
