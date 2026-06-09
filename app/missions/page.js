@@ -3,27 +3,27 @@
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
-import { FooterNav } from "../../components/footer";
-import { HamburgerMenu } from "../../components/hamburger";
-import MissionCard from "../../components/penalty-kick/missions/MissionCard";
-import MissionsHeader from "../../components/penalty-kick/missions/MissionsHeader";
-import GoldButton from "../../components/penalty-kick/missions/GoldButton";
+import { FooterNav } from "../components/footer";
+import { HamburgerMenu } from "../components/hamburger";
+import MissionCard from "../components/penalty-kick/missions/MissionCard";
+import MissionsHeader from "../components/penalty-kick/missions/MissionsHeader";
+import GoldButton from "../components/penalty-kick/missions/GoldButton";
 import {
   MISSION_TABS,
   MISSION_COLORS,
-} from "../../components/penalty-kick/missions/data";
-import { useUser } from "../../contexts/UserContext";
-import { HOME_ASSETS } from "../../components/home/homeAssets";
+} from "../components/penalty-kick/missions/data";
+import { useUser } from "../contexts/UserContext";
+import { HOME_ASSETS } from "../components/home/homeAssets";
 import {
   claimMissionReward,
   getMissionProgressHistory,
   getMyMissions,
   joinMission,
-} from "../../api/memberApi";
+} from "../api/memberApi";
 import {
   MISSION_CATEGORY_BY_TAB,
   MISSION_TAB_BY_CATEGORY,
-} from "../../config/missionOptions";
+} from "../config/missionOptions";
 
 const TOKEN_ICON = "/assets/penalty-kick/missions/token-icon.svg";
 const HISTORY_ICON = "/assets/penalty-kick/missions/icon-history.svg";
