@@ -2,76 +2,40 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-// Stadium ambience for the leaderboard. The client wants all five clips on a
-// continuous loop; we shuffle them so there's no obvious repeating pattern.
-const CLIPS = [
-  "/assets/penalty-kick/leaderboard/cheering.mp3",
-  "/assets/penalty-kick/leaderboard/chanting.mp3",
-  "/assets/penalty-kick/leaderboard/stadium-1.mp3",
-  "/assets/penalty-kick/leaderboard/stadium-2.mp3",
-  "/assets/penalty-kick/leaderboard/stadium-3.mp3",
-];
+// Background music for the leaderboard: a single football song on a seamless
+// loop. Tries to autoplay on mount; browsers that block unmuted autoplay fall
+// back to starting on the user's first interaction with the page.
+const TRACK = "/assets/penalty-kick/leaderboard/football-song.mpeg";
 
 const VOLUME = 0.4;
 
-// Fisher–Yates, with one guard: if the freshly shuffled order would replay the
-// clip that just finished (the boundary between two shuffles), rotate it so the
-// same track never plays twice back-to-back.
-function shuffleOrder(prevLast) {
-  const order = [...CLIPS];
-  for (let i = order.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [order[i], order[j]] = [order[j], order[i]];
-  }
-  if (order[0] === prevLast && order.length > 1) {
-    order.push(order.shift());
-  }
-  return order;
-}
-
-// Plays the crowd clips on shuffle-loop. Tries to autoplay on mount; browsers
-// that block unmuted autoplay fall back to starting on the user's first
-// interaction with the page. The returned `muted` flag drives a header toggle.
+// Plays the football song on loop. The returned `muted` flag drives a header
+// toggle.
 export function useCrowdAmbience() {
   const audioRef = useRef(null);
-  const orderRef = useRef([]);
-  const idxRef = useRef(0);
   const [muted, setMuted] = useState(false);
   const mutedRef = useRef(false);
 
-  const playNext = useCallback(() => {
+  const play = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    if (idxRef.current >= orderRef.current.length) {
-      const prevLast = orderRef.current[orderRef.current.length - 1];
-      orderRef.current = shuffleOrder(prevLast);
-      idxRef.current = 0;
-    }
-    audio.src = orderRef.current[idxRef.current];
-    idxRef.current += 1;
     return audio.play();
   }, []);
 
   useEffect(() => {
-    const audio = new Audio();
+    const audio = new Audio(TRACK);
     audio.volume = VOLUME;
     audio.preload = "auto";
+    audio.loop = true;
     audioRef.current = audio;
-    orderRef.current = shuffleOrder(null);
-    idxRef.current = 0;
-
-    // Advance to the next shuffled clip whenever one finishes — this is what
-    // makes it "loop forever" without ever cutting a clip short.
-    const onEnded = () => playNext();
-    audio.addEventListener("ended", onEnded);
 
     // First-interaction fallback: if autoplay is blocked, the first tap/keypress
-    // anywhere on the page starts the ambience (unless the user has muted).
+    // anywhere on the page starts the music (unless the user has muted).
     let started = false;
     const startOnInteraction = () => {
       if (started) return;
       started = true;
-      if (!mutedRef.current) playNext()?.catch(() => {});
+      if (!mutedRef.current) play()?.catch(() => {});
       removeInteractionListeners();
     };
     const removeInteractionListeners = () => {
@@ -81,7 +45,7 @@ export function useCrowdAmbience() {
     };
 
     // Try unmuted autoplay first; on rejection, arm the interaction fallback.
-    playNext()
+    play()
       ?.then(() => { started = true; })
       .catch(() => {
         window.addEventListener("pointerdown", startOnInteraction);
@@ -90,13 +54,12 @@ export function useCrowdAmbience() {
       });
 
     return () => {
-      audio.removeEventListener("ended", onEnded);
       removeInteractionListeners();
       audio.pause();
       audio.src = "";
       audioRef.current = null;
     };
-  }, [playNext]);
+  }, [play]);
 
   const toggleMuted = useCallback(() => {
     setMuted((prev) => {
@@ -107,11 +70,11 @@ export function useCrowdAmbience() {
         audio.muted = next;
         // Unmuting after a blocked autoplay may need a fresh play() call, now
         // that the toggle itself is a user gesture.
-        if (!next && audio.paused) playNext()?.catch(() => {});
+        if (!next && audio.paused) play()?.catch(() => {});
       }
       return next;
     });
-  }, [playNext]);
+  }, [play]);
 
   return { muted, toggleMuted };
 }
