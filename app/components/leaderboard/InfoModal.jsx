@@ -10,10 +10,10 @@ import { GlowCard } from "./primitives";
 // leaderboard dialogs stay visually consistent.
 
 const RULES = [
-  "Pick a nation as your team, then predict the winner of each World Cup fixture before kickoff.",
-  "Earn points for every correct call and climb the country, global, and prediction leaderboards.",
-  "Top players and countries share the prize pool when the tournament ends.",
-  'Track every call you’ve made under the "My Predictions" tab.',
+  "Choose your nation and represent it throughout the tournament.",
+  "RM10 = 100 Points. Earn Points and climb the Country & Global Leaderboards.",
+  "Predict match winners and play the Penalty Kick Challenge for extra Points and rewards.",
+  "The campaign runs from 11 June - 19 July. Players who finish on the Leaderboards when the tournament ends will receive prizes.",
 ];
 
 export default function InfoModal({ onClose }) {
