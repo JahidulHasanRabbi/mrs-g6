@@ -122,7 +122,6 @@ export const ENDPOINTS = {
   },
   WORLDCUP_USER: {
     COUNTRY_LIST: '/worldcup/country-list/',
-    MATCH_COUNTRY_LIST: '/worldcup/match-country-list/',
     INFO: '/worldcup/info/',
     BANNER_LIST: '/worldcup/banner-list/',
     PRIZE_POOL: '/worldcup/prize-pool/',
@@ -142,9 +141,6 @@ export const ENDPOINTS = {
   },
   WORLDCUP_ADMIN: {
     SETTINGS: '/worldcup/settings/',
-    COUNTRIES: '/worldcup/countries/',
-    COUNTRY: (uuid) => `/worldcup/countries/${uuid}/`,
-    COUNTRY_ARCHIVE: (uuid) => `/worldcup/countries/${uuid}/archive/`,
     BANNERS: '/worldcup/banners/',
     BANNER: (uuid) => `/worldcup/banners/${uuid}/`,
     BANNER_ARCHIVE: (uuid) => `/worldcup/banners/${uuid}/archive/`,

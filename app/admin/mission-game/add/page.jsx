@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createMission, getMission, updateMission } from "../../../api/adminApi";
 import {
   MISSION_ACTION_OPTIONS,
@@ -138,24 +138,23 @@ function toPayload(form) {
   return payload;
 }
 
-export default function AddMissionPage() {
+function AddMissionForm() {
   const router = useRouter();
-  const [editingUuid, setEditingUuid] = useState(null);
+  const searchParams = useSearchParams();
+  const editingUuid = searchParams.get("uuid") || null;
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const uuid = new URLSearchParams(window.location.search).get("uuid");
-    if (!uuid) return;
-    setEditingUuid(uuid);
+    if (!editingUuid) return;
     setLoading(true);
-    getMission(uuid)
+    getMission(editingUuid)
       .then((data) => setForm(toForm(data)))
       .catch((err) => setError(err?.data?.detail || err?.message || "Failed to load mission."))
       .finally(() => setLoading(false));
-  }, []);
+  }, [editingUuid]);
 
   const set = (key) => (v) => setForm((p) => ({ ...p, [key]: v }));
 
@@ -286,5 +285,13 @@ export default function AddMissionPage() {
         </button>
       </div>
     </div>
+  );
+}
+
+export default function AddMissionPage() {
+  return (
+    <Suspense fallback={null}>
+      <AddMissionForm />
+    </Suspense>
   );
 }

@@ -82,17 +82,29 @@ function BannerForm() {
 
   const onSave = async () => {
     if (!form.title) { setError("Banner title is required."); return; }
+    if (!editingUuid && !form.imageFile) { 
+      setError("Banner image is required."); 
+      return; 
+    }
     setSaving(true);
     setError("");
     try {
-      const payload = new FormData();
-      payload.append("title", form.title);
-      if (form.label) payload.append("label_text", form.label);
-      if (form.section) payload.append("section_title", form.section);
-      if (form.subtitle) payload.append("subtitle", form.subtitle);
-      if (form.description) payload.append("description", form.description);
-      payload.append("location", form.location);
-      if (form.imageFile) payload.append("image", form.imageFile);
+      // Use plain object - apiClient will auto-convert to FormData when it detects File
+      const payload = {
+        title: form.title,
+        location: form.location,
+      };
+      
+      // Only include non-empty optional fields
+      if (form.label) payload.label_text = form.label;
+      if (form.section) payload.section_title = form.section;
+      if (form.subtitle) payload.subtitle = form.subtitle;
+      if (form.description) payload.description = form.description;
+      
+      // Include image file if user uploaded one
+      if (form.imageFile) {
+        payload.image = form.imageFile;
+      }
 
       if (editingUuid) {
         await updateWorldCupBanner(editingUuid, payload);
@@ -101,7 +113,9 @@ function BannerForm() {
       }
       router.push("/admin/world-cup/settings");
     } catch (e) {
-      setError(e?.message ?? "Failed to save.");
+      console.error('Error saving World Cup banner:', e);
+      const errorMsg = e?.data?.detail || e?.data?.title?.[0] || e?.message || "Failed to save.";
+      setError(errorMsg);
     } finally {
       setSaving(false);
     }

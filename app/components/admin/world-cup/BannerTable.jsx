@@ -41,7 +41,6 @@ export default function BannerTable({ banners = [], onEdit, onArchive }) {
                     <RowActions
                       onEdit={() => onEdit?.(b)}
                       onArchive={() => onArchive?.(b)}
-                      showArchive={false}
                     />
                   </td>
                 </tr>

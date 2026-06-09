@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "../../../components/admin/ui/Toast";
 import * as adminApi from "../../../api/adminApi";
@@ -81,7 +81,7 @@ function ImagePlaceholderIcon() {
   );
 }
 
-export default function AddRewardPage() {
+function RewardForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const toast = useToast();
@@ -97,7 +97,7 @@ export default function AddRewardPage() {
     maxWithdraw: "",
     tokenAmount: "",
     scoreAmount: "",
-    unlimited: true,
+    unlimited: false,
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -316,5 +316,13 @@ export default function AddRewardPage() {
         </button>
       </div>
     </div>
+  );
+}
+
+export default function AddRewardPage() {
+  return (
+    <Suspense fallback={null}>
+      <RewardForm />
+    </Suspense>
   );
 }

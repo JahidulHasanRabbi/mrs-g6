@@ -766,25 +766,15 @@ export async function updateWorldCupSettings(data) {
   return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.SETTINGS, { method: 'POST', body: data }, true, 'admin');
 }
 
-// Countries CRUD
+// Countries - Read only (countries are 1-10, managed by backend)
 export async function getWorldCupCountries(params = {}) {
   const qs = buildQueryParams(params);
-  return await apiRequest(`${ENDPOINTS.WORLDCUP_ADMIN.COUNTRIES}${qs}`, { method: 'GET' }, true, 'admin');
+  // Use the user endpoint since admin doesn't have a separate country list endpoint
+  return await apiRequest(`${ENDPOINTS.WORLDCUP_USER.COUNTRY_LIST}${qs}`, { method: 'GET' }, true, 'admin');
 }
 export async function getWorldCupMatchCountries() {
-  return await apiRequest(ENDPOINTS.WORLDCUP_USER.MATCH_COUNTRY_LIST, { method: 'GET' }, true, 'admin');
-}
-export async function getWorldCupCountry(uuid) {
-  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.COUNTRY(uuid), { method: 'GET' }, true, 'admin');
-}
-export async function createWorldCupCountry(data) {
-  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.COUNTRIES, { method: 'POST', body: data }, true, 'admin');
-}
-export async function updateWorldCupCountry(uuid, data) {
-  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.COUNTRY(uuid), { method: 'PUT', body: data }, true, 'admin');
-}
-export async function archiveWorldCupCountry(uuid) {
-  return await apiRequest(ENDPOINTS.WORLDCUP_ADMIN.COUNTRY_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+  // Countries are just 1-10, use the country-list endpoint
+  return await apiRequest(ENDPOINTS.WORLDCUP_USER.COUNTRY_LIST, { method: 'GET' }, true, 'admin');
 }
 
 // Banners CRUD

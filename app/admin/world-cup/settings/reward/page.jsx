@@ -121,13 +121,27 @@ function RewardForm() {
     setSaving(true);
     setError("");
     try {
-      const payload = new FormData();
-      payload.append("reward_name", form.name);
-      payload.append("quantity", Number(String(form.quantity).replace(/[,\s]/g, "")) || 0);
-      payload.append("item_type", form.itemType);
-      if (form.countryUuid) payload.append("country", form.countryUuid);
-      if (form.description) payload.append("description", form.description);
-      if (form.imageFile) payload.append("image", form.imageFile);
+      // Use plain object - apiClient will auto-convert to FormData when it detects File
+      const payload = {
+        reward_name: form.name,
+        quantity: Number(String(form.quantity).replace(/[,\s]/g, "")) || 0,
+        item_type: form.itemType,
+      };
+      
+      // Only include country if specified
+      if (form.countryUuid) {
+        payload.country = form.countryUuid;
+      }
+      
+      // Only include non-empty optional fields
+      if (form.description) {
+        payload.description = form.description;
+      }
+      
+      // Include image file if user uploaded one
+      if (form.imageFile) {
+        payload.image = form.imageFile;
+      }
 
       if (editingUuid) {
         await updateWorldCupRewardItem(editingUuid, payload);
@@ -136,7 +150,9 @@ function RewardForm() {
       }
       router.push("/admin/world-cup/settings");
     } catch (e) {
-      setError(e?.message ?? "Failed to save.");
+      console.error('Error saving World Cup reward:', e);
+      const errorMsg = e?.data?.detail || e?.data?.reward_name?.[0] || e?.message || "Failed to save.";
+      setError(errorMsg);
     } finally {
       setSaving(false);
     }

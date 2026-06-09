@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import Image from "next/image";
@@ -13,14 +13,16 @@ import * as adminApi from "../../api/adminApi";
 const PAGE_SIZE = 7;
 
 const MRS_PAGES = [
-  { slug: "/",                   label: "Home" },
-  { slug: "/personal-data",      label: "Personal Data" },
-  { slug: "/profile",            label: "Profile" },
-  { slug: "/mart",               label: "Redemption Mart" },
-  { slug: "/spin",               label: "Lucky Spin" },
-  { slug: "/penalty-kick",       label: "Penalty Kick" },
+  { slug: "/",                     label: "Home" },
+  { slug: "/personal-data",        label: "Personal Data" },
+  { slug: "/profile",              label: "Profile" },
+  { slug: "/mart",                 label: "Redemption Mart" },
+  { slug: "/spin",                 label: "Lucky Spin" },
+  { slug: "/penalty-kick",         label: "Penalty Kick" },
+  { slug: "/leaderboard",          label: "Leaderboard" },
+  { slug: "/missions",             label: "Missions" },
   { slug: "/terms-and-conditions", label: "Terms & Conditions" },
-  { slug: "/vip",                label: "VIP" },
+  { slug: "/vip",                  label: "VIP" },
 ];
 
 const MRS_SLUGS = new Set(MRS_PAGES.map((p) => p.slug));
