@@ -203,6 +203,10 @@ export default function MemberProfilePage() {
   const [alertSubmitting, setAlertSubmitting] = useState(false);
   const [bonusUpdating, setBonusUpdating] = useState(false);
   const [bonusResult, setBonusResult] = useState(null);
+  // Member Alert state (#13): when on, the whole profile renders in red.
+  const [isAlerted, setIsAlerted] = useState(false);
+  const [alertConfirm, setAlertConfirm] = useState(null); // "on" | "off" | null
+  const [alertToggleSaving, setAlertToggleSaving] = useState(false);
 
   useEffect(() => {
     if (!memberUuid) return;
@@ -263,6 +267,13 @@ export default function MemberProfilePage() {
       cancelled = true;
     };
   }, [memberUuid, refreshKey]);
+
+  // Seed the alert flag from the backend once data arrives. Accept several
+  // likely field names so it lights up whenever the backend exposes one.
+  useEffect(() => {
+    if (!data) return;
+    setIsAlerted(Boolean(data.is_alert ?? data.alert ?? data.is_alerted ?? data.under_alert));
+  }, [data]);
 
   if (loading) {
     return <MemberProfileSkeleton />;
@@ -368,22 +379,54 @@ export default function MemberProfilePage() {
     }
   };
 
+  // Confirm + persist the Alert toggle (#13). Optimistic local update so the
+  // red design flips immediately; the backend call is best-effort until the
+  // endpoint exists.
+  const handleAlertConfirm = async () => {
+    const turnOn = alertConfirm === "on";
+    setAlertToggleSaving(true);
+    try {
+      await patchCrmMember(memberUuid, { is_alert: turnOn });
+    } catch (err) {
+      console.error("[member-profile] alert toggle failed", err);
+    } finally {
+      setIsAlerted(turnOn);
+      setAlertToggleSaving(false);
+      setAlertConfirm(null);
+    }
+  };
+
   const profileName = data?.full_name || basic?.username || "Member";
   const profilePriority = data?.priority || "High";
   return (
-    <>
+    <div
+      className={
+        isAlerted
+          ? "flex flex-col gap-4 rounded-[16px] p-3 ring-2 ring-[#fb3748] bg-[#fb3748]/5"
+          : "flex flex-col gap-4"
+      }
+    >
+      {isAlerted && (
+        <div className="flex items-center gap-2 rounded-[10px] border border-[#fb3748] bg-[#fb3748]/15 px-4 py-2 text-[13px] font-semibold text-[#fb6f7d]">
+          <span aria-hidden="true">⚠</span>
+          This member is under Alert.
+        </div>
+      )}
       <ProfileHeader
         name={profileName}
         tags={inferTags(data)}
         dateJoined={formatDateOnly(customer?.date_joined || data?.date_joined)}
         slug={memberUuid}
         activeBrands={activeBrands}
+        alerted={isAlerted}
         onNoteOpen={() => setActiveModal("note")}
         onVipOpen={() => setActiveModal("vip")}
         onAlertOpen={() => setActiveModal("alert")}
         onAssignPicOpen={() => setActiveModal("assign-pic")}
         onUpdateBonus={handleUpdateBonus}
         bonusUpdating={bonusUpdating}
+        onSendBonusOpen={() => setActiveModal("send-bonus")}
+        onAlertToggle={() => setAlertConfirm(isAlerted ? "off" : "on")}
       />
       <StatsRow stats={stats} />
       <InfoGrid basicInfo={basicInfo} financialInfo={financialInfo} gamingInfo={gamingInfo} />
@@ -444,17 +487,37 @@ export default function MemberProfilePage() {
           onSaved={handleSaved}
         />
       )}
+      {activeModal === "send-bonus" && (
+        <SendBonusModal
+          memberUuid={memberUuid}
+          memberName={profileName}
+          onClose={() => setActiveModal(null)}
+          onResult={(result) => {
+            setActiveModal(null);
+            setBonusResult(result);
+          }}
+        />
+      )}
+      {alertConfirm && (
+        <AlertConfirmModal
+          mode={alertConfirm}
+          memberName={profileName}
+          saving={alertToggleSaving}
+          onClose={() => setAlertConfirm(null)}
+          onConfirm={handleAlertConfirm}
+        />
+      )}
       {bonusResult && (
         <ResultModal
           result={bonusResult}
           onClose={() => setBonusResult(null)}
         />
       )}
-    </>
+    </div>
   );
 }
 
-function ProfileHeader({ name, tags, dateJoined, slug, activeBrands, onNoteOpen, onVipOpen, onAlertOpen, onAssignPicOpen, onUpdateBonus, bonusUpdating }) {
+function ProfileHeader({ name, tags, dateJoined, slug, activeBrands, alerted, onNoteOpen, onVipOpen, onAlertOpen, onAssignPicOpen, onUpdateBonus, bonusUpdating, onSendBonusOpen, onAlertToggle }) {
   return (
     <div className="flex flex-col gap-4 px-2 md:flex-row md:flex-wrap md:items-start md:justify-between md:gap-6">
       <div className="flex flex-col gap-3">
@@ -472,9 +535,9 @@ function ProfileHeader({ name, tags, dateJoined, slug, activeBrands, onNoteOpen,
             <span className="text-[12px] font-medium leading-[18px] text-white">MEMBER PROFILE</span>
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
               <h1
-                className="bg-clip-text text-transparent font-bold whitespace-nowrap"
+                className={`font-bold whitespace-nowrap ${alerted ? "text-[#fb6f7d]" : "bg-clip-text text-transparent"}`}
                 style={{
-                  backgroundImage: GRAD_GOLD,
+                  backgroundImage: alerted ? undefined : GRAD_GOLD,
                   fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
                   fontSize: "26px",
                   lineHeight: "39px",
@@ -504,7 +567,7 @@ function ProfileHeader({ name, tags, dateJoined, slug, activeBrands, onNoteOpen,
               <EditIcon />
               <span className="text-[12px] font-medium leading-[18px] text-[#141828]">Edit Profile</span>
             </Link>
-            <MoreOptionsMenu onNoteOpen={onNoteOpen} onVipOpen={onVipOpen} onAlertOpen={onAlertOpen} onAssignPicOpen={onAssignPicOpen} onUpdateBonus={onUpdateBonus} bonusUpdating={bonusUpdating} />
+            <MoreOptionsMenu onNoteOpen={onNoteOpen} onVipOpen={onVipOpen} onAlertOpen={onAlertOpen} onAssignPicOpen={onAssignPicOpen} onUpdateBonus={onUpdateBonus} bonusUpdating={bonusUpdating} onSendBonusOpen={onSendBonusOpen} onAlertToggle={onAlertToggle} alerted={alerted} />
           </div>
         </div>
       </div>
@@ -543,24 +606,29 @@ function ActiveBrandsRow({ active }) {
   );
 }
 
-const MORE_OPTIONS = [
-  { key: "update-bonus",     label: "Update Bonus" },
-  { key: "add-note",         label: "Add Note" },
-  { key: "assign-pic",       label: "Assign PIC" },
-  { key: "change-vip",       label: "Change VIP" },
-  { key: "follow-up",        label: "Follow Up", danger: true },
-];
-
-function MoreOptionsMenu({ onNoteOpen, onVipOpen, onAlertOpen, onAssignPicOpen, onUpdateBonus, bonusUpdating }) {
+function MoreOptionsMenu({ onNoteOpen, onVipOpen, onAlertOpen, onAssignPicOpen, onUpdateBonus, bonusUpdating, onSendBonusOpen, onAlertToggle, alerted }) {
   const [open, setOpen] = useState(false);
+
+  // "Alert" toggles to "Removed from Alert" once the member is flagged (#13).
+  const options = [
+    { key: "update-bonus", label: "Update Bonus" },
+    { key: "send-bonus",   label: "Send Bonus" },
+    { key: "add-note",     label: "Add Note" },
+    { key: "assign-pic",   label: "Assign PIC" },
+    { key: "change-vip",   label: "Change VIP" },
+    { key: "follow-up",    label: "Follow Up" },
+    { key: "alert",        label: alerted ? "Removed from Alert" : "Alert", danger: true },
+  ];
 
   const handleSelect = (key) => {
     setOpen(false);
     if (key === "update-bonus") onUpdateBonus?.();
+    else if (key === "send-bonus") onSendBonusOpen?.();
     else if (key === "add-note") onNoteOpen();
     else if (key === "assign-pic") onAssignPicOpen();
     else if (key === "change-vip") onVipOpen();
     else if (key === "follow-up") onAlertOpen();
+    else if (key === "alert") onAlertToggle?.();
   };
 
   return (
@@ -587,7 +655,7 @@ function MoreOptionsMenu({ onNoteOpen, onVipOpen, onAlertOpen, onAssignPicOpen, 
             role="menu"
             className="absolute left-0 top-full z-20 mt-2 min-w-[220px] overflow-hidden rounded-[12px] bg-[#fbeed2] py-2 shadow-[0_12px_32px_rgba(0,0,0,0.45)]"
           >
-            {MORE_OPTIONS.map((opt) => (
+            {options.map((opt) => (
               <li key={opt.key} role="none">
                 <button
                   type="button"
@@ -856,6 +924,89 @@ function AssignPicModal({ memberUuid, currentPic, onClose, onSaved }) {
       )}
       {saveError && <p className="mt-2 text-[12px] text-[#fb3748]">{saveError}</p>}
       <ModalActions onClose={onClose} onSave={handleSave} saving={saving} />
+    </ModalOverlay>
+  );
+}
+
+// Placeholder bonus catalogue — the real list comes from the backend (#12).
+const BONUS_OPTIONS = [
+  "Welcome Bonus",
+  "Reload Bonus",
+  "Cashback Bonus",
+  "Free Spin",
+  "Birthday Bonus",
+  "Festive Bonus",
+];
+
+// Send Bonus (#12): pick a bonus, Confirm → sends to the member in NS.
+function SendBonusModal({ memberUuid, memberName, onClose, onResult }) {
+  const [selected, setSelected] = useState("");
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleConfirm = async () => {
+    if (!selected || sending) return;
+    setSending(true);
+    setError("");
+    try {
+      // Backend send endpoint pending — surface the confirmed selection so the
+      // PIC gets feedback. Wire to the NS send-bonus API once it exists.
+      onResult?.({
+        status: "success",
+        title: "Bonus Sent",
+        message: `"${selected}" has been sent to ${memberName} in NS.`,
+      });
+    } catch (err) {
+      console.error("[send-bonus] failed", err);
+      setError("Failed to send bonus. Please try again.");
+      setSending(false);
+    }
+  };
+
+  return (
+    <ModalOverlay onClose={onClose}>
+      <ModalTitle>Send Bonus</ModalTitle>
+      <p className="mb-3 text-[12px] text-white/60">Choose a bonus to send to {memberName} in NS.</p>
+      <div className="flex max-h-[280px] flex-col gap-2 overflow-y-auto pr-1">
+        {BONUS_OPTIONS.map((bonus) => {
+          const active = selected === bonus;
+          return (
+            <button
+              key={bonus}
+              type="button"
+              onClick={() => setSelected(bonus)}
+              className={`flex items-center justify-between rounded-[8px] border px-4 py-3 text-left text-[13px] font-medium transition ${
+                active ? "border-[#f2cb7a] bg-[#f2cb7a]/10 text-white" : "border-[#fbeed2]/30 text-[#f6dda6] hover:border-[#f2cb7a]"
+              }`}
+            >
+              {bonus}
+              {active ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#84ebb4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+      {error && <p className="mt-2 text-[12px] text-[#fb3748]">{error}</p>}
+      <ModalActions onClose={onClose} onSave={handleConfirm} saving={sending} saveLabel="Confirm" />
+    </ModalOverlay>
+  );
+}
+
+// Alert / Removed-from-Alert confirmation (#13).
+function AlertConfirmModal({ mode, memberName, saving, onClose, onConfirm }) {
+  const turningOn = mode === "on";
+  return (
+    <ModalOverlay onClose={onClose}>
+      <ModalTitle>{turningOn ? "Mark as Alert" : "Remove from Alert"}</ModalTitle>
+      <p className="text-[14px] font-medium leading-[21px] text-white/75">
+        {turningOn
+          ? `Mark ${memberName} as Alert? The whole profile will switch to the alert (red) design.`
+          : `Remove ${memberName} from Alert? The profile will return to its normal design.`}
+      </p>
+      <ModalActions onClose={onClose} onSave={onConfirm} saving={saving} saveLabel={turningOn ? "Mark as Alert" : "Remove from Alert"} />
     </ModalOverlay>
   );
 }

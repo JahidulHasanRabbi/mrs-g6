@@ -19,9 +19,16 @@ import {
 //   - default          → assignment table (Edit button per row)
 //   - ?view=edit&id=X  → edit form, prefilled from row X; saves level, criteria, retention target, and PIC
 
-const STATUSES = ["Active", "Inactive"];
-
 const PAGE_SIZE = 7;
+
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+
+// Retention Target is set per month for the current year only (#14). The year
+// advances automatically (2026 now; 2027 unlocks once the date rolls over).
+const TARGET_YEAR = new Date().getFullYear();
 
 function formatNumber(value) {
   if (value === null || value === undefined || value === "") return "0";
@@ -54,6 +61,29 @@ function firstPresent(...values) {
 }
 
 
+// Pull monthly retention targets out of a row into a { 1..12: "amount" } map
+// for the current year. Accepts an array ([{ month, year, amount }]) or an
+// object keyed by month number — whichever the backend ends up returning.
+function parseMonthlyTargets(row) {
+  const out = {};
+  const raw = row?.monthly_targets || row?.retention_targets;
+  if (Array.isArray(raw)) {
+    for (const t of raw) {
+      const month = Number(t?.month);
+      const year = t?.year != null ? Number(t.year) : TARGET_YEAR;
+      if (month >= 1 && month <= 12 && year === TARGET_YEAR) {
+        out[month] = stripCurrency(t?.amount ?? t?.target ?? "");
+      }
+    }
+  } else if (raw && typeof raw === "object") {
+    for (const [k, v] of Object.entries(raw)) {
+      const month = Number(k);
+      if (month >= 1 && month <= 12) out[month] = stripCurrency(v);
+    }
+  }
+  return out;
+}
+
 function mapAssignment(row, idx = 0) {
   return {
     id: row.uuid || row.id || idx + 1,
@@ -67,6 +97,7 @@ function mapAssignment(row, idx = 0) {
     upgrade: formatCurrency(row.upgrade_criteria),
     target: formatCurrency(row.retention_target),
     status: normalizeAssignmentStatus(row.status),
+    monthlyTargets: parseMonthlyTargets(row),
   };
 }
 
@@ -77,12 +108,9 @@ function mapAssignment(row, idx = 0) {
 function rowToFormValues(row) {
   return {
     name: row.level,
-    status: row.status,
-    retain: stripCurrency(row.retain),
-    upgrade: stripCurrency(row.upgrade),
-    target: stripCurrency(row.target),
     picUuid: row.picUuid,
     pic: row.name,
+    monthlyTargets: row.monthlyTargets || {},
   };
 }
 
@@ -134,13 +162,18 @@ function RetentionSettingsPageInner() {
 
   const handleSave = useCallback(
     async (values) => {
+      // Monthly retention targets for the current year (#14): only months with
+      // an amount are sent.
+      const retention_targets = Object.entries(values.monthlyTargets || {})
+        .filter(([, amount]) => String(amount ?? "").trim() !== "")
+        .map(([month, amount]) => ({
+          month: Number(month),
+          year: TARGET_YEAR,
+          amount: stripCurrency(amount),
+        }));
       const payload = {
-        name: values.name,
-        status: statusLabelToInt(values.status),
-        retain_criteria: stripCurrency(values.retain),
-        upgrade_criteria: stripCurrency(values.upgrade),
-        retention_target: stripCurrency(values.target),
         pic_uuid: editingRow?.picUuid,
+        retention_targets,
       };
       try {
         if (editingRow?.uuid) await updateCrmAssignment(editingRow.uuid, payload);
@@ -231,6 +264,7 @@ function AssignmentListSection({ rows, total, page, loading, onAssignmentsChange
         >
           Assignment List
         </h2>
+        <ImportMembersButton />
       </header>
 
       <div className="w-full overflow-x-auto scrollbar-admin">
@@ -266,6 +300,58 @@ function AssignmentListSection({ rows, total, page, loading, onAssignmentsChange
         />
 
     </section>
+  );
+}
+
+// Import a member list from a single-column ("Phone Number") spreadsheet (#14).
+// The file is parsed/ingested by the backend; the frontend just hands it over.
+function ImportMembersButton() {
+  const [file, setFile] = useState(null);
+  const [notice, setNotice] = useState("");
+
+  const onPick = (e) => {
+    const picked = e.target.files?.[0] || null;
+    setFile(picked);
+    setNotice("");
+    e.target.value = "";
+  };
+
+  const onUpload = () => {
+    if (!file) return;
+    // Backend import endpoint pending — hand the raw file over once it exists.
+    setNotice(`"${file.name}" received. Members will be imported once the backend import is live.`);
+    setFile(null);
+  };
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <div className="flex items-center gap-2">
+        <label
+          className="flex cursor-pointer items-center gap-2 rounded-[8px] border border-[#f2cb7a] px-4 py-2 text-[12px] font-semibold text-[#152044] transition hover:brightness-110"
+          style={{ backgroundImage: GRAD_GOLD }}
+        >
+          Import Members
+          <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={onPick} />
+        </label>
+        {file ? (
+          <button
+            type="button"
+            onClick={onUpload}
+            className="rounded-[8px] border border-[#f2cb7a] px-4 py-2 text-[12px] font-medium text-[#f6dda6] transition hover:bg-white/5"
+            style={{ backgroundImage: GRAD_DARK }}
+          >
+            Upload
+          </button>
+        ) : null}
+      </div>
+      {file ? (
+        <span className="text-[11px] text-white/60">{file.name} — single &quot;Phone Number&quot; column</span>
+      ) : notice ? (
+        <span className="max-w-[260px] text-right text-[11px] text-[#84ebb4]">{notice}</span>
+      ) : (
+        <span className="text-[11px] text-white/40">Excel: one &quot;Phone Number&quot; column</span>
+      )}
+    </div>
   );
 }
 
@@ -391,13 +477,13 @@ function MemberLevelForm({ mode, initialValues, onSave }) {
   // useState lazy initializers run once at mount — fine here because the
   // parent unmounts/remounts the form via URL changes when switching between
   // add/edit/list, so we never need to re-sync from props mid-life.
-  const [name, setName] = useState(() => initialValues?.name ?? "Level 2");
-  const [status, setStatus] = useState(() => initialValues?.status ?? "Active");
-  const [retain, setRetain] = useState(() => initialValues?.retain ?? "10,000");
-  const [upgrade, setUpgrade] = useState(() => initialValues?.upgrade ?? "1,000");
-  const [target, setTarget] = useState(() => initialValues?.target ?? "");
+  const [monthly, setMonthly] = useState(() => initialValues?.monthlyTargets ?? {});
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+
+  const setMonth = useCallback((monthNum, value) => {
+    setMonthly((prev) => ({ ...prev, [monthNum]: value }));
+  }, []);
 
   const goBack = useCallback(() => {
     const next = new URLSearchParams(searchParams.toString());
@@ -411,46 +497,49 @@ function MemberLevelForm({ mode, initialValues, onSave }) {
     setSaving(true);
     setSaveError("");
     try {
-      await onSave({ name, status, retain, upgrade, target });
+      await onSave({ name: initialValues?.name, monthlyTargets: monthly });
       goBack();
     } catch {
       setSaveError("Failed to save assignment. Please check the values and try again.");
     } finally {
       setSaving(false);
     }
-  }, [name, status, retain, upgrade, target, onSave, goBack]);
+  }, [monthly, initialValues, onSave, goBack]);
 
   return (
     <section className="flex w-full flex-col gap-6 rounded-[16px] bg-[#041502] p-8 shadow-[0_-4px_12px_-2px_#dea220]">
-      <h2
-        className="bg-clip-text text-transparent"
-        style={{
-          backgroundImage: GRAD_GOLD,
-          fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-          fontWeight: 700,
-          fontSize: "26px",
-          lineHeight: "39px",
-        }}
-      >
-        {isEdit ? "Edit Member Assignment" : "Add Member Assignment"}
-      </h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2
+          className="bg-clip-text text-transparent"
+          style={{
+            backgroundImage: GRAD_GOLD,
+            fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+            fontWeight: 700,
+            fontSize: "26px",
+            lineHeight: "39px",
+          }}
+        >
+          {isEdit ? "Edit Member Assignment" : "Add Member Assignment"}
+        </h2>
+        {initialValues?.pic ? (
+          <span className="rounded-[8px] border border-[#f2cb7a]/40 px-3 py-1 text-[13px] text-[#f6dda6]">
+            {initialValues.pic}
+          </span>
+        ) : null}
+      </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <FormField label="Level">
-          <TextInput value={name} onChange={setName} />
-        </FormField>
-        <FormField label="Status">
-          <Select value={status} onChange={setStatus} options={STATUSES} />
-        </FormField>
-        <FormField label="Retain Criteria">
-          <RmInput value={retain} onChange={setRetain} />
-        </FormField>
-        <FormField label="Upgrade Criteria">
-          <RmInput value={upgrade} onChange={setUpgrade} />
-        </FormField>
-        <FormField label="Retention Target">
-          <RmInput value={target} onChange={setTarget} />
-        </FormField>
+      <div className="flex flex-col gap-3">
+        <p className="text-[16px] font-semibold text-white" style={{ letterSpacing: "-0.5px" }}>
+          Retention Target — {TARGET_YEAR}
+        </p>
+        <p className="text-[12px] text-white/55">Set a monthly target for {TARGET_YEAR}. Leave a month blank to skip it.</p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {MONTHS.map((label, i) => (
+            <FormField key={label} label={`${label} ${TARGET_YEAR}`}>
+              <RmInput value={monthly[i + 1] ?? ""} onChange={(v) => setMonth(i + 1, v)} />
+            </FormField>
+          ))}
+        </div>
       </div>
 
       {saveError && (

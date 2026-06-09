@@ -105,12 +105,13 @@ export function FollowUpCreateModal({
   title = "Add Follow Up",
   showPriority = false,
   initialPriority = "High",
+  initialNote = "",
   submitting = false,
   submitError = "",
 }) {
   const [actionType, setActionType] = useState(fixedActionType);
   const [priority, setPriority] = useState(initialPriority || "High");
-  const [note, setNote] = useState("");
+  const [note, setNote] = useState(initialNote);
 
   const noteRequired = actionType === "Others";
   const submitDisabled = submitting || !actionType || (showPriority && !priority) || (noteRequired && !note.trim());
