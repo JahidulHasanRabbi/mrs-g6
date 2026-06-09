@@ -360,9 +360,9 @@ function FollowUpList() {
 
   return (
     <section className="relative flex w-full flex-col rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
-      <header className="flex flex-col gap-4 p-6 w-full xl:flex-row xl:flex-wrap xl:items-center">
+      <header className="flex flex-col gap-4 p-6 w-full">
         <h2
-          className="text-white font-bold xl:flex-1 xl:min-w-0"
+          className="text-white font-bold whitespace-nowrap"
           style={{
             fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
             fontSize: "26px",
