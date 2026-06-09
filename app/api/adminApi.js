@@ -107,6 +107,28 @@ export async function archiveVipTier(tierUuid) {
   }, true, 'admin');
 }
 
+// Mission Management
+export async function getMissions(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.MISSION.MISSIONS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+export async function getMission(uuid) {
+  return await apiRequest(ENDPOINTS.MISSION.MISSION(uuid), { method: 'GET' }, true, 'admin');
+}
+
+export async function createMission(data) {
+  return await apiRequest(ENDPOINTS.MISSION.MISSIONS, { method: 'POST', body: data }, true, 'admin');
+}
+
+export async function updateMission(uuid, data) {
+  return await apiRequest(ENDPOINTS.MISSION.MISSION(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+
+export async function archiveMission(uuid) {
+  return await apiRequest(ENDPOINTS.MISSION.ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
 export async function getLuckySpinItems() {
   return await apiRequest(ENDPOINTS.ADMIN.LUCKY_SPIN_ITEMS, {
     method: 'GET'

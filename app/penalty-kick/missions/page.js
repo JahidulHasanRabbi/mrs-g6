@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { FooterNav } from "../../components/footer";
@@ -9,12 +9,21 @@ import MissionCard from "../../components/penalty-kick/missions/MissionCard";
 import MissionsHeader from "../../components/penalty-kick/missions/MissionsHeader";
 import GoldButton from "../../components/penalty-kick/missions/GoldButton";
 import {
-  MISSIONS,
   MISSION_TABS,
   MISSION_COLORS,
 } from "../../components/penalty-kick/missions/data";
 import { useUser } from "../../contexts/UserContext";
 import { HOME_ASSETS } from "../../components/home/homeAssets";
+import {
+  claimMissionReward,
+  getMissionProgressHistory,
+  getMyMissions,
+  joinMission,
+} from "../../api/memberApi";
+import {
+  MISSION_CATEGORY_BY_TAB,
+  MISSION_TAB_BY_CATEGORY,
+} from "../../config/missionOptions";
 
 const TOKEN_ICON = "/assets/penalty-kick/missions/token-icon.svg";
 const HISTORY_ICON = "/assets/penalty-kick/missions/icon-history.svg";
@@ -23,7 +32,6 @@ const TAB_FRAME = "/assets/penalty-kick/missions/tab-active.png";
 const SERIF = '"Times New Roman", serif';
 
 const TAB_IDS = MISSION_TABS.map((t) => t.id);
-
 // Horizontal slide for the mission list — enters from the side the new tab
 // sits on relative to the old one, exits to the opposite side. `custom` feeds
 // the signed direction into the variants.
@@ -34,8 +42,48 @@ const slideVariants = {
 };
 
 function formatTokens(value) {
-  if (typeof value !== "number" || Number.isNaN(value)) return "2,450";
-  return Math.round(value).toLocaleString("en-US");
+  if (value === null || value === undefined || value === "") return "0.00";
+  const numeric = typeof value === "number"
+    ? value
+    : Number(String(value).replace(/,/g, ""));
+  if (!Number.isFinite(numeric)) return "0.00";
+  return numeric.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function iconForAction(action) {
+  if (action === 2 || action === 7 || action === 9) return "star";
+  if (action === 3 || action === 4 || action === 6) return "target";
+  return "bolt";
+}
+
+function missionStatus(row) {
+  if (!row.joined) return "not-joined";
+  if (row.status === 3) return "claimed";
+  if (row.status === 2) return "completed";
+  return "in-progress";
+}
+
+function mapMission(row) {
+  return {
+    id: row.uuid,
+    tab: MISSION_TAB_BY_CATEGORY[row.category] ?? "daily",
+    icon: iconForAction(row.condition_action),
+    title: row.mission_name,
+    reward: row.reward_token_quantity ?? 0,
+    badge: MISSION_TAB_BY_CATEGORY[row.category] ?? "",
+    progress: {
+      current: row.current_value ?? 0,
+      total: row.accumulate_target ?? 0,
+    },
+    status: missionStatus(row),
+    joined: !!row.joined,
+    claimed: row.status === 3,
+    description: row.description,
+    _raw: row,
+  };
 }
 
 export default function MissionsPage() {
@@ -45,9 +93,11 @@ export default function MissionsPage() {
   // Sign of the last tab move (+1 → moved right, -1 → moved left) so the
   // content can slide in the matching direction.
   const [direction, setDirection] = useState(0);
-  // Track claimed missions locally so the completed card flips to "Claimed".
-  // A real implementation would POST the claim and refresh server balance.
-  const [claimed, setClaimed] = useState(() => new Set());
+  const [missions, setMissions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [actionId, setActionId] = useState(null);
+  const [error, setError] = useState("");
+  const [history, setHistory] = useState(null);
 
   const changeTab = (id) => {
     if (id === activeTab) return;
@@ -57,21 +107,66 @@ export default function MissionsPage() {
 
   const balance = formatTokens(userData?.balance);
 
+  const loadMissions = () => {
+    setLoading(true);
+    setError("");
+    getMyMissions({ category: MISSION_CATEGORY_BY_TAB[activeTab], page_size: 100 })
+      .then((data) => {
+        const rows = data.results ?? data ?? [];
+        setMissions(rows.map(mapMission));
+      })
+      .catch((err) => {
+        setError(err?.data?.detail || err?.message || "Failed to load missions.");
+        setMissions([]);
+      })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadMissions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
   const visibleMissions = useMemo(
-    () =>
-      MISSIONS.filter((m) => m.tab === activeTab).map((m) => ({
-        ...m,
-        claimed: claimed.has(m.id),
-      })),
-    [activeTab, claimed],
+    () => missions.filter((m) => m.tab === activeTab),
+    [activeTab, missions],
   );
 
-  const handleClaim = (id) =>
-    setClaimed((prev) => {
-      const next = new Set(prev);
-      next.add(id);
-      return next;
-    });
+  const handleJoin = async (id) => {
+    setActionId(id);
+    setError("");
+    try {
+      await joinMission(id);
+      loadMissions();
+    } catch (err) {
+      setError(err?.data?.detail || err?.message || "Failed to join mission.");
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const handleClaim = async (id) => {
+    setActionId(id);
+    setError("");
+    try {
+      await claimMissionReward(id);
+      loadMissions();
+    } catch (err) {
+      setError(err?.data?.detail || err?.message || "Failed to claim reward.");
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const loadHistory = async () => {
+    setError("");
+    try {
+      const data = await getMissionProgressHistory({ page_size: 20 });
+      setHistory(data.results ?? data ?? []);
+    } catch (err) {
+      setError(err?.data?.detail || err?.message || "Failed to load mission history.");
+    }
+  };
 
   return (
     <div
@@ -194,6 +289,11 @@ export default function MissionsPage() {
         {/* overflow-x-clip keeps the off-screen enter/exit slide from spawning
             a horizontal scrollbar. */}
         <div className="relative overflow-x-clip">
+          {error && (
+            <p className="mb-3 rounded-[8px] border border-red-500/40 bg-red-500/10 px-3 py-2 text-center text-[13px] text-red-200">
+              {error}
+            </p>
+          )}
           <AnimatePresence mode="wait" custom={direction} initial={false}>
             <motion.div
               key={activeTab}
@@ -205,16 +305,29 @@ export default function MissionsPage() {
               transition={{ duration: 0.22, ease: "easeOut" }}
               className="flex flex-col gap-4"
             >
-              {visibleMissions.length > 0 ? (
+              {loading ? (
+                <p
+                  className="py-10 text-center leading-[24px]"
+                  style={{ fontFamily: SERIF, color: MISSION_COLORS.muted, fontSize: 16 }}
+                >
+                  Loading missions...
+                </p>
+              ) : visibleMissions.length > 0 ? (
                 visibleMissions.map((mission) => (
-                  <MissionCard key={mission.id} mission={mission} onClaim={handleClaim} />
+                  <MissionCard
+                    key={mission.id}
+                    mission={mission}
+                    onJoin={handleJoin}
+                    onClaim={handleClaim}
+                    actionLoading={actionId === mission.id}
+                  />
                 ))
               ) : (
                 <p
                   className="py-10 text-center leading-[24px]"
                   style={{ fontFamily: SERIF, color: MISSION_COLORS.muted, fontSize: 16 }}
                 >
-                  No missions available yet — check back soon.
+                  No missions available yet - check back soon.
                 </p>
               )}
             </motion.div>
@@ -224,7 +337,7 @@ export default function MissionsPage() {
         {/* ── History button ───────────────────────────────────────── */}
         <div className="flex justify-center pt-4">
           <div className="w-full max-w-[254px]">
-            <GoldButton>
+            <GoldButton onClick={loadHistory}>
               <img
                 src={HISTORY_ICON}
                 alt=""
@@ -235,6 +348,31 @@ export default function MissionsPage() {
             </GoldButton>
           </div>
         </div>
+        {history && (
+          <div className="rounded-[12px] border border-white/10 bg-white/[0.04] p-4">
+            <h3 className="mb-3 text-[16px]" style={{ fontFamily: SERIF, color: MISSION_COLORS.title }}>
+              Mission Progress History
+            </h3>
+            {history.length === 0 ? (
+              <p className="text-[14px]" style={{ fontFamily: SERIF, color: MISSION_COLORS.muted }}>
+                No claimed mission rewards yet.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {history.map((item) => (
+                  <div key={item.uuid} className="flex items-center justify-between gap-3 rounded-[8px] bg-black/20 px-3 py-2">
+                    <span className="min-w-0 truncate text-[14px]" style={{ fontFamily: SERIF, color: MISSION_COLORS.title }}>
+                      {item.mission_name}
+                    </span>
+                    <span className="shrink-0 text-[14px]" style={{ fontFamily: SERIF, color: MISSION_COLORS.gold }}>
+                      {Number(item.token_amount ?? 0).toLocaleString("en-US")} Tokens
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <FooterNav />

@@ -33,6 +33,15 @@ export const ENDPOINTS = {
   SETTINGS: {
     PUBLIC_BANNERS: '/settings/banners/public/'
   },
+  MISSION: {
+    MISSIONS: '/mission/missions/',
+    MISSION: (uuid) => `/mission/missions/${uuid}/`,
+    ARCHIVE: (uuid) => `/mission/missions/${uuid}/archive/`,
+    MY_MISSIONS: '/mission/missions/my-missions/',
+    JOIN: (uuid) => `/mission/missions/${uuid}/join/`,
+    CLAIM: (uuid) => `/mission/missions/${uuid}/claim/`,
+    PROGRESS_HISTORY: '/mission/missions/progress-history/',
+  },
   ADMIN: {
     // Previous admin login API:
     // LOGIN: '/login/admin-access-token/',

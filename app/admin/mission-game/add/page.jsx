@@ -1,38 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { createMission, getMission, updateMission } from "../../../api/adminApi";
+import {
+  MISSION_ACTION_OPTIONS,
+  MISSION_CATEGORY_OPTIONS,
+  MISSION_RESET_TYPE_OPTIONS,
+  MISSION_TYPE_OPTIONS,
+} from "../../../config/missionOptions";
 
 const GOLD_BG = "linear-gradient(96deg, #dc9d16 1%, #f2cb7a 98%)";
-
 const INPUT_BASE =
   "w-full rounded-[8px] border border-[#f2cb7a] bg-transparent px-4 py-2.5 text-[14px] text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#e9af41]/40";
 
-const MISSION_CATEGORIES = [
-  { value: "free_credit",   label: "Free Credit" },
-  { value: "min_withdraw",  label: "Min withdraw" },
-  { value: "max_withdraw",  label: "Max withdraw" },
-  { value: "prize",         label: "Prize" },
-  { value: "token",         label: "Token" },
-];
-
-const MISSION_TYPES = [
-  { value: "repeatable",    label: "Repeatable" },
-  { value: "one_time",      label: "One Time" },
-];
-
-const RESET_TYPES = [
-  { value: "daily",         label: "Daily" },
-  { value: "weekly",        label: "Weekly" },
-  { value: "monthly",       label: "Monthly" },
-];
-
-const ACTIONS = [
-  { value: "",              label: "Action" },
-  { value: "login",         label: "Login" },
-  { value: "deposit",       label: "Deposit" },
-  { value: "play",          label: "Play game" },
-];
+const EMPTY_FORM = {
+  missionName: "",
+  category: 1,
+  description: "",
+  missionType: 1,
+  resetType: 4,
+  conditionAction: 1,
+  timeBased: false,
+  startDate: "",
+  endDate: "",
+  accumulateTarget: 1,
+  rewardTokenQuantity: 0,
+  limitControl: "",
+};
 
 function Toggle({ checked, onChange, label }) {
   return (
@@ -62,7 +57,7 @@ function Select({ value, onChange, options }) {
     <div className="relative">
       <select
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => onChange(Number(e.target.value))}
         className={`${INPUT_BASE} appearance-none pr-10`}
       >
         {options.map((o) => (
@@ -78,22 +73,15 @@ function Select({ value, onChange, options }) {
   );
 }
 
-function DateInput({ value, onChange }) {
+function DateInput({ value, onChange, disabled }) {
   return (
-    <div className="relative">
-      <svg className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e9af41" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="4" width="18" height="18" rx="2" />
-        <line x1="16" y1="2" x2="16" y2="6" />
-        <line x1="8" y1="2" x2="8" y2="6" />
-        <line x1="3" y1="10" x2="21" y2="10" />
-      </svg>
-      <input
-        type="date"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={`${INPUT_BASE} pl-10 [color-scheme:dark]`}
-      />
-    </div>
+    <input
+      type="date"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      disabled={disabled}
+      className={`${INPUT_BASE} [color-scheme:dark] disabled:opacity-40`}
+    />
   );
 }
 
@@ -101,200 +89,199 @@ function SectionTitle({ children }) {
   return (
     <h3
       className="mb-4 mt-2 bg-clip-text text-[18px] font-bold text-transparent"
-      style={{
-        fontFamily: "'DM Sans', sans-serif",
-        backgroundImage: "linear-gradient(101deg, #dc9d16 1%, #f2cb7a 98%)",
-      }}
+      style={{ fontFamily: "'DM Sans', sans-serif", backgroundImage: GOLD_BG }}
     >
       {children}
     </h3>
   );
 }
 
-function BackIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="19" y1="12" x2="5" y2="12" />
-      <polyline points="12 19 5 12 12 5" />
-    </svg>
-  );
+function dateOnly(value) {
+  if (!value) return "";
+  return String(value).slice(0, 10);
 }
 
-function CheckIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
+function toForm(api) {
+  return {
+    missionName: api.mission_name ?? "",
+    category: api.category ?? 1,
+    description: api.description ?? "",
+    missionType: api.mission_type ?? 1,
+    resetType: api.reset_type ?? 4,
+    conditionAction: api.condition_action ?? 1,
+    timeBased: !!api.is_time_based,
+    startDate: dateOnly(api.start_date),
+    endDate: dateOnly(api.end_date),
+    accumulateTarget: api.accumulate_target ?? 1,
+    rewardTokenQuantity: api.reward_token_quantity ?? 0,
+    limitControl: api.limit_control ?? "",
+  };
+}
+
+function toPayload(form) {
+  const payload = {
+    mission_name: form.missionName.trim(),
+    category: Number(form.category),
+    description: form.description.trim() || null,
+    mission_type: Number(form.missionType),
+    reset_type: Number(form.resetType),
+    condition_action: Number(form.conditionAction),
+    is_time_based: !!form.timeBased,
+    accumulate_target: Math.max(1, Number(form.accumulateTarget) || 1),
+    reward_token_quantity: Math.max(0, Number(form.rewardTokenQuantity) || 0),
+    limit_control: form.limitControl === "" ? null : Math.max(1, Number(form.limitControl) || 1),
+  };
+  if (form.timeBased) {
+    payload.start_date = form.startDate;
+    payload.end_date = form.endDate;
+  }
+  return payload;
 }
 
 export default function AddMissionPage() {
   const router = useRouter();
-  const [form, setForm] = useState({
-    name: "BMW M3",
-    category: "free_credit",
-    description: "This is a mission",
-    missionType: "repeatable",
-    resetType: "weekly",
-    action: "",
-    accumulate: true,
-    target: 23,
-    timeBased: true,
-    startDate: "2026-06-03",
-    endDate: "2026-06-20",
-    tokenQuantity: "3,000",
-    limitControl: "300",
-  });
+  const [editingUuid, setEditingUuid] = useState(null);
+  const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const uuid = new URLSearchParams(window.location.search).get("uuid");
+    if (!uuid) return;
+    setEditingUuid(uuid);
+    setLoading(true);
+    getMission(uuid)
+      .then((data) => setForm(toForm(data)))
+      .catch((err) => setError(err?.data?.detail || err?.message || "Failed to load mission."))
+      .finally(() => setLoading(false));
+  }, []);
 
   const set = (key) => (v) => setForm((p) => ({ ...p, [key]: v }));
 
   const handleSave = async () => {
+    setError("");
+    if (!form.missionName.trim()) {
+      setError("Mission name is required.");
+      return;
+    }
+    if (form.timeBased && (!form.startDate || !form.endDate)) {
+      setError("Start date and end date are required for time based missions.");
+      return;
+    }
     setSaving(true);
-    await new Promise((r) => setTimeout(r, 400));
-    setSaving(false);
-    router.push("/admin/mission-game");
+    try {
+      const payload = toPayload(form);
+      if (editingUuid) await updateMission(editingUuid, payload);
+      else await createMission(payload);
+      router.push("/admin/mission-game");
+    } catch (err) {
+      setError(err?.data?.detail || err?.data?.error || err?.message || "Failed to save mission.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <div className="rounded-[16px] bg-[#041502] p-6 shadow-[0_-4px_12px_-2px_#dea220]">
       <h2
         className="mb-6 bg-clip-text text-[24px] font-bold leading-[1.2] text-transparent"
-        style={{
-          fontFamily: "'DM Sans', sans-serif",
-          backgroundImage: "linear-gradient(101deg, #dc9d16 1%, #f2cb7a 98%)",
-        }}
+        style={{ fontFamily: "'DM Sans', sans-serif", backgroundImage: GOLD_BG }}
       >
-        Add Mission
+        {editingUuid ? "Edit Mission" : "Add Mission"}
       </h2>
 
-      <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-3">
-        <div>
-          <label className="mb-2 block text-[14px] font-semibold text-white">Mission Name</label>
-          <input
-            type="text"
-            value={form.name}
-            onChange={(e) => set("name")(e.target.value)}
-            className={INPUT_BASE}
-          />
-        </div>
-        <div>
-          <label className="mb-2 block text-[14px] font-semibold text-white">Mission Category</label>
-          <Select value={form.category} onChange={set("category")} options={MISSION_CATEGORIES} />
-        </div>
-        <div>
-          <label className="mb-2 block text-[14px] font-semibold text-white">Description</label>
-          <input
-            type="text"
-            value={form.description}
-            onChange={(e) => set("description")(e.target.value)}
-            className={INPUT_BASE}
-          />
-        </div>
+      {error && <p className="mb-4 rounded-[8px] border border-red-500/40 bg-red-500/10 px-4 py-2 text-[13px] text-red-200">{error}</p>}
+      {loading ? <p className="py-8 text-center text-[13px] text-white/60">Loading mission...</p> : (
+        <>
+          <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-3">
+            <div>
+              <label className="mb-2 block text-[14px] font-semibold text-white">Mission Name</label>
+              <input type="text" value={form.missionName} onChange={(e) => set("missionName")(e.target.value)} className={INPUT_BASE} />
+            </div>
+            <div>
+              <label className="mb-2 block text-[14px] font-semibold text-white">Mission Category</label>
+              <Select value={form.category} onChange={set("category")} options={MISSION_CATEGORY_OPTIONS} />
+            </div>
+            <div>
+              <label className="mb-2 block text-[14px] font-semibold text-white">Description</label>
+              <input type="text" value={form.description} onChange={(e) => set("description")(e.target.value)} className={INPUT_BASE} />
+            </div>
 
-        <div>
-          <label className="mb-2 block text-[14px] font-semibold text-white">Mission Type</label>
-          <Select value={form.missionType} onChange={set("missionType")} options={MISSION_TYPES} />
-        </div>
-        <div>
-          <label className="mb-2 block text-[14px] font-semibold text-white">Reset Type</label>
-          <Select value={form.resetType} onChange={set("resetType")} options={RESET_TYPES} />
-        </div>
-        <div />
-      </div>
+            <div>
+              <label className="mb-2 block text-[14px] font-semibold text-white">Mission Type</label>
+              <Select value={form.missionType} onChange={set("missionType")} options={MISSION_TYPE_OPTIONS} />
+            </div>
+            <div>
+              <label className="mb-2 block text-[14px] font-semibold text-white">Reset Type</label>
+              <Select value={form.resetType} onChange={set("resetType")} options={MISSION_RESET_TYPE_OPTIONS} />
+            </div>
+          </div>
 
-      <div className="mt-6 border-t border-white/5 pt-4">
-        <SectionTitle>Mission Target</SectionTitle>
-        <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-3">
-          <div>
-            <label className="mb-2 block text-[14px] font-semibold text-white">Action</label>
-            <Select value={form.action} onChange={set("action")} options={ACTIONS} />
+          <div className="mt-6 border-t border-white/5 pt-4">
+            <SectionTitle>Mission Target</SectionTitle>
+            <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-3">
+              <div>
+                <label className="mb-2 block text-[14px] font-semibold text-white">Action</label>
+                <Select value={form.conditionAction} onChange={set("conditionAction")} options={MISSION_ACTION_OPTIONS} />
+              </div>
+              <div>
+                <label className="mb-2 block text-[14px] font-semibold text-white">Accumulate Target</label>
+                <input type="number" min="1" value={form.accumulateTarget} onChange={(e) => set("accumulateTarget")(e.target.value)} className={INPUT_BASE} />
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="mb-4 block text-[14px] font-semibold text-white">Accumulate</label>
-            <Toggle
-              checked={form.accumulate}
-              onChange={set("accumulate")}
-              label="Active"
-            />
-          </div>
-          <div>
-            <label className="mb-2 block text-[14px] font-semibold text-white">Set Target</label>
-            <input
-              type="number"
-              value={form.target}
-              onChange={(e) => set("target")(Number(e.target.value))}
-              className={INPUT_BASE}
-            />
-          </div>
-        </div>
-      </div>
 
-      <div className="mt-6 border-t border-white/5 pt-4">
-        <SectionTitle>Condition Builder</SectionTitle>
-        <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-3">
-          <div>
-            <label className="mb-4 block text-[14px] font-semibold text-white">Time Based</label>
-            <Toggle
-              checked={form.timeBased}
-              onChange={set("timeBased")}
-              label="Active"
-            />
+          <div className="mt-6 border-t border-white/5 pt-4">
+            <SectionTitle>Condition Builder</SectionTitle>
+            <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-3">
+              <div>
+                <label className="mb-4 block text-[14px] font-semibold text-white">Time Based</label>
+                <Toggle checked={form.timeBased} onChange={set("timeBased")} label="Active" />
+              </div>
+              <div>
+                <label className="mb-2 block text-[14px] font-semibold text-white">Start Date</label>
+                <DateInput value={form.startDate} onChange={set("startDate")} disabled={!form.timeBased} />
+              </div>
+              <div>
+                <label className="mb-2 block text-[14px] font-semibold text-white">End Date</label>
+                <DateInput value={form.endDate} onChange={set("endDate")} disabled={!form.timeBased} />
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="mb-2 block text-[14px] font-semibold text-white">Start Date</label>
-            <DateInput value={form.startDate} onChange={set("startDate")} />
-          </div>
-          <div>
-            <label className="mb-2 block text-[14px] font-semibold text-white">End Date</label>
-            <DateInput value={form.endDate} onChange={set("endDate")} />
-          </div>
-        </div>
-      </div>
 
-      <div className="mt-6 border-t border-white/5 pt-4">
-        <SectionTitle>Reward</SectionTitle>
-        <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-3">
-          <div>
-            <label className="mb-2 block text-[14px] font-semibold text-white">Token Quantity</label>
-            <input
-              type="text"
-              value={form.tokenQuantity}
-              onChange={(e) => set("tokenQuantity")(e.target.value)}
-              className={INPUT_BASE}
-            />
+          <div className="mt-6 border-t border-white/5 pt-4">
+            <SectionTitle>Reward</SectionTitle>
+            <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-3">
+              <div>
+                <label className="mb-2 block text-[14px] font-semibold text-white">Token Quantity</label>
+                <input type="number" min="0" value={form.rewardTokenQuantity} onChange={(e) => set("rewardTokenQuantity")(e.target.value)} className={INPUT_BASE} />
+              </div>
+              <div>
+                <label className="mb-2 block text-[14px] font-semibold text-white">Limit Control</label>
+                <input type="number" min="1" placeholder="Unlimited" value={form.limitControl} onChange={(e) => set("limitControl")(e.target.value)} className={INPUT_BASE} />
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="mb-2 block text-[14px] font-semibold text-white">Limit Control</label>
-            <input
-              type="text"
-              value={form.limitControl}
-              onChange={(e) => set("limitControl")(e.target.value)}
-              className={INPUT_BASE}
-            />
-          </div>
-          <div />
-        </div>
-      </div>
+        </>
+      )}
 
       <div className="mt-8 flex items-center justify-end gap-3">
         <button
           type="button"
           onClick={() => router.push("/admin/mission-game")}
           disabled={saving}
-          className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold tracking-[-0.5px] text-[#fbeed2] transition-colors hover:bg-white/5 disabled:opacity-50"
+          className="rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold tracking-[-0.5px] text-[#fbeed2] transition-colors hover:bg-white/5 disabled:opacity-50"
         >
-          <BackIcon />
           Back
         </button>
         <button
           type="button"
           onClick={handleSave}
-          disabled={saving}
-          className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold tracking-[-0.5px] text-[#141828] transition-opacity hover:opacity-90 disabled:opacity-50"
+          disabled={saving || loading}
+          className="rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold tracking-[-0.5px] text-[#141828] transition-opacity hover:opacity-90 disabled:opacity-50"
           style={{ backgroundImage: GOLD_BG }}
         >
-          <CheckIcon />
           {saving ? "Saving..." : "Save"}
         </button>
       </div>

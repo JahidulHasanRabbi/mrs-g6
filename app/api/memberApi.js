@@ -50,6 +50,25 @@ export async function claimWelcomeGift(memberUuid) {
   }, true, 'member');
 }
 
+// Mission Game
+export async function getMyMissions(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.MISSION.MY_MISSIONS}${qs}`, { method: 'GET' }, true, 'member');
+}
+
+export async function joinMission(uuid) {
+  return await apiRequest(ENDPOINTS.MISSION.JOIN(uuid), { method: 'POST' }, true, 'member');
+}
+
+export async function claimMissionReward(uuid) {
+  return await apiRequest(ENDPOINTS.MISSION.CLAIM(uuid), { method: 'POST' }, true, 'member');
+}
+
+export async function getMissionProgressHistory(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.MISSION.PROGRESS_HISTORY}${qs}`, { method: 'GET' }, true, 'member');
+}
+
 // GET /member/{uuid}/profile/
 export async function getProfile(memberUuid) {
   return await apiRequest(ENDPOINTS.MEMBER.PROFILE(memberUuid), {
