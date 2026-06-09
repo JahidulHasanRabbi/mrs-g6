@@ -282,8 +282,6 @@ function KpiCardSkeleton() {
 // line instead of clipping or wrapping mid-number. Sizes are kept compact so
 // four big-value tiles fit a row without truncation. The min in the clamp is
 // tuned so 17-char strings (RM + 2 decimals) clear the narrowest 4-col width.
-const KPI_VALUE_FONT = "clamp(20px, 1.5vw, 32px)";
-
 function KpiCard({ kpi, onSelect }) {
   const isCurrency = !!kpi.valuePrefix;
   return (
@@ -291,50 +289,48 @@ function KpiCard({ kpi, onSelect }) {
       type="button"
       onClick={onSelect}
       aria-label={`View ${kpi.label} brand breakdown`}
-      className="flex flex-col gap-2 rounded-[16px] border-2 border-[#05060a] p-6 text-left transition hover:border-[#f2cb7a]/40 hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f2cb7a]/60 cursor-pointer"
+      className="flex flex-col gap-3 rounded-[16px] border-2 border-[#05060a] p-4 text-left transition hover:border-[#f2cb7a]/40 hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f2cb7a]/60 cursor-pointer"
       style={{ backgroundImage: GRAD_CARD }}
     >
-      <div className="flex w-full items-start gap-3">
+      <div className="flex w-full items-center gap-2.5">
         <div
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[6px] drop-shadow-[0_0_3px_rgba(222,162,32,0.5)]"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[6px] drop-shadow-[0_0_3px_rgba(222,162,32,0.5)]"
           style={{ backgroundImage: GRAD_DARK }}
         >
           <img
             src={kpi.icon}
             alt=""
-            className="h-6 w-6"
-            style={{ maxWidth: kpi.iconSize + 4, maxHeight: kpi.iconSize + 4 }}
+            className="h-5 w-5"
+            style={{ maxWidth: 20, maxHeight: 20 }}
           />
         </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <p
-            className="text-[13px] font-semibold uppercase leading-[19px] text-[#f6dda6]"
-            style={{ letterSpacing: "-0.5px" }}
-          >
-            {kpi.label}
-          </p>
-          <p
-            className="bg-clip-text font-bold text-transparent"
-            style={{
-              backgroundImage: GRAD_GOLD,
-              fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
-              fontSize: KPI_VALUE_FONT,
-              lineHeight: "1.2",
-            }}
-          >
-            {isCurrency ? (
-              <span className="flex min-w-0 items-baseline gap-1 tabular-nums whitespace-nowrap">
-                <span className="shrink-0 text-[0.7em]">{kpi.valuePrefix}</span>
-                <span className="min-w-0 [overflow-wrap:anywhere]">{kpi.value}</span>
-              </span>
-            ) : (
-              <span className="block [overflow-wrap:anywhere] tabular-nums">
-                {kpi.value}
-              </span>
-            )}
-          </p>
-        </div>
+        <p
+          className="min-w-0 flex-1 text-[12px] font-semibold uppercase leading-[15px] text-[#f6dda6]"
+          style={{ letterSpacing: "-0.3px" }}
+        >
+          {kpi.label}
+        </p>
       </div>
+      {/* One uniform, viewport-scaled size for every card. The value spans the
+          full card width and the clamp shrinks with the viewport, so long
+          currency totals still fit at the narrowest 4-col width without clipping. */}
+      <p
+        className="block w-full overflow-hidden text-ellipsis whitespace-nowrap bg-clip-text font-bold text-transparent tabular-nums"
+        style={{
+          backgroundImage: GRAD_GOLD,
+          fontFamily: "var(--font-dm-sans), system-ui, sans-serif",
+          fontSize: "clamp(20px, 1.7vw, 30px)",
+          lineHeight: "1.2",
+        }}
+      >
+        {isCurrency ? (
+          <>
+            <span className="text-[0.7em]">{kpi.valuePrefix}</span> {kpi.value}
+          </>
+        ) : (
+          kpi.value
+        )}
+      </p>
     </button>
   );
 }
