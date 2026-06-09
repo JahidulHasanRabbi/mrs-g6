@@ -55,7 +55,11 @@ export default function PredictionsPage() {
       const countriesById = new Map(
         countries.map((c) => [String(c.id ?? c.country ?? c.uuid), c.name]),
       );
-      setMatches((matchesRes.results ?? matchesRes ?? []).map((m) => normalizeMatch(m, countriesById)));
+      const STATUS_ORDER = { 1: 0, 2: 1, 3: 2 };
+      const sorted = (matchesRes.results ?? matchesRes ?? [])
+        .slice()
+        .sort((a, b) => (STATUS_ORDER[a.status] ?? 0) - (STATUS_ORDER[b.status] ?? 0));
+      setMatches(sorted.map((m) => normalizeMatch(m, countriesById)));
     });
   }, []);
 

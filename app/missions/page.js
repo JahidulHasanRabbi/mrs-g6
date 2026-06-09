@@ -86,6 +86,37 @@ function mapMission(row) {
   };
 }
 
+function MissionCardSkeleton() {
+  return (
+    <div
+      className="flex w-full flex-col gap-4 rounded-[12px] p-[17px] animate-pulse"
+      style={{
+        backgroundColor: MISSION_COLORS.cardFill,
+        border: `1px solid ${MISSION_COLORS.cardBorder}`,
+      }}
+    >
+      <div className="flex w-full items-start justify-between gap-2">
+        <div className="flex items-start gap-4">
+          <div className="size-12 shrink-0 rounded-[8px]" style={{ backgroundColor: MISSION_COLORS.iconChip }} />
+          <div className="flex flex-col gap-2 pt-1">
+            <div className="h-4 w-36 rounded" style={{ backgroundColor: MISSION_COLORS.iconChip }} />
+            <div className="h-3 w-24 rounded" style={{ backgroundColor: MISSION_COLORS.iconChip }} />
+          </div>
+        </div>
+        <div className="h-5 w-14 rounded" style={{ backgroundColor: MISSION_COLORS.iconChip }} />
+      </div>
+      <div className="flex flex-col gap-2">
+        <div className="flex justify-between">
+          <div className="h-3 w-16 rounded" style={{ backgroundColor: MISSION_COLORS.iconChip }} />
+          <div className="h-3 w-12 rounded" style={{ backgroundColor: MISSION_COLORS.iconChip }} />
+        </div>
+        <div className="h-2 w-full rounded-full" style={{ backgroundColor: MISSION_COLORS.track }} />
+      </div>
+      <div className="h-10 w-full rounded-[8px]" style={{ backgroundColor: MISSION_COLORS.iconChip }} />
+    </div>
+  );
+}
+
 export default function MissionsPage() {
   const { userData, refreshUserData } = useUser();
   const [activeTab, setActiveTab] = useState("daily");
@@ -307,12 +338,7 @@ export default function MissionsPage() {
               className="flex flex-col gap-4"
             >
               {loading ? (
-                <p
-                  className="py-10 text-center leading-[24px]"
-                  style={{ fontFamily: SERIF, color: MISSION_COLORS.muted, fontSize: 16 }}
-                >
-                  Loading missions...
-                </p>
+                Array.from({ length: 3 }).map((_, i) => <MissionCardSkeleton key={i} />)
               ) : visibleMissions.length > 0 ? (
                 visibleMissions.map((mission) => (
                   <MissionCard
