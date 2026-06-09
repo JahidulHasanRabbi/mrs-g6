@@ -142,7 +142,7 @@ export default function MissionCard({ mission, onClaim, onJoin, actionLoading })
         </div>
       </div>
 
-      {/* Action: members must join before progress starts, then claim when complete. */}
+      {/* Action: manual join is optional because backend may auto-join on the first qualifying action. */}
       <GoldButton
         disabled={actionLoading || claimed || (joined && !completed)}
         onClick={() => {

@@ -285,6 +285,13 @@ export async function getWorldCupCountryList(params = {}) {
   }, true, 'member');
 }
 
+// GET /worldcup/match-country-list/
+export async function getWorldCupMatchCountryList() {
+  return await apiRequest(ENDPOINTS.WORLDCUP_USER.MATCH_COUNTRY_LIST, {
+    method: 'GET'
+  }, true, 'member');
+}
+
 // GET /worldcup/info/
 export async function getWorldCupInfo() {
   return await apiRequest(ENDPOINTS.WORLDCUP_USER.INFO, {

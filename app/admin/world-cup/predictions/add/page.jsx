@@ -3,9 +3,9 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import FormChrome, { INPUT_BASE } from "../../../../components/admin/world-cup/FormChrome";
-import { normalizeCountryOptions } from "../../../../components/admin/world-cup/countryOptions";
+import { normalizeMatchCountryOptions } from "../../../../components/admin/world-cup/countryOptions";
 import {
-  getWorldCupCountries,
+  getWorldCupMatchCountries,
   getWorldCupMatch,
   createWorldCupMatch,
   updateWorldCupMatch,
@@ -84,8 +84,8 @@ function MatchForm() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    getWorldCupCountries().then((d) => setCountryOptions(normalizeCountryOptions(d))).catch(() => {
-      setCountryOptions(normalizeCountryOptions([]));
+    getWorldCupMatchCountries().then((d) => setCountryOptions(normalizeMatchCountryOptions(d))).catch(() => {
+      setCountryOptions(normalizeMatchCountryOptions([]));
     });
 
     if (editingUuid) {
@@ -114,6 +114,7 @@ function MatchForm() {
       const nextTeam1 = key === "team1Uuid" ? nextValue : otherValue;
       const nextTeam2 = key === "team2Uuid" ? nextValue : otherValue;
       const winnerStillValid =
+        String(p.winnerUuid) === "0" ||
         String(p.winnerUuid) === String(nextTeam1) ||
         String(p.winnerUuid) === String(nextTeam2);
       return {
@@ -154,7 +155,7 @@ function MatchForm() {
 
       // If user picked a winner, settle the match. Backend requires the match
       // to be closed/ongoing before a winner can be declared.
-      if (form.winnerUuid && savedUuid && Number(form.status) === 2) {
+      if (form.winnerUuid !== "" && savedUuid && Number(form.status) === 2) {
         await settleWorldCupMatch(savedUuid, form.winnerUuid);
       }
 
@@ -225,7 +226,7 @@ function MatchForm() {
           <CountrySelect
             value={form.winnerUuid}
             onChange={Number(form.status) === 2 ? set("winnerUuid") : () => {}}
-            countries={winnerOptions}
+            countries={[{ id: 0, name: "Draw" }, ...winnerOptions]}
             placeholder="— No winner yet —"
           />
           <p className="mt-2 text-[11px] leading-[16px] text-white/55">

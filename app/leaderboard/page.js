@@ -14,6 +14,7 @@ import {
   getCountryRankings,
   getGlobalPlayers,
   getMyPredictions,
+  getPredictionEligibility,
 } from "../components/leaderboard/worldcupApi";
 import ProfileCard from "../components/leaderboard/ProfileCard";
 import PredictToWinCard from "../components/leaderboard/PredictToWinCard";
@@ -91,7 +92,7 @@ function LeaderboardPageInner() {
   const { authReady, memberUuid } = useUser();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
-  const [joinBlocked, setJoinBlocked] = useState(false);
+  const [joinBlocked, setJoinBlocked] = useState(null);
   const [profile, setProfile] = useState(null);
   const [confirmError, setConfirmError] = useState(null);
   const [selectedCountry, setSelectedCountry] = useState(null);
@@ -99,6 +100,7 @@ function LeaderboardPageInner() {
   const [countriesData, setCountriesData] = useState({ rows: [], loading: true });
   const [playersData, setPlayersData] = useState({ rows: [], loading: true });
   const [predictionsData, setPredictionsData] = useState({ rows: [], loading: true });
+  const [predictionEligibility, setPredictionEligibility] = useState(null);
 
   useEffect(() => {
     if (!authReady || !memberUuid) return;
@@ -142,6 +144,9 @@ function LeaderboardPageInner() {
     getMyPredictions()
       .then((rows) => { if (!cancelled) setPredictionsData({ rows, loading: false }); })
       .catch(() => { if (!cancelled) setPredictionsData({ rows: [], loading: false }); });
+    getPredictionEligibility()
+      .then((status) => { if (!cancelled) setPredictionEligibility(status); })
+      .catch(() => { if (!cancelled) setPredictionEligibility(null); });
     return () => { cancelled = true; };
   }, [authReady, memberUuid]);
 
@@ -248,13 +253,36 @@ function LeaderboardPageInner() {
               <div className="flex flex-col items-center gap-6 px-4 pb-8 pt-2">
                 <ProfileCard profile={profile} />
                 <PredictToWinCard
-                  onJoinNow={() => {
-                    // Spec slide 10: members need ≥ 3,000 total points to join predictions.
-                    if ((profile.totalPoints ?? 0) < 3000) {
-                      setJoinBlocked(true);
-                      return;
+                  eligibility={predictionEligibility}
+                  onJoinNow={async () => {
+                    try {
+                      const status = await getPredictionEligibility();
+                      setPredictionEligibility(status);
+                      const totalPoints = Number(status?.total_points ?? profile.totalPoints ?? 0);
+                      const requiredPoints = Number(status?.required_points ?? 3000);
+                      if (!status?.eligible || totalPoints < requiredPoints) {
+                        const additional = Math.max(0, requiredPoints - totalPoints);
+                        setJoinBlocked({
+                          title: `${requiredPoints.toLocaleString()} Points Required`,
+                          message: additional > 0
+                            ? `You need to accumulate an additional ${additional.toLocaleString()} points before you can participate again.`
+                            : `You need at least ${requiredPoints.toLocaleString()} total points to join this prediction.`,
+                        });
+                        return;
+                      }
+                      navigate("fixtures");
+                    } catch {
+                      const totalPoints = Number(profile.totalPoints ?? 0);
+                      if (totalPoints < 3000) {
+                        const additional = 3000 - totalPoints;
+                        setJoinBlocked({
+                          title: "3,000 Points Required",
+                          message: `You need to accumulate an additional ${additional.toLocaleString()} points before you can participate again.`,
+                        });
+                        return;
+                      }
+                      navigate("fixtures");
                     }
-                    navigate("fixtures");
                   }}
                 />
                 <LeaderboardTabs activeTab={activeTab} onTabChange={onTabChange} />
@@ -339,9 +367,9 @@ function LeaderboardPageInner() {
 
       {joinBlocked && (
         <NoticeModal
-          title="3,000 Points Required"
-          message="You need at least 3,000 total points to join this prediction."
-          onClose={() => setJoinBlocked(false)}
+          title={joinBlocked.title}
+          message={joinBlocked.message}
+          onClose={() => setJoinBlocked(null)}
         />
       )}
     </div>

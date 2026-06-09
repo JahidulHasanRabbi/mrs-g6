@@ -76,7 +76,7 @@ function mapMission(row) {
     badge: MISSION_TAB_BY_CATEGORY[row.category] ?? "",
     progress: {
       current: row.current_value ?? 0,
-      total: row.accumulate_target ?? 0,
+      total: row.accumulate_target ?? row.target_value ?? 0,
     },
     status: missionStatus(row),
     joined: !!row.joined,
