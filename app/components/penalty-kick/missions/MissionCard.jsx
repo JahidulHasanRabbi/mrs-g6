@@ -35,7 +35,7 @@ function MissionIcon({ icon }) {
 }
 
 export default function MissionCard({ mission, onClaim, onJoin, actionLoading }) {
-  const { icon, title, reward, badge, progress, status } = mission;
+  const { icon, title, reward, badge, progress, status, description } = mission;
   const completed = status === "completed";
   const claimed = mission.claimed;
   const joined = mission.joined;
@@ -78,6 +78,18 @@ export default function MissionCard({ mission, onClaim, onJoin, actionLoading })
             >
               Reward: {reward} Tokens
             </p>
+            {description?.trim() && (
+              <p
+                className="leading-[20px]"
+                style={{
+                  fontFamily: '"Times New Roman", serif',
+                  color: MISSION_COLORS.muted,
+                  fontSize: 14,
+                }}
+              >
+                {description}
+              </p>
+            )}
           </div>
         </div>
         {badge && (
