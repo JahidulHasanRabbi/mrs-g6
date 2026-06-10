@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LB_COLORS } from "./constants";
 import { GlowCard, SectionBadge, HeroButton } from "./primitives";
+import { getWorldCupBannerList } from "../../api/memberApi";
 
-const SLIDES = [
+const FALLBACK_SLIDES = [
   { title: "Real-time Rankings", body: "Live leaderboard allows players to get real-time updates on their rankings and see where they stand among others.", emoji: "🏆" },
   { title: "Lucrative Prizes", body: "The higher you step up the leaderboard ladder, the more luxury gifts and prizes you can get your hands on!", emoji: "🎁" },
   { title: "Fair Play Challenges", body: "Pit yourself against others of the same membership tier and secure a top spot on the leaderboard every month!", emoji: "🤝" },
@@ -26,10 +27,30 @@ function Arrow({ dir, onClick }) {
 }
 
 export default function Onboarding({ onJoinNow }) {
+  const [slides, setSlides] = useState(FALLBACK_SLIDES);
   const [i, setI] = useState(0);
-  const s = SLIDES[i];
-  const prev = () => setI((i - 1 + SLIDES.length) % SLIDES.length);
-  const next = () => setI((i + 1) % SLIDES.length);
+
+  useEffect(() => {
+    getWorldCupBannerList({ location: 2 })
+      .then((res) => {
+        const list = Array.isArray(res) ? res : (res?.results || []);
+        if (!list.length) return;
+        setSlides(list.map((b) => ({
+          title: b.title || b.section_title || "",
+          body: b.description || b.subtitle || "",
+          emoji: "🏆",
+          image: b.image || null,
+        })));
+        setI(0);
+      })
+      .catch((err) => {
+        console.error("Failed to load Onboarding banners:", err);
+      });
+  }, []);
+
+  const s = slides[i];
+  const prev = () => setI((i - 1 + slides.length) % slides.length);
+  const next = () => setI((i + 1) % slides.length);
 
   return (
     <div className="flex justify-center px-4 pb-8 pt-2">
@@ -58,13 +79,18 @@ export default function Onboarding({ onJoinNow }) {
           <div className="flex w-full items-center gap-4 py-4">
             <Arrow dir="left" onClick={prev} />
             <div className="flex flex-1 items-center justify-center">
-              <div
-                className="grid h-[150px] w-[150px] place-items-center rounded-full"
-                style={{ background: "rgba(84,233,138,0.06)", fontSize: 72 }}
-                aria-hidden="true"
-              >
-                {s.emoji}
-              </div>
+              {s.image ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={s.image} alt={s.title} className="h-[150px] w-[150px] rounded-full object-cover" />
+              ) : (
+                <div
+                  className="grid h-[150px] w-[150px] place-items-center rounded-full"
+                  style={{ background: "rgba(84,233,138,0.06)", fontSize: 72 }}
+                  aria-hidden="true"
+                >
+                  {s.emoji}
+                </div>
+              )}
             </div>
             <Arrow dir="right" onClick={next} />
           </div>
@@ -87,7 +113,7 @@ export default function Onboarding({ onJoinNow }) {
           </p>
 
           <div className="flex gap-1 pt-2">
-            {SLIDES.map((_, idx) => (
+            {slides.map((_, idx) => (
               <span
                 key={idx}
                 className="h-1 w-6 rounded-full"

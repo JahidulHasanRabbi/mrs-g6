@@ -59,6 +59,12 @@ function PaginatedFooter({ total, page, setPage }) {
   );
 }
 
+const BANNER_LOCATION_LABELS = {
+  1: "Home",
+  2: "Lobby",
+  3: "Prediction",
+};
+
 function normalizeBanner(b) {
   return {
     id: b.uuid,
@@ -70,6 +76,7 @@ function normalizeBanner(b) {
     description: b.description,
     image: b.image,
     location: b.location,
+    locationLabel: b.location_display || BANNER_LOCATION_LABELS[b.location] || "",
   };
 }
 

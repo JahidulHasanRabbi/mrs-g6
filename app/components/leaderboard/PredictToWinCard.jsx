@@ -177,7 +177,7 @@ export default function PredictToWinCard({ onJoinNow, eligibility }) {
           style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${LB_COLORS.borderSoft}` }}
         >
           <p className="text-[11px] uppercase" style={{ color: LB_COLORS.textMuted, fontFamily: "'Lexend',sans-serif" }}>
-            Required Points
+            Required Points to Join FIFA 2026 Prediction
           </p>
           <p
             className="text-[16px]"
@@ -197,7 +197,7 @@ export default function PredictToWinCard({ onJoinNow, eligibility }) {
         </div>
 
         <div className="w-full pt-2">
-          <HeroButton onClick={onJoinNow}>Join Now</HeroButton>
+          <HeroButton onClick={onJoinNow}>Join Prediction Now</HeroButton>
         </div>
       </div>
     </GlowCard>

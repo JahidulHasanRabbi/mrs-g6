@@ -129,19 +129,19 @@ function DummyForm() {
         </div>
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">Total Points</label>
-          <input type="text" value={form.totalPoints} onChange={set("totalPoints")} className={INPUT_BASE} />
+          <input type="number" min="0" value={form.totalPoints} onChange={set("totalPoints")} className={INPUT_BASE} />
         </div>
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">Total Prediction</label>
-          <input type="text" value={form.totalPrediction} onChange={set("totalPrediction")} className={INPUT_BASE} />
+          <input type="number" min="0" value={form.totalPrediction} onChange={set("totalPrediction")} className={INPUT_BASE} />
         </div>
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">Total Win</label>
-          <input type="text" value={form.totalWin} onChange={set("totalWin")} className={INPUT_BASE} />
+          <input type="number" min="0" value={form.totalWin} onChange={set("totalWin")} className={INPUT_BASE} />
         </div>
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">Winning Streak</label>
-          <input type="text" value={form.winningStreak} onChange={set("winningStreak")} className={INPUT_BASE} />
+          <input type="number" min="0" value={form.winningStreak} onChange={set("winningStreak")} className={INPUT_BASE} />
         </div>
       </div>
     </FormChrome>

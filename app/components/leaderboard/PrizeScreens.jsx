@@ -98,6 +98,13 @@ function placeSuffix(rank) {
   return rank === 1 ? "st" : rank === 2 ? "nd" : rank === 3 ? "rd" : "th";
 }
 
+function placeRangeLabel(rank, quantity) {
+  const start = rank;
+  const end = start + Math.max(1, Number(quantity) || 1) - 1;
+  if (end > start) return `${start}${placeSuffix(start)} - ${end}${placeSuffix(end)} Place`;
+  return `${start}${placeSuffix(start)} Place`;
+}
+
 export function CountryPrizesPanel({ onViewLeaderboards, onViewDetails }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -177,7 +184,7 @@ export function PlayerPrizesPanel({ onViewLeaderboards, onViewDetails }) {
               </div>
               <div className="flex flex-1 items-center gap-2">
                 <span className="truncate text-[14px]" style={{ color: placeColor(p.rank), fontFamily: "'Lexend',sans-serif" }}>
-                  {p.name}
+                  {placeRangeLabel(p.rank, p.quantity)}
                 </span>
                 {(p.code || p.flag) && <Flag code={p.code} src={p.flag} size={24} />}
               </div>
@@ -233,7 +240,12 @@ export function PredictionPrizesPanel({ onViewPredictions }) {
                 <div className="w-[48px] text-[12px]" style={{ color, fontFamily: "'Lexend',sans-serif" }}>{r.position}</div>
                 <div className="flex-1 text-center text-[12px]" style={{ color, fontFamily: "'Lexend',sans-serif" }}>{r.condition}</div>
                 <div className="flex w-[75px] flex-col items-center gap-1">
-                  <span aria-hidden="true" style={{ fontSize: 28 }}>{r.type === "phone" ? "📱" : "🪙"}</span>
+                  {r.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={r.image} alt={r.reward} className="h-7 w-7 rounded-[4px] object-cover" />
+                  ) : (
+                    <span aria-hidden="true" style={{ fontSize: 28 }}>{r.type === "phone" ? "📱" : "🪙"}</span>
+                  )}
                   <span className="text-center text-[9px]" style={{ color: LB_COLORS.primary, fontFamily: "'Lexend',sans-serif", lineHeight: "11px" }}>
                     {r.reward}
                   </span>
@@ -250,6 +262,9 @@ export function PredictionPrizesPanel({ onViewPredictions }) {
 }
 
 export function PrizeInfo({ prize, onBack }) {
+  const description = prize?.description?.trim()
+    || "Live leaderboard allows players to get real-time updates on their rankings and see where they stand among others.";
+
   return (
     <Panel>
       <div className="flex flex-col items-center gap-4">
@@ -257,13 +272,13 @@ export function PrizeInfo({ prize, onBack }) {
         <div className="flex w-full flex-col gap-3 rounded-[8px] p-2" style={{ background: LB_COLORS.panelLight }}>
           <PrizePlaceholder name={prize?.name ?? "Grand Prize"} image={prize?.image} />
           <p className="text-[14px]" style={{ color: LB_COLORS.textMuted, fontFamily: "'Lexend',sans-serif", lineHeight: "22px" }}>
-            Live leaderboard allows players to get real-time updates on their rankings and see where they stand among others.
+            {description}
           </p>
           <div className="flex w-full items-center justify-between">
             <div className="flex items-center gap-2">
               <span style={{ fontSize: 22 }}>🏆</span>
               <span className="text-[14px] uppercase" style={{ color: LB_COLORS.primary, fontFamily: "'Lexend',sans-serif", fontWeight: 600, letterSpacing: "0.5px" }}>
-                {prize?.rank ? `${prize.rank}${placeSuffix(prize.rank)} Place` : "1st Place"}
+                {prize?.rank ? placeRangeLabel(prize.rank, prize.quantity) : "1st Place"}
               </span>
             </div>
             <div className="flex items-center gap-2">

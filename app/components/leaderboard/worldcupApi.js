@@ -191,25 +191,31 @@ export async function getCountryPrizes() {
 
 export async function getPlayerPrizes() {
   const data = await getWorldCupPrizePool({ type: "global-top-player" });
-  return (data.results ?? data ?? []).map((r, i) => ({
-    rank: r.position ?? i + 1,
-    uuid: r.uuid,
-    name: r.reward_name,
-    description: r.description,
-    image: r.image,
-    quantity: r.quantity,
-  }));
+  return (data.results ?? data ?? [])
+    .map((r, i) => ({
+      rank: r.position ?? i + 1,
+      uuid: r.uuid,
+      name: r.reward_name,
+      description: r.description,
+      image: r.image,
+      quantity: r.quantity,
+    }))
+    .sort((a, b) => a.rank - b.rank);
 }
 
 export async function getPredictionPrizes() {
   const data = await getWorldCupPrizePool({ type: "prediction" });
-  return (data.results ?? data ?? []).map((r, i) => {
+  const items = (data.results ?? data ?? [])
+    .slice()
+    .sort((a, b) => (b.win_condition ?? 0) - (a.win_condition ?? 0));
+  return items.map((r, i) => {
     const wins = r.win_condition ?? 0;
     return {
-      position: ordinal(r.position ?? i + 1),
-      condition: wins ? `${wins} Consecutive Win${wins !== 1 ? "s" : ""}` : r.reward_name,
-      reward: r.token_amount ? `${r.token_amount} TOKEN SPIN` : r.reward_name,
+      position: ordinal(i + 1),
+      condition: wins > 1 ? `${wins} Match Win Streak` : "Correct Prediction",
+      reward: r.token_amount ? `${Number(r.token_amount).toLocaleString()} Tokens` : r.reward_name,
       type: r.token_amount ? "tokens" : "phone",
+      image: r.image,
       uuid: r.uuid,
     };
   });

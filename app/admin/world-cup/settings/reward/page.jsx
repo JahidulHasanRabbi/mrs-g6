@@ -151,6 +151,7 @@ function RewardForm() {
 
   const onSave = async () => {
     if (!form.name) { setError("Reward name is required."); return; }
+    if (form.itemType === 2 && !form.countryUuid) { setError("Country is required for Top Country rewards."); return; }
     setSaving(true);
     setError("");
     try {
@@ -216,7 +217,7 @@ function RewardForm() {
         </div>
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">Quantity</label>
-          <input type="text" value={form.quantity} onChange={set("quantity")} className={INPUT_BASE} />
+          <input type="number" min="0" value={form.quantity} onChange={set("quantity")} className={INPUT_BASE} />
         </div>
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">Item Type</label>
@@ -227,7 +228,9 @@ function RewardForm() {
           />
         </div>
         <div>
-          <label className="mb-2 block text-[14px] font-semibold text-white">Country (Top Country only)</label>
+          <label className="mb-2 block text-[14px] font-semibold text-white">
+            Country (Top Country only){form.itemType === 2 && <span className="text-red-400"> *</span>}
+          </label>
           <CountrySelect value={form.countryUuid} onChange={set("countryUuid")} countries={countryOptions} />
         </div>
         <div>
@@ -236,17 +239,17 @@ function RewardForm() {
         </div>
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">Position</label>
-          <input type="text" value={form.position} onChange={set("position")} className={INPUT_BASE} />
+          <input type="number" min="1" value={form.position} onChange={set("position")} className={INPUT_BASE} />
         </div>
         {form.itemType === 1 && (
           <>
             <div>
               <label className="mb-2 block text-[14px] font-semibold text-white">Win Condition</label>
-              <input type="text" value={form.winCondition} onChange={set("winCondition")} className={INPUT_BASE} />
+              <input type="number" min="1" value={form.winCondition} onChange={set("winCondition")} className={INPUT_BASE} />
             </div>
             <div>
               <label className="mb-2 block text-[14px] font-semibold text-white">Token Amount</label>
-              <input type="text" value={form.tokenAmount} onChange={set("tokenAmount")} className={INPUT_BASE} />
+              <input type="number" min="1" value={form.tokenAmount} onChange={set("tokenAmount")} className={INPUT_BASE} />
             </div>
           </>
         )}
