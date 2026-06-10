@@ -15,7 +15,8 @@ const CATEGORIES = [
   { id: 6, name: "Smash Egg" },
   { id: 7, name: "Penalty Kick" },
   { id: 8, name: "Main Page", usesSections: true },
-  { id: 9, name: "Wallet VIP" }
+  { id: 9, name: "Wallet VIP" },
+  { id: 10, name: "Mission" }
 ];
 
 // Parse "title: X\ndescription: Y" format into sections array
@@ -54,7 +55,7 @@ function TermsConditionsSkeleton() {
       <div className="rounded-xl border border-white/10 bg-white/[0.03] p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
         <div className={`h-5 w-40 mb-4 rounded ${SHIMMER}`} />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {Array.from({ length: 9 }).map((_, i) => (
+          {Array.from({ length: CATEGORIES.length }).map((_, i) => (
             <div
               key={i}
               className={`h-[46px] rounded-lg ${i === 0 ? GOLD_SHIMMER : SHIMMER}`}

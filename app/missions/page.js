@@ -20,6 +20,7 @@ import {
   getMyMissions,
   joinMission,
   getFeatureStatus,
+  getPublicTermsAndConditions,
 } from "../api/memberApi";
 import {
   MISSION_CATEGORY_BY_TAB,
@@ -31,6 +32,7 @@ const HISTORY_ICON = "/assets/penalty-kick/missions/icon-history.svg";
 const TAB_FRAME = "/assets/penalty-kick/missions/tab-active.png";
 
 const SERIF = '"Times New Roman", serif';
+const MISSION_TERMS_CATEGORY = 10;
 
 const TAB_IDS = MISSION_TABS.map((t) => t.id);
 // Horizontal slide for the mission list — enters from the side the new tab
@@ -118,6 +120,69 @@ function MissionCardSkeleton() {
   );
 }
 
+function MissionTermsDialog({ loading, termsText, error, onClose }) {
+  const lines = String(termsText || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 px-5 backdrop-blur-[6px]" onClick={onClose}>
+      <div
+        className="w-full max-w-[360px] rounded-[16px] border px-5 py-5 shadow-[0_18px_60px_rgba(0,0,0,0.5)]"
+        style={{
+          backgroundColor: "rgba(7,25,13,0.96)",
+          borderColor: "rgba(233,175,65,0.45)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className="mb-4 rounded-[8px] px-4 py-2 text-center text-[15px] font-bold uppercase"
+          style={{
+            backgroundColor: "rgba(233,175,65,0.14)",
+            color: MISSION_COLORS.gold,
+            fontFamily: SERIF,
+          }}
+        >
+          Terms & Conditions
+        </div>
+
+        {loading ? (
+          <p className="py-8 text-center text-[14px]" style={{ color: MISSION_COLORS.muted, fontFamily: SERIF }}>
+            Loading terms...
+          </p>
+        ) : error ? (
+          <p className="py-8 text-center text-[14px] text-red-200" style={{ fontFamily: SERIF }}>
+            {error}
+          </p>
+        ) : lines.length === 0 ? (
+          <p className="py-8 text-center text-[14px]" style={{ color: MISSION_COLORS.muted, fontFamily: SERIF }}>
+            No terms and conditions available.
+          </p>
+        ) : (
+          <ol className="max-h-[52dvh] list-decimal space-y-2 overflow-y-auto pl-5 pr-1 text-[14px] leading-6" style={{ color: MISSION_COLORS.muted, fontFamily: SERIF }}>
+            {lines.map((line, i) => (
+              <li key={i}>{line}</li>
+            ))}
+          </ol>
+        )}
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-5 w-full rounded-[10px] py-3 text-[15px] font-bold uppercase text-black"
+          style={{
+            backgroundImage: "linear-gradient(90deg, #ffe77a 0%, #e9af41 100%)",
+            fontFamily: SERIF,
+          }}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function MissionsPage() {
   const { userData, refreshUserData } = useUser();
   const [activeTab, setActiveTab] = useState("daily");
@@ -131,6 +196,10 @@ export default function MissionsPage() {
   const [error, setError] = useState("");
   const [history, setHistory] = useState(null);
   const [maintenance, setMaintenance] = useState(null);
+  const [termsOpen, setTermsOpen] = useState(false);
+  const [termsLoading, setTermsLoading] = useState(false);
+  const [termsText, setTermsText] = useState("");
+  const [termsError, setTermsError] = useState("");
   const isMaintenance = maintenance === true;
 
   const changeTab = (id) => {
@@ -227,6 +296,21 @@ export default function MissionsPage() {
     }
   };
 
+  const openTerms = async () => {
+    setTermsOpen(true);
+    if (termsText || termsLoading) return;
+    setTermsLoading(true);
+    setTermsError("");
+    try {
+      const data = await getPublicTermsAndConditions(MISSION_TERMS_CATEGORY);
+      setTermsText(data?.terms_and_conditions || "");
+    } catch (err) {
+      setTermsError(err?.data?.detail || err?.message || "Failed to load terms and conditions.");
+    } finally {
+      setTermsLoading(false);
+    }
+  };
+
   return (
     <div
       className="relative flex min-h-[100dvh] w-full flex-col"
@@ -245,7 +329,7 @@ export default function MissionsPage() {
       {/* Top HUD bar (gold "Missions" + info / menu chips) from the Figma
           "Missions Hub" frame. The hamburger opens the shared member nav. */}
       <MissionsHeader
-        onInfoClick={() => {}}
+        onInfoClick={openTerms}
         onMenuClick={() => setIsMenuOpen(true)}
       />
 
@@ -432,6 +516,15 @@ export default function MissionsPage() {
       <FooterNav />
 
       <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+
+      {termsOpen && (
+        <MissionTermsDialog
+          loading={termsLoading}
+          termsText={termsText}
+          error={termsError}
+          onClose={() => setTermsOpen(false)}
+        />
+      )}
 
       {isMaintenance && (
         <div className="fixed inset-x-0 top-[56px] bottom-[100px] z-30 grid place-items-center bg-black/70 px-6 backdrop-blur-md">
