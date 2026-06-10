@@ -8,20 +8,47 @@ All endpoints require JWT authentication.
 
 ## Country Reference
 
-Countries are represented as integers throughout all APIs. There are no country UUIDs, codes, or flags.
+Countries are represented as integers. There are two separate country lists with different purposes.
+
+### Leaderboard Countries (10 countries — `COUNTRY_CHOICE`)
+
+Used for: choosing a country affiliation, leaderboard ranking, top-per-country, dummy players.
 
 | ID | Country | Tier |
 | --- | --- | --- |
 | 1 | Spain | 1 |
 | 2 | France | 1 |
 | 3 | England | 1 |
-| 4 | Brazil | 1 |
-| 5 | Argentina | 1 |
-| 6 | Portugal | 2 |
+| 4 | Argentina | 1 |
+| 5 | Portugal | 1 |
+| 6 | Brazil | 1 |
 | 7 | Germany | 2 |
 | 8 | Netherlands | 2 |
-| 9 | Morocco | 3 |
-| 10 | Japan | 3 |
+| 9 | Norway | 3 |
+| 10 | Belgium | 3 |
+
+### Match / Prediction Countries (48 countries — `MATCH_COUNTRY_CHOICE`)
+
+Used for: creating matches (`team_home`, `team_away`, `winner`) and placing predictions (`team`). Full list available via `GET /worldcup/match-country-list/`.
+
+| ID | Country | ID | Country | ID | Country |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Algeria | 17 | Egypt | 33 | Norway |
+| 2 | Argentina | 18 | England | 34 | Panama |
+| 3 | Australia | 19 | France | 35 | Paraguay |
+| 4 | Austria | 20 | Germany | 36 | Portugal |
+| 5 | Belgium | 21 | Ghana | 37 | Qatar |
+| 6 | Bosnia and Herzegovina | 22 | Haiti | 38 | Saudi Arabia |
+| 7 | Brazil | 23 | Iran | 39 | Scotland |
+| 8 | Cabo Verde | 24 | Iraq | 40 | Senegal |
+| 9 | Canada | 25 | Italy | 41 | South Africa |
+| 10 | Colombia | 26 | Japan | 42 | Spain |
+| 11 | Congo DR | 27 | Jordan | 43 | Sweden |
+| 12 | Croatia | 28 | Korea Republic | 44 | Switzerland |
+| 13 | Curacao | 29 | Mexico | 45 | Tunisia |
+| 14 | Czechia | 30 | Morocco | 46 | Turkiye |
+| 15 | Cote d'Ivoire | 31 | Netherlands | 47 | United States |
+| 16 | Ecuador | 32 | New Zealand | 48 | Uzbekistan |
 
 ---
 
@@ -60,6 +87,21 @@ Country Object
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | id | Int | No | Country ID (1–10) |
 | **2** | name | Str | No | e.g. "Spain" |
+
+---
+
+## Match Country List
+
+### /worldcup/match-country-list/ GET
+
+Returns all 48 FIFA World Cup 2026 countries used for match creation and predictions. Use this to look up team names from their IDs.
+
+Output (list, not paginated)
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | id | Int | No | Country ID (1–48) |
+| **2** | name | Str | No | e.g. "Argentina" |
 
 ---
 
@@ -154,8 +196,8 @@ Paginated output
 | **1** | rank | Int | No |  |
 | **2** | country | Int | No | Country ID (1–10) |
 | **3** | country\_name | Str | No | e.g. "Brazil" |
-| **4** | total\_points | Int | No | Combined real + dummy floor |
-| **5** | total\_users | Int | No | Combined real + dummy floor |
+| **4** | total\_points | Int | No | Combined real + dummy player data |
+| **5** | total\_users | Int | No | Combined real + dummy player data |
 
 ### /worldcup/leaderboard/players/ GET
 
@@ -169,14 +211,15 @@ Paginated output
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | rank | Int | No |  |
-| **2** | player\_name | Str | No |  |
-| **3** | country | Int | No | Country ID (1–10) |
-| **4** | country\_name | Str | No |  |
-| **5** | total\_points | Int | No |  |
-| **6** | total\_prediction | Int | No |  |
-| **7** | total\_win | Int | No |  |
-| **8** | winning\_streak | Int | No |  |
+| **1** | global\_rank | Int | No | Rank across the whole board (all countries combined) |
+| **2** | country\_rank | Int | No | Rank within the player's own country |
+| **3** | player\_name | Str | No |  |
+| **4** | country | Int | No | Country ID (1–10) |
+| **5** | country\_name | Str | No |  |
+| **6** | total\_points | Int | No |  |
+| **7** | total\_prediction | Int | No |  |
+| **8** | total\_win | Int | No |  |
+| **9** | winning\_streak | Int | No |  |
 
 ### /worldcup/leaderboard/top-per-country/ GET
 
@@ -261,12 +304,12 @@ Output (list, ordered by kickoff\_at asc)
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | uuid | UUID | No |  |
 | **2** | group\_label | Str | No | e.g. "GROUP A" |
-| **3** | team\_home | Int | No | Country ID |
-| **4** | team\_away | Int | No | Country ID |
+| **3** | team\_home | Int | No | Country ID (1–48) |
+| **4** | team\_away | Int | No | Country ID (1–48) |
 | **5** | kickoff\_at | Datetime | No |  |
 | **6** | status | Int | No | 1 = Upcoming, 2 = Closed, 3 = Settled |
 | **7** | status\_display | Str | No | e.g. "UPCOMING" |
-| **8** | winner | Int | Yes | Country ID. Null until settled |
+| **8** | winner | Int | Yes | Country ID (1–48). Null when not yet settled **or** when the result is a draw. To tell draw from unsettled: check `status == 3 && winner == null` |
 | **9** | settled\_at | Datetime | Yes | Null until settled |
 
 ### /worldcup/match-list/{match\_uuid}/ GET
@@ -279,14 +322,14 @@ Same output as single match object above.
 
 ### /worldcup/{member\_uuid}/predict/ POST
 
-Requires member to have chosen a country. Requires current month deposit ≥ RM300. Cannot predict on a closed or settled match or after kickoff. Member must not be locked (lost last prediction without depositing RM50 to unlock).
+Requires member to have chosen a country. Requires Total Points (Penalty Kick points + campaign deposit points) ≥ required points, where required points = `WC_PREDICTION_BASE_REQUIRED_POINTS` (3000) + (`current_loss_streak` × `WC_PREDICTION_LOSS_PENALTY_POINTS` (500)) — i.e. each consecutive lost prediction raises the bar by 500 points. Cannot predict on a closed or settled match or after kickoff.
 
 Input
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | match\_uuid | UUID | No |  |
-| **2** | team | Int | No | Country ID. Must be one of the two teams in the match |
+| **2** | team | Int | No | Country ID (1–48, from match country list). Must be one of the two teams in the match |
 
 Output
 
@@ -313,10 +356,10 @@ Output (paginated)
 | **3** | match\_status | Int | No | 1/2/3 |
 | **4** | match\_status\_display | Str | No |  |
 | **5** | match\_kickoff\_at | Datetime | No |  |
-| **6** | team\_home | Int | No | Country ID |
-| **7** | team\_away | Int | No | Country ID |
-| **8** | winner | Int | Yes | Country ID. Null until match settled |
-| **9** | predicted\_team | Int | No | Country ID |
+| **6** | team\_home | Int | No | Country ID (1–48) |
+| **7** | team\_away | Int | No | Country ID (1–48) |
+| **8** | winner | Int | Yes | Country ID (1–48). Null when unsettled or draw |
+| **9** | predicted\_team | Int | No | Country ID (1–48) |
 | **10** | state | Int | No | See State Enum below |
 | **11** | state\_display | Str | No |  |
 | **12** | settled\_at | Datetime | Yes |  |
@@ -327,6 +370,7 @@ Output (paginated)
 | 1 | PENDING |
 | 2 | WIN |
 | 3 | LOSE |
+| 4 | DRAW |
 
 ### /worldcup/{member\_uuid}/matches/{match\_uuid}/my-prediction/ GET
 
@@ -344,8 +388,10 @@ Output (list, not paginated)
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | prediction\_uuid | UUID | No |  |
 | **2** | match\_uuid | UUID | No |  |
-| **3** | state | Int | No | 1/2/3 |
-| **4** | state\_display | Str | No |  |
+| **3** | predicted\_team | Int | No | Country ID (1–48) the member picked |
+| **4** | predicted\_team\_name | Str | No | e.g. "Argentina" |
+| **5** | state | Int | No | 1 = PENDING, 2 = WIN, 3 = LOSE, 4 = DRAW |
+| **6** | state\_display | Str | No |  |
 
 ### /worldcup/{member\_uuid}/prediction-status/ GET
 
@@ -353,10 +399,10 @@ Output
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | eligible | Bool | No | True if current month deposit ≥ RM300 |
-| **2** | monthly\_deposit | Str (Decimal) | No | Current month total deposit e.g. "350.00" |
-| **3** | is\_locked | Bool | No | True if member lost last prediction and must deposit RM50 |
-| **4** | needs\_deposit | Bool | No | Same as is\_locked |
+| **1** | eligible | Bool | No | True if total\_points ≥ required\_points |
+| **2** | total\_points | Int | No | Combined Total Points (Penalty Kick points + campaign deposit points) |
+| **3** | required\_points | Int | No | `WC_PREDICTION_BASE_REQUIRED_POINTS` (3000) + (current\_loss\_streak × `WC_PREDICTION_LOSS_PENALTY_POINTS` (500)) |
+| **4** | current\_loss\_streak | Int | No | Consecutive lost predictions; raises required\_points by 500 each |
 | **5** | current\_streak | Int | No |  |
 | **6** | best\_streak | Int | No |  |
 | **7** | total\_predictions | Int | No |  |
@@ -376,7 +422,7 @@ Output
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | information | Str | No |  |
+| **1** | maintenance_mode | Bool | No | false = Maintenance OFF, true = Maintenance ON |
 
 ### /worldcup/settings/ POST
 
@@ -384,7 +430,7 @@ Input
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | information | Str | Yes |  |
+| **1** | maintenance_mode | Bool | Yes | false = Maintenance OFF, true = Maintenance ON |
 
 ---
 
@@ -477,8 +523,8 @@ Input
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | team\_home | Int | No (create) / Yes (update) | Country ID (1–10). Must differ from team\_away |
-| **2** | team\_away | Int | No (create) / Yes (update) | Country ID (1–10). Must differ from team\_home |
+| **1** | team\_home | Int | No (create) / Yes (update) | Country ID (1–48, from match country list). Must differ from team\_away |
+| **2** | team\_away | Int | No (create) / Yes (update) | Country ID (1–48, from match country list). Must differ from team\_home |
 | **3** | group\_label | Str | Yes | e.g. "GROUP A" |
 | **4** | kickoff\_at | Datetime | No (create) / Yes (update) |  |
 | **5** | status | Int | Yes | 1 = Upcoming, 2 = Closed. Default 1. Cannot set to 3 via this endpoint |
@@ -492,18 +538,19 @@ Cannot archive a match that has pending predictions (state = 1).
 Transitions match from Closed (2) to Settled (3). Cannot settle an Upcoming (status = 1) match or a match already settled.
 
 On settle the system automatically:
-- Marks all pending predictions WIN or LOSE
-- Updates each member's streak, total\_wins, and best\_streak
-- Locks any member who predicted wrong (is\_locked = true, must deposit RM50 to unlock)
-- Awards streak prizes: token prizes → credited immediately; physical prizes → logged as MemberReward for staff fulfilment
+- Marks all pending predictions WIN, LOSE, or DRAW
+- Updates each member's streak, total\_wins, and best\_streak (win/loss only — draw leaves these unchanged)
+- Increments `current_loss_streak` for members who predicted wrong (resets to 0 on a win; unchanged on draw) — each consecutive loss raises the points required for future predictions by 500
+- Awards streak prizes on win: token prizes → credited immediately; physical prizes → logged as MemberReward for staff fulfilment
+- **Draw**: all pending predictions are marked DRAW (state 4). No streaks change. Members are **not** locked out and their `current_loss_streak` is not incremented.
 
 Input
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | winner | Int | No | Country ID. Must be one of the two teams in the match |
+| **1** | winner | Int | No | **0 = DRAW** (explicit sentinel). **1–48 = winning team** (Country ID from match country list, must be one of the two teams in the match). Field is required — omitting it returns 400 |
 
-Output — Match Object with status = 3.
+Output — Match Object with status = 3. On draw: `winner` is null, `settled_at` is set.
 
 ---
 
@@ -550,42 +597,11 @@ Input
 
 ---
 
-## Dummy Countries
-
-Dummy country rows set a **floor/minimum** for that country in the country leaderboard. If real data already exceeds the dummy value, real data shows instead. Enter the total you want the country to display — not an additional amount to add on top.
-
-### /worldcup/dummy-countries/ GET
-
-### /worldcup/dummy-countries/{uuid}/ GET
-
-Output
-
-| \# | Property/Field | Data Type | Nullable | Description |
-| ----: | :---- | :---- | :---- | :---- |
-| **1** | uuid | UUID | No |  |
-| **2** | country | Int | No | Country ID (1–10) |
-| **3** | total\_points | Int | No | Floor value for points |
-| **4** | total\_users | Int | No | Floor value for user count |
-
-### /worldcup/dummy-countries/ POST
-
-### /worldcup/dummy-countries/{uuid}/ PUT (partial supported)
-
-Input
-
-| \# | Property/Field | Data Type | Nullable | Description |
-| ----: | :---- | :---- | :---- | :---- |
-| **1** | country | Int | No (create) / Yes (update) | Country ID (1–10) |
-| **2** | total\_points | Int | Yes | Default 0 |
-| **3** | total\_users | Int | Yes | Default 0 |
-
-### /worldcup/dummy-countries/{uuid}/archive/ PATCH
-
----
-
 ## Ranking (Admin)
 
-### /worldcup/ranking/ GET
+### /worldcup/ranking/realtime/ GET
+
+Real-time ranking — **real members only**, no dummy data merged in (unlike the member-facing `/worldcup/leaderboard/...` endpoints, which merge in `WorldCupDummyPlayer` rows).
 
 Query Parameters
 
@@ -593,5 +609,50 @@ Query Parameters
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | scope | Str | Yes | `country` for country board. Any other value or omit for player board |
 | **2** | country | Int | Yes | Filter players by country ID (player board only) |
+| **3** | period | Int | Yes | `1` = today, `2` = rolling 30 days, `3` = rolling 365 days. Omit (with no `from_date`/`to_date`) for all-time/lifetime totals |
+| **4** | from\_date | Str (YYYY-MM-DD) | Yes | Custom range start. Must be paired with `to_date`; takes priority over `period` |
+| **5** | to\_date | Str (YYYY-MM-DD) | Yes | Custom range end. Must be paired with `from_date`; takes priority over `period` |
+| **6** | total\_win | Int | Yes | Player board only. Shows players with **at least** this many wins within the selected window |
+| **7** | winning\_streak | Int | Yes | Player board only. Shows players whose **longest win streak within the selected window** is at least this value |
 
-Output — same format as `/worldcup/leaderboard/countries/` (scope=country) or `/worldcup/leaderboard/players/` (player board). Paginated.
+Notes
+- When `period`/`from_date`+`to_date` is supplied, `total_points`, `total_prediction`, `total_win`, and `winning_streak` are all scoped to that window (sourced from settled predictions and World Cup score redemptions in that range — not lifetime cumulative values). With no date filter, lifetime totals are returned (same values as `WorldCupMemberScore.total_points`).
+- Sort order on the player board follows whichever threshold filter is active: `winning_streak` (if set) → `total_win` (if set, and `winning_streak` not set) → `total_points` (default, when neither is set). All high → low.
+- `total_win`/`winning_streak` filters and sorting only apply to the player board (`scope` ≠ `country`).
+
+Output — same row format as `/worldcup/leaderboard/players/` (`scope` ≠ `country`) or `/worldcup/leaderboard/countries/` (`scope=country`), but built from real-member data only (no dummy rows). Paginated.
+
+---
+
+## KPI Dashboard (Admin)
+
+### /worldcup/dashboard/kpi/ GET
+
+Returns key metrics for the World Cup feature. When a date filter is supplied, each metric is compared against the immediately-preceding period of equal length (e.g. `period=2` compares the current rolling 30 days against the prior 30 days; a custom `from_date`/`to_date` range is compared against an equal-length range immediately before it). With no filter, all-time totals are returned and comparison fields are null.
+
+Query Parameters
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | period | Int | Yes | `1` = daily (today vs yesterday), `2` = monthly (rolling 30 days vs prior 30 days), `3` = yearly (rolling 365 days vs prior 365 days). Defaults to `2` when any date filter is present without an explicit `period` |
+| **2** | from\_date | Str (YYYY-MM-DD) | Yes | Custom range start. Must be paired with `to_date`; takes priority over `period`. Compared against an equal-length range immediately preceding it |
+| **3** | to\_date | Str (YYYY-MM-DD) | Yes | Custom range end. Must be paired with `from_date`; takes priority over `period` |
+
+Output
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | total\_sales | Object | No | KPI Entry — sum of `MemberDeposit.amount` in the period |
+| **2** | total\_participants | Object | No | KPI Entry — distinct members with a deposit in the period |
+| **3** | new\_depositing\_users | Object | No | KPI Entry — distinct members whose first-ever deposit falls within the period (no filter: all-time distinct depositors) |
+| **4** | returning\_depositing\_users | Object | No | KPI Entry — distinct members who deposited in the period AND had deposited before it (always 0 / null when no filter is applied) |
+| **5** | prediction\_users | Object | No | KPI Entry — distinct members who made a World Cup prediction in the period |
+| **6** | predicted\_matches | Object | No | KPI Entry — distinct matches that received at least one prediction in the period |
+
+KPI Entry Object
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | value | Int / Str (Decimal) | No | Current period's value (`total_sales` is a Decimal string, others are integers) |
+| **2** | change\_percent | Float | Yes | `% change vs. previous period`, rounded to 2dp. Null when no filter is applied, or when the previous period's value is 0 |
+| **3** | change\_direction | Int | Yes | `1` = up (current ≥ previous), `2` = down (current < previous). Null when no filter is applied |
