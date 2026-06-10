@@ -1,5 +1,7 @@
 "use client";
 
+import RowActions from "./RowActions";
+
 const HEADER_BG = "linear-gradient(180deg, #141828 0%, #333333 99.75%)";
 
 function fmt(n) {
@@ -7,9 +9,10 @@ function fmt(n) {
   return Number(n).toLocaleString("en-US");
 }
 
-export default function PlayerTable({ players = [] }) {
+export default function PlayerTable({ players = [], onEdit, onArchive }) {
   const hasRankColumns = players.some((p) => p.countryRank != null || p.globalRank != null);
-  const emptyColSpan = hasRankColumns ? 8 : 6;
+  const hasActions = typeof onEdit === "function" || typeof onArchive === "function";
+  const emptyColSpan = (hasRankColumns ? 8 : 6) + (hasActions ? 1 : 0);
 
   return (
     <div className="overflow-hidden rounded-[12px] border border-white/5">
@@ -25,6 +28,7 @@ export default function PlayerTable({ players = [] }) {
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Total Prediction</th>
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Total Win</th>
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Winning Streak</th>
+              {hasActions && <th className="px-5 py-4 text-right text-[13px] font-semibold text-[#fbeed2]">Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -45,6 +49,15 @@ export default function PlayerTable({ players = [] }) {
                   <td className="px-5 py-5 text-[12px] text-white">{p.totalPrediction}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{p.totalWin}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{p.winningStreak}</td>
+                  {hasActions && (
+                    <td className="px-5 py-5">
+                      <RowActions
+                        onEdit={() => onEdit?.(p)}
+                        onArchive={() => onArchive?.(p)}
+                        showArchive={!!onArchive}
+                      />
+                    </td>
+                  )}
                 </tr>
               ))
             )}

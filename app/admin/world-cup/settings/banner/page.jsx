@@ -91,15 +91,13 @@ function BannerForm() {
     try {
       // Use plain object - apiClient will auto-convert to FormData when it detects File
       const payload = {
-        title: form.title,
+        title: form.title.trim(),
         location: form.location,
+        label_text: form.label,
+        section_title: form.section,
+        subtitle: form.subtitle,
+        description: form.description,
       };
-      
-      // Only include non-empty optional fields
-      if (form.label) payload.label_text = form.label;
-      if (form.section) payload.section_title = form.section;
-      if (form.subtitle) payload.subtitle = form.subtitle;
-      if (form.description) payload.description = form.description;
       
       // Include image file if user uploaded one
       if (form.imageFile) {

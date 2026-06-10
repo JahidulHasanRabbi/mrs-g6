@@ -83,8 +83,8 @@ function DummyForm() {
     setError("");
     try {
       const payload = {
-        player_name: form.name,
-        country: form.countryUuid,
+        player_name: form.name.trim(),
+        country: Number(form.countryUuid),
         total_points: toNum(form.totalPoints),
         total_prediction: toNum(form.totalPrediction),
         total_win: toNum(form.totalWin),
@@ -97,7 +97,14 @@ function DummyForm() {
       }
       router.push("/admin/world-cup/settings");
     } catch (e) {
-      setError(e?.message ?? "Failed to save.");
+      const data = e?.data;
+      const fieldError = data && typeof data === "object"
+        ? Object.entries(data).find(([, value]) => value !== undefined && value !== null)
+        : null;
+      const message = fieldError
+        ? `${fieldError[0]}: ${Array.isArray(fieldError[1]) ? fieldError[1][0] : fieldError[1]}`
+        : e?.message;
+      setError(message ?? "Failed to save.");
     } finally {
       setSaving(false);
     }

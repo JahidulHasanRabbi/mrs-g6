@@ -88,6 +88,9 @@ function normalizeReward(r, countriesById = new Map()) {
     country: r.country_name ?? r.country_code ?? countryName(r.country, countriesById),
     description: r.description,
     image: r.image,
+    position: r.position,
+    winCondition: r.win_condition,
+    tokenAmount: r.token_amount,
   };
 }
 

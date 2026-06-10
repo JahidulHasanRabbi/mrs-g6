@@ -16,6 +16,9 @@ export default function RewardTable({ rewards = [], onEdit, onArchive }) {
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Quantity</th>
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Item Type</th>
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Country</th>
+              <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Position</th>
+              <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Win Condition</th>
+              <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Token Amount</th>
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Description</th>
               <th className="px-5 py-4 text-center text-[13px] font-semibold text-[#fbeed2]">Image</th>
               <th className="px-5 py-4 text-right text-[13px] font-semibold text-[#fbeed2]">Action</th>
@@ -24,7 +27,7 @@ export default function RewardTable({ rewards = [], onEdit, onArchive }) {
           <tbody>
             {rewards.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-5 py-10 text-center text-[13px] text-white/50">
+                <td colSpan={10} className="px-5 py-10 text-center text-[13px] text-white/50">
                   No rewards configured yet.
                 </td>
               </tr>
@@ -35,6 +38,9 @@ export default function RewardTable({ rewards = [], onEdit, onArchive }) {
                   <td className="px-5 py-5 text-[12px] text-white">{r.quantity}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{r.itemType}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{r.country}</td>
+                  <td className="px-5 py-5 text-[12px] text-white">{r.position ?? ""}</td>
+                  <td className="px-5 py-5 text-[12px] text-white">{r.winCondition ?? ""}</td>
+                  <td className="px-5 py-5 text-[12px] text-white">{r.tokenAmount ?? ""}</td>
                   <td className="px-5 py-5 text-[12px] leading-[1.6] text-white">{r.description}</td>
                   <td className="px-5 py-5 align-middle"><ImageCell src={r.image} alt={r.name} /></td>
                   <td className="px-5 py-5 align-middle">

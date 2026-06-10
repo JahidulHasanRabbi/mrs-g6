@@ -18,6 +18,33 @@ const ITEM_TYPES = [
   { value: 3, label: "Global Top Player" },
 ];
 
+function toNullableNumber(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const n = Number(String(value).replace(/[,\s]/g, ""));
+  return Number.isFinite(n) ? n : null;
+}
+
+function normalizeItemType(value) {
+  if (typeof value === "number") return value;
+  const normalized = String(value ?? "").trim().toUpperCase();
+  if (normalized === "PREDICTION") return 1;
+  if (normalized === "TOP COUNTRY" || normalized === "TOP_COUNTRY") return 2;
+  if (normalized === "GLOBAL TOP PLAYER" || normalized === "GLOBAL_TOP_PLAYER") return 3;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 2;
+}
+
+function apiErrorMessage(error) {
+  const data = error?.data;
+  if (!data || typeof data !== "object") return error?.message || "Failed to save.";
+  if (typeof data.detail === "string") return data.detail;
+  const firstField = Object.entries(data).find(([, value]) => value !== undefined && value !== null);
+  if (!firstField) return error?.message || "Failed to save.";
+  const [field, value] = firstField;
+  const message = Array.isArray(value) ? value[0] : value;
+  return `${field}: ${String(message)}`;
+}
+
 function ChevronIcon() {
   return (
     <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e9af41" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -78,6 +105,9 @@ function RewardForm() {
     itemType: 2,
     countryUuid: "",
     description: "",
+    position: "",
+    winCondition: "",
+    tokenAmount: "",
     imageFile: null,
   });
   const [imagePreview, setImagePreview] = useState(null);
@@ -95,9 +125,12 @@ function RewardForm() {
         setForm({
           name: r.reward_name ?? "",
           quantity: String(r.quantity ?? ""),
-          itemType: r.item_type ?? 2,
+          itemType: normalizeItemType(r.item_type ?? r.item_type_display),
           countryUuid: r.country ?? r.country_uuid ?? "",
           description: r.description ?? "",
+          position: r.position == null ? "" : String(r.position),
+          winCondition: r.win_condition == null ? "" : String(r.win_condition),
+          tokenAmount: r.token_amount == null ? "" : String(r.token_amount),
           imageFile: null,
         });
         setImagePreview(r.image || null);
@@ -121,21 +154,32 @@ function RewardForm() {
     setSaving(true);
     setError("");
     try {
+      const quantity = toNullableNumber(form.quantity) ?? 0;
+      const position = toNullableNumber(form.position);
+      const winCondition = toNullableNumber(form.winCondition);
+      const tokenAmount = toNullableNumber(form.tokenAmount);
+
       // Use plain object - apiClient will auto-convert to FormData when it detects File
       const payload = {
-        reward_name: form.name,
-        quantity: Number(String(form.quantity).replace(/[,\s]/g, "")) || 0,
+        reward_name: form.name.trim(),
+        quantity,
         item_type: form.itemType,
+        description: form.description,
       };
       
-      // Only include country if specified
-      if (form.countryUuid) {
-        payload.country = form.countryUuid;
+      if (form.itemType === 2 && form.countryUuid) {
+        payload.country = Number(form.countryUuid);
+      } else if (editingUuid && !form.imageFile) {
+        payload.country = null;
       }
       
-      // Only include non-empty optional fields
-      if (form.description) {
-        payload.description = form.description;
+      if (position !== null) {
+        payload.position = position;
+      }
+
+      if (form.itemType === 1) {
+        payload.win_condition = winCondition;
+        payload.token_amount = tokenAmount;
       }
       
       // Include image file if user uploaded one
@@ -151,8 +195,7 @@ function RewardForm() {
       router.push("/admin/world-cup/settings");
     } catch (e) {
       console.error('Error saving World Cup reward:', e);
-      const errorMsg = e?.data?.detail || e?.data?.reward_name?.[0] || e?.message || "Failed to save.";
-      setError(errorMsg);
+      setError(apiErrorMessage(e));
     } finally {
       setSaving(false);
     }
@@ -191,6 +234,22 @@ function RewardForm() {
           <label className="mb-2 block text-[14px] font-semibold text-white">Description</label>
           <textarea value={form.description} onChange={set("description")} rows={3} className={`${INPUT_BASE} resize-none`} />
         </div>
+        <div>
+          <label className="mb-2 block text-[14px] font-semibold text-white">Position</label>
+          <input type="text" value={form.position} onChange={set("position")} className={INPUT_BASE} />
+        </div>
+        {form.itemType === 1 && (
+          <>
+            <div>
+              <label className="mb-2 block text-[14px] font-semibold text-white">Win Condition</label>
+              <input type="text" value={form.winCondition} onChange={set("winCondition")} className={INPUT_BASE} />
+            </div>
+            <div>
+              <label className="mb-2 block text-[14px] font-semibold text-white">Token Amount</label>
+              <input type="text" value={form.tokenAmount} onChange={set("tokenAmount")} className={INPUT_BASE} />
+            </div>
+          </>
+        )}
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">Choose Image</label>
           <button
