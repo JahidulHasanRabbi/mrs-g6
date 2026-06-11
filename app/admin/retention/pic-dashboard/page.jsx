@@ -19,8 +19,8 @@ import {
 } from "../../../components/admin/retention/constants";
 import {
   getCrmDashboardSummary,
+  getCrmDashboardBreakdown,
   getCrmDashboardDetails,
-  periodLabelToType,
 } from "../../../api/crmApi";
 
 // PIC Dashboard — overview KPIs + paginated PIC performance table.
@@ -81,41 +81,56 @@ function zeroByType(type) {
   return formatByType(type, 0);
 }
 
-// Pull the per-brand split for one KPI out of the dashboard summary. The
-// overview endpoint currently returns only flat totals, so until the backend
-// adds a per-brand split this returns []. It accepts the same station-keyed
-// shape the retention-summary endpoint already uses ([{ station, amount }] /
-// [{ station, members }]) under a handful of likely keys, so whichever field
-// the backend ships, the popup lights up without further frontend changes.
-function getBreakdownRows(summary, meta) {
-  if (!summary) return [];
-  const candidates = [
-    summary[`${meta.key}_breakdown`],
-    summary[`${meta.key}_per_brand`],
-    summary[`${meta.key}_by_brand`],
-    summary[`${meta.key}_by_station`],
-    summary.breakdown?.[meta.key],
-    // future-proof: backend may switch the bare key to a station list (as
-    // retention-summary does) and move the scalar to `<key>__total`.
-    Array.isArray(summary[meta.key]) ? summary[meta.key] : undefined,
-  ];
-  const list = candidates.find((c) => Array.isArray(c) && c.length > 0);
-  if (!list) return [];
-  return list
+function normalizeBreakdownRows(list, meta) {
+  const rows = Array.isArray(list?.results) ? list.results : list;
+  if (!Array.isArray(rows)) return [];
+  return rows
     .map((entry) => {
-      const brand = entry?.station ?? entry?.brand ?? entry?.name ?? entry?.level;
-      const raw = entry?.amount ?? entry?.members ?? entry?.value ?? entry?.count ?? entry?.total;
+      const brand = entry?.station ?? entry?.brand ?? entry?.name;
+      const raw = entry?.value ?? entry?.amount ?? entry?.members ?? entry?.count ?? entry?.total;
       if (!brand) return null;
       return { brand: String(brand), value: formatByType(meta.type, raw) };
     })
     .filter(Boolean);
 }
 
-function buildPeriodParams(period, fromDate, toDate) {
-  if (fromDate && toDate) {
-    return { type: 4, from_date: fromDate, to_date: toDate };
+function formatDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function buildDateRangeParams(period, fromDate, toDate) {
+  if (fromDate && toDate) return { from_date: fromDate, to_date: toDate };
+
+  const today = new Date();
+  if (period === "Daily") {
+    const value = formatDate(today);
+    return { from_date: value, to_date: value };
   }
-  return { type: periodLabelToType(period) };
+  if (period === "Monthly") {
+    return {
+      from_date: formatDate(new Date(today.getFullYear(), today.getMonth(), 1)),
+      to_date: formatDate(new Date(today.getFullYear(), today.getMonth() + 1, 0)),
+    };
+  }
+  if (period === "Yearly") {
+    return {
+      from_date: formatDate(new Date(today.getFullYear(), 0, 1)),
+      to_date: formatDate(new Date(today.getFullYear(), 11, 31)),
+    };
+  }
+
+  const value = formatDate(today);
+  return { from_date: value, to_date: value };
+}
+
+function buildBreakdownParams(period, fromDate, toDate, metric) {
+  return {
+    ...buildDateRangeParams(period, fromDate, toDate),
+    metric,
+  };
 }
 
 // Chrome (auth guard, main wrapper, topbar) lives in
@@ -137,11 +152,13 @@ function PicDashboardContent() {
   const [summary, setSummary] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
   const [activeKpi, setActiveKpi] = useState(null);
+  const [breakdownRows, setBreakdownRows] = useState([]);
+  const [breakdownLoading, setBreakdownLoading] = useState(false);
 
   const fromDate = searchParams.get("from") || "";
   const toDate = searchParams.get("to") || "";
   const periodParams = useMemo(
-    () => buildPeriodParams(period, fromDate, toDate),
+    () => buildDateRangeParams(period, fromDate, toDate),
     [period, fromDate, toDate]
   );
 
@@ -172,11 +189,28 @@ function PicDashboardContent() {
     loadSummary();
   }, [loadSummary]);
 
+  const handleSelectKpi = useCallback(async (kpi) => {
+    setActiveKpi(kpi);
+    setBreakdownRows([]);
+    setBreakdownLoading(true);
+    try {
+      const res = await getCrmDashboardBreakdown(
+        buildBreakdownParams(period, fromDate, toDate, kpi.meta.key),
+      );
+      setBreakdownRows(normalizeBreakdownRows(res, kpi.meta));
+    } catch (err) {
+      console.error("[pic-dashboard] breakdown failed", err);
+      setBreakdownRows([]);
+    } finally {
+      setBreakdownLoading(false);
+    }
+  }, [period, fromDate, toDate]);
+
   return (
     <>
       <HeaderRow period={period} onPeriodChange={handlePeriodChange} fromDate={fromDate} toDate={toDate} />
       <div className="relative">
-        <KpiGrid summary={summary} loading={summaryLoading} onSelect={setActiveKpi} />
+        <KpiGrid summary={summary} loading={summaryLoading} onSelect={handleSelectKpi} />
         {summaryLoading && <LoadingOverlay label="Loading..." />}
       </div>
       <PerformanceSummary periodParams={periodParams} />
@@ -185,7 +219,8 @@ function PicDashboardContent() {
         onClose={() => setActiveKpi(null)}
         kpi={activeKpi}
         brands={BRANDS}
-        rows={activeKpi ? getBreakdownRows(summary, activeKpi.meta) : []}
+        rows={breakdownRows}
+        loading={breakdownLoading}
       />
     </>
   );
@@ -210,7 +245,7 @@ function HeaderRow({ period, onPeriodChange, fromDate, toDate }) {
         </h1>
       </div>
       <Suspense fallback={null}>
-        <PeriodToggle period={period} onPeriodChange={onPeriodChange} />
+        <PeriodToggle period={period} onPeriodChange={onPeriodChange} fromDate={fromDate} toDate={toDate} />
       </Suspense>
     </div>
   );

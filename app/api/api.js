@@ -191,6 +191,7 @@ export const ENDPOINTS = {
     MEMBER_FOLLOW_UP: (memberUuid) => `/crm-members/members/${memberUuid}/follow-up/`,
     // Dashboard
     DASHBOARD_SUMMARY: '/crm-admins/dashboard-summary/',
+    DASHBOARD_BREAKDOWN: '/crm-admins/dashboard-breakdown/',
     DASHBOARD_DETAILS: '/crm-admins/dashboard-details/',
     // Member Assignment
     ASSIGNMENTS: '/crm-admins/assignments/',

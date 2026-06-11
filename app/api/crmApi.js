@@ -190,14 +190,21 @@ export async function getAdminMembers(adminUuid, params = {}) {
 // ─────────────────────────── Dashboard ───────────────────────────
 
 // GET /crm-admins/dashboard-summary/
-// params: { type, from_date, to_date }
+// params: { from_date, to_date }
 export async function getCrmDashboardSummary(params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.CRM.DASHBOARD_SUMMARY}${qs}`, { method: 'GET' }, true, 'admin');
 }
 
+// GET /crm-admins/dashboard-breakdown/
+// params: { from_date, to_date, metric }
+export async function getCrmDashboardBreakdown(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.CRM.DASHBOARD_BREAKDOWN}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
 // GET /crm-admins/dashboard-details/  (paginated)
-// params: { page, page_size, type, from_date, to_date }
+// params: { page, page_size, from_date, to_date }
 export async function getCrmDashboardDetails(params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.CRM.DASHBOARD_DETAILS}${qs}`, { method: 'GET' }, true, 'admin');

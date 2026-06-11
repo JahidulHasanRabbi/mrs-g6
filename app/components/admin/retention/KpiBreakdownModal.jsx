@@ -11,10 +11,8 @@ import { ASSETS, GRAD_GOLD } from "./constants";
 //
 // `kpi` carries the tile's label + formatted total. `brands` is the ordered
 // list of brand codes to show (KG/LV/EP/AB/UB/N1). `rows` is the per-brand
-// values already formatted by the caller: [{ brand, value }]. When `rows` is
-// empty the modal still shows the total plus a notice that the per-brand
-// split isn't available yet (backend dependency).
-export default function KpiBreakdownModal({ isOpen, onClose, kpi, brands, rows }) {
+// values already formatted by the caller: [{ brand, value }].
+export default function KpiBreakdownModal({ isOpen, onClose, kpi, brands, rows, loading = false }) {
   useEffect(() => {
     if (!isOpen) return;
     const onKey = (e) => {
@@ -86,15 +84,15 @@ export default function KpiBreakdownModal({ isOpen, onClose, kpi, brands, rows }
               <img src={`${ASSETS}/shop-icon.svg`} alt="" className="h-6 w-6 shrink-0" />
               <span className="min-w-0 flex-1 b-4 text-white">{brand}</span>
               <span className="shrink-0 b-4 whitespace-nowrap tabular-nums text-[#84ebb4]">
-                {hasBreakdown ? valueByBrand.get(brand) ?? kpi?.zero : "—"}
+                {loading ? "..." : hasBreakdown ? valueByBrand.get(brand) ?? kpi?.zero : "—"}
               </span>
             </div>
           ))}
         </div>
 
-        {!hasBreakdown && (
+        {!loading && !hasBreakdown && (
           <p className="mt-5 rounded-[8px] border border-[#f2cb7a]/30 bg-[#f2cb7a]/5 px-4 py-2 text-[12px] leading-[18px] text-[#f6dda6]">
-            Per-brand breakdown isn&apos;t available for this metric yet.
+            Per-brand breakdown isn&apos;t available for this metric.
           </p>
         )}
 
