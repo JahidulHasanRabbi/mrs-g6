@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { GRAD_GOLD } from "../../../../components/admin/retention/constants";
@@ -15,22 +15,34 @@ import { createPromotion, getAvailablePromotions, getPromotionsByStation, getRed
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-function emptyPromotion() {
-  return { promotion_type: "", item_uuid: "", promotion_code: "" };
+function emptyPromotion(promotionType = "") {
+  return { promotion_type: promotionType, item_uuid: "", promotion_code: "" };
 }
 
 function normalizeListResponse(response) {
   if (Array.isArray(response)) return response;
   if (Array.isArray(response?.results)) return response.results;
   if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.value)) return response.value;
   return [];
 }
 
-// Map a get-by-station group's `type` label (e.g. "VIP Type") back to the
-// numeric `value` from available-promotions (case/spacing tolerant).
-function matchTypeValue(typeLabel, promotionTypes) {
+function normalizeLabel(value) {
+  return String(value ?? "").toLowerCase().replace(/[_\s]+/g, " ").trim();
+}
+
+// Map a get-by-station row back to a promotion type. Staging returns group
+// labels like "VIP Type", while the actual type is often in promo.item/name.
+function matchTypeValue(group, promo, promotionTypes) {
+  const typeValues = new Set(promotionTypes.map((t) => String(t.value)));
+  const itemValue = String(promo?.item ?? "");
+  if (typeValues.has(itemValue)) return itemValue;
+
+  const byPromoName = promotionTypes.find((t) => normalizeLabel(t.label) === normalizeLabel(promo?.name));
+  if (byPromoName) return String(byPromoName.value);
+
   const norm = (s) => String(s ?? "").toLowerCase().replace(/[_\s]+/g, " ").trim();
-  const target = norm(typeLabel);
+  const target = norm(group?.type);
   const found = promotionTypes.find((t) => norm(t.label) === target);
   return found ? String(found.value) : "";
 }
@@ -43,7 +55,7 @@ function hydratePromotions(response, promotionTypes) {
     const promos = Array.isArray(group?.promotions) ? group.promotions : Array.isArray(group?.promotion) ? group.promotion : [];
     for (const promo of promos) {
       rows.push({
-        promotion_type: matchTypeValue(group?.type, promotionTypes),
+        promotion_type: matchTypeValue(group, promo, promotionTypes),
         item_uuid: typeof promo?.item === "string" && UUID_RE.test(promo.item) ? promo.item : "",
         promotion_code: String(promo?.code ?? ""),
       });
@@ -97,18 +109,6 @@ export default function AddPromotionPage() {
       });
   }, []);
 
-  // The <select> visually shows the first option as selected before the user
-  // touches it, but the controlled value stays "" until onChange fires. Seed
-  // any unset promotion_type with the first loaded type so what's shown
-  // matches what gets submitted.
-  useEffect(() => {
-    if (promotionTypes.length === 0) return;
-    const firstValue = String(promotionTypes[0].value);
-    setPromotions((prev) =>
-      prev.map((p) => (p.promotion_type === "" ? { ...p, promotion_type: firstValue } : p))
-    );
-  }, [promotionTypes]);
-
   useEffect(() => {
     getRedemptionItems()
       .then((res) => {
@@ -124,24 +124,23 @@ export default function AddPromotionPage() {
   // POST replaces the full set of promotions for the station, so hydrate the
   // form with the station's existing promotions once we know the station and
   // have the type list (needed to map type labels back to values).
-  const hydratedRef = useRef(false);
   useEffect(() => {
-    if (hydratedRef.current) return;
     if (!stationId || promotionTypes.length === 0) return;
-    hydratedRef.current = true;
     getPromotionsByStation(stationId)
       .then((res) => {
         const rows = hydratePromotions(res, promotionTypes);
-        if (rows.length > 0) setPromotions(rows);
+        setPromotions(rows.length > 0 ? rows : [emptyPromotion()]);
       })
-      .catch((err) => console.error("[promotions-add] hydrate failed", err));
+    .catch((err) => console.error("[promotions-add] hydrate failed", err));
   }, [stationId, promotionTypes]);
 
   const updatePromotion = (index, key) => (value) => {
     setPromotions((prev) => prev.map((p, i) => (i === index ? { ...p, [key]: value } : p)));
   };
 
-  const addPromotionRow = () => setPromotions((prev) => [...prev, emptyPromotion()]);
+  const addPromotionRow = () => {
+    setPromotions((prev) => [...prev, emptyPromotion()]);
+  };
 
   const removePromotionRow = (index) =>
     setPromotions((prev) => prev.filter((_, i) => i !== index));
@@ -196,6 +195,12 @@ export default function AddPromotionPage() {
     label: t.label,
   }));
 
+  const canAddPromotion = useMemo(() => {
+    const used = new Set(promotions.map((p) => String(p.promotion_type)).filter(Boolean));
+    const hasUnselectedRow = promotions.some((p) => String(p.promotion_type) === "");
+    return !hasUnselectedRow && typeOptions.some((option) => !used.has(option.value));
+  }, [promotions, typeOptions]);
+
   const itemOptions = items.map((i) => ({
     value: i.uuid,
     label: i.name || i.title || i.uuid,
@@ -236,7 +241,10 @@ export default function AddPromotionPage() {
                 key={index}
                 index={index}
                 promo={promo}
-                typeOptions={typeOptions}
+                typeOptions={typeOptions.filter((option) => (
+                  option.value === String(promo.promotion_type)
+                  || !promotions.some((p, promoIndex) => promoIndex !== index && String(p.promotion_type) === option.value)
+                ))}
                 typesError={typesError}
                 itemOptions={itemOptions}
                 itemsError={itemsError}
@@ -244,7 +252,7 @@ export default function AddPromotionPage() {
                 onRemove={promotions.length > 1 ? () => removePromotionRow(index) : null}
               />
             ))}
-            <AddRowButton onClick={addPromotionRow} />
+            {canAddPromotion && <AddRowButton onClick={addPromotionRow} />}
           </div>
 
           <div className="flex flex-wrap items-center justify-end gap-4 pt-2">
@@ -359,7 +367,7 @@ function PromotionEntry({ index, promo, typeOptions, typesError, itemOptions, it
           <button
             type="button"
             onClick={onRemove}
-            className="text-[12px] font-medium text-[#d00416] hover:underline"
+            className="rounded-[6px] bg-[#d00416] px-3 py-1 text-[12px] font-semibold text-white transition hover:bg-[#b80413]"
           >
             Remove
           </button>
@@ -371,6 +379,8 @@ function PromotionEntry({ index, promo, typeOptions, typesError, itemOptions, it
           value={promo.promotion_type}
           onChange={onChange(index, "promotion_type")}
           options={typeOptions}
+          allowEmpty
+          emptyLabel="Select type"
           placeholder={
             typesError
               ? "Failed to load types"

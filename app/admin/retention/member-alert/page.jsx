@@ -9,6 +9,7 @@ import {
   assignCrmMemberToPic,
   getRetentionMembers,
   getCrmUsers,
+  getCrmRoles,
   getCrmVipTiers,
   getPrioritySummary,
   patchCrmMemberFollowUp,
@@ -30,26 +31,22 @@ const BRAND_OPTIONS = ["KG", "LV", "EP", "AB", "UB", "N1"];
 const SALES_SORT_OPTIONS = ["High to Low", "Low to High"];
 const WINLOSS_SORT_OPTIONS = ["High to Low", "Low to High"];
 
+// A role carries the Retention permission if its permissions list includes
+// the "access_retention" key (Others > Type, per /admins/permissions/).
+function roleHasRetentionAccess(role) {
+  const permissions = role?.permissions;
+  if (!Array.isArray(permissions)) return false;
+  return permissions.some((p) => String(p?.key || p).toLowerCase() === "access_retention");
+}
+
 // Whether a PIC carries the Retention role — the "All Retention" filter should
-// only list those (spec #10). Backend ultimately decides; until it exposes a
-// flag we accept several likely shapes and fall back to showing everyone.
-function hasRetentionRole(pic) {
+// only list those (spec #10). /admins/users/ only exposes the PIC's role name,
+// so membership is resolved by cross-referencing /admins/roles/ for roles that
+// have the "access_retention" permission.
+function hasRetentionRole(pic, retentionRoleNames) {
   if (!pic) return false;
-  if (pic.is_retention || pic.has_retention_role || pic.retention_role) return true;
-  const role = pic.role || pic.role_name || "";
-  if (typeof role === "string" && role.toLowerCase().includes("retention")) return true;
-  const roles = pic.roles || pic.role_names;
-  if (Array.isArray(roles)) {
-    return roles.some((r) => String(r?.name || r).toLowerCase().includes("retention"));
-  }
-  const permissions = pic.permissions || pic.permission_keys;
-  if (Array.isArray(permissions)) {
-    return permissions.some((p) => {
-      const key = String(p?.key || p).toLowerCase();
-      return key.includes("retention") || key === "view_retention_members";
-    });
-  }
-  return false;
+  const role = String(pic.role || pic.role_name || "").trim().toLowerCase();
+  return role ? retentionRoleNames?.has(role) ?? false : false;
 }
 
 function memberSalesValue(row) {
@@ -268,6 +265,7 @@ function FollowUpList() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [pics, setPics] = useState([]);
+  const [retentionRoleNames, setRetentionRoleNames] = useState(new Set());
   const [walletTiers, setWalletTiers] = useState([]);
   const [vipTiers, setVipTiers] = useState([]);
   const [reloadKey, setReloadKey] = useState(0);
@@ -279,6 +277,16 @@ function FollowUpList() {
         setPics(results);
       })
       .catch(() => setPics([]));
+    getCrmRoles({ page: 1, page_size: 100 })
+      .then((res) => {
+        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        const names = results
+          .filter(roleHasRetentionAccess)
+          .map((r) => String(r?.name || "").trim().toLowerCase())
+          .filter(Boolean);
+        setRetentionRoleNames(new Set(names));
+      })
+      .catch(() => setRetentionRoleNames(new Set()));
     getCrmVipTiers({ page: 1, page_size: 100 })
       .then((res) => {
         const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
@@ -296,8 +304,8 @@ function FollowUpList() {
   // Only PICs holding the Retention role populate the "All Retention" filter
   // (spec #10). If the backend exposes no role data yet, fall back to all PICs.
   const retentionPics = useMemo(() => {
-    return pics.filter(hasRetentionRole);
-  }, [pics]);
+    return pics.filter((pic) => hasRetentionRole(pic, retentionRoleNames));
+  }, [pics, retentionRoleNames]);
 
   useEffect(() => {
     setPage(1);
@@ -565,25 +573,49 @@ function SearchInput({ value, onChange }) {
 // Single-day filter only — no range (spec #7). A native date input keeps it to
 // one calendar day and is the lightest control that does the job.
 function DayPicker({ value, onChange }) {
+  const inputRef = useRef(null);
+
+  const openPicker = () => {
+    const el = inputRef.current;
+    if (!el) return;
+    if (typeof el.showPicker === "function") el.showPicker();
+    else el.focus();
+  };
+
+  const formatted = value
+    ? new Date(`${value}T00:00:00`).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+    : "";
+
   return (
     <div
-      className="flex items-center gap-2 rounded-[8px] border border-[#f2cb7a] px-3 py-2"
+      className="relative flex items-center gap-2 rounded-[8px] border border-[#f2cb7a] px-3 py-2 cursor-pointer"
       style={{ backgroundImage: GRAD_DARK }}
+      onClick={openPicker}
     >
+      <span className="pointer-events-none whitespace-nowrap text-[12px] font-medium text-[#f6dda6]">
+        {formatted || "dd/mm/yyyy"}
+      </span>
       <input
+        ref={inputRef}
         type="date"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-label="Filter by day"
-        lang="en-GB"
-        className="bg-transparent text-[12px] font-medium text-[#f6dda6] focus:outline-none [color-scheme:dark]"
+        className="absolute inset-0 h-full w-full cursor-pointer opacity-0 [color-scheme:dark]"
       />
       {value ? (
         <button
           type="button"
-          onClick={() => onChange("")}
+          onClick={(e) => {
+            e.stopPropagation();
+            onChange("");
+          }}
           aria-label="Clear date"
-          className="text-[12px] leading-none text-[#f6dda6]/70 hover:text-[#f6dda6]"
+          className="relative z-10 text-[12px] leading-none text-[#f6dda6]/70 hover:text-[#f6dda6]"
         >
           ✕
         </button>
@@ -636,9 +668,12 @@ function followedUpDate(row) {
   const text = String(raw).replace("T", " ");
   const [d = "", t = ""] = text.split(" ");
   const [y, m, day] = d.split("-");
-  if (!y) return String(raw);
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  return `${Number(day)} ${months[Number(m) - 1] || m} ${y}${t ? `, ${t.slice(0, 5)}` : ""}`;
+  if (!y || !m || !day) return String(raw);
+  const [hourRaw = "0", minuteRaw = "00"] = t.split(":");
+  const hour24 = Number(hourRaw);
+  const hour12 = hour24 % 12 || 12;
+  const ampm = hour24 >= 12 ? "PM" : "AM";
+  return `${String(day).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}, ${String(hour12).padStart(2, "0")}:${String(minuteRaw).padStart(2, "0")} ${ampm}`;
 }
 
 function TableHeader() {

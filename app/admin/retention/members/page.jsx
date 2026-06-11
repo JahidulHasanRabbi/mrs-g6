@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { getCrmMembers, getCrmUsers, getCrmVipTiers } from "../../../api/crmApi";
@@ -15,17 +15,76 @@ const GRAD_DARK = "linear-gradient(178deg, #141828 0%, #333333 99.7%)";
 const PAGE_SIZE = 7;
 
 const PRIORITY_OPTIONS = ["High", "Medium", "Low", "Inactive"];
+const BRAND_OPTIONS = ["KG", "LV", "EP", "AB", "UB", "N1"];
+const SALES_SORT_OPTIONS = ["High to Low", "Low to High"];
 
 const COLUMNS = [
-  { key: "name",     label: "Username",       minW: 180 },
-  { key: "phone",    label: "Phone Number",   minW: 140 },
-  { key: "vip",      label: "VIP Level",      minW: 100 },
-  { key: "sales",    label: "Daily Sales",    minW: 120 },
-  { key: "winloss",  label: "Daily Win/Loss", minW: 130 },
-  { key: "priority", label: "Priority",       minW: 100 },
-  { key: "pic",      label: "Retention",      minW: 110 },
-  { key: "action",   label: "Action",         minW: 110, align: "end" },
+  { key: "name",        label: "Username",            minW: 180 },
+  { key: "brand",       label: "Brand",               minW: 100 },
+  { key: "phone",       label: "Phone Number",        minW: 140 },
+  { key: "vip",         label: "VIP Level",           minW: 100 },
+  { key: "sales",       label: "Daily Sales",         minW: 120 },
+  { key: "winloss",     label: "Daily Win/Loss",      minW: 130 },
+  { key: "priority",    label: "Priority",            minW: 100 },
+  { key: "pic",         label: "Retention",           minW: 110 },
+  { key: "followed_by", label: "Last Followed Up By",   minW: 150 },
+  { key: "followed_at", label: "Last Followed Up Date", minW: 160 },
+  { key: "follow_stat", label: "Follow Up Status",      minW: 150 },
+  { key: "action",      label: "Action",              minW: 110, align: "end" },
 ];
+
+// Follow Up Status (Member List - GET): Completed (done) · Pending (not yet) ·
+// Missed (not done and the day has rolled past midnight). Derived from the
+// backend `follow_up_status` when present; otherwise inferred from
+// last-followed-up. Same logic as the Member Follow Up List.
+const FOLLOW_STATUS_COLORS = {
+  Completed: { bg: "#003920", color: "#84ebb4" },
+  Pending: { bg: "#3d2e00", color: "#eaad2c" },
+  Missed: { bg: "#4a0d12", color: "#fb6f7d" },
+};
+
+function deriveFollowStatus(row) {
+  const raw = row?.follow_up_status || row?.followup_status;
+  if (raw) {
+    const norm = String(raw).toLowerCase();
+    if (norm.startsWith("complet")) return "Completed";
+    if (norm.startsWith("miss")) return "Missed";
+    if (norm.startsWith("pend")) return "Pending";
+  }
+  const last = row?.last_followed_up_date || row?.last_followed_up_at || row?.last_follow_up_at || row?.last_action_at;
+  return last ? "Completed" : "Pending";
+}
+
+function FollowUpStatusBadge({ row }) {
+  const status = deriveFollowStatus(row);
+  const palette = FOLLOW_STATUS_COLORS[status] || FOLLOW_STATUS_COLORS.Pending;
+  return (
+    <span
+      className="inline-flex items-center rounded-[4px] px-2.5 py-1 text-[12px] font-semibold leading-[18px] whitespace-nowrap"
+      style={{ backgroundColor: palette.bg, color: palette.color }}
+    >
+      {status}
+    </span>
+  );
+}
+
+function followedUpBy(row) {
+  return row?.last_followed_up_by || row?.last_follow_up_by || row?.last_action_by || "—";
+}
+
+function followedUpDate(row) {
+  const raw = row?.last_followed_up_date || row?.last_followed_up_at || row?.last_follow_up_at || row?.last_action_at;
+  if (!raw) return "—";
+  const text = String(raw).replace("T", " ");
+  const [d = "", t = ""] = text.split(" ");
+  const [y, m, day] = d.split("-");
+  if (!y || !m || !day) return String(raw);
+  const [hourRaw = "0", minuteRaw = "00"] = t.split(":");
+  const hour24 = Number(hourRaw);
+  const hour12 = hour24 % 12 || 12;
+  const ampm = hour24 >= 12 ? "PM" : "AM";
+  return `${String(day).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}, ${String(hour12).padStart(2, "0")}:${String(minuteRaw).padStart(2, "0")} ${ampm}`;
+}
 
 const TABLE_MIN_WIDTH = COLUMNS.reduce((sum, c) => sum + c.minW, 0);
 
@@ -34,6 +93,10 @@ function formatCurrency(value) {
   const num = parseFloat(value);
   if (Number.isNaN(num)) return `RM ${value}`;
   return `RM ${num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function memberSalesValue(row) {
+  return parseFloat(row?.daily_sales ?? 0) || 0;
 }
 
 export default function RetentionMembersPage() {
@@ -58,6 +121,8 @@ function RetentionMembersContent() {
   const [walletLevel, setWalletLevel] = useState("");
   const [vip, setVip] = useState("");
   const [pic, setPic] = useState("");
+  const [brand, setBrand] = useState("");
+  const [salesSort, setSalesSort] = useState("");
   const [query, setQuery] = useState("");
 
   const setPage = (next) => {
@@ -82,6 +147,8 @@ function RetentionMembersContent() {
   const handleWalletLevel = (v) => { setWalletLevel(v); resetToPage1(); };
   const handleVip = (v) => { setVip(v); resetToPage1(); };
   const handlePic = (v) => { setPic(v); resetToPage1(); };
+  const handleBrand = (v) => { setBrand(v); resetToPage1(); };
+  const handleSalesSort = (v) => { setSalesSort(v); resetToPage1(); };
   const handleQuery = (v) => { setQuery(v); resetToPage1(); };
 
   const [pics, setPics] = useState([]);
@@ -127,6 +194,9 @@ function RetentionMembersContent() {
         const retentionUser = pic
           ? pics.find((u) => (u.full_name || u.username) === pic)
           : undefined;
+        const ordering = salesSort
+          ? (salesSort === "High to Low" ? "-daily_sales" : "daily_sales")
+          : undefined;
         const res = await getCrmMembers({
           page,
           page_size: PAGE_SIZE,
@@ -134,7 +204,9 @@ function RetentionMembersContent() {
           wallet_vip_level: walletLevel || undefined,
           mrs_vip_level: vip || undefined,
           retention: retentionUser?.id ?? retentionUser?.uuid ?? undefined,
+          brand: brand || undefined,
           search: debouncedQuery || undefined,
+          ordering,
         });
         if (cancelled) return;
         const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
@@ -153,7 +225,15 @@ function RetentionMembersContent() {
     return () => {
       cancelled = true;
     };
-  }, [page, priority, walletLevel, vip, pic, pics, debouncedQuery]);
+  }, [page, priority, walletLevel, vip, pic, brand, salesSort, pics, debouncedQuery]);
+
+  // Client-side fallback sort by sales — backend `ordering` covers cross-page,
+  // this keeps the current page correctly ordered if the backend ignores it.
+  const sortedRows = useMemo(() => {
+    if (!salesSort) return rows;
+    const dir = salesSort === "High to Low" ? -1 : 1;
+    return [...rows].sort((a, b) => (memberSalesValue(a) - memberSalesValue(b)) * dir);
+  }, [rows, salesSort]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -189,6 +269,8 @@ function RetentionMembersContent() {
           <FilterDropdown label="Priority" value={priority} onChange={handlePriority} options={PRIORITY_OPTIONS} />
           <FilterDropdown label="Wallet Level" value={walletLevel} onChange={handleWalletLevel} options={walletTiers} />
           <FilterDropdown label="MRS Level" value={vip} onChange={handleVip} options={vipTiers.map((t) => t.name)} />
+          <FilterDropdown label="Sales (H-L)" value={salesSort} onChange={handleSalesSort} options={SALES_SORT_OPTIONS} />
+          <FilterDropdown label="Brand" value={brand} onChange={handleBrand} options={BRAND_OPTIONS} />
           <FilterDropdown label="All PIC" value={pic} onChange={handlePic} options={pics.map((u) => u.full_name || u.username).filter(Boolean)} />
           <SearchInput value={query} onChange={handleQuery} />
         </div>
@@ -200,12 +282,12 @@ function RetentionMembersContent() {
           <div className="flex w-full flex-col">
             {loading ? (
               <TableSkeleton rows={PAGE_SIZE} />
-            ) : rows.length === 0 ? (
+            ) : sortedRows.length === 0 ? (
               <div className="px-6 py-12 text-center text-[12px] text-white/40">
                 No members found.
               </div>
             ) : (
-              rows.map((row, idx) => <TableRow key={`${row.uuid || row.username || "member"}-${idx}`} row={row} />)
+              sortedRows.map((row, idx) => <TableRow key={`${row.uuid || row.username || "member"}-${idx}`} row={row} />)
             )}
           </div>
         </div>
@@ -323,25 +405,44 @@ function TableHeader() {
 function TableRow({ row }) {
   const href = `/admin/retention/members/${row.uuid}`;
   const name = row.full_name || row.username || "—";
+  const alerted = Boolean(row.alert);
   return (
-    <div className="flex w-full items-stretch -mb-px border-b border-white/5">
+    <div
+      className={`flex w-full items-stretch -mb-px border-b ${
+        alerted ? "border-[#fb3748]/35 bg-[#fb3748]/5 ring-1 ring-inset ring-[#fb3748]/45" : "border-white/5"
+      }`}
+    >
       <Cell minW={COLUMNS[0].minW}>
         <div className="flex min-w-0 items-center gap-3">
-          <UserAvatar />
-          <span className="min-w-0 break-words text-[12px] font-medium text-white leading-[18px]">
-            {name}
-          </span>
+          <UserAvatar alerted={alerted} />
+          <div className="flex min-w-0 flex-col gap-1">
+            <span className={`min-w-0 break-words text-[12px] font-medium leading-[18px] ${alerted ? "text-[#fb6f7d]" : "text-white"}`}>
+              {name}
+            </span>
+            {alerted ? (
+              <span className="inline-flex w-fit items-center gap-1 rounded-[10px] border border-[#fb3748] bg-[#fb3748]/15 px-2 py-0.5 text-[10px] font-semibold leading-[15px] text-[#fb6f7d]">
+                <span aria-hidden="true" className="text-[9px] leading-none">!</span>
+                Alerted
+              </span>
+            ) : null}
+          </div>
         </div>
       </Cell>
-      <DataCell value={row.phone_number} minW={COLUMNS[1].minW} />
-      <DataCell value={row.vip_level} minW={COLUMNS[2].minW} />
-      <DataCell value={formatCurrency(row.daily_sales)} minW={COLUMNS[3].minW} />
-      <DataCell value={formatCurrency(row.daily_win_loss)} minW={COLUMNS[4].minW} />
-      <Cell minW={COLUMNS[5].minW}>
+      <DataCell value={row.brand} minW={COLUMNS[1].minW} />
+      <DataCell value={row.phone_number} minW={COLUMNS[2].minW} />
+      <DataCell value={row.vip_level} minW={COLUMNS[3].minW} />
+      <DataCell value={formatCurrency(row.daily_sales)} minW={COLUMNS[4].minW} />
+      <DataCell value={formatCurrency(row.daily_win_loss)} minW={COLUMNS[5].minW} />
+      <Cell minW={COLUMNS[6].minW}>
         <PriorityBadge value={row.priority} />
       </Cell>
-      <DataCell value={row.retention} minW={COLUMNS[6].minW} />
-      <Cell minW={COLUMNS[7].minW} align="end">
+      <DataCell value={row.retention} minW={COLUMNS[7].minW} />
+      <DataCell value={followedUpBy(row)} minW={COLUMNS[8].minW} />
+      <DataCell value={followedUpDate(row)} minW={COLUMNS[9].minW} />
+      <Cell minW={COLUMNS[10].minW}>
+        <FollowUpStatusBadge row={row} />
+      </Cell>
+      <Cell minW={COLUMNS[11].minW} align="end">
         <Link
           href={href}
           className="flex items-center justify-center gap-1 rounded-[8px] border border-[#f2cb7a] px-4 py-2 transition hover:brightness-110"
@@ -431,13 +532,13 @@ function Cell({ children, minW, align = "start" }) {
   );
 }
 
-function UserAvatar() {
+function UserAvatar({ alerted = false }) {
   return (
     <div
-      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
-      style={{ background: "#3a4255" }}
+      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${alerted ? "ring-1 ring-[#fb3748]" : ""}`}
+      style={{ background: alerted ? "rgba(251,55,72,0.15)" : "#3a4255" }}
     >
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f6dda6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={alerted ? "#fb6f7d" : "#f6dda6"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
         <circle cx="12" cy="7" r="4" />
       </svg>

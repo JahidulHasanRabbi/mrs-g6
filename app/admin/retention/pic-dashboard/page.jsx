@@ -82,7 +82,7 @@ function zeroByType(type) {
 }
 
 function normalizeBreakdownRows(list, meta) {
-  const rows = Array.isArray(list?.results) ? list.results : list;
+  const rows = Array.isArray(list?.value) ? list.value : Array.isArray(list?.results) ? list.results : list;
   if (!Array.isArray(rows)) return [];
   return rows
     .map((entry) => {
@@ -434,7 +434,7 @@ function PerformanceSummary({ periodParams }) {
         </h2>
       </header>
       <div className="w-full overflow-x-auto">
-        <div className="flex min-w-[960px] w-full flex-col">
+        <div className="flex min-w-[1300px] w-full flex-col">
           <TableHeader />
           <div className="flex w-full flex-col">
             {loading ? (

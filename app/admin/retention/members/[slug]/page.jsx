@@ -187,6 +187,23 @@ function buildWalletLevels(memberData, walletVipTiers, stationList) {
   return out;
 }
 
+// Member's active stations (brand) with UUIDs, for the Send Bonus payload's
+// required `station_uuid` (#12 / "Member Bonus - Post").
+function memberStations(memberData, stationList) {
+  const raw = memberData?.customer_data?.wallet_levels || memberData?.customer_data?.wallet_level;
+  if (!Array.isArray(raw)) return [];
+  const out = [];
+  for (const item of raw) {
+    const sName = normalizeLookup(item?.Station || item?.station || item?.station_name);
+    if (!sName) continue;
+    const station = stationList.find((s) => stationCandidates(s).includes(sName));
+    if (station?.uuid) {
+      out.push({ uuid: station.uuid, name: stationName(station), brand: STATION_TO_BRAND[sName] || stationName(station) });
+    }
+  }
+  return out;
+}
+
 export default function MemberProfilePage() {
   const params = useParams();
   const memberUuid = typeof params?.slug === "string" ? params.slug : Array.isArray(params?.slug) ? params.slug[0] : "";
@@ -489,6 +506,7 @@ export default function MemberProfilePage() {
         <SendBonusModal
           memberUuid={memberUuid}
           memberName={profileName}
+          stations={memberStations(data, stationList)}
           onClose={() => setActiveModal(null)}
           onResult={(result) => {
             setActiveModal(null);
@@ -934,20 +952,20 @@ const BONUS_OPTIONS = [
   { label: "RM 8 Bonus", value: "8" },
 ];
 
-// Send Bonus (#12): pick a bonus, Confirm → sends to the member in NS.
-function SendBonusModal({ memberUuid, memberName, onClose, onResult }) {
+// Send Bonus (#12): pick a bonus (and station, if member is active on more
+// than one), Confirm → sends to the member in NS.
+function SendBonusModal({ memberUuid, memberName, stations, onClose, onResult }) {
   const [selected, setSelected] = useState("");
+  const [stationUuid, setStationUuid] = useState(stations?.length === 1 ? stations[0].uuid : "");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
 
   const handleConfirm = async () => {
-    if (!selected || sending) return;
+    if (!selected || !stationUuid || sending) return;
     setSending(true);
     setError("");
     try {
-      // Backend send endpoint pending — surface the confirmed selection so the
-      // PIC gets feedback. Wire to the NS send-bonus API once it exists.
-      const res = await sendCrmMemberBonus(memberUuid, { bonus: selected });
+      const res = await sendCrmMemberBonus(memberUuid, { bonus: selected, station_uuid: stationUuid });
       if (res?.status === "ERROR") {
         setError(res?.error_message || "Failed to send bonus. Please try again.");
         setSending(false);
@@ -971,6 +989,21 @@ function SendBonusModal({ memberUuid, memberName, onClose, onResult }) {
     <ModalOverlay onClose={onClose}>
       <ModalTitle>Send Bonus</ModalTitle>
       <p className="mb-3 text-[12px] text-white/60">Choose a bonus to send to {memberName} in NS.</p>
+      {stations?.length > 1 ? (
+        <div className="mb-3">
+          <label className="mb-1 block text-[12px] font-medium text-[#fbeed2]">Brand / Station</label>
+          <select
+            value={stationUuid}
+            onChange={(e) => setStationUuid(e.target.value)}
+            className="w-full rounded-[8px] border border-[#f2cb7a] bg-[#141828] px-3 py-2 text-[13px] text-white outline-none"
+          >
+            <option value="">Select brand</option>
+            {stations.map((s) => (
+              <option key={s.uuid} value={s.uuid}>{s.brand}</option>
+            ))}
+          </select>
+        </div>
+      ) : null}
       <div className="flex max-h-[280px] flex-col gap-2 overflow-y-auto pr-1">
         {BONUS_OPTIONS.map((bonus) => {
           const active = selected === bonus.value;
@@ -993,6 +1026,9 @@ function SendBonusModal({ memberUuid, memberName, onClose, onResult }) {
           );
         })}
       </div>
+      {!stations?.length ? (
+        <p className="mt-2 text-[12px] text-[#fb3748]">No active brand/station found for this member.</p>
+      ) : null}
       {error && <p className="mt-2 text-[12px] text-[#fb3748]">{error}</p>}
       <ModalActions onClose={onClose} onSave={handleConfirm} saving={sending} saveLabel="Confirm" />
     </ModalOverlay>

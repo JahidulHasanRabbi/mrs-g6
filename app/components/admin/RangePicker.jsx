@@ -391,6 +391,15 @@ function RangePickerPopover({ fromIso, toIso, onClose, onApply, position }) {
               {formatPanelLabel(from)} – {formatPanelLabel(to)}
             </span>
             <div className="flex items-center gap-2">
+              {(fromIso || toIso || from || to) && (
+                <button
+                  type="button"
+                  onClick={() => onApply(null, null)}
+                  className="rounded-[8px] border border-[#f2cb7a]/50 px-4 py-1.5 text-[12px] font-medium text-[#edba4d] hover:brightness-110"
+                >
+                  Clear
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onClose}

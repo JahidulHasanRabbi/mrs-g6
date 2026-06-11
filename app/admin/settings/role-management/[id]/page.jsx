@@ -300,8 +300,18 @@ function groupPermissionAreas(areas) {
     } else if (normalized === "others") {
       for (const group of area.groups) {
         const groupName = group.name.toLowerCase();
-        if (groupName === "login") retentionGroups.push(group);
-        else mrsGroups.push(group);
+        if (groupName === "login") {
+          retentionGroups.push(group);
+        } else if (groupName === "type") {
+          // "access_retention" gates the whole Retention dashboard, so it
+          // belongs with Retention System Access rather than MRS Access.
+          const retentionPerms = group.permissions.filter((p) => p.key === "access_retention");
+          const mrsPerms = group.permissions.filter((p) => p.key !== "access_retention");
+          if (mrsPerms.length > 0) mrsGroups.push({ ...group, permissions: mrsPerms });
+          if (retentionPerms.length > 0) retentionGroups.push({ ...group, permissions: retentionPerms });
+        } else {
+          mrsGroups.push(group);
+        }
       }
     } else {
       mrsGroups.push(...area.groups);

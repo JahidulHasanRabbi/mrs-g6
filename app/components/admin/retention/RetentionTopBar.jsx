@@ -6,7 +6,7 @@
 //   • bell    → Notifications list
 // Clicking outside or pressing Escape closes whichever panel is open.
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminLogout } from "../../../api/adminApi";
 import { getCrmNotifications, getCrmUserSingle, markCrmNotificationRead, updateCrmUser } from "../../../api/crmApi";
@@ -25,7 +25,6 @@ const GRADIENT = "linear-gradient(178deg, #141828 0%, #333333 99.7%)";
 const GRAD_GOLD = "linear-gradient(90deg, #f2cb7a 0%, #eaad2c 100%)";
 
 // ── Notification model ──────────────────────────────────────────────────
-// No notification endpoint is defined in the CRM doc yet, so this stays empty.
 const ALERT_ICON = "alert";
 const USER_ICON = "user";
 
@@ -218,8 +217,7 @@ export default function RetentionTopBar({ userName = "Admin", role = "PIC" }) {
   const toggle = (menu) => () =>
     setOpenMenu((current) => (current === menu ? null : menu));
 
-  useEffect(() => {
-    if (openMenu !== "notifications") return;
+  const loadNotifications = useCallback(() => {
     let cancelled = false;
     setNotificationsLoading(true);
     setNotificationsError("");
@@ -240,7 +238,9 @@ export default function RetentionTopBar({ userName = "Admin", role = "PIC" }) {
     return () => {
       cancelled = true;
     };
-  }, [openMenu]);
+  }, []);
+
+  useEffect(() => loadNotifications(), [loadNotifications]);
 
   const handleNotificationRead = async (item) => {
     if (!item?.id) return;
@@ -293,6 +293,11 @@ export default function RetentionTopBar({ userName = "Admin", role = "PIC" }) {
         }`}
       >
         <img src={BELL_ICON} alt="" className="h-5 w-4" />
+        {notifications.length > 0 ? (
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#fb3748] px-1 text-[10px] font-bold leading-none text-white">
+            {notifications.length > 9 ? "9+" : notifications.length}
+          </span>
+        ) : null}
       </button>
 
       <div className="flex items-center gap-3 border-l border-[#eaad2c] pl-[25px]">

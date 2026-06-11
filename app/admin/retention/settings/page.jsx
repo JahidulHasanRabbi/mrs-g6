@@ -11,13 +11,14 @@ import {
 import {
   getCrmAssignmentRetentionTarget,
   getCrmAssignments,
+  getCrmUsers,
   updateCrmAssignment,
 } from "../../../api/crmApi";
 
 // Retention Settings — Member Assignment.
 // Two views toggled by ?view=:
 //   - default          → assignment table (Edit button per row)
-//   - ?view=edit&id=X  → edit form, prefilled from row X; saves level, criteria, retention target, and PIC
+//   - ?view=edit&id=X  → edit form, prefilled from row X; saves monthly targets
 
 const PAGE_SIZE = 7;
 
@@ -47,9 +48,6 @@ function stripCurrency(value) {
   return String(value ?? "").replace(/^RM\s*/i, "").replace(/,/g, "");
 }
 
-function firstPresent(...values) {
-  return values.find((value) => value !== null && value !== undefined && String(value) !== "") || "";
-}
 
 
 // Pull monthly retention targets out of a row into a { 1..12: "amount" } map
@@ -92,7 +90,6 @@ function mapAssignment(row, idx = 0) {
     id: row.uuid || row.id || idx + 1,
     uuid: row.uuid,
     name: row.full_name || "—",
-    picUuid: firstPresent(row.pic_uuid, row.admin_uuid, row.user_uuid, row.pic?.uuid, row.admin?.uuid),
     avatar: `${ASSETS}/avatar-${(idx % 5) + 1}.jpg`,
     members: formatNumber(row.no_of_members ?? row.target_members),
     target: formatCurrency(row.retention_target),
@@ -107,7 +104,6 @@ function mapAssignment(row, idx = 0) {
 function rowToFormValues(row) {
   return {
     assignmentUuid: row.uuid,
-    picUuid: row.picUuid,
     pic: row.name,
     monthlyTargets: row.monthlyTargets || {},
   };
@@ -157,7 +153,7 @@ function RetentionSettingsPageInner() {
       ? rows.find((r) => String(r.id) === editIdParam)
       : null;
 
-  const mode = viewParam === "add" ? "add" : editingRow ? "edit" : "list";
+  const mode = editingRow ? "edit" : "list";
 
   const handleSave = useCallback(
     async (values) => {
@@ -173,7 +169,8 @@ function RetentionSettingsPageInner() {
         retention_targets,
       };
       try {
-        if (editingRow?.uuid) await updateCrmAssignment(editingRow.uuid, payload);
+        if (!editingRow?.uuid) throw new Error("Assignment is required.");
+        await updateCrmAssignment(editingRow.uuid, payload);
         await loadAssignments();
       } catch (err) {
         console.error("[retention-settings] save failed", err);
@@ -192,7 +189,6 @@ function RetentionSettingsPageInner() {
           total={total}
           page={page}
           loading={loading}
-          onAssignmentsChanged={loadAssignments}
         />
       ) : (
         <MemberLevelForm
@@ -226,7 +222,7 @@ function PageHeader() {
   );
 }
 
-function AssignmentListSection({ rows, total, page, loading, onAssignmentsChanged }) {
+function AssignmentListSection({ rows, total, page, loading }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -261,7 +257,7 @@ function AssignmentListSection({ rows, total, page, loading, onAssignmentsChange
         >
           Assignment List
         </h2>
-        <ImportMembersButton assignees={rows} />
+        <ImportMembersButton />
       </header>
 
       <div className="w-full overflow-x-auto scrollbar-admin">
@@ -300,21 +296,39 @@ function AssignmentListSection({ rows, total, page, loading, onAssignmentsChange
   );
 }
 
-// Import a member list from a single-column ("Phone Number") spreadsheet (#14).
-// The file is parsed/ingested by the backend; the frontend just hands it over.
-// An optional "Assign to" PIC can be picked — leaving it blank imports the
-// members without assigning them to anyone.
-function ImportMembersButton({ assignees = [] }) {
+function ImportMembersButton() {
   const [file, setFile] = useState(null);
   const [assigneeUuid, setAssigneeUuid] = useState("");
+  const [assigneeOptions, setAssigneeOptions] = useState([{ value: "", label: "Unassigned" }]);
+  const [assigneesLoading, setAssigneesLoading] = useState(false);
   const [notice, setNotice] = useState("");
 
-  const assigneeOptions = [
-    { value: "", label: "Unassigned" },
-    ...assignees
-      .filter((row) => row.picUuid)
-      .map((row) => ({ value: row.picUuid, label: row.name })),
-  ];
+  useEffect(() => {
+    let cancelled = false;
+    setAssigneesLoading(true);
+    getCrmUsers({ page: 1, page_size: 200 })
+      .then((res) => {
+        if (cancelled) return;
+        const users = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        const options = users
+          .map((user) => ({
+            value: user.uuid || user.id,
+            label: user.username || user.full_name || user.name || user.email || user.uuid || user.id,
+          }))
+          .filter((option) => option.value);
+        setAssigneeOptions([{ value: "", label: "Unassigned" }, ...options]);
+      })
+      .catch((err) => {
+        console.error("[retention-settings] import assignee list failed", err);
+        if (!cancelled) setAssigneeOptions([{ value: "", label: "Unassigned" }]);
+      })
+      .finally(() => {
+        if (!cancelled) setAssigneesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const onPick = (e) => {
     const picked = e.target.files?.[0] || null;
@@ -323,26 +337,23 @@ function ImportMembersButton({ assignees = [] }) {
     e.target.value = "";
   };
 
-  const onUpload = () => {
+  const onPrepare = () => {
     if (!file) return;
-    // Backend import endpoint pending — hand the raw file (and chosen
-    // assignee, if any) over once it exists.
-    const assignee = assigneeOptions.find((opt) => opt.value === assigneeUuid);
-    const assignedTo = assigneeUuid ? ` and assigned to ${assignee.label}` : "";
-    setNotice(`"${file.name}" received${assignedTo}. Members will be imported once the backend import is live.`);
+    const assignee = assigneeOptions.find((option) => option.value === assigneeUuid);
+    const assignedTo = assigneeUuid && assignee ? `Assign to: ${assignee.label}.` : "Assign to: Unassigned.";
+    setNotice(`${file.name} is ready. ${assignedTo} Waiting for backend import API.`);
     setFile(null);
-    setAssigneeUuid("");
   };
 
   return (
-    <div className="flex flex-col items-end gap-1">
-      <div className="flex items-center gap-2">
+    <div className="flex max-w-full flex-col items-end gap-1">
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <div className="w-[180px]">
           <CustomSelect
             value={assigneeUuid}
             onChange={setAssigneeUuid}
             options={assigneeOptions}
-            placeholder="Assign to..."
+            placeholder={assigneesLoading ? "Loading PIC..." : "Assign to..."}
           />
         </div>
         <label
@@ -355,21 +366,23 @@ function ImportMembersButton({ assignees = [] }) {
         {file ? (
           <button
             type="button"
-            onClick={onUpload}
+            onClick={onPrepare}
             className="rounded-[8px] border border-[#f2cb7a] px-4 py-2 text-[12px] font-medium text-[#f6dda6] transition hover:bg-white/5"
             style={{ backgroundImage: GRAD_DARK }}
           >
-            Upload
+            Prepare
           </button>
         ) : null}
       </div>
       {file ? (
-        <span className="text-[11px] text-white/60">{file.name} — single &quot;Phone Number&quot; column</span>
+        <span className="max-w-[360px] text-right text-[11px] text-white/60">
+          {file.name} - one &quot;Phone Number&quot; column
+        </span>
       ) : notice ? (
-        <span className="max-w-[260px] text-right text-[11px] text-[#84ebb4]">{notice}</span>
+        <span className="max-w-[360px] text-right text-[11px] text-[#84ebb4]">{notice}</span>
       ) : (
-        <span className="text-[11px] text-white/40">
-          Excel: one &quot;Phone Number&quot; column. Leave &quot;Assign to&quot; empty to import without assigning.
+        <span className="max-w-[360px] text-right text-[11px] text-white/40">
+          Frontend ready. Choose a PIC or leave Unassigned; backend import API is still pending.
         </span>
       )}
     </div>
@@ -477,7 +490,7 @@ function MemberLevelForm({ mode, initialValues, onSave }) {
 
   // useState lazy initializers run once at mount — fine here because the
   // parent unmounts/remounts the form via URL changes when switching between
-  // add/edit/list, so we never need to re-sync from props mid-life.
+  // edit/list, so we never need to re-sync from props mid-life.
   const [monthly, setMonthly] = useState(() => initialValues?.monthlyTargets ?? {});
   const [targetLoading, setTargetLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -518,14 +531,14 @@ function MemberLevelForm({ mode, initialValues, onSave }) {
     setSaving(true);
     setSaveError("");
     try {
-      await onSave({ name: initialValues?.name, monthlyTargets: monthly });
+      await onSave({ monthlyTargets: monthly });
       goBack();
     } catch {
       setSaveError("Failed to save assignment. Please check the values and try again.");
     } finally {
       setSaving(false);
     }
-  }, [monthly, initialValues, onSave, goBack]);
+  }, [monthly, onSave, goBack]);
 
   return (
     <section className="flex w-full flex-col gap-6 rounded-[16px] bg-[#041502] p-8 shadow-[0_-4px_12px_-2px_#dea220]">
@@ -540,7 +553,7 @@ function MemberLevelForm({ mode, initialValues, onSave }) {
             lineHeight: "39px",
           }}
         >
-          {isEdit ? "Edit Member Assignment" : "Add Member Assignment"}
+          Edit Member Assignment
         </h2>
         {initialValues?.pic ? (
           <span className="rounded-[8px] border border-[#f2cb7a]/40 px-3 py-1 text-[13px] text-[#f6dda6]">
