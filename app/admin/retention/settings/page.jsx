@@ -9,8 +9,8 @@ import {
   GRAD_GOLD,
 } from "../../../components/admin/retention/constants";
 import {
+  getCrmAssignmentRetentionTarget,
   getCrmAssignments,
-  statusLabelToInt,
   updateCrmAssignment,
 } from "../../../api/crmApi";
 
@@ -47,15 +47,6 @@ function stripCurrency(value) {
   return String(value ?? "").replace(/^RM\s*/i, "").replace(/,/g, "");
 }
 
-function normalizeAssignmentStatus(value) {
-  if (value === 1 || value === "1") return "Active";
-  if (value === 2 || value === "2") return "Inactive";
-  const normalized = String(value || "").trim().toUpperCase();
-  if (normalized === "ACTIVE") return "Active";
-  if (normalized === "INACTIVE") return "Inactive";
-  return value || "Inactive";
-}
-
 function firstPresent(...values) {
   return values.find((value) => value !== null && value !== undefined && String(value) !== "") || "";
 }
@@ -84,6 +75,18 @@ function parseMonthlyTargets(row) {
   return out;
 }
 
+function parseRetentionTargetList(response) {
+  const rows = Array.isArray(response?.results) ? response.results : Array.isArray(response) ? response : [];
+  const out = {};
+  for (const item of rows) {
+    const month = Number(item?.month);
+    if (month >= 1 && month <= 12) {
+      out[month] = stripCurrency(item?.target ?? item?.amount ?? "");
+    }
+  }
+  return out;
+}
+
 function mapAssignment(row, idx = 0) {
   return {
     id: row.uuid || row.id || idx + 1,
@@ -91,12 +94,8 @@ function mapAssignment(row, idx = 0) {
     name: row.full_name || "—",
     picUuid: firstPresent(row.pic_uuid, row.admin_uuid, row.user_uuid, row.pic?.uuid, row.admin?.uuid),
     avatar: `${ASSETS}/avatar-${(idx % 5) + 1}.jpg`,
-    level: row.level || "—",
-    members: formatNumber(row.target_members),
-    retain: formatCurrency(row.retain_criteria),
-    upgrade: formatCurrency(row.upgrade_criteria),
+    members: formatNumber(row.no_of_members ?? row.target_members),
     target: formatCurrency(row.retention_target),
-    status: normalizeAssignmentStatus(row.status),
     monthlyTargets: parseMonthlyTargets(row),
   };
 }
@@ -107,7 +106,7 @@ function mapAssignment(row, idx = 0) {
 // internals like avatars/VIP badge.
 function rowToFormValues(row) {
   return {
-    name: row.level,
+    assignmentUuid: row.uuid,
     picUuid: row.picUuid,
     pic: row.name,
     monthlyTargets: row.monthlyTargets || {},
@@ -168,11 +167,9 @@ function RetentionSettingsPageInner() {
         .filter(([, amount]) => String(amount ?? "").trim() !== "")
         .map(([month, amount]) => ({
           month: Number(month),
-          year: TARGET_YEAR,
-          amount: stripCurrency(amount),
+          target: stripCurrency(amount),
         }));
       const payload = {
-        pic_uuid: editingRow?.picUuid,
         retention_targets,
       };
       try {
@@ -268,7 +265,7 @@ function AssignmentListSection({ rows, total, page, loading, onAssignmentsChange
       </header>
 
       <div className="w-full overflow-x-auto scrollbar-admin">
-        <div style={{ minWidth: 900 }}>
+        <div style={{ minWidth: 620 }}>
         <TableHeader />
         <div className="flex w-full flex-col">
           {loading ? (
@@ -359,12 +356,8 @@ function TableHeader() {
   return (
     <div className="flex w-full items-start justify-between" style={{ backgroundImage: GRAD_DARK }}>
       <HeaderCell label="Member Assignment" widthClass="w-[200px]" />
-      <HeaderCell label="Level" />
       <HeaderCell label="No. of Members" />
-      <HeaderCell label="Retain Criteria" />
-      <HeaderCell label="Upgrade Criteria" />
       <HeaderCell label="Retention Target" />
-      <HeaderCell label="Status" />
       <HeaderCell label="Action" widthClass="w-[110px]" align="end" />
     </div>
   );
@@ -380,7 +373,6 @@ function HeaderCell({ label, widthClass = "flex-1 min-w-0", align = "start" }) {
 }
 
 function AssignmentRow({ row, onEdit }) {
-  const statusActive = row.status === "Active";
   return (
     <div className="flex w-full items-center -mb-px border-b border-white/5">
       <div className="flex h-full w-[200px] shrink-0 items-center gap-3 p-6">
@@ -391,23 +383,8 @@ function AssignmentRow({ row, onEdit }) {
           <span className="b-4 text-white break-words leading-[18px]">{row.name}</span>
         </div>
       </div>
-      <DataCell value={row.level} />
       <DataCell value={row.members} />
-      <DataCell value={row.retain} />
-      <DataCell value={row.upgrade} />
       <DataCell value={row.target} />
-      <div className="flex flex-1 min-w-0 items-center self-stretch">
-        <div className="flex h-full flex-1 flex-col justify-center p-6">
-          <span
-            className={
-              "inline-flex w-fit items-center rounded-[6px] px-3 py-1 b-5 font-semibold text-white whitespace-nowrap " +
-              (statusActive ? "bg-[#22c55e]" : "bg-[#ef4444]")
-            }
-          >
-            {row.status}
-          </span>
-        </div>
-      </div>
       <div className="flex h-full w-[110px] shrink-0 items-center justify-end p-6">
         <button
           type="button"
@@ -441,7 +418,7 @@ function SkeletonRow() {
         <SkeletonCircle />
         <SkeletonBar width="70%" />
       </div>
-      {Array.from({ length: 6 }).map((_, i) => (
+      {Array.from({ length: 2 }).map((_, i) => (
         <div key={i} className="flex flex-1 min-w-0 items-center p-6">
           <SkeletonBar width={i % 2 === 0 ? "68%" : "52%"} />
         </div>
@@ -478,8 +455,28 @@ function MemberLevelForm({ mode, initialValues, onSave }) {
   // parent unmounts/remounts the form via URL changes when switching between
   // add/edit/list, so we never need to re-sync from props mid-life.
   const [monthly, setMonthly] = useState(() => initialValues?.monthlyTargets ?? {});
+  const [targetLoading, setTargetLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+
+  useEffect(() => {
+    if (!isEdit || !initialValues?.assignmentUuid) return;
+    let cancelled = false;
+    setTargetLoading(true);
+    getCrmAssignmentRetentionTarget(initialValues.assignmentUuid)
+      .then((res) => {
+        if (!cancelled) setMonthly(parseRetentionTargetList(res));
+      })
+      .catch((err) => {
+        console.error("[retention-settings] retention target fetch failed", err);
+      })
+      .finally(() => {
+        if (!cancelled) setTargetLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isEdit, initialValues?.assignmentUuid]);
 
   const setMonth = useCallback((monthNum, value) => {
     setMonthly((prev) => ({ ...prev, [monthNum]: value }));
@@ -532,7 +529,9 @@ function MemberLevelForm({ mode, initialValues, onSave }) {
         <p className="text-[16px] font-semibold text-white" style={{ letterSpacing: "-0.5px" }}>
           Retention Target — {TARGET_YEAR}
         </p>
-        <p className="text-[12px] text-white/55">Set a monthly target for {TARGET_YEAR}. Leave a month blank to skip it.</p>
+        <p className="text-[12px] text-white/55">
+          {targetLoading ? "Loading monthly targets..." : `Set a monthly target for ${TARGET_YEAR}. Leave a month blank to skip it.`}
+        </p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {MONTHS.map((label, i) => (
             <FormField key={label} label={`${label} ${TARGET_YEAR}`}>

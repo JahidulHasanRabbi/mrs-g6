@@ -4,61 +4,108 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { GRAD_DARK, GRAD_GOLD } from "../../../components/admin/retention/constants";
 import Pagination from "../../../components/admin/retention/Pagination";
-import { getPromotions } from "../../../api/adminApi";
+import { getPromotionsByStation, getStationList } from "../../../api/adminApi";
 
-// Promotions (Settings → Promotions). List of promotions with Name,
-// Promotion ID and assigned Stations, plus an "Add Promotion" affordance.
+// Promotions (Settings → Promotions). Promotions are configured per-station,
+// so the list shows the promotions assigned to a selected station via
+// GET /settings/promotions/get-by-station/<station_uuid>/.
 // Chrome (auth guard, topbar, padding) comes from app/admin/settings/layout.jsx.
-//
-// NOTE: the backend endpoint is stubbed (see TODO in app/api/api.js). Until the
-// real path lands the list will surface an empty/error state — the UI flow is
-// the deliverable here.
 
 const PAGE_SIZE = 8;
 
 const COLUMNS = [
-  { key: "name",         label: "Name",         minW: 240 },
-  { key: "promotion_id", label: "Promotion ID", minW: 200 },
-  { key: "stations",     label: "Stations",     minW: 280 },
-  { key: "action",       label: "Action",       minW: 140, align: "end" },
+  { key: "type", label: "Type", minW: 220 },
+  { key: "name", label: "Name", minW: 240 },
+  { key: "code", label: "Code", minW: 160 },
+  { key: "item", label: "Item", minW: 240 },
+  { key: "actions", label: "Actions", minW: 120 },
 ];
 
 const TABLE_MIN_WIDTH = COLUMNS.reduce((sum, c) => sum + c.minW, 0);
 
-function stationNames(row) {
-  const stations = Array.isArray(row?.stations) ? row.stations : [];
-  return stations
-    .map((s) => (typeof s === "string" ? s : s?.station_name || s?.name || ""))
-    .filter(Boolean);
+function normalizeListResponse(response) {
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response?.results)) return response.results;
+  if (Array.isArray(response?.data)) return response.data;
+  return [];
+}
+
+// Flatten the get-by-station response (groups of { type, promotions: [{item, name, code}] })
+// into one row per promotion.
+function flattenPromotions(response) {
+  const groups = normalizeListResponse(response);
+  const rows = [];
+  for (const group of groups) {
+    const promos = Array.isArray(group?.promotions) ? group.promotions : Array.isArray(group?.promotion) ? group.promotion : [];
+    for (const promo of promos) {
+      rows.push({
+        type: group?.type || "—",
+        name: promo?.name ?? "—",
+        code: promo?.code ?? "—",
+        item: promo?.item ?? "—",
+      });
+    }
+  }
+  return rows;
 }
 
 export default function PromotionsPage() {
+  const [stations, setStations] = useState([]);
+  const [stationsLoading, setStationsLoading] = useState(true);
+  const [selectedStation, setSelectedStation] = useState("");
   const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    getPromotions({ page: 1, page_size: 100 })
+    getStationList()
       .then((res) => {
         if (cancelled) return;
-        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
-        setRows(results);
-        setError(false);
+        const results = normalizeListResponse(res);
+        setStations(results);
+        if (results.length > 0) setSelectedStation(results[0].uuid);
+      })
+      .catch((err) => console.error("[promotions] station list failed", err))
+      .finally(() => { if (!cancelled) setStationsLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedStation) {
+      setRows([]);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setError(false);
+    getPromotionsByStation(selectedStation)
+      .then((res) => {
+        if (cancelled) return;
+        setRows(flattenPromotions(res));
       })
       .catch((err) => {
         if (cancelled) return;
         console.error("[promotions] fetch failed", err);
         setError(true);
+        setRows([]);
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, []);
+  }, [selectedStation]);
 
   return (
     <>
       <PageHeader />
-      <PromotionList rows={rows} loading={loading} error={error} />
+      <PromotionList
+        stations={stations}
+        stationsLoading={stationsLoading}
+        selectedStation={selectedStation}
+        onStationChange={setSelectedStation}
+        rows={rows}
+        loading={loading}
+        error={error}
+      />
     </>
   );
 }
@@ -87,7 +134,7 @@ function PageHeader() {
   );
 }
 
-function PromotionList({ rows, loading, error }) {
+function PromotionList({ stations, stationsLoading, selectedStation, onStationChange, rows, loading, error }) {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
 
@@ -95,7 +142,7 @@ function PromotionList({ rows, loading, error }) {
     if (!query) return rows;
     const q = query.toLowerCase();
     return rows.filter((r) => {
-      const haystack = `${r.name || ""} ${r.promotion_id || ""}`.toLowerCase();
+      const haystack = `${r.type || ""} ${r.name || ""} ${r.code || ""}`.toLowerCase();
       return haystack.includes(q);
     });
   }, [rows, query]);
@@ -104,7 +151,7 @@ function PromotionList({ rows, loading, error }) {
 
   useEffect(() => {
     setPage(1);
-  }, [query]);
+  }, [query, selectedStation]);
 
   const safePage = Math.min(page, totalPages);
   const startIdx = (safePage - 1) * PAGE_SIZE;
@@ -128,25 +175,36 @@ function PromotionList({ rows, loading, error }) {
         </h2>
         <div className="flex flex-wrap items-center gap-3">
           <SearchInput value={query} onChange={setQuery} />
-          <AddPromotionButton />
+          <AddPromotionButton stationUuid={selectedStation} />
         </div>
       </header>
+
+      <div className="px-6 pb-6">
+        <StationTabs
+          stations={stations}
+          loading={stationsLoading}
+          value={selectedStation}
+          onChange={onStationChange}
+        />
+      </div>
 
       <div className="overflow-x-auto overflow-y-hidden scrollbar-admin">
         <div style={{ minWidth: TABLE_MIN_WIDTH }}>
           <TableHeader />
           <div className="flex w-full flex-col">
-            {loading ? (
+            {!selectedStation ? (
+              <EmptyRow text="Select a station to view its promotions." />
+            ) : loading ? (
               Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonRow key={i} />)
             ) : error ? (
               <div className="px-6 py-12 text-center text-[12px] text-red-400">
                 Failed to load promotions.
               </div>
             ) : visibleRows.length === 0 ? (
-              <EmptyRow />
+              <EmptyRow text="No promotions yet." />
             ) : (
               visibleRows.map((row, idx) => (
-                <PromotionRow key={row.uuid || `${row.promotion_id}-${idx}`} row={row} />
+                <PromotionRow key={`${row.type}-${row.code}-${idx}`} row={row} stationUuid={selectedStation} />
               ))
             )}
           </div>
@@ -165,15 +223,59 @@ function PromotionList({ rows, loading, error }) {
   );
 }
 
-function AddPromotionButton() {
+// Row of per-station buttons (matches the category-tab pattern used on the
+// Terms & Conditions page) so stations are switched one-by-one.
+function StationTabs({ stations, loading, value, onChange }) {
+  if (loading) {
+    return (
+      <div className="flex flex-wrap gap-3">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-[38px] w-[100px] animate-pulse rounded-[8px] bg-white/10" />
+        ))}
+      </div>
+    );
+  }
+
+  if (stations.length === 0) {
+    return <p className="text-[12px] text-white/40">No stations available.</p>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-3">
+      {stations.map((s) => {
+        const active = s.uuid === value;
+        return (
+          <button
+            key={s.uuid}
+            type="button"
+            onClick={() => onChange(s.uuid)}
+            className={`flex h-[38px] items-center justify-center rounded-[8px] border-2 px-4 text-[12px] font-semibold whitespace-nowrap transition ${
+              active
+                ? "border-[#f2cb7a] text-[#141828]"
+                : "border-[#fbeed2]/30 text-[#fbeed2] hover:border-[#f2cb7a]"
+            }`}
+            style={active ? { backgroundImage: GRAD_GOLD } : undefined}
+          >
+            {s.station_name || s.name || s.uuid}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function AddPromotionButton({ stationUuid }) {
+  const href = stationUuid
+    ? `/admin/settings/promotions/add?station=${stationUuid}`
+    : "/admin/settings/promotions/add";
   return (
     <Link
-      href="/admin/settings/promotions/add"
+      href={href}
       className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold text-[#141828] whitespace-nowrap transition hover:brightness-110"
       style={{ backgroundImage: GRAD_GOLD, letterSpacing: "-1px" }}
     >
       <PlusIcon />
-      <span>Add Promotion</span>
+      <span>Manage Promotions</span>
     </Link>
   );
 }
@@ -184,7 +286,7 @@ function SearchInput({ value, onChange }) {
       type="text"
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      placeholder="Search by name or ID"
+      placeholder="Search by type, name or code"
       className="w-[200px] bg-[#141828] border border-[#f2cb7a] rounded-[8px] px-3 py-2 text-[10px] italic text-[#f6dda6] placeholder:text-[#f6dda6] placeholder:capitalize focus:outline-none focus:ring-1 focus:ring-[#eaad2c]"
       style={{ fontFamily: "Inter, sans-serif", lineHeight: "15px" }}
     />
@@ -197,9 +299,7 @@ function TableHeader() {
       {COLUMNS.map((col) => (
         <div
           key={col.key}
-          className={`flex flex-1 flex-col px-6 py-4 ${
-            col.align === "end" ? "items-end" : "items-start"
-          }`}
+          className="flex flex-1 flex-col items-start px-6 py-4"
           style={{ minWidth: col.minW }}
         >
           <p className="text-[14px] font-semibold text-[#fbeed2] leading-[21px] whitespace-nowrap" style={{ letterSpacing: "-1px" }}>
@@ -211,69 +311,56 @@ function TableHeader() {
   );
 }
 
-function PromotionRow({ row }) {
-  const names = stationNames(row);
+function PromotionRow({ row, stationUuid }) {
+  const editHref = stationUuid
+    ? `/admin/settings/promotions/add?station=${stationUuid}`
+    : "/admin/settings/promotions/add";
   return (
     <div className="flex w-full items-stretch -mb-px border-b border-white/5">
       <Cell minW={COLUMNS[0].minW}>
         <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">
-          {row.name}
+          {row.type}
         </span>
       </Cell>
       <Cell minW={COLUMNS[1].minW}>
         <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">
-          {row.promotion_id}
+          {row.name}
         </span>
       </Cell>
       <Cell minW={COLUMNS[2].minW}>
-        {names.length === 0 ? (
-          <span className="text-[12px] text-white/40">—</span>
-        ) : (
-          <div className="flex flex-wrap gap-1.5">
-            {names.map((name, i) => (
-              <span
-                key={`${name}-${i}`}
-                className="rounded-[6px] border border-[#f2cb7a]/40 bg-[#141828] px-2 py-0.5 text-[11px] font-medium text-[#f6dda6] whitespace-nowrap"
-              >
-                {name}
-              </span>
-            ))}
-          </div>
-        )}
+        <span className="text-[12px] font-medium text-white leading-[18px] whitespace-nowrap">
+          {row.code}
+        </span>
       </Cell>
-      <Cell minW={COLUMNS[3].minW} align="end">
-        <EditButton href={`/admin/settings/promotions/${row.uuid}`} />
+      <Cell minW={COLUMNS[3].minW}>
+        <span className="text-[12px] font-medium text-white leading-[18px] break-all">
+          {row.item}
+        </span>
+      </Cell>
+      <Cell minW={COLUMNS[4].minW}>
+        <Link
+          href={editHref}
+          className="rounded-[6px] border-2 border-[#f2cb7a] px-3 py-1 text-[12px] font-semibold text-[#fbeed2] transition hover:bg-[#f2cb7a]/10"
+        >
+          Edit
+        </Link>
       </Cell>
     </div>
   );
 }
 
-function Cell({ children, minW, align = "start" }) {
-  const justify = align === "end" ? "justify-end" : "justify-start";
+function Cell({ children, minW }) {
   return (
-    <div className={`flex flex-1 items-center p-6 ${justify}`} style={{ minWidth: minW }}>
+    <div className="flex flex-1 items-center p-6" style={{ minWidth: minW }}>
       {children}
     </div>
   );
 }
 
-function EditButton({ href }) {
-  return (
-    <Link
-      href={href}
-      className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#f2cb7a] px-4 py-2 text-[12px] font-medium text-[#141828] transition hover:brightness-110"
-      style={{ backgroundImage: GRAD_GOLD }}
-    >
-      <EditIcon />
-      <span>Edit</span>
-    </Link>
-  );
-}
-
-function EmptyRow() {
+function EmptyRow({ text }) {
   return (
     <div className="px-6 py-12 text-center text-[12px] text-white/40">
-      No promotions yet.
+      {text}
     </div>
   );
 }
@@ -297,15 +384,6 @@ function PlusIcon() {
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#141828" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <line x1="12" y1="5" x2="12" y2="19" />
       <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  );
-}
-
-function EditIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#141828" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 20h9" />
-      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
     </svg>
   );
 }

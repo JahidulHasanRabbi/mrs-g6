@@ -401,24 +401,22 @@ export async function getStationList() {
 }
 
 // Promotions (Settings → Promotions)
-// NOTE: backend endpoint is stubbed in ENDPOINTS.ADMIN — see TODO in api.js.
-// Payload shape (name, promotion_id, station_uuids[]) is provisional; confirm
-// against the real spec before treating list/save as production-ready.
-export async function getPromotions(params = {}) {
-  const qs = buildQueryParams(params);
-  return await apiRequest(`${ENDPOINTS.ADMIN.PROMOTIONS}${qs}`, { method: 'GET' }, true, 'admin');
+
+// GET /settings/available-promotions/ -> [{ value, label }] promotion type options
+export async function getAvailablePromotions() {
+  return await apiRequest(ENDPOINTS.ADMIN.AVAILABLE_PROMOTIONS, { method: 'GET' }, true, 'admin');
 }
 
+// GET /settings/promotions/get-by-station/<station_uuid>/
+export async function getPromotionsByStation(stationUuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.PROMOTIONS_BY_STATION(stationUuid), { method: 'GET' }, true, 'admin');
+}
+
+// POST /settings/promotions/
+// body: { station_id, promotions: [{ promotion_type, item_uuid, promotion_code }] }
 export async function createPromotion(data) {
   return await apiRequest(ENDPOINTS.ADMIN.PROMOTIONS, {
     method: 'POST',
-    body: data
-  }, true, 'admin');
-}
-
-export async function updatePromotion(uuid, data) {
-  return await apiRequest(ENDPOINTS.ADMIN.PROMOTION_SINGLE(uuid), {
-    method: 'PUT',
     body: data
   }, true, 'admin');
 }

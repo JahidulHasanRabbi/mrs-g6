@@ -9,7 +9,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { adminLogout } from "../../../api/adminApi";
-import { getCrmUserSingle, updateCrmUser } from "../../../api/crmApi";
+import { getCrmNotifications, getCrmUserSingle, markCrmNotificationRead, updateCrmUser } from "../../../api/crmApi";
 import { tokenStorage } from "../../../api/tokenStorage";
 
 // useLayoutEffect on the server warns; alias to useEffect during SSR.
@@ -29,7 +29,27 @@ const GRAD_GOLD = "linear-gradient(90deg, #f2cb7a 0%, #eaad2c 100%)";
 const ALERT_ICON = "alert";
 const USER_ICON = "user";
 
-const NOTIFICATIONS = [];
+function formatNotificationDate(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short" });
+}
+
+function normalizeNotifications(response) {
+  const rows = Array.isArray(response?.results) ? response.results : Array.isArray(response) ? response : [];
+  return rows.map((row) => {
+    const count = row?.number_of_members ?? row?.count ?? 0;
+    return {
+      id: row?.uuid || row?.id,
+      icon: USER_ICON,
+      title: "Member Alert",
+      body: `You have ${count} members to follow up today.`,
+      date: formatNotificationDate(row?.created),
+      unread: true,
+    };
+  }).filter((item) => item.id);
+}
 
 // ── Visual primitives ───────────────────────────────────────────────────
 
@@ -69,10 +89,14 @@ function UserBadgeIcon() {
 }
 
 // Single notification row + a hairline divider beneath (except the last item).
-function NotificationItem({ item, isLast }) {
+function NotificationItem({ item, isLast, onRead }) {
   return (
     <>
-      <div className="flex items-center gap-3 p-3 rounded-[12px]">
+      <button
+        type="button"
+        onClick={() => onRead?.(item)}
+        className="flex w-full items-center gap-3 rounded-[12px] p-3 text-left transition hover:bg-black/5"
+      >
         {item.icon === ALERT_ICON ? <AlertCircleIcon /> : <UserBadgeIcon />}
         <div className="flex flex-1 min-w-0 flex-col">
           <div className="flex w-full items-start gap-4">
@@ -88,7 +112,7 @@ function NotificationItem({ item, isLast }) {
             {item.body}
           </p>
         </div>
-      </div>
+      </button>
       {!isLast && <div className="mx-3 h-px bg-[#d4d4d4]" />}
     </>
   );
@@ -132,6 +156,9 @@ export default function RetentionTopBar({ userName = "Admin", role = "PIC" }) {
   // null | "profile" | "notifications" — only one popup is open at a time.
   const [openMenu, setOpenMenu] = useState(null);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [notificationsError, setNotificationsError] = useState("");
   const rootRef = useRef(null);
   const bellRef = useRef(null);
   const avatarRef = useRef(null);
@@ -190,6 +217,40 @@ export default function RetentionTopBar({ userName = "Admin", role = "PIC" }) {
 
   const toggle = (menu) => () =>
     setOpenMenu((current) => (current === menu ? null : menu));
+
+  useEffect(() => {
+    if (openMenu !== "notifications") return;
+    let cancelled = false;
+    setNotificationsLoading(true);
+    setNotificationsError("");
+    getCrmNotifications()
+      .then((res) => {
+        if (!cancelled) setNotifications(normalizeNotifications(res));
+      })
+      .catch((err) => {
+        console.error("[retention-topbar] notifications failed", err);
+        if (!cancelled) {
+          setNotifications([]);
+          setNotificationsError("Failed to load notifications.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setNotificationsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [openMenu]);
+
+  const handleNotificationRead = async (item) => {
+    if (!item?.id) return;
+    setNotifications((current) => current.filter((n) => n.id !== item.id));
+    try {
+      await markCrmNotificationRead(item.id);
+    } catch (err) {
+      console.error("[retention-topbar] mark notification read failed", err);
+    }
+  };
 
   const handleLogout = async () => {
     const refreshToken = tokenStorage.getAdminRefreshToken();
@@ -289,15 +350,24 @@ export default function RetentionTopBar({ userName = "Admin", role = "PIC" }) {
               Notifications
             </h3>
             <div className="flex flex-col">
-              {NOTIFICATIONS.length === 0 ? (
+              {notificationsLoading ? (
+                <p className="px-3 py-4 text-[12px] font-medium leading-[18px] text-[#4a4a4a]">
+                  Loading notifications...
+                </p>
+              ) : notificationsError ? (
+                <p className="px-3 py-4 text-[12px] font-medium leading-[18px] text-[#e74c3c]">
+                  {notificationsError}
+                </p>
+              ) : notifications.length === 0 ? (
                 <p className="px-3 py-4 text-[12px] font-medium leading-[18px] text-[#4a4a4a]">
                   No notifications.
                 </p>
-              ) : NOTIFICATIONS.map((item, i) => (
+              ) : notifications.map((item, i) => (
                 <NotificationItem
                   key={item.id}
                   item={item}
-                  isLast={i === NOTIFICATIONS.length - 1}
+                  isLast={i === notifications.length - 1}
+                  onRead={handleNotificationRead}
                 />
               ))}
             </div>

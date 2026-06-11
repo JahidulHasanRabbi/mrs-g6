@@ -108,11 +108,9 @@ export const ENDPOINTS = {
     PENALTY_KICK_SEQUENCES: '/penalty-kick/kick-sequences/',
     PENALTY_KICK_SEQUENCE: (uuid) => `/penalty-kick/kick-sequences/${uuid}/`,
     PENALTY_KICK_SEQUENCE_REORDER: '/penalty-kick/kick-sequences/change-kick-sequences/',
-    // TODO(promotions): backend endpoint not yet documented in postman/ — these
-    // paths are a stub so the Settings → Promotions UI can be wired end-to-end.
-    // Confirm the real path/payload and update before relying on save/list.
+    AVAILABLE_PROMOTIONS: '/settings/available-promotions/',
     PROMOTIONS: '/settings/promotions/',
-    PROMOTION_SINGLE: (uuid) => `/settings/promotions/${uuid}/`,
+    PROMOTIONS_BY_STATION: (stationUuid) => `/settings/promotions/get-by-station/${stationUuid}/`,
     MISSION_SETTINGS: '/mission/settings/'
   },
   EXTERNAL: {
@@ -189,13 +187,18 @@ export const ENDPOINTS = {
     FOLLOW_UPS: '/crm-members/follow-up/',
     MEMBER_ASSIGN_TO_PIC: (memberUuid) => `/crm-members/members/${memberUuid}/assign-to-pic/`,
     MEMBER_FOLLOW_UP: (memberUuid) => `/crm-members/members/${memberUuid}/follow-up/`,
+    MEMBER_ALERT: (memberUuid) => `/crm-members/members/${memberUuid}/alert/`,
+    MEMBER_SEND_BONUS: (memberUuid) => `/crm-members/members/${memberUuid}/send-bonus/`,
     // Dashboard
     DASHBOARD_SUMMARY: '/crm-admins/dashboard-summary/',
     DASHBOARD_BREAKDOWN: '/crm-admins/dashboard-breakdown/',
     DASHBOARD_DETAILS: '/crm-admins/dashboard-details/',
+    NOTIFICATIONS: '/crm-admins/notifications/',
+    NOTIFICATION_MARK_READ: (uuid) => `/crm-admins/notifications/${uuid}/mark-as-read/`,
     // Member Assignment
     ASSIGNMENTS: '/crm-admins/assignments/',
     ASSIGNMENT_SINGLE: (uuid) => `/crm-admins/assignments/${uuid}/`,
+    ASSIGNMENT_RETENTION_TARGET: (adminUuid) => `/crm-admins/assignments/${adminUuid}/retention-target/`,
     ASSIGNMENT_SET_TARGET: '/crm-admins/assignments/set-target/',
     // CRM MRS VIP Tier aliases.
     // Old CRM-specific paths returned 404 on staging:

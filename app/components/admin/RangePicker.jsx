@@ -458,21 +458,22 @@ function CalendarGrid({ month, from, to, today, onPick }) {
       ))}
       {cells.map((cell, i) => {
         const inMonth = cell.inMonth;
-        const isFrom = from && isSameDay(cell.date, from);
-        const isTo = to && isSameDay(cell.date, to);
+        const isFrom = inMonth && from && isSameDay(cell.date, from);
+        const isTo = inMonth && to && isSameDay(cell.date, to);
         const isEnd = isFrom || isTo;
-        const inRange = isBetween(cell.date, from, to);
-        const isToday = isSameDay(cell.date, today);
+        const inRange = inMonth && isBetween(cell.date, from, to);
+        const isToday = inMonth && isSameDay(cell.date, today);
 
         return (
           <button
             type="button"
             key={i}
-            onClick={() => onPick(cell.date)}
+            onClick={() => inMonth && onPick(cell.date)}
+            disabled={!inMonth}
             className={`relative flex h-8 items-center justify-center text-[12px] transition-colors ${
-              !inMonth ? "text-white/25" : "text-white"
+              !inMonth ? "cursor-default text-white/25" : "text-white"
             } ${inRange ? "bg-[rgba(234,173,44,0.18)]" : ""} ${
-              isEnd ? "" : "rounded-[6px] hover:bg-white/5"
+              isEnd ? "" : `rounded-[6px] ${inMonth ? "hover:bg-white/5" : ""}`
             }`}
           >
             <span

@@ -24,6 +24,7 @@ import LoadingOverlay from "../../../components/admin/ui/LoadingOverlay";
 const PAGE_SIZE = 7;
 
 const PRIORITY_OPTIONS = ["High", "Medium", "Low", "Inactive"];
+const PRIORITY_SORT_RANK = { high: 0, medium: 1, low: 2, inactive: 3 };
 const BRAND_OPTIONS = ["KG", "LV", "EP", "AB", "UB", "N1"];
 const SALES_SORT_OPTIONS = ["High to Low", "Low to High"];
 const WINLOSS_SORT_OPTIONS = ["High to Low", "Low to High"];
@@ -40,6 +41,13 @@ function hasRetentionRole(pic) {
   if (Array.isArray(roles)) {
     return roles.some((r) => String(r?.name || r).toLowerCase().includes("retention"));
   }
+  const permissions = pic.permissions || pic.permission_keys;
+  if (Array.isArray(permissions)) {
+    return permissions.some((p) => {
+      const key = String(p?.key || p).toLowerCase();
+      return key.includes("retention") || key === "view_retention_members";
+    });
+  }
   return false;
 }
 
@@ -49,6 +57,11 @@ function memberSalesValue(row) {
 
 function memberWinLossValue(row) {
   return parseFloat(row?.total_win_lose ?? row?.total_winlose ?? row?.daily_win_loss ?? 0) || 0;
+}
+
+function memberPriorityRank(row) {
+  const priority = String(row?.priority || "").trim().toLowerCase();
+  return PRIORITY_SORT_RANK[priority] ?? 99;
 }
 
 // Column widths from Figma 69:340 (frame ids 87:6604 etc). Username and
@@ -275,8 +288,7 @@ function FollowUpList() {
   // Only PICs holding the Retention role populate the "All Retention" filter
   // (spec #10). If the backend exposes no role data yet, fall back to all PICs.
   const retentionPics = useMemo(() => {
-    const withRole = pics.filter(hasRetentionRole);
-    return withRole.length > 0 ? withRole : pics;
+    return pics.filter(hasRetentionRole);
   }, [pics]);
 
   useEffect(() => {
@@ -345,7 +357,10 @@ function FollowUpList() {
       const dir = winSort === "High to Low" ? -1 : 1;
       return [...rows].sort((a, b) => (memberWinLossValue(a) - memberWinLossValue(b)) * dir);
     }
-    return rows;
+    return rows
+      .map((row, idx) => ({ row, idx }))
+      .sort((a, b) => memberPriorityRank(a.row) - memberPriorityRank(b.row) || a.idx - b.idx)
+      .map(({ row }) => row);
   }, [rows, salesSort, winSort]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -585,7 +600,7 @@ function deriveFollowStatus(row) {
     if (norm.startsWith("miss")) return "Missed";
     if (norm.startsWith("pend")) return "Pending";
   }
-  const last = row?.last_followed_up_at || row?.last_follow_up_at || row?.last_action_at;
+  const last = row?.last_followed_up_date || row?.last_followed_up_at || row?.last_follow_up_at || row?.last_action_at;
   return last ? "Completed" : "Pending";
 }
 
@@ -607,7 +622,7 @@ function followedUpBy(row) {
 }
 
 function followedUpDate(row) {
-  const raw = row?.last_followed_up_at || row?.last_follow_up_at || row?.last_action_at;
+  const raw = row?.last_followed_up_date || row?.last_followed_up_at || row?.last_follow_up_at || row?.last_action_at;
   if (!raw) return "—";
   const text = String(raw).replace("T", " ");
   const [d = "", t = ""] = text.split(" ");

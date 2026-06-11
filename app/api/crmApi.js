@@ -164,6 +164,24 @@ export async function patchCrmMemberFollowUp(memberUuid, data) {
   }, true, 'admin');
 }
 
+// PATCH /crm-members/members/<uuid>/alert/
+// body: { alert }
+export async function patchCrmMemberAlert(memberUuid, alert) {
+  return await apiRequest(ENDPOINTS.CRM.MEMBER_ALERT(memberUuid), {
+    method: 'PATCH',
+    body: { alert }
+  }, true, 'admin');
+}
+
+// POST /crm-members/members/<uuid>/send-bonus/
+// body: { bonus }
+export async function sendCrmMemberBonus(memberUuid, data) {
+  return await apiRequest(ENDPOINTS.CRM.MEMBER_SEND_BONUS(memberUuid), {
+    method: 'POST',
+    body: data
+  }, true, 'admin');
+}
+
 // ──────────────────────── Retention Profile ──────────────────────
 
 // GET /crm-members/retention-summary/<admin_uuid>/
@@ -174,14 +192,14 @@ export async function getRetentionSummary(adminUuid, params = {}) {
 }
 
 // GET /crm-members/retention-members/  (paginated) — only members with priority set
-// params: { page, page_size, priority ("inactive"|"low"|"medium"|"high"), mrs_vip_level, wallet_vip_level, retention (PIC uuid), search, brand }
+// params: { page, page_size, priority ("inactive"|"low"|"medium"|"high"), mrs_vip_level, wallet_vip_level, retention (PIC uuid), search, brand, date, ordering }
 export async function getRetentionMembers(params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.CRM.RETENTION_MEMBERS}${qs}`, { method: 'GET' }, true, 'admin');
 }
 
 // GET /crm-members/<admin_uuid>/admin-members/  (paginated)
-// params: { page, page_size, from_date, to_date, vip_level, from_sales, to_sales, search }
+// params: { page, page_size, from_date, to_date, wallet_vip_level, mrs_vip_level, brand, search, ordering }
 export async function getAdminMembers(adminUuid, params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.CRM.ADMIN_MEMBERS(adminUuid)}${qs}`, { method: 'GET' }, true, 'admin');
@@ -210,6 +228,16 @@ export async function getCrmDashboardDetails(params = {}) {
   return await apiRequest(`${ENDPOINTS.CRM.DASHBOARD_DETAILS}${qs}`, { method: 'GET' }, true, 'admin');
 }
 
+// GET /crm-admins/notifications/
+export async function getCrmNotifications() {
+  return await apiRequest(ENDPOINTS.CRM.NOTIFICATIONS, { method: 'GET' }, true, 'admin');
+}
+
+// PATCH /crm-admins/notifications/<notification_uuid>/mark-as-read/
+export async function markCrmNotificationRead(uuid) {
+  return await apiRequest(ENDPOINTS.CRM.NOTIFICATION_MARK_READ(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
 // ───────────────────────── Member Assignment ─────────────────────
 
 // GET /crm-admins/assignments/  (paginated)
@@ -218,8 +246,13 @@ export async function getCrmAssignments(params = {}) {
   return await apiRequest(`${ENDPOINTS.CRM.ASSIGNMENTS}${qs}`, { method: 'GET' }, true, 'admin');
 }
 
+// GET /crm-admins/assignments/<admin_uuid>/retention-target/
+export async function getCrmAssignmentRetentionTarget(adminUuid) {
+  return await apiRequest(ENDPOINTS.CRM.ASSIGNMENT_RETENTION_TARGET(adminUuid), { method: 'GET' }, true, 'admin');
+}
+
 // POST /crm-admins/assignments/
-// body: { name, status, retain_criteria, upgrade_criteria, pic_uuid }
+// body: { retention_targets }
 export async function createCrmAssignment(data) {
   return await apiRequest(ENDPOINTS.CRM.ASSIGNMENTS, {
     method: 'POST',

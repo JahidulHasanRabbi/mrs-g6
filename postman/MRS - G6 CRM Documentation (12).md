@@ -64,7 +64,7 @@
 
 [Priority Summary \- GET	18](#priority-summary---get)
 
-[Refresh Members \- POST	18](#refresh-members---post)
+[Refresh Members \- POST	18](#refresh-member---post)
 
 [**Individual Sales Report	19**](#individual-sales-report)
 
@@ -404,6 +404,10 @@ Output (Is Paginated)
 | **7** | daily\_win\_loss | Str(Decimal) | No |  |
 | **8** | priority | Str | No |  |
 | **9** | retention | Str | No |  |
+| **10** | alert | Bool | No |  |
+| **11** | last\_followed\_up\_by | str | No |  |
+| **12** | last\_followed\_up\_date | date | No |  |
+| **13** | follow\_up\_status | str | No | “COMPLETED” “PENDING” “MISSED” “NONE” |
 
 ### Member Single \- GET {#member-single---get}
 
@@ -418,6 +422,7 @@ Output
 | **4** | basic\_info | Obj | \- | See Basic Info Output below |
 | **5** | financial\_info | Obj | \- | See Financial Info Output below |
 | **6** | gaming\_info | Obj | \- | See Gaming Info Output below |
+| **7** | alert | Bool | No |  |
 
 Customer Data Output
 
@@ -542,7 +547,23 @@ Game Info Input
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | follow\_up\_remark | str | No |  |
 
-### 
+### Member Alert \- PATCH
+
+/crm-members/members/\<member\_uuid\>/alert/ PATCH
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | alert | bool | No |  |
+
+### Member Bonus \- Post
+
+/crm-members/members/\<member\_uuid\>/send-bonus/ POST
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | bonus | Str (Decimal) | No |  |
+
+Returns SUCCESS if bonus amount \< 10, ERROR if bonus amount \> 10, for staging purposes.
 
 ## Member List \- By Admin PIC
 
@@ -572,6 +593,9 @@ Output (Is Paginated)
 | **7** | daily\_win\_loss | Str(Decimal) | No |  |
 | **8** | priority | Str | No |  |
 | **9** | retention | Str | No |  |
+| **10** | last\_followed\_up\_by | str |  |  |
+| **11** | last\_followed\_up\_date | datetime |  |  |
+| **12** | follow\_up\_status | str |  | “COMPLETED” “PENDING” “MISSED” “NONE” |
 
 ## Member FollowUp
 
@@ -609,14 +633,38 @@ Output
 | **3** | low\_priority | Int | No |  |
 | **4** | inactive\_members | Int | No |  |
 
-## Refresh Members \- POST {#refresh-members---post}
+## Refresh Member \- POST {#refresh-member---post}
 
-/crm-members/refresh-members/ POST  
+/crm-members/\<member\_uuid\>/refresh/ POST  
 Output
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | message | Str | No | Currently returns “Refresh Successful” |
+| **1** | status | Str | No | “SUCCESS” or “ERROR” |
+| **2** | error\_message | Str | Yes | Only if ERROR |
+
+In staging:  
+If member\_uuid \= “1234:  
+Returns SUCCESS  
+Else:  
+Returns ERROR, error\_message \= “Staging Envrionment”
+
+# Notifications
+
+## Notifications  \- GET
+
+/crm-admins/notifications/ GET
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | uuid | uuid | No |  |
+| **2** | created | datetime | No |  |
+| **3** | number\_of\_members | Int | No |  |
+
+## Notifications  \- Mark as Read
+
+/crm-admins/notifications/\<notification\_uuid\>/mark-as-read/ PATCH  
+A notification marked as read will no longer appear in GET
 
 # Individual Sales Report {#individual-sales-report}
 
@@ -627,6 +675,13 @@ Output
 ### Dashboard Summary \- GET {#dashboard-summary---get}
 
 /crm-admins/dashboard-summary/ GET  
+Query parameters
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | from\_date | Date | No |  |
+| **2** | to\_date | Date | No |  |
+
 Output
 
 | \# | Property/Field | Data Type | Nullable | Description |
@@ -638,7 +693,25 @@ Output
 | **5** | total\_sales\_tickets | Int | No |  |
 | **6** | total\_bonus\_given | Str(Decimal) | No |  |
 | **7** | total\_bonus\_given\_percentage | Str | No |  |
-| **8** | total\_win\_rate | Str | NoOh  |  |
+| **8** | total\_win\_rate | Str | No  |  |
+
+### Dashboard Breakdown \- GET
+
+/crm-admins/dashboard-breakdown/ GET  
+Query parameters
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | from\_date | Date | No |  |
+| **2** | to\_date | Date | No |  |
+| **3** | metric | Str | No | total\_members active\_members total\_sales total\_sales\_tickets total\_win\_lose total\_win\_rate total\_bonus\_given total\_bonus\_given\_percentage |
+
+Output
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | station | str | No |  |
+| **2** | value | Mix of Int, Decimal, and str, but can treat all as str | No |  |
 
 ### Dashboard Details \- GET {#dashboard-details---get}
 
@@ -649,9 +722,8 @@ Query parameters
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | page | Int | No | For Pagination |
 | **2** | page\_size | Int | No | For Pagination |
-| **3** | type | int | No | 1 \= Daily 2 \= Monthly 3 \= Yearly 4 \= Input Date |
-| **4** | from\_date | Date | No if type is 4 |  |
-| **5** | to\_date | Date | No if type is 4 |  |
+| **3** | from\_date | Date | No |  |
+| **4** | to\_date | Date | No |  |
 
 Output (Is Paginated)
 
@@ -664,8 +736,6 @@ Output (Is Paginated)
 | **5** | total\_win\_lose | Str(Decimal) | No |  |
 | **6** | monthly\_target | Str(Decimal) | No |  |
 | **7** | achievements | Str(Decimal) | No |  |
-
-## 
 
 # 
 
@@ -764,13 +834,18 @@ Output (Is Paginated)
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | uuid | uuid | No |  |
-| **2** | full\_name | str | No |  |
-| **3** | level | str | No |  |
+| **2** | profile\_picture | img | Yes |  |
+| **3** | full\_name | str | No |  |
 | **4** | no\_of\_members | int | No |  |
-| **5** | retain\_criteria | Str (decimal) | No |  |
-| **6** | upgrade\_criteria | Str (decimal) | No |  |
-| **7** | retention\_target | Int | No |  |
-| **8** | status | str |  |  |
+| **5** | retention\_target | Int | No |  |
+
+/crm-admins/assignments/{admin\_uuid}/retention-target/ GET  
+Output
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | month | int | No | Returns 1-12 |
+| **2** | amount | Decimal | No | Returns 0 if not created |
 
 ### Member Assignment \- PUT {#member-assignment---put}
 
@@ -779,10 +854,62 @@ Input
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | name | str | No |  |
-| **2** | status | int | No | 1 \= Active 2 \= Inactive |
-| **3** | retain\_criteria | Str (Decimal) | No |  |
-| **4** | upgrade\_criteria | Str (Decimal) | No |  |
-| **5** | retention\_target | Str (Decimal) | No | /admins/users/ GET, use their uuid |
+| **1** | retention\_targets | List | No | Check Retention Targets below |
+
+Retention Targets
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | month | int | No | Accepts 1-12 |
+| **2** | target | Str (Decimal) | No |  |
+
+### 
+
+## 
+
+## Promotions
+
+### Available Promotions
+
+/settings/available-promotions/ GET
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | value | int | No |  |
+| **2** | label | Str  | No |  |
+
+### Promotions by Stations \- GET
+
+/settings/promotions/get-by-station/\<station\_uuid\>/ GET
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | type | str | No |  |
+| **2** | promotion | List | \- | See promotions GET below |
+
+Promotions GET
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | item | Int or uuid | No | Returns int if not associated with an item, UUID otherwise |
+| **2** | name | str | No | Returns name of item if associated with item, otherwise returns “Monthly VIP” “Upgrade VIP” “Birthday Bonus” “Manual Bonus” |
+| **3** | code | int | No |  |
+
+### Promotions by Stations \- POST
+
+/settings/promotions/ POST
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | station\_id | uuid | No |  |
+| **2** | promotions | List | \- | See promotions POST below |
+
+Promotions POST
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | promotion\_type | Int | No | Use available-promotions |
+| **2** | item\_uuid | UUID | Yes | Required if using an item |
+| **3** | promotion-code | int | No |  |
 
 ### 

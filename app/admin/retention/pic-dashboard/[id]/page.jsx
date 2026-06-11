@@ -19,7 +19,6 @@ import {
   getCrmVipTiers,
   getCrmUserSingle,
   getRetentionSummary,
-  periodLabelToType,
 } from "../../../../api/crmApi";
 
 // PIC detail view — shows per-PIC breakdown of members + a member list.
@@ -137,13 +136,6 @@ function buildKpis(summary) {
   ];
 }
 
-function buildSummaryParams(period, fromDate, toDate) {
-  if (fromDate && toDate) {
-    return { type: 4, from_date: fromDate, to_date: toDate };
-  }
-  return { type: periodLabelToType(period) };
-}
-
 function toDateInput(date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -202,7 +194,7 @@ function PicDetailContent() {
   const fromDate = searchParams.get("from") || "";
   const toDate = searchParams.get("to") || "";
   const summaryParams = useMemo(
-    () => buildSummaryParams(period, fromDate, toDate),
+    () => buildMemberDateParams(period, fromDate, toDate),
     [period, fromDate, toDate]
   );
 
@@ -447,7 +439,8 @@ function MemberListSection({ adminUuid, period, fromDate, toDate }) {
     mrs_vip_level: level !== "all" ? level : undefined,
     brand: brand !== "all" ? brand : undefined,
     search: q || undefined,
-  }), [memberDateParams, walletLevel, level, brand, page, q]);
+    ordering: sort === "hl" ? "-total_sales" : sort === "lh" ? "total_sales" : undefined,
+  }), [memberDateParams, walletLevel, level, brand, page, q, sort]);
 
   const fetchMembers = useCallback(async () => {
     if (!adminUuid) return;

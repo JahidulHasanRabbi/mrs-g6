@@ -9,7 +9,7 @@ import {
   AlertHistorySection,
   FollowUpCreateModal,
 } from "../../../../components/admin/retention/FollowUpComponents";
-import { assignCrmMemberToPic, getCrmFollowUps, getCrmMemberSingle, getCrmUsers, patchCrmMember, patchCrmMemberFollowUp, refreshCrmMember } from "../../../../api/crmApi";
+import { assignCrmMemberToPic, getCrmFollowUps, getCrmMemberSingle, getCrmUsers, patchCrmMember, patchCrmMemberAlert, patchCrmMemberFollowUp, refreshCrmMember, sendCrmMemberBonus } from "../../../../api/crmApi";
 import { getVipTierList, getWalletVipTiers, getStationList } from "../../../../api/adminApi";
 
 const TAG_STYLES = {
@@ -268,11 +268,11 @@ export default function MemberProfilePage() {
     };
   }, [memberUuid, refreshKey]);
 
-  // Seed the alert flag from the backend once data arrives. Accept several
-  // likely field names so it lights up whenever the backend exposes one.
+  // Seed the alert flag from the backend once data arrives (Member Single GET
+  // returns top-level `alert: bool`).
   useEffect(() => {
     if (!data) return;
-    setIsAlerted(Boolean(data.is_alert ?? data.alert ?? data.is_alerted ?? data.under_alert));
+    setIsAlerted(Boolean(data.alert));
   }, [data]);
 
   if (loading) {
@@ -379,20 +379,18 @@ export default function MemberProfilePage() {
     }
   };
 
-  // Confirm + persist the Alert toggle (#13). Optimistic local update so the
-  // red design flips immediately; the backend call is best-effort until the
-  // endpoint exists.
+  // Confirm + persist the Alert toggle (#13) via PATCH /crm-members/members/<uuid>/alert/.
   const handleAlertConfirm = async () => {
     const turnOn = alertConfirm === "on";
     setAlertToggleSaving(true);
     try {
-      await patchCrmMember(memberUuid, { is_alert: turnOn });
+      await patchCrmMemberAlert(memberUuid, turnOn);
+      setIsAlerted(turnOn);
+      setAlertConfirm(null);
     } catch (err) {
       console.error("[member-profile] alert toggle failed", err);
     } finally {
-      setIsAlerted(turnOn);
       setAlertToggleSaving(false);
-      setAlertConfirm(null);
     }
   };
 
@@ -930,12 +928,10 @@ function AssignPicModal({ memberUuid, currentPic, onClose, onSaved }) {
 
 // Placeholder bonus catalogue — the real list comes from the backend (#12).
 const BONUS_OPTIONS = [
-  "Welcome Bonus",
-  "Reload Bonus",
-  "Cashback Bonus",
-  "Free Spin",
-  "Birthday Bonus",
-  "Festive Bonus",
+  { label: "RM 1 Bonus", value: "1" },
+  { label: "RM 3 Bonus", value: "3" },
+  { label: "RM 5 Bonus", value: "5" },
+  { label: "RM 8 Bonus", value: "8" },
 ];
 
 // Send Bonus (#12): pick a bonus, Confirm → sends to the member in NS.
@@ -951,14 +947,22 @@ function SendBonusModal({ memberUuid, memberName, onClose, onResult }) {
     try {
       // Backend send endpoint pending — surface the confirmed selection so the
       // PIC gets feedback. Wire to the NS send-bonus API once it exists.
+      const res = await sendCrmMemberBonus(memberUuid, { bonus: selected });
+      if (res?.status === "ERROR") {
+        setError(res?.error_message || "Failed to send bonus. Please try again.");
+        setSending(false);
+        return;
+      }
+      const bonus = BONUS_OPTIONS.find((item) => item.value === selected);
       onResult?.({
         status: "success",
         title: "Bonus Sent",
-        message: `"${selected}" has been sent to ${memberName} in NS.`,
+        message: `${bonus?.label || `RM ${selected} Bonus`} has been sent to ${memberName} in NS.`,
       });
     } catch (err) {
       console.error("[send-bonus] failed", err);
-      setError("Failed to send bonus. Please try again.");
+      const detail = err?.data?.error_message || err?.data?.detail || err?.data?.message || err?.message;
+      setError(detail || "Failed to send bonus. Please try again.");
       setSending(false);
     }
   };
@@ -969,17 +973,17 @@ function SendBonusModal({ memberUuid, memberName, onClose, onResult }) {
       <p className="mb-3 text-[12px] text-white/60">Choose a bonus to send to {memberName} in NS.</p>
       <div className="flex max-h-[280px] flex-col gap-2 overflow-y-auto pr-1">
         {BONUS_OPTIONS.map((bonus) => {
-          const active = selected === bonus;
+          const active = selected === bonus.value;
           return (
             <button
-              key={bonus}
+              key={bonus.value}
               type="button"
-              onClick={() => setSelected(bonus)}
+              onClick={() => setSelected(bonus.value)}
               className={`flex items-center justify-between rounded-[8px] border px-4 py-3 text-left text-[13px] font-medium transition ${
                 active ? "border-[#f2cb7a] bg-[#f2cb7a]/10 text-white" : "border-[#fbeed2]/30 text-[#f6dda6] hover:border-[#f2cb7a]"
               }`}
             >
-              {bonus}
+              {bonus.label}
               {active ? (
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#84ebb4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12" />

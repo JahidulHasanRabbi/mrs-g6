@@ -749,46 +749,14 @@ const ExpandableMenuItem = ({ item, activeItem, forceOpen = false }) => {
 
 // Section title gradient — Primary 600 → Primary 300 from the Figma tokens.
 const SECTION_TITLE_GRADIENT = "linear-gradient(102deg, #dc9d16 1%, #f2cb7a 98%)";
-const SECTION_STORAGE_PREFIX = "mrs_admin_sidebar_section_";
-
-function getStoredSectionOpen(sectionKey, defaultOpen) {
-  if (typeof window === "undefined") return defaultOpen;
-  try {
-    const stored = localStorage.getItem(`${SECTION_STORAGE_PREFIX}${sectionKey}`);
-    if (stored === null) return defaultOpen;
-    return stored === "true";
-  } catch {
-    return defaultOpen;
-  }
-}
-
-function storeSectionOpen(sectionKey, value) {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(`${SECTION_STORAGE_PREFIX}${sectionKey}`, value ? "true" : "false");
-  } catch {
-    // Ignore storage failures; the in-memory section state still works.
-  }
-}
-
 // Collapsible section wrapper — renders a header with the section title
 // and a chevron that toggles visibility of the items inside.
 //
 // When the sidebar is collapsed, the title shows a short prefix (~3 chars +
 // ellipsis) so the section is still distinguishable in the narrow track.
-const CollapsibleSection = ({ title, storageKey, defaultOpen = true, forceOpen = false, children }) => {
+const CollapsibleSection = ({ title, sectionKey, open, onToggle, forceOpen = false, children }) => {
   const { collapsed: sidebarCollapsed } = useSidebar();
-  const sectionKey = storageKey || title.toLowerCase().replace(/\s+/g, "-");
-  const [open, setOpen] = useState(() => getStoredSectionOpen(sectionKey, defaultOpen));
   const effectivelyOpen = forceOpen || open;
-
-  const toggleSection = () => {
-    setOpen((current) => {
-      const next = !current;
-      storeSectionOpen(sectionKey, next);
-      return next;
-    });
-  };
 
   // In collapsed mode the section header has no room for readable text and
   // toggling a section you can't name is pointless — just render the items
@@ -801,7 +769,7 @@ const CollapsibleSection = ({ title, storageKey, defaultOpen = true, forceOpen =
     <div className="flex flex-col gap-2">
       <button
         type="button"
-        onClick={toggleSection}
+        onClick={() => onToggle?.(sectionKey)}
         disabled={forceOpen}
         className="flex items-center w-full py-1 group justify-between gap-2 px-0"
         aria-expanded={effectivelyOpen}
@@ -902,6 +870,18 @@ function filterMenuItems(items, query) {
   return result;
 }
 
+function activeSectionForItem(activeItem) {
+  const hasActive = (items) => items.some((item) => {
+    if (item.id === activeItem) return true;
+    return Array.isArray(item.children) && item.children.some((child) => child.id === activeItem);
+  });
+  if (hasActive(WORLD_CUP_MENU)) return "wc";
+  if (hasActive(RETENTION_MENU)) return "rt";
+  if (hasActive(SETTINGS_MENU)) return "st";
+  if (hasActive([...MENU_ITEMS, ...SECONDARY_MENU])) return "mrs";
+  return "mrs";
+}
+
 export default function Sidebar({ activeItem: activeItemProp }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -909,6 +889,7 @@ export default function Sidebar({ activeItem: activeItemProp }) {
   const { collapsed, toggle } = useSidebar();
   const [search, setSearch] = useState("");
   const [permissions, setPermissions] = useState(() => getStoredAdminPermissions());
+  const [openSection, setOpenSection] = useState(() => activeSectionForItem(activeItem));
   // Sidebar items keyed to a boolean — true means render the red attention dot.
   // Currently driven only by getPrioritySummary for the Member Alert row, but
   // shaped as a map so future alert sources can plug in without restructuring.
@@ -923,6 +904,14 @@ export default function Sidebar({ activeItem: activeItemProp }) {
   const popoverInputRef = useRef(null);
 
   const hasQuery = search.trim().length > 0;
+
+  useEffect(() => {
+    setOpenSection(activeSectionForItem(activeItem));
+  }, [activeItem]);
+
+  const toggleSection = (sectionKey) => {
+    setOpenSection((current) => (current === sectionKey ? "" : sectionKey));
+  };
 
   useEffect(() => {
     const refreshPermissions = () => setPermissions(getStoredAdminPermissions());
@@ -1151,22 +1140,22 @@ export default function Sidebar({ activeItem: activeItemProp }) {
         {(() => {
           const blocks = [
             worldCupItems.length > 0 && (
-              <CollapsibleSection key="wc" title="World Cup Leaderboards" forceOpen={hasQuery}>
+              <CollapsibleSection key="wc" sectionKey="wc" title="World Cup Leaderboards" open={openSection === "wc"} onToggle={toggleSection} forceOpen={hasQuery}>
                 {worldCupItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
               </CollapsibleSection>
             ),
             mrsItems.length > 0 && (
-              <CollapsibleSection key="mrs" title="MRS System" storageKey="mrs-system" defaultOpen={false} forceOpen={hasQuery}>
+              <CollapsibleSection key="mrs" sectionKey="mrs" title="MRS System" open={openSection === "mrs"} onToggle={toggleSection} forceOpen={hasQuery}>
                 {mrsItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
               </CollapsibleSection>
             ),
             retentionItems.length > 0 && (
-              <CollapsibleSection key="rt" title="Retention System" storageKey="retention-system" forceOpen={hasQuery}>
+              <CollapsibleSection key="rt" sectionKey="rt" title="Retention System" open={openSection === "rt"} onToggle={toggleSection} forceOpen={hasQuery}>
                 {retentionItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
               </CollapsibleSection>
             ),
             settingsItems.length > 0 && (
-              <CollapsibleSection key="st" title="Settings" storageKey="settings" forceOpen={hasQuery}>
+              <CollapsibleSection key="st" sectionKey="st" title="Settings" open={openSection === "st"} onToggle={toggleSection} forceOpen={hasQuery}>
                 {settingsItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
               </CollapsibleSection>
             ),
