@@ -261,7 +261,7 @@ function AssignmentListSection({ rows, total, page, loading, onAssignmentsChange
         >
           Assignment List
         </h2>
-        <ImportMembersButton />
+        <ImportMembersButton assignees={rows} />
       </header>
 
       <div className="w-full overflow-x-auto scrollbar-admin">
@@ -302,9 +302,19 @@ function AssignmentListSection({ rows, total, page, loading, onAssignmentsChange
 
 // Import a member list from a single-column ("Phone Number") spreadsheet (#14).
 // The file is parsed/ingested by the backend; the frontend just hands it over.
-function ImportMembersButton() {
+// An optional "Assign to" PIC can be picked — leaving it blank imports the
+// members without assigning them to anyone.
+function ImportMembersButton({ assignees = [] }) {
   const [file, setFile] = useState(null);
+  const [assigneeUuid, setAssigneeUuid] = useState("");
   const [notice, setNotice] = useState("");
+
+  const assigneeOptions = [
+    { value: "", label: "Unassigned" },
+    ...assignees
+      .filter((row) => row.picUuid)
+      .map((row) => ({ value: row.picUuid, label: row.name })),
+  ];
 
   const onPick = (e) => {
     const picked = e.target.files?.[0] || null;
@@ -315,14 +325,26 @@ function ImportMembersButton() {
 
   const onUpload = () => {
     if (!file) return;
-    // Backend import endpoint pending — hand the raw file over once it exists.
-    setNotice(`"${file.name}" received. Members will be imported once the backend import is live.`);
+    // Backend import endpoint pending — hand the raw file (and chosen
+    // assignee, if any) over once it exists.
+    const assignee = assigneeOptions.find((opt) => opt.value === assigneeUuid);
+    const assignedTo = assigneeUuid ? ` and assigned to ${assignee.label}` : "";
+    setNotice(`"${file.name}" received${assignedTo}. Members will be imported once the backend import is live.`);
     setFile(null);
+    setAssigneeUuid("");
   };
 
   return (
     <div className="flex flex-col items-end gap-1">
       <div className="flex items-center gap-2">
+        <div className="w-[180px]">
+          <CustomSelect
+            value={assigneeUuid}
+            onChange={setAssigneeUuid}
+            options={assigneeOptions}
+            placeholder="Assign to..."
+          />
+        </div>
         <label
           className="flex cursor-pointer items-center gap-2 rounded-[8px] border border-[#f2cb7a] px-4 py-2 text-[12px] font-semibold text-[#152044] transition hover:brightness-110"
           style={{ backgroundImage: GRAD_GOLD }}
@@ -346,7 +368,9 @@ function ImportMembersButton() {
       ) : notice ? (
         <span className="max-w-[260px] text-right text-[11px] text-[#84ebb4]">{notice}</span>
       ) : (
-        <span className="text-[11px] text-white/40">Excel: one &quot;Phone Number&quot; column</span>
+        <span className="text-[11px] text-white/40">
+          Excel: one &quot;Phone Number&quot; column. Leave &quot;Assign to&quot; empty to import without assigning.
+        </span>
       )}
     </div>
   );

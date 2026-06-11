@@ -72,7 +72,7 @@ function mapActivityRow(row, id) {
     id,
     uuid: row.uuid,
     rawDate: validDate ? date.toISOString().split("T")[0] : null,
-    date: validDate ? date.toLocaleDateString("en-US", { year: "2-digit", month: "2-digit", day: "2-digit" }) : "—",
+    date: validDate ? date.toLocaleDateString("en-GB", { year: "2-digit", month: "2-digit", day: "2-digit" }) : "—",
     time: validDate ? date.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "—",
     user: row.user || "—",
     activity: row.activity || "—",

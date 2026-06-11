@@ -562,6 +562,7 @@ Game Info Input
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | bonus | Str (Decimal) | No |  |
+| **2** | station\_uuid | UUID | No |  |
 
 Returns SUCCESS if bonus amount \< 10, ERROR if bonus amount \> 10, for staging purposes.
 

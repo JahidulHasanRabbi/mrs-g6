@@ -82,8 +82,8 @@ function formatTrigger(fromIso, toIso) {
   const from = parseIso(fromIso);
   const to = parseIso(toIso);
   if (!from || !to) return null;
-  const f = `${MONTH_SHORT[from.getMonth()]} ${from.getDate()}, ${from.getFullYear() % 100}`;
-  const t = `${MONTH_SHORT[to.getMonth()]} ${to.getDate()}, ${to.getFullYear() % 100}`;
+  const f = `${from.getDate()} ${MONTH_SHORT[from.getMonth()]} ${from.getFullYear() % 100}`;
+  const t = `${to.getDate()} ${MONTH_SHORT[to.getMonth()]} ${to.getFullYear() % 100}`;
   return `${f} – ${t}`;
 }
 
@@ -91,7 +91,7 @@ function formatPanelLabel(date) {
   if (!date) return "—";
   const mm = String(date.getMonth() + 1).padStart(2, "0");
   const dd = String(date.getDate()).padStart(2, "0");
-  return `${mm}/${dd}/${date.getFullYear()}`;
+  return `${dd}/${mm}/${date.getFullYear()}`;
 }
 
 // ── Preset definitions ──────────────────────────────────────────────────

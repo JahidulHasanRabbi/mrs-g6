@@ -575,6 +575,7 @@ function DayPicker({ value, onChange }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-label="Filter by day"
+        lang="en-GB"
         className="bg-transparent text-[12px] font-medium text-[#f6dda6] focus:outline-none [color-scheme:dark]"
       />
       {value ? (
