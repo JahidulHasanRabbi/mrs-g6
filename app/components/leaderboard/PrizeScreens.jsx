@@ -44,7 +44,6 @@ function PlayerPrizeSkeleton({ index }) {
 function PredictionPrizeSkeleton() {
   return (
     <div className="flex w-full items-center gap-3 rounded-[8px] px-2 py-3" style={{ background: LB_COLORS.panelLight }}>
-      <div className="h-4 w-[48px] shrink-0 animate-pulse rounded-[4px]" style={{ background: SKEL_BG }} />
       <div className="flex flex-1 justify-center">
         <div className="h-3.5 w-3/4 animate-pulse rounded-[4px]" style={{ background: SKEL_BG }} />
       </div>
@@ -189,11 +188,18 @@ export function PlayerPrizesPanel({ onViewLeaderboards, onViewDetails }) {
                 {(p.code || p.flag) && <Flag code={p.code} src={p.flag} size={24} />}
               </div>
               <button
+                type="button"
                 onClick={() => onViewDetails?.(p)}
-                className="grid h-[44px] w-[71px] place-items-center rounded-[4px]"
+                className="grid h-[44px] w-[71px] place-items-center overflow-hidden rounded-[4px]"
                 style={{ background: "linear-gradient(135deg,#1a3a25 0%,#2a4d2a 100%)", color: LB_COLORS.primary, fontFamily: "'Lexend',sans-serif", fontSize: 10 }}
+                aria-label={`View ${placeRangeLabel(p.rank, p.quantity)} prize details`}
               >
-                View Details
+                {p.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={p.image} alt={p.name ?? "Prize"} className="h-full w-full object-cover" />
+                ) : (
+                  "View Details"
+                )}
               </button>
             </div>
           ))}
@@ -217,8 +223,7 @@ export function PredictionPrizesPanel({ onViewPredictions }) {
 
         <div className="flex w-full flex-col gap-2">
           <div className="flex items-center gap-3 px-1">
-            <div className="w-[48px] text-[10px] uppercase" style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}>POSITION</div>
-            <div className="flex-1 text-center text-[10px] uppercase" style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}>CONDITION</div>
+            <div className="flex-1 text-left text-[10px] uppercase" style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}>ACHIEVEMENT</div>
             <div className="w-[75px] text-center text-[10px] uppercase" style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}>PRIZE</div>
           </div>
 
@@ -229,7 +234,7 @@ export function PredictionPrizesPanel({ onViewPredictions }) {
             const color = placeColor(rank);
             return (
               <div
-                key={r.position}
+                key={r.uuid ?? r.condition}
                 className="flex w-full items-center gap-3 rounded-[8px] px-2 py-3"
                 style={{
                   background: LB_COLORS.panelLight,
@@ -237,8 +242,7 @@ export function PredictionPrizesPanel({ onViewPredictions }) {
                   boxShadow: rank === 1 ? "0 0 10px 0 rgba(84,233,138,0.8), 0 0 20px 0 rgba(84,233,138,0.4)" : "none",
                 }}
               >
-                <div className="w-[48px] text-[12px]" style={{ color, fontFamily: "'Lexend',sans-serif" }}>{r.position}</div>
-                <div className="flex-1 text-center text-[12px]" style={{ color, fontFamily: "'Lexend',sans-serif" }}>{r.condition}</div>
+                <div className="flex-1 text-left text-[12px]" style={{ color, fontFamily: "'Lexend',sans-serif" }}>{r.condition}</div>
                 <div className="flex w-[75px] flex-col items-center gap-1">
                   {r.image ? (
                     // eslint-disable-next-line @next/next/no-img-element

@@ -151,7 +151,6 @@ function RewardForm() {
 
   const onSave = async () => {
     if (!form.name) { setError("Reward name is required."); return; }
-    if (form.itemType === 2 && !form.countryUuid) { setError("Country is required for Top Country rewards."); return; }
     setSaving(true);
     setError("");
     try {
@@ -168,9 +167,9 @@ function RewardForm() {
         description: form.description,
       };
       
-      if (form.itemType === 2 && form.countryUuid) {
+      if (form.countryUuid) {
         payload.country = Number(form.countryUuid);
-      } else if (editingUuid && !form.imageFile) {
+      } else if (editingUuid || form.itemType === 2) {
         payload.country = null;
       }
       
@@ -229,7 +228,7 @@ function RewardForm() {
         </div>
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">
-            Country (Top Country only){form.itemType === 2 && <span className="text-red-400"> *</span>}
+            Country (optional)
           </label>
           <CountrySelect value={form.countryUuid} onChange={set("countryUuid")} countries={countryOptions} />
         </div>
@@ -237,14 +236,16 @@ function RewardForm() {
           <label className="mb-2 block text-[14px] font-semibold text-white">Description</label>
           <textarea value={form.description} onChange={set("description")} rows={3} className={`${INPUT_BASE} resize-none`} />
         </div>
-        <div>
-          <label className="mb-2 block text-[14px] font-semibold text-white">Position</label>
-          <input type="number" min="1" value={form.position} onChange={set("position")} className={INPUT_BASE} />
-        </div>
+        {form.itemType !== 1 && (
+          <div>
+            <label className="mb-2 block text-[14px] font-semibold text-white">Position</label>
+            <input type="number" min="1" value={form.position} onChange={set("position")} className={INPUT_BASE} />
+          </div>
+        )}
         {form.itemType === 1 && (
           <>
             <div>
-              <label className="mb-2 block text-[14px] font-semibold text-white">Win Condition</label>
+              <label className="mb-2 block text-[14px] font-semibold text-white">Achievement</label>
               <input type="number" min="1" value={form.winCondition} onChange={set("winCondition")} className={INPUT_BASE} />
             </div>
             <div>
