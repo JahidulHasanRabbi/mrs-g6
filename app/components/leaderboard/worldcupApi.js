@@ -207,12 +207,26 @@ export async function getPredictionPrizes() {
   const data = await getWorldCupPrizePool({ type: "prediction" });
   const items = (data.results ?? data ?? [])
     .slice()
-    .sort((a, b) => (b.win_condition ?? 0) - (a.win_condition ?? 0));
+    .sort((a, b) => {
+      const aPos = Number(a.position);
+      const bPos = Number(b.position);
+      if (Number.isFinite(aPos) && Number.isFinite(bPos)) return aPos - bPos;
+      if (Number.isFinite(aPos)) return -1;
+      if (Number.isFinite(bPos)) return 1;
+      const aWins = Number(a.win_condition);
+      const bWins = Number(b.win_condition);
+      if (Number.isFinite(aWins) && Number.isFinite(bWins)) return bWins - aWins;
+      return 0;
+    });
   return items.map((r, i) => {
-    const wins = r.win_condition ?? 0;
+    const wins = Number(r.win_condition);
+    const achievement = firstNonBlank(
+      r.description,
+      Number.isFinite(wins) && wins > 1 ? `${wins} Match Win Streak` : "",
+    ) || "Correct Prediction";
     return {
       position: ordinal(i + 1),
-      condition: wins > 1 ? `${wins} Match Win Streak` : "Correct Prediction",
+      condition: achievement,
       reward: r.token_amount ? `${Number(r.token_amount).toLocaleString()} Tokens` : r.reward_name,
       type: r.token_amount ? "tokens" : "phone",
       image: r.image,

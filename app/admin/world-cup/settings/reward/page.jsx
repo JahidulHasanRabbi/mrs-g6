@@ -151,6 +151,7 @@ function RewardForm() {
 
   const onSave = async () => {
     if (!form.name) { setError("Reward name is required."); return; }
+    if (form.itemType === 2 && !form.countryUuid) { setError("Country is required for Top Country rewards."); return; }
     setSaving(true);
     setError("");
     try {
@@ -167,9 +168,9 @@ function RewardForm() {
         description: form.description,
       };
       
-      if (form.countryUuid) {
+      if (form.itemType === 2 && form.countryUuid) {
         payload.country = Number(form.countryUuid);
-      } else if (editingUuid || form.itemType === 2) {
+      } else if (editingUuid) {
         payload.country = null;
       }
       
@@ -228,7 +229,7 @@ function RewardForm() {
         </div>
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">
-            Country (optional)
+            Country (Top Country only){form.itemType === 2 && <span className="text-red-400"> *</span>}
           </label>
           <CountrySelect value={form.countryUuid} onChange={set("countryUuid")} countries={countryOptions} />
         </div>
