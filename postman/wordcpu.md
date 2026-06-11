@@ -52,6 +52,22 @@ Used for: creating matches (`team_home`, `team_away`, `winner`) and placing pred
 
 ---
 
+## Points & Ranking
+
+`total_points` (and therefore `global_rank` / `country_rank`) for a real member is always:
+
+```
+total_points = WorldCupMemberScore.total_points (Penalty Kick "WORLD CUP SCORE" redemptions)
+              + deposit points from the campaign window (computed live)
+```
+
+- **Deposit points** are converted from `MemberDeposit` amounts with `transaction_date` inside the World Cup campaign window (`WC_CAMPAIGN_PERIOD_START`–`WC_CAMPAIGN_PERIOD_END`, e.g. June 11 – July 19 in production), at a rate of RM10 = 100 points. This is computed fresh on every request, not stored.
+- Deposit points count for the **entire campaign window**, even deposits made before the member selected a country - as soon as a member has a `WorldCupMemberScore` row, all of their in-window deposits are included.
+- A member must select a country (`/choose-country/`) before they can place predictions, so `total_predictions` / `total_wins` / `current_streak` / `best_streak` only ever accumulate from the join date onward.
+- `global_rank` / `country_rank` are recomputed from current data on every request - there is no cached/denormalized rank, so values are always up to date with the latest deposits, kick redemptions, and settled predictions.
+
+---
+
 # USER PAGE
 
 ## Country List
@@ -491,11 +507,36 @@ Input
 | **4** | country | Int | Yes | Country ID (1–10). Use for Top Country prizes |
 | **5** | description | Str | Yes |  |
 | **6** | image | Image | Yes |  |
-| **7** | position | Int | Yes | Display order |
+| **7** | position | Int | Yes | Display order. For Global Top Player items, also the rank slot (e.g. 1 = 1st place) |
 | **8** | win\_condition | Int | Yes | Consecutive wins required (prediction prizes) |
 | **9** | token\_amount | Int | Yes | Token reward for prediction prizes |
 
 ### /worldcup/reward-items/{uuid}/archive/ PATCH
+
+---
+
+## Global Top Player Reward Distribution (Automatic)
+
+Global Top Player rewards (item\_type = 3) are granted automatically by a periodic
+background task (`distribute_global_top_player_rewards`, run via the
+`run_global_top_player_reward_task` management command) - there is no claim
+endpoint for members.
+
+- Each `WorldCupRewardItem` with `item_type = 3` defines a `position` (rank
+  slot, e.g. 1, 2, 3 for 1st/2nd/3rd place).
+- Ranking for eligibility is computed from **real members only**
+  (`WorldCupDummyPlayer` entries are excluded and never receive rewards).
+- A member qualifies for a reward item once their global rank reaches
+  `<= position` **at any point** - this is a one-time milestone (ratchet):
+  if the member later drops in rank, the reward is not revoked, and it is
+  never paid out twice for the same member/reward item. This is tracked via
+  an internal `WorldCupRewardClaim` record (member + reward item, unique).
+- Delivery follows the same rule as prediction prizes: `token_amount` set →
+  tokens are credited automatically (`MemberToken`, reason "WORLDCUP-TOP-PLAYER");
+  `token_amount` null → a `MemberReward` (category "Prize") is logged for staff
+  to fulfil manually.
+- Top Country (item\_type = 2) rewards are **not** automated and remain
+  manually administered.
 
 ---
 
@@ -628,13 +669,15 @@ Output — same row format as `/worldcup/leaderboard/players/` (`scope` ≠ `cou
 
 ### /worldcup/dashboard/kpi/ GET
 
-Returns key metrics for the World Cup feature. When a date filter is supplied, each metric is compared against the immediately-preceding period of equal length (e.g. `period=2` compares the current rolling 30 days against the prior 30 days; a custom `from_date`/`to_date` range is compared against an equal-length range immediately before it). With no filter, all-time totals are returned and comparison fields are null.
+Returns key metrics for the World Cup feature. **All metrics are scoped to the World Cup campaign window** (`WC_CAMPAIGN_PERIOD_START`..`WC_CAMPAIGN_PERIOD_END` - production: 2026-06-11 to 2026-07-19). Any `period`/`from_date`/`to_date` range is intersected with the campaign window; a range that falls entirely outside it returns all KPI values as 0 with no comparison.
+
+When a date filter is supplied, each metric is compared against the immediately-preceding period of equal length (also clamped to the campaign window - e.g. `period=1` compares today vs yesterday; a custom `from_date`/`to_date` range is compared against an equal-length range immediately before it). With no filter, the full campaign window is used and comparison fields are null.
 
 Query Parameters
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | period | Int | Yes | `1` = daily (today vs yesterday), `2` = monthly (rolling 30 days vs prior 30 days), `3` = yearly (rolling 365 days vs prior 365 days). Defaults to `2` when any date filter is present without an explicit `period` |
+| **1** | period | Int | Yes | `1` = daily (today vs yesterday). Omit (with no `from_date`/`to_date`) for the full campaign window |
 | **2** | from\_date | Str (YYYY-MM-DD) | Yes | Custom range start. Must be paired with `to_date`; takes priority over `period`. Compared against an equal-length range immediately preceding it |
 | **3** | to\_date | Str (YYYY-MM-DD) | Yes | Custom range end. Must be paired with `from_date`; takes priority over `period` |
 
@@ -642,10 +685,10 @@ Output
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | total\_sales | Object | No | KPI Entry — sum of `MemberDeposit.amount` in the period |
-| **2** | total\_participants | Object | No | KPI Entry — distinct members with a deposit in the period |
-| **3** | new\_depositing\_users | Object | No | KPI Entry — distinct members whose first-ever deposit falls within the period (no filter: all-time distinct depositors) |
-| **4** | returning\_depositing\_users | Object | No | KPI Entry — distinct members who deposited in the period AND had deposited before it (always 0 / null when no filter is applied) |
+| **1** | total\_sales | Object | No | KPI Entry — sum of `MemberDeposit.amount` (World Cup participants only) in the period |
+| **2** | total\_participants | Object | No | KPI Entry — members who joined the World Cup (`WorldCupMemberScore` created) in the period |
+| **3** | new\_depositing\_users | Object | No | KPI Entry — distinct members whose first-ever deposit falls within the period |
+| **4** | returning\_depositing\_users | Object | No | KPI Entry — distinct members who deposited in the period AND had deposited before it |
 | **5** | prediction\_users | Object | No | KPI Entry — distinct members who made a World Cup prediction in the period |
 | **6** | predicted\_matches | Object | No | KPI Entry — distinct matches that received at least one prediction in the period |
 
@@ -654,5 +697,5 @@ KPI Entry Object
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | value | Int / Str (Decimal) | No | Current period's value (`total_sales` is a Decimal string, others are integers) |
-| **2** | change\_percent | Float | Yes | `% change vs. previous period`, rounded to 2dp. Null when no filter is applied, or when the previous period's value is 0 |
-| **3** | change\_direction | Int | Yes | `1` = up (current ≥ previous), `2` = down (current < previous). Null when no filter is applied |
+| **2** | change\_percent | Float | Yes | `% change vs. previous period`, rounded to 2dp. Null when no comparison period applies, or when the previous period's value is 0 |
+| **3** | change\_direction | Int | Yes | `1` = up (current ≥ previous), `2` = down (current < previous). Null when no comparison period applies |

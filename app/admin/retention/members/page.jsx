@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { getCrmMembers, getCrmUsers, getCrmVipTiers } from "../../../api/crmApi";
+import { getWalletVipTiers } from "../../../api/adminApi";
 import { Pagination } from "../../../components/admin/members/DataTable";
 import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
 import LoadingOverlay from "../../../components/admin/ui/LoadingOverlay";
@@ -54,6 +55,7 @@ function RetentionMembersContent() {
   // so nothing can race with the URL.
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
   const [priority, setPriority] = useState("");
+  const [walletLevel, setWalletLevel] = useState("");
   const [vip, setVip] = useState("");
   const [pic, setPic] = useState("");
   const [query, setQuery] = useState("");
@@ -77,11 +79,13 @@ function RetentionMembersContent() {
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   };
   const handlePriority = (v) => { setPriority(v); resetToPage1(); };
+  const handleWalletLevel = (v) => { setWalletLevel(v); resetToPage1(); };
   const handleVip = (v) => { setVip(v); resetToPage1(); };
   const handlePic = (v) => { setPic(v); resetToPage1(); };
   const handleQuery = (v) => { setQuery(v); resetToPage1(); };
 
   const [pics, setPics] = useState([]);
+  const [walletTiers, setWalletTiers] = useState([]);
   const [vipTiers, setVipTiers] = useState([]); // [{ name, level }]
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
@@ -100,6 +104,12 @@ function RetentionMembersContent() {
         setVipTiers(results.map((t, i) => ({ name: t.name || t.tier_name || t.level || t.uuid, level: i + 1 })).filter((t) => t.name));
       })
       .catch(() => setVipTiers([]));
+    getWalletVipTiers({ page: 1, page_size: 100 })
+      .then((res) => {
+        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        setWalletTiers(results.map((t) => t.name || t.tier_name || t.level || t.uuid).filter(Boolean));
+      })
+      .catch(() => setWalletTiers([]));
   }, []);
 
   // Debounce search to avoid hammering the API on every keystroke.
@@ -121,6 +131,7 @@ function RetentionMembersContent() {
           page,
           page_size: PAGE_SIZE,
           priority: priority ? priority.toLowerCase() : undefined,
+          wallet_vip_level: walletLevel || undefined,
           mrs_vip_level: vip || undefined,
           retention: retentionUser?.id ?? retentionUser?.uuid ?? undefined,
           search: debouncedQuery || undefined,
@@ -142,7 +153,7 @@ function RetentionMembersContent() {
     return () => {
       cancelled = true;
     };
-  }, [page, priority, vip, pic, pics, debouncedQuery]);
+  }, [page, priority, walletLevel, vip, pic, pics, debouncedQuery]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -176,7 +187,8 @@ function RetentionMembersContent() {
         </h1>
         <div className="flex flex-wrap items-center gap-3">
           <FilterDropdown label="Priority" value={priority} onChange={handlePriority} options={PRIORITY_OPTIONS} />
-          <FilterDropdown label="VIP Level" value={vip} onChange={handleVip} options={vipTiers.map((t) => t.name)} />
+          <FilterDropdown label="Wallet Level" value={walletLevel} onChange={handleWalletLevel} options={walletTiers} />
+          <FilterDropdown label="MRS Level" value={vip} onChange={handleVip} options={vipTiers.map((t) => t.name)} />
           <FilterDropdown label="All PIC" value={pic} onChange={handlePic} options={pics.map((u) => u.full_name || u.username).filter(Boolean)} />
           <SearchInput value={query} onChange={handleQuery} />
         </div>

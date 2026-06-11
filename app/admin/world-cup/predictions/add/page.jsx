@@ -12,10 +12,10 @@ import {
   settleWorldCupMatch,
 } from "../../../../api/adminApi";
 
-// API status: 1=Upcoming, 2=Closed (ongoing), 3=Settled (ended via settle endpoint)
+// API status: 1=Upcoming, 2=Closed, 3=Settled (ended via settle endpoint)
 const STATUS_OPTIONS = [
   { value: 1, label: "Upcoming" },
-  { value: 2, label: "Ongoing" },
+  { value: 2, label: "Closed" },
 ];
 
 function ChevronIcon() {
@@ -138,8 +138,8 @@ function MatchForm() {
     setError("");
     try {
       const payload = {
-        team_home: form.team1Uuid,
-        team_away: form.team2Uuid,
+        team_home: Number(form.team1Uuid),
+        team_away: Number(form.team2Uuid),
         group_label: form.groupLabel || undefined,
         kickoff_at: buildKickoff(),
         status: Number(form.status),
@@ -154,7 +154,7 @@ function MatchForm() {
       }
 
       // If user picked a winner, settle the match. Backend requires the match
-      // to be closed/ongoing before a winner can be declared.
+      // to be closed before a winner can be declared.
       if (form.winnerUuid !== "" && savedUuid && Number(form.status) === 2) {
         await settleWorldCupMatch(savedUuid, form.winnerUuid);
       }
@@ -230,7 +230,7 @@ function MatchForm() {
             placeholder="— No winner yet —"
           />
           <p className="mt-2 text-[11px] leading-[16px] text-white/55">
-            Match status must be Ongoing before declaring a winner.
+            Match status must be Closed before declaring a winner.
           </p>
         </div>
       </div>

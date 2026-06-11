@@ -24,6 +24,10 @@ function toNullableNumber(value) {
   return Number.isFinite(n) ? n : null;
 }
 
+function isPositiveInteger(value) {
+  return Number.isInteger(value) && value > 0;
+}
+
 function normalizeItemType(value) {
   if (typeof value === "number") return value;
   const normalized = String(value ?? "").trim().toUpperCase();
@@ -152,13 +156,21 @@ function RewardForm() {
   const onSave = async () => {
     if (!form.name) { setError("Reward name is required."); return; }
     if (form.itemType === 2 && !form.countryUuid) { setError("Country is required for Top Country rewards."); return; }
+    const winCondition = toNullableNumber(form.winCondition);
+    const tokenAmount = toNullableNumber(form.tokenAmount);
+    if (form.itemType === 1 && !isPositiveInteger(winCondition)) {
+      setError("Achievement / win streak is required for Prediction rewards.");
+      return;
+    }
+    if (form.itemType === 1 && !isPositiveInteger(tokenAmount)) {
+      setError("Token amount is required for Prediction rewards.");
+      return;
+    }
     setSaving(true);
     setError("");
     try {
       const quantity = toNullableNumber(form.quantity) ?? 0;
       const position = toNullableNumber(form.position);
-      const winCondition = toNullableNumber(form.winCondition);
-      const tokenAmount = toNullableNumber(form.tokenAmount);
 
       // Use plain object - apiClient will auto-convert to FormData when it detects File
       const payload = {
@@ -227,12 +239,14 @@ function RewardForm() {
             options={ITEM_TYPES}
           />
         </div>
-        <div>
-          <label className="mb-2 block text-[14px] font-semibold text-white">
-            Country (Top Country only){form.itemType === 2 && <span className="text-red-400"> *</span>}
-          </label>
-          <CountrySelect value={form.countryUuid} onChange={set("countryUuid")} countries={countryOptions} />
-        </div>
+        {form.itemType === 2 && (
+          <div>
+            <label className="mb-2 block text-[14px] font-semibold text-white">
+              Country <span className="text-red-400">*</span>
+            </label>
+            <CountrySelect value={form.countryUuid} onChange={set("countryUuid")} countries={countryOptions} />
+          </div>
+        )}
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">Description</label>
           <textarea value={form.description} onChange={set("description")} rows={3} className={`${INPUT_BASE} resize-none`} />
@@ -246,12 +260,16 @@ function RewardForm() {
         {form.itemType === 1 && (
           <>
             <div>
-              <label className="mb-2 block text-[14px] font-semibold text-white">Achievement</label>
-              <input type="number" min="1" value={form.winCondition} onChange={set("winCondition")} className={INPUT_BASE} />
+              <label className="mb-2 block text-[14px] font-semibold text-white">
+                Achievement / Win Streak <span className="text-red-400">*</span>
+              </label>
+              <input type="number" min="1" step="1" value={form.winCondition} onChange={set("winCondition")} className={INPUT_BASE} />
             </div>
             <div>
-              <label className="mb-2 block text-[14px] font-semibold text-white">Token Amount</label>
-              <input type="number" min="1" value={form.tokenAmount} onChange={set("tokenAmount")} className={INPUT_BASE} />
+              <label className="mb-2 block text-[14px] font-semibold text-white">
+                Token Amount <span className="text-red-400">*</span>
+              </label>
+              <input type="number" min="1" step="1" value={form.tokenAmount} onChange={set("tokenAmount")} className={INPUT_BASE} />
             </div>
           </>
         )}

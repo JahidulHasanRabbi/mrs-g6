@@ -13,6 +13,7 @@ import {
   getPrioritySummary,
   patchCrmMemberFollowUp,
 } from "../../../api/crmApi";
+import { getWalletVipTiers } from "../../../api/adminApi";
 import { FollowUpCreateModal } from "../../../components/admin/retention/FollowUpComponents";
 import Pagination from "../../../components/admin/retention/Pagination";
 import LoadingOverlay from "../../../components/admin/ui/LoadingOverlay";
@@ -267,6 +268,7 @@ function FollowUpList() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [pics, setPics] = useState([]);
+  const [walletTiers, setWalletTiers] = useState([]);
   const [vipTiers, setVipTiers] = useState([]);
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -280,9 +282,15 @@ function FollowUpList() {
     getCrmVipTiers({ page: 1, page_size: 100 })
       .then((res) => {
         const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
-        setVipTiers(results.map((t, i) => ({ name: t.name, level: i + 1 })));
+        setVipTiers(results.map((t, i) => ({ name: t.name || t.tier_name || t.level || t.uuid, level: i + 1 })).filter((t) => t.name));
       })
       .catch(() => setVipTiers([]));
+    getWalletVipTiers({ page: 1, page_size: 100 })
+      .then((res) => {
+        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        setWalletTiers(results.map((t) => t.name || t.tier_name || t.level || t.uuid).filter(Boolean));
+      })
+      .catch(() => setWalletTiers([]));
   }, []);
 
   // Only PICs holding the Retention role populate the "All Retention" filter
@@ -388,7 +396,7 @@ function FollowUpList() {
           Member Follow Up List
         </h2>
         <div className="flex flex-wrap items-center gap-3">
-          <FilterPill label="Wallet Level" value={walletLevel} onChange={setWalletLevel} options={vipTiers.map((t) => t.name)} />
+          <FilterPill label="Wallet Level" value={walletLevel} onChange={setWalletLevel} options={walletTiers} />
           <FilterPill label="MRS Level" value={vip} onChange={setVip} options={vipTiers.map((t) => t.name)} />
           <FilterPill label="Priority" value={priority} onChange={setPriority} options={PRIORITY_OPTIONS} />
           <FilterPill label="Sales (H-L)" value={salesSort} onChange={pickSalesSort} options={SALES_SORT_OPTIONS} />

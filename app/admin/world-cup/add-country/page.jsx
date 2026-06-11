@@ -84,7 +84,7 @@ function AddCountryForm() {
     setError("");
     try {
       const payload = {
-        country: form.countryUuid,
+        country: Number(form.countryUuid),
         total_points: toNum(form.totalPoints),
         total_users: toNum(form.totalUsers),
       };

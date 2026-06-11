@@ -330,7 +330,7 @@ export async function getWorldCupLeaderboardCountries(params = {}) {
   }, true, 'member');
 }
 
-// GET /worldcup/leaderboard/players/  (?country=<uuid> to filter by country)
+// GET /worldcup/leaderboard/players/  (?country=<country_id> to filter by country)
 export async function getWorldCupLeaderboardPlayers(params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.WORLDCUP_USER.LEADERBOARD_PLAYERS}${qs}`, {

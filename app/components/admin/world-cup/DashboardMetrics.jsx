@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import RangePicker from "../RangePicker";
 import { getWorldCupDashboardKpi } from "../../../api/adminApi";
-import { PERIOD_OPTIONS, periodFilterParams } from "./periodFilters";
+import { KPI_PERIOD_OPTIONS, kpiFilterParams } from "./periodFilters";
 
 const ASSETS = "/assets/admin/world-cup";
 const GOLD_BG = "linear-gradient(96deg, #dc9d16 1%, #f2cb7a 98%)";
@@ -163,7 +163,7 @@ export default function DashboardMetrics({ period, range, onPeriodChange, onRang
 
   const loadKpi = () => {
     setRefreshing(true);
-    getWorldCupDashboardKpi(periodFilterParams(period, range))
+    getWorldCupDashboardKpi(kpiFilterParams(period, range))
       .then(setKpi)
       .catch(() => {})
       .finally(() => setRefreshing(false));
@@ -194,7 +194,7 @@ export default function DashboardMetrics({ period, range, onPeriodChange, onRang
       <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
       <div className="flex flex-wrap items-center justify-end gap-2">
         <div className="inline-flex items-center gap-1 rounded-[10px] border border-white/10 bg-[#0c1018] p-1">
-          {PERIOD_OPTIONS.map((p) => {
+          {KPI_PERIOD_OPTIONS.map((p) => {
             const active = !hasRange && period === p;
             return (
               <button

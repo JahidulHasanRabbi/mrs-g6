@@ -92,7 +92,7 @@ function AddRankingForm() {
     try {
       const payload = {
         player_name: form.name,
-        country: form.countryUuid,
+        country: Number(form.countryUuid),
         total_points: toNum(form.totalPoints),
         total_prediction: toNum(form.totalPrediction),
         total_win: toNum(form.totalWin),

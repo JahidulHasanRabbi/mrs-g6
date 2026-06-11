@@ -208,22 +208,21 @@ export async function getPredictionPrizes() {
   const items = (data.results ?? data ?? [])
     .slice()
     .sort((a, b) => {
+      const aWins = Number(a.win_condition);
+      const bWins = Number(b.win_condition);
+      if (Number.isFinite(aWins) && Number.isFinite(bWins)) return aWins - bWins;
       const aPos = Number(a.position);
       const bPos = Number(b.position);
       if (Number.isFinite(aPos) && Number.isFinite(bPos)) return aPos - bPos;
-      if (Number.isFinite(aPos)) return -1;
-      if (Number.isFinite(bPos)) return 1;
-      const aWins = Number(a.win_condition);
-      const bWins = Number(b.win_condition);
-      if (Number.isFinite(aWins) && Number.isFinite(bWins)) return bWins - aWins;
+      if (Number.isFinite(aWins)) return -1;
+      if (Number.isFinite(bWins)) return 1;
       return 0;
     });
   return items.map((r, i) => {
     const wins = Number(r.win_condition);
-    const achievement = firstNonBlank(
-      r.description,
-      Number.isFinite(wins) && wins > 1 ? `${wins} Match Win Streak` : "",
-    ) || "Correct Prediction";
+    const achievement = Number.isFinite(wins)
+      ? `${wins} Match Win Streak`
+      : firstNonBlank(r.description, r.reward_name) || "Correct Prediction";
     return {
       position: ordinal(i + 1),
       condition: achievement,
