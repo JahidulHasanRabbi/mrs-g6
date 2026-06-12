@@ -78,7 +78,9 @@ const COLUMNS = [
   { key: "followed_by", label: "Last Followed Up By",   minW: 150 },
   { key: "followed_at", label: "Last Followed Up Date", minW: 160 },
   { key: "follow_stat", label: "Follow Up Status",      minW: 150 },
-  { key: "action",      label: "Action",              minW: 171, align: "end" },
+  // Pinned to the right edge of the scroller so the View/more buttons stay
+  // reachable without scrolling horizontally.
+  { key: "action",      label: "Action",              minW: 171, align: "end", sticky: true },
 ];
 
 const TABLE_MIN_WIDTH = COLUMNS.reduce((sum, c) => sum + c.minW, 0);
@@ -478,7 +480,7 @@ function SkeletonRow() {
           <SkeletonBar width="55%" />
         </div>
       ))}
-      <div className="flex items-center justify-end p-6" style={{ minWidth: COLUMNS[COLUMNS.length - 1].minW }}>
+      <div className="sticky right-0 z-[1] flex items-center justify-end bg-[#041502] p-6 shadow-[-12px_0_12px_-8px_rgba(0,0,0,0.55)]" style={{ minWidth: COLUMNS[COLUMNS.length - 1].minW }}>
         <span className="relative block h-8 w-[76px] overflow-hidden rounded-[8px] bg-[#e9af41]/20 before:absolute before:inset-0 before:-translate-x-full before:animate-[skeleton-shimmer_1.4s_ease-in-out_infinite] before:bg-gradient-to-r before:from-transparent before:via-[#e9af41]/30 before:to-transparent" />
       </div>
     </div>
@@ -682,8 +684,8 @@ function TableHeader() {
       {COLUMNS.map((col) => (
         <div
           key={col.key}
-          className={`flex flex-1 flex-col px-6 py-4 ${col.align === "end" ? "items-end" : "items-start"}`}
-          style={{ minWidth: col.minW }}
+          className={`flex flex-1 flex-col px-6 py-4 ${col.align === "end" ? "items-end" : "items-start"}${col.sticky ? " sticky right-0 z-[1]" : ""}`}
+          style={{ minWidth: col.minW, ...(col.sticky ? { backgroundImage: GRAD_DARK } : null) }}
         >
           <p className="text-[12px] font-medium text-[#fbeed2] leading-[18px] whitespace-nowrap">
             {col.label}
@@ -721,7 +723,7 @@ function TableRow({ row, pics, onChanged }) {
       <Cell minW={COLUMNS[10].minW}>
         <FollowUpStatusBadge row={row} />
       </Cell>
-      <Cell minW={COLUMNS[11].minW} align="end">
+      <Cell minW={COLUMNS[11].minW} align="end" sticky>
         <div className="flex items-center gap-2">
           <ViewButton href={href} />
           <MoreButton
@@ -1048,10 +1050,17 @@ function DataCell({ value, minW }) {
   );
 }
 
-function Cell({ children, minW, align = "start" }) {
+function Cell({ children, minW, align = "start", sticky = false }) {
   const justify = align === "end" ? "justify-end" : "justify-start";
+  // Sticky cells need an opaque background (the section's #041502) so the
+  // columns scrolling beneath don't show through, plus a soft left shadow to
+  // read as a pinned edge. border-t re-draws the row separator the opaque
+  // background would otherwise cover (rows overlap 1px via -mb-px).
+  const pinned = sticky
+    ? " sticky right-0 z-[1] border-t border-white/5 bg-[#041502] shadow-[-12px_0_12px_-8px_rgba(0,0,0,0.55)]"
+    : "";
   return (
-    <div className={`flex min-w-0 flex-1 items-center overflow-hidden p-6 ${justify}`} style={{ minWidth: minW }}>
+    <div className={`flex min-w-0 flex-1 items-center overflow-hidden p-6 ${justify}${pinned}`} style={{ minWidth: minW }}>
       {children}
     </div>
   );
