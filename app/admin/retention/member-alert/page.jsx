@@ -327,12 +327,8 @@ function FollowUpList() {
         const retentionUuid = retention
           ? pics.find((u) => (u.full_name || u.username) === retention)?.uuid
           : undefined;
-        // Ordering for sales / win-loss — sent so the backend can order across
-        // the full result set; the current page is also sorted client-side
-        // below as an immediate fallback.
-        let ordering;
-        if (salesSort) ordering = salesSort === "High to Low" ? "-total_sales" : "total_sales";
-        else if (winSort) ordering = winSort === "High to Low" ? "-total_win_lose" : "total_win_lose";
+        const sales = salesSort ? (salesSort === "High to Low" ? "High" : "Low") : undefined;
+        const win_lose = winSort ? (winSort === "High to Low" ? "High" : "Low") : undefined;
         const res = await getRetentionMembers({
           page,
           page_size: PAGE_SIZE,
@@ -344,7 +340,8 @@ function FollowUpList() {
           search: debouncedQuery || undefined,
           // Single-day filter only — no range (spec #7).
           date: date || undefined,
-          ordering,
+          sales,
+          win_lose,
         });
         if (cancelled) return;
         const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];

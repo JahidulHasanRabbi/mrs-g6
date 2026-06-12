@@ -192,7 +192,7 @@ export async function getRetentionSummary(adminUuid, params = {}) {
 }
 
 // GET /crm-members/retention-members/  (paginated) — only members with priority set
-// params: { page, page_size, priority ("inactive"|"low"|"medium"|"high"), mrs_vip_level, wallet_vip_level, retention (PIC uuid), search, brand, date, ordering }
+// params: { page, page_size, priority ("inactive"|"low"|"medium"|"high"), mrs_vip_level, wallet_vip_level, retention (PIC uuid), search, brand, date, sales ("High"|"Low"), win_lose ("High"|"Low") }
 export async function getRetentionMembers(params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.CRM.RETENTION_MEMBERS}${qs}`, { method: 'GET' }, true, 'admin');
