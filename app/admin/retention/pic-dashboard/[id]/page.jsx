@@ -20,6 +20,7 @@ import {
   getCrmUserSingle,
   getRetentionSummary,
 } from "../../../../api/crmApi";
+import { getWalletVipTiers } from "../../../../api/adminApi";
 
 // PIC detail view — shows per-PIC breakdown of members + a member list.
 
@@ -52,8 +53,8 @@ const KPIS = [
 const PAGE_SIZE = 7;
 
 // Standardised Member List filters: Wallet Level · MRS Level · Sales · Brand ·
-// Name/Phone. Wallet/MRS level options are sourced from the VIP-tier endpoint;
-// Brand uses the same six-brand set the Member Alert list uses.
+// Name/Phone. Wallet and MRS level options are sourced from their own tier
+// endpoints; Brand uses the same six-brand set the Member Alert list uses.
 const DEFAULT_WALLET_LEVEL_OPTIONS = [{ value: "all", label: "All Wallet Level" }];
 const DEFAULT_MRS_LEVEL_OPTIONS = [{ value: "all", label: "All MRS Level" }];
 
@@ -67,6 +68,11 @@ const SORT_OPTIONS = [
   { value: "hl", label: "Sales (H-L)" },
   { value: "lh", label: "Sales (L-H)" },
 ];
+
+function tierToOption(tier) {
+  const name = tier?.name || tier?.tier_name || tier?.level || tier?.vip_level || tier?.title || tier?.uuid;
+  return name ? { value: name, label: name } : null;
+}
 
 function formatNumber(value) {
   if (value === null || value === undefined || value === "") return "0";
@@ -386,26 +392,31 @@ function MemberListSection({ adminUuid, period, fromDate, toDate }) {
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [tierOptions, setTierOptions] = useState([]);
+  const [walletTierOptions, setWalletTierOptions] = useState([]);
+  const [mrsTierOptions, setMrsTierOptions] = useState([]);
 
-  // VIP tiers feed both the Wallet Level and MRS Level dropdowns.
-  const walletOptions = useMemo(() => [...DEFAULT_WALLET_LEVEL_OPTIONS, ...tierOptions], [tierOptions]);
-  const mrsOptions = useMemo(() => [...DEFAULT_MRS_LEVEL_OPTIONS, ...tierOptions], [tierOptions]);
+  const walletOptions = useMemo(() => [...DEFAULT_WALLET_LEVEL_OPTIONS, ...walletTierOptions], [walletTierOptions]);
+  const mrsOptions = useMemo(() => [...DEFAULT_MRS_LEVEL_OPTIONS, ...mrsTierOptions], [mrsTierOptions]);
 
   useEffect(() => {
     let cancelled = false;
+    getWalletVipTiers({ page: 1, page_size: 100 })
+      .then((res) => {
+        if (cancelled) return;
+        const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
+        setWalletTierOptions(results.map(tierToOption).filter(Boolean));
+      })
+      .catch(() => {
+        if (!cancelled) setWalletTierOptions([]);
+      });
     getCrmVipTiers({ page: 1, page_size: 100 })
       .then((res) => {
         if (cancelled) return;
         const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
-        const options = results
-          .map((tier) => tier.name || tier.tier_name || tier.level || tier.vip_level || tier.title)
-          .filter(Boolean)
-          .map((name) => ({ value: name, label: name }));
-        setTierOptions(options);
+        setMrsTierOptions(results.map(tierToOption).filter(Boolean));
       })
       .catch(() => {
-        if (!cancelled) setTierOptions([]);
+        if (!cancelled) setMrsTierOptions([]);
       });
     return () => {
       cancelled = true;

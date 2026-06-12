@@ -154,8 +154,8 @@ function RetentionMembersContent() {
   const handleVip = (v) => { setVip(v); resetToPage1(); };
   const handlePic = (v) => { setPic(v); resetToPage1(); };
   const handleBrand = (v) => { setBrand(v); resetToPage1(); };
-  const handleSalesSort = (v) => { setSalesSort(v); setWinSort(""); resetToPage1(); };
-  const handleWinSort = (v) => { setWinSort(v); setSalesSort(""); resetToPage1(); };
+  const handleSalesSort = (v) => { setSalesSort(v); resetToPage1(); };
+  const handleWinSort = (v) => { setWinSort(v); resetToPage1(); };
   const handleQuery = (v) => { setQuery(v); resetToPage1(); };
 
   const [pics, setPics] = useState([]);
@@ -237,13 +237,15 @@ function RetentionMembersContent() {
   // Client-side fallback sort for the visible page; backend filters/sorts
   // across the full result set.
   const sortedRows = useMemo(() => {
-    if (salesSort) {
-      const dir = salesSort === "High to Low" ? -1 : 1;
-      return [...rows].sort((a, b) => (memberSalesValue(a) - memberSalesValue(b)) * dir);
-    }
-    if (winSort) {
-      const dir = winSort === "High to Low" ? -1 : 1;
-      return [...rows].sort((a, b) => (memberWinLossValue(a) - memberWinLossValue(b)) * dir);
+    const salesDir = salesSort ? (salesSort === "High to Low" ? -1 : 1) : 0;
+    const winDir = winSort ? (winSort === "High to Low" ? -1 : 1) : 0;
+
+    if (salesDir || winDir) {
+      return [...rows].sort((a, b) => {
+        const salesDelta = salesDir ? (memberSalesValue(a) - memberSalesValue(b)) * salesDir : 0;
+        if (salesDelta !== 0) return salesDelta;
+        return winDir ? (memberWinLossValue(a) - memberWinLossValue(b)) * winDir : 0;
+      });
     }
     return rows;
   }, [rows, salesSort, winSort]);

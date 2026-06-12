@@ -254,14 +254,18 @@ function FollowUpList() {
   const [retention, setRetention] = useState("");
   const [query, setQuery] = useState("");
   const [date, setDate] = useState("");
-  // Sales / Win-Loss sorts are mutually exclusive — picking one clears the
-  // other so the table has a single, unambiguous order.
   const [salesSort, setSalesSort] = useState("");
   const [winSort, setWinSort] = useState("");
   const [page, setPage] = useState(1);
 
-  const pickSalesSort = useCallback((v) => { setSalesSort(v); setWinSort(""); }, []);
-  const pickWinSort = useCallback((v) => { setWinSort(v); setSalesSort(""); }, []);
+  const pickSalesSort = useCallback((v) => {
+    setSalesSort(v);
+    setPage(1);
+  }, []);
+  const pickWinSort = useCallback((v) => {
+    setWinSort(v);
+    setPage(1);
+  }, []);
 
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
@@ -364,13 +368,15 @@ function FollowUpList() {
 
   // Client-side sort of the current page (backend ordering covers cross-page).
   const sortedRows = useMemo(() => {
-    if (salesSort) {
-      const dir = salesSort === "High to Low" ? -1 : 1;
-      return [...rows].sort((a, b) => (memberSalesValue(a) - memberSalesValue(b)) * dir);
-    }
-    if (winSort) {
-      const dir = winSort === "High to Low" ? -1 : 1;
-      return [...rows].sort((a, b) => (memberWinLossValue(a) - memberWinLossValue(b)) * dir);
+    const salesDir = salesSort ? (salesSort === "High to Low" ? -1 : 1) : 0;
+    const winDir = winSort ? (winSort === "High to Low" ? -1 : 1) : 0;
+
+    if (salesDir || winDir) {
+      return [...rows].sort((a, b) => {
+        const salesDelta = salesDir ? (memberSalesValue(a) - memberSalesValue(b)) * salesDir : 0;
+        if (salesDelta !== 0) return salesDelta;
+        return winDir ? (memberWinLossValue(a) - memberWinLossValue(b)) * winDir : 0;
+      });
     }
     return rows
       .map((row, idx) => ({ row, idx }))
