@@ -390,6 +390,8 @@ Query parameters
 | **5** | mrs\_vip\_level | str | Yes | Fuzzy |
 | **6** | retention | int | Yes |  |
 | **7** | search | str | Yes | For Name and Phone Number, fuzzy |
+| **8** | sales | str | Yes | “High” “Low” |
+| **9** | win\_lose | str | Yes | “High” “Low” |
 
 Output (Is Paginated)
 
@@ -580,6 +582,8 @@ Query parameters
 | **5** | mrs\_vip\_level | str | Yes | Fuzzy |
 | **6** | retention | int | Yes |  |
 | **7** | search | str | Yes | For Name and Phone Number, fuzzy |
+| **8** | sales | str | Yes | “High” “Low” |
+| **9** | win\_lose | str | Yes | “High” “Low” |
 
 Output (Is Paginated)
 
@@ -797,6 +801,8 @@ Query parameters
 | **5** | wallet\_vip\_level | Str | Yes | Fuzzy |
 | **6** | retention | uuid | Yes | PIC uuid |
 | **7** | search | str | Yes | Fuzzy for phone and full name |
+| **8** | sales | str | Yes | “High” “Low” |
+| **9** | win\_lose | str | Yes | “High” “Low” |
 
 Output (Is Paginated)
 
@@ -864,7 +870,13 @@ Retention Targets
 | **1** | month | int | No | Accepts 1-12 |
 | **2** | target | Str (Decimal) | No |  |
 
-### 
+### Member Assignment \- Import Members
+
+/crm-admins/assignments/\<uuid\>/import-members/ POST
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | member\_list | File | No | Accepts csv, xls, and xlsx |
 
 ## 
 

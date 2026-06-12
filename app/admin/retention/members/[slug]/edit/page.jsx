@@ -207,6 +207,18 @@ function walletLevelsToPayload(walletLevels = {}) {
     .map(([station_uuid, wallet_level_uuid]) => ({ station_uuid, wallet_level_uuid }));
 }
 
+function listToText(value) {
+  if (Array.isArray(value)) return value.filter(Boolean).join(", ");
+  return value || "";
+}
+
+function textToList(value) {
+  return String(value || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 function hasDisplayValue(value) {
   return value !== null && value !== undefined && value !== "";
 }
@@ -270,6 +282,7 @@ function emptyForm() {
     depositFreq: null,
     status: null,
     walletLevels: {},
+    tagsText: "",
 
     fullName: "",
     phone: "",
@@ -371,6 +384,7 @@ function apiToForm(data, vipTiers = [], walletVipTiers = [], stationList = []) {
     risk: tagFor("risk", g.risk_style),
     depositFreq: tagFor("weekly", g.deposit_frequency_style),
     walletLevels: buildWalletLevelSelections(data, walletVipTiers, stationList),
+    tagsText: listToText(data?.profile_data?.tags || c.tags),
 
     // customer_data returns documented string values (e.g. gender="Male").
     // basic_info GET fields are undocumented and likely return the same
@@ -421,9 +435,9 @@ function formToApi(form, vipTiers = [], originalData = null) {
   const paymentMethod = labelToInt("paymentMethod", form.paymentMethod);
   const playTimePattern = labelToInt("playTimePattern", form.playTimePattern);
   const existingProfile = originalData?.profile_data || {};
-  const existingTags = existingProfile.tags || originalData?.customer_data?.tags;
   const existingWalletLevels = existingProfile.wallet_levels;
   const walletLevels = walletLevelsToPayload(form.walletLevels);
+  const tags = textToList(form.tagsText);
 
   // Doc 8 removed these from profile_data. Keep the old mapping here as a
   // reference only in case backend reintroduces the fields later.
@@ -434,7 +448,7 @@ function formToApi(form, vipTiers = [], originalData = null) {
   return {
     profile_data: {
       mrs_vip_level_uuid: vipUuid,
-      tags: Array.isArray(existingTags) ? existingTags : undefined,
+      tags,
       wallet_levels: walletLevels.length ? walletLevels : Array.isArray(existingWalletLevels) ? existingWalletLevels : undefined,
       // Old profile_data fields, no longer documented in CRM doc 8:
       // player_type: playerType,
@@ -1357,27 +1371,12 @@ function BasicInfoStep({ form, setField, vipTiers = [], walletVipTiers = [], sta
   return (
     <>
       <SectionTitle>Profile Data</SectionTitle>
-      <UserImage value={form.image} onChange={(file) => setField("image", file)} />
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-10 gap-y-6">
         <FieldWrapper label="VIP Level">
           <TagSelectField value={form.vip} onChange={handleVipChange} kind={TAG_OPTIONS.vip.kind} options={vipOptions} />
         </FieldWrapper>
-        <FieldWrapper label="Player Type">
-          <TagSelectField value={form.playerType} onChange={(v) => setField("playerType", v)} {...TAG_OPTIONS.playerType} />
-        </FieldWrapper>
-        <FieldWrapper label="Risk">
-          <TagSelectField value={form.risk} onChange={(v) => setField("risk", v)} {...TAG_OPTIONS.risk} />
-        </FieldWrapper>
-        <FieldWrapper label="Deposit Freq.">
-          <TagSelectField value={form.depositFreq} onChange={(v) => setField("depositFreq", v)} {...TAG_OPTIONS.depositFreq} />
-        </FieldWrapper>
-        <FieldWrapper label="Status">
-          <TagSelectField
-            value={form.status}
-            onChange={(v) => setField("status", v)}
-            options={TAG_OPTIONS.status.options}
-            kindFor={statusKind}
-          />
+        <FieldWrapper label="Tags" span={2}>
+          <TextInput value={form.tagsText} onChange={(v) => setField("tagsText", v)} />
         </FieldWrapper>
         <div className="sm:col-span-2 xl:col-span-3">
           <FieldWrapper label="Wallet VIP">

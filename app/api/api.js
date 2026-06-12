@@ -198,6 +198,7 @@ export const ENDPOINTS = {
     // Member Assignment
     ASSIGNMENTS: '/crm-admins/assignments/',
     ASSIGNMENT_SINGLE: (uuid) => `/crm-admins/assignments/${uuid}/`,
+    ASSIGNMENT_IMPORT_MEMBERS: (uuid) => `/crm-admins/assignments/${uuid}/import-members/`,
     ASSIGNMENT_RETENTION_TARGET: (adminUuid) => `/crm-admins/assignments/${adminUuid}/retention-target/`,
     ASSIGNMENT_SET_TARGET: '/crm-admins/assignments/set-target/',
     // CRM MRS VIP Tier aliases.

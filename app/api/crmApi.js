@@ -98,7 +98,7 @@ export async function archiveCrmVipTier(uuid) {
 // ───────────────────────── Member Profile ─────────────────────────
 
 // GET /crm-members/members/  (paginated)
-// params: { page, page_size, priority, wallet_vip_level, mrs_vip_level, retention, search }
+// params: { page, page_size, priority, wallet_vip_level, mrs_vip_level, retention, search, brand, sales ("High"|"Low"), win_lose ("High"|"Low") }
 export async function getCrmMembers(params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.CRM.MEMBERS}${qs}`, { method: 'GET' }, true, 'admin');
@@ -265,6 +265,15 @@ export async function updateCrmAssignment(uuid, data) {
   return await apiRequest(ENDPOINTS.CRM.ASSIGNMENT_SINGLE(uuid), {
     method: 'PUT',
     body: data
+  }, true, 'admin');
+}
+
+// POST /crm-admins/assignments/<uuid>/import-members/
+// body: multipart/form-data { member_list: File }
+export async function importCrmAssignmentMembers(uuid, file) {
+  return await apiRequest(ENDPOINTS.CRM.ASSIGNMENT_IMPORT_MEMBERS(uuid), {
+    method: 'POST',
+    body: { member_list: file }
   }, true, 'admin');
 }
 

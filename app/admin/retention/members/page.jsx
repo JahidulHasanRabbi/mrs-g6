@@ -17,6 +17,7 @@ const PAGE_SIZE = 7;
 const PRIORITY_OPTIONS = ["High", "Medium", "Low", "Inactive"];
 const BRAND_OPTIONS = ["KG", "LV", "EP", "AB", "UB", "N1"];
 const SALES_SORT_OPTIONS = ["High to Low", "Low to High"];
+const WINLOSS_SORT_OPTIONS = ["High to Low", "Low to High"];
 
 const COLUMNS = [
   { key: "name",        label: "Username",            minW: 180 },
@@ -99,6 +100,10 @@ function memberSalesValue(row) {
   return parseFloat(row?.daily_sales ?? 0) || 0;
 }
 
+function memberWinLossValue(row) {
+  return parseFloat(row?.daily_win_loss ?? row?.daily_win_lose ?? 0) || 0;
+}
+
 export default function RetentionMembersPage() {
   return (
     <Suspense>
@@ -123,6 +128,7 @@ function RetentionMembersContent() {
   const [pic, setPic] = useState("");
   const [brand, setBrand] = useState("");
   const [salesSort, setSalesSort] = useState("");
+  const [winSort, setWinSort] = useState("");
   const [query, setQuery] = useState("");
 
   const setPage = (next) => {
@@ -148,7 +154,8 @@ function RetentionMembersContent() {
   const handleVip = (v) => { setVip(v); resetToPage1(); };
   const handlePic = (v) => { setPic(v); resetToPage1(); };
   const handleBrand = (v) => { setBrand(v); resetToPage1(); };
-  const handleSalesSort = (v) => { setSalesSort(v); resetToPage1(); };
+  const handleSalesSort = (v) => { setSalesSort(v); setWinSort(""); resetToPage1(); };
+  const handleWinSort = (v) => { setWinSort(v); setSalesSort(""); resetToPage1(); };
   const handleQuery = (v) => { setQuery(v); resetToPage1(); };
 
   const [pics, setPics] = useState([]);
@@ -194,9 +201,8 @@ function RetentionMembersContent() {
         const retentionUser = pic
           ? pics.find((u) => (u.full_name || u.username) === pic)
           : undefined;
-        const ordering = salesSort
-          ? (salesSort === "High to Low" ? "-daily_sales" : "daily_sales")
-          : undefined;
+        const sales = salesSort ? (salesSort === "High to Low" ? "High" : "Low") : undefined;
+        const win_lose = winSort ? (winSort === "High to Low" ? "High" : "Low") : undefined;
         const res = await getCrmMembers({
           page,
           page_size: PAGE_SIZE,
@@ -206,7 +212,8 @@ function RetentionMembersContent() {
           retention: retentionUser?.id ?? retentionUser?.uuid ?? undefined,
           brand: brand || undefined,
           search: debouncedQuery || undefined,
-          ordering,
+          sales,
+          win_lose,
         });
         if (cancelled) return;
         const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
@@ -225,15 +232,21 @@ function RetentionMembersContent() {
     return () => {
       cancelled = true;
     };
-  }, [page, priority, walletLevel, vip, pic, brand, salesSort, pics, debouncedQuery]);
+  }, [page, priority, walletLevel, vip, pic, brand, salesSort, winSort, pics, debouncedQuery]);
 
-  // Client-side fallback sort by sales — backend `ordering` covers cross-page,
-  // this keeps the current page correctly ordered if the backend ignores it.
+  // Client-side fallback sort for the visible page; backend filters/sorts
+  // across the full result set.
   const sortedRows = useMemo(() => {
-    if (!salesSort) return rows;
-    const dir = salesSort === "High to Low" ? -1 : 1;
-    return [...rows].sort((a, b) => (memberSalesValue(a) - memberSalesValue(b)) * dir);
-  }, [rows, salesSort]);
+    if (salesSort) {
+      const dir = salesSort === "High to Low" ? -1 : 1;
+      return [...rows].sort((a, b) => (memberSalesValue(a) - memberSalesValue(b)) * dir);
+    }
+    if (winSort) {
+      const dir = winSort === "High to Low" ? -1 : 1;
+      return [...rows].sort((a, b) => (memberWinLossValue(a) - memberWinLossValue(b)) * dir);
+    }
+    return rows;
+  }, [rows, salesSort, winSort]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -270,6 +283,7 @@ function RetentionMembersContent() {
           <FilterDropdown label="Wallet Level" value={walletLevel} onChange={handleWalletLevel} options={walletTiers} />
           <FilterDropdown label="MRS Level" value={vip} onChange={handleVip} options={vipTiers.map((t) => t.name)} />
           <FilterDropdown label="Sales (H-L)" value={salesSort} onChange={handleSalesSort} options={SALES_SORT_OPTIONS} />
+          <FilterDropdown label="Win/Lose (H-L)" value={winSort} onChange={handleWinSort} options={WINLOSS_SORT_OPTIONS} />
           <FilterDropdown label="Brand" value={brand} onChange={handleBrand} options={BRAND_OPTIONS} />
           <FilterDropdown label="All PIC" value={pic} onChange={handlePic} options={pics.map((u) => u.full_name || u.username).filter(Boolean)} />
           <SearchInput value={query} onChange={handleQuery} />

@@ -27,6 +27,7 @@ import {
   CountriesPanel,
   GlobalPlayersPanel,
   MyCountryPanel,
+  MyPredictionsPanel,
 } from "../components/leaderboard/RankingScreens";
 import PredictionsList from "../components/leaderboard/PredictionsList";
 import InfoModal from "../components/leaderboard/InfoModal";
@@ -48,6 +49,7 @@ const SCREEN_FROM_VIEW = {
   players: LB_SCREENS.GLOBAL_PLAYERS,
   country: LB_SCREENS.MY_COUNTRY,
   fixtures: LB_SCREENS.PREDICTIONS_LIST,
+  "my-predictions": LB_SCREENS.MY_PREDICTIONS,
   "prize-country": LB_SCREENS.PRIZE_COUNTRY,
   "prize-players": LB_SCREENS.PRIZE_PLAYERS,
   "prize-predictions": LB_SCREENS.PRIZE_PREDICTIONS,
@@ -58,6 +60,7 @@ const TAB_FROM_VIEW = {
   home: LB_TABS.COUNTRIES,
   country: LB_TABS.COUNTRIES,
   players: LB_TABS.PLAYERS,
+  "my-predictions": LB_TABS.PREDICTIONS,
 };
 
 // `pt` (prize tab) is a secondary param so PRIZE_INFO can remember which
@@ -218,6 +221,7 @@ function LeaderboardPageInner() {
 
   const onTabChange = (tab) => {
     if (tab === LB_TABS.PLAYERS) navigate("players");
+    else if (tab === LB_TABS.PREDICTIONS) navigate("my-predictions");
     else navigate("home");
   };
 
@@ -227,18 +231,20 @@ function LeaderboardPageInner() {
 
   const openPrizePool = () => {
     if (activeTab === LB_TABS.PLAYERS) navigate("prize-players");
+    else if (activeTab === LB_TABS.PREDICTIONS) navigate("prize-predictions");
     else navigate("prize-country");
   };
 
   const backToLeaderboards = () => {
     if (prizeTab === "players") navigate("players");
-    else if (prizeTab === "predictions") navigate("predictions");
+    else if (prizeTab === "predictions") navigate("my-predictions");
     else navigate("home");
   };
 
   const isLeaderboardTabbed =
     screen === LB_SCREENS.COUNTRIES ||
     screen === LB_SCREENS.GLOBAL_PLAYERS ||
+    screen === LB_SCREENS.MY_PREDICTIONS ||
     screen === LB_SCREENS.MY_COUNTRY;
 
   const isPrizeTabbed =
@@ -340,6 +346,13 @@ function LeaderboardPageInner() {
                   <MyCountryPanel
                     country={selectedCountry}
                     onChangeCountry={() => navigate("home")}
+                    onViewPrize={openPrizePool}
+                  />
+                )}
+                {screen === LB_SCREENS.MY_PREDICTIONS && (
+                  <MyPredictionsPanel
+                    rows={predictionsData.rows}
+                    loading={predictionsData.loading}
                     onViewPrize={openPrizePool}
                   />
                 )}

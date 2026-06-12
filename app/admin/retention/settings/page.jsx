@@ -11,7 +11,7 @@ import {
 import {
   getCrmAssignmentRetentionTarget,
   getCrmAssignments,
-  getCrmUsers,
+  importCrmAssignmentMembers,
   updateCrmAssignment,
 } from "../../../api/crmApi";
 
@@ -48,7 +48,19 @@ function stripCurrency(value) {
   return String(value ?? "").replace(/^RM\s*/i, "").replace(/,/g, "");
 }
 
+function getApiErrorMessage(err, fallback = "Something went wrong.") {
+  const data = err?.data;
+  const details = data?.details;
+  if (details && typeof details === "object") {
+    const first = Object.values(details).flat?.()[0];
+    if (first) return String(first);
+  }
+  return data?.detail || data?.error || err?.message || fallback;
+}
 
+function isImportFile(file) {
+  return /\.(csv|xls|xlsx)$/i.test(file?.name || "");
+}
 
 // Pull monthly retention targets out of a row into a { 1..12: "amount" } map
 // for the current year. Accepts an array ([{ month, year, amount }]) or an
@@ -189,6 +201,7 @@ function RetentionSettingsPageInner() {
           total={total}
           page={page}
           loading={loading}
+          onImported={loadAssignments}
         />
       ) : (
         <MemberLevelForm
@@ -222,7 +235,7 @@ function PageHeader() {
   );
 }
 
-function AssignmentListSection({ rows, total, page, loading }) {
+function AssignmentListSection({ rows, total, page, loading, onImported }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -257,7 +270,7 @@ function AssignmentListSection({ rows, total, page, loading }) {
         >
           Assignment List
         </h2>
-        <ImportMembersButton />
+        <ImportMembersButton assignments={rows} onImported={onImported} />
       </header>
 
       <div className="w-full overflow-x-auto scrollbar-admin">
@@ -296,53 +309,58 @@ function AssignmentListSection({ rows, total, page, loading }) {
   );
 }
 
-function ImportMembersButton() {
+function ImportMembersButton({ assignments = [], onImported }) {
   const [file, setFile] = useState(null);
-  const [assigneeUuid, setAssigneeUuid] = useState("");
-  const [assigneeOptions, setAssigneeOptions] = useState([{ value: "", label: "Unassigned" }]);
-  const [assigneesLoading, setAssigneesLoading] = useState(false);
+  const [assignmentUuid, setAssignmentUuid] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [notice, setNotice] = useState("");
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    let cancelled = false;
-    setAssigneesLoading(true);
-    getCrmUsers({ page: 1, page_size: 200 })
-      .then((res) => {
-        if (cancelled) return;
-        const users = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
-        const options = users
-          .map((user) => ({
-            value: user.uuid || user.id,
-            label: user.username || user.full_name || user.name || user.email || user.uuid || user.id,
-          }))
-          .filter((option) => option.value);
-        setAssigneeOptions([{ value: "", label: "Unassigned" }, ...options]);
-      })
-      .catch((err) => {
-        console.error("[retention-settings] import assignee list failed", err);
-        if (!cancelled) setAssigneeOptions([{ value: "", label: "Unassigned" }]);
-      })
-      .finally(() => {
-        if (!cancelled) setAssigneesLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const assignmentOptions = assignments
+    .map((row) => ({ value: row.uuid || row.id, label: row.name || row.uuid || row.id }))
+    .filter((option) => option.value);
 
   const onPick = (e) => {
     const picked = e.target.files?.[0] || null;
-    setFile(picked);
+    setError("");
     setNotice("");
+    if (picked && !isImportFile(picked)) {
+      setFile(null);
+      setError("Only CSV and Excel files are allowed.");
+      e.target.value = "";
+      return;
+    }
+    setFile(picked);
     e.target.value = "";
   };
 
-  const onPrepare = () => {
-    if (!file) return;
-    const assignee = assigneeOptions.find((option) => option.value === assigneeUuid);
-    const assignedTo = assigneeUuid && assignee ? `Assign to: ${assignee.label}.` : "Assign to: Unassigned.";
-    setNotice(`${file.name} is ready. ${assignedTo} Waiting for backend import API.`);
-    setFile(null);
+  const onImport = async () => {
+    setError("");
+    setNotice("");
+    if (!assignmentUuid) {
+      setError("Please choose a PIC before importing.");
+      return;
+    }
+    if (!file) {
+      setError("Please choose a CSV, XLS, or XLSX file.");
+      return;
+    }
+    if (!isImportFile(file)) {
+      setError("Only CSV and Excel files are allowed.");
+      return;
+    }
+    setUploading(true);
+    try {
+      await importCrmAssignmentMembers(assignmentUuid, file);
+      setNotice(`${file.name} imported successfully.`);
+      setFile(null);
+      onImported?.();
+    } catch (err) {
+      console.error("[retention-settings] import members failed", err);
+      setError(getApiErrorMessage(err, "Import failed. Please check the file and try again."));
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -350,10 +368,10 @@ function ImportMembersButton() {
       <div className="flex flex-wrap items-center justify-end gap-2">
         <div className="w-[180px]">
           <CustomSelect
-            value={assigneeUuid}
-            onChange={setAssigneeUuid}
-            options={assigneeOptions}
-            placeholder={assigneesLoading ? "Loading PIC..." : "Assign to..."}
+            value={assignmentUuid}
+            onChange={setAssignmentUuid}
+            options={assignmentOptions}
+            placeholder="Assign to..."
           />
         </div>
         <label
@@ -366,11 +384,12 @@ function ImportMembersButton() {
         {file ? (
           <button
             type="button"
-            onClick={onPrepare}
-            className="rounded-[8px] border border-[#f2cb7a] px-4 py-2 text-[12px] font-medium text-[#f6dda6] transition hover:bg-white/5"
+            onClick={onImport}
+            disabled={uploading}
+            className="rounded-[8px] border border-[#f2cb7a] px-4 py-2 text-[12px] font-medium text-[#f6dda6] transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
             style={{ backgroundImage: GRAD_DARK }}
           >
-            Prepare
+            {uploading ? "Importing..." : "Upload"}
           </button>
         ) : null}
       </div>
@@ -378,11 +397,13 @@ function ImportMembersButton() {
         <span className="max-w-[360px] text-right text-[11px] text-white/60">
           {file.name} - one &quot;Phone Number&quot; column
         </span>
+      ) : error ? (
+        <span className="max-w-[360px] text-right text-[11px] text-[#fb6f7d]">{error}</span>
       ) : notice ? (
         <span className="max-w-[360px] text-right text-[11px] text-[#84ebb4]">{notice}</span>
       ) : (
         <span className="max-w-[360px] text-right text-[11px] text-white/40">
-          Frontend ready. Choose a PIC or leave Unassigned; backend import API is still pending.
+          Choose a PIC and upload a CSV, XLS, or XLSX file.
         </span>
       )}
     </div>
