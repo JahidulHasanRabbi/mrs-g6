@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import PlayerTable from "./PlayerTable";
 import CountryRankingTable from "./CountryRankingTable";
+import Pagination from "../retention/Pagination";
 
 const GOLD_BG = "linear-gradient(96deg, #dc9d16 1%, #f2cb7a 98%)";
 const DARK_BG = "linear-gradient(178deg, #141828 0%, #333333 99.7%)";
@@ -175,9 +176,24 @@ export default function RealTimeRanking({
   onChangeStreakFilter,
   refreshing,
   onRefresh,
+  playerPage,
+  playerTotal,
+  playerTotalPages,
+  countryPage,
+  countryTotal,
+  countryTotalPages,
+  pageSize,
+  onChangePlayerPage,
+  onChangeCountryPage,
 }) {
   const isGlobal = view === "global";
   const visibleTotal = isGlobal ? players.length : countries.length;
+  const activePage = isGlobal ? playerPage : countryPage;
+  const activeTotal = isGlobal ? playerTotal : countryTotal;
+  const activeTotalPages = isGlobal ? playerTotalPages : countryTotalPages;
+  const activeRows = isGlobal ? players.length : countries.length;
+  const showingFrom = activeTotal === 0 ? 0 : (activePage - 1) * pageSize + 1;
+  const showingTo = Math.min((activePage - 1) * pageSize + activeRows, activeTotal);
 
   return (
     <section className="overflow-hidden rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
@@ -227,10 +243,18 @@ export default function RealTimeRanking({
 
       <div className="px-2 pb-2">
         {isGlobal ? (
-          <PlayerTable players={players} />
+          <PlayerTable players={players} showPointBreakdown />
         ) : (
           <CountryRankingTable countries={countries} />
         )}
+        <Pagination
+          from={showingFrom}
+          to={showingTo}
+          total={activeTotal}
+          pageCount={activeTotalPages}
+          currentPage={activePage}
+          onPageChange={isGlobal ? onChangePlayerPage : onChangeCountryPage}
+        />
       </div>
     </section>
   );

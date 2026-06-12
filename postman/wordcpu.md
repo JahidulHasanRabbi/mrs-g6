@@ -65,6 +65,7 @@ total_points = WorldCupMemberScore.total_points (Penalty Kick "WORLD CUP SCORE" 
 - Deposit points count for the **entire campaign window**, even deposits made before the member selected a country - as soon as a member has a `WorldCupMemberScore` row, all of their in-window deposits are included.
 - A member must select a country (`/choose-country/`) before they can place predictions, so `total_predictions` / `total_wins` / `current_streak` / `best_streak` only ever accumulate from the join date onward.
 - `global_rank` / `country_rank` are recomputed from current data on every request - there is no cached/denormalized rank, so values are always up to date with the latest deposits, kick redemptions, and settled predictions.
+- The admin real-time ranking (`/worldcup/ranking/realtime/`) additionally returns the two components separately as `penalty_kick_points` and `deposit_points` on each player row (see Ranking (Admin) below). Member-facing leaderboards return only the combined `total_points`.
 
 ---
 
@@ -662,6 +663,13 @@ Notes
 - `total_win`/`winning_streak` filters and sorting only apply to the player board (`scope` ≠ `country`).
 
 Output — same row format as `/worldcup/leaderboard/players/` (`scope` ≠ `country`) or `/worldcup/leaderboard/countries/` (`scope=country`), but built from real-member data only (no dummy rows). Paginated.
+
+Player rows additionally include a points breakdown (`total_points` = `penalty_kick_points` + `deposit_points`):
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | penalty\_kick\_points | Int | No | Points earned from Penalty Kick score redemptions (scoped to the date window when one is supplied) |
+| **2** | deposit\_points | Int | No | Points converted from deposits made during the campaign window (RM10 = 100 points) |
 
 ---
 

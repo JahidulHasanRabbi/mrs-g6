@@ -9,19 +9,25 @@ function fmt(n) {
   return Number(n).toLocaleString("en-US");
 }
 
-export default function PlayerTable({ players = [], onEdit, onArchive }) {
+export default function PlayerTable({ players = [], onEdit, onArchive, showPointBreakdown = false }) {
   const hasRankColumns = players.some((p) => p.countryRank != null || p.globalRank != null);
   const hasActions = typeof onEdit === "function" || typeof onArchive === "function";
-  const emptyColSpan = (hasRankColumns ? 8 : 6) + (hasActions ? 1 : 0);
+  const pointBreakdownColumns = showPointBreakdown ? 2 : 0;
+  const emptyColSpan = (hasRankColumns ? 8 : 6) + pointBreakdownColumns + (hasActions ? 1 : 0);
+  const minWidth = showPointBreakdown
+    ? hasRankColumns ? "min-w-[1360px]" : "min-w-[1120px]"
+    : hasRankColumns ? "min-w-[1200px]" : "min-w-[960px]";
 
   return (
     <div className="overflow-hidden rounded-[12px] border border-white/5">
       <div className="overflow-x-auto">
-        <table className={`w-full ${hasRankColumns ? "min-w-[1200px]" : "min-w-[960px]"}`}>
+        <table className={`w-full ${minWidth}`}>
           <thead>
             <tr style={{ backgroundImage: HEADER_BG }} className="text-left">
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Player Name</th>
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Country</th>
+              {showPointBreakdown && <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Penalty Kick Points</th>}
+              {showPointBreakdown && <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Deposit Points</th>}
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Total Points</th>
               {hasRankColumns && <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Country Rank</th>}
               {hasRankColumns && <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Global Rank</th>}
@@ -43,6 +49,8 @@ export default function PlayerTable({ players = [], onEdit, onArchive }) {
                 <tr key={p.id} className="border-b border-white/5 align-middle last:border-b-0 hover:bg-white/[0.02]">
                   <td className="px-5 py-5 text-[12px] text-white">{p.name}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{p.country}</td>
+                  {showPointBreakdown && <td className="px-5 py-5 text-[12px] text-white">{fmt(p.penaltyKickPoints)}</td>}
+                  {showPointBreakdown && <td className="px-5 py-5 text-[12px] text-white">{fmt(p.depositPoints)}</td>}
                   <td className="px-5 py-5 text-[12px] text-white">{fmt(p.totalPoints)}</td>
                   {hasRankColumns && <td className="px-5 py-5 text-[12px] text-white">#{fmt(p.countryRank)}</td>}
                   {hasRankColumns && <td className="px-5 py-5 text-[12px] text-white">#{fmt(p.globalRank)}</td>}
