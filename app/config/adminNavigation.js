@@ -39,6 +39,12 @@ export const ADMIN_NAVIGATION = [
     id: 'lucky-spin'
   },
   {
+    label: 'Smash Egg',
+    path: '/admin/smash-egg',
+    enabled: true,
+    id: 'smash-egg'
+  },
+  {
     label: 'Penalty Kick',
     path: '/admin/penalty-kick',
     enabled: true,

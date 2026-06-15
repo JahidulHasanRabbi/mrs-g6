@@ -44,6 +44,7 @@ function pathnameToActiveItem(pathname) {
   if (pathname.startsWith("/admin/lucky-spin/user-logs")) return "user-logs";
   if (pathname.startsWith("/admin/lucky-spin/daily-limits")) return "daily-limits";
   if (pathname.startsWith("/admin/lucky-spin")) return "lucky-spin";
+  if (pathname.startsWith("/admin/smash-egg")) return "smash-egg";
   if (pathname.startsWith("/admin/mission-game")) return "mission-game";
   if (pathname.startsWith("/admin/world-cup/predictions")) return "wc-predictions";
   if (pathname.startsWith("/admin/world-cup/settings")) return "wc-settings";
@@ -173,6 +174,13 @@ const MENU_ITEMS = [
     iconMask: "/assets/admin/sidebar/icons/cil-casino.svg",
     href: "/admin/lucky-spin",
     hasSubmenu: true,
+    disabled: false,
+  },
+  {
+    id: "smash-egg",
+    label: "Smash Egg",
+    iconMask: "/assets/admin/sidebar/icons/material-symbols-light-egg-outline-sharp.svg",
+    href: "/admin/smash-egg",
     disabled: false,
   },
   {
