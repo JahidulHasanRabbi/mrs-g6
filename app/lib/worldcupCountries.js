@@ -40,7 +40,7 @@ export const MATCH_COUNTRY_MAP = {
   22: { name: "Haiti", code: "ht" },
   23: { name: "Iran", code: "ir" },
   24: { name: "Iraq", code: "iq" },
-  25: { name: "Italy", code: "it" },
+  25: { name: "Uruguay", code: "uy" },
   26: { name: "Japan", code: "jp" },
   27: { name: "Jordan", code: "jo" },
   28: { name: "Korea Republic", code: "kr" },
