@@ -32,6 +32,7 @@ export const MENU_CONFIG = {
   extraItems: [
     { icon: "/assets/images/live-chat-icon.png", label: "Live Chat", action: "livechat" },
     { icon: "/assets/images/terms-icon.png", label: "Term & Condition", link: "/terms-and-conditions" },
+    { icon: "/assets/images/logout-icon.png", label: "Back to Station", action: "station" },
   ],
 };
 
