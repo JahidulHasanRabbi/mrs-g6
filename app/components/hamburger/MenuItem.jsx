@@ -45,6 +45,17 @@ function MenuItem({
       return;
     }
 
+    if (action === "station") {
+      const savedO = tokenStorage.getRedirectO();
+      let redirectUrl = "/";
+      if (savedO) {
+        redirectUrl = savedO.startsWith("http") ? savedO : `https://${savedO}`;
+      }
+
+      window.location.href = redirectUrl;
+      return;
+    }
+
     // Other named actions (e.g. "feedback") bubble up so the parent menu
     // can decide what to do — typically opening a modal.
     if (onAction) {
