@@ -49,6 +49,15 @@ export default function SpinItemsTable({
   });
 
   const renderCell = (item, col) => {
+    if (col.key === "reward_name") {
+      // Long reward names would otherwise stretch the column (cells are
+      // nowrap). Cap the width and ellipsize; the full name shows on hover.
+      return (
+        <span className="block max-w-[260px] truncate" title={item.reward_name}>
+          {item.reward_name}
+        </span>
+      );
+    }
     if (col.key === "quantity") return item.unlimited ? "Unlimited" : item.quantity;
     if (col.key === "item_type") return getOptionLabel("ITEM_TYPE", item.item_type);
     if (col.key === "image") {

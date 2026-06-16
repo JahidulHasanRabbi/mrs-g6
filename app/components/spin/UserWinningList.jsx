@@ -5,27 +5,26 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { SPIN_ASSETS } from "./spinAssets";
 
-const WinningRow = memo(function WinningRow({ date, reward, amount, index }) {
+const WinningRow = memo(function WinningRow({ date, reward, index }) {
   return (
-  <motion.div 
+  <motion.div
     className="flex items-center justify-between px-4 sm:px-6 py-2.5 min-h-[45px]"
     initial={{ opacity: 0, x: -100 }}
     animate={{ opacity: 1, x: 0 }}
-    transition={{ 
-      duration: 0.5, 
+    transition={{
+      duration: 0.5,
       delay: Math.min(index * 0.1, 0.5),
       ease: "easeOut"
     }}
     whileHover={{ scale: 1.02, x: 5 }}
   >
     <span className="text-[#3d1a02] text-xs sm:text-sm font-bold w-[85px] flex-shrink-0">{date}</span>
-    <span className="text-[#3d1a02] text-xs sm:text-sm font-bold flex-1 text-center px-2 truncate">{reward}</span>
-    <motion.div 
-      className="flex items-center gap-1.5 flex-shrink-0"
+    <motion.div
+      className="flex items-center gap-1.5 flex-1 min-w-0 justify-end pl-2"
       initial={{ opacity: 0, scale: 0 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ 
-        duration: 0.4, 
+      transition={{
+        duration: 0.4,
         delay: Math.min(index * 0.1 + 0.2, 0.7),
         ease: "easeOut"
       }}
@@ -39,7 +38,7 @@ const WinningRow = memo(function WinningRow({ date, reward, amount, index }) {
           sizes="18px"
         />
       </div>
-      <span className="text-[#3d1a02] text-sm sm:text-base font-bold whitespace-nowrap">{amount}</span>
+      <span className="text-[#3d1a02] text-sm sm:text-base font-bold truncate">{reward}</span>
     </motion.div>
   </motion.div>
   );

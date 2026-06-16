@@ -60,8 +60,23 @@ export function getOptionLabel(optionKey, value) {
     console.warn(`Invalid option key: ${optionKey}`);
     return '';
   }
-  
-  return options[value] || '';
+
+  // Direct match by numeric/string key (e.g. 3 or "3").
+  if (options[value] != null) return options[value];
+
+  // Some list endpoints return the enum *name* as a string ("TOKEN",
+  // "FREE_CREDIT", "ITEM") instead of its numeric id. Resolve those by
+  // comparing against the labels — normalising underscores to spaces and
+  // ignoring case — so e.g. "FREE_CREDIT" -> "Free Credit".
+  if (typeof value === 'string') {
+    const normalized = value.replace(/_/g, ' ').trim().toUpperCase();
+    const match = Object.values(options).find(
+      (label) => label.toUpperCase() === normalized
+    );
+    if (match) return match;
+  }
+
+  return '';
 }
 
 // Get numeric value from string label (reverse lookup)
@@ -72,10 +87,13 @@ export function getOptionValue(optionKey, label) {
     return null;
   }
   
-  // Find the key where the value matches the label (case-insensitive)
+  // Find the key where the value matches the label (case-insensitive).
+  // Normalise underscores to spaces so enum names like "FREE_CREDIT" resolve
+  // to the "Free Credit" label.
+  const normalized = String(label).replace(/_/g, ' ').trim().toUpperCase();
   const entry = Object.entries(options).find(
-    ([key, value]) => value.toUpperCase() === label.toUpperCase()
+    ([key, value]) => value.toUpperCase() === normalized
   );
-  
+
   return entry ? parseInt(entry[0], 10) : null;
 }

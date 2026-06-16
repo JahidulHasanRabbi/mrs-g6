@@ -72,10 +72,13 @@ export default function SpinPage() {
       // happened on the server and the result is final, so the UI history
       // must reflect it regardless of how the player ended the animation.
       if (results.length > 0) {
+        // Show the reward *name* (e.g. "RM2.64", "Iphone", "2 Token"). The
+        // spin API does not return a separate credit_amount — the resolved
+        // value already lives in reward_name — so there is no numeric amount
+        // to display.
         const newWinnings = results.map(r => ({
           date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }),
           reward: r.reward_name,
-          amount: r.credit_amount ? `RM${r.credit_amount}` : '-'
         }));
         setUserWinnings(prev => [...newWinnings, ...prev]);
       }

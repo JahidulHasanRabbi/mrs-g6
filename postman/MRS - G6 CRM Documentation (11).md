@@ -652,7 +652,23 @@ In staging:
 If member\_uuid \= “1234:  
 Returns SUCCESS  
 Else:  
-Returns ERROR, error\_message \= “Staging Envrionment”
+Returns ERROR, error\_message \= “Staging Environment"
+
+## Update Data \- POST
+
+/crm-members/\<member\_uuid\>/update-data/ POST  
+Output
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | status | Str | No | “SUCCESS” or “ERROR” |
+| **2** | error\_message | Str | Yes | Only if ERROR |
+
+In staging:  
+If member\_uuid \= “1234:  
+Returns SUCCESS  
+Else:  
+Returns ERROR, error\_message \= “Staging Environment"
 
 # Notifications
 
