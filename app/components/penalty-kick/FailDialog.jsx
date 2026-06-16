@@ -2,11 +2,13 @@
 
 import GlassCard from "./GlassCard";
 import GreenCta, { OutlinePillCta } from "./GreenCta";
+import RedeemAllButton from "./RedeemAllButton";
 import { COLORS } from "./constants";
 
 // reason: "save" (keeper saved it), "miss" (ball went wide), or "error".
 export default function FailDialog({
   onKickAgain,
+  onRedeemAll,
   onReturn,
   reason = "save",
   title,
@@ -40,6 +42,10 @@ export default function FailDialog({
 
       <div className="flex flex-col gap-3">
         <GreenCta onClick={onKickAgain}>{kickAgainLabel}</GreenCta>
+        {/* Redeem All claims any pending rewards from earlier goals — useful
+            even after a save/miss. Hidden on error states (country required /
+            maintenance), where the flow is "fix the problem" not "redeem". */}
+        {onRedeemAll && !isError && <RedeemAllButton onRedeemAll={onRedeemAll} />}
         <OutlinePillCta onClick={onReturn}>Return to website</OutlinePillCta>
       </div>
     </GlassCard>

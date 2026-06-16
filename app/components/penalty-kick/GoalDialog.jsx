@@ -2,9 +2,10 @@
 
 import GlassCard from "./GlassCard";
 import GreenCta, { OutlinePillCta } from "./GreenCta";
+import RedeemAllButton from "./RedeemAllButton";
 import { COLORS, ICONS } from "./constants";
 
-export default function GoalDialog({ reward, onKickAgain, onReturn }) {
+export default function GoalDialog({ reward, onKickAgain, onRedeemAll, onReturn }) {
   const itemType = String(reward?.item_type || "").toUpperCase();
   const amount = reward?.credit_amount ?? reward?.amount ?? reward?.token_amount ?? reward?.score_amount;
   const rewardText = reward?.reward_name
@@ -65,6 +66,7 @@ export default function GoalDialog({ reward, onKickAgain, onReturn }) {
 
       <div className="flex flex-col gap-3">
         <GreenCta onClick={onKickAgain}>Kick Again?</GreenCta>
+        {onRedeemAll && <RedeemAllButton onRedeemAll={onRedeemAll} />}
         <OutlinePillCta onClick={onReturn}>Return to website</OutlinePillCta>
       </div>
     </GlassCard>

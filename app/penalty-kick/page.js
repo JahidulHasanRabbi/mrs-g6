@@ -358,6 +358,10 @@ export default function PenaltyKickPage() {
     if (!config.enabled) return;
     play("whistle");
     setPhase(PHASES.READY);
+    // Surface the swipe guidance the moment the game starts, so the player
+    // sees how to shoot before their first swipe. Closing it reveals the
+    // READY pitch underneath, ready for the kick.
+    setDialog(DIALOGS.INFO);
   }, [config.enabled, play]);
 
   const handleCountryConfirmed = useCallback(async (country) => {
@@ -595,6 +599,7 @@ export default function PenaltyKickPage() {
                   play("tap");
                   handleKickAgain();
                 }}
+                onRedeemAll={handleRedeemAll}
                 onReturn={handleReturnToWebsite}
               />
             )}
@@ -613,6 +618,7 @@ export default function PenaltyKickPage() {
                     handleKickAgain();
                   }
                 }}
+                onRedeemAll={handleRedeemAll}
                 onReturn={handleReturnToWebsite}
               />
             )}

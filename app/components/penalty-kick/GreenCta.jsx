@@ -43,12 +43,13 @@ export default function GreenCta({
   );
 }
 
-export function OutlinePillCta({ children, onClick, className = "" }) {
+export function OutlinePillCta({ children, onClick, disabled = false, className = "" }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex w-full items-center justify-center rounded-[8px] px-5 py-3 text-[14px] font-medium transition-colors hover:bg-white/5 ${className}`}
+      disabled={disabled}
+      className={`inline-flex w-full items-center justify-center rounded-[8px] px-5 py-3 text-[14px] font-medium transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
       style={{
         backgroundColor: "rgba(40,42,43,0.4)",
         border: `1px solid ${COLORS.greenSoft50}`,
