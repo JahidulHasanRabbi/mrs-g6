@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Pagination } from "../../components/admin/members/DataTable";
 import RewardsTable from "../../components/admin/smash-egg/RewardsTable";
-import SmashEggRewardModal from "../../components/admin/smash-egg/SmashEggRewardModal";
+import RewardForm from "../../components/admin/smash-egg/RewardForm";
 import SmashSequenceModal from "../../components/admin/smash-egg/SmashSequenceModal";
 import ConfirmDialog from "../../components/admin/ui/ConfirmDialog";
 import { useToast } from "../../components/admin/ui/Toast";
@@ -59,8 +59,11 @@ export default function SmashEggPage() {
   const [rewards, setRewards] = useState(SEED_REWARDS);
   const [page, setPage] = useState(1);
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState("add");
+  // "list" shows the rewards table; "form" shows the Add/Edit Reward page
+  // (Figma 1727:3817). Kept as an in-page view so local state survives — there
+  // is no backend to reload from after a route change.
+  const [view, setView] = useState("list");
+  const [formMode, setFormMode] = useState("add");
   const [editTarget, setEditTarget] = useState(null);
   const [sequenceOpen, setSequenceOpen] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState(null);
@@ -76,25 +79,26 @@ export default function SmashEggPage() {
   }, [page, totalPages]);
 
   const openAdd = () => {
-    setModalMode("add");
+    setFormMode("add");
     setEditTarget(null);
-    setModalOpen(true);
+    setView("form");
   };
 
   const openEdit = (reward) => {
-    setModalMode("edit");
+    setFormMode("edit");
     setEditTarget(reward);
-    setModalOpen(true);
+    setView("form");
   };
 
   const handleSave = (data) => {
-    if (modalMode === "edit" && editTarget) {
+    if (formMode === "edit" && editTarget) {
       setRewards((prev) => prev.map((r) => (r.id === editTarget.id ? { ...r, ...data } : r)));
       toast.success("Reward updated");
     } else {
       setRewards((prev) => [...prev, { id: nextId(), ...data }]);
       toast.success("Reward added");
     }
+    setView("list");
   };
 
   const confirmArchive = () => {
@@ -109,6 +113,17 @@ export default function SmashEggPage() {
     setPage(1);
     toast.success("Smash sequence saved");
   };
+
+  if (view === "form") {
+    return (
+      <RewardForm
+        mode={formMode}
+        initial={editTarget}
+        onBack={() => setView("list")}
+        onSave={handleSave}
+      />
+    );
+  }
 
   return (
     <div className="rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
@@ -149,14 +164,6 @@ export default function SmashEggPage() {
         </p>
         <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
       </div>
-
-      <SmashEggRewardModal
-        open={modalOpen}
-        mode={modalMode}
-        initial={editTarget}
-        onClose={() => setModalOpen(false)}
-        onSave={handleSave}
-      />
 
       <SmashSequenceModal
         open={sequenceOpen}

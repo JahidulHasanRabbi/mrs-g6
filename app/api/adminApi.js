@@ -881,3 +881,109 @@ export async function getWorldCupDashboardKpi(params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.WORLDCUP_ADMIN.DASHBOARD_KPI}${qs}`, { method: 'GET' }, true, 'admin');
 }
+
+// ---------------------------------------------------------------------------
+// Deposit Leaderboard – Banners CRUD
+// ---------------------------------------------------------------------------
+export async function getDepositBanners(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.DEPOSIT_LEADERBOARD.BANNERS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+export async function getDepositBanner(uuid) {
+  return await apiRequest(ENDPOINTS.DEPOSIT_LEADERBOARD.BANNER(uuid), { method: 'GET' }, true, 'admin');
+}
+export async function createDepositBanner(data) {
+  return await apiRequest(ENDPOINTS.DEPOSIT_LEADERBOARD.BANNERS, { method: 'POST', body: data }, true, 'admin');
+}
+export async function updateDepositBanner(uuid, data) {
+  return await apiRequest(ENDPOINTS.DEPOSIT_LEADERBOARD.BANNER(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+export async function archiveDepositBanner(uuid) {
+  return await apiRequest(ENDPOINTS.DEPOSIT_LEADERBOARD.BANNER_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
+// Deposit Leaderboard – Reward Items CRUD
+export async function getDepositRewardItems(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.DEPOSIT_LEADERBOARD.REWARD_ITEMS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+export async function getDepositRewardItem(uuid) {
+  return await apiRequest(ENDPOINTS.DEPOSIT_LEADERBOARD.REWARD_ITEM(uuid), { method: 'GET' }, true, 'admin');
+}
+export async function createDepositRewardItem(data) {
+  return await apiRequest(ENDPOINTS.DEPOSIT_LEADERBOARD.REWARD_ITEMS, { method: 'POST', body: data }, true, 'admin');
+}
+export async function updateDepositRewardItem(uuid, data) {
+  return await apiRequest(ENDPOINTS.DEPOSIT_LEADERBOARD.REWARD_ITEM(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+export async function archiveDepositRewardItem(uuid) {
+  return await apiRequest(ENDPOINTS.DEPOSIT_LEADERBOARD.REWARD_ITEM_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
+// Deposit Leaderboard – Dummy Players CRUD
+export async function getDepositDummyPlayers(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.DEPOSIT_LEADERBOARD.DUMMY_PLAYERS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+export async function getDepositDummyPlayer(uuid) {
+  return await apiRequest(ENDPOINTS.DEPOSIT_LEADERBOARD.DUMMY_PLAYER(uuid), { method: 'GET' }, true, 'admin');
+}
+export async function createDepositDummyPlayer(data) {
+  return await apiRequest(ENDPOINTS.DEPOSIT_LEADERBOARD.DUMMY_PLAYERS, { method: 'POST', body: data }, true, 'admin');
+}
+export async function updateDepositDummyPlayer(uuid, data) {
+  return await apiRequest(ENDPOINTS.DEPOSIT_LEADERBOARD.DUMMY_PLAYER(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+
+// ---------------------------------------------------------------------------
+// Referrer Leaderboard – Banners CRUD
+// ---------------------------------------------------------------------------
+export async function getReferrerBanners(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.REFERRER_LEADERBOARD.BANNERS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+export async function getReferrerBanner(uuid) {
+  return await apiRequest(ENDPOINTS.REFERRER_LEADERBOARD.BANNER(uuid), { method: 'GET' }, true, 'admin');
+}
+export async function createReferrerBanner(data) {
+  return await apiRequest(ENDPOINTS.REFERRER_LEADERBOARD.BANNERS, { method: 'POST', body: data }, true, 'admin');
+}
+export async function updateReferrerBanner(uuid, data) {
+  return await apiRequest(ENDPOINTS.REFERRER_LEADERBOARD.BANNER(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+export async function archiveReferrerBanner(uuid) {
+  return await apiRequest(ENDPOINTS.REFERRER_LEADERBOARD.BANNER_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
+// Referrer Leaderboard – Reward Items CRUD
+export async function getReferrerRewardItems(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.REFERRER_LEADERBOARD.REWARD_ITEMS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+export async function getReferrerRewardItem(uuid) {
+  return await apiRequest(ENDPOINTS.REFERRER_LEADERBOARD.REWARD_ITEM(uuid), { method: 'GET' }, true, 'admin');
+}
+export async function createReferrerRewardItem(data) {
+  return await apiRequest(ENDPOINTS.REFERRER_LEADERBOARD.REWARD_ITEMS, { method: 'POST', body: data }, true, 'admin');
+}
+export async function updateReferrerRewardItem(uuid, data) {
+  return await apiRequest(ENDPOINTS.REFERRER_LEADERBOARD.REWARD_ITEM(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+export async function archiveReferrerRewardItem(uuid) {
+  return await apiRequest(ENDPOINTS.REFERRER_LEADERBOARD.REWARD_ITEM_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
+// Referrer Leaderboard – Dummy Players CRUD
+export async function getReferrerDummyPlayers(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.REFERRER_LEADERBOARD.DUMMY_PLAYERS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+export async function getReferrerDummyPlayer(uuid) {
+  return await apiRequest(ENDPOINTS.REFERRER_LEADERBOARD.DUMMY_PLAYER(uuid), { method: 'GET' }, true, 'admin');
+}
+export async function createReferrerDummyPlayer(data) {
+  return await apiRequest(ENDPOINTS.REFERRER_LEADERBOARD.DUMMY_PLAYERS, { method: 'POST', body: data }, true, 'admin');
+}
+export async function updateReferrerDummyPlayer(uuid, data) {
+  return await apiRequest(ENDPOINTS.REFERRER_LEADERBOARD.DUMMY_PLAYER(uuid), { method: 'PUT', body: data }, true, 'admin');
+}

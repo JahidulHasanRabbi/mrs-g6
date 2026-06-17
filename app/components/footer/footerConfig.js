@@ -20,7 +20,6 @@ export const FOOTER_CONFIG = {
       link: '/smash-egg',
       width: 40,
       height: 40,
-      disabled: true,
     },
     {
       id: 'home',

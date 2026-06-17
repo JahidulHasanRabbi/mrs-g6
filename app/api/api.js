@@ -159,6 +159,26 @@ export const ENDPOINTS = {
     RANKING_REALTIME: '/worldcup/ranking/realtime/',
     DASHBOARD_KPI: '/worldcup/dashboard/kpi/',
   },
+  DEPOSIT_LEADERBOARD: {
+    BANNERS: '/leaderboard-deposit/banners/',
+    BANNER: (uuid) => `/leaderboard-deposit/banners/${uuid}/`,
+    BANNER_ARCHIVE: (uuid) => `/leaderboard-deposit/banners/${uuid}/archive/`,
+    REWARD_ITEMS: '/leaderboard-deposit/reward-items/',
+    REWARD_ITEM: (uuid) => `/leaderboard-deposit/reward-items/${uuid}/`,
+    REWARD_ITEM_ARCHIVE: (uuid) => `/leaderboard-deposit/reward-items/${uuid}/archive/`,
+    DUMMY_PLAYERS: '/leaderboard-deposit/dummy-players/',
+    DUMMY_PLAYER: (uuid) => `/leaderboard-deposit/dummy-players/${uuid}/`,
+  },
+  REFERRER_LEADERBOARD: {
+    BANNERS: '/leaderboard-referrer/banners/',
+    BANNER: (uuid) => `/leaderboard-referrer/banners/${uuid}/`,
+    BANNER_ARCHIVE: (uuid) => `/leaderboard-referrer/banners/${uuid}/archive/`,
+    REWARD_ITEMS: '/leaderboard-referrer/reward-items/',
+    REWARD_ITEM: (uuid) => `/leaderboard-referrer/reward-items/${uuid}/`,
+    REWARD_ITEM_ARCHIVE: (uuid) => `/leaderboard-referrer/reward-items/${uuid}/archive/`,
+    DUMMY_PLAYERS: '/leaderboard-referrer/dummy-players/',
+    DUMMY_PLAYER: (uuid) => `/leaderboard-referrer/dummy-players/${uuid}/`,
+  },
   CRM: {
     // User Access Panel
     USERS: '/admins/users/',
