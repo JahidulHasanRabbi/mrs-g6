@@ -1,68 +1,73 @@
 "use client";
 
-import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { SMASH_EGG_ASSETS } from "./smashEggAssets";
 
-export default function SmashEggHeader({ onMenuClick }) {
-  const router = useRouter();
+function IconButton({ src, onClick, label }) {
+  return (
+    <motion.button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className="grid h-9 w-9 place-items-center"
+      style={{ background: "transparent", border: "none", padding: 0 }}
+      whileTap={{ scale: 0.9 }}
+    >
+      <img
+        src={src}
+        alt=""
+        aria-hidden="true"
+        className="block h-9 w-9 select-none"
+        style={{ objectFit: "contain" }}
+        draggable={false}
+      />
+    </motion.button>
+  );
+}
 
+export default function SmashEggHeader({ onMenuClick, onInfoClick }) {
   return (
     <header
-      className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[475px] h-16 z-40 flex items-center justify-between px-6 pb-px border-b border-[#eab043]"
+      className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[475px] h-16 z-40 flex items-center justify-between px-4 pb-px border-b border-[#eab043]"
       style={{
         backgroundColor: "#07190d",
-        boxShadow: "0 4px 2px rgba(233,175,65,0.25)",
+        boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1)",
+        filter: "drop-shadow(0px 4px 2px rgba(233,175,65,0.25))",
       }}
     >
-      <div className="flex items-center gap-3 relative z-10">
-        <motion.button
-          onClick={() => router.back()}
-          className="relative w-[17.5px] h-[22.5px] shrink-0"
-          whileTap={{ scale: 0.9 }}
-          aria-label="Go back"
-        >
-          <Image
-            src={SMASH_EGG_ASSETS.backArrow}
-            alt="Back"
-            fill
-            className="object-contain"
-          />
-        </motion.button>
+      {/* Left: hamburger menu + egg icon + title */}
+      <div className="flex items-center gap-3">
+        <IconButton
+          src={SMASH_EGG_ASSETS.headerMenuIcon}
+          onClick={onMenuClick}
+          label="Navigation menu"
+        />
+        <img
+          src={SMASH_EGG_ASSETS.headerEggIcon}
+          alt=""
+          className="w-[17.5px] h-[22.5px] object-contain select-none"
+          draggable={false}
+        />
         <h1
-          className="text-[#ffd700] text-2xl uppercase tracking-[-1.2px]"
-          style={{ fontFamily: "var(--font-acme), 'Acme', sans-serif" }}
+          className="whitespace-nowrap leading-[28.8px] uppercase"
+          style={{
+            fontFamily: "var(--font-acme), 'Acme', sans-serif",
+            fontSize: 24,
+            letterSpacing: "-1.2px",
+            color: "#ffd700",
+          }}
         >
           SMASH Egg
         </h1>
       </div>
 
-      <div className="flex items-center gap-4 relative z-10">
-        <motion.div
-          className="relative w-9 h-9 rounded-full overflow-hidden"
-          whileTap={{ scale: 0.9 }}
-        >
-          <Image
-            src={SMASH_EGG_ASSETS.soundIcon}
-            alt="Sound"
-            fill
-            className="object-cover"
-          />
-        </motion.div>
-        <motion.button
-          onClick={onMenuClick}
-          className="relative w-9 h-9 rounded-full overflow-hidden"
-          whileTap={{ scale: 0.9 }}
-          aria-label="Menu"
-        >
-          <Image
-            src={SMASH_EGG_ASSETS.menuIcon}
-            alt="Menu"
-            fill
-            className="object-cover"
-          />
-        </motion.button>
+      {/* Right: info icon */}
+      <div className="flex items-center gap-4">
+        <IconButton
+          src={SMASH_EGG_ASSETS.headerInfoIcon}
+          onClick={onInfoClick}
+          label="Info"
+        />
       </div>
     </header>
   );
