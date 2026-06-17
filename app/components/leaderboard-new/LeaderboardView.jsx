@@ -38,7 +38,7 @@ export default function LeaderboardView({
         <img
           src={config.icon}
           alt={config.label}
-          className="w-16 h-16"
+          className="w-12 h-12 sm:w-16 sm:h-16"
         />
       </div>
 
@@ -46,13 +46,13 @@ export default function LeaderboardView({
       <div className="flex flex-col items-center gap-2 w-full pt-2">
         <div className="text-center w-full">
           <p
-            className="text-4xl font-extrabold text-[#e5e2e1] leading-[48px]"
+            className="text-3xl sm:text-4xl font-extrabold text-[#e5e2e1] leading-10 sm:leading-[48px]"
             style={{ fontFamily: "var(--font-inter)" }}
           >
             TOP 20
           </p>
           <p
-            className="text-[32px] font-extrabold leading-[48px]"
+            className="text-2xl sm:text-[32px] font-extrabold leading-10 sm:leading-[48px]"
             style={{
               color: config.color,
               fontFamily: "var(--font-inter)",

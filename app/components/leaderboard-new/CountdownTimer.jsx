@@ -29,7 +29,7 @@ export default function CountdownTimer({ endDate, color = "#ff8c00" }) {
 
   return (
     <div
-      className="w-full rounded-lg p-6 flex flex-col gap-4 items-center"
+      className="w-full rounded-lg p-4 sm:p-6 flex flex-col gap-3 sm:gap-4 items-center"
       style={{
         backgroundColor: "rgba(28,27,27,0.5)",
         border: `1px solid ${color}`,
@@ -42,18 +42,18 @@ export default function CountdownTimer({ endDate, color = "#ff8c00" }) {
       >
         CAMPAIGN ENDS IN
       </p>
-      <div className="flex items-start gap-4 justify-center">
+      <div className="flex items-start gap-2 sm:gap-4 justify-center">
         {units.map((u, i) => (
-          <div key={u.label} className="flex items-start gap-4">
+          <div key={u.label} className="flex items-start gap-2 sm:gap-4">
             <div className="flex flex-col items-center">
               <span
-                className="text-[32px] leading-8 text-[#e5e2e1]"
+                className="text-2xl sm:text-[32px] leading-8 text-[#e5e2e1]"
                 style={{ fontFamily: "var(--font-jetbrains-mono)" }}
               >
                 {u.value}
               </span>
               <span
-                className="text-xs font-semibold tracking-[1.2px]"
+                className="text-[10px] sm:text-xs font-semibold tracking-[1.2px]"
                 style={{
                   color: color === "#ff8c00" ? "#ffb965" : color,
                   fontFamily: "var(--font-jetbrains-mono)",
@@ -64,7 +64,7 @@ export default function CountdownTimer({ endDate, color = "#ff8c00" }) {
             </div>
             {i < units.length - 1 && (
               <span
-                className="text-[32px] leading-[48px]"
+                className="text-2xl sm:text-[32px] leading-[48px]"
                 style={{
                   color: color === "#ff8c00" ? "#ffb965" : color,
                   fontFamily: "var(--font-jetbrains-mono)",
