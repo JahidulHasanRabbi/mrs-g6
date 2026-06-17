@@ -114,38 +114,40 @@ function LeaderboardPageInner() {
       <div
         className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[475px] z-50 flex items-center justify-between px-4 h-[72px] bg-[#0a1a0a]/95 backdrop-blur-sm border-b-2 border-[#e9af41]/60 shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
       >
-        {/* Hamburger Menu Button */}
-        <button
-          onClick={() => setIsMenuOpen(true)}
-          className="flex flex-col items-center gap-0 cursor-pointer"
-          aria-label="Open menu"
-        >
-          <img
-            src="/assets/images/hamburger-icon.png"
-            alt="Menu"
-            className="w-9 h-9 object-contain"
-          />
-          <p
-            className="text-[14px] font-bold -mt-1"
+        <div className="flex items-center gap-3">
+          {/* Hamburger Menu Button */}
+          <button
+            onClick={() => setIsMenuOpen(true)}
+            className="flex flex-col items-center gap-0 cursor-pointer"
+            aria-label="Open menu"
+          >
+            <img
+              src="/assets/images/hamburger-icon.png"
+              alt="Menu"
+              className="w-9 h-9 object-contain"
+            />
+            <p
+              className="text-[14px] font-bold -mt-1"
+              style={{
+                fontFamily: '"Times New Roman", serif',
+                color: "#e9af41",
+              }}
+            >
+              Menu
+            </p>
+          </button>
+
+          <h1
+            className="text-2xl font-semibold uppercase tracking-[-1.2px]"
             style={{
-              fontFamily: '"Times New Roman", serif',
-              color: "#e9af41",
+              color: config.color,
+              fontFamily: "var(--font-inter)",
+              transition: "color 0.3s ease",
             }}
           >
-            Menu
-          </p>
-        </button>
-
-        <h1
-          className="text-2xl font-semibold uppercase tracking-[-1.2px]"
-          style={{
-            color: config.color,
-            fontFamily: "var(--font-inter)",
-            transition: "color 0.3s ease",
-          }}
-        >
-          Leaderboards
-        </h1>
+            Leaderboards
+          </h1>
+        </div>
       </div>
 
       {/* Main content */}
