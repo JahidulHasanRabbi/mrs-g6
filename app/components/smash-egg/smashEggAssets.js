@@ -10,4 +10,10 @@ export const SMASH_EGG_ASSETS = {
   backArrow: '/assets/smash-egg/back-arrow.svg',
   soundIcon: '/assets/smash-egg/sound-icon.png',
   menuIcon: '/assets/smash-egg/menu-icon.png',
+  prizeSmartphone: '/assets/smash-egg/prize-smartphone.png',
+  prizeSmartwatch: '/assets/smash-egg/prize-smartwatch.png',
+  prizeEarbuds: '/assets/smash-egg/prize-earbuds.png',
+  rankBadge1: '/assets/smash-egg/rank-badge-1.png',
+  rankBadge2: '/assets/smash-egg/rank-badge-2.png',
+  rankBadge3: '/assets/smash-egg/rank-badge-3.png',
 };

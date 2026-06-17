@@ -308,19 +308,20 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
   const startSpinAnimation = useCallback((targetUuid = null) => {
     if (spinning) return;
 
-    // Find the grid index that matches the winning UUID
-    let targetGridIndex = 0;
-    if (targetUuid) {
-      const foundIndex = gridItems.findIndex(item => item.uuid === targetUuid);
-      if (foundIndex !== -1) {
-        targetGridIndex = foundIndex;
-      } else {
-        console.warn('Winning UUID not found in grid items, using random position');
-        targetGridIndex = Math.floor(Math.random() * 8);
-      }
-    } else {
-      // Fallback to random if no UUID provided
-      targetGridIndex = Math.floor(Math.random() * 8);
+    // The winning tile is decided solely by the server result's uuid, which
+    // always maps to one of the items already rendered on the wheel (the same
+    // saved list we fetched to build it). We never guess a position: if there
+    // is no match we skip the wheel animation rather than land on — and
+    // celebrate — a reward the player did not win. The result dialog still
+    // shows the real prize because the parent holds the authoritative result.
+    const targetGridIndex = targetUuid
+      ? gridItems.findIndex((item) => item.uuid === targetUuid)
+      : -1;
+
+    if (targetGridIndex === -1) {
+      console.error('[lucky-spin] winning uuid not found on the wheel; skipping spin animation', targetUuid);
+      onSpinComplete?.(null);
+      return;
     }
 
     // Find the position in ORDER array that corresponds to this grid index.
@@ -391,7 +392,7 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
     };
 
     rafRef.current = requestAnimationFrame(tick);
-  }, [spinning, stopSpin, centerRotate, isLowEnd, isMidEnd, gridItems]);
+  }, [spinning, stopSpin, centerRotate, isLowEnd, isMidEnd, gridItems, onSpinComplete]);
 
   const startSpin = useCallback(async () => {
     if (spinning) return;

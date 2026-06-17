@@ -10,18 +10,18 @@ const RANK_COLORS = {
   3: { border: "#fd8b00", text: "#fd8b00", bgFrom: "rgba(127,86,56,0.15)", bgTo: "rgba(127,86,56,0)" },
 };
 
-function RankBadge({ rank, color }) {
+const RANK_BADGES = {
+  1: SMASH_EGG_ASSETS.rankBadge1,
+  2: SMASH_EGG_ASSETS.rankBadge2,
+  3: SMASH_EGG_ASSETS.rankBadge3,
+};
+
+function RankBadge({ rank }) {
+  const badge = RANK_BADGES[rank];
+  if (!badge) return null;
   return (
-    <div className="relative w-6 h-6 shrink-0 flex items-center justify-center">
-      <svg width="10" height="20" viewBox="0 0 10 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M5 0L9.33 3.5V12L5 16L0.67 12V3.5L5 0Z" fill={color} fillOpacity="0.3" stroke={color} strokeWidth="0.5" />
-      </svg>
-      <span
-        className="absolute text-black text-[8px] font-bold top-[3px]"
-        style={{ fontFamily: "var(--font-acme), 'Acme', sans-serif" }}
-      >
-        {rank}
-      </span>
+    <div className="relative w-6 h-8 shrink-0">
+      <Image src={badge} alt={`Rank ${rank}`} fill className="object-contain" />
     </div>
   );
 }
@@ -63,7 +63,7 @@ function PrizeRow({ rank, name, image, index }) {
         </p>
       </div>
 
-      <RankBadge rank={rank} color={colors.border} />
+      <RankBadge rank={rank} />
     </motion.div>
   );
 }
@@ -104,9 +104,9 @@ function FreeCreditCard({ label, index }) {
 
 export default function PrizeList({ prizes = [], creditRanges = [] }) {
   const defaultPrizes = prizes.length > 0 ? prizes : [
-    { rank: 1, name: "VIVO V40", image: null },
-    { rank: 2, name: "SAMSUNG WATCH 7", image: null },
-    { rank: 3, name: "SAMSUNG BUDS", image: null },
+    { rank: 1, name: "VIVO V40", image: SMASH_EGG_ASSETS.prizeSmartphone },
+    { rank: 2, name: "SAMSUNG WATCH 7", image: SMASH_EGG_ASSETS.prizeSmartwatch },
+    { rank: 3, name: "SAMSUNG BUDS", image: SMASH_EGG_ASSETS.prizeEarbuds },
   ];
 
   const defaultCredits = creditRanges.length > 0 ? creditRanges : [

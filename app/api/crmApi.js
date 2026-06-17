@@ -139,6 +139,11 @@ export async function refreshCrmMember(memberUuid) {
   return await apiRequest(ENDPOINTS.CRM.MEMBER_REFRESH(memberUuid), { method: 'POST' }, true, 'admin');
 }
 
+// POST /crm-members/<uuid>/update-data/
+export async function updateCrmMemberData(memberUuid) {
+  return await apiRequest(ENDPOINTS.CRM.MEMBER_UPDATE_DATA(memberUuid), { method: 'POST' }, true, 'admin');
+}
+
 // GET /crm-members/follow-up/
 // params: { page, page_size, pic_uuid, member_uuid, start_date, end_date }
 export async function getCrmFollowUps(params = {}) {

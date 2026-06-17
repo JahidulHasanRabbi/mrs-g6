@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import SmashEggHeader from "../components/smash-egg/SmashEggHeader";
@@ -14,24 +14,29 @@ import { FooterNav } from "../components/footer";
 import { HamburgerMenu } from "../components/hamburger";
 import { SMASH_EGG_ASSETS } from "../components/smash-egg/smashEggAssets";
 import { useUser } from "../contexts/UserContext";
-import SuccessModal from "../components/ui/SuccessModal";
+import SmashEggResultModal from "../components/smash-egg/SmashEggResultModal";
 
 export default function SmashEggPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCracked, setIsCracked] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalTitle, setModalTitle] = useState("");
-  const [modalMessage, setModalMessage] = useState("");
-  const [modalBgColor, setModalBgColor] = useState("rgba(96, 128, 60, 1)");
+  const [wonPrize, setWonPrize] = useState(null);
   const { userData } = useUser();
 
   const tokenBalance = userData?.balance ?? 0;
 
   const handleEggTap = useCallback(() => {
-    if (isProcessing) return;
-    setIsCracked((prev) => !prev);
-  }, [isProcessing]);
+    if (isProcessing || isCracked) return;
+    setIsProcessing(true);
+    setIsCracked(true);
+
+    setTimeout(() => {
+      setWonPrize({ label: "RM0.5 ~ RM3.00" });
+      setIsModalOpen(true);
+      setIsProcessing(false);
+    }, 1200);
+  }, [isProcessing, isCracked]);
 
   const handleDraw = useCallback(async (draws) => {
     if (isProcessing) return;
@@ -41,9 +46,7 @@ export default function SmashEggPage() {
       setIsCracked(true);
 
       setTimeout(() => {
-        setModalTitle("Smash Egg");
-        setModalMessage(`${draws}x draw completed! Stay tuned for API integration.`);
-        setModalBgColor("rgba(96, 128, 60, 1)");
+        setWonPrize({ label: "RM0.5 ~ RM3.00" });
         setIsModalOpen(true);
         setIsProcessing(false);
         setIsCracked(false);
@@ -56,6 +59,7 @@ export default function SmashEggPage() {
 
   const closeModal = useCallback(() => {
     setIsModalOpen(false);
+    setIsCracked(false);
   }, []);
 
   return (
@@ -158,13 +162,11 @@ export default function SmashEggPage() {
       {/* Footer Nav */}
       <FooterNav />
 
-      {/* Success Modal */}
-      <SuccessModal
+      {/* Result Modal */}
+      <SmashEggResultModal
         isOpen={isModalOpen}
         onClose={closeModal}
-        title={modalTitle}
-        message={modalMessage}
-        backgroundColor={modalBgColor}
+        prize={wonPrize}
       />
     </div>
   );

@@ -69,7 +69,7 @@ export default function WinnerList({ winners = [] }) {
         </h2>
 
         {/* Winner Entries */}
-        <div className="flex flex-col gap-4 max-h-[600px] overflow-y-auto">
+        <div className="flex flex-col gap-4 max-h-[600px] overflow-y-auto scrollbar-smash-egg pr-1">
           {displayWinners.map((winner, i) => (
             <WinnerItem
               key={`${winner.date}-${winner.name}-${i}`}

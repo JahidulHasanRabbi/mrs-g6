@@ -9,7 +9,7 @@ import {
   AlertHistorySection,
   FollowUpCreateModal,
 } from "../../../../components/admin/retention/FollowUpComponents";
-import { assignCrmMemberToPic, getCrmFollowUps, getCrmMemberSingle, getCrmUsers, patchCrmMember, patchCrmMemberAlert, patchCrmMemberFollowUp, refreshCrmMember, sendCrmMemberBonus } from "../../../../api/crmApi";
+import { assignCrmMemberToPic, getCrmFollowUps, getCrmMemberSingle, getCrmUsers, patchCrmMember, patchCrmMemberAlert, patchCrmMemberFollowUp, refreshCrmMember, sendCrmMemberBonus, updateCrmMemberData } from "../../../../api/crmApi";
 import { getVipTierList, getWalletVipTiers, getStationList } from "../../../../api/adminApi";
 
 const TAG_STYLES = {
@@ -220,6 +220,7 @@ export default function MemberProfilePage() {
   const [alertSubmitting, setAlertSubmitting] = useState(false);
   const [bonusUpdating, setBonusUpdating] = useState(false);
   const [bonusResult, setBonusResult] = useState(null);
+  const [dataUpdating, setDataUpdating] = useState(false);
   // Member Alert state (#13): when on, the whole profile renders in red.
   const [isAlerted, setIsAlerted] = useState(false);
   const [alertConfirm, setAlertConfirm] = useState(null); // "on" | "off" | null
@@ -396,6 +397,42 @@ export default function MemberProfilePage() {
     }
   };
 
+  // "Update Data" (3-dots menu): trigger a server-side member data sync, then
+  // re-pull this member so the profile reflects the latest. Mirrors Update
+  // Bonus — lightweight, no throttle. Reuses the same ResultModal via bonusResult.
+  const handleUpdateData = async () => {
+    if (dataUpdating || !memberUuid) return;
+    setDataUpdating(true);
+    setBonusResult(null);
+    try {
+      const res = await updateCrmMemberData(memberUuid);
+      if (res?.status === "ERROR") {
+        setBonusResult({
+          status: "error",
+          title: "Update Data Failed",
+          message: res?.error_message || "Failed to update member data. Please try again.",
+        });
+        return;
+      }
+      setBonusResult({
+        status: "success",
+        title: "Data Updated",
+        message: "Member data has been updated successfully.",
+      });
+      setRefreshKey((k) => k + 1);
+    } catch (err) {
+      console.error("[member-profile] update data failed", err);
+      const detail = err?.data?.detail || err?.data?.message || err?.message;
+      setBonusResult({
+        status: "error",
+        title: "Update Data Failed",
+        message: detail || "Failed to update member data. Please try again.",
+      });
+    } finally {
+      setDataUpdating(false);
+    }
+  };
+
   // Confirm + persist the Alert toggle (#13) via PATCH /crm-members/members/<uuid>/alert/.
   const handleAlertConfirm = async () => {
     const turnOn = alertConfirm === "on";
@@ -439,7 +476,8 @@ export default function MemberProfilePage() {
         onAlertOpen={() => setActiveModal("alert")}
         onAssignPicOpen={() => setActiveModal("assign-pic")}
         onUpdateBonus={handleUpdateBonus}
-        bonusUpdating={bonusUpdating}
+        bonusUpdating={bonusUpdating || dataUpdating}
+        onUpdateData={handleUpdateData}
         onSendBonusOpen={() => setActiveModal("send-bonus")}
         onAlertToggle={() => setAlertConfirm(isAlerted ? "off" : "on")}
       />
@@ -533,7 +571,7 @@ export default function MemberProfilePage() {
   );
 }
 
-function ProfileHeader({ name, tags, dateJoined, slug, activeBrands, alerted, onNoteOpen, onVipOpen, onAlertOpen, onAssignPicOpen, onUpdateBonus, bonusUpdating, onSendBonusOpen, onAlertToggle }) {
+function ProfileHeader({ name, tags, dateJoined, slug, activeBrands, alerted, onNoteOpen, onVipOpen, onAlertOpen, onAssignPicOpen, onUpdateBonus, bonusUpdating, onUpdateData, onSendBonusOpen, onAlertToggle }) {
   return (
     <div className="flex flex-col gap-4 px-2 md:flex-row md:flex-wrap md:items-start md:justify-between md:gap-6">
       <div className="flex flex-col gap-3">
@@ -583,7 +621,7 @@ function ProfileHeader({ name, tags, dateJoined, slug, activeBrands, alerted, on
               <EditIcon />
               <span className="text-[12px] font-medium leading-[18px] text-[#141828]">Edit Profile</span>
             </Link>
-            <MoreOptionsMenu onNoteOpen={onNoteOpen} onVipOpen={onVipOpen} onAlertOpen={onAlertOpen} onAssignPicOpen={onAssignPicOpen} onUpdateBonus={onUpdateBonus} bonusUpdating={bonusUpdating} onSendBonusOpen={onSendBonusOpen} onAlertToggle={onAlertToggle} alerted={alerted} />
+            <MoreOptionsMenu onNoteOpen={onNoteOpen} onVipOpen={onVipOpen} onAlertOpen={onAlertOpen} onAssignPicOpen={onAssignPicOpen} onUpdateBonus={onUpdateBonus} bonusUpdating={bonusUpdating} onUpdateData={onUpdateData} onSendBonusOpen={onSendBonusOpen} onAlertToggle={onAlertToggle} alerted={alerted} />
           </div>
         </div>
       </div>
@@ -622,12 +660,13 @@ function ActiveBrandsRow({ active }) {
   );
 }
 
-function MoreOptionsMenu({ onNoteOpen, onVipOpen, onAlertOpen, onAssignPicOpen, onUpdateBonus, bonusUpdating, onSendBonusOpen, onAlertToggle, alerted }) {
+function MoreOptionsMenu({ onNoteOpen, onVipOpen, onAlertOpen, onAssignPicOpen, onUpdateBonus, bonusUpdating, onUpdateData, onSendBonusOpen, onAlertToggle, alerted }) {
   const [open, setOpen] = useState(false);
 
   // "Alert" toggles to "Removed from Alert" once the member is flagged (#13).
   const options = [
     { key: "update-bonus", label: "Update Bonus" },
+    { key: "update-data",  label: "Update Data" },
     { key: "send-bonus",   label: "Send Bonus" },
     { key: "add-note",     label: "Add Note" },
     { key: "assign-pic",   label: "Assign PIC" },
@@ -639,6 +678,7 @@ function MoreOptionsMenu({ onNoteOpen, onVipOpen, onAlertOpen, onAssignPicOpen, 
   const handleSelect = (key) => {
     setOpen(false);
     if (key === "update-bonus") onUpdateBonus?.();
+    else if (key === "update-data") onUpdateData?.();
     else if (key === "send-bonus") onSendBonusOpen?.();
     else if (key === "add-note") onNoteOpen();
     else if (key === "assign-pic") onAssignPicOpen();
