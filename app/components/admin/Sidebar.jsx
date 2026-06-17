@@ -45,6 +45,8 @@ function pathnameToActiveItem(pathname) {
   if (pathname.startsWith("/admin/lucky-spin/daily-limits")) return "daily-limits";
   if (pathname.startsWith("/admin/lucky-spin")) return "lucky-spin";
   if (pathname.startsWith("/admin/mission-game")) return "mission-game";
+  if (pathname.startsWith("/admin/leaderboards/deposit")) return "lb-deposit";
+  if (pathname.startsWith("/admin/leaderboards/referrer")) return "lb-referrer";
   if (pathname.startsWith("/admin/world-cup/predictions")) return "wc-predictions";
   if (pathname.startsWith("/admin/world-cup/settings")) return "wc-settings";
   if (pathname.startsWith("/admin/world-cup")) return "wc-dashboard";
@@ -233,6 +235,23 @@ const RETENTION_MENU = [
     label: "Settings",
     iconMask: "/assets/admin/sidebar/icons/retention-settings.svg",
     href: "/admin/retention/settings",
+    disabled: false,
+  },
+];
+
+const LEADERBOARDS_MENU = [
+  {
+    id: "lb-deposit",
+    label: "Deposit",
+    iconMask: "/assets/admin/sidebar/icons/leaderboard-deposit.svg",
+    href: "/admin/leaderboards/deposit",
+    disabled: false,
+  },
+  {
+    id: "lb-referrer",
+    label: "Referrer",
+    iconMask: "/assets/admin/sidebar/icons/leaderboard-referrer.svg",
+    href: "/admin/leaderboards/referrer",
     disabled: false,
   },
 ];
@@ -875,6 +894,7 @@ function activeSectionForItem(activeItem) {
     if (item.id === activeItem) return true;
     return Array.isArray(item.children) && item.children.some((child) => child.id === activeItem);
   });
+  if (hasActive(LEADERBOARDS_MENU)) return "lb";
   if (hasActive(WORLD_CUP_MENU)) return "wc";
   if (hasActive(RETENTION_MENU)) return "rt";
   if (hasActive(SETTINGS_MENU)) return "st";
@@ -996,16 +1016,18 @@ export default function Sidebar({ activeItem: activeItemProp }) {
   // underlying icon list stays intact.
   const inlineQuery = collapsed ? "" : search;
   const mrsItems = filterMenuItems(filterMenuByPermissions([...MENU_ITEMS, ...SECONDARY_MENU], permissions), inlineQuery);
+  const leaderboardItems = filterMenuItems(filterMenuByPermissions(LEADERBOARDS_MENU, permissions), inlineQuery);
   const worldCupItems = filterMenuItems(filterMenuByPermissions(WORLD_CUP_MENU, permissions), inlineQuery);
   const retentionItems = filterMenuItems(filterMenuByPermissions(RETENTION_MENU, permissions), inlineQuery)
     .map((item) => (alertItems[item.id] ? { ...item, _hasAlert: true } : item));
   const settingsItems = filterMenuItems(filterMenuByPermissions(SETTINGS_MENU, permissions), inlineQuery);
-  const noResults = hasQuery && !collapsed && !mrsItems.length && !worldCupItems.length && !retentionItems.length && !settingsItems.length;
+  const noResults = hasQuery && !collapsed && !mrsItems.length && !leaderboardItems.length && !worldCupItems.length && !retentionItems.length && !settingsItems.length;
 
   // Popover sections — independently filtered so opening the dialog doesn't
   // disturb the collapsed sidebar behind it.
   const popoverSections = collapsed && searchOpen
     ? [
+        { title: "Leaderboards", items: filterMenuItems(filterMenuByPermissions(LEADERBOARDS_MENU, permissions), search) },
         { title: "World Cup Leaderboards", items: filterMenuItems(filterMenuByPermissions(WORLD_CUP_MENU, permissions), search) },
         { title: "MRS System", items: filterMenuItems(filterMenuByPermissions([...MENU_ITEMS, ...SECONDARY_MENU], permissions), search) },
         {
@@ -1139,6 +1161,16 @@ export default function Sidebar({ activeItem: activeItemProp }) {
       <div className={`pb-6 flex w-full flex-col ${collapsed ? "gap-3 px-3" : "gap-6 px-4"}`}>
         {(() => {
           const blocks = [
+            retentionItems.length > 0 && (
+              <CollapsibleSection key="rt" sectionKey="rt" title="Retention System" open={openSection === "rt"} onToggle={toggleSection} forceOpen={hasQuery}>
+                {retentionItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
+              </CollapsibleSection>
+            ),
+            leaderboardItems.length > 0 && (
+              <CollapsibleSection key="lb" sectionKey="lb" title="Leaderboards" open={openSection === "lb"} onToggle={toggleSection} forceOpen={hasQuery}>
+                {leaderboardItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
+              </CollapsibleSection>
+            ),
             worldCupItems.length > 0 && (
               <CollapsibleSection key="wc" sectionKey="wc" title="World Cup Leaderboards" open={openSection === "wc"} onToggle={toggleSection} forceOpen={hasQuery}>
                 {worldCupItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
@@ -1147,11 +1179,6 @@ export default function Sidebar({ activeItem: activeItemProp }) {
             mrsItems.length > 0 && (
               <CollapsibleSection key="mrs" sectionKey="mrs" title="MRS System" open={openSection === "mrs"} onToggle={toggleSection} forceOpen={hasQuery}>
                 {mrsItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
-              </CollapsibleSection>
-            ),
-            retentionItems.length > 0 && (
-              <CollapsibleSection key="rt" sectionKey="rt" title="Retention System" open={openSection === "rt"} onToggle={toggleSection} forceOpen={hasQuery}>
-                {retentionItems.map((item) => renderItem(item, activeItem, item._forceOpen))}
               </CollapsibleSection>
             ),
             settingsItems.length > 0 && (

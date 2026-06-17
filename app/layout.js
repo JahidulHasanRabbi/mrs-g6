@@ -1,4 +1,4 @@
-import { Inter, Geist, Geist_Mono, Montserrat, DM_Sans, JetBrains_Mono, Sora } from "next/font/google";
+import { Inter, Geist, Geist_Mono, Montserrat, DM_Sans, JetBrains_Mono, Sora, Acme, Rubik } from "next/font/google";
 import "./globals.css";
 
 /**
@@ -58,6 +58,18 @@ const sora = Sora({
   weight: ["400", "700", "800"],
 });
 
+const acme = Acme({
+  variable: "--font-acme",
+  subsets: ["latin"],
+  weight: ["400"],
+});
+
+const rubik = Rubik({
+  variable: "--font-rubik",
+  subsets: ["latin"],
+  weight: ["400", "500"],
+});
+
 export const metadata = {
   title: "VIP Access | Claim Your Elite Benefits & Rewards",
   description: "Access your exclusive member dashboard. Log in now to claim your daily benefits, unlock rewards, and compete in our latest mini-games!",
@@ -78,7 +90,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${montserrat.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${sora.variable} antialiased bg-black`}
+        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${montserrat.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${sora.variable} ${acme.variable} ${rubik.variable} antialiased bg-black`}
         style={{ fontFamily: '"Times New Roman", serif' }}
       >
         <ToastProvider>

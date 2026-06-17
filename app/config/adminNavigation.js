@@ -73,5 +73,17 @@ export const ADMIN_NAVIGATION = [
     path: '/admin/settings',
     enabled: false, // Not yet implemented
     id: 'settings'
+  },
+  {
+    label: 'Deposit Leaderboard',
+    path: '/admin/leaderboards/deposit',
+    enabled: true,
+    id: 'lb-deposit'
+  },
+  {
+    label: 'Referrer Leaderboard',
+    path: '/admin/leaderboards/referrer',
+    enabled: true,
+    id: 'lb-referrer'
   }
 ];
