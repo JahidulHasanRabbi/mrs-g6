@@ -35,7 +35,7 @@ export default function SmashEggPage() {
       setWonPrize({ label: "RM0.5 ~ RM3.00" });
       setIsModalOpen(true);
       setIsProcessing(false);
-    }, 1200);
+    }, 1400);
   }, [isProcessing, isCracked]);
 
   const handleDraw = useCallback(async (draws) => {

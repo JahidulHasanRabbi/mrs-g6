@@ -5,14 +5,18 @@ import { motion } from "framer-motion";
 function TableRow({ entry, config, isCurrentUser }) {
   return (
     <div
-      className="flex gap-4 items-center px-4 py-3"
+      className="grid items-center px-3 sm:px-4 py-3"
       style={{
+        gridTemplateColumns: config.showPrizeColumn
+          ? "36px 1fr auto auto"
+          : "36px 1fr auto",
+        gap: "8px",
         backgroundColor: isCurrentUser ? config.color : "transparent",
         borderBottom: `1px solid ${isCurrentUser ? config.color : config.rowBorder}`,
       }}
     >
       {/* Rank */}
-      <div className="flex items-center h-8 shrink-0">
+      <div className="flex items-center justify-center">
         <div
           className="w-8 h-8 rounded-xl flex items-center justify-center border p-px"
           style={{
@@ -34,7 +38,7 @@ function TableRow({ entry, config, isCurrentUser }) {
 
       {/* User */}
       <div
-        className="flex-1 min-w-0 text-base text-[#e5e2e1]"
+        className="min-w-0 truncate text-sm sm:text-base text-[#e5e2e1]"
         style={{ fontFamily: "var(--font-inter)" }}
       >
         {isCurrentUser ? "You" : entry.user}
@@ -43,7 +47,7 @@ function TableRow({ entry, config, isCurrentUser }) {
       {/* Value */}
       {config.showPrizeColumn && (
         <div
-          className="flex-1 min-w-0 text-base font-semibold text-[#e5e2e1] text-center"
+          className="text-sm sm:text-base font-semibold text-[#e5e2e1] text-right"
           style={{ fontFamily: "var(--font-inter)" }}
         >
           {entry.value}
@@ -51,9 +55,9 @@ function TableRow({ entry, config, isCurrentUser }) {
       )}
 
       {/* Prize / Total amount */}
-      <div className="shrink-0 text-right">
+      <div className="text-right whitespace-nowrap">
         <span
-          className="text-base"
+          className="text-sm sm:text-base"
           style={{
             color: isCurrentUser ? "#e5e2e1" : config.color,
             fontFamily: "var(--font-inter)",
@@ -86,38 +90,39 @@ export default function LeaderboardTable({
     >
       {/* Table header */}
       <div
-        className="flex gap-4 items-start px-4 pt-4 pb-4"
+        className="grid items-end px-3 sm:px-4 pt-4 pb-4"
         style={{
+          gridTemplateColumns: config.showPrizeColumn
+            ? "36px 1fr auto auto"
+            : "36px 1fr auto",
+          gap: "8px",
           backgroundColor: config.headerBg,
           borderBottom: `1px solid ${config.tableBorder}`,
         }}
       >
         <span
-          className="text-xs font-semibold tracking-[1.2px] uppercase text-white shrink-0"
+          className="text-[10px] sm:text-xs font-semibold tracking-[1.2px] uppercase text-white"
           style={{ fontFamily: "var(--font-jetbrains-mono)" }}
         >
           Rank
         </span>
         <span
-          className="text-xs font-semibold tracking-[1.2px] uppercase text-white flex-1 min-w-0"
+          className="text-[10px] sm:text-xs font-semibold tracking-[1.2px] uppercase text-white"
           style={{ fontFamily: "var(--font-jetbrains-mono)" }}
         >
           User
         </span>
         {config.showPrizeColumn && (
           <span
-            className="text-xs font-semibold tracking-[1.2px] uppercase text-white flex-1 min-w-0 text-center whitespace-pre-line"
+            className="text-[10px] sm:text-xs font-semibold tracking-[1.2px] uppercase text-white text-right whitespace-pre-line"
             style={{ fontFamily: "var(--font-jetbrains-mono)" }}
           >
             {config.tableValueHeader.replace(" ", "\n")}
           </span>
         )}
         <span
-          className="text-xs font-semibold tracking-[1.2px] uppercase text-white text-right shrink-0"
-          style={{
-            fontFamily: "var(--font-jetbrains-mono)",
-            width: config.showPrizeColumn ? "59px" : "auto",
-          }}
+          className="text-[10px] sm:text-xs font-semibold tracking-[1.2px] uppercase text-white text-right"
+          style={{ fontFamily: "var(--font-jetbrains-mono)" }}
         >
           {config.showPrizeColumn ? "PRIZE" : config.tableValueHeader.replace(" ", "\n")}
         </span>
