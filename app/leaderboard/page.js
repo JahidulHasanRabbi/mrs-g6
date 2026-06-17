@@ -112,13 +112,30 @@ function LeaderboardPageInner() {
     >
       {/* Top header bar */}
       <div
-        className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[475px] z-50 flex items-center justify-between px-6 h-16"
-        style={{
-          backgroundColor: "#07190d",
-          borderBottom: "1px solid #eab043",
-          boxShadow: "0 4px 2px rgba(233,175,65,0.25)",
-        }}
+        className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[475px] z-50 flex items-center justify-between px-4 h-[72px] bg-[#0a1a0a]/95 backdrop-blur-sm border-b-2 border-[#e9af41]/60 shadow-[0_4px_12px_rgba(0,0,0,0.5)]"
       >
+        {/* Hamburger Menu Button */}
+        <button
+          onClick={() => setIsMenuOpen(true)}
+          className="flex flex-col items-center gap-0 cursor-pointer"
+          aria-label="Open menu"
+        >
+          <img
+            src="/assets/images/hamburger-icon.png"
+            alt="Menu"
+            className="w-9 h-9 object-contain"
+          />
+          <p
+            className="text-[14px] font-bold -mt-1"
+            style={{
+              fontFamily: '"Times New Roman", serif',
+              color: "#e9af41",
+            }}
+          >
+            Menu
+          </p>
+        </button>
+
         <h1
           className="text-2xl font-semibold uppercase tracking-[-1.2px]"
           style={{
@@ -129,26 +146,10 @@ function LeaderboardPageInner() {
         >
           Leaderboards
         </h1>
-
-        <div className="flex gap-4 items-center">
-          <button
-            onClick={() => setIsMenuOpen(true)}
-            className="w-9 h-9 rounded-full overflow-hidden"
-          >
-            <img
-              src="/assets/footer/home-icon.png"
-              alt="Menu"
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.target.style.display = "none";
-              }}
-            />
-          </button>
-        </div>
       </div>
 
       {/* Main content */}
-      <div className="flex-1 pt-20 pb-[140px]">
+      <div className="flex-1 pt-[84px] pb-[140px]">
         <div className="flex flex-col gap-6 items-center w-full">
           {/* Tab navigation */}
           <div className="w-full px-4">
