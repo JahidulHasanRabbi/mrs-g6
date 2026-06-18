@@ -32,11 +32,10 @@ function StatusPill({ status }) {
 
 function formatDate(iso) {
   if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const yy = String(d.getFullYear()).slice(-2);
+  const match = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return iso;
+  const [, year, mm, dd] = match;
+  const yy = year.slice(-2);
   return `${dd}.${mm}.${yy}`;
 }
 

@@ -24,6 +24,7 @@ import {
   matchCountryCode,
   matchCountryName,
 } from "../../lib/worldcupCountries";
+import { formatWorldCupKickoff } from "../../lib/worldcupDateTime";
 
 // localStorage key for tracking whether the onboarding intro was shown.
 // The API does not persist this — it's a one-time UI gate.
@@ -378,9 +379,5 @@ function playerDisplayName(row, memberProfile = null) {
 }
 
 function formatKickoff(iso) {
-  try {
-    const d = new Date(iso);
-    return d.toLocaleDateString("en-GB", { day: "numeric", month: "long" }) +
-      " " + d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-  } catch { return iso; }
+  return formatWorldCupKickoff(iso);
 }

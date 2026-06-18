@@ -7,6 +7,7 @@ import SettingsSection from "../../../components/admin/world-cup/SettingsSection
 import MatchesTable from "../../../components/admin/world-cup/MatchesTable";
 import { normalizeMatchCountryOptions } from "../../../components/admin/world-cup/countryOptions";
 import { getWorldCupMatchCountries, getWorldCupMatches } from "../../../api/adminApi";
+import { getWorldCupKickoffParts } from "../../../lib/worldcupDateTime";
 
 const PAGE_SIZE = 7;
 
@@ -18,7 +19,7 @@ function countryName(value, countriesById) {
 }
 
 function normalizeMatch(m, countriesById = new Map()) {
-  const kickoff = m.kickoff_at ? new Date(m.kickoff_at) : null;
+  const kickoff = getWorldCupKickoffParts(m.kickoff_at);
   const teamHome = m.team_home ?? m.team_home_uuid;
   const teamAway = m.team_away ?? m.team_away_uuid;
   const winner = m.winner ?? m.winner_uuid;
@@ -31,8 +32,8 @@ function normalizeMatch(m, countriesById = new Map()) {
     team2: m.team_away_name ?? countryName(teamAway, countriesById),
     team1Uuid: teamHome,
     team2Uuid: teamAway,
-    date: kickoff ? kickoff.toISOString().slice(0, 10) : "",
-    time: kickoff ? kickoff.toTimeString().slice(0, 5) : "",
+    date: kickoff?.date ?? "",
+    time: kickoff?.time ?? "",
     predictionA: "-",
     predictionB: "-",
     winner: isDraw ? "Draw" : (m.winner_name ?? countryName(winner, countriesById)),

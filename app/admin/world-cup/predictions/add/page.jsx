@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import FormChrome, { INPUT_BASE } from "../../../../components/admin/world-cup/FormChrome";
 import { normalizeMatchCountryOptions } from "../../../../components/admin/world-cup/countryOptions";
+import { buildWorldCupKickoffIso, getWorldCupKickoffParts } from "../../../../lib/worldcupDateTime";
 import {
   getWorldCupMatchCountries,
   getWorldCupMatch,
@@ -90,15 +91,15 @@ function MatchForm() {
 
     if (editingUuid) {
       getWorldCupMatch(editingUuid).then((m) => {
-        const kickoff = m.kickoff_at ? new Date(m.kickoff_at) : null;
+        const kickoff = getWorldCupKickoffParts(m.kickoff_at);
         setIsSettled(m.status === 3);
         setForm({
           groupLabel: m.group_label ?? "",
           team1Uuid: m.team_home ?? m.team_home_uuid ?? "",
           team2Uuid: m.team_away ?? m.team_away_uuid ?? "",
-          date: kickoff ? kickoff.toISOString().slice(0, 10) : "",
-          timeH: kickoff ? String(kickoff.getHours()).padStart(2, "0") : "12",
-          timeM: kickoff ? String(kickoff.getMinutes()).padStart(2, "0") : "00",
+          date: kickoff?.date ?? "",
+          timeH: kickoff?.timeH ?? "12",
+          timeM: kickoff?.timeM ?? "00",
           status: m.status === 3 ? 2 : (m.status ?? 1),
           winnerUuid: m.winner ?? m.winner_uuid ?? "",
         });
@@ -127,8 +128,7 @@ function MatchForm() {
   };
 
   const buildKickoff = () => {
-    if (!form.date) return null;
-    return `${form.date}T${String(form.timeH).padStart(2, "0")}:${String(form.timeM).padStart(2, "0")}:00`;
+    return buildWorldCupKickoffIso(form.date, form.timeH, form.timeM);
   };
 
   const onSave = async () => {
