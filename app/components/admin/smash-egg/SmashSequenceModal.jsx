@@ -3,93 +3,90 @@
 import { useEffect, useState } from "react";
 import ModalShell from "../penalty-kick/ModalShell";
 
-// Smash Sequence editor. Lets the admin set the order in which rewards are
-// awarded as eggs are smashed. Operates on a working copy and only commits the
-// new order on Save, mirroring the Lucky Spin "Spin Sequence" pattern.
-
-function ArrowIcon({ up }) {
+function ChevronIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      {up ? <polyline points="18 15 12 9 6 15" /> : <polyline points="6 9 12 15 18 9" />}
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="6 9 12 15 18 9" />
     </svg>
   );
 }
 
 export default function SmashSequenceModal({ open, rewards = [], onClose, onSave }) {
-  const [order, setOrder] = useState(rewards);
+  const [position, setPosition] = useState("");
+  const [selectedRewardId, setSelectedRewardId] = useState("");
 
   useEffect(() => {
-    if (open) setOrder(rewards);
-  }, [open, rewards]);
-
-  const move = (index, delta) => {
-    const target = index + delta;
-    if (target < 0 || target >= order.length) return;
-    setOrder((prev) => {
-      const next = [...prev];
-      [next[index], next[target]] = [next[target], next[index]];
-      return next;
-    });
-  };
+    if (open) {
+      setPosition("");
+      setSelectedRewardId("");
+    }
+  }, [open]);
 
   const handleSave = () => {
-    onSave?.(order);
+    const pos = parseInt(position, 10);
+    if (!pos || pos < 1 || pos > rewards.length || !selectedRewardId) return;
+
+    const rewardIndex = rewards.findIndex((r) => r.id === selectedRewardId);
+    if (rewardIndex === -1) return;
+
+    const targetIndex = pos - 1;
+    if (rewardIndex === targetIndex) {
+      onClose?.();
+      return;
+    }
+
+    const next = [...rewards];
+    const [moved] = next.splice(rewardIndex, 1);
+    next.splice(targetIndex, 0, moved);
+    onSave?.(next);
     onClose?.();
   };
 
   return (
     <ModalShell title="Smash Sequence" open={open} onClose={onClose} onSave={handleSave}>
-      <p className="mb-4 text-[13px] text-white/60">
-        Set the order in which rewards are awarded when members smash their eggs.
-      </p>
-      <div className="overflow-hidden rounded-[12px] border border-white/5">
-        <table className="w-full">
-          <thead>
-            <tr className="text-left" style={{ backgroundImage: "linear-gradient(180deg, #141828 0%, #333333 99.75%)" }}>
-              <th className="px-5 py-3 text-[13px] font-semibold text-[#fbeed2]" style={{ width: 90 }}>Position</th>
-              <th className="px-5 py-3 text-[13px] font-semibold text-[#fbeed2]">Reward</th>
-              <th className="px-5 py-3 text-right text-[13px] font-semibold text-[#fbeed2]">Order</th>
-            </tr>
-          </thead>
-          <tbody>
-            {order.length === 0 ? (
-              <tr>
-                <td colSpan={3} className="px-5 py-8 text-center text-[13px] text-white/50">
-                  No rewards to sequence yet.
-                </td>
-              </tr>
-            ) : (
-              order.map((r, index) => (
-                <tr key={r.id} className="border-b border-white/5 last:border-b-0">
-                  <td className="px-5 py-3 text-[12px] text-white">#{index + 1}</td>
-                  <td className="px-5 py-3 text-[12px] text-white">{r.name}</td>
-                  <td className="px-5 py-3">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        type="button"
-                        onClick={() => move(index, -1)}
-                        disabled={index === 0}
-                        aria-label="Move up"
-                        className="rounded-[8px] border border-[#f2cb7a] px-2.5 py-1.5 text-[#eaad2c] transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        <ArrowIcon up />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => move(index, 1)}
-                        disabled={index === order.length - 1}
-                        aria-label="Move down"
-                        className="rounded-[8px] border border-[#f2cb7a] px-2.5 py-1.5 text-[#eaad2c] transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        <ArrowIcon />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      <div className="flex gap-10 items-start">
+        <div className="flex flex-1 flex-col gap-2 min-w-0">
+          <label className="text-[18px] font-medium text-[#f6dda6]" style={{ fontFamily: "Inter, sans-serif" }}>
+            Position
+          </label>
+          <div className="flex items-center rounded-[8px] border border-[#fbeed2] px-4 py-3">
+            <span className="text-[12px] font-bold text-white mr-3">#</span>
+            <input
+              type="number"
+              min={1}
+              max={rewards.length}
+              value={position}
+              onChange={(e) => setPosition(e.target.value)}
+              placeholder={rewards.length ? `1–${rewards.length}` : "—"}
+              className="w-full bg-transparent text-[12px] font-medium text-white outline-none placeholder:text-white/40 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-1 flex-col gap-2 min-w-0">
+          <label className="text-[18px] font-medium text-[#f6dda6]" style={{ fontFamily: "Inter, sans-serif" }}>
+            Reward Selection
+          </label>
+          <div className="relative">
+            <select
+              value={selectedRewardId}
+              onChange={(e) => setSelectedRewardId(e.target.value)}
+              className="w-full appearance-none rounded-[8px] border border-[#fbeed2] bg-transparent px-4 py-3 pr-10 text-[12px] font-medium text-white outline-none cursor-pointer"
+            >
+              <option value="" disabled className="bg-[#041502] text-white/40">
+                Select reward
+              </option>
+              {rewards.map((r) => (
+                <option key={r.id} value={r.id} className="bg-[#041502] text-white">
+                  {r.name}
+                </option>
+              ))}
+            </select>
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-white">
+              <ChevronIcon />
+            </span>
+          </div>
+        </div>
       </div>
     </ModalShell>
   );

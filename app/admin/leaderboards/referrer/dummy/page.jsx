@@ -17,7 +17,6 @@ function DummyForm() {
 
   const [form, setForm] = useState({
     name: "",
-    rank: "",
     newMember: "",
   });
   const [saving, setSaving] = useState(false);
@@ -30,7 +29,6 @@ function DummyForm() {
       if (m) {
         setForm({
           name: m.player_name ?? "",
-          rank: String(m.rank ?? ""),
           newMember: String(m.new_member ?? ""),
         });
       }
@@ -43,7 +41,6 @@ function DummyForm() {
       .then((d) => {
         setForm({
           name: d.player_name ?? "",
-          rank: String(d.rank ?? ""),
           newMember: String(d.new_member ?? ""),
         });
       })
@@ -65,7 +62,6 @@ function DummyForm() {
     try {
       const payload = {
         player_name: form.name.trim(),
-        rank: toNum(form.rank),
         new_member: toNum(form.newMember),
       };
       if (editingUuid) {
@@ -97,25 +93,10 @@ function DummyForm() {
       saving={saving}
     >
       {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
-      <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">Player Name</label>
           <input type="text" value={form.name} onChange={set("name")} className={INPUT_BASE} />
-        </div>
-        <div>
-          <label className="mb-2 block text-[14px] font-semibold text-white">Rank</label>
-          <div className="relative flex items-center">
-            <span className="pointer-events-none absolute left-4 text-[14px] font-bold text-[#e9af41]">
-              #
-            </span>
-            <input
-              type="number"
-              min="1"
-              value={form.rank}
-              onChange={set("rank")}
-              className={`${INPUT_BASE} pl-9`}
-            />
-          </div>
         </div>
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">New Member</label>

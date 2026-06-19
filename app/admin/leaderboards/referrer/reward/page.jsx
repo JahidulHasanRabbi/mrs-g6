@@ -11,9 +11,7 @@ import {
 import { MOCK_REWARDS, isMockUuid } from "../../../../components/admin/leaderboards/mockData";
 
 const ITEM_TYPES = [
-  { value: 1, label: "Prediction" },
-  { value: 2, label: "Top Country" },
-  { value: 3, label: "Global Top Player" },
+  { value: 1, label: "Top referral" },
 ];
 
 function ChevronIcon() {
@@ -36,14 +34,8 @@ function ChevronIcon() {
 
 function normalizeItemType(value) {
   if (typeof value === "number") return value;
-  const normalized = String(value ?? "")
-    .trim()
-    .toUpperCase();
-  if (normalized === "PREDICTION") return 1;
-  if (normalized === "TOP COUNTRY" || normalized === "TOP_COUNTRY") return 2;
-  if (normalized === "GLOBAL TOP PLAYER" || normalized === "GLOBAL_TOP_PLAYER") return 3;
   const n = Number(value);
-  return Number.isFinite(n) ? n : 2;
+  return Number.isFinite(n) ? n : 1;
 }
 
 function RewardForm() {
@@ -54,7 +46,7 @@ function RewardForm() {
   const [form, setForm] = useState({
     name: "",
     quantity: "",
-    itemType: 2,
+    itemType: 1,
     imageFile: null,
   });
   const [imagePreview, setImagePreview] = useState(null);
