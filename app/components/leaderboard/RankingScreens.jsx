@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { LB_COLORS, LB_TABS } from "./constants";
-import { Panel, SectionBadge, Flag, Tabs, GreenButton } from "./primitives";
+import { DrawBadge, Panel, SectionBadge, Flag, Tabs, GreenButton } from "./primitives";
 import { RankingHeader, RankingRow } from "./RankingRow";
 import {
   getCountryRankings,
@@ -256,7 +256,11 @@ export function MyPredictionsPanel({ onViewPrize, rows: propRows, loading: propL
                 </div>
                 <div className="flex flex-1 flex-col gap-[2px]">
                   <div className="flex items-center gap-2">
-                    <Flag code={p.team.code} size={24} />
+                    {Number(p.team.id) === 0 ? (
+                      <DrawBadge size={24} />
+                    ) : (
+                      <Flag code={p.team.code} size={24} />
+                    )}
                     <span className="text-[12px]" style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}>
                       {p.team.name}
                     </span>

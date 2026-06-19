@@ -92,6 +92,7 @@ function MatchForm() {
     if (editingUuid) {
       getWorldCupMatch(editingUuid).then((m) => {
         const kickoff = getWorldCupKickoffParts(m.kickoff_at);
+        const settledDraw = Number(m.status) === 3 && (m.winner === null || m.winner === undefined) && (m.winner_uuid === null || m.winner_uuid === undefined);
         setIsSettled(m.status === 3);
         setForm({
           groupLabel: m.group_label ?? "",
@@ -101,7 +102,7 @@ function MatchForm() {
           timeH: kickoff?.timeH ?? "12",
           timeM: kickoff?.timeM ?? "00",
           status: m.status === 3 ? 2 : (m.status ?? 1),
-          winnerUuid: m.winner ?? m.winner_uuid ?? "",
+          winnerUuid: settledDraw ? "0" : (m.winner ?? m.winner_uuid ?? ""),
         });
       }).catch(() => {});
     }

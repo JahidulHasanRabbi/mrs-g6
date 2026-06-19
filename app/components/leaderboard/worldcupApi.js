@@ -29,6 +29,7 @@ import { formatWorldCupKickoff } from "../../lib/worldcupDateTime";
 // localStorage key for tracking whether the onboarding intro was shown.
 // The API does not persist this — it's a one-time UI gate.
 const ONBOARDED_KEY = "mrs_lb_onboarded";
+const DRAW_TEAM_ID = 0;
 
 function readOnboarded() {
   if (typeof window === "undefined") return false;
@@ -293,13 +294,14 @@ export async function getMyPredictions() {
   const items = data.results ?? data ?? [];
   return items.map((p, i) => {
     const winner = p.winner ?? null;
+    const isSettledDraw = Number(p.match_status) === 3 && winner === null;
     return {
       match: i + 1,
       uuid: p.uuid,
       matchUuid: p.match_uuid,
       team: {
         id: p.predicted_team,
-        name: p.predicted_team_name ?? matchCountryName(p.predicted_team) ?? "",
+        name: predictionTeamName(p.predicted_team, p.predicted_team_name),
         code: matchCountryCode(p.predicted_team),
       },
       winnerTeam: winner
@@ -309,7 +311,7 @@ export async function getMyPredictions() {
           code: matchCountryCode(winner),
         }
         : null,
-      winnerLabel: p.state === 4 ? "Draw" : winner ? null : "",
+      winnerLabel: p.state === 4 || isSettledDraw ? "Draw" : winner ? null : "",
       homeName: matchCountryName(p.team_home) ?? String(p.team_home ?? ""),
       awayName: matchCountryName(p.team_away) ?? String(p.team_away ?? ""),
       result: p.state === 2 ? "win" : p.state === 3 ? "loss" : p.state === 4 ? "draw" : "pending",
@@ -329,7 +331,7 @@ export async function getMatchPredictionsMap() {
       state: p.state,
       team: {
         id: p.predicted_team,
-        name: p.predicted_team_name ?? matchCountryName(p.predicted_team) ?? "",
+        name: predictionTeamName(p.predicted_team, p.predicted_team_name),
         code: matchCountryCode(p.predicted_team),
       },
     };
@@ -368,6 +370,11 @@ function firstNonBlank(...values) {
     if (trimmed) return trimmed;
   }
   return "";
+}
+
+function predictionTeamName(teamId, providedName) {
+  if (Number(teamId) === DRAW_TEAM_ID) return "Draw";
+  return providedName ?? matchCountryName(teamId) ?? "";
 }
 
 function playerDisplayName(row, memberProfile = null) {

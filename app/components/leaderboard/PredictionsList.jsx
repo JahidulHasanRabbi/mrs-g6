@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { LB_COLORS } from "./constants";
-import { GlowCard, Flag, GreenButton, Tabs } from "./primitives";
+import { DrawBadge, GlowCard, Flag, GreenButton, Tabs } from "./primitives";
 import { getFixtures, getMatchPredictionsMap, getMyPredictions } from "./worldcupApi";
 import PredictModal from "./PredictModal";
 
@@ -103,7 +103,11 @@ function FixtureCard({ fixture, onPredict, prediction }) {
             My Prediction
           </span>
           <span className="flex min-w-0 items-center gap-2">
-            <Flag code={predictedTeam.code} src={predictedTeam.flag} size={22} />
+            {Number(predictedTeam.id) === 0 ? (
+              <DrawBadge size={22} />
+            ) : (
+              <Flag code={predictedTeam.code} src={predictedTeam.flag} size={22} />
+            )}
             <span className="truncate text-[12px]" style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}>
               {predictedTeam.name}
             </span>
@@ -276,7 +280,11 @@ export default function PredictionsList({ predictions: propPredictions, onViewPr
                     </div>
                     <div className="flex flex-1 flex-col gap-[2px]">
                       <div className="flex items-center gap-2">
-                        <Flag code={p.team.code} size={24} />
+                        {Number(p.team.id) === 0 ? (
+                          <DrawBadge size={24} />
+                        ) : (
+                          <Flag code={p.team.code} size={24} />
+                        )}
                         <span className="text-[12px]" style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}>
                           {p.team.name}
                         </span>

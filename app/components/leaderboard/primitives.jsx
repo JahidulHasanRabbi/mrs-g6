@@ -153,6 +153,26 @@ export function Flag({ code, src, size = 28 }) {
   );
 }
 
+export function DrawBadge({ size = 28 }) {
+  const fontSize = Math.max(9, Math.floor(size * 0.4));
+  return (
+    <span
+      className="grid shrink-0 place-items-center rounded-full font-bold"
+      style={{
+        width: size,
+        height: size,
+        background: "rgba(233,175,65,0.18)",
+        border: `1px solid ${LB_COLORS.gold}`,
+        color: LB_COLORS.gold,
+        fontFamily: "'Lexend',sans-serif",
+        fontSize,
+      }}
+    >
+      D
+    </span>
+  );
+}
+
 export function Tabs({ tabs, activeIndex, onChange }) {
   return (
     <div

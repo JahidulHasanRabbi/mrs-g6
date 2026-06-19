@@ -29,7 +29,15 @@ Used for: choosing a country affiliation, leaderboard ranking, top-per-country, 
 
 ### Match / Prediction Countries (48 countries — `MATCH_COUNTRY_CHOICE`)
 
-Used for: creating matches (`team_home`, `team_away`, `winner`) and placing predictions (`team`). Full list available via `GET /worldcup/match-country-list/`.
+Used for: creating matches (`team_home`, `team_away`, `winner`). Full list available via `GET /worldcup/match-country-list/`.
+
+Placing a prediction (`team`) uses a superset of this list, `PREDICTED_TEAM_CHOICE`, which adds one extra value:
+
+| ID | Meaning |
+| --- | --- |
+| 0 | Draw — predicting the match will end in a draw |
+
+`0` is **only** valid as a prediction pick — it is never a valid `team_home`/`team_away` value, and a match's settled `winner` uses `0`/null as its own separate "this match was a draw" sentinel (see Matches and Predictions below).
 
 | ID | Country | ID | Country | ID | Country |
 | --- | --- | --- | --- | --- | --- |
@@ -346,7 +354,7 @@ Input
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | match\_uuid | UUID | No |  |
-| **2** | team | Int | No | Country ID (1–48, from match country list). Must be one of the two teams in the match |
+| **2** | team | Int | No | **0 = Draw**, or Country ID (1–48) — must be one of the two teams in the match. Picking Draw is a valid 3rd option, but **never itself a winning pick** (see settle endpoint below) |
 
 Output
 
@@ -354,8 +362,8 @@ Output
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | uuid | UUID | No | Prediction UUID |
 | **2** | match\_uuid | UUID | No |  |
-| **3** | predicted\_team | Int | No | Country ID |
-| **4** | predicted\_team\_name | Str | No |  |
+| **3** | predicted\_team | Int | No | 0 (Draw) or Country ID |
+| **4** | predicted\_team\_name | Str | No | "Draw" when `predicted_team` is 0 |
 | **5** | state | Int | No | 1 = Pending |
 | **6** | state\_display | Str | No | "PENDING" |
 | **7** | created | Datetime | No |  |
@@ -376,7 +384,7 @@ Output (paginated)
 | **6** | team\_home | Int | No | Country ID (1–48) |
 | **7** | team\_away | Int | No | Country ID (1–48) |
 | **8** | winner | Int | Yes | Country ID (1–48). Null when unsettled or draw |
-| **9** | predicted\_team | Int | No | Country ID (1–48) |
+| **9** | predicted\_team | Int | No | 0 (Draw) or Country ID (1–48) |
 | **10** | state | Int | No | See State Enum below |
 | **11** | state\_display | Str | No |  |
 | **12** | settled\_at | Datetime | Yes |  |
@@ -387,7 +395,9 @@ Output (paginated)
 | 1 | PENDING |
 | 2 | WIN |
 | 3 | LOSE |
-| 4 | DRAW |
+| 4 | DRAW (legacy — see note below) |
+
+`DRAW` (4) is **no longer produced by settlement** as of the Draw-as-a-loss change (see Matches (Admin) → settle below). It only exists on predictions that were settled before that change shipped. New settlements always resolve to WIN (2) or LOSE (3), never DRAW.
 
 ### /worldcup/{member\_uuid}/matches/{match\_uuid}/my-prediction/ GET
 
@@ -405,9 +415,9 @@ Output (list, not paginated)
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | prediction\_uuid | UUID | No |  |
 | **2** | match\_uuid | UUID | No |  |
-| **3** | predicted\_team | Int | No | Country ID (1–48) the member picked |
-| **4** | predicted\_team\_name | Str | No | e.g. "Argentina" |
-| **5** | state | Int | No | 1 = PENDING, 2 = WIN, 3 = LOSE, 4 = DRAW |
+| **3** | predicted\_team | Int | No | 0 (Draw) or Country ID (1–48) the member picked |
+| **4** | predicted\_team\_name | Str | No | e.g. "Argentina", or "Draw" |
+| **5** | state | Int | No | 1 = PENDING, 2 = WIN, 3 = LOSE (4 = DRAW, legacy only — see Predictions above) |
 | **6** | state\_display | Str | No |  |
 
 ### /worldcup/{member\_uuid}/prediction-status/ GET
@@ -580,11 +590,11 @@ Cannot archive a match that has pending predictions (state = 1).
 Transitions match from Closed (2) to Settled (3). Cannot settle an Upcoming (status = 1) match or a match already settled.
 
 On settle the system automatically:
-- Marks all pending predictions WIN, LOSE, or DRAW
-- Updates each member's streak, total\_wins, and best\_streak (win/loss only — draw leaves these unchanged)
-- Increments `current_loss_streak` for members who predicted wrong (resets to 0 on a win; unchanged on draw) — each consecutive loss raises the points required for future predictions by 500
+- Marks all pending predictions WIN or LOSE. A prediction is a WIN only if `predicted_team == winner` **and** the match was not a draw.
+- Updates each member's `current_streak`, `total_wins`, and `best_streak` on a win; resets `current_streak` to 0 on a loss
+- Increments `current_loss_streak` for members who lost (resets to 0 on a win) — each consecutive loss raises the points required for future predictions by 500
 - Awards streak prizes on win: token prizes → credited immediately; physical prizes → logged as MemberReward for staff fulfilment
-- **Draw**: all pending predictions are marked DRAW (state 4). No streaks change. Members are **not** locked out and their `current_loss_streak` is not incremented.
+- **Draw result (`winner = 0`)**: every pending prediction is marked **LOSE**, regardless of what was picked — including members who predicted Draw themselves. Predicting Draw is never a winning pick; it only adds a 3rd selectable option, not a 3rd way to win. `current_streak` resets to 0 and `current_loss_streak` increments for everyone, same as any other loss. No token/physical prizes are awarded on a draw.
 
 Input
 

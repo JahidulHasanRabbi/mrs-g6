@@ -4,7 +4,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { LB_COLORS } from "./constants";
-import { GlowCard, Flag } from "./primitives";
+import { DrawBadge, GlowCard, Flag } from "./primitives";
 import { submitPrediction } from "./worldcupApi";
 
 // Two-step prediction modal for a single World Cup fixture (Figma 980:5399 →
@@ -69,6 +69,7 @@ function GreenCta({ children, onClick, disabled }) {
 }
 
 function TeamOption({ team, selected, onSelect }) {
+  const isDraw = Number(team.id) === 0;
   return (
     <button
       type="button"
@@ -79,7 +80,7 @@ function TeamOption({ team, selected, onSelect }) {
         background: selected ? LB_COLORS.primarySoft : "transparent",
       }}
     >
-      <Flag code={team.code} src={team.flag} />
+      {isDraw ? <DrawBadge /> : <Flag code={team.code} src={team.flag} />}
       <span
         className="text-[16px]"
         style={{ color: LB_COLORS.textPrimary, fontFamily: "'Lexend',sans-serif" }}
@@ -95,6 +96,7 @@ export default function PredictModal({ fixture, onClose, onPredicted }) {
   const [selected, setSelected] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const drawOption = { id: 0, name: "Draw", code: null };
 
   const handlePredict = async () => {
     if (!selected || submitting) return;
@@ -148,13 +150,14 @@ export default function PredictModal({ fixture, onClose, onPredicted }) {
               <div className="flex flex-col gap-3">
                 <div className="flex flex-col items-center gap-1 py-2">
                   <ModalTitle>
-                    Predict<br />Winner
+                    Predict<br />Result
                   </ModalTitle>
                   <ModalSubtitle>
-                    Choose a country below as your predicted winner
+                    Choose the winner or predict a draw
                   </ModalSubtitle>
                 </div>
                 <TeamOption team={fixture.home} selected={selected?.id === fixture.home.id} onSelect={setSelected} />
+                <TeamOption team={drawOption} selected={selected?.id === drawOption.id} onSelect={setSelected} />
                 <TeamOption team={fixture.away} selected={selected?.id === fixture.away.id} onSelect={setSelected} />
                 {error && (
                   <p className="text-center text-[12px]" style={{ color: LB_COLORS.red, fontFamily: "'Lexend',sans-serif" }}>
@@ -178,7 +181,11 @@ export default function PredictModal({ fixture, onClose, onPredicted }) {
                     className="grid place-items-center rounded-full"
                     style={{ boxShadow: "0 0 16px 2px rgba(84,233,138,0.6)" }}
                   >
-                    <Flag code={selected.code} src={selected.flag} size={36} />
+                    {Number(selected.id) === 0 ? (
+                      <DrawBadge size={36} />
+                    ) : (
+                      <Flag code={selected.code} src={selected.flag} size={36} />
+                    )}
                   </span>
                   <span
                     className="text-[20px]"
