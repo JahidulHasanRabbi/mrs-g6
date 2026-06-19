@@ -21,6 +21,7 @@ import {
   getRetentionSummary,
 } from "../../../../api/crmApi";
 import { getWalletVipTiers } from "../../../../api/adminApi";
+import { uniqueWalletVipTierOptions } from "../../../../components/admin/retention/walletVipFilterOptions";
 
 // PIC detail view — shows per-PIC breakdown of members + a member list.
 
@@ -404,7 +405,7 @@ function MemberListSection({ adminUuid, period, fromDate, toDate }) {
       .then((res) => {
         if (cancelled) return;
         const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
-        setWalletTierOptions(results.map(tierToOption).filter(Boolean));
+        setWalletTierOptions(uniqueWalletVipTierOptions(results));
       })
       .catch(() => {
         if (!cancelled) setWalletTierOptions([]);

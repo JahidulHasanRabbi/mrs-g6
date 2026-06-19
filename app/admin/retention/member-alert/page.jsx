@@ -18,6 +18,7 @@ import { getWalletVipTiers } from "../../../api/adminApi";
 import { FollowUpCreateModal } from "../../../components/admin/retention/FollowUpComponents";
 import Pagination from "../../../components/admin/retention/Pagination";
 import LoadingOverlay from "../../../components/admin/ui/LoadingOverlay";
+import { uniqueWalletVipTierNames } from "../../../components/admin/retention/walletVipFilterOptions";
 
 // Member Alert page — Figma 69:340. "Overview" KPI strip + Member Follow Up
 // list. The list is the same shape as /admin/retention/members but with a
@@ -302,7 +303,7 @@ function FollowUpList() {
     getWalletVipTiers({ page: 1, page_size: 100 })
       .then((res) => {
         const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
-        setWalletTiers(results.map((t) => t.name || t.tier_name || t.level || t.uuid).filter(Boolean));
+        setWalletTiers(uniqueWalletVipTierNames(results));
       })
       .catch(() => setWalletTiers([]));
   }, []);

@@ -8,6 +8,7 @@ import { getWalletVipTiers } from "../../../api/adminApi";
 import { Pagination } from "../../../components/admin/members/DataTable";
 import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
 import LoadingOverlay from "../../../components/admin/ui/LoadingOverlay";
+import { uniqueWalletVipTierNames } from "../../../components/admin/retention/walletVipFilterOptions";
 
 const A = "/assets/admin/pic-dashboard";
 
@@ -181,7 +182,7 @@ function RetentionMembersContent() {
     getWalletVipTiers({ page: 1, page_size: 100 })
       .then((res) => {
         const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
-        setWalletTiers(results.map((t) => t.name || t.tier_name || t.level || t.uuid).filter(Boolean));
+        setWalletTiers(uniqueWalletVipTierNames(results));
       })
       .catch(() => setWalletTiers([]));
   }, []);
