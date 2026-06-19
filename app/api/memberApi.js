@@ -106,6 +106,70 @@ export async function getAllLuckySpinItems() {
   }, true, 'member');
 }
 
+// GET /smash-egg/smash-egg-items/
+export async function getAllSmashEggItems() {
+  return await apiRequest(ENDPOINTS.MEMBER.ALL_SMASH_EGG_ITEMS, {
+    method: 'GET'
+  }, true, 'member');
+}
+
+// GET /smash-egg/smash-sequences/
+export async function getAllSmashEggSequences() {
+  return await apiRequest(ENDPOINTS.MEMBER.ALL_SMASH_EGG_SEQUENCES, {
+    method: 'GET'
+  }, true, 'member');
+}
+
+// GET /smash-egg/winning-list/
+export async function getSmashEggWinningList() {
+  return await apiRequest(ENDPOINTS.MEMBER.SMASH_EGG_WINNING_LIST, {
+    method: 'GET'
+  }, true, 'member');
+}
+
+// GET /member/<member_uuid>/smash-history/
+export async function getSmashEggHistory(memberUuid, params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.MEMBER.SMASH_EGG_HISTORY(memberUuid)}${qs}`, {
+    method: 'GET'
+  }, true, 'member');
+}
+
+// POST /member/<member_uuid>/one-smash/
+export async function oneSmash(memberUuid) {
+  return await apiRequest(ENDPOINTS.MEMBER.ONE_SMASH(memberUuid), {
+    method: 'POST'
+  }, true, 'member');
+}
+
+// POST /member/<member_uuid>/ten-smash/
+export async function tenSmash(memberUuid) {
+  return await apiRequest(ENDPOINTS.MEMBER.TEN_SMASH(memberUuid), {
+    method: 'POST'
+  }, true, 'member');
+}
+
+// POST /member/<member_uuid>/fifty-smash/
+export async function fiftySmash(memberUuid) {
+  return await apiRequest(ENDPOINTS.MEMBER.FIFTY_SMASH(memberUuid), {
+    method: 'POST'
+  }, true, 'member');
+}
+
+// POST /member/<member_uuid>/hundred-smash/
+export async function hundredSmash(memberUuid) {
+  return await apiRequest(ENDPOINTS.MEMBER.HUNDRED_SMASH(memberUuid), {
+    method: 'POST'
+  }, true, 'member');
+}
+
+// GET /smash-egg/smash-egg-settings/
+export async function getSmashEggSettings() {
+  return await apiRequest(ENDPOINTS.MEMBER.SMASH_EGG_SETTINGS, {
+    method: 'GET'
+  }, true, 'member');
+}
+
 // POST /member/{uuid}/one-spin/
 export async function oneSpin(memberUuid) {
   return await apiRequest(ENDPOINTS.MEMBER.ONE_SPIN(memberUuid), {

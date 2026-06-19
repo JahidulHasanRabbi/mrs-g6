@@ -3,6 +3,15 @@
 import Image from "next/image";
 import { SMASH_EGG_ASSETS } from "./smashEggAssets";
 
+function formatTokenAmount(value) {
+  const amount = Number(String(value ?? 0).replace(/,/g, ""));
+  if (!Number.isFinite(amount)) return "0.00";
+  return amount.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 export default function TokenBalance({ balance, tokensPerRound }) {
   return (
     <div className="flex flex-col items-center gap-4">
@@ -29,7 +38,7 @@ export default function TokenBalance({ balance, tokensPerRound }) {
           style={{ fontFamily: "var(--font-rubik), 'Rubik', sans-serif", fontWeight: 500 }}
         >
           Token Balance:{" "}
-          <span className="text-[#ffe16d]">{balance}</span>
+          <span className="text-[#ffe16d]">{formatTokenAmount(balance)}</span>
         </p>
       </div>
 
@@ -49,7 +58,7 @@ export default function TokenBalance({ balance, tokensPerRound }) {
           className="text-[#d0c6ab] text-base whitespace-nowrap relative z-10"
           style={{ fontFamily: "var(--font-rubik), 'Rubik', sans-serif", fontWeight: 500 }}
         >
-          {tokensPerRound} Tokens / round
+          {formatTokenAmount(tokensPerRound)} Tokens / round
         </p>
       </div>
     </div>

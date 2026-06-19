@@ -3,10 +3,19 @@
 import { motion } from "framer-motion";
 
 const DRAW_OPTIONS = [
-  { draws: 10, tokens: 100, featured: false },
-  { draws: 50, tokens: 500, featured: true },
-  { draws: 100, tokens: 1000, featured: false },
+  { draws: 10, featured: false },
+  { draws: 50, featured: true },
+  { draws: 100, featured: false },
 ];
+
+function formatTokenAmount(value) {
+  const amount = Number(value ?? 0);
+  if (!Number.isFinite(amount)) return "0.00";
+  return amount.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
 
 function DrawButton({ draws, tokens, featured, onClick, disabled }) {
   const bgGradient = featured
@@ -57,14 +66,14 @@ function DrawButton({ draws, tokens, featured, onClick, disabled }) {
   );
 }
 
-export default function DrawButtons({ onDraw, disabled }) {
+export default function DrawButtons({ onDraw, disabled, tokensPerRound = 10 }) {
   return (
     <div className="grid grid-cols-3 gap-4 px-4 w-full">
       {DRAW_OPTIONS.map((opt) => (
         <DrawButton
           key={opt.draws}
           draws={opt.draws}
-          tokens={opt.tokens}
+          tokens={formatTokenAmount(Number(tokensPerRound) * opt.draws)}
           featured={opt.featured}
           onClick={onDraw}
           disabled={disabled}

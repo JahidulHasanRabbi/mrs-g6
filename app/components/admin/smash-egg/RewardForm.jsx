@@ -15,7 +15,6 @@ const FIELD =
   "w-full rounded-[8px] border border-[#fbeed2] bg-transparent px-4 py-3 text-[12px] leading-[18px] text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#e9af41]/40";
 
 const ITEM_TYPES = ["Free credit", "Token", "Prize"];
-const PRIZE_OPTIONS = ["BMW M3", "Audi Sedan", "Ford Pickup", "Mercedes SUV", "Tesla Model 3"];
 
 function ChevronIcon() {
   return (
@@ -90,7 +89,7 @@ const EMPTY = {
   minWithdraw: "",
   maxWithdraw: "",
   tokens: "",
-  prize: PRIZE_OPTIONS[0],
+  prize: "",
   unlimited: false,
 };
 
@@ -98,6 +97,7 @@ export default function RewardForm({ mode = "add", initial = null, onBack, onSav
   const fileRef = useRef(null);
   const [form, setForm] = useState(EMPTY);
   const [imagePreview, setImagePreview] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
 
   useEffect(() => {
     if (mode === "edit" && initial) {
@@ -106,12 +106,17 @@ export default function RewardForm({ mode = "add", initial = null, onBack, onSav
         name: initial.name || "",
         quantity: initial.unlimited ? "" : String(initial.quantity ?? ""),
         itemType: ITEM_TYPES.includes(initial.itemType) ? initial.itemType : "Free credit",
+        minWithdraw: String(initial.minWithdraw ?? ""),
+        maxWithdraw: String(initial.maxWithdraw ?? ""),
+        tokens: String(initial.tokens ?? ""),
         unlimited: Boolean(initial.unlimited),
       });
       setImagePreview(initial.image || null);
+      setImageFile(null);
     } else {
       setForm(EMPTY);
       setImagePreview(null);
+      setImageFile(null);
     }
   }, [mode, initial]);
 
@@ -120,6 +125,7 @@ export default function RewardForm({ mode = "add", initial = null, onBack, onSav
   const handleImage = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setImageFile(file);
     const reader = new FileReader();
     reader.onloadend = () => setImagePreview(reader.result);
     reader.readAsDataURL(file);
@@ -131,8 +137,11 @@ export default function RewardForm({ mode = "add", initial = null, onBack, onSav
       name: form.name.trim(),
       quantity: form.unlimited ? 0 : Number(String(form.quantity).replace(/[.,]/g, "")) || 0,
       itemType: form.itemType,
+      minWithdraw: form.minWithdraw,
+      maxWithdraw: form.maxWithdraw,
+      tokens: form.tokens,
       unlimited: form.unlimited,
-      image: imagePreview,
+      image: imageFile,
     });
   };
 
@@ -193,9 +202,7 @@ export default function RewardForm({ mode = "add", initial = null, onBack, onSav
         <Field label="Prize" dimmed={!isPrize}>
           <div className="relative w-full">
             <select value={form.prize} onChange={set("prize")} disabled={!isPrize} className={`${FIELD} appearance-none pr-10`}>
-              {PRIZE_OPTIONS.map((p) => (
-                <option key={p} value={p} style={{ background: "#05060a", color: "white" }}>{p}</option>
-              ))}
+              <option value="" style={{ background: "#05060a", color: "white" }} />
             </select>
             <ChevronIcon />
           </div>

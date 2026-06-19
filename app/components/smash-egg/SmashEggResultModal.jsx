@@ -1,23 +1,63 @@
 "use client";
 
-import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { SMASH_EGG_ASSETS } from "./smashEggAssets";
+
+function RewardImage({ image, name }) {
+  if (image) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={image} alt={name} className="h-[26px] w-[26px] rounded object-cover" />
+    );
+  }
+
+  return (
+    <img
+      src={SMASH_EGG_ASSETS.coinsIcon}
+      alt=""
+      className="h-[26px] w-[26px] shrink-0 object-contain"
+      draggable={false}
+    />
+  );
+}
 
 function PrizeCard({ prize }) {
   if (!prize) return null;
 
+  const items = Array.isArray(prize.items) ? prize.items : [];
+
+  if (items.length > 0) {
+    return (
+      <div className="flex max-h-[280px] w-full flex-col gap-2 overflow-y-auto pr-1">
+        {items.map((item, index) => (
+          <div
+            key={`${item.uuid || item.name}-${index}`}
+            className="grid w-full grid-cols-[26px_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-[rgba(77,71,50,0.2)] bg-[#2e2a1e] px-3 py-[9px]"
+          >
+            <RewardImage image={item.image} name={item.name} />
+            <p
+              className="min-w-0 truncate text-[11px] text-[#d0c6ab] leading-[16px]"
+              style={{ fontFamily: "var(--font-rubik), 'Rubik', sans-serif" }}
+              title={item.name}
+            >
+              {item.name}
+            </p>
+            <p
+              className="text-[12px] text-[#ffe16d] leading-[16px]"
+              style={{ fontFamily: "var(--font-acme), 'Acme', sans-serif" }}
+            >
+              x{item.count}
+            </p>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center gap-2 px-[17px] py-[9px] rounded-lg bg-[#2e2a1e] border border-[rgba(77,71,50,0.2)] w-full justify-center">
-      <div className="relative w-[26px] h-[26px] shrink-0">
-        <Image
-          src={SMASH_EGG_ASSETS.coinsIcon}
-          alt=""
-          fill
-          className="object-contain"
-        />
-      </div>
-      <div className="flex flex-col items-center">
+      <RewardImage name={prize.label} />
+      <div className="flex flex-col items-center min-w-0">
         <p
           className="text-[9px] text-[#ffb77d] uppercase leading-[13.5px]"
           style={{ fontFamily: "var(--font-acme), 'Acme', sans-serif" }}
@@ -25,7 +65,7 @@ function PrizeCard({ prize }) {
           FREE CREDIT
         </p>
         <p
-          className="text-[10px] text-[#d0c6ab] leading-[15px]"
+          className="max-w-full break-words text-center text-[10px] text-[#d0c6ab] leading-[15px]"
           style={{ fontFamily: "var(--font-rubik), 'Rubik', sans-serif" }}
         >
           {prize.label}

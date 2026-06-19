@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import SmashEggHeader from "../components/smash-egg/SmashEggHeader";
 import EggAnimation from "../components/smash-egg/EggAnimation";
 import TokenBalance from "../components/smash-egg/TokenBalance";
@@ -10,11 +10,133 @@ import DrawButtons from "../components/smash-egg/DrawButtons";
 import PrizeList from "../components/smash-egg/PrizeList";
 import WinnerList from "../components/smash-egg/WinnerList";
 import SmashEggTerms from "../components/smash-egg/SmashEggTerms";
+import SmashEggHistoryDialog from "../components/smash-egg/SmashEggHistoryDialog";
 import { FooterNav } from "../components/footer";
 import { HamburgerMenu } from "../components/hamburger";
 import { SMASH_EGG_ASSETS } from "../components/smash-egg/smashEggAssets";
 import { useUser } from "../contexts/UserContext";
 import SmashEggResultModal from "../components/smash-egg/SmashEggResultModal";
+import {
+  fiftySmash,
+  getAllSmashEggItems,
+  getPublicTermsAndConditions,
+  getSmashEggHistory,
+  getSmashEggSettings,
+  getSmashEggWinningList,
+  hundredSmash,
+  oneSmash,
+  tenSmash,
+} from "../api/memberApi";
+import { mapSmashEggItems } from "../api/responseMappers";
+import { tokenStorage } from "../api/tokenStorage";
+import { BASE_URL } from "../api/api";
+
+const HISTORY_PAGE_SIZE = 10;
+const SMASH_EGG_TERMS_CATEGORY = 6;
+
+function buildRewardBoard(items) {
+  const prizeItems = items
+    .filter((item) => item.itemType !== "Free credit")
+    .map((item, index) => ({
+      rank: index + 1,
+      name: item.name,
+      image: item.itemType === "Prize" ? item.image : null,
+      itemType: item.itemType,
+    }));
+
+  const creditRanges = items
+    .filter((item) => item.itemType === "Free credit")
+    .map((item) => `RM${item.minWithdraw || 0} ~ RM${item.maxWithdraw || 0}`);
+
+  return { prizes: prizeItems, creditRanges };
+}
+
+function maskName(name) {
+  if (!name) return "";
+  if (name.includes("*")) return name;
+  if (name.length <= 2) return `${name[0] || ""}*`;
+  if (name.length <= 4) return `${name[0]}${"*".repeat(name.length - 2)}${name[name.length - 1]}`;
+  return `${name.slice(0, 2)}${"*".repeat(name.length - 4)}${name.slice(-2)}`;
+}
+
+function mapWinningHistory(items) {
+  const rows = Array.isArray(items)
+    ? items
+    : Array.isArray(items?.value)
+      ? items.value
+      : Array.isArray(items?.results)
+        ? items.results
+        : [];
+
+  return rows.map((item) => {
+    const date = item.datetime_obtained
+      ? new Date(item.datetime_obtained).toISOString().slice(0, 10)
+      : "";
+
+    return {
+      date,
+      name: maskName(item.display_name),
+      prize: item.prize_name,
+    };
+  });
+}
+
+function normalizeSmashResults(response) {
+  if (Array.isArray(response)) return response;
+  if (response && typeof response === "object") {
+    if (response.uuid && response.reward_name !== undefined) return [response];
+    if (Array.isArray(response.results)) return response.results;
+    if (Array.isArray(response.value)) return response.value;
+  }
+  return [];
+}
+
+function inferResultType(result, rewardLookup) {
+  const matched = rewardLookup.get(result.uuid);
+  if (matched?.itemType) return matched.itemType;
+  if (/^RM\s?\d/i.test(String(result.reward_name || ""))) return "Free credit";
+  if (/token/i.test(String(result.reward_name || ""))) return "Token";
+  return "Prize";
+}
+
+function resolveApiImagePath(path) {
+  if (!path) return null;
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${BASE_URL.replace(/\/$/, "")}/${String(path).replace(/^\//, "")}`;
+}
+
+function formatPrizeSummary(results, rewards) {
+  if (!results.length) {
+    return { label: "Smash completed", items: [] };
+  }
+
+  const rewardLookup = new Map(rewards.map((item) => [item.uuid, item]));
+  const grouped = results.reduce((acc, item) => {
+    const name = item.reward_name || "Reward";
+    const itemType = inferResultType(item, rewardLookup);
+    const matched = rewardLookup.get(item.uuid);
+    const key = `${item.uuid || name}-${name}`;
+    if (!acc[key]) {
+      acc[key] = {
+        uuid: item.uuid,
+        name,
+        itemType,
+        image: itemType === "Prize" ? resolveApiImagePath(item.image || matched?.image) : null,
+        count: 0,
+      };
+    }
+    acc[key].count += 1;
+    return acc;
+  }, {});
+
+  const items = Object.values(grouped);
+  return {
+    label: items.length === 1
+      ? `${items[0].count > 1 ? `${items[0].count}x ` : ""}${items[0].name}`
+      : `${results.length} rewards won`,
+    items,
+  };
+}
 
 export default function SmashEggPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -22,40 +144,189 @@ export default function SmashEggPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [wonPrize, setWonPrize] = useState(null);
-  const { userData } = useUser();
+  const [smashRewards, setSmashRewards] = useState([]);
+  const [winningHistory, setWinningHistory] = useState([]);
+  const [tokensPerRound, setTokensPerRound] = useState(10);
+  const [gameEnabled, setGameEnabled] = useState(true);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [termsText, setTermsText] = useState("");
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyRows, setHistoryRows] = useState([]);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyTotal, setHistoryTotal] = useState(0);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const { userData, refreshUserData } = useUser();
 
   const tokenBalance = userData?.balance ?? 0;
+  const memberUuid = tokenStorage.getMemberUuid();
+  const rewardBoard = useMemo(() => buildRewardBoard(smashRewards), [smashRewards]);
 
-  const handleEggTap = useCallback(() => {
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSmashRewards() {
+      try {
+        const response = await getAllSmashEggItems();
+        if (!cancelled) {
+          setSmashRewards(mapSmashEggItems(response));
+        }
+      } catch (error) {
+        console.error("Failed to load smash egg rewards:", error);
+      }
+    }
+
+    loadSmashRewards();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSettings() {
+      try {
+        const response = await getSmashEggSettings();
+        if (!cancelled) {
+          if (response?.cost_per_smash != null) {
+            setTokensPerRound(Number(response.cost_per_smash));
+          }
+          setGameEnabled(Number(response?.game_status ?? 1) === 1 && !response?.maintenance_mode);
+          setMaintenanceMode(Boolean(response?.maintenance_mode));
+        }
+      } catch (error) {
+        console.error("Failed to load smash egg settings:", error);
+      }
+    }
+
+    loadSettings();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadTerms() {
+      try {
+        const response = await getPublicTermsAndConditions(SMASH_EGG_TERMS_CATEGORY);
+        if (!cancelled) {
+          setTermsText(response?.terms_and_conditions ?? "");
+        }
+      } catch (error) {
+        console.error("Failed to load smash egg terms:", error);
+      }
+    }
+
+    loadTerms();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const loadWinningHistory = useCallback(async (options = {}) => {
+    const { cancelled } = options;
+
+    try {
+      const response = await getSmashEggWinningList();
+      if (!cancelled?.()) {
+        setWinningHistory(mapWinningHistory(response));
+      }
+    } catch (error) {
+      console.error("Failed to load smash egg winning history:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    loadWinningHistory({ cancelled: () => cancelled });
+    const interval = setInterval(loadWinningHistory, 30000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [loadWinningHistory]);
+
+  const loadHistoryPage = useCallback(async (page = 1) => {
+    if (!memberUuid) return;
+    setHistoryLoading(true);
+    try {
+      const response = await getSmashEggHistory(memberUuid, { page, page_size: HISTORY_PAGE_SIZE });
+      setHistoryRows(response?.results || []);
+      setHistoryTotal(Number(response?.count ?? 0));
+      setHistoryPage(page);
+    } catch (error) {
+      console.error("Failed to load smash egg history:", error);
+      setHistoryRows([]);
+      setHistoryTotal(0);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [memberUuid]);
+
+  const runSmash = useCallback(async (smashFn, resetAfter = false) => {
+    if (!memberUuid) {
+      setWonPrize({ label: "Please log in to smash." });
+      setIsModalOpen(true);
+      return;
+    }
+
+    if (!gameEnabled) {
+      setWonPrize({ label: maintenanceMode ? "Smash Egg is under maintenance." : "Smash Egg is currently closed." });
+      setIsModalOpen(true);
+      return;
+    }
+
     if (isProcessing || isCracked) return;
     setIsProcessing(true);
     setIsCracked(true);
 
-    setTimeout(() => {
-      setWonPrize({ label: "RM0.5 ~ RM3.00" });
-      setIsModalOpen(true);
-      setIsProcessing(false);
-    }, 1400);
-  }, [isProcessing, isCracked]);
-
-  const handleDraw = useCallback(async (draws) => {
-    if (isProcessing) return;
-    setIsProcessing(true);
-
     try {
-      setIsCracked(true);
-
+      const response = await smashFn(memberUuid);
+      const results = normalizeSmashResults(response);
+      refreshUserData?.().catch(() => {});
+      loadWinningHistory();
+      loadHistoryPage(1);
       setTimeout(() => {
-        setWonPrize({ label: "RM0.5 ~ RM3.00" });
+        setWonPrize(formatPrizeSummary(results, smashRewards));
         setIsModalOpen(true);
         setIsProcessing(false);
-        setIsCracked(false);
+        if (resetAfter) setIsCracked(false);
       }, 1200);
-    } catch {
+    } catch (error) {
+      const message = error?.data?.details || error?.data?.detail || error?.message || "Smash failed. Please try again.";
+      const lowerMessage = String(message).toLowerCase();
+      if (lowerMessage.includes("maintenance") || lowerMessage.includes("close")) {
+        setGameEnabled(false);
+        setMaintenanceMode(lowerMessage.includes("maintenance"));
+      }
+      setWonPrize({ label: message });
+      setIsModalOpen(true);
       setIsProcessing(false);
       setIsCracked(false);
     }
-  }, [isProcessing]);
+  }, [isProcessing, isCracked, memberUuid, gameEnabled, maintenanceMode, refreshUserData, loadWinningHistory, loadHistoryPage, smashRewards]);
+
+  const openHistory = useCallback(() => {
+    setHistoryOpen(true);
+    loadHistoryPage(1);
+  }, [loadHistoryPage]);
+
+  const handleEggTap = useCallback(() => {
+    runSmash(oneSmash);
+  }, [runSmash]);
+
+  const handleDraw = useCallback(async (draws) => {
+    if (draws === 10) return runSmash(tenSmash, true);
+    if (draws === 50) return runSmash(fiftySmash, true);
+    if (draws === 100) return runSmash(hundredSmash, true);
+  }, [runSmash]);
 
   const closeModal = useCallback(() => {
     setIsModalOpen(false);
@@ -73,7 +344,7 @@ export default function SmashEggPage() {
       />
 
       {/* Header */}
-      <SmashEggHeader onMenuClick={() => setIsMenuOpen(true)} />
+      <SmashEggHeader onMenuClick={() => setIsMenuOpen(true)} onInfoClick={openHistory} />
 
       {/* Hamburger Menu */}
       <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
@@ -105,7 +376,7 @@ export default function SmashEggPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-          <TokenBalance balance={tokenBalance} tokensPerRound={10} />
+          <TokenBalance balance={tokenBalance} tokensPerRound={tokensPerRound} />
         </motion.div>
 
         {/* Egg Animation */}
@@ -125,7 +396,7 @@ export default function SmashEggPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.5 }}
         >
-          <DrawButtons onDraw={handleDraw} disabled={isProcessing} />
+          <DrawButtons onDraw={handleDraw} disabled={isProcessing || !gameEnabled} tokensPerRound={tokensPerRound} />
         </motion.div>
 
         {/* Prize List */}
@@ -135,7 +406,7 @@ export default function SmashEggPage() {
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.5 }}
         >
-          <PrizeList />
+          <PrizeList prizes={rewardBoard.prizes} creditRanges={rewardBoard.creditRanges} />
         </motion.div>
 
         {/* Winner List */}
@@ -145,7 +416,7 @@ export default function SmashEggPage() {
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.5 }}
         >
-          <WinnerList />
+          <WinnerList winners={winningHistory} />
         </motion.div>
 
         {/* Terms & Conditions */}
@@ -155,9 +426,28 @@ export default function SmashEggPage() {
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.5 }}
         >
-          <SmashEggTerms />
+          <SmashEggTerms termsText={termsText} />
         </motion.div>
       </main>
+
+      {!gameEnabled && (
+        <div className="fixed inset-x-0 top-16 bottom-[92px] z-30 grid place-items-center bg-black/70 px-6 backdrop-blur-md">
+          <div className="w-full max-w-[360px] rounded-xl border border-[rgba(255,246,223,0.16)] bg-[#231f14]/95 px-6 py-7 text-center shadow-[0_16px_50px_rgba(0,0,0,0.45)]">
+            <p
+              className="text-[20px] text-[#ffd700]"
+              style={{ fontFamily: "var(--font-acme), 'Acme', sans-serif" }}
+            >
+              {maintenanceMode ? "Smash Egg is under maintenance" : "Smash Egg is currently closed"}
+            </p>
+            <p
+              className="mt-3 text-[12px] leading-5 text-[#d0c6ab]"
+              style={{ fontFamily: "var(--font-rubik), 'Rubik', sans-serif" }}
+            >
+              Please check back later.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Footer Nav */}
       <FooterNav />
@@ -168,6 +458,32 @@ export default function SmashEggPage() {
         onClose={closeModal}
         prize={wonPrize}
       />
+
+      <AnimatePresence>
+        {historyOpen && (
+          <motion.div
+            key="smash-history"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 grid place-items-center px-4"
+            style={{ backgroundColor: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)" }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setHistoryOpen(false);
+            }}
+          >
+            <SmashEggHistoryDialog
+              rows={historyRows}
+              loading={historyLoading}
+              total={historyTotal}
+              currentPage={historyPage}
+              totalPages={Math.max(1, Math.ceil(historyTotal / HISTORY_PAGE_SIZE))}
+              onPageChange={loadHistoryPage}
+              onClose={() => setHistoryOpen(false)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

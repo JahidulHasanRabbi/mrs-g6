@@ -5,27 +5,20 @@ import { Pagination } from "../../components/admin/members/DataTable";
 import RewardsTable from "../../components/admin/smash-egg/RewardsTable";
 import RewardForm from "../../components/admin/smash-egg/RewardForm";
 import SmashSequenceModal from "../../components/admin/smash-egg/SmashSequenceModal";
+import CostSettingModal from "../../components/admin/penalty-kick/CostSettingModal";
+import GameStatusModal from "../../components/admin/penalty-kick/GameStatusModal";
 import ConfirmDialog from "../../components/admin/ui/ConfirmDialog";
 import { useToast } from "../../components/admin/ui/Toast";
+import * as adminApi from "../../api/adminApi";
+import { mapSmashEggItems, mapSmashEggSequences } from "../../api/responseMappers";
 
 const GOLD_BG = "linear-gradient(101deg, #dc9d16 1%, #f2cb7a 98%)";
 const PAGE_SIZE = 7;
 
 const EGG_ICON = "/assets/admin/sidebar/icons/material-symbols-light-egg-outline-sharp.svg";
 const LEVEL_ICON = "/assets/admin/icons/icon-park-outline-level.svg";
-
-// Seed data — matches the sample rows in Figma 1727:4046 so the page renders
-// faithfully out of the box. The Smash Egg feature has no backend yet, so all
-// mutations operate on local state.
-const SEED_REWARDS = [
-  { id: "se-1", name: "BMW Car", quantity: 34053, itemType: "Free credit", unlimited: false, image: null },
-  { id: "se-2", name: "Audi Sedan", quantity: 28470, itemType: "Min withdraw", unlimited: false, image: null },
-  { id: "se-3", name: "Ford Pickup", quantity: 32540, itemType: "Max withdraw", unlimited: false, image: null },
-  { id: "se-4", name: "BMW Car", quantity: 34053, itemType: "Prize", unlimited: false, image: null },
-  { id: "se-5", name: "Mercedes SUV", quantity: 45237, itemType: "Prize", unlimited: false, image: null },
-  { id: "se-6", name: "Toyota Hatchback", quantity: 23890, itemType: "Worldcup Leaderboard Score", unlimited: false, image: null },
-  { id: "se-7", name: "Tesla Model 3", quantity: 39000, itemType: "Token", unlimited: false, image: null },
-];
+const COINS_ICON = "/assets/admin/icons/iconoir-coins.svg";
+const STATUS_ICON = "/assets/admin/icons/lsicon-batch-check-outline.svg";
 
 function MaskIcon({ src, size = 16 }) {
   return (
@@ -48,25 +41,94 @@ function MaskIcon({ src, size = 16 }) {
   );
 }
 
-let idCounter = 0;
-function nextId() {
-  idCounter += 1;
-  return `se-new-${idCounter}`;
+function itemTypeToApi(value) {
+  const normalized = String(value || "").trim().toUpperCase();
+  if (normalized === "FREE CREDIT") return 1;
+  if (normalized === "TOKEN") return 2;
+  if (normalized === "PRIZE") return 3;
+  return value;
+}
+
+function buildItemPayload(data, includeImage = true) {
+  const payload = {
+    reward_name: data.name,
+    item_type: itemTypeToApi(data.itemType),
+    unlimited: Boolean(data.unlimited),
+  };
+
+  if (!payload.unlimited) {
+    payload.quantity = Number(data.quantity) || 0;
+  }
+
+  if (data.itemType === "Free credit") {
+    payload.min_withdraw = Number(data.minWithdraw) || 0;
+    payload.max_withdraw = Number(data.maxWithdraw) || 0;
+  }
+
+  if (data.itemType === "Token") {
+    payload.token_amount = Number(data.tokens) || 0;
+  }
+
+  if (includeImage && data.image instanceof File) {
+    payload.image = data.image;
+  }
+
+  return payload;
+}
+
+function mapSettings(data = {}) {
+  return {
+    cost: { cost: Number(data.cost_per_smash ?? 10) },
+    status: {
+      maintenance: Boolean(data.maintenance_mode),
+      gameplay: Number(data.game_status ?? 1) === 1 && !data.maintenance_mode,
+    },
+  };
 }
 
 export default function SmashEggPage() {
   const toast = useToast();
-  const [rewards, setRewards] = useState(SEED_REWARDS);
+  const [rewards, setRewards] = useState([]);
+  const [sequences, setSequences] = useState([]);
   const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
 
-  // "list" shows the rewards table; "form" shows the Add/Edit Reward page
-  // (Figma 1727:3817). Kept as an in-page view so local state survives — there
-  // is no backend to reload from after a route change.
   const [view, setView] = useState("list");
   const [formMode, setFormMode] = useState("add");
   const [editTarget, setEditTarget] = useState(null);
   const [sequenceOpen, setSequenceOpen] = useState(false);
+  const [costOpen, setCostOpen] = useState(false);
+  const [statusOpen, setStatusOpen] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState(null);
+  const [costData, setCostData] = useState({ cost: 10 });
+  const [statusData, setStatusData] = useState({ gameplay: true, maintenance: false });
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [itemsResponse, sequencesResponse, settingsResponse] = await Promise.all([
+        adminApi.getSmashEggItems(),
+        adminApi.getSmashEggSequences(),
+        adminApi.getSmashEggSettings(),
+      ]);
+      setRewards(mapSmashEggItems(itemsResponse));
+      setSequences(mapSmashEggSequences(sequencesResponse));
+      const mappedSettings = mapSettings(settingsResponse);
+      setCostData(mappedSettings.cost);
+      setStatusData(mappedSettings.status);
+    } catch (error) {
+      toast.error("Failed to load Smash Egg data", {
+        description: error?.data?.detail || error?.message,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const totalPages = Math.max(1, Math.ceil(rewards.length / PAGE_SIZE));
   const pageRewards = useMemo(
@@ -90,28 +152,57 @@ export default function SmashEggPage() {
     setView("form");
   };
 
-  const handleSave = (data) => {
-    if (formMode === "edit" && editTarget) {
-      setRewards((prev) => prev.map((r) => (r.id === editTarget.id ? { ...r, ...data } : r)));
-      toast.success("Reward updated");
-    } else {
-      setRewards((prev) => [...prev, { id: nextId(), ...data }]);
-      toast.success("Reward added");
+  const handleSave = async (data) => {
+    try {
+      if (formMode === "edit" && editTarget) {
+        await adminApi.updateSmashEggItem(editTarget.uuid, buildItemPayload(data, data.image instanceof File));
+        toast.success("Reward updated");
+      } else {
+        await adminApi.createSmashEggItem(buildItemPayload(data));
+        toast.success("Reward added");
+      }
+      await loadData();
+      setView("list");
+    } catch (error) {
+      toast.error(formMode === "edit" ? "Failed to update reward" : "Failed to add reward", {
+        description: error?.data?.detail || error?.message,
+      });
     }
-    setView("list");
   };
 
-  const confirmArchive = () => {
-    if (!archiveTarget) return;
-    setRewards((prev) => prev.filter((r) => r.id !== archiveTarget.id));
-    toast.success("Reward archived");
-    setArchiveTarget(null);
+  const confirmArchive = async () => {
+    if (!archiveTarget?.uuid) return;
+    try {
+      await adminApi.archiveSmashEggItem(archiveTarget.uuid);
+      toast.success("Reward archived");
+      setArchiveTarget(null);
+      await loadData();
+    } catch (error) {
+      toast.error("Failed to archive reward", {
+        description: error?.data?.detail || error?.message,
+      });
+    }
   };
 
-  const handleSequenceSave = (orderedRewards) => {
-    setRewards(orderedRewards);
-    setPage(1);
-    toast.success("Smash sequence saved");
+  const handleSequenceSave = async ({ position, rewardId }) => {
+    try {
+      await adminApi.createSmashEggSequence(position, rewardId);
+      toast.success("Smash sequence saved");
+      setSequenceOpen(false);
+      await loadData();
+    } catch (error) {
+      toast.error("Failed to save smash sequence", {
+        description: error?.data?.detail || error?.message,
+      });
+    }
+  };
+
+  const saveSettings = async (payload, successMessage) => {
+    const response = await adminApi.updateSmashEggSettings(payload);
+    const mappedSettings = mapSettings(response);
+    setCostData(mappedSettings.cost);
+    setStatusData(mappedSettings.status);
+    toast.success(successMessage);
   };
 
   if (view === "form") {
@@ -134,6 +225,22 @@ export default function SmashEggPage() {
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
+            onClick={() => setCostOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold tracking-[-0.5px] text-[#fbeed2] transition-colors hover:bg-white/5"
+          >
+            <MaskIcon src={COINS_ICON} />
+            Cost Setting
+          </button>
+          <button
+            type="button"
+            onClick={() => setStatusOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold tracking-[-0.5px] text-[#fbeed2] transition-colors hover:bg-white/5"
+          >
+            <MaskIcon src={STATUS_ICON} />
+            Game Status
+          </button>
+          <button
+            type="button"
             onClick={() => setSequenceOpen(true)}
             className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold tracking-[-0.5px] text-[#fbeed2] transition-colors hover:bg-white/5"
           >
@@ -153,7 +260,11 @@ export default function SmashEggPage() {
       </div>
 
       <div className="px-2 pb-2">
-        <RewardsTable rewards={pageRewards} onEdit={openEdit} onArchive={setArchiveTarget} />
+        {loading ? (
+          <div className="px-6 py-12 text-center text-[13px] text-white/50">Loading rewards...</div>
+        ) : (
+          <RewardsTable rewards={pageRewards} onEdit={openEdit} onArchive={setArchiveTarget} />
+        )}
       </div>
 
       <div className="flex items-center justify-between px-6 py-3">
@@ -168,8 +279,38 @@ export default function SmashEggPage() {
       <SmashSequenceModal
         open={sequenceOpen}
         rewards={rewards}
+        sequences={sequences}
         onClose={() => setSequenceOpen(false)}
         onSave={handleSequenceSave}
+      />
+
+      <CostSettingModal
+        open={costOpen}
+        initial={costData}
+        onClose={() => setCostOpen(false)}
+        onSave={async (payload) => {
+          try {
+            await saveSettings({ cost_per_smash: Number(payload.cost) }, "Cost setting saved");
+          } catch (error) {
+            toast.error("Failed to save cost setting", { description: error?.data?.detail || error?.message });
+          }
+        }}
+      />
+
+      <GameStatusModal
+        open={statusOpen}
+        initial={statusData}
+        onClose={() => setStatusOpen(false)}
+        onSave={async (payload) => {
+          try {
+            await saveSettings(
+              { game_status: payload.gameplay ? 1 : 2, maintenance_mode: Boolean(payload.maintenance) },
+              "Game status saved",
+            );
+          } catch (error) {
+            toast.error("Failed to save game status", { description: error?.data?.detail || error?.message });
+          }
+        }}
       />
 
       <ConfirmDialog

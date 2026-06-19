@@ -33,14 +33,7 @@ function WinnerItem({ date, name, prize, index }) {
 }
 
 export default function WinnerList({ winners = [] }) {
-  const displayWinners = winners.length > 0 ? winners : [
-    { date: "2026-04-30", name: "Fat**************************", prize: "Free Credit RM 3" },
-    { date: "2026-04-30", name: "Heb**********", prize: "Free Credit RM 0.81" },
-    { date: "2026-05-01", name: "Jad**********", prize: "Free Credit RM 5.00" },
-    { date: "2026-05-02", name: "Mad**********", prize: "Free Credit RM 2.50" },
-    { date: "2026-04-30", name: "Kha**************************", prize: "Free Credit RM 30.6" },
-    { date: "2026-04-30", name: "Kus***************", prize: "Free Credit RM 0.75" },
-  ];
+  const displayWinners = winners.slice(0, 20);
 
   return (
     <div

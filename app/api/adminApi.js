@@ -253,6 +253,79 @@ export async function changeSpinSequencesOrder(luckySpins) {
   }
 }
 
+export async function getSmashEggItems(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.SMASH_EGG_ITEMS}${qs}`, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function getSmashEggItem(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.SMASH_EGG_ITEM(uuid), {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function createSmashEggItem(itemData) {
+  return await apiRequest(ENDPOINTS.ADMIN.SMASH_EGG_ITEMS, {
+    method: 'POST',
+    body: itemData
+  }, true, 'admin');
+}
+
+export async function updateSmashEggItem(uuid, itemData) {
+  return await apiRequest(ENDPOINTS.ADMIN.SMASH_EGG_ITEM(uuid), {
+    method: 'PUT',
+    body: itemData
+  }, true, 'admin');
+}
+
+export async function archiveSmashEggItem(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.ARCHIVE_SMASH_EGG_ITEM(uuid), {
+    method: 'PATCH'
+  }, true, 'admin');
+}
+
+export async function getSmashEggSequences(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.SMASH_EGG_SEQUENCES}${qs}`, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function createSmashEggSequence(itemOrder, itemUuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.SMASH_EGG_SEQUENCES, {
+    method: 'POST',
+    body: { item_order: itemOrder, item_uuid: itemUuid }
+  }, true, 'admin');
+}
+
+export async function deleteSmashEggSequence(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.SMASH_EGG_SEQUENCE(uuid), {
+    method: 'DELETE'
+  }, true, 'admin');
+}
+
+export async function changeSmashEggSequencesOrder(smashes) {
+  return await apiRequest(ENDPOINTS.ADMIN.CHANGE_SMASH_EGG_SEQUENCES, {
+    method: 'PATCH',
+    body: { smashes }
+  }, true, 'admin');
+}
+
+export async function getSmashEggSettings() {
+  return await apiRequest(ENDPOINTS.ADMIN.SMASH_EGG_SETTINGS, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function updateSmashEggSettings(settingsData) {
+  return await apiRequest(ENDPOINTS.ADMIN.SMASH_EGG_SETTINGS, {
+    method: 'POST',
+    body: settingsData
+  }, true, 'admin');
+}
+
 export async function getMembers() {
   return await apiRequest(`${ENDPOINTS.ADMIN.MEMBERS}?page_size=1000`, {
     method: 'GET'

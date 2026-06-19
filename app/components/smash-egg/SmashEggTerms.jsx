@@ -3,14 +3,9 @@
 import Image from "next/image";
 import { SMASH_EGG_ASSETS } from "./smashEggAssets";
 
-const TERMS = [
-  "Credit cannot mixed with other deposits and bonuses.",
-  "1 Member / 1 ID / 1 Name can only participate in this Lucky Spin Event.",
-  "Only slot games are allowed.",
-  "The name on the bank account must match the registered name. Incorrect details result in forfeited winnings.",
-];
+export default function SmashEggTerms({ termsText = "" }) {
+  const terms = String(termsText || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
 
-export default function SmashEggTerms() {
   return (
     <div
       className="relative w-[342px] max-w-full mx-auto rounded-2xl border border-[rgba(255,246,223,0.15)] p-8 overflow-hidden"
@@ -29,7 +24,14 @@ export default function SmashEggTerms() {
         </h3>
 
         <div className="flex flex-col gap-2">
-          {TERMS.map((term, i) => (
+          {terms.length === 0 ? (
+            <p
+              className="text-sm text-[#d0c6ab] leading-[25.6px]"
+              style={{ fontFamily: "var(--font-acme), 'Acme', sans-serif" }}
+            >
+              No terms and conditions available.
+            </p>
+          ) : terms.map((term, i) => (
             <div key={i} className="flex gap-4 items-start">
               <div className="shrink-0 pt-[2px]">
                 <div className="relative w-[18px] h-4">

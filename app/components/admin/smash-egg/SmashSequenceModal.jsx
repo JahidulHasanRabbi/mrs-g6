@@ -11,9 +11,10 @@ function ChevronIcon() {
   );
 }
 
-export default function SmashSequenceModal({ open, rewards = [], onClose, onSave }) {
+export default function SmashSequenceModal({ open, rewards = [], sequences = [], onClose, onSave }) {
   const [position, setPosition] = useState("");
   const [selectedRewardId, setSelectedRewardId] = useState("");
+  const nextPosition = sequences.length + 1;
 
   useEffect(() => {
     if (open) {
@@ -24,22 +25,9 @@ export default function SmashSequenceModal({ open, rewards = [], onClose, onSave
 
   const handleSave = () => {
     const pos = parseInt(position, 10);
-    if (!pos || pos < 1 || pos > rewards.length || !selectedRewardId) return;
+    if (!pos || pos < 1 || !selectedRewardId) return;
 
-    const rewardIndex = rewards.findIndex((r) => r.id === selectedRewardId);
-    if (rewardIndex === -1) return;
-
-    const targetIndex = pos - 1;
-    if (rewardIndex === targetIndex) {
-      onClose?.();
-      return;
-    }
-
-    const next = [...rewards];
-    const [moved] = next.splice(rewardIndex, 1);
-    next.splice(targetIndex, 0, moved);
-    onSave?.(next);
-    onClose?.();
+    onSave?.({ position: pos, rewardId: selectedRewardId });
   };
 
   return (
@@ -54,10 +42,9 @@ export default function SmashSequenceModal({ open, rewards = [], onClose, onSave
             <input
               type="number"
               min={1}
-              max={rewards.length}
               value={position}
               onChange={(e) => setPosition(e.target.value)}
-              placeholder={rewards.length ? `1–${rewards.length}` : "—"}
+              placeholder={nextPosition > 1 ? `1-${nextPosition}` : "1"}
               className="w-full bg-transparent text-[12px] font-medium text-white outline-none placeholder:text-white/40 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
           </div>

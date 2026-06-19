@@ -26,8 +26,9 @@ function RankBadge({ rank }) {
   );
 }
 
-function PrizeRow({ rank, name, image, index }) {
+function PrizeRow({ rank, name, image, itemType, index }) {
   const colors = RANK_COLORS[rank] || RANK_COLORS[3];
+  const showPrizeImage = itemType === "Prize" && image;
 
   return (
     <motion.div
@@ -42,8 +43,11 @@ function PrizeRow({ rank, name, image, index }) {
     >
       {/* Prize Image */}
       <div className="w-12 h-12 rounded-md bg-[#231f14] border border-[rgba(77,71,50,0.4)] shrink-0 overflow-hidden relative">
-        {image && (
-          <Image src={image} alt={name} fill className="object-cover p-px" />
+        {showPrizeImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={image} alt={name} className="h-full w-full object-cover p-px" />
+        ) : (
+          <Image src={SMASH_EGG_ASSETS.coinsIcon} alt="" fill className="object-contain p-3" />
         )}
       </div>
 
@@ -103,19 +107,8 @@ function FreeCreditCard({ label, index }) {
 }
 
 export default function PrizeList({ prizes = [], creditRanges = [] }) {
-  const defaultPrizes = prizes.length > 0 ? prizes : [
-    { rank: 1, name: "VIVO V40", image: SMASH_EGG_ASSETS.prizeSmartphone },
-    { rank: 2, name: "SAMSUNG WATCH 7", image: SMASH_EGG_ASSETS.prizeSmartwatch },
-    { rank: 3, name: "SAMSUNG BUDS", image: SMASH_EGG_ASSETS.prizeEarbuds },
-  ];
-
-  const defaultCredits = creditRanges.length > 0 ? creditRanges : [
-    "RM100 ~ RM300",
-    "RM30 ~ RM100",
-    "RM10 ~ RM30",
-    "RM3 ~ RM10",
-    "RM0.5 ~ RM3.00",
-  ];
+  const displayPrizes = prizes;
+  const displayCredits = creditRanges;
 
   return (
     <div
@@ -145,12 +138,13 @@ export default function PrizeList({ prizes = [], creditRanges = [] }) {
 
         {/* Ranked Prizes */}
         <div className="flex flex-col gap-3">
-          {defaultPrizes.map((prize, i) => (
+          {displayPrizes.map((prize, i) => (
             <PrizeRow
               key={prize.rank}
               rank={prize.rank}
               name={prize.name}
               image={prize.image}
+              itemType={prize.itemType}
               index={i}
             />
           ))}
@@ -158,13 +152,13 @@ export default function PrizeList({ prizes = [], creditRanges = [] }) {
 
         {/* Free Credit Grid */}
         <div className="grid grid-cols-2 gap-2">
-          {defaultCredits.slice(0, 4).map((label, i) => (
+          {displayCredits.slice(0, 4).map((label, i) => (
             <FreeCreditCard key={label} label={label} index={i} />
           ))}
-          {defaultCredits.length > 4 && (
+          {displayCredits.length > 4 && (
             <div className="col-span-2 flex justify-center">
               <div className="w-full">
-                <FreeCreditCard label={defaultCredits[4]} index={4} />
+                <FreeCreditCard label={displayCredits[4]} index={4} />
               </div>
             </div>
           )}
