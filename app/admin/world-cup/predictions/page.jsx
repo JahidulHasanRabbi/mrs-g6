@@ -11,7 +11,7 @@ import { getWorldCupKickoffParts } from "../../../lib/worldcupDateTime";
 
 const PAGE_SIZE = 7;
 
-const STATUS_DISPLAY = { 1: "Upcoming", 2: "Ongoing", 3: "Ended" };
+const STATUS_DISPLAY = { 1: "Upcoming", 2: "Closed", 3: "Settled" };
 
 function countryName(value, countriesById) {
   if (value == null || value === "") return "";
@@ -23,7 +23,14 @@ function normalizeMatch(m, countriesById = new Map()) {
   const teamHome = m.team_home ?? m.team_home_uuid;
   const teamAway = m.team_away ?? m.team_away_uuid;
   const winner = m.winner ?? m.winner_uuid;
-  const isDraw = Number(m.status) === 3 && (winner === null || winner === undefined || winner === "");
+  const status = Number(m.status);
+  const hasWinner = winner !== null && winner !== undefined && winner !== "";
+  const isDraw = status === 3 && !hasWinner;
+  const settledWinnerName = m.winner_name ?? countryName(winner, countriesById);
+  const winnerLabel = status === 3
+    ? (isDraw ? "Draw" : (settledWinnerName || "-"))
+    : "-";
+
   return {
     id: m.uuid,
     uuid: m.uuid,
@@ -36,8 +43,8 @@ function normalizeMatch(m, countriesById = new Map()) {
     time: kickoff?.time ?? "",
     predictionA: "-",
     predictionB: "-",
-    winner: isDraw ? "Draw" : (m.winner_name ?? countryName(winner, countriesById)),
-    status: STATUS_DISPLAY[m.status] ?? "Upcoming",
+    winner: winnerLabel,
+    status: STATUS_DISPLAY[status] ?? "Upcoming",
     _raw: m,
   };
 }

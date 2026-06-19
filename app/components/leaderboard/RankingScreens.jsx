@@ -272,14 +272,19 @@ export function MyPredictionsPanel({ onViewPrize, rows: propRows, loading: propL
                   )}
                   {(p.winnerTeam?.name || p.winnerLabel) && (
                     <span className="flex min-w-0 items-center gap-1 text-[10px]" style={{ color: LB_COLORS.textMuted, fontFamily: "'Lexend',sans-serif" }}>
-                      <span className="shrink-0">Winner:</span>
-                      {p.winnerTeam?.name ? (
+                      {p.winnerLabel === "Draw" ? (
+                        <span style={{ color: LB_COLORS.gold }}>Match is Draw</span>
+                      ) : p.winnerTeam?.name ? (
                         <>
+                          <span className="shrink-0">Winner:</span>
                           <Flag code={p.winnerTeam.code} size={16} />
                           <span className="truncate">{p.winnerTeam.name}</span>
                         </>
                       ) : (
-                        <span style={{ color: LB_COLORS.gold }}>{p.winnerLabel}</span>
+                        <>
+                          <span className="shrink-0">Winner:</span>
+                          <span style={{ color: LB_COLORS.gold }}>{p.winnerLabel}</span>
+                        </>
                       )}
                     </span>
                   )}

@@ -13,9 +13,9 @@ function EditIcon() {
 }
 
 const STATUS_STYLES = {
-  Ongoing:  { bg: "#0f3e16", border: "#3ad26a", color: "#3ad26a" },
+  Closed:   { bg: "#0f3e16", border: "#3ad26a", color: "#3ad26a" },
   Upcoming: { bg: "#3a2810", border: "#eaad2c", color: "#eaad2c" },
-  Ended:    { bg: "#2a2a2a", border: "#9a9a9a", color: "#d6d6d6" },
+  Settled:  { bg: "#2a2a2a", border: "#9a9a9a", color: "#d6d6d6" },
 };
 
 function StatusPill({ status }) {

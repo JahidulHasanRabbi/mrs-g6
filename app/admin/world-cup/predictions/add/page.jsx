@@ -27,10 +27,15 @@ function ChevronIcon() {
   );
 }
 
-function Select({ value, onChange, options, placeholder }) {
+function Select({ value, onChange, options, placeholder, disabled = false }) {
   return (
     <div className="relative">
-      <select value={value} onChange={(e) => onChange(e.target.value)} className={`${INPUT_BASE} appearance-none pr-10`}>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        className={`${INPUT_BASE} appearance-none pr-10 disabled:cursor-not-allowed disabled:opacity-60`}
+      >
         {placeholder !== undefined && (
           <option value="" style={{ background: "#041502", color: "white" }}>{placeholder}</option>
         )}
@@ -43,10 +48,15 @@ function Select({ value, onChange, options, placeholder }) {
   );
 }
 
-function CountrySelect({ value, onChange, countries, placeholder }) {
+function CountrySelect({ value, onChange, countries, placeholder, disabled = false }) {
   return (
     <div className="relative">
-      <select value={value} onChange={(e) => onChange(e.target.value)} className={`${INPUT_BASE} appearance-none pr-10`}>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        className={`${INPUT_BASE} appearance-none pr-10 disabled:cursor-not-allowed disabled:opacity-60`}
+      >
         {placeholder && <option value="" style={{ background: "#041502", color: "white" }}>{placeholder}</option>}
         {countries.map((c) => {
           const countryValue = c.id ?? c.country ?? c.uuid;
@@ -156,7 +166,7 @@ function MatchForm() {
 
       // If user picked a winner, settle the match. Backend requires the match
       // to be closed before a winner can be declared.
-      if (form.winnerUuid !== "" && savedUuid && Number(form.status) === 2) {
+      if (!isSettled && form.winnerUuid !== "" && savedUuid && Number(form.status) === 2) {
         await settleWorldCupMatch(savedUuid, form.winnerUuid);
       }
 
@@ -174,6 +184,7 @@ function MatchForm() {
   );
   const team1Options = countryOptions.filter((c) => String(countryValue(c)) !== String(form.team2Uuid));
   const team2Options = countryOptions.filter((c) => String(countryValue(c)) !== String(form.team1Uuid));
+  const canDeclareWinner = !isSettled && Number(form.status) === 2;
 
   return (
     <FormChrome
@@ -219,15 +230,25 @@ function MatchForm() {
         </div>
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">Status</label>
-          <Select value={form.status} onChange={(v) => setForm((p) => ({ ...p, status: Number(v) }))} options={STATUS_OPTIONS} />
+          <Select
+            value={form.status}
+            onChange={(v) => setForm((p) => ({
+              ...p,
+              status: Number(v),
+              winnerUuid: Number(v) === 2 ? p.winnerUuid : "",
+            }))}
+            options={STATUS_OPTIONS}
+            disabled={isSettled}
+          />
         </div>
 
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">Declare Winner (settles match)</label>
           <CountrySelect
             value={form.winnerUuid}
-            onChange={Number(form.status) === 2 ? set("winnerUuid") : () => {}}
-            countries={[{ id: 0, name: "Draw" }, ...winnerOptions]}
+            onChange={canDeclareWinner ? set("winnerUuid") : () => {}}
+            countries={canDeclareWinner ? [{ id: 0, name: "Draw" }, ...winnerOptions] : []}
+            disabled={!canDeclareWinner}
             placeholder="— No winner yet —"
           />
           <p className="mt-2 text-[11px] leading-[16px] text-white/55">
