@@ -424,7 +424,8 @@ Output
 | **4** | basic\_info | Obj | \- | See Basic Info Output below |
 | **5** | financial\_info | Obj | \- | See Financial Info Output below |
 | **6** | gaming\_info | Obj | \- | See Gaming Info Output below |
-| **7** | alert | Bool | No |  |
+| **7** | tags | Obj | \- | See Station Tags Output below |
+| **8** | alert | Bool | No |  |
 
 Customer Data Output
 
@@ -483,6 +484,15 @@ Gaming Data Output
 | **10** | reactivation\_trigger | Str |  |  |
 | **11** | note | Str |  |  |
 
+Gaming Data Output
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | uuid | UUID | No |  |
+| **2** | station | Str | No |  |
+| **3** | vip\_tag | Str | Yes |  |
+| **4** | other\_tag | Str | Yes |  |
+
 ### Member Single \- PUT / PATCH {#member-single---put-/-patch}
 
 /crm-members/members/\<member\_uuid\>/ PUT  
@@ -495,6 +505,7 @@ Input
 | **1** | profile\_data | Obj | \- | See Profile Data Input below |
 | **2** | basic\_info | Obj | \- | See Basic Info Input below |
 | **3** | game\_info | Obj | \- | See Game Info Input below |
+| **4** | tags | Obj |  | See Station Tags Input below |
 
 Profile Data Input
 
@@ -532,6 +543,14 @@ Game Info Input
 | **9** | churn\_risk\_reason | Multiple Input | No | (Will have choices later) |
 | **10** | reactivation\_trigger | Multiple Input | No | (Will have choices later) |
 | **11** | note | Text | Yes |  |
+
+Game Info Input
+
+| \# | Property/Field | Data Type | Nullable | Description |
+| ----: | :---- | :---- | :---- | :---- |
+| **1** | station\_uuid | UUID | No |  |
+| **2** | vip\_tag | str | Yes |  |
+| **3** | other\_tag | Str Choice | Yes | SAME IP SAME ACCOUNT FAKE RECEIPT |
 
 ### Assign Member to PIC \- PATCH
 

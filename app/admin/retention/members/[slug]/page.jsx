@@ -18,6 +18,7 @@ const TAG_STYLES = {
   low:    { bg: "#fb3748", color: "#fbeed2" },
   active: { bg: "#84ebb4", color: "#00813c" },
   weekly: { bg: "#a4a4a4", color: "#141828" },
+  user:   { bg: "#fbeed2", color: "#9a6e10" },
 };
 
 const ACTIVE_BRANDS = ["KG", "AB", "EP", "LV", "UB", "N1"];
@@ -118,6 +119,12 @@ function inferTags(data) {
   if (game) tags.push({ label: game, kind: "game" });
   const priority = data?.priority;
   if (priority) tags.push({ label: priority, kind: priority === "Low" ? "low" : "active" });
+  const userTags = Array.isArray(data?.customer_data?.tags)
+    ? data.customer_data.tags
+    : Array.isArray(data?.profile_data?.tags)
+      ? data.profile_data.tags
+      : [];
+  userTags.filter(Boolean).forEach((label) => tags.push({ label, kind: "user" }));
   return tags;
 }
 
@@ -169,6 +176,45 @@ function walletTierName(tier) {
 }
 
 // Map GET response wallet_level (names) → PUT payload wallet_levels (UUIDs).
+function brandFromStationValue(value, stationList = []) {
+  const lookup = normalizeLookup(value);
+  if (!lookup) return "";
+  if (STATION_TO_BRAND[lookup]) return STATION_TO_BRAND[lookup];
+
+  const station = stationList.find((item) => {
+    if (item?.uuid && String(item.uuid).toLowerCase() === lookup) return true;
+    return stationCandidates(item).includes(lookup);
+  });
+  if (!station) return "";
+
+  return stationCandidates(station).map((candidate) => STATION_TO_BRAND[candidate]).find(Boolean) || stationName(station);
+}
+
+function normalizeStationTags(memberData, stationList = []) {
+  const raw = memberData?.tags;
+  const items = Array.isArray(raw) ? raw : raw && typeof raw === "object" ? [raw] : [];
+  return items
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const brand =
+        brandFromStationValue(item.station_uuid, stationList) ||
+        brandFromStationValue(item.station, stationList) ||
+        brandFromStationValue(item.station_name, stationList) ||
+        brandFromStationValue(item.Station, stationList) ||
+        brandFromStationValue(item.brand, stationList);
+      const tags = [
+        item.vip_tag,
+        item.other_tag,
+        item.tag,
+        item.name,
+        ...(Array.isArray(item.tags) ? item.tags : []),
+      ].filter(Boolean);
+      if (!brand || tags.length === 0) return null;
+      return { brand, tags };
+    })
+    .filter(Boolean);
+}
+
 function buildWalletLevels(memberData, walletVipTiers, stationList) {
   const raw = memberData?.customer_data?.wallet_levels || memberData?.customer_data?.wallet_level;
   if (!Array.isArray(raw)) return [];
@@ -355,6 +401,7 @@ export default function MemberProfilePage() {
   };
 
   const activeBrands = inferActiveBrands(data?.customer_data);
+  const stationTags = normalizeStationTags(data, stationList);
 
   const handleSaved = () => {
     setActiveModal(null);
@@ -467,6 +514,7 @@ export default function MemberProfilePage() {
       <ProfileHeader
         name={profileName}
         tags={inferTags(data)}
+        stationTags={stationTags}
         dateJoined={formatDateOnly(customer?.date_joined || data?.date_joined)}
         slug={memberUuid}
         activeBrands={activeBrands}
@@ -571,11 +619,11 @@ export default function MemberProfilePage() {
   );
 }
 
-function ProfileHeader({ name, tags, dateJoined, slug, activeBrands, alerted, onNoteOpen, onVipOpen, onAlertOpen, onAssignPicOpen, onUpdateBonus, bonusUpdating, onUpdateData, onSendBonusOpen, onAlertToggle }) {
+function ProfileHeader({ name, tags, stationTags, dateJoined, slug, activeBrands, alerted, onNoteOpen, onVipOpen, onAlertOpen, onAssignPicOpen, onUpdateBonus, bonusUpdating, onUpdateData, onSendBonusOpen, onAlertToggle }) {
   return (
-    <div className="flex flex-col gap-4 px-2 md:flex-row md:flex-wrap md:items-start md:justify-between md:gap-6">
-      <div className="flex flex-col gap-3">
-        <div className="flex items-start gap-2">
+    <div className="flex flex-col gap-3 px-2">
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-6">
+        <div className="flex min-w-0 flex-1 items-start gap-2">
           <div
             className="flex h-14 w-14 shrink-0 items-center justify-center overflow-clip rounded-full"
             style={{ backgroundImage: GRAD_GOLD }}
@@ -600,32 +648,64 @@ function ProfileHeader({ name, tags, dateJoined, slug, activeBrands, alerted, on
               >
                 {name}
               </h1>
-              <div className="flex flex-wrap items-center gap-2">
-                {tags.map((tag) => (
-                  <Tag key={tag.label} label={tag.label} kind={tag.kind} />
+              <div className="flex min-w-0 items-center gap-2 overflow-x-auto overflow-y-hidden pb-1">
+                {tags.map((tag, index) => (
+                  <Tag key={`${tag.kind}-${tag.label}-${index}`} label={tag.label} kind={tag.kind} />
                 ))}
               </div>
             </div>
           </div>
         </div>
-        <div className="flex flex-col gap-2">
-          <p className="text-[10px] font-normal leading-[15px] text-white capitalize">
-            Date Joined: {dateJoined}
-          </p>
-          <div className="flex items-center gap-2">
-            <Link
-              href={`/admin/retention/members/${slug}/edit`}
-              className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 transition hover:brightness-110"
-              style={{ backgroundImage: GRAD_GOLD }}
-            >
-              <EditIcon />
-              <span className="text-[12px] font-medium leading-[18px] text-[#141828]">Edit Profile</span>
-            </Link>
-            <MoreOptionsMenu onNoteOpen={onNoteOpen} onVipOpen={onVipOpen} onAlertOpen={onAlertOpen} onAssignPicOpen={onAssignPicOpen} onUpdateBonus={onUpdateBonus} bonusUpdating={bonusUpdating} onUpdateData={onUpdateData} onSendBonusOpen={onSendBonusOpen} onAlertToggle={onAlertToggle} alerted={alerted} />
-          </div>
+        <ActiveBrandsRow active={activeBrands} />
+      </div>
+      <StationTagRow stationTags={stationTags} />
+      <div className="flex flex-col gap-2">
+        <p className="text-[10px] font-normal leading-[15px] text-white capitalize">
+          Date Joined: {dateJoined}
+        </p>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/admin/retention/members/${slug}/edit`}
+            className="flex items-center justify-center gap-1 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 transition hover:brightness-110"
+            style={{ backgroundImage: GRAD_GOLD }}
+          >
+            <EditIcon />
+            <span className="text-[12px] font-medium leading-[18px] text-[#141828]">Edit Profile</span>
+          </Link>
+          <MoreOptionsMenu onNoteOpen={onNoteOpen} onVipOpen={onVipOpen} onAlertOpen={onAlertOpen} onAssignPicOpen={onAssignPicOpen} onUpdateBonus={onUpdateBonus} bonusUpdating={bonusUpdating} onUpdateData={onUpdateData} onSendBonusOpen={onSendBonusOpen} onAlertToggle={onAlertToggle} alerted={alerted} />
         </div>
       </div>
-      <ActiveBrandsRow active={activeBrands} />
+    </div>
+  );
+}
+
+function StationTagRow({ stationTags = [] }) {
+  if (!stationTags.length) return null;
+
+  return (
+    <div className="grid max-w-full grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+      {stationTags.map((item, index) => {
+        const colors = BRAND_COLORS[item.brand] || { bg: "#f2cb7a", text: "#141828", border: "#f2cb7a" };
+        return (
+          <div
+            key={`${item.brand}-${index}`}
+            className="grid h-[36px] min-w-0 grid-cols-[44px_1fr] items-center gap-2 rounded-[8px] border px-1.5 py-1"
+            style={{ borderColor: colors.border }}
+          >
+            <span
+              className="flex h-[26px] w-[38px] items-center justify-center rounded-[8px] text-[12px] font-semibold leading-[18px]"
+              style={{ backgroundColor: colors.bg, color: colors.text }}
+            >
+              {item.brand}
+            </span>
+            <div className="flex min-w-0 items-center gap-1.5 overflow-hidden">
+              {item.tags.map((label, tagIndex) => (
+                <Tag key={`${item.brand}-${label}-${tagIndex}`} label={label} kind={tagKindForStationLabel(label)} compact />
+              ))}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -633,7 +713,7 @@ function ProfileHeader({ name, tags, dateJoined, slug, activeBrands, alerted, on
 function ActiveBrandsRow({ active }) {
   const activeSet = new Set(active || []);
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
       <span className="text-[12px] font-medium leading-[18px] text-white whitespace-nowrap">
         Active on:
       </span>
@@ -1242,14 +1322,23 @@ function VipModal({ memberUuid, memberData, currentVipLabel, walletVipTiers, sta
   );
 }
 
-function Tag({ label, kind }) {
+function tagKindForStationLabel(label) {
+  const normalized = normalizeLookup(label);
+  if (normalized.includes("fake") || normalized.includes("same")) return "game";
+  return "vip";
+}
+
+function Tag({ label, kind, compact = false }) {
   const style = TAG_STYLES[kind] || TAG_STYLES.weekly;
   return (
     <span
-      className="flex h-[23px] items-center justify-center rounded-[12px] px-3 py-1 text-[12px] font-medium leading-[18px] whitespace-nowrap"
+      className={`flex min-w-0 items-center justify-center rounded-[12px] text-[12px] font-medium leading-[18px] whitespace-nowrap ${
+        compact ? "h-[22px] max-w-[112px] px-2.5 py-0.5" : "h-[23px] px-3 py-1"
+      }`}
       style={{ backgroundColor: style.bg, color: style.color }}
+      title={String(label)}
     >
-      {label}
+      <span className="truncate">{label}</span>
     </span>
   );
 }

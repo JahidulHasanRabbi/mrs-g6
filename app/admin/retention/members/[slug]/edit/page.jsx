@@ -43,7 +43,7 @@ const TAG_OPTIONS = {
   risk:                { kind: "risk",   options: ["Low", "Medium", "High"] },
   depositFreq:         { kind: "weekly", options: ["Daily", "Weekly", "Bi-Weekly", "Monthly", "Quarterly"] },
   status:              { kind: "active", options: ["Active", "Inactive", "Dormant", "Suspended"] },
-  hobby:               { kind: "hobby",  options: ["Gaming", "Reading", "Sports", "Music", "Travel", "Cooking", "Photography"] },
+  hobby:               { kind: "hobby",  options: ["Reading", "Cooking / Baking", "Travelling", "Music", "Gaming", "Sports", "Gardening", "Photography", "Art", "Crafting", "Watching Videos", "Dancing", "Hiking", "Writing", "Animal Care"] },
   providerPref:        { kind: "hobby",  options: ["Pragmatic", "Microgaming", "NetEnt", "Playtech", "PG Soft", "Evolution"] },
   depositTrigger:      { kind: "hobby",  options: ["Bonus", "Promotion", "FOMO", "Habit", "Tournament"] },
   churnRiskReason:     { kind: "hobby",  options: ["Any", "Lost Interest", "Better Offer", "Personal Reason", "Service Issue"] },
@@ -463,7 +463,6 @@ function formToApi(form, vipTiers = [], originalData = null) {
       home_address: form.homeAddress || undefined,
       marital_status: labelToInt("marital", form.marital),
       job: form.job || undefined,
-      hobby: labelsToInts("hobby", form.hobby),
       payment_method: paymentMethod,
     },
     game_info: {
@@ -1420,7 +1419,7 @@ function BasicInfoStep({ form, setField, vipTiers = [], walletVipTiers = [], sta
           <TextInput value={form.job} onChange={(v) => setField("job", v)} />
         </FieldWrapper>
         <FieldWrapper label="Hobby">
-          <MultiTagSelectField value={form.hobby} onChange={(v) => setField("hobby", v)} {...TAG_OPTIONS.hobby} />
+          <MultiTagSelectField value={form.hobby} onChange={(v) => setField("hobby", v.slice(-1))} {...TAG_OPTIONS.hobby} />
         </FieldWrapper>
       </div>
     </>
