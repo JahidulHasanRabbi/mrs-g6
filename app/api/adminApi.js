@@ -1060,3 +1060,56 @@ export async function createReferrerDummyPlayer(data) {
 export async function updateReferrerDummyPlayer(uuid, data) {
   return await apiRequest(ENDPOINTS.REFERRER_LEADERBOARD.DUMMY_PLAYER(uuid), { method: 'PUT', body: data }, true, 'admin');
 }
+
+// ---------------------------------------------------------------------------
+// Withdrawal Leaderboard - Banners CRUD
+// ---------------------------------------------------------------------------
+export async function getWithdrawalBanners(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.WITHDRAWAL_LEADERBOARD.BANNERS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+export async function getWithdrawalBanner(uuid) {
+  return await apiRequest(ENDPOINTS.WITHDRAWAL_LEADERBOARD.BANNER(uuid), { method: 'GET' }, true, 'admin');
+}
+export async function createWithdrawalBanner(data) {
+  return await apiRequest(ENDPOINTS.WITHDRAWAL_LEADERBOARD.BANNERS, { method: 'POST', body: data }, true, 'admin');
+}
+export async function updateWithdrawalBanner(uuid, data) {
+  return await apiRequest(ENDPOINTS.WITHDRAWAL_LEADERBOARD.BANNER(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+export async function archiveWithdrawalBanner(uuid) {
+  return await apiRequest(ENDPOINTS.WITHDRAWAL_LEADERBOARD.BANNER_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
+// Withdrawal Leaderboard - Reward Items CRUD
+export async function getWithdrawalRewardItems(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.WITHDRAWAL_LEADERBOARD.REWARD_ITEMS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+export async function getWithdrawalRewardItem(uuid) {
+  return await apiRequest(ENDPOINTS.WITHDRAWAL_LEADERBOARD.REWARD_ITEM(uuid), { method: 'GET' }, true, 'admin');
+}
+export async function createWithdrawalRewardItem(data) {
+  return await apiRequest(ENDPOINTS.WITHDRAWAL_LEADERBOARD.REWARD_ITEMS, { method: 'POST', body: data }, true, 'admin');
+}
+export async function updateWithdrawalRewardItem(uuid, data) {
+  return await apiRequest(ENDPOINTS.WITHDRAWAL_LEADERBOARD.REWARD_ITEM(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+export async function archiveWithdrawalRewardItem(uuid) {
+  return await apiRequest(ENDPOINTS.WITHDRAWAL_LEADERBOARD.REWARD_ITEM_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
+// Withdrawal Leaderboard - Dummy Players CRUD
+export async function getWithdrawalDummyPlayers(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.WITHDRAWAL_LEADERBOARD.DUMMY_PLAYERS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+export async function getWithdrawalDummyPlayer(uuid) {
+  return await apiRequest(ENDPOINTS.WITHDRAWAL_LEADERBOARD.DUMMY_PLAYER(uuid), { method: 'GET' }, true, 'admin');
+}
+export async function createWithdrawalDummyPlayer(data) {
+  return await apiRequest(ENDPOINTS.WITHDRAWAL_LEADERBOARD.DUMMY_PLAYERS, { method: 'POST', body: data }, true, 'admin');
+}
+export async function updateWithdrawalDummyPlayer(uuid, data) {
+  return await apiRequest(ENDPOINTS.WITHDRAWAL_LEADERBOARD.DUMMY_PLAYER(uuid), { method: 'PUT', body: data }, true, 'admin');
+}

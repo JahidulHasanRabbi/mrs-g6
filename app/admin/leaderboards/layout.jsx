@@ -6,6 +6,7 @@ function resolveTitle(pathname) {
   if (!pathname) return "Deposit";
   if (pathname.startsWith("/admin/leaderboards/deposit")) return "Deposit";
   if (pathname.startsWith("/admin/leaderboards/referrer")) return "Referrer";
+  if (pathname.startsWith("/admin/leaderboards/withdrawal")) return "Withdrawal";
   return "Deposit";
 }
 

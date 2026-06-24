@@ -195,6 +195,16 @@ export const ENDPOINTS = {
     DUMMY_PLAYERS: '/leaderboard-referrer/dummy-players/',
     DUMMY_PLAYER: (uuid) => `/leaderboard-referrer/dummy-players/${uuid}/`,
   },
+  WITHDRAWAL_LEADERBOARD: {
+    BANNERS: '/leaderboard-withdrawal/banners/',
+    BANNER: (uuid) => `/leaderboard-withdrawal/banners/${uuid}/`,
+    BANNER_ARCHIVE: (uuid) => `/leaderboard-withdrawal/banners/${uuid}/archive/`,
+    REWARD_ITEMS: '/leaderboard-withdrawal/reward-items/',
+    REWARD_ITEM: (uuid) => `/leaderboard-withdrawal/reward-items/${uuid}/`,
+    REWARD_ITEM_ARCHIVE: (uuid) => `/leaderboard-withdrawal/reward-items/${uuid}/archive/`,
+    DUMMY_PLAYERS: '/leaderboard-withdrawal/dummy-players/',
+    DUMMY_PLAYER: (uuid) => `/leaderboard-withdrawal/dummy-players/${uuid}/`,
+  },
   CRM: {
     // User Access Panel
     USERS: '/admins/users/',

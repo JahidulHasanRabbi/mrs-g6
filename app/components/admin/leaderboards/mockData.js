@@ -37,6 +37,13 @@ export const MOCK_REFERRER_PLAYERS = [
   { uuid: "mock-p4", player_name: "Pele_fan", rank: 720, new_member: 4200 },
 ];
 
+export const MOCK_WITHDRAWAL_PLAYERS = [
+  { uuid: "mock-p1", player_name: "Messi_fan", rank: 560, total_withdrawal: 3096 },
+  { uuid: "mock-p2", player_name: "Ronaldo_fan", rank: 450, total_withdrawal: 2785 },
+  { uuid: "mock-p3", player_name: "Messi_fan", rank: 560, total_withdrawal: 3096 },
+  { uuid: "mock-p4", player_name: "Pele_fan", rank: 720, total_withdrawal: 4200 },
+];
+
 // True for placeholder rows that have no backend record to fetch.
 export function isMockUuid(uuid) {
   return typeof uuid === "string" && uuid.startsWith("mock-");

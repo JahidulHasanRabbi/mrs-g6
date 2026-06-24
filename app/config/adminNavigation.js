@@ -91,5 +91,11 @@ export const ADMIN_NAVIGATION = [
     path: '/admin/leaderboards/referrer',
     enabled: true,
     id: 'lb-referrer'
+  },
+  {
+    label: 'Withdrawal Leaderboard',
+    path: '/admin/leaderboards/withdrawal',
+    enabled: true,
+    id: 'lb-withdrawal'
   }
 ];
