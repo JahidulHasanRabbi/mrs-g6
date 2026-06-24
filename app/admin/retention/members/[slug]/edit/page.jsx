@@ -35,6 +35,8 @@ const TAG_PALETTE = {
 // whether it's rendered in the closed pill or in the dropdown options.
 const statusKind = (label) => `status:${label}`;
 
+const HOBBY_OPTIONS = ["Reading", "Cooking / Baking", "Travelling", "Music", "Gaming", "Sports", "Gardening", "Photography", "Art", "Crafting", "Watching Videos", "Dancing", "Hiking", "Writing", "Animal Care"];
+
 // Available options for each tag-pill field. The `kind` controls the chip
 // color via TAG_PALETTE above.
 const TAG_OPTIONS = {
@@ -43,11 +45,31 @@ const TAG_OPTIONS = {
   risk:                { kind: "risk",   options: ["Low", "Medium", "High"] },
   depositFreq:         { kind: "weekly", options: ["Daily", "Weekly", "Bi-Weekly", "Monthly", "Quarterly"] },
   status:              { kind: "active", options: ["Active", "Inactive", "Dormant", "Suspended"] },
-  hobby:               { kind: "hobby",  options: ["Reading", "Cooking / Baking", "Travelling", "Music", "Gaming", "Sports", "Gardening", "Photography", "Art", "Crafting", "Watching Videos", "Dancing", "Hiking", "Writing", "Animal Care"] },
+  hobby:               { kind: "hobby",  options: HOBBY_OPTIONS },
   providerPref:        { kind: "hobby",  options: ["Pragmatic", "Microgaming", "NetEnt", "Playtech", "PG Soft", "Evolution"] },
   depositTrigger:      { kind: "hobby",  options: ["Bonus", "Promotion", "FOMO", "Habit", "Tournament"] },
   churnRiskReason:     { kind: "hobby",  options: ["Any", "Lost Interest", "Better Offer", "Personal Reason", "Service Issue"] },
   reactivationTrigger: { kind: "hobby",  options: ["Any", "Bonus", "Tournament", "VIP Upgrade", "Personal Outreach"] },
+};
+
+const BRAND_TAG_OTHER_OPTIONS = ["SAME IP", "SAME ACCOUNT", "FAKE RECEIPT"];
+
+const STATION_CODE_BY_NAME = {
+  n1gang: "N1",
+  kgame99: "KG",
+  acebet77: "AB",
+  ep369: "EP",
+  ubetclub: "UB",
+  lv918: "LV",
+};
+
+const STATION_NAME_BY_CODE = {
+  N1: "n1gang",
+  KG: "kgame99",
+  AB: "acebet77",
+  EP: "ep369",
+  UB: "ubetclub",
+  LV: "lv918",
 };
 
 const SELECT_OPTIONS = {
@@ -145,6 +167,7 @@ function getExistingVipUuid(data) {
 function normalizeListResponse(response) {
   if (Array.isArray(response)) return response;
   if (Array.isArray(response?.results)) return response.results;
+  if (Array.isArray(response?.value)) return response.value;
   if (Array.isArray(response?.data)) return response.data;
   if (Array.isArray(response?.data?.results)) return response.data.results;
   return [];
@@ -163,6 +186,29 @@ function stationCandidates(station) {
     station?.code,
     station?.short_code,
   ].map(normalizeLabel).filter(Boolean);
+}
+
+function stationCodeFromStation(station) {
+  return stationCandidates(station).map((candidate) => STATION_CODE_BY_NAME[candidate]).find(Boolean) || "";
+}
+
+function stationCodeFromValue(value, stationList = []) {
+  const raw = String(value || "").trim();
+  const upper = raw.toUpperCase();
+  if (STATION_NAME_BY_CODE[upper]) return upper;
+  const normalized = normalizeLabel(raw);
+  if (STATION_CODE_BY_NAME[normalized]) return STATION_CODE_BY_NAME[normalized];
+  const station = (stationList || []).find((item) => {
+    if (item?.uuid && String(item.uuid).toLowerCase() === raw.toLowerCase()) return true;
+    return stationCandidates(item).includes(normalized);
+  });
+  return station ? stationCodeFromStation(station) : "";
+}
+
+function stationUuidFromCode(code, stationList = []) {
+  const target = STATION_NAME_BY_CODE[String(code || "").toUpperCase()];
+  const station = (stationList || []).find((item) => stationCandidates(item).includes(target));
+  return station?.uuid || "";
 }
 
 function walletTierStationCandidates(tier) {
@@ -217,6 +263,50 @@ function textToList(value) {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function uniqueList(list = []) {
+  const seen = new Set();
+  return list.filter((item) => {
+    const label = String(item || "").trim();
+    if (!label) return false;
+    const key = normalizeLabel(label);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function normalizeFreeTags(value) {
+  return uniqueList(Array.isArray(value) ? value : textToList(value));
+}
+
+function stationTagsToForm(data, stationList = []) {
+  const raw = Array.isArray(data?.tags) ? data.tags : [];
+  return raw
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const code = stationCodeFromValue(item.station_uuid || item.station || item.station_name || item.Station || item.brand, stationList);
+      const stationUuid = item.station_uuid || stationUuidFromCode(code, stationList);
+      if (!stationUuid && !code) return null;
+      return {
+        station_uuid: stationUuid,
+        station_code: code,
+        vip_tags: normalizeFreeTags([item.vip_tag]),
+        other_tag: item.other_tag || "",
+      };
+    })
+    .filter(Boolean);
+}
+
+function stationTagsToPayload(stationTags = []) {
+  return (stationTags || [])
+    .map((row) => ({
+      station_uuid: row.station_uuid,
+      vip_tag: row.vip_tags?.[0] || "",
+      other_tag: row.other_tag || "",
+    }))
+    .filter((row) => row.station_uuid && (row.vip_tag || row.other_tag));
 }
 
 function hasDisplayValue(value) {
@@ -282,7 +372,8 @@ function emptyForm() {
     depositFreq: null,
     status: null,
     walletLevels: {},
-    tagsText: "",
+    tags: [],
+    stationTags: [],
 
     fullName: "",
     phone: "",
@@ -342,6 +433,14 @@ function labelsToInts(enumKey, list) {
     .filter((v) => v !== undefined);
 }
 
+function enumValueToLabel(enumKey, value) {
+  if (value === null || value === undefined || value === "") return "";
+  if (typeof value === "number" || /^\d+$/.test(String(value))) {
+    return ENUM_INDEX[enumKey]?.[Number(value) - 1] || "";
+  }
+  return String(value);
+}
+
 // Hydrate the form from the GET response. Tag-style fields wrap the label in
 // `{ kind, label }` to match TagSelectField; selects/inputs are plain strings.
 function apiToForm(data, vipTiers = [], walletVipTiers = [], stationList = []) {
@@ -384,7 +483,8 @@ function apiToForm(data, vipTiers = [], walletVipTiers = [], stationList = []) {
     risk: tagFor("risk", g.risk_style),
     depositFreq: tagFor("weekly", g.deposit_frequency_style),
     walletLevels: buildWalletLevelSelections(data, walletVipTiers, stationList),
-    tagsText: listToText(data?.profile_data?.tags || c.tags),
+    tags: normalizeFreeTags(data?.profile_data?.tags || c.tags),
+    stationTags: stationTagsToForm(data, stationList),
 
     // customer_data returns documented string values (e.g. gender="Male").
     // basic_info GET fields are undocumented and likely return the same
@@ -399,7 +499,7 @@ function apiToForm(data, vipTiers = [], walletVipTiers = [], stationList = []) {
     homeAddress: c.home_address || b.home_address || "",
     marital: c.marital_status || b.marital_status || "",
     job: c.job || b.job || "",
-    hobby: tagListFor("hobby", c.hobby || b.hobby),
+    hobby: tagListFor("hobby", enumValueToLabel("hobby", c.hobby || b.hobby)),
 
     totalSales: f.total_sales ?? "",
     totalWithdrawal: f.total_withdrawal ?? "",
@@ -437,7 +537,8 @@ function formToApi(form, vipTiers = [], originalData = null) {
   const existingProfile = originalData?.profile_data || {};
   const existingWalletLevels = existingProfile.wallet_levels;
   const walletLevels = walletLevelsToPayload(form.walletLevels);
-  const tags = textToList(form.tagsText);
+  const tags = normalizeFreeTags(form.tags);
+  const stationTags = stationTagsToPayload(form.stationTags);
 
   // Doc 8 removed these from profile_data. Keep the old mapping here as a
   // reference only in case backend reintroduces the fields later.
@@ -463,6 +564,7 @@ function formToApi(form, vipTiers = [], originalData = null) {
       home_address: form.homeAddress || undefined,
       marital_status: labelToInt("marital", form.marital),
       job: form.job || undefined,
+      hobby: labelToInt("hobby", form.hobby?.[0]?.label),
       payment_method: paymentMethod,
     },
     game_info: {
@@ -478,6 +580,7 @@ function formToApi(form, vipTiers = [], originalData = null) {
       reactivation_trigger: labelsToInts("reactivationTrigger", form.reactivationTrigger),
       note: form.note || undefined,
     },
+    tags: stationTags,
   };
 }
 
@@ -1323,6 +1426,121 @@ function MultiTagSelectField({ value = [], onChange, kind, options, kindFor }) {
   );
 }
 
+function FreeTagInput({ value = [], onChange, maxTags }) {
+  const [draft, setDraft] = useState("");
+
+  const commit = (raw) => {
+    const nextTags = String(raw || "")
+      .split(/[\s,]+/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+    if (!nextTags.length) return;
+    const merged = uniqueList([...(value || []), ...nextTags]);
+    onChange(maxTags ? merged.slice(-maxTags) : merged);
+  };
+
+  const remove = (tag) => onChange((value || []).filter((item) => item !== tag));
+
+  return (
+    <div className="flex min-h-[44px] flex-wrap items-center gap-2 rounded-[8px] border border-[#fbeed2] px-3 py-2 transition focus-within:border-[#f2cb7a]">
+      {(value || []).map((tag) => (
+        <span
+          key={tag}
+          className="inline-flex h-[24px] items-center gap-1 rounded-[12px] bg-[#f6dda6] px-3 text-[12px] font-semibold leading-[18px] text-[#6f4600]"
+        >
+          {tag}
+          <button
+            type="button"
+            aria-label={`Remove ${tag}`}
+            onClick={() => remove(tag)}
+            className="flex h-3 w-3 items-center justify-center"
+          >
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </span>
+      ))}
+      <input
+        value={draft}
+        onChange={(e) => {
+          const next = e.target.value;
+          if (/,$/.test(next)) {
+            commit(next);
+            setDraft("");
+          } else {
+            setDraft(next);
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === "Tab" || e.key === " ") {
+            if (draft.trim()) {
+              e.preventDefault();
+              commit(draft);
+              setDraft("");
+            }
+          } else if (e.key === "Backspace" && !draft && value?.length) {
+            onChange(value.slice(0, -1));
+          }
+        }}
+        onBlur={() => {
+          if (draft.trim()) {
+            commit(draft);
+            setDraft("");
+          }
+        }}
+        placeholder={(value || []).length ? "" : "Type and press space..."}
+        className="min-w-[120px] flex-1 bg-transparent text-[12px] font-medium leading-[18px] text-white outline-none placeholder:text-white/40"
+      />
+    </div>
+  );
+}
+
+function BrandTagsFields({ value = [], onChange, stationList = [] }) {
+  const stationOptions = (stationList || [])
+    .filter((station) => station?.uuid)
+    .map((station) => ({ value: station.uuid, label: stationCodeFromStation(station) }))
+    .filter((station) => station.label);
+
+  const updateRow = (index, patch) => {
+    onChange(value.map((row, idx) => idx === index ? { ...row, ...patch } : row));
+  };
+  const removeRow = (index) => onChange(value.filter((_, idx) => idx !== index));
+
+  return (
+    <div className="flex flex-col gap-2">
+      {(value || []).map((row, index) => (
+        <div key={`${row.station_uuid || "tag"}-${index}`} className="grid grid-cols-1 items-center gap-2 rounded-[8px] border border-[#f2cb7a]/35 px-2 py-2 sm:grid-cols-[48px_1fr] xl:grid-cols-[48px_minmax(160px,1fr)_160px_34px]">
+          <span className="flex h-[34px] items-center justify-center rounded-[8px] border border-[#f2cb7a]/50 bg-[#f2cb7a]/10 px-2 text-[12px] font-semibold leading-[18px] text-[#f6dda6]">
+            {row.station_code || stationOptions.find((item) => item.value === row.station_uuid)?.label || "Brand"}
+          </span>
+          <TextInput
+            value={row.vip_tags?.[0] || ""}
+            onChange={(vipTag) => updateRow(index, { vip_tags: vipTag.trim() ? [vipTag] : [] })}
+          />
+          <SelectInput
+            value={row.other_tag}
+            onChange={(other_tag) => updateRow(index, { other_tag })}
+            options={BRAND_TAG_OTHER_OPTIONS}
+          />
+          <button
+            type="button"
+            aria-label="Remove brand tag"
+            onClick={() => removeRow(index)}
+            className="flex h-[44px] w-[34px] items-center justify-center rounded-[8px] border border-[#d00416] text-[#d00416] transition hover:bg-[#d00416]/10"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function UserImage({ value, onChange }) {
   return (
     <div className="flex flex-col gap-2">
@@ -1375,7 +1593,7 @@ function BasicInfoStep({ form, setField, vipTiers = [], walletVipTiers = [], sta
           <TagSelectField value={form.vip} onChange={handleVipChange} kind={TAG_OPTIONS.vip.kind} options={vipOptions} />
         </FieldWrapper>
         <FieldWrapper label="Tags" span={2}>
-          <TextInput value={form.tagsText} onChange={(v) => setField("tagsText", v)} />
+          <FreeTagInput value={form.tags} onChange={(tags) => setField("tags", tags)} />
         </FieldWrapper>
         <div className="sm:col-span-2 xl:col-span-3">
           <FieldWrapper label="Wallet VIP">
@@ -1388,6 +1606,13 @@ function BasicInfoStep({ form, setField, vipTiers = [], walletVipTiers = [], sta
           </FieldWrapper>
         </div>
       </div>
+
+      <SectionTitle>Brand Tags</SectionTitle>
+      <BrandTagsFields
+        value={form.stationTags}
+        onChange={(stationTags) => setField("stationTags", stationTags)}
+        stationList={stationList}
+      />
 
       <SectionTitle>Basic Info</SectionTitle>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-10 gap-y-6">
