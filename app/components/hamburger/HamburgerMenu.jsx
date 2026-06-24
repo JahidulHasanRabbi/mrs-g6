@@ -156,12 +156,30 @@ function HamburgerMenu({ isOpen, onClose, side = "left" }) {
                   {/* Standalone items between Mini Game and Stay Connected */}
                   <div className="space-y-1 mb-3 pl-2">
                     {MENU_CONFIG.mainItems.map((item, index) => (
-                      <MenuItem
-                        key={index}
-                        {...item}
-                        onClose={onClose}
-                        onAction={handleMenuAction}
-                      />
+                      item.children ? (
+                        <MenuSection
+                          key={index}
+                          title={item.label}
+                          icon={item.icon}
+                          defaultOpen={false}
+                        >
+                          {item.children.map((child, childIndex) => (
+                            <MenuItem
+                              key={childIndex}
+                              {...child}
+                              onClose={onClose}
+                              onAction={handleMenuAction}
+                            />
+                          ))}
+                        </MenuSection>
+                      ) : (
+                        <MenuItem
+                          key={index}
+                          {...item}
+                          onClose={onClose}
+                          onAction={handleMenuAction}
+                        />
+                      )
                     ))}
                   </div>
 

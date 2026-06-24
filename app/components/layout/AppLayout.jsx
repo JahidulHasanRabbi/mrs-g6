@@ -37,7 +37,8 @@ export default function AppLayout({ children }) {
     pathname === "/penalty-kick" || pathname?.startsWith("/penalty-kick/");
   const isSmashEggPage = pathname === "/smash-egg";
   const isMissionsPage = pathname === "/missions";
-  const isLeaderboardPage = pathname === "/leaderboard";
+  const isLeaderboardPage =
+    pathname === "/leaderboard" || pathname?.startsWith("/leaderboard/");
 
   // Don't show layout on home page
   if (isHomePage) {

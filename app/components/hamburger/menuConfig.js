@@ -15,7 +15,17 @@ export const MENU_CONFIG = {
     ],
   },
   mainItems: [
-    { icon: "/assets/images/leaderboard-icon.png", label: "Leaderboard", link: "/leaderboard" },
+    {
+      icon: "/assets/images/leaderboard-icon.png",
+      label: "Leaderboard",
+      link: "/leaderboard",
+      children: [
+        { icon: "/assets/images/leaderboard-icon.png", label: "WorldCup Leaderboard", link: "/leaderboard" },
+        { icon: "/assets/leaderboard/wallet-icon.svg", label: "Top 20 Deposit", link: "/leaderboard/top-20?tab=deposit" },
+        { icon: "/assets/leaderboard/withdrawal-icon.svg", label: "Top 20 Withdraw", link: "/leaderboard/top-20?tab=withdrawal" },
+        { icon: "/assets/leaderboard/referrer-icon.svg", label: "Top 20 Referral", link: "/leaderboard/top-20?tab=referrer" },
+      ],
+    },
     { icon: "/assets/penalty-kick/icons/flag-gold.svg", label: "Missions", link: "/missions" },
     { icon: "/assets/images/vip-membership-icon.png", label: "VIP Membership", link: "/vip" },
     { icon: "/assets/images/pagcor-mart-icon.png", label: "Mart", link: "/mart" },
