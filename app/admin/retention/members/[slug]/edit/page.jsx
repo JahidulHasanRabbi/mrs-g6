@@ -227,6 +227,17 @@ function walletTierName(tier) {
   return tier?.tier_name || tier?.name || tier?.level || tier?.vip_level || tier?.title || "";
 }
 
+function walletVipNamesForStation(stationUuid, stationList = [], walletVipTiers = []) {
+  const station = (stationList || []).find((item) => item?.uuid === stationUuid);
+  if (!station) return [];
+  const stationKeys = stationCandidates(station);
+  return uniqueList(
+    (walletVipTiers || [])
+      .filter((tier) => stationKeys.some((candidate) => walletTierStationCandidates(tier).includes(candidate)))
+      .map(walletTierName)
+  );
+}
+
 function buildWalletLevelSelections(data, walletVipTiers = [], stationList = []) {
   const raw = data?.customer_data?.wallet_levels || data?.customer_data?.wallet_level || data?.profile_data?.wallet_levels;
   if (!Array.isArray(raw)) return {};
@@ -1497,7 +1508,7 @@ function FreeTagInput({ value = [], onChange, maxTags }) {
   );
 }
 
-function BrandTagsFields({ value = [], onChange, stationList = [] }) {
+function BrandTagsFields({ value = [], onChange, stationList = [], walletVipTiers = [] }) {
   const stationOptions = (stationList || [])
     .filter((station) => station?.uuid)
     .map((station) => ({ value: station.uuid, label: stationCodeFromStation(station) }))
@@ -1510,33 +1521,40 @@ function BrandTagsFields({ value = [], onChange, stationList = [] }) {
 
   return (
     <div className="flex flex-col gap-2">
-      {(value || []).map((row, index) => (
-        <div key={`${row.station_uuid || "tag"}-${index}`} className="grid grid-cols-1 items-center gap-2 rounded-[8px] border border-[#f2cb7a]/35 px-2 py-2 sm:grid-cols-[48px_1fr] xl:grid-cols-[48px_minmax(160px,1fr)_160px_34px]">
-          <span className="flex h-[34px] items-center justify-center rounded-[8px] border border-[#f2cb7a]/50 bg-[#f2cb7a]/10 px-2 text-[12px] font-semibold leading-[18px] text-[#f6dda6]">
-            {row.station_code || stationOptions.find((item) => item.value === row.station_uuid)?.label || "Brand"}
-          </span>
-          <TextInput
-            value={row.vip_tags?.[0] || ""}
-            onChange={(vipTag) => updateRow(index, { vip_tags: vipTag.trim() ? [vipTag] : [] })}
-          />
-          <SelectInput
-            value={row.other_tag}
-            onChange={(other_tag) => updateRow(index, { other_tag })}
-            options={BRAND_TAG_OTHER_OPTIONS}
-          />
-          <button
-            type="button"
-            aria-label="Remove brand tag"
-            onClick={() => removeRow(index)}
-            className="flex h-[44px] w-[34px] items-center justify-center rounded-[8px] border border-[#d00416] text-[#d00416] transition hover:bg-[#d00416]/10"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
-      ))}
+      {(value || []).map((row, index) => {
+        const vipOptions = walletVipNamesForStation(row.station_uuid, stationList, walletVipTiers)
+          .map((name) => ({ value: name, label: name }));
+        return (
+          <div key={`${row.station_uuid || "tag"}-${index}`} className="grid grid-cols-1 items-center gap-2 rounded-[8px] border border-[#f2cb7a]/35 px-2 py-2 sm:grid-cols-[48px_1fr] xl:grid-cols-[48px_minmax(160px,1fr)_160px_34px]">
+            <span className="flex h-[34px] items-center justify-center rounded-[8px] border border-[#f2cb7a]/50 bg-[#f2cb7a]/10 px-2 text-[12px] font-semibold leading-[18px] text-[#f6dda6]">
+              {row.station_code || stationOptions.find((item) => item.value === row.station_uuid)?.label || "Brand"}
+            </span>
+            <ObjectSelectInput
+              value={row.vip_tags?.[0] || ""}
+              onChange={(vipTag) => updateRow(index, { vip_tags: vipTag ? [vipTag] : [] })}
+              disabled={!vipOptions.length}
+              placeholder={vipOptions.length ? "Select VIP..." : "No wallet VIP"}
+              options={vipOptions}
+            />
+            <SelectInput
+              value={row.other_tag}
+              onChange={(other_tag) => updateRow(index, { other_tag })}
+              options={BRAND_TAG_OTHER_OPTIONS}
+            />
+            <button
+              type="button"
+              aria-label="Remove brand tag"
+              onClick={() => removeRow(index)}
+              className="flex h-[44px] w-[34px] items-center justify-center rounded-[8px] border border-[#d00416] text-[#d00416] transition hover:bg-[#d00416]/10"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -1612,6 +1630,7 @@ function BasicInfoStep({ form, setField, vipTiers = [], walletVipTiers = [], sta
         value={form.stationTags}
         onChange={(stationTags) => setField("stationTags", stationTags)}
         stationList={stationList}
+        walletVipTiers={walletVipTiers}
       />
 
       <SectionTitle>Basic Info</SectionTitle>
