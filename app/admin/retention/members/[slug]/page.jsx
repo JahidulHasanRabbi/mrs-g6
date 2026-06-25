@@ -10,7 +10,7 @@ import {
   FollowUpCreateModal,
 } from "../../../../components/admin/retention/FollowUpComponents";
 import { assignCrmMemberToPic, getCrmFollowUps, getCrmMemberSingle, getCrmUsers, patchCrmMember, patchCrmMemberAlert, patchCrmMemberFollowUp, refreshCrmMember, sendCrmMemberBonus, updateCrmMemberData } from "../../../../api/crmApi";
-import { getVipTierList, getWalletVipTiers, getStationList, getPromotionsByStation } from "../../../../api/adminApi";
+import { getVipTierList, getWalletVipTiers, getStationList } from "../../../../api/adminApi";
 
 const TAG_STYLES = {
   vip:    { bg: "#d9acff", color: "#8800fb" },
@@ -1064,80 +1064,35 @@ function AssignPicModal({ memberUuid, currentPic, onClose, onSaved }) {
   );
 }
 
-function flattenBonusOptions(response) {
-  const groups = normalizeListResponse(response);
-  const out = [];
-  for (const group of groups) {
-    const promos = Array.isArray(group?.promotions) ? group.promotions : Array.isArray(group?.promotion) ? group.promotion : [];
-    for (const promo of promos) {
-      const code = promo?.code;
-      if (code === null || code === undefined || code === "") continue;
-      out.push({
-        value: String(code),
-        label: promo?.name || group?.type || `Bonus ${code}`,
-        type: group?.type || "",
-      });
-    }
-  }
-  return out;
-}
-
-
-// Send Bonus (#12): pick a bonus (and station, if member is active on more
-// than one), Confirm → sends to the member in NS.
+// Send Bonus (#12): always a manual bonus — enter an amount (and pick a
+// station, if the member is active on more than one), Confirm → sends to the
+// member in NS. Per client, the `bonus` field carries the amount given, not a
+// chosen promotion (promotion selection was removed).
 function SendBonusModal({ memberUuid, memberName, stations, onClose, onResult }) {
-  const [selected, setSelected] = useState("");
+  const [amount, setAmount] = useState("");
   const [stationUuid, setStationUuid] = useState(stations?.length === 1 ? stations[0].uuid : "");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
-  const [bonusOptions, setBonusOptions] = useState([]);
-  const [bonusLoading, setBonusLoading] = useState(false);
 
-  useEffect(() => {
-    if (!stationUuid) {
-      setBonusOptions([]);
-      setSelected("");
-      return;
-    }
-
-    let cancelled = false;
-    setBonusLoading(true);
-    setError("");
-    getPromotionsByStation(stationUuid)
-      .then((res) => {
-        if (cancelled) return;
-        const options = flattenBonusOptions(res);
-        setBonusOptions(options);
-        setSelected((current) => options.some((option) => option.value === current) ? current : "");
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        console.error("[send-bonus] promotion list failed", err);
-        setBonusOptions([]);
-        setSelected("");
-        setError("Failed to load promotions for this station.");
-      })
-      .finally(() => { if (!cancelled) setBonusLoading(false); });
-
-    return () => { cancelled = true; };
-  }, [stationUuid]);
+  const numericAmount = parseFloat(amount);
+  const canSubmit = Boolean(stationUuid) && amount.trim() !== "" && !Number.isNaN(numericAmount) && numericAmount > 0;
 
   const handleConfirm = async () => {
-    if (!selected || !stationUuid || sending) return;
+    if (!canSubmit || sending) return;
     setSending(true);
     setError("");
     try {
-      const res = await sendCrmMemberBonus(memberUuid, { bonus: selected, station_uuid: stationUuid });
+      const res = await sendCrmMemberBonus(memberUuid, { bonus: amount.trim(), station_uuid: stationUuid });
       if (res?.status === "ERROR") {
         setError(res?.error_message || res?.message || "Failed to send bonus. Please try again.");
         setSending(false);
         return;
       }
-      const bonus = bonusOptions.find((item) => item.value === selected);
+      const formatted = numericAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       onResult?.({
         status: "success",
         title: "Bonus Sent",
-        message: `${bonus?.label || `RM ${selected} Bonus`} has been sent to ${memberName} in NS.`,
+        message: `RM ${formatted} bonus has been sent to ${memberName} in NS.`,
       });
     } catch (err) {
       console.error("[send-bonus] failed", err);
@@ -1150,7 +1105,7 @@ function SendBonusModal({ memberUuid, memberName, stations, onClose, onResult })
   return (
     <ModalOverlay onClose={onClose}>
       <ModalTitle>Send Bonus</ModalTitle>
-      <p className="mb-3 text-[12px] text-white/60">Choose a bonus to send to {memberName} in NS.</p>
+      <p className="mb-3 text-[12px] text-white/60">Enter a bonus amount to send to {memberName} in NS.</p>
       {stations?.length > 1 ? (
         <div className="mb-3">
           <label className="mb-1 block text-[12px] font-medium text-[#fbeed2]">Brand / Station</label>
@@ -1166,29 +1121,18 @@ function SendBonusModal({ memberUuid, memberName, stations, onClose, onResult })
           </select>
         </div>
       ) : null}
-      <div className="flex max-h-[280px] flex-col gap-2 overflow-y-auto pr-1">
-        {bonusLoading ? <p className="rounded-[8px] border border-[#fbeed2]/30 px-4 py-3 text-[12px] text-white/40">Loading promotions...</p> : null}
-        {bonusOptions.map((bonus) => {
-          const active = selected === bonus.value;
-          return (
-            <button
-              key={bonus.value}
-              type="button"
-              onClick={() => setSelected(bonus.value)}
-              className={`flex items-center justify-between rounded-[8px] border px-4 py-3 text-left text-[13px] font-medium transition ${
-                active ? "border-[#f2cb7a] bg-[#f2cb7a]/10 text-white" : "border-[#fbeed2]/30 text-[#f6dda6] hover:border-[#f2cb7a]"
-              }`}
-            >
-              {bonus.label}
-              {active ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#84ebb4" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              ) : null}
-            </button>
-          );
-        })}
-        {!bonusLoading && stationUuid && bonusOptions.length === 0 ? <p className="rounded-[8px] border border-[#fbeed2]/30 px-4 py-3 text-[12px] text-white/40">No promotions configured for this station.</p> : null}
+      <div>
+        <label className="mb-1 block text-[12px] font-medium text-[#fbeed2]">Bonus Amount (RM)</label>
+        <input
+          type="number"
+          inputMode="decimal"
+          min="0"
+          step="0.01"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="Enter bonus amount"
+          className="w-full rounded-[8px] border border-[#f2cb7a] bg-[#141828] px-3 py-2 text-[13px] text-white outline-none placeholder:text-white/30"
+        />
       </div>
       {!stations?.length ? (
         <p className="mt-2 text-[12px] text-[#fb3748]">No active brand/station found for this member.</p>

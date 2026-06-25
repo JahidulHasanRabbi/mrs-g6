@@ -269,9 +269,9 @@ function RetentionMembersContent() {
 
   return (
     <section className="relative flex w-full flex-col rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
-      <header className="flex flex-col gap-4 p-6 w-full xl:flex-row xl:flex-wrap xl:items-center">
+      <header className="flex flex-col gap-4 p-6 w-full 2xl:flex-row 2xl:items-start 2xl:justify-between">
         <h1
-          className="text-white font-bold xl:flex-1 xl:min-w-0"
+          className="text-white font-bold shrink-0"
           style={{
             fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
             fontSize: "26px",
@@ -281,7 +281,7 @@ function RetentionMembersContent() {
         >
           Member List
         </h1>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 2xl:justify-end">
           <FilterDropdown label="Priority" value={priority} onChange={handlePriority} options={PRIORITY_OPTIONS} />
           <FilterDropdown label="Wallet Level" value={walletLevel} onChange={handleWalletLevel} options={walletTiers} />
           <FilterDropdown label="MRS Level" value={vip} onChange={handleVip} options={vipTiers.map((t) => t.name)} />
