@@ -75,7 +75,7 @@ function PrizeCard({ prize }) {
   );
 }
 
-export default function SmashEggResultModal({ isOpen, onClose, prize }) {
+export default function SmashEggResultModal({ isOpen, onClose, onReturn, prize }) {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -125,18 +125,35 @@ export default function SmashEggResultModal({ isOpen, onClose, prize }) {
               {/* Prize display */}
               <PrizeCard prize={prize} />
 
-              {/* Close button */}
-              <button
-                onClick={onClose}
-                className="w-full py-4 rounded-xl border-b-4 border-[#3a3000] text-[#3a3000] text-base leading-4 cursor-pointer"
-                style={{
-                  fontFamily: "var(--font-acme), 'Acme', sans-serif",
-                  background: "linear-gradient(to bottom, #ffd700, #544600)",
-                  boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
-                }}
-              >
-                Close
-              </button>
+              {/* Actions */}
+              <div className="flex w-full flex-col gap-3">
+                {/* Return to website (Claim) */}
+                {onReturn && (
+                  <button
+                    onClick={onReturn}
+                    className="w-full py-4 rounded-xl border-b-4 border-[#3a3000] text-[#3a3000] text-base leading-4 cursor-pointer"
+                    style={{
+                      fontFamily: "var(--font-acme), 'Acme', sans-serif",
+                      background: "linear-gradient(to bottom, #ffd700, #544600)",
+                      boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
+                    }}
+                  >
+                    Return to website (Claim)
+                  </button>
+                )}
+
+                {/* Close button */}
+                <button
+                  onClick={onClose}
+                  className="w-full py-4 rounded-xl border border-[#fff6df]/30 text-[#fff6df] text-base leading-4 cursor-pointer"
+                  style={{
+                    fontFamily: "var(--font-acme), 'Acme', sans-serif",
+                    background: "rgba(255,246,223,0.06)",
+                  }}
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </motion.div>
         </motion.div>

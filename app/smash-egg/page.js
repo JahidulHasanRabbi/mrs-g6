@@ -333,6 +333,20 @@ export default function SmashEggPage() {
     setIsCracked(false);
   }, []);
 
+  // "Return to website (Claim)" sends the player to the /promotion page on the
+  // external host saved during member auth (e.g. https://n1gang.net/promotion).
+  // Falls back to the local /promotion route when no host is saved. Same
+  // behaviour as the Spin and Penalty Kick games.
+  const handleReturnToWebsite = useCallback(() => {
+    const savedO = tokenStorage.getRedirectO?.();
+    if (!savedO) {
+      window.location.href = "/promotion";
+      return;
+    }
+    const base = String(savedO).startsWith("http") ? savedO : `https://${savedO}`;
+    window.location.href = `${base.replace(/\/$/, "")}/promotion`;
+  }, []);
+
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden">
       {/* Page Background - covers entire scrollable area */}
@@ -456,6 +470,7 @@ export default function SmashEggPage() {
       <SmashEggResultModal
         isOpen={isModalOpen}
         onClose={closeModal}
+        onReturn={handleReturnToWebsite}
         prize={wonPrize}
       />
 

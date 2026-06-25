@@ -86,12 +86,88 @@ function mapSettings(data = {}) {
   };
 }
 
+// Mirrors the Penalty Kick "Kick Sequences" table: lists the configured smash
+// sequence in item_order, with reorder (Up/Down) and Delete actions.
+function SequenceTable({ rows, loading, onDelete, onMove }) {
+  return (
+    <div className="overflow-hidden rounded-[12px] border border-white/5">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[680px]">
+          <thead>
+            <tr className="bg-gradient-to-b from-[#141828] to-[#333333] text-left">
+              <th className="px-6 py-4 text-[14px] font-semibold text-[#fbeed2]">Position</th>
+              <th className="px-6 py-4 text-[14px] font-semibold text-[#fbeed2]">Reward</th>
+              <th className="px-6 py-4 text-right text-[14px] font-semibold text-[#fbeed2]">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={3} className="px-6 py-10 text-center text-[13px] text-white/50">
+                  Loading sequences...
+                </td>
+              </tr>
+            ) : rows.length === 0 ? (
+              <tr>
+                <td colSpan={3} className="px-6 py-10 text-center text-[13px] text-white/50">
+                  No smash sequences configured.
+                </td>
+              </tr>
+            ) : (
+              rows.map((row, index) => (
+                <tr key={row.uuid} className="border-b border-white/5 last:border-b-0 hover:bg-white/[0.02]">
+                  <td className="px-6 py-5 text-[12px] text-white">#{row.item_order}</td>
+                  <td className="px-6 py-5 text-[12px] text-white">{row.item_name || "-"}</td>
+                  <td className="px-6 py-5">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onMove?.(index, -1)}
+                        disabled={index === 0}
+                        className="rounded-[8px] border border-[#f2cb7a] px-3 py-2 text-[12px] text-[#eaad2c] disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Up
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onMove?.(index, 1)}
+                        disabled={index === rows.length - 1}
+                        className="rounded-[8px] border border-[#f2cb7a] px-3 py-2 text-[12px] text-[#eaad2c] disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        Down
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onDelete?.(row)}
+                        className="rounded-[8px] border border-red-400/70 px-3 py-2 text-[12px] text-red-300"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 export default function SmashEggPage() {
   const toast = useToast();
   const [rewards, setRewards] = useState([]);
-  const [sequences, setSequences] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+
+  // Sequences live in their own paginated state, exactly like the Penalty Kick
+  // page — and every change (add / delete / reorder) re-pulls them via
+  // loadSequences so the table always reflects the server.
+  const [sequences, setSequences] = useState([]);
+  const [sequencePage, setSequencePage] = useState(1);
+  const [sequenceTotal, setSequenceTotal] = useState(0);
+  const [sequenceLoading, setSequenceLoading] = useState(true);
 
   const [view, setView] = useState("list");
   const [formMode, setFormMode] = useState("add");
@@ -100,19 +176,18 @@ export default function SmashEggPage() {
   const [costOpen, setCostOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState(null);
+  const [sequenceDeleteTarget, setSequenceDeleteTarget] = useState(null);
   const [costData, setCostData] = useState({ cost: 10 });
   const [statusData, setStatusData] = useState({ gameplay: true, maintenance: false });
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const [itemsResponse, sequencesResponse, settingsResponse] = await Promise.all([
+      const [itemsResponse, settingsResponse] = await Promise.all([
         adminApi.getSmashEggItems(),
-        adminApi.getSmashEggSequences(),
         adminApi.getSmashEggSettings(),
       ]);
       setRewards(mapSmashEggItems(itemsResponse));
-      setSequences(mapSmashEggSequences(sequencesResponse));
       const mappedSettings = mapSettings(settingsResponse);
       setCostData(mappedSettings.cost);
       setStatusData(mappedSettings.status);
@@ -125,8 +200,26 @@ export default function SmashEggPage() {
     }
   };
 
+  const loadSequences = async (nextPage = sequencePage) => {
+    setSequenceLoading(true);
+    try {
+      const data = await adminApi.getSmashEggSequences({ page: nextPage, page_size: PAGE_SIZE });
+      const rows = mapSmashEggSequences(data);
+      setSequences(rows);
+      setSequenceTotal(Number(data?.count ?? rows.length));
+      setSequencePage(nextPage);
+    } catch (error) {
+      toast.error("Failed to load smash sequences", {
+        description: error?.data?.detail || error?.message,
+      });
+    } finally {
+      setSequenceLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadData();
+    loadSequences(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -189,9 +282,41 @@ export default function SmashEggPage() {
       await adminApi.createSmashEggSequence(position, rewardId);
       toast.success("Smash sequence saved");
       setSequenceOpen(false);
-      await loadData();
+      await loadSequences(sequencePage);
     } catch (error) {
       toast.error("Failed to save smash sequence", {
+        description: error?.data?.detail || error?.message,
+      });
+    }
+  };
+
+  const confirmSequenceDelete = async () => {
+    if (!sequenceDeleteTarget?.uuid) return;
+    try {
+      await adminApi.deleteSmashEggSequence(sequenceDeleteTarget.uuid);
+      toast.success("Smash sequence deleted");
+      setSequenceDeleteTarget(null);
+      await loadSequences(sequencePage);
+    } catch (error) {
+      toast.error("Failed to delete smash sequence", {
+        description: error?.data?.detail || error?.message,
+      });
+    }
+  };
+
+  const moveSequence = async (index, delta) => {
+    const target = sequences[index];
+    const swap = sequences[index + delta];
+    if (!target || !swap) return;
+    try {
+      await adminApi.changeSmashEggSequencesOrder([
+        { sequence_uuid: target.uuid, item_order: swap.item_order },
+        { sequence_uuid: swap.uuid, item_order: target.item_order },
+      ]);
+      toast.success("Smash sequence reordered");
+      await loadSequences(sequencePage);
+    } catch (error) {
+      toast.error("Failed to reorder smash sequence", {
         description: error?.data?.detail || error?.message,
       });
     }
@@ -276,6 +401,30 @@ export default function SmashEggPage() {
         <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
       </div>
 
+      <div className="border-t border-white/10 p-6">
+        <h2 className="mb-4 text-[22px] font-bold text-white" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+          Smash Sequences
+        </h2>
+        <SequenceTable
+          rows={sequences}
+          loading={sequenceLoading}
+          onDelete={setSequenceDeleteTarget}
+          onMove={moveSequence}
+        />
+        <div className="flex items-center justify-between py-3">
+          <p className="text-[10px] text-white/80">
+            {sequenceTotal === 0
+              ? "Showing 0 to 0 of 0 Results"
+              : `Showing ${(sequencePage - 1) * PAGE_SIZE + 1} to ${Math.min(sequencePage * PAGE_SIZE, sequenceTotal)} of ${sequenceTotal} Results`}
+          </p>
+          <Pagination
+            currentPage={sequencePage}
+            totalPages={Math.max(1, Math.ceil(sequenceTotal / PAGE_SIZE))}
+            onPageChange={loadSequences}
+          />
+        </div>
+      </div>
+
       <SmashSequenceModal
         open={sequenceOpen}
         rewards={rewards}
@@ -287,6 +436,7 @@ export default function SmashEggPage() {
       <CostSettingModal
         open={costOpen}
         initial={costData}
+        label="Token cost per Smash"
         onClose={() => setCostOpen(false)}
         onSave={async (payload) => {
           try {
@@ -321,6 +471,16 @@ export default function SmashEggPage() {
         tone="destructive"
         onConfirm={confirmArchive}
         onCancel={() => setArchiveTarget(null)}
+      />
+
+      <ConfirmDialog
+        open={!!sequenceDeleteTarget}
+        title="Delete smash sequence?"
+        message={sequenceDeleteTarget ? `Delete sequence #${sequenceDeleteTarget.item_order} for ${sequenceDeleteTarget.item_name || "this reward"}?` : ""}
+        confirmLabel="Delete"
+        tone="destructive"
+        onConfirm={confirmSequenceDelete}
+        onCancel={() => setSequenceDeleteTarget(null)}
       />
     </div>
   );
