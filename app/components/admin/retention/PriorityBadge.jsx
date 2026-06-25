@@ -14,16 +14,22 @@ const PRIORITY_COLORS = {
   Inactive: { bg: "#3a4255", color: "#a0aec0" },
 };
 
-// API may return "Low Priority", "High Priority", "Medium Priority", or plain "Low" etc.
+// Case-insensitive lookup of the known labels, since the API may send any
+// casing (e.g. "INACTIVE", "high", "Low Priority").
+const LABEL_BY_LOWER = Object.keys(PRIORITY_COLORS).reduce((acc, key) => {
+  acc[key.toLowerCase()] = key;
+  return acc;
+}, {});
+
+// API may return "Low Priority", "High Priority", "Medium Priority", plain
+// "Low" etc., or all-caps like "INACTIVE" — match regardless of case.
 function normalize(value) {
   if (value === null || value === undefined || value === "") return null;
   if (typeof value === "number") return PRIORITY_LABELS[value] || null;
-  const str = String(value).trim();
-  if (PRIORITY_COLORS[str]) return str;
   // Strip " Priority" suffix: "Low Priority" → "Low"
-  const stripped = str.replace(/\s*priority$/i, "").trim();
-  if (PRIORITY_COLORS[stripped]) return stripped;
-  const asInt = Number.parseInt(str, 10);
+  const stripped = String(value).trim().replace(/\s*priority$/i, "").trim();
+  if (LABEL_BY_LOWER[stripped.toLowerCase()]) return LABEL_BY_LOWER[stripped.toLowerCase()];
+  const asInt = Number.parseInt(stripped, 10);
   return Number.isFinite(asInt) ? PRIORITY_LABELS[asInt] || null : null;
 }
 
