@@ -4,7 +4,15 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { GRAD_GOLD } from "../../../../components/admin/retention/constants";
-import { createPromotion, getAvailablePromotions, getPromotionsByStation, getRedemptionItems, getStationList } from "../../../../api/adminApi";
+import {
+  createPromotion,
+  getAvailablePromotions,
+  getLuckySpinItems,
+  getPenaltyKickItems,
+  getPromotionsByStation,
+  getRedemptionItems,
+  getStationList,
+} from "../../../../api/adminApi";
 
 // Manage Promotions (Settings → Promotions → Add/Edit).
 // POST /settings/promotions/ body: { station_id, promotions: [{ promotion_type, item_uuid, promotion_code }] }
@@ -31,6 +39,27 @@ function normalizeLabel(value) {
   return String(value ?? "").toLowerCase().replace(/[_\s]+/g, " ").trim();
 }
 
+function typeByLabel(promotionTypes, label) {
+  const target = normalizeLabel(label);
+  const found = promotionTypes.find((t) => normalizeLabel(t.label) === target);
+  return found ? String(found.value) : "";
+}
+
+function typeFromGroup(groupType, promotionTypes) {
+  const direct = typeByLabel(promotionTypes, groupType);
+  if (direct) return direct;
+
+  const aliases = {
+    "lucky spin": "Lucky Spin Item",
+    "penalty kick": "Penalty Kick Bonus",
+    penaltykick: "Penalty Kick Bonus",
+    "smash egg": "Smash Egg Bonus",
+    smashegg: "Smash Egg Bonus",
+  };
+  return typeByLabel(promotionTypes, aliases[normalizeLabel(groupType)] || "");
+}
+
+
 // Map a get-by-station row back to a promotion type. Staging returns group
 // labels like "VIP Type", while the actual type is often in promo.item/name.
 function matchTypeValue(group, promo, promotionTypes) {
@@ -38,13 +67,7 @@ function matchTypeValue(group, promo, promotionTypes) {
   const itemValue = String(promo?.item ?? "");
   if (typeValues.has(itemValue)) return itemValue;
 
-  const byPromoName = promotionTypes.find((t) => normalizeLabel(t.label) === normalizeLabel(promo?.name));
-  if (byPromoName) return String(byPromoName.value);
-
-  const norm = (s) => String(s ?? "").toLowerCase().replace(/[_\s]+/g, " ").trim();
-  const target = norm(group?.type);
-  const found = promotionTypes.find((t) => norm(t.label) === target);
-  return found ? String(found.value) : "";
+  return typeByLabel(promotionTypes, promo?.name) || typeFromGroup(group?.type, promotionTypes);
 }
 
 // Flatten get-by-station groups into editable promotion rows.
@@ -57,6 +80,7 @@ function hydratePromotions(response, promotionTypes) {
       rows.push({
         promotion_type: matchTypeValue(group, promo, promotionTypes),
         item_uuid: typeof promo?.item === "string" && UUID_RE.test(promo.item) ? promo.item : "",
+        item_name: promo?.name || "",
         promotion_code: String(promo?.code ?? ""),
       });
     }
@@ -76,7 +100,7 @@ export default function AddPromotionPage() {
   const [promotionTypes, setPromotionTypes] = useState([]);
   const [typesError, setTypesError] = useState(false);
 
-  const [items, setItems] = useState([]);
+  const [itemsByType, setItemsByType] = useState({});
   const [itemsError, setItemsError] = useState(false);
 
   const [promotions, setPromotions] = useState([emptyPromotion()]);
@@ -110,13 +134,21 @@ export default function AddPromotionPage() {
   }, []);
 
   useEffect(() => {
-    getRedemptionItems()
-      .then((res) => {
-        setItems(normalizeListResponse(res));
-        setItemsError(false);
+    Promise.allSettled([
+      getLuckySpinItems(),
+      getRedemptionItems(),
+      getPenaltyKickItems({ page_size: 1000 }),
+    ])
+      .then(([luckySpin, redemption, penaltyKick]) => {
+        setItemsByType({
+          4: luckySpin.status === "fulfilled" ? normalizeListResponse(luckySpin.value) : [],
+          5: redemption.status === "fulfilled" ? normalizeListResponse(redemption.value) : [],
+          6: penaltyKick.status === "fulfilled" ? normalizeListResponse(penaltyKick.value) : [],
+        });
+        setItemsError([luckySpin, redemption, penaltyKick].some((result) => result.status === "rejected"));
       })
       .catch(() => {
-        setItems([]);
+        setItemsByType({});
         setItemsError(true);
       });
   }, []);
@@ -201,10 +233,16 @@ export default function AddPromotionPage() {
     return !hasUnselectedRow && typeOptions.some((option) => !used.has(option.value));
   }, [promotions, typeOptions]);
 
-  const itemOptions = items.map((i) => ({
-    value: i.uuid,
-    label: i.name || i.title || i.uuid,
-  }));
+  const getItemOptions = (promotionType, promo) => {
+    const options = (itemsByType[String(promotionType)] || []).map((i) => ({
+      value: i.uuid,
+      label: i.name || i.reward_name || i.title || i.uuid,
+    }));
+    if (promo?.item_uuid && !options.some((option) => option.value === promo.item_uuid)) {
+      options.push({ value: promo.item_uuid, label: promo.item_name || promo.item_uuid });
+    }
+    return options;
+  };
 
   return (
     <>
@@ -246,7 +284,7 @@ export default function AddPromotionPage() {
                   || !promotions.some((p, promoIndex) => promoIndex !== index && String(p.promotion_type) === option.value)
                 ))}
                 typesError={typesError}
-                itemOptions={itemOptions}
+                itemOptions={getItemOptions(promo.promotion_type, promo)}
                 itemsError={itemsError}
                 onChange={updatePromotion}
                 onRemove={promotions.length > 1 ? () => removePromotionRow(index) : null}

@@ -10,7 +10,7 @@ import {
   FollowUpCreateModal,
 } from "../../../../components/admin/retention/FollowUpComponents";
 import { assignCrmMemberToPic, getCrmFollowUps, getCrmMemberSingle, getCrmUsers, patchCrmMember, patchCrmMemberAlert, patchCrmMemberFollowUp, refreshCrmMember, sendCrmMemberBonus, updateCrmMemberData } from "../../../../api/crmApi";
-import { getVipTierList, getWalletVipTiers, getStationList } from "../../../../api/adminApi";
+import { getVipTierList, getWalletVipTiers, getStationList, getPromotionsByStation } from "../../../../api/adminApi";
 
 const TAG_STYLES = {
   vip:    { bg: "#d9acff", color: "#8800fb" },
@@ -1064,13 +1064,24 @@ function AssignPicModal({ memberUuid, currentPic, onClose, onSaved }) {
   );
 }
 
-// Placeholder bonus catalogue — the real list comes from the backend (#12).
-const BONUS_OPTIONS = [
-  { label: "RM 1 Bonus", value: "1" },
-  { label: "RM 3 Bonus", value: "3" },
-  { label: "RM 5 Bonus", value: "5" },
-  { label: "RM 8 Bonus", value: "8" },
-];
+function flattenBonusOptions(response) {
+  const groups = normalizeListResponse(response);
+  const out = [];
+  for (const group of groups) {
+    const promos = Array.isArray(group?.promotions) ? group.promotions : Array.isArray(group?.promotion) ? group.promotion : [];
+    for (const promo of promos) {
+      const code = promo?.code;
+      if (code === null || code === undefined || code === "") continue;
+      out.push({
+        value: String(code),
+        label: promo?.name || group?.type || `Bonus ${code}`,
+        type: group?.type || "",
+      });
+    }
+  }
+  return out;
+}
+
 
 // Send Bonus (#12): pick a bonus (and station, if member is active on more
 // than one), Confirm → sends to the member in NS.
@@ -1079,6 +1090,37 @@ function SendBonusModal({ memberUuid, memberName, stations, onClose, onResult })
   const [stationUuid, setStationUuid] = useState(stations?.length === 1 ? stations[0].uuid : "");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  const [bonusOptions, setBonusOptions] = useState([]);
+  const [bonusLoading, setBonusLoading] = useState(false);
+
+  useEffect(() => {
+    if (!stationUuid) {
+      setBonusOptions([]);
+      setSelected("");
+      return;
+    }
+
+    let cancelled = false;
+    setBonusLoading(true);
+    setError("");
+    getPromotionsByStation(stationUuid)
+      .then((res) => {
+        if (cancelled) return;
+        const options = flattenBonusOptions(res);
+        setBonusOptions(options);
+        setSelected((current) => options.some((option) => option.value === current) ? current : "");
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("[send-bonus] promotion list failed", err);
+        setBonusOptions([]);
+        setSelected("");
+        setError("Failed to load promotions for this station.");
+      })
+      .finally(() => { if (!cancelled) setBonusLoading(false); });
+
+    return () => { cancelled = true; };
+  }, [stationUuid]);
 
   const handleConfirm = async () => {
     if (!selected || !stationUuid || sending) return;
@@ -1087,11 +1129,11 @@ function SendBonusModal({ memberUuid, memberName, stations, onClose, onResult })
     try {
       const res = await sendCrmMemberBonus(memberUuid, { bonus: selected, station_uuid: stationUuid });
       if (res?.status === "ERROR") {
-        setError(res?.error_message || "Failed to send bonus. Please try again.");
+        setError(res?.error_message || res?.message || "Failed to send bonus. Please try again.");
         setSending(false);
         return;
       }
-      const bonus = BONUS_OPTIONS.find((item) => item.value === selected);
+      const bonus = bonusOptions.find((item) => item.value === selected);
       onResult?.({
         status: "success",
         title: "Bonus Sent",
@@ -1125,7 +1167,8 @@ function SendBonusModal({ memberUuid, memberName, stations, onClose, onResult })
         </div>
       ) : null}
       <div className="flex max-h-[280px] flex-col gap-2 overflow-y-auto pr-1">
-        {BONUS_OPTIONS.map((bonus) => {
+        {bonusLoading ? <p className="rounded-[8px] border border-[#fbeed2]/30 px-4 py-3 text-[12px] text-white/40">Loading promotions...</p> : null}
+        {bonusOptions.map((bonus) => {
           const active = selected === bonus.value;
           return (
             <button
@@ -1145,6 +1188,7 @@ function SendBonusModal({ memberUuid, memberName, stations, onClose, onResult })
             </button>
           );
         })}
+        {!bonusLoading && stationUuid && bonusOptions.length === 0 ? <p className="rounded-[8px] border border-[#fbeed2]/30 px-4 py-3 text-[12px] text-white/40">No promotions configured for this station.</p> : null}
       </div>
       {!stations?.length ? (
         <p className="mt-2 text-[12px] text-[#fb3748]">No active brand/station found for this member.</p>

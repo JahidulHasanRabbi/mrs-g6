@@ -4,7 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { GRAD_DARK, GRAD_GOLD } from "../../../components/admin/retention/constants";
 import Pagination from "../../../components/admin/retention/Pagination";
-import { getPromotionsByStation, getStationList } from "../../../api/adminApi";
+import {
+  getLuckySpinItems,
+  getPenaltyKickItems,
+  getPromotionsByStation,
+  getRedemptionItems,
+  getStationList,
+} from "../../../api/adminApi";
 
 // Promotions (Settings → Promotions). Promotions are configured per-station,
 // so the list shows the promotions assigned to a selected station via
@@ -22,6 +28,7 @@ const COLUMNS = [
 ];
 
 const TABLE_MIN_WIDTH = COLUMNS.reduce((sum, c) => sum + c.minW, 0);
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function normalizeListResponse(response) {
   if (Array.isArray(response)) return response;
@@ -31,9 +38,32 @@ function normalizeListResponse(response) {
   return [];
 }
 
+function itemLabel(item) {
+  return item?.name || item?.reward_name || item?.title || item?.display_name || item?.uuid || "";
+}
+
+function buildItemNameLookup(responses) {
+  const lookup = {};
+  for (const response of responses) {
+    for (const item of normalizeListResponse(response)) {
+      if (item?.uuid) lookup[item.uuid] = itemLabel(item);
+    }
+  }
+  return lookup;
+}
+
+function displayPromotionItem(promo, itemNameByUuid) {
+  const item = promo?.item;
+  if (typeof item === "string" && UUID_RE.test(item)) {
+    return itemNameByUuid[item] || promo?.name || item;
+  }
+  return promo?.name || item || "—";
+}
+
+
 // Flatten the get-by-station response (groups of { type, promotions: [{item, name, code}] })
 // into one row per promotion.
-function flattenPromotions(response) {
+function flattenPromotions(response, itemNameByUuid = {}) {
   const groups = normalizeListResponse(response);
   const rows = [];
   for (const group of groups) {
@@ -43,7 +73,7 @@ function flattenPromotions(response) {
         type: group?.type || "—",
         name: promo?.name ?? "—",
         code: promo?.code ?? "—",
-        item: promo?.item ?? "—",
+        item: displayPromotionItem(promo, itemNameByUuid),
       });
     }
   }
@@ -55,6 +85,7 @@ export default function PromotionsPage() {
   const [stationsLoading, setStationsLoading] = useState(true);
   const [selectedStation, setSelectedStation] = useState("");
   const [rows, setRows] = useState([]);
+  const [itemNameByUuid, setItemNameByUuid] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
@@ -73,6 +104,21 @@ export default function PromotionsPage() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    Promise.allSettled([
+      getLuckySpinItems(),
+      getRedemptionItems(),
+      getPenaltyKickItems({ page_size: 1000 }),
+    ]).then((results) => {
+      if (cancelled) return;
+      setItemNameByUuid(buildItemNameLookup(
+        results.filter((result) => result.status === "fulfilled").map((result) => result.value)
+      ));
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
     if (!selectedStation) {
       setRows([]);
       return;
@@ -83,7 +129,7 @@ export default function PromotionsPage() {
     getPromotionsByStation(selectedStation)
       .then((res) => {
         if (cancelled) return;
-        setRows(flattenPromotions(res));
+        setRows(flattenPromotions(res, itemNameByUuid));
       })
       .catch((err) => {
         if (cancelled) return;
@@ -93,7 +139,7 @@ export default function PromotionsPage() {
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [selectedStation]);
+  }, [selectedStation, itemNameByUuid]);
 
   return (
     <>
