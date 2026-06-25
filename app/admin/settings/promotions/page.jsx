@@ -208,9 +208,9 @@ function PromotionList({ stations, stationsLoading, selectedStation, onStationCh
 
   return (
     <section className="flex w-full flex-col overflow-hidden rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
-      <header className="flex flex-col gap-4 p-6 w-full md:flex-row md:flex-wrap md:items-center">
+      <header className="flex flex-col gap-4 p-6 w-full md:flex-row md:items-center md:justify-between">
         <h2
-          className="text-white font-bold whitespace-nowrap md:flex-1 md:min-w-0"
+          className="text-white font-bold whitespace-nowrap shrink-0"
           style={{
             fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
             fontSize: "26px",
@@ -220,7 +220,7 @@ function PromotionList({ stations, stationsLoading, selectedStation, onStationCh
         >
           Promotion List
         </h2>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 md:justify-end">
           <SearchInput value={query} onChange={setQuery} />
           <AddPromotionButton stationUuid={selectedStation} />
         </div>
