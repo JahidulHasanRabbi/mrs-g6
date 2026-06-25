@@ -204,7 +204,7 @@ export async function getRetentionMembers(params = {}) {
 }
 
 // GET /crm-members/<admin_uuid>/admin-members/  (paginated)
-// params: { page, page_size, from_date, to_date, wallet_vip_level, mrs_vip_level, brand, search, ordering }
+// params: { page, page_size, from_date, to_date, wallet_vip_level, mrs_vip_level, brand, search, sales ("High"|"Low"), win_lose ("High"|"Low") }
 export async function getAdminMembers(adminUuid, params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.CRM.ADMIN_MEMBERS(adminUuid)}${qs}`, { method: 'GET' }, true, 'admin');

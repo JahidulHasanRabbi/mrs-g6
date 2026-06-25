@@ -19,6 +19,8 @@ import {
   getCrmVipTiers,
   getCrmUserSingle,
   getRetentionSummary,
+  periodLabelToType,
+  CRM_PERIOD_TYPE,
 } from "../../../../api/crmApi";
 import { getWalletVipTiers } from "../../../../api/adminApi";
 import { uniqueWalletVipTierOptions } from "../../../../components/admin/retention/walletVipFilterOptions";
@@ -178,6 +180,18 @@ function buildMemberDateParams(period, fromDate, toDate) {
   return {};
 }
 
+function buildSummaryParams(period, fromDate, toDate) {
+  if (fromDate && toDate) {
+    return {
+      type: CRM_PERIOD_TYPE.CUSTOM,
+      from_date: fromDate,
+      to_date: toDate,
+    };
+  }
+
+  return { type: periodLabelToType(period) };
+}
+
 export default function PicDetailPage() {
   return (
     <Suspense>
@@ -201,7 +215,7 @@ function PicDetailContent() {
   const fromDate = searchParams.get("from") || "";
   const toDate = searchParams.get("to") || "";
   const summaryParams = useMemo(
-    () => buildMemberDateParams(period, fromDate, toDate),
+    () => buildSummaryParams(period, fromDate, toDate),
     [period, fromDate, toDate]
   );
 
@@ -451,7 +465,7 @@ function MemberListSection({ adminUuid, period, fromDate, toDate }) {
     mrs_vip_level: level !== "all" ? level : undefined,
     brand: brand !== "all" ? brand : undefined,
     search: q || undefined,
-    ordering: sort === "hl" ? "-total_sales" : sort === "lh" ? "total_sales" : undefined,
+    sales: sort === "hl" ? "High" : sort === "lh" ? "Low" : undefined,
   }), [memberDateParams, walletLevel, level, brand, page, q, sort]);
 
   const fetchMembers = useCallback(async () => {
