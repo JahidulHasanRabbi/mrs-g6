@@ -66,6 +66,7 @@ const BRAND_FILTER_OPTIONS = [
 ];
 
 const SORT_OPTIONS = [
+  { value: "", label: "Sales" },
   { value: "hl", label: "Sales (H-L)" },
   { value: "lh", label: "Sales (L-H)" },
 ];
@@ -509,7 +510,7 @@ function MemberListSection({ adminUuid, period, fromDate, toDate }) {
           <FilterDropdown
             value={sort}
             options={SORT_OPTIONS}
-            placeholder="Sales (H-L)"
+            placeholder="Sales"
             onChange={(v) => updateParams({ sort: v, page: null })}
           />
           <FilterDropdown

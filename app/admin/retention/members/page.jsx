@@ -285,8 +285,8 @@ function RetentionMembersContent() {
           <FilterDropdown label="Priority" value={priority} onChange={handlePriority} options={PRIORITY_OPTIONS} />
           <FilterDropdown label="Wallet Level" value={walletLevel} onChange={handleWalletLevel} options={walletTiers} />
           <FilterDropdown label="MRS Level" value={vip} onChange={handleVip} options={vipTiers.map((t) => t.name)} />
-          <FilterDropdown label="Sales (H-L)" value={salesSort} onChange={handleSalesSort} options={SALES_SORT_OPTIONS} />
-          <FilterDropdown label="Win/Lose (H-L)" value={winSort} onChange={handleWinSort} options={WINLOSS_SORT_OPTIONS} />
+          <FilterDropdown label="Sales" value={salesSort} onChange={handleSalesSort} options={SALES_SORT_OPTIONS} />
+          <FilterDropdown label="Win/Lose" value={winSort} onChange={handleWinSort} options={WINLOSS_SORT_OPTIONS} />
           <FilterDropdown label="Brand" value={brand} onChange={handleBrand} options={BRAND_OPTIONS} />
           <FilterDropdown label="All PIC" value={pic} onChange={handlePic} options={pics.map((u) => u.full_name || u.username).filter(Boolean)} />
           <SearchInput value={query} onChange={handleQuery} />

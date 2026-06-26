@@ -413,8 +413,8 @@ function FollowUpList() {
           <FilterPill label="Wallet Level" value={walletLevel} onChange={setWalletLevel} options={walletTiers} />
           <FilterPill label="MRS Level" value={vip} onChange={setVip} options={vipTiers.map((t) => t.name)} />
           <FilterPill label="Priority" value={priority} onChange={setPriority} options={PRIORITY_OPTIONS} />
-          <FilterPill label="Sales (H-L)" value={salesSort} onChange={pickSalesSort} options={SALES_SORT_OPTIONS} />
-          <FilterPill label="Win/Lose (H-L)" value={winSort} onChange={pickWinSort} options={WINLOSS_SORT_OPTIONS} />
+          <FilterPill label="Sales" value={salesSort} onChange={pickSalesSort} options={SALES_SORT_OPTIONS} />
+          <FilterPill label="Win/Lose" value={winSort} onChange={pickWinSort} options={WINLOSS_SORT_OPTIONS} />
           <FilterPill label="Brand" value={brand} onChange={setBrand} options={BRAND_OPTIONS} />
           <FilterPill label="All Retention" value={retention} onChange={setRetention} options={retentionPics.map((u) => u.full_name || u.username).filter(Boolean)} />
           <DayPicker value={date} onChange={setDate} />
