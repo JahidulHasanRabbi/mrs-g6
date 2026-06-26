@@ -181,15 +181,11 @@ function buildMemberDateParams(period, fromDate, toDate) {
 }
 
 function buildSummaryParams(period, fromDate, toDate) {
-  if (fromDate && toDate) {
-    return {
-      type: CRM_PERIOD_TYPE.CUSTOM,
-      from_date: fromDate,
-      to_date: toDate,
-    };
-  }
-
-  return { type: periodLabelToType(period) };
+  const dateParams = buildMemberDateParams(period, fromDate, toDate);
+  return {
+    type: fromDate && toDate ? CRM_PERIOD_TYPE.CUSTOM : periodLabelToType(period),
+    ...dateParams,
+  };
 }
 
 export default function PicDetailPage() {
