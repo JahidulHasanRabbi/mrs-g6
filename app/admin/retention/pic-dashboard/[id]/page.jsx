@@ -19,8 +19,6 @@ import {
   getCrmVipTiers,
   getCrmUserSingle,
   getRetentionSummary,
-  periodLabelToType,
-  CRM_PERIOD_TYPE,
 } from "../../../../api/crmApi";
 import { getWalletVipTiers } from "../../../../api/adminApi";
 import { uniqueWalletVipTierOptions } from "../../../../components/admin/retention/walletVipFilterOptions";
@@ -181,11 +179,7 @@ function buildMemberDateParams(period, fromDate, toDate) {
 }
 
 function buildSummaryParams(period, fromDate, toDate) {
-  const dateParams = buildMemberDateParams(period, fromDate, toDate);
-  return {
-    type: fromDate && toDate ? CRM_PERIOD_TYPE.CUSTOM : periodLabelToType(period),
-    ...dateParams,
-  };
+  return buildMemberDateParams(period, fromDate, toDate);
 }
 
 export default function PicDetailPage() {

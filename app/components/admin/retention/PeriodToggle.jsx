@@ -31,6 +31,7 @@ export default function PeriodToggle({ period, onPeriodChange, fromDate, toDate 
       else next.delete("from");
       if (to) next.set("to", to);
       else next.delete("to");
+      next.delete("page");
       const qs = next.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
