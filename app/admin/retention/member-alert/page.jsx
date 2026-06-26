@@ -109,13 +109,14 @@ function formatCurrency(value) {
 }
 
 export default function MemberAlertPage() {
+  const [date, setDate] = useState("");
   const [summary, setSummary] = useState(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
 
   const loadSummary = useCallback(async () => {
     setSummaryLoading(true);
     try {
-      const res = await getPrioritySummary();
+      const res = await getPrioritySummary({ date: date || undefined });
       setSummary(res || {});
     } catch (err) {
       console.error("[member-alert] priority-summary failed", err);
@@ -123,7 +124,7 @@ export default function MemberAlertPage() {
     } finally {
       setSummaryLoading(false);
     }
-  }, []);
+  }, [date]);
 
   useEffect(() => {
     loadSummary();
@@ -136,7 +137,7 @@ export default function MemberAlertPage() {
         <KpiRow summary={summary} loading={summaryLoading} />
         {summaryLoading && <LoadingOverlay label="Loading..." />}
       </div>
-      <FollowUpList />
+      <FollowUpList date={date} onDateChange={setDate} />
     </>
   );
 }
@@ -247,14 +248,13 @@ function KpiIcon({ name }) {
   );
 }
 
-function FollowUpList() {
+function FollowUpList({ date, onDateChange }) {
   const [walletLevel, setWalletLevel] = useState("");
   const [brand, setBrand] = useState("");
   const [priority, setPriority] = useState("");
   const [vip, setVip] = useState("");
   const [retention, setRetention] = useState("");
   const [query, setQuery] = useState("");
-  const [date, setDate] = useState("");
   const [salesSort, setSalesSort] = useState("");
   const [winSort, setWinSort] = useState("");
   const [page, setPage] = useState(1);
@@ -417,7 +417,7 @@ function FollowUpList() {
           <FilterPill label="Win/Lose" value={winSort} onChange={pickWinSort} options={WINLOSS_SORT_OPTIONS} />
           <FilterPill label="Brand" value={brand} onChange={setBrand} options={BRAND_OPTIONS} />
           <FilterPill label="All Retention" value={retention} onChange={setRetention} options={retentionPics.map((u) => u.full_name || u.username).filter(Boolean)} />
-          <DayPicker value={date} onChange={setDate} />
+          <DayPicker value={date} onChange={onDateChange} />
           <SearchInput value={query} onChange={setQuery} />
         </div>
       </header>

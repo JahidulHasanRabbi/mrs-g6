@@ -125,8 +125,10 @@ export async function patchCrmMember(memberUuid, data) {
 // ──────────────────────── Retention Alert ────────────────────────
 
 // GET /crm-members/priority-summary/
-export async function getPrioritySummary() {
-  return await apiRequest(ENDPOINTS.CRM.PRIORITY_SUMMARY, { method: 'GET' }, true, 'admin');
+// params: { date }
+export async function getPrioritySummary(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.CRM.PRIORITY_SUMMARY}${qs}`, { method: 'GET' }, true, 'admin');
 }
 
 // POST /crm-members/refresh-members/
