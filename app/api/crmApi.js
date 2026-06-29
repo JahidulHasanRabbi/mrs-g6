@@ -181,7 +181,7 @@ export async function patchCrmMemberAlert(memberUuid, alert) {
 }
 
 // POST /crm-members/members/<uuid>/send-bonus/
-// body: { bonus }
+// body: { bonus, station_uuid, promotion_uuid }
 export async function sendCrmMemberBonus(memberUuid, data) {
   return await apiRequest(ENDPOINTS.CRM.MEMBER_SEND_BONUS(memberUuid), {
     method: 'POST',

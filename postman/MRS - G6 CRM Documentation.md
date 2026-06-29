@@ -582,8 +582,9 @@ Game Info Input
 
 | \# | Property/Field | Data Type | Nullable | Description |
 | ----: | :---- | :---- | :---- | :---- |
-| **1** | bonus | Str (Decimal) | No |  |
+| **1** | bonus | Str (Decimal) | No | Amount to give |
 | **2** | station\_uuid | UUID | No |  |
+| **3** | promotion\_uuid | UUID | No | Retrieve from Promotions by Station \- Manual Input |
 
 Returns SUCCESS if bonus amount \< 10, ERROR if bonus amount \> 10, for staging purposes.
 
@@ -958,6 +959,7 @@ Promotions POST
 | ----: | :---- | :---- | :---- | :---- |
 | **1** | promotion\_type | Int | No | Use available-promotions |
 | **2** | item\_uuid | UUID | Yes | Required if using an item |
-| **3** | promotion-code | int | No |  |
+| **3** | item\_name | str | Yes | Required for Manual Promotion |
+| **4** | promotion-code | int | No |  |
 
 ### 

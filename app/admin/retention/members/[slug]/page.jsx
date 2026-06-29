@@ -10,7 +10,7 @@ import {
   FollowUpCreateModal,
 } from "../../../../components/admin/retention/FollowUpComponents";
 import { assignCrmMemberToPic, getCrmFollowUps, getCrmMemberSingle, getCrmUsers, patchCrmMember, patchCrmMemberAlert, patchCrmMemberFollowUp, refreshCrmMember, sendCrmMemberBonus, updateCrmMemberData } from "../../../../api/crmApi";
-import { getVipTierList, getWalletVipTiers, getStationList } from "../../../../api/adminApi";
+import { getVipTierList, getWalletVipTiers, getStationList, getPromotionsByStation } from "../../../../api/adminApi";
 
 const TAG_STYLES = {
   vip:    { bg: "#d9acff", color: "#8800fb" },
@@ -142,6 +142,25 @@ function normalizeLookup(value) {
     .replace(/[^a-z0-9]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+// Flatten a get-by-station response down to the station's Manual Bonus
+// promotions — the only type send-bonus's `promotion_uuid` (#12) accepts.
+// The backend groups these under type "manual_code" (not the "Manual Bonus"
+// label, which only appears in /settings/available-promotions/). Promotions
+// created before item_name existed have no linked uuid (item is the numeric
+// type id, not a string) and show up elsewhere — skip those.
+function manualBonusPromotions(response) {
+  const groups = normalizeListResponse(response);
+  const rows = [];
+  for (const group of groups) {
+    if (normalizeLookup(group?.type) !== "manual code") continue;
+    const promos = Array.isArray(group?.promotions) ? group.promotions : Array.isArray(group?.promotion) ? group.promotion : [];
+    for (const promo of promos) {
+      if (typeof promo?.item === "string") rows.push({ uuid: promo.item, label: promo?.name || promo.item });
+    }
+  }
+  return rows;
 }
 
 function stationName(station) {
@@ -1064,25 +1083,56 @@ function AssignPicModal({ memberUuid, currentPic, onClose, onSaved }) {
   );
 }
 
-// Send Bonus (#12): always a manual bonus — enter an amount (and pick a
-// station, if the member is active on more than one), Confirm → sends to the
-// member in NS. Per client, the `bonus` field carries the amount given, not a
-// chosen promotion (promotion selection was removed).
+// Send Bonus (#12): always a manual bonus — pick a station (the member's
+// brand), pick which Manual Bonus promotion it's for, enter an amount, Confirm
+// → sends to the member in NS. The promotion list comes from the station's
+// Manual Bonus promotions configured in Settings → Promotions.
 function SendBonusModal({ memberUuid, memberName, stations, onClose, onResult }) {
   const [amount, setAmount] = useState("");
   const [stationUuid, setStationUuid] = useState(stations?.length === 1 ? stations[0].uuid : "");
+  const [promotions, setPromotions] = useState([]);
+  const [promotionUuid, setPromotionUuid] = useState("");
+  const [promotionsLoading, setPromotionsLoading] = useState(false);
+  const [promotionsError, setPromotionsError] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (!stationUuid) {
+      setPromotions([]);
+      setPromotionUuid("");
+      return;
+    }
+    let cancelled = false;
+    setPromotionsLoading(true);
+    setPromotionsError(false);
+    getPromotionsByStation(stationUuid)
+      .then((res) => {
+        if (cancelled) return;
+        const rows = manualBonusPromotions(res);
+        setPromotions(rows);
+        setPromotionUuid(rows.length === 1 ? rows[0].uuid : "");
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("[send-bonus] promotions load failed", err);
+        setPromotions([]);
+        setPromotionUuid("");
+        setPromotionsError(true);
+      })
+      .finally(() => { if (!cancelled) setPromotionsLoading(false); });
+    return () => { cancelled = true; };
+  }, [stationUuid]);
+
   const numericAmount = parseFloat(amount);
-  const canSubmit = Boolean(stationUuid) && amount.trim() !== "" && !Number.isNaN(numericAmount) && numericAmount > 0;
+  const canSubmit = Boolean(stationUuid) && Boolean(promotionUuid) && amount.trim() !== "" && !Number.isNaN(numericAmount) && numericAmount > 0;
 
   const handleConfirm = async () => {
     if (!canSubmit || sending) return;
     setSending(true);
     setError("");
     try {
-      const res = await sendCrmMemberBonus(memberUuid, { bonus: amount.trim(), station_uuid: stationUuid });
+      const res = await sendCrmMemberBonus(memberUuid, { bonus: amount.trim(), station_uuid: stationUuid, promotion_uuid: promotionUuid });
       if (res?.status === "ERROR") {
         setError(res?.error_message || res?.message || "Failed to send bonus. Please try again.");
         setSending(false);
@@ -1121,6 +1171,30 @@ function SendBonusModal({ memberUuid, memberName, stations, onClose, onResult })
           </select>
         </div>
       ) : null}
+      <div className="mb-3">
+        <label className="mb-1 block text-[12px] font-medium text-[#fbeed2]">Promotion</label>
+        <select
+          value={promotionUuid}
+          onChange={(e) => setPromotionUuid(e.target.value)}
+          disabled={!stationUuid || promotionsLoading || promotions.length === 0}
+          className="w-full rounded-[8px] border border-[#f2cb7a] bg-[#141828] px-3 py-2 text-[13px] text-white outline-none disabled:opacity-50"
+        >
+          <option value="">
+            {!stationUuid
+              ? "Select a brand first"
+              : promotionsLoading
+                ? "Loading..."
+                : promotionsError
+                  ? "Failed to load promotions"
+                  : promotions.length === 0
+                    ? "No Manual Bonus promotions configured"
+                    : "Select promotion"}
+          </option>
+          {promotions.map((p) => (
+            <option key={p.uuid} value={p.uuid}>{p.label}</option>
+          ))}
+        </select>
+      </div>
       <div>
         <label className="mb-1 block text-[12px] font-medium text-[#fbeed2]">Bonus Amount (RM)</label>
         <input

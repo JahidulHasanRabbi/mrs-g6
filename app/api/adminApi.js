@@ -413,7 +413,7 @@ export async function getPromotionsByStation(stationUuid) {
 }
 
 // POST /settings/promotions/
-// body: { station_id, promotions: [{ promotion_type, item_uuid, promotion_code }] }
+// body: { station_id, promotions: [{ promotion_type, item_uuid | item_name, promotion_code }] }
 export async function createPromotion(data) {
   return await apiRequest(ENDPOINTS.ADMIN.PROMOTIONS, {
     method: 'POST',

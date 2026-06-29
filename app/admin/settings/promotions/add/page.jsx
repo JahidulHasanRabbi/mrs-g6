@@ -15,7 +15,8 @@ import {
 } from "../../../../api/adminApi";
 
 // Manage Promotions (Settings → Promotions → Add/Edit).
-// POST /settings/promotions/ body: { station_id, promotions: [{ promotion_type, item_uuid, promotion_code }] }
+// POST /settings/promotions/ body: { station_id, promotions: [{ promotion_type, item_uuid | item_name, promotion_code }] }
+// item_name (instead of item_uuid) is required for the Manual Bonus type, which has no catalog item.
 // There is no PUT/PATCH for individual promotions - POST replaces the full set
 // for the station, so this page hydrates with the station's existing
 // promotions (GET get-by-station) and re-submits the full edited list.
@@ -24,7 +25,7 @@ import {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function emptyPromotion(promotionType = "") {
-  return { promotion_type: promotionType, item_uuid: "", promotion_code: "" };
+  return { promotion_type: promotionType, item_uuid: "", item_name: "", promotion_code: "" };
 }
 
 function normalizeListResponse(response) {
@@ -45,6 +46,11 @@ function typeByLabel(promotionTypes, label) {
   return found ? String(found.value) : "";
 }
 
+// Manual Bonus has no catalog item — admins type a free-form item_name instead.
+function manualBonusTypeValue(promotionTypes) {
+  return typeByLabel(promotionTypes, "Manual Bonus");
+}
+
 function typeFromGroup(groupType, promotionTypes) {
   const direct = typeByLabel(promotionTypes, groupType);
   if (direct) return direct;
@@ -55,6 +61,8 @@ function typeFromGroup(groupType, promotionTypes) {
     penaltykick: "Penalty Kick Bonus",
     "smash egg": "Smash Egg Bonus",
     smashegg: "Smash Egg Bonus",
+    "manual code": "Manual Bonus",
+    manualcode: "Manual Bonus",
   };
   return typeByLabel(promotionTypes, aliases[normalizeLabel(groupType)] || "");
 }
@@ -177,6 +185,8 @@ export default function AddPromotionPage() {
   const removePromotionRow = (index) =>
     setPromotions((prev) => prev.filter((_, i) => i !== index));
 
+  const manualBonusType = manualBonusTypeValue(promotionTypes);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!stationId) {
@@ -196,17 +206,26 @@ export default function AddPromotionPage() {
         alert("Cannot save: promotion code must be a whole number for every entry.");
         return;
       }
+      if (manualBonusType && String(p.promotion_type) === manualBonusType && p.item_name.trim() === "") {
+        alert("Cannot save: please enter an item name for every Manual Bonus entry.");
+        return;
+      }
     }
 
     setSaving(true);
     try {
       await createPromotion({
         station_id: stationId,
-        promotions: promotions.map((p) => ({
-          promotion_type: Number(p.promotion_type),
-          ...(p.item_uuid ? { item_uuid: p.item_uuid } : {}),
-          promotion_code: parseInt(p.promotion_code.trim(), 10),
-        })),
+        promotions: promotions.map((p) => {
+          const isManualBonus = manualBonusType && String(p.promotion_type) === manualBonusType;
+          return {
+            promotion_type: Number(p.promotion_type),
+            ...(isManualBonus
+              ? { item_name: p.item_name.trim() }
+              : (p.item_uuid ? { item_uuid: p.item_uuid } : {})),
+            promotion_code: parseInt(p.promotion_code.trim(), 10),
+          };
+        }),
       });
       router.push("/admin/settings/promotions");
     } catch (err) {
@@ -286,6 +305,7 @@ export default function AddPromotionPage() {
                 typesError={typesError}
                 itemOptions={getItemOptions(promo.promotion_type, promo)}
                 itemsError={itemsError}
+                isManualBonus={Boolean(manualBonusType) && String(promo.promotion_type) === manualBonusType}
                 onChange={updatePromotion}
                 onRemove={promotions.length > 1 ? () => removePromotionRow(index) : null}
               />
@@ -396,7 +416,7 @@ function SelectField({ label, value, onChange, options, placeholder, allowEmpty 
   );
 }
 
-function PromotionEntry({ index, promo, typeOptions, typesError, itemOptions, itemsError, onChange, onRemove }) {
+function PromotionEntry({ index, promo, typeOptions, typesError, itemOptions, itemsError, isManualBonus, onChange, onRemove }) {
   return (
     <div className="flex w-full flex-col gap-4 rounded-[12px] border border-[#fbeed2]/20 p-4">
       <div className="flex items-center justify-between">
@@ -433,21 +453,30 @@ function PromotionEntry({ index, promo, typeOptions, typesError, itemOptions, it
           onChange={onChange(index, "promotion_code")}
           placeholder="e.g. 1001"
         />
-        <SelectField
-          label="Item (optional)"
-          value={promo.item_uuid}
-          onChange={onChange(index, "item_uuid")}
-          options={itemOptions}
-          allowEmpty
-          emptyLabel="No item"
-          placeholder={
-            itemsError
-              ? "Failed to load items"
-              : itemOptions.length === 0
-                ? "Loading..."
-                : "Select item"
-          }
-        />
+        {isManualBonus ? (
+          <TextField
+            label="Item Name"
+            value={promo.item_name}
+            onChange={onChange(index, "item_name")}
+            placeholder="e.g. Birthday Bonus"
+          />
+        ) : (
+          <SelectField
+            label="Item (optional)"
+            value={promo.item_uuid}
+            onChange={onChange(index, "item_uuid")}
+            options={itemOptions}
+            allowEmpty
+            emptyLabel="No item"
+            placeholder={
+              itemsError
+                ? "Failed to load items"
+                : itemOptions.length === 0
+                  ? "Loading..."
+                  : "Select item"
+            }
+          />
+        )}
       </div>
     </div>
   );
