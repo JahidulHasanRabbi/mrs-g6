@@ -1,9 +1,11 @@
 "use client";
 
 export default function TermsConditions({ terms = [], color = "#ff8c00" }) {
+  const rows = Array.isArray(terms) ? terms.filter(Boolean) : [];
+
   return (
     <div
-      className="w-full rounded-2xl px-6 py-8 flex flex-col gap-8"
+      className="w-full min-h-[180px] rounded-2xl px-6 py-8 flex flex-col gap-8"
       style={{
         backdropFilter: "blur(6px)",
         backgroundColor: "rgba(35,31,20,0.7)",
@@ -18,7 +20,7 @@ export default function TermsConditions({ terms = [], color = "#ff8c00" }) {
       </h3>
 
       <div className="flex flex-col gap-4">
-        {terms.map((text, i) => (
+        {rows.map((text, i) => (
           <div key={i} className="flex gap-2 items-start">
             <span
               className="text-sm shrink-0"

@@ -7,14 +7,6 @@ import LeaderboardTable from "./LeaderboardTable";
 import TermsConditions from "./TermsConditions";
 import LeaderboardSkeleton from "./LeaderboardSkeleton";
 
-const DEFAULT_TERMS = [
-  "Deposit Leaderboard campaign is valid from 1st July 2026 to 31st July 2026. Only successful deposits made within this period qualify for ranking points.",
-  "Ranking is determined by the total accumulated deposit amount. In the event of a tie, the user who reached the total amount first will be ranked higher.",
-  "Prizes will be credited to the winner's wallet within 3 working days after the campaign ends. All prizes are subject to a 1x turnover requirement before withdrawal.",
-  "Any form of fraudulent activity, including multiple account creation or bonus abuse, will result in immediate disqualification and account suspension.",
-  "KingGroup reserves the right to modify or cancel the promotion at any time without prior notice. The management's decision is final and binding.",
-];
-
 export default function LeaderboardView({
   config,
   top3 = [],
@@ -23,7 +15,7 @@ export default function LeaderboardView({
   campaignEndDate,
   periodLabel = "",
   updateNotes = [],
-  terms = DEFAULT_TERMS,
+  terms = [],
   loading = false,
 }) {
   return (

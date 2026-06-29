@@ -17,28 +17,40 @@ import {
   getPublicReferralRanking,
   getPublicLeaderboardInfo,
   getPublicLeaderboardCampaign,
+  getPublicTermsAndConditions,
 } from "../../api/memberApi";
 
-// Maps each board tab to its leaderboard_type (1/2/3) and ranking endpoint.
+// type = leaderboard info/ranking API. termsCategory = main T&C API category.
 const BOARD_META = {
-  [LEADERBOARD_TYPES.DEPOSIT]: { type: 1, getRanking: getPublicDepositRanking },
-  [LEADERBOARD_TYPES.WITHDRAWAL]: { type: 2, getRanking: getPublicWithdrawRanking },
-  [LEADERBOARD_TYPES.REFERRER]: { type: 3, getRanking: getPublicReferralRanking },
+  [LEADERBOARD_TYPES.DEPOSIT]: {
+    type: 1,
+    termsCategory: 2,
+    getRanking: getPublicDepositRanking,
+  },
+  [LEADERBOARD_TYPES.WITHDRAWAL]: {
+    type: 2,
+    termsCategory: 3,
+    getRanking: getPublicWithdrawRanking,
+  },
+  [LEADERBOARD_TYPES.REFERRER]: {
+    type: 3,
+    termsCategory: 4,
+    getRanking: getPublicReferralRanking,
+  },
 };
 
-const DEFAULT_TERMS = [
-  "Deposit Leaderboard campaign is valid from 1st July 2026 to 31st July 2026. Only successful deposits made within this period qualify for ranking points.",
-  "Ranking is determined by the total accumulated deposit amount. In the event of a tie, the user who reached the total amount first will be ranked higher.",
-  "Prizes will be credited to the winner's wallet within 3 working days after the campaign ends. All prizes are subject to a 1x turnover requirement before withdrawal.",
-  "Any form of fraudulent activity, including multiple account creation or bonus abuse, will result in immediate disqualification and account suspension.",
-  "KingGroup reserves the right to modify or cancel the promotion at any time without prior notice. The management's decision is final and binding.",
-];
-
-const EMPTY_BOARD = { top3: [], table: [], endDate: null, notes: [], terms: DEFAULT_TERMS };
+const EMPTY_BOARD = { top3: [], table: [], endDate: null, notes: [], terms: [] };
 
 function asList(response) {
   if (Array.isArray(response)) return response;
   return response?.results ?? (response ? [response] : []);
+}
+
+function splitLines(text) {
+  return String(text || "")
+    .split(/\r?\n+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 function formatAmount(amount) {
@@ -75,7 +87,7 @@ function Top20LeaderboardPageInner() {
 
   useEffect(() => {
     let cancelled = false;
-    // Already loaded this tab — show cached data, skip the 3 calls.
+    // Already loaded this tab - show cached data, skip the API calls.
     if (boardCache.current[activeTab]) {
       setData(boardCache.current[activeTab]);
       setLoading(false);
@@ -88,7 +100,8 @@ function Top20LeaderboardPageInner() {
       meta.getRanking().catch(() => []),
       getPublicLeaderboardInfo(meta.type).catch(() => null),
       getPublicLeaderboardCampaign(meta.type).catch(() => null),
-    ]).then(([ranking, info, campaign]) => {
+      getPublicTermsAndConditions(meta.termsCategory).catch(() => null),
+    ]).then(([ranking, info, campaign, mainTerms]) => {
       if (cancelled) return;
       const entries = asList(ranking).map((e, i) => ({
         rank: e.rank ?? i + 1,
@@ -97,15 +110,12 @@ function Top20LeaderboardPageInner() {
       }));
       const infoRec = asList(info)[0];
       const campRec = asList(campaign)[0];
-      const tc = infoRec?.terms_and_conditions;
       const board = {
         top3: entries.slice(0, 3),
         table: entries.slice(3),
         endDate: campRec?.end_date ? new Date(campRec.end_date).getTime() : null,
-        notes: infoRec?.information ? [infoRec.information] : [],
-        terms: tc
-          ? tc.split(/\r?\n+/).map((s) => s.trim()).filter(Boolean)
-          : DEFAULT_TERMS,
+        notes: infoRec?.information ? splitLines(infoRec.information) : [],
+        terms: splitLines(mainTerms?.terms_and_conditions),
       };
       boardCache.current[activeTab] = board;
       setData(board);
