@@ -12,17 +12,15 @@ import {
   LEADERBOARD_CONFIG,
 } from "../../components/leaderboard-new/constants";
 import {
-  getDepositRewardItems,
-  getReferrerRewardItems,
-  getWithdrawalRewardItems,
-} from "../../api/adminApi";
-import {
   getPublicDepositRanking,
   getPublicWithdrawRanking,
   getPublicReferralRanking,
   getPublicLeaderboardInfo,
   getPublicLeaderboardCampaign,
   getPublicTermsAndConditions,
+  getMemberDepositRewardItems,
+  getMemberReferrerRewardItems,
+  getMemberWithdrawalRewardItems,
 } from "../../api/memberApi";
 
 // type = leaderboard info/ranking API. termsCategory = main T&C API category.
@@ -31,23 +29,23 @@ const BOARD_META = {
     type: 1,
     termsCategory: 2,
     getRanking: getPublicDepositRanking,
-    getRewards: getDepositRewardItems,
+    getRewards: getMemberDepositRewardItems,
   },
   [LEADERBOARD_TYPES.WITHDRAWAL]: {
     type: 2,
     termsCategory: 3,
     getRanking: getPublicWithdrawRanking,
-    getRewards: getWithdrawalRewardItems,
+    getRewards: getMemberWithdrawalRewardItems,
   },
   [LEADERBOARD_TYPES.REFERRER]: {
     type: 3,
     termsCategory: 4,
     getRanking: getPublicReferralRanking,
-    getRewards: getReferrerRewardItems,
+    getRewards: getMemberReferrerRewardItems,
   },
 };
 
-const EMPTY_BOARD = { top3: [], table: [], endDate: null, notes: [], terms: [] };
+const EMPTY_BOARD = { top3: [], table: [], endDate: null, notes: [], terms: [], infoTerms: [] };
 
 function asList(response) {
   if (Array.isArray(response)) return response;
@@ -84,11 +82,80 @@ function buildPrizeMap(rewardsResponse) {
   return map;
 }
 
+function collectInfoNotes(rows) {
+  return asList(rows).flatMap((row) => splitLines(row?.information));
+}
+
+function collectInfoTerms(rows) {
+  return asList(rows).flatMap((row) => splitLines(row?.terms_and_conditions));
+}
+function pickLatestNonEmpty(rows, field) {
+  const list = asList(rows);
+  for (let i = list.length - 1; i >= 0; i -= 1) {
+    const value = list[i]?.[field];
+    if (String(value || "").trim()) return list[i];
+  }
+  return list[0] || null;
+}
+
+
+function InfoTermsModal({ terms, color, onClose }) {
+  const rows = Array.isArray(terms) ? terms.filter(Boolean) : [];
+
+  return (
+    <div
+      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 px-5 backdrop-blur-sm"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose?.();
+      }}
+    >
+      <div className="w-full max-w-[380px] rounded-2xl border border-[#e9af41]/35 bg-[#0a1a0a] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.55)]">
+        <div className="mb-5 flex items-center justify-between gap-4">
+          <h2
+            className="text-[18px] font-bold"
+            style={{ color: color || "#e9af41", fontFamily: "var(--font-inter)" }}
+          >
+            Terms &amp; Conditions
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="grid h-8 w-8 place-items-center rounded-full border border-[#e9af41]/50 text-[#e9af41]"
+            aria-label="Close terms"
+          >
+            x
+          </button>
+        </div>
+
+        <div className="flex max-h-[60vh] flex-col gap-3 overflow-y-auto pr-1">
+          {rows.length ? rows.map((term, index) => (
+            <div key={`${term}-${index}`} className="flex items-start gap-3">
+              <span
+                className="shrink-0 text-[13px] font-semibold"
+                style={{ color: color || "#e9af41", fontFamily: "var(--font-inter)" }}
+              >
+                {String(index + 1).padStart(2, "0")}.
+              </span>
+              <p className="text-[13px] leading-5 text-[#ddc1ae]" style={{ fontFamily: "var(--font-inter)" }}>
+                {term}
+              </p>
+            </div>
+          )) : (
+            <p className="text-[13px] leading-5 text-[#ddc1ae]" style={{ fontFamily: "var(--font-inter)" }}>
+              No terms and conditions available.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 function Top20LeaderboardPageInner() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [data, setData] = useState(EMPTY_BOARD);
   const [loading, setLoading] = useState(true);
   // Cache each tab's loaded board so switching back doesn't refetch.
@@ -139,13 +206,15 @@ function Top20LeaderboardPageInner() {
           prize: prizeMap.get(Number(rank)) || "",
         };
       });
-      const infoRec = asList(info)[0];
-      const campRec = asList(campaign)[0];
+      const notes = collectInfoNotes(info);
+      const infoTerms = collectInfoTerms(info);
+      const campRec = pickLatestNonEmpty(campaign, "end_date");
       const board = {
         top3: entries.slice(0, 3),
         table: entries.slice(3),
         endDate: campRec?.end_date ? new Date(campRec.end_date).getTime() : null,
-        notes: infoRec?.information ? splitLines(infoRec.information) : [],
+        notes,
+        infoTerms,
         terms: splitLines(mainTerms?.terms_and_conditions),
       };
       boardCache.current[activeTab] = board;
@@ -201,6 +270,15 @@ function Top20LeaderboardPageInner() {
             Leaderboards
           </h1>
         </div>
+        <button
+          type="button"
+          onClick={() => setIsInfoOpen(true)}
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 border-[#e9af41] text-[18px] font-bold italic text-[#e9af41]"
+          style={{ fontFamily: "var(--font-inter)" }}
+          aria-label="Leaderboard terms and conditions"
+        >
+          i
+        </button>
       </div>
 
       <div className="flex-1 pb-[140px] pt-[84px]">
@@ -229,6 +307,13 @@ function Top20LeaderboardPageInner() {
         </div>
       </div>
 
+      {isInfoOpen && (
+        <InfoTermsModal
+          terms={data.infoTerms}
+          color={config.color}
+          onClose={() => setIsInfoOpen(false)}
+        />
+      )}
       <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
       <FooterNav />
     </div>

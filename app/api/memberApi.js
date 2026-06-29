@@ -502,3 +502,19 @@ export async function getPublicWithdrawRanking() {
 export async function getPublicReferralRanking() {
   return await apiRequest(ENDPOINTS.LEADERBOARD.PUBLIC_REFERRAL_RANKING, { method: 'GET' }, true, 'member');
 }
+
+// GET /leaderboard/{board}-reward-items/ using member token for display prize mapping
+export async function getMemberDepositRewardItems(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.DEPOSIT_REWARD_ITEMS}${qs}`, { method: 'GET' }, true, 'member');
+}
+
+export async function getMemberWithdrawalRewardItems(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.WITHDRAW_REWARD_ITEMS}${qs}`, { method: 'GET' }, true, 'member');
+}
+
+export async function getMemberReferrerRewardItems(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.REFERRAL_REWARD_ITEMS}${qs}`, { method: 'GET' }, true, 'member');
+}
