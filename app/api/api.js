@@ -129,6 +129,12 @@ export const ENDPOINTS = {
     PROMOTIONS_BY_STATION: (stationUuid) => `/settings/promotions/get-by-station/${stationUuid}/`,
     MISSION_SETTINGS: '/mission/settings/'
   },
+  USAGE_REPORT: {
+    SUMMARY: '/usage-report/summary/',
+    GAMES: '/usage-report/games/',
+    RETENTION: '/usage-report/games/retention/',
+    INSIGHTS: '/usage-report/insights/',
+  },
   EXTERNAL: {
     SPECIAL_CODE: '/third-party/special-codes/',
     WALLET_VIP_TIERS: (specialCode) => `/third-party/station-wallet-vip/${specialCode}/`,

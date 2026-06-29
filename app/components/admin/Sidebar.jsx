@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -26,7 +26,7 @@ const SearchIcon = ({ className }) => (
 );
 
 // Shared expand/collapse animation for nested menus and section bodies.
-// Animating height: 0 ↔ "auto" plus opacity gives a smooth slide-fade without
+// Animating height: 0 ? "auto" plus opacity gives a smooth slide-fade without
 // the snappy display:none hop.
 const collapseTransition = { duration: 0.28, ease: [0.4, 0, 0.2, 1] };
 const collapseVariants = {
@@ -34,7 +34,7 @@ const collapseVariants = {
   open: { height: "auto", opacity: 1 },
 };
 
-// Map a pathname → sidebar item id. Keeps the sidebar a single source of truth
+// Map a pathname ? sidebar item id. Keeps the sidebar a single source of truth
 // so it doesn't depend on a per-page `activeItem` prop (which would force a
 // re-render dance from each page).
 function pathnameToActiveItem(pathname) {
@@ -58,6 +58,7 @@ function pathnameToActiveItem(pathname) {
   if (pathname.startsWith("/admin/reports/token")) return "token-report";
   if (pathname.startsWith("/admin/reports/reward")) return "reward-report";
   if (pathname.startsWith("/admin/reports/member")) return "member-report";
+  if (pathname.startsWith("/admin/reports/usage")) return "usage-report";
   if (pathname.startsWith("/admin/retention/member-alert")) return "retention-member-alert";
   if (pathname.startsWith("/admin/retention/members")) return "retention-member-list";
   if (pathname.startsWith("/admin/retention/settings")) return "retention-settings";
@@ -116,7 +117,7 @@ const GearIcon = ({ className }) => (
   </svg>
 );
 
-// User with a small key/check — represents "role management"
+// User with a small key/check � represents "role management"
 const RoleIcon = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="10" cy="7" r="4" />
@@ -125,7 +126,7 @@ const RoleIcon = ({ className }) => (
   </svg>
 );
 
-// ID-badge with lines — represents "activity log"
+// ID-badge with lines � represents "activity log"
 const ActivityLogIcon = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="4" width="18" height="16" rx="2" />
@@ -137,7 +138,7 @@ const ActivityLogIcon = ({ className }) => (
   </svg>
 );
 
-// Person with arrow — represents "login request"
+// Person with arrow � represents "login request"
 const LoginRequestIcon = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="9" cy="7" r="4" />
@@ -147,7 +148,7 @@ const LoginRequestIcon = ({ className }) => (
   </svg>
 );
 
-// Price tag — represents "promotions"
+// Price tag � represents "promotions"
 const PromotionIcon = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M20.59 13.41 13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
@@ -414,14 +415,15 @@ const SECONDARY_MENU = [
       { id: "token-report", label: "Token Report", href: "/admin/reports/token" },
       { id: "reward-report", label: "Reward Report", href: "/admin/reports/reward" },
       { id: "member-report", label: "Member Report", href: "/admin/reports/member" },
+      { id: "usage-report", label: "Usage Report", href: "/admin/reports/usage" },
     ],
   },
 ];
 
 // Renders one of:
-//   item.iconNode  → inline React SVG component, colored via currentColor
-//   item.iconMask  → PNG used as a CSS mask so we can tint it via currentColor too
-//   item.icon      → plain <img> (color is whatever the source asset has baked in)
+//   item.iconNode  ? inline React SVG component, colored via currentColor
+//   item.iconMask  ? PNG used as a CSS mask so we can tint it via currentColor too
+//   item.icon      ? plain <img> (color is whatever the source asset has baked in)
 const ItemIcon = ({ item, sizeClass }) => {
   if (item.iconNode) {
     const Icon = item.iconNode;
@@ -450,7 +452,7 @@ const ItemIcon = ({ item, sizeClass }) => {
 
 // Shared active highlight. Every active row/square renders this same element
 // with the same `layoutId`, so when the route changes Framer Motion animates
-// the gold pill sliding from the previously-active item to the new one — the
+// the gold pill sliding from the previously-active item to the new one � the
 // sidebar's counterpart to the content slide in app/admin/layout.jsx.
 const ACTIVE_PILL_LAYOUT_ID = "sidebar-active-pill";
 const ActivePill = () => (
@@ -475,7 +477,7 @@ const RedDot = ({ corner = false }) => (
   />
 );
 
-// Spec from Figma 231:3393 — items/nav item:
+// Spec from Figma 231:3393 � items/nav item:
 //   - rounded-[12px] container, 12px horizontal / 8px vertical padding
 //   - 32px icon container with the actual glyph centered at 18-20px
 //   - label: Inter Semi Bold, 14px, leading-21, tracking-[-1px], color #fbeed2 (Primary 100)
@@ -539,7 +541,7 @@ const MenuItem = ({ item, isActive }) => {
   return <Link href={item.href}>{content}</Link>;
 };
 
-// Active-state item — visually identical to MenuItem but with the gold gradient
+// Active-state item � visually identical to MenuItem but with the gold gradient
 // + light-gold border + dark text from the Figma spec. Kept as a thin wrapper
 // so the renderItem dispatcher stays readable.
 const HighlightedMenuItem = ({ item }) => <MenuItem item={item} isActive={true} />;
@@ -571,7 +573,7 @@ const ExpandableMenuItem = ({ item, activeItem, forceOpen = false }) => {
   const [open, setOpen] = useState(isAnyChildActive);
   const effectivelyOpen = forceOpen || open;
 
-  // Collapsed-mode hover flyout — anchors a small popover to the right of the
+  // Collapsed-mode hover flyout � anchors a small popover to the right of the
   // icon listing this item's children. The inline submenu has no room in the
   // 56px column, so a fixed-position flyout is the standard pattern (VS Code /
   // GitHub style).
@@ -695,7 +697,7 @@ const ExpandableMenuItem = ({ item, activeItem, forceOpen = false }) => {
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Parent header — same row dimensions as a MenuItem */}
+      {/* Parent header � same row dimensions as a MenuItem */}
       <button
         onClick={() => setOpen((v) => !v)}
         className={`relative isolate flex w-full items-center gap-2 rounded-[12px] px-3 py-2 transition-all duration-200 border-[2.5px] border-transparent ${
@@ -782,9 +784,9 @@ const ExpandableMenuItem = ({ item, activeItem, forceOpen = false }) => {
   );
 };
 
-// Section title gradient — Primary 600 → Primary 300 from the Figma tokens.
+// Section title gradient � Primary 600 ? Primary 300 from the Figma tokens.
 const SECTION_TITLE_GRADIENT = "linear-gradient(102deg, #dc9d16 1%, #f2cb7a 98%)";
-// Collapsible section wrapper — renders a header with the section title
+// Collapsible section wrapper � renders a header with the section title
 // and a chevron that toggles visibility of the items inside.
 //
 // When the sidebar is collapsed, the title shows a short prefix (~3 chars +
@@ -794,7 +796,7 @@ const CollapsibleSection = ({ title, sectionKey, open, onToggle, forceOpen = fal
   const effectivelyOpen = forceOpen || open;
 
   // In collapsed mode the section header has no room for readable text and
-  // toggling a section you can't name is pointless — just render the items
+  // toggling a section you can't name is pointless � just render the items
   // directly. The parent's gap-6 still separates groups visually.
   if (sidebarCollapsed) {
     return <div className="flex flex-col gap-2">{children}</div>;
@@ -862,12 +864,12 @@ function isPrimaryActive(itemId, activeItem) {
 }
 
 // Centralized render for a single sidebar entry. Handles three cases:
-// 1. Item has children → ExpandableMenuItem (its own collapsible)
-// 2. Item is active for the current route → HighlightedMenuItem (gold pill)
-// 3. Otherwise → regular MenuItem
+// 1. Item has children ? ExpandableMenuItem (its own collapsible)
+// 2. Item is active for the current route ? HighlightedMenuItem (gold pill)
+// 3. Otherwise ? regular MenuItem
 //
 // `forceOpen` is set when the sidebar search has matched a child of an
-// expandable parent — we open the parent so the match is visible.
+// expandable parent � we open the parent so the match is visible.
 function renderItem(item, activeItem, forceOpen = false) {
   if (item.children) {
     return <ExpandableMenuItem key={item.id} item={item} activeItem={activeItem} forceOpen={forceOpen} />;
@@ -926,7 +928,7 @@ export default function Sidebar({ activeItem: activeItemProp }) {
   const [search, setSearch] = useState("");
   const [permissions, setPermissions] = useState(() => getStoredAdminPermissions());
   const [openSection, setOpenSection] = useState(() => activeSectionForItem(activeItem));
-  // Sidebar items keyed to a boolean — true means render the red attention dot.
+  // Sidebar items keyed to a boolean � true means render the red attention dot.
   // Currently driven only by getPrioritySummary for the Member Alert row, but
   // shaped as a map so future alert sources can plug in without restructuring.
   const [alertItems, setAlertItems] = useState({});
@@ -958,7 +960,7 @@ export default function Sidebar({ activeItem: activeItemProp }) {
   // Poll the priority summary so the Member Alert row gets a red dot whenever
   // any member is sitting in a follow-up bucket (high / medium / low / inactive).
   // The endpoint requires an admin token; if the user isn't logged in or the
-  // backend errors, we silently skip — the sidebar must not break.
+  // backend errors, we silently skip � the sidebar must not break.
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
@@ -1039,7 +1041,7 @@ export default function Sidebar({ activeItem: activeItemProp }) {
   const settingsItems = filterMenuItems(filterMenuByPermissions(SETTINGS_MENU, permissions), inlineQuery);
   const noResults = hasQuery && !collapsed && !mrsItems.length && !leaderboardItems.length && !worldCupItems.length && !retentionItems.length && !settingsItems.length;
 
-  // Popover sections — independently filtered so opening the dialog doesn't
+  // Popover sections � independently filtered so opening the dialog doesn't
   // disturb the collapsed sidebar behind it.
   const popoverSections = collapsed && searchOpen
     ? [
@@ -1057,15 +1059,15 @@ export default function Sidebar({ activeItem: activeItemProp }) {
   const popoverEmpty = collapsed && searchOpen && hasQuery && popoverSections.length === 0;
 
   return (
-    // Sidebar shell — gold border + dark green gradient per Figma 243:6071.
-    // Background uses Como-style deep green (rgb(17,50,14) → rgb(3,17,1)).
+    // Sidebar shell � gold border + dark green gradient per Figma 243:6071.
+    // Background uses Como-style deep green (rgb(17,50,14) ? rgb(3,17,1)).
     <div
       className="scrollbar-admin relative h-full w-full overflow-y-auto overflow-x-hidden rounded-[12px] border border-[#f2cb7a]"
       style={{
         background: "linear-gradient(143deg, #11320e 0%, #031101 99.749%)",
       }}
     >
-      {/* Sticky top region — logo, toggle button and search bar stay pinned
+      {/* Sticky top region � logo, toggle button and search bar stay pinned
           at the top of the sidebar while the menu list scrolls behind them.
           Background matches the top of the shell's diagonal gradient so the
           scrolling content doesn't peek through. */}
@@ -1134,7 +1136,7 @@ export default function Sidebar({ activeItem: activeItemProp }) {
         </button>
       </div>
 
-      {/* Search — full input when expanded, icon-only button when collapsed.
+      {/* Search � full input when expanded, icon-only button when collapsed.
           Wiring of the search itself is left to a future step; this matches
           the design and reserves the slot. */}
       <div className={`pb-4 ${collapsed ? "px-2" : "px-4"}`}>
@@ -1170,7 +1172,7 @@ export default function Sidebar({ activeItem: activeItemProp }) {
       </div>
       {/* /sticky top region */}
 
-      {/* Menu Items — gap-[24px] between sections per Figma when expanded.
+      {/* Menu Items � gap-[24px] between sections per Figma when expanded.
           In collapsed mode, gap shrinks and a thin gold divider sits between
           adjacent sections so the icon-only column still telegraphs the group
           boundaries. */}

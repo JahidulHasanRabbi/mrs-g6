@@ -597,6 +597,29 @@ export async function updateTermsAndConditions(data) {
   }, true, 'admin');
 }
 
+// GET /usage-report/summary/
+export async function getUsageReportSummary(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.USAGE_REPORT.SUMMARY}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+// GET /usage-report/games/
+export async function getUsageReportGames(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.USAGE_REPORT.GAMES}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+// GET /usage-report/games/retention/
+export async function getUsageReportRetention(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.USAGE_REPORT.RETENTION}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+// GET /usage-report/insights/
+export async function getUsageReportInsights(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.USAGE_REPORT.INSIGHTS}${qs}`, { method: 'GET' }, true, 'admin');
+}
 // Front View Dashboard APIs
 // GET /front-view/total-users/ - Get total users count
 export async function getTotalUsers() {
