@@ -469,3 +469,36 @@ export async function getWorldCupMyPrediction(memberUuid, matchUuid) {
     method: 'GET'
   }, true, 'member');
 }
+
+// ============================================================================
+// LEADERBOARD — PUBLIC (postman/leaderboard.md)
+// type: 1 = Deposit, 2 = Withdraw, 3 = Referral
+// ============================================================================
+
+// GET /leaderboard/public/info/  (optional ?type=)
+export async function getPublicLeaderboardInfo(type) {
+  const qs = type ? buildQueryParams({ type }) : '';
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.PUBLIC_INFO}${qs}`, { method: 'GET' }, true, 'member');
+}
+
+// GET /leaderboard/public/status/
+export async function getPublicLeaderboardStatus() {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.PUBLIC_STATUS, { method: 'GET' }, true, 'member');
+}
+
+// GET /leaderboard/public/campaign/  (optional ?type=)
+export async function getPublicLeaderboardCampaign(type) {
+  const qs = type ? buildQueryParams({ type }) : '';
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.PUBLIC_CAMPAIGN}${qs}`, { method: 'GET' }, true, 'member');
+}
+
+// GET /leaderboard/public/{board}-ranking/  — latest generated Top 20 batch
+export async function getPublicDepositRanking() {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.PUBLIC_DEPOSIT_RANKING, { method: 'GET' }, true, 'member');
+}
+export async function getPublicWithdrawRanking() {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.PUBLIC_WITHDRAW_RANKING, { method: 'GET' }, true, 'member');
+}
+export async function getPublicReferralRanking() {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.PUBLIC_REFERRAL_RANKING, { method: 'GET' }, true, 'member');
+}

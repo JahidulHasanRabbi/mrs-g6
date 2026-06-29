@@ -17,13 +17,10 @@ import {
   archiveReferrerRewardItem,
   getReferrerDummyPlayers,
 } from "../../../api/adminApi";
-import {
-  MOCK_BANNERS,
-  MOCK_REWARDS,
-  MOCK_REFERRER_PLAYERS as MOCK_PLAYERS,
-} from "../../../components/admin/leaderboards/mockData";
 
 const PAGE_SIZE = 7;
+
+const ITEM_TYPE_LABELS = { 1: "Free Credit", 2: "Item", 3: "Token", 4: "Other" };
 
 function PaginatedFooter({ total, page, setPage }) {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -42,8 +39,8 @@ function normalizeBanner(b) {
   return {
     id: b.uuid,
     uuid: b.uuid,
-    description: b.description ?? "",
-    termsCondition: b.terms_condition ?? b.terms_and_condition ?? "",
+    description: b.information ?? "",
+    termsCondition: b.terms_and_conditions ?? "",
   };
 }
 
@@ -51,9 +48,9 @@ function normalizeReward(r) {
   return {
     id: r.uuid,
     uuid: r.uuid,
-    name: r.reward_name ?? r.name ?? "",
+    name: r.reward_name ?? "",
     quantity: r.quantity ?? 0,
-    itemType: r.item_type_display ?? String(r.item_type ?? ""),
+    itemType: ITEM_TYPE_LABELS[r.item_type] ?? String(r.item_type ?? ""),
     image: r.image ?? null,
   };
 }
@@ -62,9 +59,9 @@ function normalizePlayer(p) {
   return {
     id: p.uuid,
     uuid: p.uuid,
-    name: p.player_name ?? "",
+    name: p.player ?? "",
     rank: p.rank ?? 0,
-    newMember: p.new_member ?? 0,
+    newMember: p.total_referral_deposit ?? 0,
   };
 }
 
@@ -87,12 +84,12 @@ export default function ReferrerSettingsPage() {
       getReferrerRewardItems().catch(() => null),
       getReferrerDummyPlayers().catch(() => null),
     ]).then(([bannersRes, rewardsRes, playersRes]) => {
-      const bList = bannersRes ? (bannersRes.results ?? bannersRes) : null;
-      const rList = rewardsRes ? (rewardsRes.results ?? rewardsRes) : null;
-      const pList = playersRes ? (playersRes.results ?? playersRes) : null;
-      setBanners((Array.isArray(bList) && bList.length ? bList : MOCK_BANNERS).map(normalizeBanner));
-      setRewards((Array.isArray(rList) && rList.length ? rList : MOCK_REWARDS).map(normalizeReward));
-      setPlayers((Array.isArray(pList) && pList.length ? pList : MOCK_PLAYERS).map(normalizePlayer));
+      const bList = bannersRes ? (bannersRes.results ?? bannersRes) : [];
+      const rList = rewardsRes ? (rewardsRes.results ?? rewardsRes) : [];
+      const pList = playersRes ? (playersRes.results ?? playersRes) : [];
+      setBanners((Array.isArray(bList) ? bList : []).map(normalizeBanner));
+      setRewards((Array.isArray(rList) ? rList : []).map(normalizeReward));
+      setPlayers((Array.isArray(pList) ? pList : []).map(normalizePlayer));
     });
   }, []);
 

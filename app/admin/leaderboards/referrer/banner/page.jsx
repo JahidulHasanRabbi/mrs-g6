@@ -8,7 +8,6 @@ import {
   createReferrerBanner,
   updateReferrerBanner,
 } from "../../../../api/adminApi";
-import { MOCK_BANNERS, isMockUuid } from "../../../../components/admin/leaderboards/mockData";
 
 function BannerForm() {
   const router = useRouter();
@@ -24,22 +23,14 @@ function BannerForm() {
 
   useEffect(() => {
     if (!editingUuid) return;
-    const applyMock = () => {
-      const m = MOCK_BANNERS.find((x) => x.uuid === editingUuid);
-      if (m) setForm({ description: m.description ?? "", termsCondition: m.terms_condition ?? "" });
-    };
-    if (isMockUuid(editingUuid)) {
-      applyMock();
-      return;
-    }
     getReferrerBanner(editingUuid)
       .then((b) => {
         setForm({
-          description: b.description ?? "",
-          termsCondition: b.terms_condition ?? b.terms_and_condition ?? "",
+          description: b.information ?? "",
+          termsCondition: b.terms_and_conditions ?? "",
         });
       })
-      .catch(applyMock);
+      .catch(() => {});
   }, [editingUuid]);
 
   const set = (k) => (e) => setForm((p) => ({ ...p, [k]: e.target.value }));
@@ -53,8 +44,8 @@ function BannerForm() {
     setError("");
     try {
       const payload = {
-        description: form.description.trim(),
-        terms_condition: form.termsCondition.trim(),
+        information: form.description.trim(),
+        terms_and_conditions: form.termsCondition.trim(),
       };
       if (editingUuid) {
         await updateReferrerBanner(editingUuid, payload);

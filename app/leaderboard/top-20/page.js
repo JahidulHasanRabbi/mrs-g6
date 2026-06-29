@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
 import { FooterNav } from "../../components/footer";
@@ -11,65 +11,22 @@ import {
   LEADERBOARD_TYPES,
   LEADERBOARD_CONFIG,
 } from "../../components/leaderboard-new/constants";
+import {
+  getPublicDepositRanking,
+  getPublicWithdrawRanking,
+  getPublicReferralRanking,
+  getPublicLeaderboardInfo,
+  getPublicLeaderboardCampaign,
+} from "../../api/memberApi";
 
-const MOCK_DEPOSIT = {
-  top3: [
-    { rank: 1, user: "60*******100", value: "1,700", prize: "RM 1,888" },
-    { rank: 2, user: "60*******100", value: "1,400", prize: "RM 1,888" },
-    { rank: 3, user: "60*******100", value: "1,200", prize: "RM 888" },
-  ],
-  table: Array.from({ length: 17 }, (_, i) => ({
-    rank: i + 4,
-    user: `${(i + 6) * 10}****787`,
-    value: `${(840 - i * 40).toFixed(2)}`,
-    prize: `RM ${288 + i * 20}`,
-    isCurrentUser: i + 4 === 5,
-  })),
+// Maps each board tab to its leaderboard_type (1/2/3) and ranking endpoint.
+const BOARD_META = {
+  [LEADERBOARD_TYPES.DEPOSIT]: { type: 1, getRanking: getPublicDepositRanking },
+  [LEADERBOARD_TYPES.WITHDRAWAL]: { type: 2, getRanking: getPublicWithdrawRanking },
+  [LEADERBOARD_TYPES.REFERRER]: { type: 3, getRanking: getPublicReferralRanking },
 };
 
-const MOCK_REFERRER = {
-  top3: [
-    { rank: 1, user: "60*******100", value: "700", prize: "RM 1,888" },
-    { rank: 2, user: "60*******100", value: "400", prize: "RM 1,888" },
-    { rank: 3, user: "60*******100", value: "200", prize: "RM 888" },
-  ],
-  table: Array.from({ length: 17 }, (_, i) => ({
-    rank: i + 4,
-    user: `${(i + 6) * 10}****787`,
-    value: `${233 - i * 12}`,
-    prize: `RM ${288 + i * 20}`,
-    isCurrentUser: i + 4 === 5,
-  })),
-};
-
-const MOCK_WITHDRAWAL = {
-  top3: [
-    { rank: 1, user: "60*******100", value: "1,700" },
-    { rank: 2, user: "60*******100", value: "1,400" },
-    { rank: 3, user: "60*******100", value: "1,200" },
-  ],
-  table: Array.from({ length: 17 }, (_, i) => ({
-    rank: i + 4,
-    user: `${(i + 6) * 10}****78${i % 2 === 0 ? "6" : "7"}`,
-    value: `RM ${288 + i * 20}`,
-    isCurrentUser: i + 4 === 5,
-  })),
-};
-
-const MOCK_DATA = {
-  [LEADERBOARD_TYPES.DEPOSIT]: MOCK_DEPOSIT,
-  [LEADERBOARD_TYPES.REFERRER]: MOCK_REFERRER,
-  [LEADERBOARD_TYPES.WITHDRAWAL]: MOCK_WITHDRAWAL,
-};
-
-const CAMPAIGN_END = new Date("2026-07-31T23:59:59").getTime();
-
-const UPDATE_NOTES = [
-  "* Result Will Be Updated On Every Monday.",
-  "* Current Result: Updated On 01 July 2026 - Showing Deposit Made On July Only",
-];
-
-const TERMS = [
+const DEFAULT_TERMS = [
   "Deposit Leaderboard campaign is valid from 1st July 2026 to 31st July 2026. Only successful deposits made within this period qualify for ranking points.",
   "Ranking is determined by the total accumulated deposit amount. In the event of a tie, the user who reached the total amount first will be ranked higher.",
   "Prizes will be credited to the winner's wallet within 3 working days after the campaign ends. All prizes are subject to a 1x turnover requirement before withdrawal.",
@@ -77,11 +34,28 @@ const TERMS = [
   "KingGroup reserves the right to modify or cancel the promotion at any time without prior notice. The management's decision is final and binding.",
 ];
 
+const EMPTY_BOARD = { top3: [], table: [], endDate: null, notes: [], terms: DEFAULT_TERMS };
+
+function asList(response) {
+  if (Array.isArray(response)) return response;
+  return response?.results ?? (response ? [response] : []);
+}
+
+function formatAmount(amount) {
+  if (amount == null) return "";
+  const num = Number(String(amount).replace(/,/g, ""));
+  return Number.isFinite(num) ? num.toLocaleString("en-US") : String(amount);
+}
+
 function Top20LeaderboardPageInner() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [data, setData] = useState(EMPTY_BOARD);
+  const [loading, setLoading] = useState(true);
+  // Cache each tab's loaded board so switching back doesn't refetch.
+  const boardCache = useRef({});
 
   const tabParam = searchParams.get("tab");
   const activeTab =
@@ -99,8 +73,50 @@ function Top20LeaderboardPageInner() {
     [router, pathname]
   );
 
+  useEffect(() => {
+    let cancelled = false;
+    // Already loaded this tab — show cached data, skip the 3 calls.
+    if (boardCache.current[activeTab]) {
+      setData(boardCache.current[activeTab]);
+      setLoading(false);
+      return;
+    }
+    const meta = BOARD_META[activeTab];
+    setData(EMPTY_BOARD);
+    setLoading(true);
+    Promise.all([
+      meta.getRanking().catch(() => []),
+      getPublicLeaderboardInfo(meta.type).catch(() => null),
+      getPublicLeaderboardCampaign(meta.type).catch(() => null),
+    ]).then(([ranking, info, campaign]) => {
+      if (cancelled) return;
+      const entries = asList(ranking).map((e, i) => ({
+        rank: e.rank ?? i + 1,
+        user: e.display_name ?? "",
+        value: formatAmount(e.amount),
+      }));
+      const infoRec = asList(info)[0];
+      const campRec = asList(campaign)[0];
+      const tc = infoRec?.terms_and_conditions;
+      const board = {
+        top3: entries.slice(0, 3),
+        table: entries.slice(3),
+        endDate: campRec?.end_date ? new Date(campRec.end_date).getTime() : null,
+        notes: infoRec?.information ? [infoRec.information] : [],
+        terms: tc
+          ? tc.split(/\r?\n+/).map((s) => s.trim()).filter(Boolean)
+          : DEFAULT_TERMS,
+      };
+      boardCache.current[activeTab] = board;
+      setData(board);
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab]);
+
   const config = LEADERBOARD_CONFIG[activeTab];
-  const data = MOCK_DATA[activeTab];
 
   return (
     <div
@@ -161,11 +177,12 @@ function Top20LeaderboardPageInner() {
               config={config}
               top3={data.top3}
               tableEntries={data.table}
-              currentUserRank={5}
-              campaignEndDate={CAMPAIGN_END}
-              periodLabel="June 2026 Leaderboard"
-              updateNotes={UPDATE_NOTES}
-              terms={TERMS}
+              currentUserRank={null}
+              campaignEndDate={data.endDate}
+              periodLabel=""
+              updateNotes={data.notes}
+              terms={data.terms}
+              loading={loading}
             />
           </AnimatePresence>
         </div>

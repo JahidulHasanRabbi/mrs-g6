@@ -175,35 +175,48 @@ export const ENDPOINTS = {
     RANKING_REALTIME: '/worldcup/ranking/realtime/',
     DASHBOARD_KPI: '/worldcup/dashboard/kpi/',
   },
-  DEPOSIT_LEADERBOARD: {
-    BANNERS: '/leaderboard-deposit/banners/',
-    BANNER: (uuid) => `/leaderboard-deposit/banners/${uuid}/`,
-    BANNER_ARCHIVE: (uuid) => `/leaderboard-deposit/banners/${uuid}/archive/`,
-    REWARD_ITEMS: '/leaderboard-deposit/reward-items/',
-    REWARD_ITEM: (uuid) => `/leaderboard-deposit/reward-items/${uuid}/`,
-    REWARD_ITEM_ARCHIVE: (uuid) => `/leaderboard-deposit/reward-items/${uuid}/archive/`,
-    DUMMY_PLAYERS: '/leaderboard-deposit/dummy-players/',
-    DUMMY_PLAYER: (uuid) => `/leaderboard-deposit/dummy-players/${uuid}/`,
-  },
-  REFERRER_LEADERBOARD: {
-    BANNERS: '/leaderboard-referrer/banners/',
-    BANNER: (uuid) => `/leaderboard-referrer/banners/${uuid}/`,
-    BANNER_ARCHIVE: (uuid) => `/leaderboard-referrer/banners/${uuid}/archive/`,
-    REWARD_ITEMS: '/leaderboard-referrer/reward-items/',
-    REWARD_ITEM: (uuid) => `/leaderboard-referrer/reward-items/${uuid}/`,
-    REWARD_ITEM_ARCHIVE: (uuid) => `/leaderboard-referrer/reward-items/${uuid}/archive/`,
-    DUMMY_PLAYERS: '/leaderboard-referrer/dummy-players/',
-    DUMMY_PLAYER: (uuid) => `/leaderboard-referrer/dummy-players/${uuid}/`,
-  },
-  WITHDRAWAL_LEADERBOARD: {
-    BANNERS: '/leaderboard-withdrawal/banners/',
-    BANNER: (uuid) => `/leaderboard-withdrawal/banners/${uuid}/`,
-    BANNER_ARCHIVE: (uuid) => `/leaderboard-withdrawal/banners/${uuid}/archive/`,
-    REWARD_ITEMS: '/leaderboard-withdrawal/reward-items/',
-    REWARD_ITEM: (uuid) => `/leaderboard-withdrawal/reward-items/${uuid}/`,
-    REWARD_ITEM_ARCHIVE: (uuid) => `/leaderboard-withdrawal/reward-items/${uuid}/archive/`,
-    DUMMY_PLAYERS: '/leaderboard-withdrawal/dummy-players/',
-    DUMMY_PLAYER: (uuid) => `/leaderboard-withdrawal/dummy-players/${uuid}/`,
+  // Unified Leaderboard API (Deposit / Withdraw / Referral).
+  // Info & Campaign are shared endpoints selected by ?type= (1/2/3);
+  // Status is a single global open/closed flag. Reward items and fake data
+  // are per-board paths. See postman/leaderboard.md.
+  LEADERBOARD: {
+    INFO: '/leaderboard/info/',
+    INFO_SINGLE: (uuid) => `/leaderboard/info/${uuid}/`,
+    INFO_ARCHIVE: (uuid) => `/leaderboard/info/${uuid}/archive/`,
+    STATUS: '/leaderboard/status/',
+    CAMPAIGN: '/leaderboard/campaign/',
+    CAMPAIGN_SINGLE: (uuid) => `/leaderboard/campaign/${uuid}/`,
+    CAMPAIGN_ARCHIVE: (uuid) => `/leaderboard/campaign/${uuid}/archive/`,
+
+    DEPOSIT_REWARD_ITEMS: '/leaderboard/deposit-reward-items/',
+    DEPOSIT_REWARD_ITEM: (uuid) => `/leaderboard/deposit-reward-items/${uuid}/`,
+    DEPOSIT_REWARD_ITEM_ARCHIVE: (uuid) => `/leaderboard/deposit-reward-items/${uuid}/archive/`,
+    DEPOSIT_FAKE_DATA: '/leaderboard/deposit-fake-data/',
+    DEPOSIT_FAKE_DATA_SINGLE: (uuid) => `/leaderboard/deposit-fake-data/${uuid}/`,
+    DEPOSIT_FAKE_DATA_ARCHIVE: (uuid) => `/leaderboard/deposit-fake-data/${uuid}/archive/`,
+
+    WITHDRAW_REWARD_ITEMS: '/leaderboard/withdraw-reward-items/',
+    WITHDRAW_REWARD_ITEM: (uuid) => `/leaderboard/withdraw-reward-items/${uuid}/`,
+    WITHDRAW_REWARD_ITEM_ARCHIVE: (uuid) => `/leaderboard/withdraw-reward-items/${uuid}/archive/`,
+    WITHDRAW_FAKE_DATA: '/leaderboard/withdraw-fake-data/',
+    WITHDRAW_FAKE_DATA_SINGLE: (uuid) => `/leaderboard/withdraw-fake-data/${uuid}/`,
+    WITHDRAW_FAKE_DATA_ARCHIVE: (uuid) => `/leaderboard/withdraw-fake-data/${uuid}/archive/`,
+
+    REFERRAL_REWARD_ITEMS: '/leaderboard/referral-reward-items/',
+    REFERRAL_REWARD_ITEM: (uuid) => `/leaderboard/referral-reward-items/${uuid}/`,
+    REFERRAL_REWARD_ITEM_ARCHIVE: (uuid) => `/leaderboard/referral-reward-items/${uuid}/archive/`,
+    REFERRAL_FAKE_DATA: '/leaderboard/referral-fake-data/',
+    REFERRAL_FAKE_DATA_SINGLE: (uuid) => `/leaderboard/referral-fake-data/${uuid}/`,
+    REFERRAL_FAKE_DATA_ARCHIVE: (uuid) => `/leaderboard/referral-fake-data/${uuid}/archive/`,
+
+    GENERATE_RANKING: '/leaderboard/generate-ranking/',
+
+    PUBLIC_INFO: '/leaderboard/public/info/',
+    PUBLIC_STATUS: '/leaderboard/public/status/',
+    PUBLIC_CAMPAIGN: '/leaderboard/public/campaign/',
+    PUBLIC_DEPOSIT_RANKING: '/leaderboard/public/deposit-ranking/',
+    PUBLIC_WITHDRAW_RANKING: '/leaderboard/public/withdraw-ranking/',
+    PUBLIC_REFERRAL_RANKING: '/leaderboard/public/referral-ranking/',
   },
   CRM: {
     // User Access Panel

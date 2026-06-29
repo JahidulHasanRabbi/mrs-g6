@@ -5,10 +5,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import FormChrome, { INPUT_BASE } from "../../../../components/admin/world-cup/FormChrome";
 import {
   getDepositDummyPlayer,
+  getDepositDummyPlayers,
   createDepositDummyPlayer,
   updateDepositDummyPlayer,
 } from "../../../../api/adminApi";
-import { MOCK_DEPOSIT_PLAYERS, isMockUuid } from "../../../../components/admin/leaderboards/mockData";
+
+function nextRankFrom(response) {
+  const list = Array.isArray(response) ? response : response?.results ?? [];
+  const maxRank = list.reduce((max, r) => Math.max(max, Number(r.rank) || 0), 0);
+  return maxRank + 1;
+}
 
 function DummyForm() {
   const router = useRouter();
@@ -19,32 +25,28 @@ function DummyForm() {
     name: "",
     totalDeposit: "",
   });
+  // rank is required by the API but not edited in the UI: preserve it on edit,
+  // auto-assign the next sequential rank on create.
+  const [rank, setRank] = useState(1);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!editingUuid) return;
-    const applyMock = () => {
-      const m = MOCK_DEPOSIT_PLAYERS.find((x) => x.uuid === editingUuid);
-      if (m) {
-        setForm({
-          name: m.player_name ?? "",
-          totalDeposit: String(m.total_deposit ?? ""),
-        });
-      }
-    };
-    if (isMockUuid(editingUuid)) {
-      applyMock();
-      return;
+    if (editingUuid) {
+      getDepositDummyPlayer(editingUuid)
+        .then((d) => {
+          setForm({
+            name: d.player ?? "",
+            totalDeposit: String(d.total_deposit ?? ""),
+          });
+          setRank(Number(d.rank) || 1);
+        })
+        .catch(() => {});
+    } else {
+      getDepositDummyPlayers()
+        .then((res) => setRank(nextRankFrom(res)))
+        .catch(() => {});
     }
-    getDepositDummyPlayer(editingUuid)
-      .then((d) => {
-        setForm({
-          name: d.player_name ?? "",
-          totalDeposit: String(d.total_deposit ?? ""),
-        });
-      })
-      .catch(applyMock);
   }, [editingUuid]);
 
   const set = (k) => (v) =>
@@ -61,7 +63,8 @@ function DummyForm() {
     setError("");
     try {
       const payload = {
-        player_name: form.name.trim(),
+        rank,
+        player: form.name.trim(),
         total_deposit: toNum(form.totalDeposit),
       };
       if (editingUuid) {

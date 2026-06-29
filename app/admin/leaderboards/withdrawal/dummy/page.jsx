@@ -5,10 +5,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import FormChrome, { INPUT_BASE } from "../../../../components/admin/world-cup/FormChrome";
 import {
   getWithdrawalDummyPlayer,
+  getWithdrawalDummyPlayers,
   createWithdrawalDummyPlayer,
   updateWithdrawalDummyPlayer,
 } from "../../../../api/adminApi";
-import { MOCK_WITHDRAWAL_PLAYERS, isMockUuid } from "../../../../components/admin/leaderboards/mockData";
+
+function nextRankFrom(response) {
+  const list = Array.isArray(response) ? response : response?.results ?? [];
+  const maxRank = list.reduce((max, r) => Math.max(max, Number(r.rank) || 0), 0);
+  return maxRank + 1;
+}
 
 function DummyForm() {
   const router = useRouter();
@@ -19,32 +25,28 @@ function DummyForm() {
     name: "",
     totalWithdraw: "",
   });
+  // rank is required by the API but not edited in the UI: preserve it on edit,
+  // auto-assign the next sequential rank on create.
+  const [rank, setRank] = useState(1);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!editingUuid) return;
-    const applyMock = () => {
-      const m = MOCK_WITHDRAWAL_PLAYERS.find((x) => x.uuid === editingUuid);
-      if (m) {
-        setForm({
-          name: m.player_name ?? "",
-          totalWithdraw: String(m.total_withdrawal ?? ""),
-        });
-      }
-    };
-    if (isMockUuid(editingUuid)) {
-      applyMock();
-      return;
+    if (editingUuid) {
+      getWithdrawalDummyPlayer(editingUuid)
+        .then((d) => {
+          setForm({
+            name: d.player ?? "",
+            totalWithdraw: String(d.total_withdraw ?? ""),
+          });
+          setRank(Number(d.rank) || 1);
+        })
+        .catch(() => {});
+    } else {
+      getWithdrawalDummyPlayers()
+        .then((res) => setRank(nextRankFrom(res)))
+        .catch(() => {});
     }
-    getWithdrawalDummyPlayer(editingUuid)
-      .then((d) => {
-        setForm({
-          name: d.player_name ?? "",
-          totalWithdraw: String(d.total_withdrawal ?? d.total_withdraw ?? ""),
-        });
-      })
-      .catch(applyMock);
   }, [editingUuid]);
 
   const set = (k) => (v) =>
@@ -61,8 +63,9 @@ function DummyForm() {
     setError("");
     try {
       const payload = {
-        player_name: form.name.trim(),
-        total_withdrawal: toNum(form.totalWithdraw),
+        rank,
+        player: form.name.trim(),
+        total_withdraw: toNum(form.totalWithdraw),
       };
       if (editingUuid) {
         await updateWithdrawalDummyPlayer(editingUuid, payload);

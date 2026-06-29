@@ -5,10 +5,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import FormChrome, { INPUT_BASE } from "../../../../components/admin/world-cup/FormChrome";
 import {
   getReferrerDummyPlayer,
+  getReferrerDummyPlayers,
   createReferrerDummyPlayer,
   updateReferrerDummyPlayer,
 } from "../../../../api/adminApi";
-import { MOCK_REFERRER_PLAYERS, isMockUuid } from "../../../../components/admin/leaderboards/mockData";
+
+function nextRankFrom(response) {
+  const list = Array.isArray(response) ? response : response?.results ?? [];
+  const maxRank = list.reduce((max, r) => Math.max(max, Number(r.rank) || 0), 0);
+  return maxRank + 1;
+}
 
 function DummyForm() {
   const router = useRouter();
@@ -19,32 +25,28 @@ function DummyForm() {
     name: "",
     newMember: "",
   });
+  // rank is required by the API but not edited in the UI: preserve it on edit,
+  // auto-assign the next sequential rank on create.
+  const [rank, setRank] = useState(1);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!editingUuid) return;
-    const applyMock = () => {
-      const m = MOCK_REFERRER_PLAYERS.find((x) => x.uuid === editingUuid);
-      if (m) {
-        setForm({
-          name: m.player_name ?? "",
-          newMember: String(m.new_member ?? ""),
-        });
-      }
-    };
-    if (isMockUuid(editingUuid)) {
-      applyMock();
-      return;
+    if (editingUuid) {
+      getReferrerDummyPlayer(editingUuid)
+        .then((d) => {
+          setForm({
+            name: d.player ?? "",
+            newMember: String(d.total_referral_deposit ?? ""),
+          });
+          setRank(Number(d.rank) || 1);
+        })
+        .catch(() => {});
+    } else {
+      getReferrerDummyPlayers()
+        .then((res) => setRank(nextRankFrom(res)))
+        .catch(() => {});
     }
-    getReferrerDummyPlayer(editingUuid)
-      .then((d) => {
-        setForm({
-          name: d.player_name ?? "",
-          newMember: String(d.new_member ?? ""),
-        });
-      })
-      .catch(applyMock);
   }, [editingUuid]);
 
   const set = (k) => (v) =>
@@ -61,8 +63,9 @@ function DummyForm() {
     setError("");
     try {
       const payload = {
-        player_name: form.name.trim(),
-        new_member: toNum(form.newMember),
+        rank,
+        player: form.name.trim(),
+        total_referral_deposit: toNum(form.newMember),
       };
       if (editingUuid) {
         await updateReferrerDummyPlayer(editingUuid, payload);

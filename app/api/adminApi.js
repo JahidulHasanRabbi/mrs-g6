@@ -955,161 +955,191 @@ export async function getWorldCupDashboardKpi(params = {}) {
   return await apiRequest(`${ENDPOINTS.WORLDCUP_ADMIN.DASHBOARD_KPI}${qs}`, { method: 'GET' }, true, 'admin');
 }
 
-// ---------------------------------------------------------------------------
-// Deposit Leaderboard – Banners CRUD
-// ---------------------------------------------------------------------------
-export async function getDepositBanners(params = {}) {
-  const qs = buildQueryParams(params);
-  return await apiRequest(`${ENDPOINTS.DEPOSIT_LEADERBOARD.BANNERS}${qs}`, { method: 'GET' }, true, 'admin');
+// ===========================================================================
+// LEADERBOARD (Deposit / Withdraw / Referral) — postman/leaderboard.md
+//
+// leaderboard_type: 1 = Deposit, 2 = Withdraw, 3 = Referral.
+// "Banner" functions below map to the shared Info endpoint (information +
+// terms_and_conditions), selected/created per board via leaderboard_type.
+// "Dummy player" functions map to the per-board fake-data endpoint.
+// ===========================================================================
+
+const LB_TYPE = { deposit: 1, withdraw: 2, referral: 3 };
+
+// --- Info (shared endpoint, filtered/created by leaderboard_type) -----------
+async function getLeaderboardInfoList(type, params = {}) {
+  const qs = buildQueryParams({ type, ...params });
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.INFO}${qs}`, { method: 'GET' }, true, 'admin');
 }
-export async function getDepositBanner(uuid) {
-  return await apiRequest(ENDPOINTS.DEPOSIT_LEADERBOARD.BANNER(uuid), { method: 'GET' }, true, 'admin');
+async function getLeaderboardInfo(uuid) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.INFO_SINGLE(uuid), { method: 'GET' }, true, 'admin');
 }
-export async function createDepositBanner(data) {
-  return await apiRequest(ENDPOINTS.DEPOSIT_LEADERBOARD.BANNERS, { method: 'POST', body: data }, true, 'admin');
+async function createLeaderboardInfo(type, data) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.INFO, { method: 'POST', body: { leaderboard_type: type, ...data } }, true, 'admin');
 }
-export async function updateDepositBanner(uuid, data) {
-  return await apiRequest(ENDPOINTS.DEPOSIT_LEADERBOARD.BANNER(uuid), { method: 'PUT', body: data }, true, 'admin');
+async function updateLeaderboardInfo(uuid, data) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.INFO_SINGLE(uuid), { method: 'PUT', body: data }, true, 'admin');
 }
-export async function archiveDepositBanner(uuid) {
-  return await apiRequest(ENDPOINTS.DEPOSIT_LEADERBOARD.BANNER_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+async function archiveLeaderboardInfo(uuid) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.INFO_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
 }
 
-// Deposit Leaderboard – Reward Items CRUD
+// --- Status (single global flag) -------------------------------------------
+export async function getLeaderboardStatus() {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.STATUS, { method: 'GET' }, true, 'admin');
+}
+export async function updateLeaderboardStatus(isOpen) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.STATUS, { method: 'PUT', body: { is_open: Boolean(isOpen) } }, true, 'admin');
+}
+
+// --- Campaign (shared endpoint, filtered/created by leaderboard_type) -------
+export async function getLeaderboardCampaigns(type, params = {}) {
+  const qs = buildQueryParams({ type, ...params });
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.CAMPAIGN}${qs}`, { method: 'GET' }, true, 'admin');
+}
+export async function getLeaderboardCampaign(uuid) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.CAMPAIGN_SINGLE(uuid), { method: 'GET' }, true, 'admin');
+}
+export async function createLeaderboardCampaign(type, data) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.CAMPAIGN, { method: 'POST', body: { leaderboard_type: type, ...data } }, true, 'admin');
+}
+export async function updateLeaderboardCampaign(uuid, data) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.CAMPAIGN_SINGLE(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+export async function archiveLeaderboardCampaign(uuid) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.CAMPAIGN_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
+// --- Generate Ranking (Top 20 batch for one board) -------------------------
+export async function generateLeaderboardRanking(type) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.GENERATE_RANKING, { method: 'POST', body: { leaderboard_type: type } }, true, 'admin');
+}
+
+// ---------------------------------------------------------------------------
+// Deposit Leaderboard
+// ---------------------------------------------------------------------------
+export const getDepositBanners = (params = {}) => getLeaderboardInfoList(LB_TYPE.deposit, params);
+export const getDepositBanner = (uuid) => getLeaderboardInfo(uuid);
+export const createDepositBanner = (data) => createLeaderboardInfo(LB_TYPE.deposit, data);
+export const updateDepositBanner = (uuid, data) => updateLeaderboardInfo(uuid, data);
+export const archiveDepositBanner = (uuid) => archiveLeaderboardInfo(uuid);
+
 export async function getDepositRewardItems(params = {}) {
   const qs = buildQueryParams(params);
-  return await apiRequest(`${ENDPOINTS.DEPOSIT_LEADERBOARD.REWARD_ITEMS}${qs}`, { method: 'GET' }, true, 'admin');
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.DEPOSIT_REWARD_ITEMS}${qs}`, { method: 'GET' }, true, 'admin');
 }
 export async function getDepositRewardItem(uuid) {
-  return await apiRequest(ENDPOINTS.DEPOSIT_LEADERBOARD.REWARD_ITEM(uuid), { method: 'GET' }, true, 'admin');
+  return await apiRequest(ENDPOINTS.LEADERBOARD.DEPOSIT_REWARD_ITEM(uuid), { method: 'GET' }, true, 'admin');
 }
 export async function createDepositRewardItem(data) {
-  return await apiRequest(ENDPOINTS.DEPOSIT_LEADERBOARD.REWARD_ITEMS, { method: 'POST', body: data }, true, 'admin');
+  return await apiRequest(ENDPOINTS.LEADERBOARD.DEPOSIT_REWARD_ITEMS, { method: 'POST', body: data }, true, 'admin');
 }
 export async function updateDepositRewardItem(uuid, data) {
-  return await apiRequest(ENDPOINTS.DEPOSIT_LEADERBOARD.REWARD_ITEM(uuid), { method: 'PUT', body: data }, true, 'admin');
+  return await apiRequest(ENDPOINTS.LEADERBOARD.DEPOSIT_REWARD_ITEM(uuid), { method: 'PUT', body: data }, true, 'admin');
 }
 export async function archiveDepositRewardItem(uuid) {
-  return await apiRequest(ENDPOINTS.DEPOSIT_LEADERBOARD.REWARD_ITEM_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+  return await apiRequest(ENDPOINTS.LEADERBOARD.DEPOSIT_REWARD_ITEM_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
 }
 
-// Deposit Leaderboard – Dummy Players CRUD
 export async function getDepositDummyPlayers(params = {}) {
   const qs = buildQueryParams(params);
-  return await apiRequest(`${ENDPOINTS.DEPOSIT_LEADERBOARD.DUMMY_PLAYERS}${qs}`, { method: 'GET' }, true, 'admin');
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.DEPOSIT_FAKE_DATA}${qs}`, { method: 'GET' }, true, 'admin');
 }
 export async function getDepositDummyPlayer(uuid) {
-  return await apiRequest(ENDPOINTS.DEPOSIT_LEADERBOARD.DUMMY_PLAYER(uuid), { method: 'GET' }, true, 'admin');
+  return await apiRequest(ENDPOINTS.LEADERBOARD.DEPOSIT_FAKE_DATA_SINGLE(uuid), { method: 'GET' }, true, 'admin');
 }
 export async function createDepositDummyPlayer(data) {
-  return await apiRequest(ENDPOINTS.DEPOSIT_LEADERBOARD.DUMMY_PLAYERS, { method: 'POST', body: data }, true, 'admin');
+  return await apiRequest(ENDPOINTS.LEADERBOARD.DEPOSIT_FAKE_DATA, { method: 'POST', body: data }, true, 'admin');
 }
 export async function updateDepositDummyPlayer(uuid, data) {
-  return await apiRequest(ENDPOINTS.DEPOSIT_LEADERBOARD.DUMMY_PLAYER(uuid), { method: 'PUT', body: data }, true, 'admin');
+  return await apiRequest(ENDPOINTS.LEADERBOARD.DEPOSIT_FAKE_DATA_SINGLE(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+export async function archiveDepositDummyPlayer(uuid) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.DEPOSIT_FAKE_DATA_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
 }
 
 // ---------------------------------------------------------------------------
-// Referrer Leaderboard – Banners CRUD
+// Referrer Leaderboard (referral board, leaderboard_type 3)
 // ---------------------------------------------------------------------------
-export async function getReferrerBanners(params = {}) {
-  const qs = buildQueryParams(params);
-  return await apiRequest(`${ENDPOINTS.REFERRER_LEADERBOARD.BANNERS}${qs}`, { method: 'GET' }, true, 'admin');
-}
-export async function getReferrerBanner(uuid) {
-  return await apiRequest(ENDPOINTS.REFERRER_LEADERBOARD.BANNER(uuid), { method: 'GET' }, true, 'admin');
-}
-export async function createReferrerBanner(data) {
-  return await apiRequest(ENDPOINTS.REFERRER_LEADERBOARD.BANNERS, { method: 'POST', body: data }, true, 'admin');
-}
-export async function updateReferrerBanner(uuid, data) {
-  return await apiRequest(ENDPOINTS.REFERRER_LEADERBOARD.BANNER(uuid), { method: 'PUT', body: data }, true, 'admin');
-}
-export async function archiveReferrerBanner(uuid) {
-  return await apiRequest(ENDPOINTS.REFERRER_LEADERBOARD.BANNER_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
-}
+export const getReferrerBanners = (params = {}) => getLeaderboardInfoList(LB_TYPE.referral, params);
+export const getReferrerBanner = (uuid) => getLeaderboardInfo(uuid);
+export const createReferrerBanner = (data) => createLeaderboardInfo(LB_TYPE.referral, data);
+export const updateReferrerBanner = (uuid, data) => updateLeaderboardInfo(uuid, data);
+export const archiveReferrerBanner = (uuid) => archiveLeaderboardInfo(uuid);
 
-// Referrer Leaderboard – Reward Items CRUD
 export async function getReferrerRewardItems(params = {}) {
   const qs = buildQueryParams(params);
-  return await apiRequest(`${ENDPOINTS.REFERRER_LEADERBOARD.REWARD_ITEMS}${qs}`, { method: 'GET' }, true, 'admin');
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.REFERRAL_REWARD_ITEMS}${qs}`, { method: 'GET' }, true, 'admin');
 }
 export async function getReferrerRewardItem(uuid) {
-  return await apiRequest(ENDPOINTS.REFERRER_LEADERBOARD.REWARD_ITEM(uuid), { method: 'GET' }, true, 'admin');
+  return await apiRequest(ENDPOINTS.LEADERBOARD.REFERRAL_REWARD_ITEM(uuid), { method: 'GET' }, true, 'admin');
 }
 export async function createReferrerRewardItem(data) {
-  return await apiRequest(ENDPOINTS.REFERRER_LEADERBOARD.REWARD_ITEMS, { method: 'POST', body: data }, true, 'admin');
+  return await apiRequest(ENDPOINTS.LEADERBOARD.REFERRAL_REWARD_ITEMS, { method: 'POST', body: data }, true, 'admin');
 }
 export async function updateReferrerRewardItem(uuid, data) {
-  return await apiRequest(ENDPOINTS.REFERRER_LEADERBOARD.REWARD_ITEM(uuid), { method: 'PUT', body: data }, true, 'admin');
+  return await apiRequest(ENDPOINTS.LEADERBOARD.REFERRAL_REWARD_ITEM(uuid), { method: 'PUT', body: data }, true, 'admin');
 }
 export async function archiveReferrerRewardItem(uuid) {
-  return await apiRequest(ENDPOINTS.REFERRER_LEADERBOARD.REWARD_ITEM_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+  return await apiRequest(ENDPOINTS.LEADERBOARD.REFERRAL_REWARD_ITEM_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
 }
 
-// Referrer Leaderboard – Dummy Players CRUD
 export async function getReferrerDummyPlayers(params = {}) {
   const qs = buildQueryParams(params);
-  return await apiRequest(`${ENDPOINTS.REFERRER_LEADERBOARD.DUMMY_PLAYERS}${qs}`, { method: 'GET' }, true, 'admin');
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.REFERRAL_FAKE_DATA}${qs}`, { method: 'GET' }, true, 'admin');
 }
 export async function getReferrerDummyPlayer(uuid) {
-  return await apiRequest(ENDPOINTS.REFERRER_LEADERBOARD.DUMMY_PLAYER(uuid), { method: 'GET' }, true, 'admin');
+  return await apiRequest(ENDPOINTS.LEADERBOARD.REFERRAL_FAKE_DATA_SINGLE(uuid), { method: 'GET' }, true, 'admin');
 }
 export async function createReferrerDummyPlayer(data) {
-  return await apiRequest(ENDPOINTS.REFERRER_LEADERBOARD.DUMMY_PLAYERS, { method: 'POST', body: data }, true, 'admin');
+  return await apiRequest(ENDPOINTS.LEADERBOARD.REFERRAL_FAKE_DATA, { method: 'POST', body: data }, true, 'admin');
 }
 export async function updateReferrerDummyPlayer(uuid, data) {
-  return await apiRequest(ENDPOINTS.REFERRER_LEADERBOARD.DUMMY_PLAYER(uuid), { method: 'PUT', body: data }, true, 'admin');
+  return await apiRequest(ENDPOINTS.LEADERBOARD.REFERRAL_FAKE_DATA_SINGLE(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+export async function archiveReferrerDummyPlayer(uuid) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.REFERRAL_FAKE_DATA_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
 }
 
 // ---------------------------------------------------------------------------
-// Withdrawal Leaderboard - Banners CRUD
+// Withdrawal Leaderboard (withdraw board, leaderboard_type 2)
 // ---------------------------------------------------------------------------
-export async function getWithdrawalBanners(params = {}) {
-  const qs = buildQueryParams(params);
-  return await apiRequest(`${ENDPOINTS.WITHDRAWAL_LEADERBOARD.BANNERS}${qs}`, { method: 'GET' }, true, 'admin');
-}
-export async function getWithdrawalBanner(uuid) {
-  return await apiRequest(ENDPOINTS.WITHDRAWAL_LEADERBOARD.BANNER(uuid), { method: 'GET' }, true, 'admin');
-}
-export async function createWithdrawalBanner(data) {
-  return await apiRequest(ENDPOINTS.WITHDRAWAL_LEADERBOARD.BANNERS, { method: 'POST', body: data }, true, 'admin');
-}
-export async function updateWithdrawalBanner(uuid, data) {
-  return await apiRequest(ENDPOINTS.WITHDRAWAL_LEADERBOARD.BANNER(uuid), { method: 'PUT', body: data }, true, 'admin');
-}
-export async function archiveWithdrawalBanner(uuid) {
-  return await apiRequest(ENDPOINTS.WITHDRAWAL_LEADERBOARD.BANNER_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
-}
+export const getWithdrawalBanners = (params = {}) => getLeaderboardInfoList(LB_TYPE.withdraw, params);
+export const getWithdrawalBanner = (uuid) => getLeaderboardInfo(uuid);
+export const createWithdrawalBanner = (data) => createLeaderboardInfo(LB_TYPE.withdraw, data);
+export const updateWithdrawalBanner = (uuid, data) => updateLeaderboardInfo(uuid, data);
+export const archiveWithdrawalBanner = (uuid) => archiveLeaderboardInfo(uuid);
 
-// Withdrawal Leaderboard - Reward Items CRUD
 export async function getWithdrawalRewardItems(params = {}) {
   const qs = buildQueryParams(params);
-  return await apiRequest(`${ENDPOINTS.WITHDRAWAL_LEADERBOARD.REWARD_ITEMS}${qs}`, { method: 'GET' }, true, 'admin');
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.WITHDRAW_REWARD_ITEMS}${qs}`, { method: 'GET' }, true, 'admin');
 }
 export async function getWithdrawalRewardItem(uuid) {
-  return await apiRequest(ENDPOINTS.WITHDRAWAL_LEADERBOARD.REWARD_ITEM(uuid), { method: 'GET' }, true, 'admin');
+  return await apiRequest(ENDPOINTS.LEADERBOARD.WITHDRAW_REWARD_ITEM(uuid), { method: 'GET' }, true, 'admin');
 }
 export async function createWithdrawalRewardItem(data) {
-  return await apiRequest(ENDPOINTS.WITHDRAWAL_LEADERBOARD.REWARD_ITEMS, { method: 'POST', body: data }, true, 'admin');
+  return await apiRequest(ENDPOINTS.LEADERBOARD.WITHDRAW_REWARD_ITEMS, { method: 'POST', body: data }, true, 'admin');
 }
 export async function updateWithdrawalRewardItem(uuid, data) {
-  return await apiRequest(ENDPOINTS.WITHDRAWAL_LEADERBOARD.REWARD_ITEM(uuid), { method: 'PUT', body: data }, true, 'admin');
+  return await apiRequest(ENDPOINTS.LEADERBOARD.WITHDRAW_REWARD_ITEM(uuid), { method: 'PUT', body: data }, true, 'admin');
 }
 export async function archiveWithdrawalRewardItem(uuid) {
-  return await apiRequest(ENDPOINTS.WITHDRAWAL_LEADERBOARD.REWARD_ITEM_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+  return await apiRequest(ENDPOINTS.LEADERBOARD.WITHDRAW_REWARD_ITEM_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
 }
 
-// Withdrawal Leaderboard - Dummy Players CRUD
 export async function getWithdrawalDummyPlayers(params = {}) {
   const qs = buildQueryParams(params);
-  return await apiRequest(`${ENDPOINTS.WITHDRAWAL_LEADERBOARD.DUMMY_PLAYERS}${qs}`, { method: 'GET' }, true, 'admin');
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.WITHDRAW_FAKE_DATA}${qs}`, { method: 'GET' }, true, 'admin');
 }
 export async function getWithdrawalDummyPlayer(uuid) {
-  return await apiRequest(ENDPOINTS.WITHDRAWAL_LEADERBOARD.DUMMY_PLAYER(uuid), { method: 'GET' }, true, 'admin');
+  return await apiRequest(ENDPOINTS.LEADERBOARD.WITHDRAW_FAKE_DATA_SINGLE(uuid), { method: 'GET' }, true, 'admin');
 }
 export async function createWithdrawalDummyPlayer(data) {
-  return await apiRequest(ENDPOINTS.WITHDRAWAL_LEADERBOARD.DUMMY_PLAYERS, { method: 'POST', body: data }, true, 'admin');
+  return await apiRequest(ENDPOINTS.LEADERBOARD.WITHDRAW_FAKE_DATA, { method: 'POST', body: data }, true, 'admin');
 }
 export async function updateWithdrawalDummyPlayer(uuid, data) {
-  return await apiRequest(ENDPOINTS.WITHDRAWAL_LEADERBOARD.DUMMY_PLAYER(uuid), { method: 'PUT', body: data }, true, 'admin');
+  return await apiRequest(ENDPOINTS.LEADERBOARD.WITHDRAW_FAKE_DATA_SINGLE(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+export async function archiveWithdrawalDummyPlayer(uuid) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.WITHDRAW_FAKE_DATA_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
 }

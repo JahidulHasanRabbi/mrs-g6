@@ -5,6 +5,7 @@ import CountdownTimer from "./CountdownTimer";
 import PodiumCards from "./PodiumCards";
 import LeaderboardTable from "./LeaderboardTable";
 import TermsConditions from "./TermsConditions";
+import LeaderboardSkeleton from "./LeaderboardSkeleton";
 
 const DEFAULT_TERMS = [
   "Deposit Leaderboard campaign is valid from 1st July 2026 to 31st July 2026. Only successful deposits made within this period qualify for ranking points.",
@@ -23,6 +24,7 @@ export default function LeaderboardView({
   periodLabel = "",
   updateNotes = [],
   terms = DEFAULT_TERMS,
+  loading = false,
 }) {
   return (
     <motion.div
@@ -73,40 +75,46 @@ export default function LeaderboardView({
         )}
       </div>
 
-      {/* Countdown timer (deposit only) */}
-      {config.showCountdown && campaignEndDate && (
-        <div className="w-full pt-6">
-          <CountdownTimer endDate={campaignEndDate} color={config.color} />
-        </div>
+      {loading ? (
+        <LeaderboardSkeleton config={config} />
+      ) : (
+        <>
+          {/* Countdown timer (deposit only) */}
+          {config.showCountdown && campaignEndDate && (
+            <div className="w-full pt-6">
+              <CountdownTimer endDate={campaignEndDate} color={config.color} />
+            </div>
+          )}
+
+          {/* Update notes */}
+          {updateNotes.length > 0 && (
+            <div className="flex flex-col gap-1 items-center pt-6 w-full">
+              {updateNotes.map((note, i) => (
+                <p
+                  key={i}
+                  className="text-sm text-center"
+                  style={{
+                    color: config.colorLight,
+                    fontFamily: "var(--font-inter)",
+                  }}
+                >
+                  {note}
+                </p>
+              ))}
+            </div>
+          )}
+
+          {/* Podium - Top 3 */}
+          <PodiumCards top3={top3} config={config} />
+
+          {/* Table - Ranks 4-20 */}
+          <LeaderboardTable
+            entries={tableEntries}
+            config={config}
+            currentUserRank={currentUserRank}
+          />
+        </>
       )}
-
-      {/* Update notes */}
-      {updateNotes.length > 0 && (
-        <div className="flex flex-col gap-1 items-center pt-6 w-full">
-          {updateNotes.map((note, i) => (
-            <p
-              key={i}
-              className="text-sm text-center"
-              style={{
-                color: config.colorLight,
-                fontFamily: "var(--font-inter)",
-              }}
-            >
-              {note}
-            </p>
-          ))}
-        </div>
-      )}
-
-      {/* Podium - Top 3 */}
-      <PodiumCards top3={top3} config={config} />
-
-      {/* Table - Ranks 4-20 */}
-      <LeaderboardTable
-        entries={tableEntries}
-        config={config}
-        currentUserRank={currentUserRank}
-      />
 
       {/* Terms & Conditions */}
       <TermsConditions terms={terms} color={config.color} />

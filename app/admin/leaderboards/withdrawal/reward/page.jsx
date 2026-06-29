@@ -8,7 +8,6 @@ import {
   createWithdrawalRewardItem,
   updateWithdrawalRewardItem,
 } from "../../../../api/adminApi";
-import { MOCK_REWARDS, isMockUuid } from "../../../../components/admin/leaderboards/mockData";
 
 const ITEM_TYPES = [
   { value: 1, label: "Top Withdrawal" },
@@ -56,33 +55,17 @@ function RewardForm() {
 
   useEffect(() => {
     if (!editingUuid) return;
-    const applyMock = () => {
-      const m = MOCK_REWARDS.find((x) => x.uuid === editingUuid);
-      if (m) {
-        setForm({
-          name: m.reward_name ?? "",
-          quantity: String(m.quantity ?? ""),
-          itemType: normalizeItemType(m.item_type ?? m.item_type_display),
-          imageFile: null,
-        });
-        setImagePreview(m.image || null);
-      }
-    };
-    if (isMockUuid(editingUuid)) {
-      applyMock();
-      return;
-    }
     getWithdrawalRewardItem(editingUuid)
       .then((r) => {
         setForm({
           name: r.reward_name ?? "",
           quantity: String(r.quantity ?? ""),
-          itemType: normalizeItemType(r.item_type ?? r.item_type_display),
+          itemType: normalizeItemType(r.item_type),
           imageFile: null,
         });
         setImagePreview(r.image || null);
       })
-      .catch(applyMock);
+      .catch(() => {});
   }, [editingUuid]);
 
   const set = (k) => (v) =>
