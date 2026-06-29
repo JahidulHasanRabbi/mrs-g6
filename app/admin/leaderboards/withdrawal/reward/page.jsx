@@ -45,6 +45,7 @@ function RewardForm() {
   const [form, setForm] = useState({
     name: "",
     quantity: "",
+    position: "",
     itemType: 1,
     imageFile: null,
   });
@@ -60,6 +61,7 @@ function RewardForm() {
         setForm({
           name: r.reward_name ?? "",
           quantity: String(r.quantity ?? ""),
+          position: String(r.position ?? ""),
           itemType: normalizeItemType(r.item_type),
           imageFile: null,
         });
@@ -91,6 +93,7 @@ function RewardForm() {
       const payload = {
         reward_name: form.name.trim(),
         quantity: Number(String(form.quantity).replace(/[,\s]/g, "")) || 0,
+        position: Number(String(form.position).replace(/[,\s]/g, "")) || 0,
         item_type: form.itemType,
       };
       if (form.imageFile) {
@@ -135,6 +138,16 @@ function RewardForm() {
             min="0"
             value={form.quantity}
             onChange={set("quantity")}
+            className={INPUT_BASE}
+          />
+        </div>
+        <div>
+          <label className="mb-2 block text-[14px] font-semibold text-white">Rank Position</label>
+          <input
+            type="number"
+            min="0"
+            value={form.position}
+            onChange={set("position")}
             className={INPUT_BASE}
           />
         </div>

@@ -48,6 +48,7 @@ function normalizeReward(r) {
     uuid: r.uuid,
     name: r.reward_name ?? "",
     quantity: r.quantity ?? 0,
+    position: r.position ?? "",
     itemType: ITEM_TYPE_LABELS[r.item_type] ?? String(r.item_type ?? ""),
     image: r.image ?? null,
   };

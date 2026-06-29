@@ -14,6 +14,7 @@ export default function DepositRewardTable({ rewards = [], onEdit, onArchive }) 
             <tr style={{ backgroundImage: HEADER_BG }} className="text-left">
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Reward Name</th>
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Quantity</th>
+              <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Rank Position</th>
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Item Type</th>
               <th className="px-5 py-4 text-center text-[13px] font-semibold text-[#fbeed2]">Image</th>
               <th className="px-5 py-4 text-right text-[13px] font-semibold text-[#fbeed2]">Action</th>
@@ -22,7 +23,7 @@ export default function DepositRewardTable({ rewards = [], onEdit, onArchive }) 
           <tbody>
             {rewards.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-5 py-10 text-center text-[13px] text-white/50">
+                <td colSpan={6} className="px-5 py-10 text-center text-[13px] text-white/50">
                   No rewards configured yet.
                 </td>
               </tr>
@@ -31,6 +32,7 @@ export default function DepositRewardTable({ rewards = [], onEdit, onArchive }) 
                 <tr key={r.id} className="border-b border-white/5 align-top last:border-b-0 hover:bg-white/[0.02]">
                   <td className="px-5 py-5 text-[12px] text-white">{r.name}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{r.quantity}</td>
+                  <td className="px-5 py-5 text-[12px] text-white">{r.position || "-"}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{r.itemType}</td>
                   <td className="px-5 py-5 align-middle"><ImageCell src={r.image} alt={r.name} /></td>
                   <td className="px-5 py-5 align-middle">

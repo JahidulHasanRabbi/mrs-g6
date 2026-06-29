@@ -12,6 +12,11 @@ import {
   LEADERBOARD_CONFIG,
 } from "../../components/leaderboard-new/constants";
 import {
+  getDepositRewardItems,
+  getReferrerRewardItems,
+  getWithdrawalRewardItems,
+} from "../../api/adminApi";
+import {
   getPublicDepositRanking,
   getPublicWithdrawRanking,
   getPublicReferralRanking,
@@ -26,16 +31,19 @@ const BOARD_META = {
     type: 1,
     termsCategory: 2,
     getRanking: getPublicDepositRanking,
+    getRewards: getDepositRewardItems,
   },
   [LEADERBOARD_TYPES.WITHDRAWAL]: {
     type: 2,
     termsCategory: 3,
     getRanking: getPublicWithdrawRanking,
+    getRewards: getWithdrawalRewardItems,
   },
   [LEADERBOARD_TYPES.REFERRER]: {
     type: 3,
     termsCategory: 4,
     getRanking: getPublicReferralRanking,
+    getRewards: getReferrerRewardItems,
   },
 };
 
@@ -57,6 +65,23 @@ function formatAmount(amount) {
   if (amount == null) return "";
   const num = Number(String(amount).replace(/,/g, ""));
   return Number.isFinite(num) ? num.toLocaleString("en-US") : String(amount);
+}
+
+function formatPrize(reward) {
+  if (!reward) return "";
+  const credit = reward.credit_amount ?? reward.amount;
+  if (credit != null && credit !== "") return `RM ${formatAmount(credit)}`;
+  return reward.reward_name || "";
+}
+
+function buildPrizeMap(rewardsResponse) {
+  const map = new Map();
+  asList(rewardsResponse).forEach((reward) => {
+    const position = Number(reward.position);
+    if (!Number.isFinite(position) || position <= 0) return;
+    map.set(position, formatPrize(reward));
+  });
+  return map;
 }
 
 function Top20LeaderboardPageInner() {
@@ -101,13 +126,19 @@ function Top20LeaderboardPageInner() {
       getPublicLeaderboardInfo(meta.type).catch(() => null),
       getPublicLeaderboardCampaign(meta.type).catch(() => null),
       getPublicTermsAndConditions(meta.termsCategory).catch(() => null),
-    ]).then(([ranking, info, campaign, mainTerms]) => {
+      meta.getRewards({ page_size: 100 }).catch(() => []),
+    ]).then(([ranking, info, campaign, mainTerms, rewards]) => {
       if (cancelled) return;
-      const entries = asList(ranking).map((e, i) => ({
-        rank: e.rank ?? i + 1,
-        user: e.display_name ?? "",
-        value: formatAmount(e.amount),
-      }));
+      const prizeMap = buildPrizeMap(rewards);
+      const entries = asList(ranking).map((e, i) => {
+        const rank = e.rank ?? i + 1;
+        return {
+          rank,
+          user: e.display_name ?? "",
+          value: formatAmount(e.amount),
+          prize: prizeMap.get(Number(rank)) || "",
+        };
+      });
       const infoRec = asList(info)[0];
       const campRec = asList(campaign)[0];
       const board = {
@@ -151,7 +182,7 @@ function Top20LeaderboardPageInner() {
             <p
               className="-mt-1 text-[14px] font-bold"
               style={{
-                fontFamily: '"Times New Roman", serif',
+                fontFamily: '\"Times New Roman\", serif',
                 color: "#e9af41",
               }}
             >
