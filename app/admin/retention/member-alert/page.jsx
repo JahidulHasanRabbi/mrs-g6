@@ -324,14 +324,16 @@ function FollowUpList({ date, onDateChange }) {
     return () => clearTimeout(t);
   }, [query]);
 
+  const retentionUuid = useMemo(() => {
+    if (!retention) return undefined;
+    return pics.find((u) => (u.full_name || u.username) === retention)?.uuid;
+  }, [retention, pics]);
+
   useEffect(() => {
     let cancelled = false;
     const fetchRows = async () => {
       setLoading(true);
       try {
-        const retentionUuid = retention
-          ? pics.find((u) => (u.full_name || u.username) === retention)?.uuid
-          : undefined;
         const sales = salesSort ? (salesSort === "High to Low" ? "High" : "Low") : undefined;
         const win_lose = winSort ? (winSort === "High to Low" ? "High" : "Low") : undefined;
         const res = await getRetentionMembers({
@@ -365,7 +367,7 @@ function FollowUpList({ date, onDateChange }) {
     return () => {
       cancelled = true;
     };
-  }, [page, walletLevel, brand, priority, vip, retention, pics, debouncedQuery, date, salesSort, winSort, reloadKey]);
+  }, [page, walletLevel, brand, priority, vip, retentionUuid, retention, debouncedQuery, date, salesSort, winSort, reloadKey]);
 
   // Client-side sort of the current page (backend ordering covers cross-page).
   const sortedRows = useMemo(() => {
