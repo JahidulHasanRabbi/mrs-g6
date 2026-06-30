@@ -278,15 +278,14 @@ No body. Response: the archived record.
 
 ---
 
-# ADMIN — FAKE DATA (Deposit / Withdraw / Referral)
+# ADMIN — FAKE DATA (Deposit / Withdraw)
 
-Same shape across boards, except the score field name differs per board:
+Same shape for both boards, path prefix differs:
 
 | Board | Path prefix | Score field |
 | :--- | :--- | :--- |
 | Deposit | `deposit-fake-data` | `total_deposit` |
 | Withdraw | `withdraw-fake-data` | `total_withdraw` |
-| Referral | `referral-fake-data` | `total_referral_deposit` |
 
 ### GET .../{board}-fake-data/ &nbsp;·&nbsp; GET .../{board}-fake-data/{uuid}/
 
@@ -316,7 +315,7 @@ Response fields (each item in `results`)
 | uuid | UUID | |
 | rank | Int | |
 | player | Str | Display name (shown as-is) |
-| *score field* | Str (Decimal) | `total_deposit` / `total_withdraw` / `total_referral_deposit` — the ranking score |
+| *score field* | Str (Decimal) | `total_deposit` / `total_withdraw` — the ranking score |
 
 ### POST .../{board}-fake-data/ &nbsp;·&nbsp; PUT .../{board}-fake-data/{uuid}/
 
@@ -326,11 +325,63 @@ Request body
 | :--- | :--- | :--- | :--- |
 | rank | Int | Yes (create) | |
 | player | Str | Yes (create) | |
-| *score field* | Str (Decimal) | Yes (create) | `total_deposit` / `total_withdraw` / `total_referral_deposit` |
+| *score field* | Str (Decimal) | Yes (create) | `total_deposit` / `total_withdraw` |
 
 Response: same as GET.
 
 ### PATCH .../{board}-fake-data/{uuid}/archive/
+
+No body. Response: the archived record.
+
+---
+
+# ADMIN — FAKE DATA (Referral)
+
+### GET /leaderboard/referral-fake-data/ &nbsp;·&nbsp; GET /leaderboard/referral-fake-data/{uuid}/
+
+No additional query parameters (beyond pagination). List ordered by `rank`.
+
+| Pagination param | Type | Description |
+| :--- | :--- | :--- |
+| page | Int | Page number (default 1) |
+| page\_size | Int | Items per page (default 20, max 100) |
+
+Paginated list response envelope
+
+```json
+{
+  "count": 42,
+  "next": "https://…/leaderboard/referral-fake-data/?page=2",
+  "previous": null,
+  "results": [ … ]
+}
+```
+
+Response fields (each item in `results`)
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| id | Int | |
+| uuid | UUID | |
+| rank | Int | |
+| player | Str | Display name (shown as-is) |
+| total\_referral\_deposit | Str (Decimal) | Total qualifying deposit amount used for ranking |
+| total\_member | Int | Number of qualified referred members (used as tiebreaker) |
+
+### POST /leaderboard/referral-fake-data/ &nbsp;·&nbsp; PUT /leaderboard/referral-fake-data/{uuid}/
+
+Request body
+
+| Field | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| rank | Int | Yes (create) | |
+| player | Str | Yes (create) | |
+| total\_referral\_deposit | Str (Decimal) | Yes (create) | Total qualifying referral deposit in RM |
+| total\_member | Int | No | Number of qualified referred members (default 0) |
+
+Response: same as GET.
+
+### PATCH /leaderboard/referral-fake-data/{uuid}/archive/
 
 No body. Response: the archived record.
 

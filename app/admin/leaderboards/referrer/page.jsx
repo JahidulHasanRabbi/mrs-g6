@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Pagination } from "../../../components/admin/members/DataTable";
 import SettingsSection from "../../../components/admin/world-cup/SettingsSection";
 // Information + reward tables are generic (no deposit-specific logic) so they
-// are reused here; only the player table differs (New Member column).
+// are reused here; only the player table differs for referral fake-data fields.
 import InformationTable from "../../../components/admin/leaderboards/deposit/InformationTable";
 import DepositRewardTable from "../../../components/admin/leaderboards/deposit/DepositRewardTable";
 import ReferrerPlayerTable from "../../../components/admin/leaderboards/referrer/ReferrerPlayerTable";
@@ -62,7 +62,8 @@ function normalizePlayer(p) {
     uuid: p.uuid,
     name: p.player ?? "",
     rank: p.rank ?? 0,
-    newMember: p.total_referral_deposit ?? 0,
+    referralDeposit: p.total_referral_deposit ?? 0,
+    totalMember: p.total_member ?? 0,
   };
 }
 

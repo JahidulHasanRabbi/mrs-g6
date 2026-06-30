@@ -36,8 +36,8 @@ export const LEADERBOARD_CONFIG = {
   [LEADERBOARD_TYPES.REFERRER]: {
     label: 'Referrer',
     title: 'Referrer Leaderboard',
-    valueLabel: 'New Members',
-    tableValueHeader: 'NEW MEMBER',
+    valueLabel: 'Referral Score',
+    tableValueHeader: 'REFERRAL SCORE',
     color: '#007bff',
     colorLight: '#65aaff',
     colorMuted: '#ddc1ae',

@@ -23,7 +23,8 @@ function DummyForm() {
 
   const [form, setForm] = useState({
     name: "",
-    newMember: "",
+    referralDeposit: "",
+    totalMember: "",
   });
   // rank is required by the API but not edited in the UI: preserve it on edit,
   // auto-assign the next sequential rank on create.
@@ -37,7 +38,8 @@ function DummyForm() {
         .then((d) => {
           setForm({
             name: d.player ?? "",
-            newMember: String(d.total_referral_deposit ?? ""),
+            referralDeposit: String(d.total_referral_deposit ?? ""),
+            totalMember: String(d.total_member ?? ""),
           });
           setRank(Number(d.rank) || 1);
         })
@@ -65,7 +67,8 @@ function DummyForm() {
       const payload = {
         rank,
         player: form.name.trim(),
-        total_referral_deposit: toNum(form.newMember),
+        total_referral_deposit: toNum(form.referralDeposit),
+        total_member: toNum(form.totalMember),
       };
       if (editingUuid) {
         await updateReferrerDummyPlayer(editingUuid, payload);
@@ -96,18 +99,28 @@ function DummyForm() {
       saving={saving}
     >
       {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
-      <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-3">
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">Player Name</label>
           <input type="text" value={form.name} onChange={set("name")} className={INPUT_BASE} />
         </div>
         <div>
-          <label className="mb-2 block text-[14px] font-semibold text-white">New Member</label>
+          <label className="mb-2 block text-[14px] font-semibold text-white">Referral Deposit</label>
           <input
             type="number"
             min="0"
-            value={form.newMember}
-            onChange={set("newMember")}
+            value={form.referralDeposit}
+            onChange={set("referralDeposit")}
+            className={INPUT_BASE}
+          />
+        </div>
+        <div>
+          <label className="mb-2 block text-[14px] font-semibold text-white">Total Member</label>
+          <input
+            type="number"
+            min="0"
+            value={form.totalMember}
+            onChange={set("totalMember")}
             className={INPUT_BASE}
           />
         </div>
