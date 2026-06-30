@@ -388,13 +388,13 @@ function GamePerformance({ games }) {
       <div className="flex items-center justify-between gap-3 px-5 py-4">
         <div>
           <h2 className="text-[20px] font-bold text-[#f4efe0]">Game Performance</h2>
-          <p className="mt-1 text-[12px] text-white/50">Usage and full reward breakdown per game, sorted by unique players (top mini-game ranking). Credit RM shows N/A for games that track no recoverable RM (Lucky Spin, Prediction).</p>
+          <p className="mt-1 text-[12px] text-white/50">Usage and money paid out per game, sorted by unique players (top mini-game ranking). Credit RM shows N/A for games that track no recoverable RM (Lucky Spin, Prediction).</p>
         </div>
       </div>
       <div className="overflow-x-auto scrollbar-admin">
-        <table className="w-full min-w-[1120px] table-fixed border-separate border-spacing-0">
+        <table className="w-full min-w-[860px] table-fixed border-separate border-spacing-0">
           <thead><tr className="bg-black text-left">
-            {["Rank", "Game", "Players", "Sessions", "Avg/Player", "Tokens Spent", "Rewards", "Credit RM", "Tokens Won", "Prizes", "WC Pts", "New", "Existing"].map((h) => <th key={h} className="px-4 py-3 text-[12px] font-bold uppercase text-white">{h}</th>)}
+            {["Rank", "Game", "Players", "Sessions", "Avg/Player", "Tokens Spent", "Credit RM", "New", "Existing"].map((h) => <th key={h} className="px-4 py-3 text-[12px] font-bold uppercase text-white">{h}</th>)}
           </tr></thead>
           <tbody>
             {sorted.length ? sorted.map((game, index) => (
@@ -405,16 +405,12 @@ function GamePerformance({ games }) {
                 <td className="px-4 py-4 text-[13px] text-white/85">{formatNumber(game.sessions)}</td>
                 <td className="px-4 py-4 text-[13px] text-white/85">{formatNumber(game.avg_sessions_per_player, 2)}</td>
                 <td className="px-4 py-4 text-[13px] text-white/85">{formatNumber(game.tokens_consumed)}</td>
-                <td className="px-4 py-4 text-[13px] text-white/85">{formatNumber(game.rewards_given)}</td>
                 <td className="px-4 py-4 text-[13px] text-[#f6dda6]">{game.credit_rm == null ? "N/A" : `RM ${formatMoney(game.credit_rm)}`}</td>
-                <td className="px-4 py-4 text-[13px] text-white/85">{formatNumber(game.tokens_awarded)}</td>
-                <td className="px-4 py-4 text-[13px] text-white/85">{formatNumber(game.prizes_awarded)}</td>
-                <td className="px-4 py-4 text-[13px] text-white/85">{game.wc_score_awarded == null ? "N/A" : formatNumber(game.wc_score_awarded)}</td>
                 <td className="px-4 py-4 text-[13px] text-[#84ebb4]">{formatNumber(game.new_users)}</td>
                 <td className="px-4 py-4 text-[13px] text-white/70">{formatNumber(game.existing_users)}</td>
               </tr>
             )) : (
-              <tr><td colSpan={13} className="px-5 py-12 text-center text-[13px] text-white/50">No game usage data for this range.</td></tr>
+              <tr><td colSpan={9} className="px-5 py-12 text-center text-[13px] text-white/50">No game usage data for this range.</td></tr>
             )}
           </tbody>
         </table>
@@ -428,7 +424,7 @@ function RetentionPanel({ rows }) {
     <section className="rounded-[16px] border border-white/10 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.25)]" style={{ backgroundImage: PANEL_BG }}>
       <div className="mb-4">
         <h2 className="text-[20px] font-bold text-[#f4efe0]">Cohort Retention</h2>
-        <p className="mt-1 text-[12px] text-white/50">Of players whose first-ever play of a game falls in this range (the cohort), the share who came back to play it again. Cumulative: D1 ≤ D7 ≤ D30. Same-day replays don't count.</p>
+        <p className="mt-1 text-[12px] text-white/50">Of players whose first-ever play of a game falls in this range (the cohort), the share who returned to play it on day +1 (D1), day +7 (D7), and day +30 (D30) after their first play.</p>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {rows.length ? rows.map((row) => (
