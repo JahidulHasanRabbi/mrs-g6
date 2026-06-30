@@ -35,18 +35,30 @@ export function MemberRouteGuard({ children }) {
     }
 
     const token = tokenStorage.getMemberAccessToken();
-    
+
     if (!token) {
-      // Use saved o or fallback to /
+      // Prefer the saved `o` (set during /auth), then the env-configured
+      // login URL. Both must be EXTERNAL destinations — never redirect to a
+      // guarded member route like `/`, or this guard re-runs on the reload,
+      // finds no token again, and loops forever (continuous refresh).
       const savedO = tokenStorage.getRedirectO();
-      
-      // Ensure savedO is a full URL
-      let redirectUrl = '/';
+      const envRedirect = process.env.NEXT_PUBLIC_REDIRECTURL;
+
+      let redirectUrl = null;
       if (savedO) {
         redirectUrl = savedO.startsWith('http') ? savedO : `https://${savedO}`;
+      } else if (envRedirect) {
+        redirectUrl = envRedirect;
       }
-      
-      window.location.href = redirectUrl;
+
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
+      } else {
+        // No external destination configured: stop and fail visibly instead
+        // of bouncing back into the same guarded page.
+        setIsAuthenticated(false);
+        setIsLoading(false);
+      }
       return;
     }
 
@@ -81,7 +93,24 @@ export function MemberRouteGuard({ children }) {
   }
 
   if (!isAuthenticated) {
-    return null;
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        padding: '20px',
+        textAlign: 'center'
+      }}>
+        <p style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px' }}>
+          Not authenticated
+        </p>
+        <p style={{ fontSize: '14px', color: '#666' }}>
+          No active session was found. Please open the app from your login link.
+        </p>
+      </div>
+    );
   }
 
   return children;

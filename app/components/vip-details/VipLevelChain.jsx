@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { VIP_DETAILS_ASSETS } from "./vipDetailsAssets";
+import GemIcon from "./GemIcon";
 
 const DEFAULT_VIP_LEVELS = [
   { name: "Bronze",   badge: VIP_DETAILS_ASSETS.badges.bronze,   left:  40, leftSm:  55 },
@@ -16,6 +17,21 @@ const DEFAULT_VIP_LEVELS = [
   { name: "Sapphire", badge: VIP_DETAILS_ASSETS.badges.sapphire, left: 660, leftSm: 550 },
   { name: "Amethyst", badge: VIP_DETAILS_ASSETS.badges.amethyst, left: 750, leftSm: 615 },
 ];
+
+// Per-tier glow colour + animation timings for the gem-icon effect (ported
+// from the Claude Design "ChainGem" spec). Indexed by tier position; cycles.
+const GEM_FX = [
+  { glow: "201,124,58",  aura: 2.8, bob: 3.0, sway: 4.0, tilt: 4.6, sweep: 3.0, twk: 2.0 },
+  { glow: "205,214,226", aura: 3.0, bob: 3.3, sway: 4.2, tilt: 4.8, sweep: 3.1, twk: 1.9 },
+  { glow: "255,205,70",  aura: 2.7, bob: 3.1, sway: 4.4, tilt: 5.0, sweep: 2.9, twk: 1.8 },
+  { glow: "224,232,240", aura: 2.9, bob: 3.5, sway: 4.1, tilt: 4.7, sweep: 3.2, twk: 2.0 },
+  { glow: "160,210,255", aura: 2.6, bob: 3.2, sway: 4.6, tilt: 5.1, sweep: 2.8, twk: 1.8 },
+  { glow: "70,214,143",  aura: 2.9, bob: 3.6, sway: 4.3, tilt: 4.9, sweep: 3.0, twk: 1.9 },
+  { glow: "255,70,70",   aura: 2.5, bob: 3.2, sway: 4.2, tilt: 4.8, sweep: 2.8, twk: 1.7 },
+  { glow: "80,130,255",  aura: 2.7, bob: 3.5, sway: 4.5, tilt: 5.0, sweep: 2.9, twk: 1.7 },
+  { glow: "190,95,255",  aura: 2.4, bob: 3.7, sway: 4.8, tilt: 5.2, sweep: 2.6, twk: 1.6 },
+];
+const gemFx = (i) => GEM_FX[((i % GEM_FX.length) + GEM_FX.length) % GEM_FX.length];
 
 // Map API tier names to badge assets
 function getBadgeForTier(tierName, index = 0) {
@@ -104,9 +120,23 @@ export default function VipLevelChain({ selectedLevel, onLevelSelect, vipTiers =
 
   return (
     <div className="relative w-full h-[130px] flex justify-center items-start">
+      {/* Gem-icon effect keyframes (ported from the Claude Design "ChainGem" spec). */}
+      <style jsx global>{`
+        @keyframes mrsBob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+        @keyframes mrsTilt { 0%{transform:rotateY(-16deg) rotateX(5deg)} 50%{transform:rotateY(16deg) rotateX(-4deg)} 100%{transform:rotateY(-16deg) rotateX(5deg)} }
+        @keyframes mrsAura { 0%,100%{opacity:.5;transform:translate(-50%,-50%) scale(.9)} 50%{opacity:.95;transform:translate(-50%,-50%) scale(1.08)} }
+        @keyframes mrsSweep { 0%{background-position:150% 0} 50%,100%{background-position:-50% 0} }
+        @keyframes mrsTwinkle { 0%,100%{opacity:0;transform:scale(.2) rotate(0deg)} 45%{opacity:1;transform:scale(1) rotate(40deg)} }
+        @keyframes mrsSway { 0%,100%{transform:rotate(-3deg)} 50%{transform:rotate(3deg)} }
+        @media (prefers-reduced-motion: reduce) {
+          .mrs-gem *[style*="animation"] { animation: none !important; }
+        }
+      `}</style>
+
       <motion.div
         ref={viewportRef}
         className="relative w-full h-[130px] shrink-0 overflow-hidden"
+        style={{ "--spd": 1, "--spark-display": "block", "--shine-op": 1 }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.3 }}
@@ -154,26 +184,19 @@ export default function VipLevelChain({ selectedLevel, onLevelSelect, vipTiers =
                 damping: 32,
               }}
             >
+              {/* Gem icon — chain-tangent lean (z) on the wrapper, 3D effect inside. */}
               <motion.div
-                className="relative transition-all duration-300"
+                className="mrs-gem relative"
                 style={{ width: `${size}px`, height: `${size}px` }}
                 animate={{ rotate: rotation }}
                 transition={{ type: "spring", stiffness: 220, damping: 32 }}
               >
-                {typeof level.badge === 'string' && level.badge.startsWith('http') ? (
-                  <img
-                    alt={level.name}
-                    src={level.badge}
-                    className={`absolute inset-0 w-full h-full object-contain transition-all duration-300 ${!isSelected ? "grayscale-[0.7] opacity-90" : ""}`}
-                  />
-                ) : (
-                  <Image
-                    alt={level.name}
-                    src={level.badge}
-                    fill
-                    className={`object-contain transition-all duration-300 ${!isSelected ? "grayscale-[0.7] opacity-90" : ""}`}
-                  />
-                )}
+                <GemIcon
+                  src={level.badge}
+                  name={level.name}
+                  selected={isSelected}
+                  {...gemFx(index)}
+                />
               </motion.div>
               <p
                 className={`text-center text-[#e9af41] font-bold font-['Times_New_Roman'] mt-2 transition-all leading-tight uppercase ${isSelected ? "scale-110" : ""}`}
