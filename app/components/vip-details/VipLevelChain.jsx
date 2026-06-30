@@ -119,7 +119,7 @@ export default function VipLevelChain({ selectedLevel, onLevelSelect, vipTiers =
   );
 
   return (
-    <div className="relative w-full h-[130px] flex justify-center items-start">
+    <div className="relative w-full h-[156px] flex justify-center items-start">
       {/* Gem-icon effect keyframes (ported from the Claude Design "ChainGem" spec). */}
       <style jsx global>{`
         @keyframes mrsBob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
@@ -135,7 +135,7 @@ export default function VipLevelChain({ selectedLevel, onLevelSelect, vipTiers =
 
       <motion.div
         ref={viewportRef}
-        className="relative w-full h-[130px] shrink-0 overflow-hidden"
+        className="relative w-full h-[156px] shrink-0 overflow-hidden"
         style={{ "--spd": 1, "--spark-display": "block", "--shine-op": 1 }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
