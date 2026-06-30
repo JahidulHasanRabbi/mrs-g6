@@ -10,7 +10,10 @@ import {
 } from "../../../../api/adminApi";
 
 const ITEM_TYPES = [
-  { value: 1, label: "Top referral" },
+  { value: 1, label: "Free Credit" },
+  { value: 2, label: "Item" },
+  { value: 3, label: "Token" },
+  { value: 4, label: "Other" },
 ];
 
 function ChevronIcon() {
@@ -37,6 +40,34 @@ function normalizeItemType(value) {
   return Number.isFinite(n) ? n : 1;
 }
 
+function normalizeAmount(value) {
+  const cleaned = String(value ?? "").replace(/[^\d.]/g, "");
+  return cleaned || "";
+}
+
+function parseInteger(value) {
+  const cleaned = String(value ?? "").replace(/[,\s]/g, "");
+  if (!cleaned) return null;
+  const parsed = Number(cleaned);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function firstApiMessage(data) {
+  if (data?.details && typeof data.details === "object") {
+    const message = Object.values(data.details).flat().find(Boolean);
+    if (message) return message;
+  }
+  if (data?.detail) return data.detail;
+  if (data?.error && data?.details && typeof data.details === "object") {
+    const message = Object.values(data.details).flat().find(Boolean);
+    if (message) return message;
+  }
+  if (data && typeof data === "object") {
+    return Object.values(data).flat().find(Boolean);
+  }
+  return null;
+}
+
 function RewardForm() {
   const router = useRouter();
   const params = useSearchParams();
@@ -47,6 +78,7 @@ function RewardForm() {
     quantity: "",
     position: "",
     itemType: 1,
+    creditAmount: "",
     imageFile: null,
   });
   const [imagePreview, setImagePreview] = useState(null);
@@ -63,6 +95,7 @@ function RewardForm() {
           quantity: String(r.quantity ?? ""),
           position: String(r.position ?? ""),
           itemType: normalizeItemType(r.item_type),
+          creditAmount: normalizeAmount(r.credit_amount),
           imageFile: null,
         });
         setImagePreview(r.image || null);
@@ -87,15 +120,26 @@ function RewardForm() {
       setError("Reward name is required.");
       return;
     }
+    const quantity = parseInteger(form.quantity);
+    if (quantity === null) {
+      setError("Quantity is required.");
+      return;
+    }
     setSaving(true);
     setError("");
     try {
+      const position = parseInteger(form.position);
       const payload = {
         reward_name: form.name.trim(),
-        quantity: Number(String(form.quantity).replace(/[,\s]/g, "")) || 0,
-        position: Number(String(form.position).replace(/[,\s]/g, "")) || 0,
+        quantity,
         item_type: form.itemType,
       };
+      if (position !== null) {
+        payload.position = position;
+      }
+      if (Number(form.itemType) === 1) {
+        payload.credit_amount = normalizeAmount(form.creditAmount) || normalizeAmount(form.name);
+      }
       if (form.imageFile) {
         payload.image = form.imageFile;
       }
@@ -108,10 +152,7 @@ function RewardForm() {
     } catch (e) {
       const data = e?.data;
       const errorMsg =
-        data?.detail ||
-        (data && typeof data === "object"
-          ? Object.values(data).flat()[0]
-          : null) ||
+        firstApiMessage(data) ||
         e?.message ||
         "Failed to save.";
       setError(errorMsg);
@@ -170,6 +211,19 @@ function RewardForm() {
             <ChevronIcon />
           </div>
         </div>
+        {Number(form.itemType) === 1 && (
+          <div>
+            <label className="mb-2 block text-[14px] font-semibold text-white">Credit Amount</label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={form.creditAmount}
+              onChange={set("creditAmount")}
+              className={INPUT_BASE}
+            />
+          </div>
+        )}
         <div>
           <label className="mb-2 block text-[14px] font-semibold text-white">Choose Image</label>
           <button

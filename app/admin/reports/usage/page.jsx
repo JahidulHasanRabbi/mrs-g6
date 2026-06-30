@@ -112,6 +112,20 @@ function gameParams(range, game) {
   return params;
 }
 
+function firstApiMessage(data) {
+  if (typeof data === "string") return data;
+  if (data?.detail) return data.detail;
+  if (data?.details && typeof data.details === "object") {
+    const message = Object.values(data.details).flat().find(Boolean);
+    if (message) return message;
+  }
+  if (data?.error) return data.error;
+  if (data && typeof data === "object") {
+    return Object.values(data).flat().find(Boolean);
+  }
+  return null;
+}
+
 // The paginated endpoints (/games/, /games/retention/, /insights/) return the
 // standard envelope { count, next, previous, results }. Pull the row list out of
 // `results`, with fallbacks so the page still works if the response is ever a
@@ -333,6 +347,58 @@ function EngagementCard({ summary }) {
   );
 }
 
+function SummaryBreakdownPanel({ summary }) {
+  const leaderboard = summary?.leaderboard || {};
+  const mission = summary?.mission || {};
+  const leaderboardRows = [
+    { label: "Total Participants", value: leaderboard.total_participants },
+    { label: "Deposit", value: leaderboard.deposit_participants },
+    { label: "Withdraw", value: leaderboard.withdraw_participants },
+    { label: "Referral", value: leaderboard.referral_participants },
+  ];
+  const missionRows = [
+    { label: "Completions", value: mission.total_completions },
+    { label: "Unique Completed", value: mission.unique_members_completed },
+    { label: "Claims", value: mission.total_claims },
+    { label: "Tokens Awarded", value: mission.total_tokens_awarded },
+    { label: "Unique Claimed", value: mission.unique_members_claimed },
+  ];
+
+  return (
+    <section className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+      <div className="rounded-[16px] border border-white/10 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.25)]" style={{ backgroundImage: PANEL_BG }}>
+        <div className="mb-4">
+          <h2 className="text-[20px] font-bold text-[#f4efe0]">Leaderboard Participation</h2>
+          <p className="mt-1 text-[12px] text-white/50">Distinct real members appearing in generated leaderboard batches for the selected range.</p>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {leaderboardRows.map((row) => (
+            <div key={row.label} className="rounded-[12px] border border-white/5 bg-black/20 p-4">
+              <p className="text-[11px] font-semibold uppercase text-white/45">{row.label}</p>
+              <p className="mt-2 text-[24px] font-bold text-[#f6dda6]">{formatNumber(row.value)}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-[16px] border border-white/10 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.25)]" style={{ backgroundImage: PANEL_BG }}>
+        <div className="mb-4">
+          <h2 className="text-[20px] font-bold text-[#f4efe0]">Mission Activity</h2>
+          <p className="mt-1 text-[12px] text-white/50">Mission completions, reward claims, and awarded tokens in the selected range.</p>
+        </div>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {missionRows.map((row) => (
+            <div key={row.label} className="flex items-center justify-between gap-3 rounded-[10px] border border-white/5 bg-black/20 px-4 py-3">
+              <span className="text-[12px] font-semibold text-white/65">{row.label}</span>
+              <span className="text-[16px] font-bold text-[#f6dda6]">{formatNumber(row.value)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function TrendChart({ rows }) {
   const points = rows.length ? rows : [];
   const width = 640;
@@ -424,7 +490,7 @@ function RetentionPanel({ rows }) {
     <section className="rounded-[16px] border border-white/10 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.25)]" style={{ backgroundImage: PANEL_BG }}>
       <div className="mb-4">
         <h2 className="text-[20px] font-bold text-[#f4efe0]">Cohort Retention</h2>
-        <p className="mt-1 text-[12px] text-white/50">Of players whose first-ever play of a game falls in this range (the cohort), the share who returned to play it on day +1 (D1), day +7 (D7), and day +30 (D30) after their first play.</p>
+        <p className="mt-1 text-[12px] text-white/50">Of players whose first-ever play of a game falls in this range (the cohort), the cumulative share who returned within D1, D7, and D30 after their first play.</p>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {rows.length ? rows.map((row) => (
@@ -548,8 +614,8 @@ function UsageReportContent() {
       const params = gameParams(range, game);
       const [summaryRes, gamesRes, retentionRes, insightsRows] = await Promise.all([
         getUsageReportSummary({ from_date: range.from, to_date: range.to }),
-        getUsageReportGames(params),
-        getUsageReportRetention(params),
+        getUsageReportGames({ ...params, page_size: 100 }),
+        getUsageReportRetention({ ...params, page_size: 100 }),
         fetchAllInsights(params),
       ]);
       setSummary(summaryRes || null);
@@ -562,7 +628,7 @@ function UsageReportContent() {
       setGames([]);
       setRetention([]);
       setTrend([]);
-      setError(err?.data?.detail || err?.data?.details || err?.data?.error || err?.message || "Failed to load usage report.");
+      setError(firstApiMessage(err?.data) || err?.message || "Failed to load usage report.");
     } finally {
       setLoading(false);
     }
@@ -601,6 +667,10 @@ function UsageReportContent() {
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <EngagementCard summary={summary} />
         <TrendChart rows={trend} />
+      </div>
+
+      <div className="mt-5">
+        <SummaryBreakdownPanel summary={summary} />
       </div>
 
       <div className="mt-5">

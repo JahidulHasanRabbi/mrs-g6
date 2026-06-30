@@ -3,14 +3,16 @@
 import { motion } from "framer-motion";
 
 function TableRow({ entry, config, isCurrentUser }) {
+  const columns = config.showPrizeColumn
+    ? "38px minmax(0, 1fr) minmax(82px, 104px) minmax(72px, 88px)"
+    : "38px minmax(0, 1fr) minmax(84px, 112px)";
+
   return (
     <div
-      className="grid items-center px-3 sm:px-4 py-3"
+      className="grid items-center px-3 py-3 sm:px-4"
       style={{
-        gridTemplateColumns: config.showPrizeColumn
-          ? "36px 1fr auto auto"
-          : "36px 1fr auto",
-        gap: "8px",
+        gridTemplateColumns: columns,
+        columnGap: "12px",
         backgroundColor: isCurrentUser ? config.color : "transparent",
         borderBottom: `1px solid ${isCurrentUser ? config.color : config.rowBorder}`,
       }}
@@ -38,7 +40,7 @@ function TableRow({ entry, config, isCurrentUser }) {
 
       {/* User */}
       <div
-        className="min-w-0 truncate text-sm sm:text-base text-[#e5e2e1]"
+        className="min-w-0 overflow-hidden truncate text-sm text-[#e5e2e1] sm:text-base"
         style={{ fontFamily: "var(--font-inter)" }}
       >
         {isCurrentUser ? "You" : entry.user}
@@ -47,23 +49,25 @@ function TableRow({ entry, config, isCurrentUser }) {
       {/* Value */}
       {config.showPrizeColumn && (
         <div
-          className="text-sm sm:text-base font-semibold text-[#e5e2e1] text-right"
+          className="min-w-0 overflow-hidden truncate text-right text-sm font-semibold tabular-nums text-[#e5e2e1] sm:text-base"
           style={{ fontFamily: "var(--font-inter)" }}
+          title={entry.value}
         >
           {entry.value}
         </div>
       )}
 
       {/* Prize / Total amount */}
-      <div className="text-right whitespace-nowrap">
+      <div className="min-w-0 overflow-hidden text-right">
         <span
-          className="text-sm sm:text-base"
+          className="block truncate whitespace-nowrap text-sm tabular-nums sm:text-base"
           style={{
             color: isCurrentUser ? "#e5e2e1" : config.color,
             fontFamily: "var(--font-inter)",
           }}
+          title={config.showPrizeColumn ? entry.prize || "-" : entry.value}
         >
-          {config.showPrizeColumn ? entry.prize : entry.value}
+          {config.showPrizeColumn ? entry.prize || "-" : entry.value}
         </span>
       </div>
     </div>
@@ -75,6 +79,10 @@ export default function LeaderboardTable({
   config,
   currentUserRank,
 }) {
+  const columns = config.showPrizeColumn
+    ? "38px minmax(0, 1fr) minmax(82px, 104px) minmax(72px, 88px)"
+    : "38px minmax(0, 1fr) minmax(84px, 112px)";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -90,12 +98,10 @@ export default function LeaderboardTable({
     >
       {/* Table header */}
       <div
-        className="grid items-end px-3 sm:px-4 pt-4 pb-4"
+        className="grid items-end px-3 pb-4 pt-4 sm:px-4"
         style={{
-          gridTemplateColumns: config.showPrizeColumn
-            ? "36px 1fr auto auto"
-            : "36px 1fr auto",
-          gap: "8px",
+          gridTemplateColumns: columns,
+          columnGap: "12px",
           backgroundColor: config.headerBg,
           borderBottom: `1px solid ${config.tableBorder}`,
         }}

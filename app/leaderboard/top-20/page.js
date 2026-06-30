@@ -67,19 +67,23 @@ function formatAmount(amount) {
 
 function formatPrize(reward) {
   if (!reward) return "";
-  const credit = reward.credit_amount ?? reward.amount;
+  const credit = reward.credit_amount ?? reward.reward_amount ?? reward.prize_amount;
   if (credit != null && credit !== "") return `RM ${formatAmount(credit)}`;
-  return reward.reward_name || "";
+  return reward.reward_name || reward.prize || reward.prize_name || "";
 }
 
 function buildPrizeMap(rewardsResponse) {
   const map = new Map();
   asList(rewardsResponse).forEach((reward) => {
-    const position = Number(reward.position);
+    const position = Number(reward.position ?? reward.rank_position ?? reward.rank);
     if (!Number.isFinite(position) || position <= 0) return;
     map.set(position, formatPrize(reward));
   });
   return map;
+}
+
+function getEntryPrize(entry, rank, prizeMap) {
+  return prizeMap.get(Number(rank)) || formatPrize(entry);
 }
 
 function collectInfoNotes(rows) {
@@ -203,7 +207,7 @@ function Top20LeaderboardPageInner() {
           rank,
           user: e.display_name ?? "",
           value: formatAmount(e.amount),
-          prize: prizeMap.get(Number(rank)) || "",
+          prize: getEntryPrize(e, rank, prizeMap),
         };
       });
       const notes = collectInfoNotes(info);
