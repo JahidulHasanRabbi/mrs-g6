@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AdminRouteGuard } from "../../../components/guards/AdminRouteGuard";
 import RangePicker from "../../../components/admin/RangePicker";
 import { Pagination } from "../../../components/admin/members/DataTable";
+import LoadingOverlay from "../../../components/admin/ui/LoadingOverlay";
 import {
   getUsageReportGames,
   getUsageReportInsights,
@@ -92,6 +93,13 @@ function formatDate(iso) {
   return `${d}/${m}/${y}`;
 }
 
+// One uniform, viewport-scaled size for every card — same as the PIC
+// dashboard's KpiCard — so all values in the row read at the same size.
+// Tuned small enough that the longest value ("RM 2,510.50") still clears the
+// narrowest 5-col card width; overflow-hidden + ellipsis is the fallback for
+// anything longer.
+const KPI_VALUE_FONT = "clamp(16px, 1.3vw, 22px)";
+
 function formatMoney(value) {
   if (value == null || value === "") return "N/A";
   const num = Number(value);
@@ -152,8 +160,8 @@ async function fetchAllInsights(params) {
   return all;
 }
 
-function TinyIcon({ type }) {
-  const common = { width: 22, height: 22, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" };
+function TinyIcon({ type, size = 22 }) {
+  const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" };
   if (type === "tokens") return <svg {...common}><circle cx="8" cy="8" r="4" /><circle cx="16" cy="16" r="4" /><path d="M12 8h3a3 3 0 0 1 3 3v1" /></svg>;
   if (type === "rm") return <svg {...common}><path d="M6 18V6h6a4 4 0 0 1 0 8H6" /><path d="M14 14l4 4" /></svg>;
   if (type === "avg") return <svg {...common}><path d="M4 19V5" /><path d="M4 19h16" /><path d="M7 15l4-4 3 3 5-7" /></svg>;
@@ -161,34 +169,28 @@ function TinyIcon({ type }) {
   return <svg {...common}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>;
 }
 
-function RefreshIcon({ spinning }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={spinning ? { animation: "usage-spin 0.7s linear infinite" } : undefined}>
-      <polyline points="23 4 23 10 17 10" />
-      <polyline points="1 20 1 14 7 14" />
-      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-    </svg>
-  );
-}
-
 function MetricCard({ metric, summary }) {
   const raw = summary?.[metric.key];
   const value = metric.prefix === "RM" ? formatMoney(raw) : formatNumber(raw, metric.decimals || 0);
 
   return (
-    <div className="min-h-[140px] rounded-[16px] border-2 border-[#05060a] p-5" style={{ backgroundImage: CARD_BG }}>
-      <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[6px] bg-[linear-gradient(175deg,#141828_0%,#333333_100%)] text-[#e9af41] shadow-[0_0_14px_rgba(222,162,32,0.22)]">
-          <TinyIcon type={metric.icon} />
+    <div className="flex flex-col gap-3 rounded-[16px] border-2 border-[#05060a] p-4" style={{ backgroundImage: CARD_BG }}>
+      <div className="flex w-full items-center gap-2.5">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[6px] bg-[linear-gradient(175deg,#141828_0%,#333333_100%)] text-[#e9af41] shadow-[0_0_14px_rgba(222,162,32,0.22)]">
+          <TinyIcon type={metric.icon} size={18} />
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-[12px] font-semibold uppercase leading-5 text-[#f6dda6]">{metric.label}</p>
-          <p className="mt-1 truncate bg-clip-text text-[28px] font-bold leading-tight text-transparent" style={{ backgroundImage: GOLD_BG }} title={`${metric.prefix ? `${metric.prefix} ` : ""}${value}`}>
-            {metric.prefix ? <span className="text-[18px]">{metric.prefix} </span> : null}{value}
-          </p>
-        </div>
+        <p className="min-w-0 flex-1 text-[12px] font-semibold uppercase leading-[15px] text-[#f6dda6]" style={{ letterSpacing: "-0.3px" }}>
+          {metric.label}
+        </p>
       </div>
-      {metric.hint ? <p className="mt-4 text-[11px] leading-4 text-white/45">{metric.hint}</p> : null}
+      <p
+        className="block w-full overflow-hidden text-ellipsis whitespace-nowrap bg-clip-text font-bold text-transparent tabular-nums"
+        style={{ backgroundImage: GOLD_BG, fontSize: KPI_VALUE_FONT, lineHeight: "1.2" }}
+        title={`${metric.prefix ? `${metric.prefix} ` : ""}${value}`}
+      >
+        {metric.prefix ? <span className="text-[0.7em]">{metric.prefix} </span> : null}{value}
+      </p>
+      {metric.hint ? <p className="text-[11px] leading-4 text-white/45">{metric.hint}</p> : null}
     </div>
   );
 }
@@ -267,7 +269,7 @@ function PresetButton({ active, onClick, children }) {
   );
 }
 
-function FilterBar({ preset, range, game, loading, onPreset, onRangeChange, onGameChange, onRefresh }) {
+function FilterBar({ preset, range, game, onPreset, onRangeChange, onGameChange }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-white/10 bg-black/20 p-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -298,12 +300,8 @@ function FilterBar({ preset, range, game, loading, onPreset, onRangeChange, onGa
         />
         {preset !== "custom" ? <span className="ml-1 hidden text-[12px] text-white/45 lg:inline">{formatRangeLabel(range)}</span> : null}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Dropdown value={game} options={GAME_OPTIONS} onChange={onGameChange} />
-        <button type="button" onClick={onRefresh} disabled={loading} className="inline-flex h-10 items-center gap-2 rounded-[8px] border border-[#f2cb7a]/60 px-4 text-[13px] font-semibold text-[#fbeed2] transition hover:bg-white/5 disabled:opacity-60">
-          <RefreshIcon spinning={loading} />
-          Refresh
-        </button>
       </div>
     </div>
   );
@@ -323,7 +321,6 @@ function EngagementCard({ summary }) {
       <div className="mb-5 flex items-center justify-between gap-3">
         <div>
           <h2 className="text-[20px] font-bold text-[#f4efe0]">Engagement Breakdown</h2>
-          <p className="mt-1 text-[12px] text-white/50">Each active user is counted once, grouped by how many different games they played. The rows add up to total active users.</p>
         </div>
         <span className="rounded-full border border-[#e9af41]/50 px-3 py-1 text-[11px] font-semibold text-[#e9af41]">{formatNumber(summary?.total_active_users)} users</span>
       </div>
@@ -365,11 +362,10 @@ function SummaryBreakdownPanel({ summary }) {
   ];
 
   return (
-    <section className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+    <section className="grid grid-cols-1 gap-5 lg:grid-cols-2">
       <div className="rounded-[16px] border border-white/10 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.25)]" style={{ backgroundImage: PANEL_BG }}>
         <div className="mb-4">
           <h2 className="text-[20px] font-bold text-[#f4efe0]">Leaderboard Participation</h2>
-          <p className="mt-1 text-[12px] text-white/50">Distinct real members appearing in generated leaderboard batches for the selected range.</p>
         </div>
         <div className="grid grid-cols-2 gap-3">
           {leaderboardRows.map((row) => (
@@ -384,7 +380,6 @@ function SummaryBreakdownPanel({ summary }) {
       <div className="rounded-[16px] border border-white/10 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.25)]" style={{ backgroundImage: PANEL_BG }}>
         <div className="mb-4">
           <h2 className="text-[20px] font-bold text-[#f4efe0]">Mission Activity</h2>
-          <p className="mt-1 text-[12px] text-white/50">Mission completions, reward claims, and awarded tokens in the selected range.</p>
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {missionRows.map((row) => (
@@ -420,7 +415,6 @@ function TrendChart({ rows }) {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-[20px] font-bold text-[#f4efe0]">Daily Usage Trend</h2>
-          <p className="mt-1 text-[12px] text-white/50">Players, sessions, and tokens from the insights endpoint.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3 text-[11px] text-white/70">
           <span className="inline-flex items-center gap-1"><i className="h-2 w-2 rounded-full bg-[#54d7ff]" />Players</span>
@@ -454,7 +448,6 @@ function GamePerformance({ games }) {
       <div className="flex items-center justify-between gap-3 px-5 py-4">
         <div>
           <h2 className="text-[20px] font-bold text-[#f4efe0]">Game Performance</h2>
-          <p className="mt-1 text-[12px] text-white/50">Usage and money paid out per game, sorted by unique players (top mini-game ranking). Credit RM shows N/A for games that track no recoverable RM (Lucky Spin, Prediction).</p>
         </div>
       </div>
       <div className="overflow-x-auto scrollbar-admin">
@@ -490,9 +483,8 @@ function RetentionPanel({ rows }) {
     <section className="rounded-[16px] border border-white/10 p-5 shadow-[0_20px_60px_rgba(0,0,0,0.25)]" style={{ backgroundImage: PANEL_BG }}>
       <div className="mb-4">
         <h2 className="text-[20px] font-bold text-[#f4efe0]">Cohort Retention</h2>
-        <p className="mt-1 text-[12px] text-white/50">Of players whose first-ever play of a game falls in this range (the cohort), the cumulative share who returned within D1, D7, and D30 after their first play.</p>
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {rows.length ? rows.map((row) => (
           <div key={row.game} className="rounded-[12px] border border-white/5 bg-black/20 p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
@@ -505,7 +497,7 @@ function RetentionPanel({ rows }) {
               <div className="rounded-[8px] bg-[#07190d] p-3"><p className="text-[11px] text-white/50">D30</p><p className="text-[18px] font-bold text-[#f2cb7a]">{asPercentRate(row.d30)}</p></div>
             </div>
           </div>
-        )) : <div className="rounded-[12px] border border-white/5 bg-black/20 px-5 py-12 text-center text-[13px] text-white/50 sm:col-span-2 xl:col-span-4">No retention data for this range.</div>}
+        )) : <div className="rounded-[12px] border border-white/5 bg-black/20 px-5 py-12 text-center text-[13px] text-white/50 sm:col-span-2 lg:col-span-3 xl:col-span-4">No retention data for this range.</div>}
       </div>
     </section>
   );
@@ -540,7 +532,6 @@ function HistoryTable({ rows }) {
       <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
         <div>
           <h2 className="text-[20px] font-bold text-[#f4efe0]">Daily Activity History</h2>
-          <p className="mt-1 text-[12px] text-white/50">Day-by-day players, sessions, and tokens for the selected range (newest first).</p>
         </div>
         <span className="rounded-full border border-[#e9af41]/50 px-3 py-1 text-[11px] font-semibold text-[#e9af41]">{formatNumber(ordered.length)} days</span>
       </div>
@@ -582,12 +573,11 @@ function HistoryTable({ rows }) {
 }
 
 function UsageReportContent() {
-  const [preset, setPreset] = useState("monthly");
-  const [range, setRange] = useState(() => presetRange("monthly"));
+  const [preset, setPreset] = useState("daily");
+  const [range, setRange] = useState(() => presetRange("daily"));
   const [game, setGame] = useState("all");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [refreshKey, setRefreshKey] = useState(0);
   const [summary, setSummary] = useState(null);
   const [games, setGames] = useState([]);
   const [retention, setRetention] = useState([]);
@@ -636,16 +626,14 @@ function UsageReportContent() {
 
   useEffect(() => {
     loadReport();
-  }, [loadReport, refreshKey]);
+  }, [loadReport]);
 
   return (
-    <main className="min-h-screen xl:admin-content-pl pr-10 pt-8 pb-10">
-      <style>{`@keyframes usage-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+    <main className="min-h-screen px-4 py-4 sm:px-6 sm:py-6 xl:admin-content-pl xl:pr-12">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <p className="mb-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-[#e9af41]">MRS System</p>
-          <h1 className="text-4xl font-bold leading-[1.05] text-white">Usage Report</h1>
-          <p className="mt-2 max-w-2xl text-[14px] text-white/55">Read-only mini-game analytics for sessions, tokens, rewards, engagement, retention, and daily activity.</p>
+          <h1 className="text-2xl font-bold leading-[1.05] text-white sm:text-3xl lg:text-4xl">Usage Report</h1>
         </div>
         <div className="rounded-[14px] border border-[#e9af41]/35 bg-[#0c1018] px-4 py-3 text-right">
           <p className="text-[11px] uppercase text-white/45">Current View</p>
@@ -654,38 +642,39 @@ function UsageReportContent() {
       </div>
 
       <div className="mb-5">
-        <FilterBar preset={preset} range={range} game={game} loading={loading} onPreset={handlePreset} onRangeChange={handleCustomRange} onGameChange={setGame} onRefresh={() => setRefreshKey((key) => key + 1)} />
+        <FilterBar preset={preset} range={range} game={game} onPreset={handlePreset} onRangeChange={handleCustomRange} onGameChange={setGame} />
       </div>
 
       {error ? <div className="mb-5 rounded-[12px] border border-red-400/40 bg-red-500/10 px-4 py-3 text-[13px] text-red-100">{error}</div> : null}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        {SUMMARY_CARDS.map((metric) => <MetricCard key={metric.key} metric={metric} summary={summary} />)}
-      </div>
-      <p className="mb-5 mt-2 text-[11px] leading-4 text-white/40">Rewards Given covers Penalty Kick + Smash Egg only — Lucky Spin pays RM but the amount isn&apos;t attributable in this read-only report, so it is excluded.</p>
+      <div className="relative">
+        <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {SUMMARY_CARDS.map((metric) => <MetricCard key={metric.key} metric={metric} summary={summary} />)}
+        </div>
 
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-        <EngagementCard summary={summary} />
-        <TrendChart rows={trend} />
-      </div>
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <EngagementCard summary={summary} />
+          <TrendChart rows={trend} />
+        </div>
 
-      <div className="mt-5">
-        <SummaryBreakdownPanel summary={summary} />
-      </div>
+        <div className="mt-5">
+          <SummaryBreakdownPanel summary={summary} />
+        </div>
 
-      <div className="mt-5">
-        <GamePerformance games={games} />
-      </div>
+        <div className="mt-5">
+          <GamePerformance games={games} />
+        </div>
 
-      <div className="mt-5">
-        <RetentionPanel rows={retention} />
-      </div>
+        <div className="mt-5">
+          <RetentionPanel rows={retention} />
+        </div>
 
-      <div className="mt-5">
-        <HistoryTable rows={trend} />
-      </div>
+        <div className="mt-5">
+          <HistoryTable rows={trend} />
+        </div>
 
-      {loading ? <div className="fixed bottom-6 right-6 rounded-full border border-[#e9af41]/40 bg-[#0c1018] px-4 py-2 text-[12px] font-semibold text-[#f6dda6] shadow-[0_12px_30px_rgba(0,0,0,0.35)]">Loading usage report...</div> : null}
+        {loading ? <LoadingOverlay label="Loading usage report..." /> : null}
+      </div>
     </main>
   );
 }
