@@ -35,8 +35,10 @@ export default function AppLayout({ children }) {
   // screen draws its own header + FooterNav over a full-bleed backdrop.
   const isPenaltyKickPage =
     pathname === "/penalty-kick" || pathname?.startsWith("/penalty-kick/");
+  const isSmashEggPage = pathname === "/smash-egg";
   const isMissionsPage = pathname === "/missions";
-  const isLeaderboardPage = pathname === "/leaderboard";
+  const isLeaderboardPage =
+    pathname === "/leaderboard" || pathname?.startsWith("/leaderboard/");
 
   // Don't show layout on home page
   if (isHomePage) {
@@ -47,7 +49,7 @@ export default function AppLayout({ children }) {
   // FooterNav and need a full-bleed surface — skip the global header/
   // footer chrome here so we don't end up with two stacked headers
   // (the global hamburger + the page's "LEADERBOARDS" bar).
-  if (isPenaltyKickPage || isMissionsPage || isLeaderboardPage) {
+  if (isPenaltyKickPage || isSmashEggPage || isMissionsPage || isLeaderboardPage) {
     return <>{children}</>;
   }
 

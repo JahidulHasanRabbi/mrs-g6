@@ -16,7 +16,7 @@ function CountryTile({ country, selected, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center gap-2 rounded-[12px] p-[14px]"
+      className="flex items-center gap-2 rounded-xl p-3.5"
       style={{
         background: "#282A2B",
         border: selected ? `1px solid ${LB_COLORS.primary}` : "1px solid rgba(255,255,255,0.05)",

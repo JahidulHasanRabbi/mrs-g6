@@ -39,6 +39,12 @@ export const ADMIN_NAVIGATION = [
     id: 'lucky-spin'
   },
   {
+    label: 'Smash Egg',
+    path: '/admin/smash-egg',
+    enabled: true,
+    id: 'smash-egg'
+  },
+  {
     label: 'Penalty Kick',
     path: '/admin/penalty-kick',
     enabled: true,
@@ -73,5 +79,23 @@ export const ADMIN_NAVIGATION = [
     path: '/admin/settings',
     enabled: false, // Not yet implemented
     id: 'settings'
+  },
+  {
+    label: 'Deposit Leaderboard',
+    path: '/admin/leaderboards/deposit',
+    enabled: true,
+    id: 'lb-deposit'
+  },
+  {
+    label: 'Referrer Leaderboard',
+    path: '/admin/leaderboards/referrer',
+    enabled: true,
+    id: 'lb-referrer'
+  },
+  {
+    label: 'Withdrawal Leaderboard',
+    path: '/admin/leaderboards/withdrawal',
+    enabled: true,
+    id: 'lb-withdrawal'
   }
 ];

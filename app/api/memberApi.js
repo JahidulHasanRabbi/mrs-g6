@@ -106,6 +106,70 @@ export async function getAllLuckySpinItems() {
   }, true, 'member');
 }
 
+// GET /smash-egg/smash-egg-items/
+export async function getAllSmashEggItems() {
+  return await apiRequest(ENDPOINTS.MEMBER.ALL_SMASH_EGG_ITEMS, {
+    method: 'GET'
+  }, true, 'member');
+}
+
+// GET /smash-egg/smash-sequences/
+export async function getAllSmashEggSequences() {
+  return await apiRequest(ENDPOINTS.MEMBER.ALL_SMASH_EGG_SEQUENCES, {
+    method: 'GET'
+  }, true, 'member');
+}
+
+// GET /smash-egg/winning-list/
+export async function getSmashEggWinningList() {
+  return await apiRequest(ENDPOINTS.MEMBER.SMASH_EGG_WINNING_LIST, {
+    method: 'GET'
+  }, true, 'member');
+}
+
+// GET /member/<member_uuid>/smash-history/
+export async function getSmashEggHistory(memberUuid, params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.MEMBER.SMASH_EGG_HISTORY(memberUuid)}${qs}`, {
+    method: 'GET'
+  }, true, 'member');
+}
+
+// POST /member/<member_uuid>/one-smash/
+export async function oneSmash(memberUuid) {
+  return await apiRequest(ENDPOINTS.MEMBER.ONE_SMASH(memberUuid), {
+    method: 'POST'
+  }, true, 'member');
+}
+
+// POST /member/<member_uuid>/ten-smash/
+export async function tenSmash(memberUuid) {
+  return await apiRequest(ENDPOINTS.MEMBER.TEN_SMASH(memberUuid), {
+    method: 'POST'
+  }, true, 'member');
+}
+
+// POST /member/<member_uuid>/fifty-smash/
+export async function fiftySmash(memberUuid) {
+  return await apiRequest(ENDPOINTS.MEMBER.FIFTY_SMASH(memberUuid), {
+    method: 'POST'
+  }, true, 'member');
+}
+
+// POST /member/<member_uuid>/hundred-smash/
+export async function hundredSmash(memberUuid) {
+  return await apiRequest(ENDPOINTS.MEMBER.HUNDRED_SMASH(memberUuid), {
+    method: 'POST'
+  }, true, 'member');
+}
+
+// GET /smash-egg/smash-egg-settings/
+export async function getSmashEggSettings() {
+  return await apiRequest(ENDPOINTS.MEMBER.SMASH_EGG_SETTINGS, {
+    method: 'GET'
+  }, true, 'member');
+}
+
 // POST /member/{uuid}/one-spin/
 export async function oneSpin(memberUuid) {
   return await apiRequest(ENDPOINTS.MEMBER.ONE_SPIN(memberUuid), {
@@ -404,4 +468,53 @@ export async function getWorldCupMyPrediction(memberUuid, matchUuid) {
   return await apiRequest(ENDPOINTS.WORLDCUP_USER.MY_PREDICTION(memberUuid, matchUuid), {
     method: 'GET'
   }, true, 'member');
+}
+
+// ============================================================================
+// LEADERBOARD — PUBLIC (postman/leaderboard.md)
+// type: 1 = Deposit, 2 = Withdraw, 3 = Referral
+// ============================================================================
+
+// GET /leaderboard/public/info/  (optional ?type=)
+export async function getPublicLeaderboardInfo(type) {
+  const qs = type ? buildQueryParams({ type }) : '';
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.PUBLIC_INFO}${qs}`, { method: 'GET' }, true, 'member');
+}
+
+// GET /leaderboard/public/status/
+export async function getPublicLeaderboardStatus() {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.PUBLIC_STATUS, { method: 'GET' }, true, 'member');
+}
+
+// GET /leaderboard/public/campaign/  (optional ?type=)
+export async function getPublicLeaderboardCampaign(type) {
+  const qs = type ? buildQueryParams({ type }) : '';
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.PUBLIC_CAMPAIGN}${qs}`, { method: 'GET' }, true, 'member');
+}
+
+// GET /leaderboard/public/{board}-ranking/  — latest generated Top 20 batch
+export async function getPublicDepositRanking() {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.PUBLIC_DEPOSIT_RANKING, { method: 'GET' }, true, 'member');
+}
+export async function getPublicWithdrawRanking() {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.PUBLIC_WITHDRAW_RANKING, { method: 'GET' }, true, 'member');
+}
+export async function getPublicReferralRanking() {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.PUBLIC_REFERRAL_RANKING, { method: 'GET' }, true, 'member');
+}
+
+// GET /leaderboard/{board}-reward-items/ using member token for display prize mapping
+export async function getMemberDepositRewardItems(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.DEPOSIT_REWARD_ITEMS}${qs}`, { method: 'GET' }, true, 'member');
+}
+
+export async function getMemberWithdrawalRewardItems(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.WITHDRAW_REWARD_ITEMS}${qs}`, { method: 'GET' }, true, 'member');
+}
+
+export async function getMemberReferrerRewardItems(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.REFERRAL_REWARD_ITEMS}${qs}`, { method: 'GET' }, true, 'member');
 }

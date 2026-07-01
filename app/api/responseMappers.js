@@ -83,6 +83,53 @@ export function mapLuckySpinItems(apiResponse) {
   }));
 }
 
+function normalizeApiList(apiResponse) {
+  if (Array.isArray(apiResponse)) return apiResponse;
+  if (Array.isArray(apiResponse?.results)) return apiResponse.results;
+  if (Array.isArray(apiResponse?.value)) return apiResponse.value;
+  return [];
+}
+
+function normalizeItemTypeLabel(value) {
+  if (value == null) return "Free credit";
+  const normalized = String(value).replace(/_/g, " ").trim().toUpperCase();
+  if (normalized === "FREE CREDIT" || normalized === "FREE_CREDIT" || normalized === "1") return "Free credit";
+  if (normalized === "TOKEN" || normalized === "2") return "Token";
+  if (normalized === "PRIZE" || normalized === "ITEM" || normalized === "3") return "Prize";
+  return String(value);
+}
+
+export function mapSmashEggItems(apiResponse) {
+  return normalizeApiList(apiResponse).map(item => ({
+    id: item.uuid || item.id,
+    uuid: item.uuid,
+    name: item.reward_name || item.name || "",
+    reward_name: item.reward_name || item.name || "",
+    quantity: item.quantity ?? 0,
+    itemType: normalizeItemTypeLabel(item.item_type),
+    item_type: item.item_type,
+    minWithdraw: item.min_withdraw ?? "",
+    maxWithdraw: item.max_withdraw ?? "",
+    tokens: item.token_amount ?? "",
+    token_amount: item.token_amount,
+    unlimited: Boolean(item.unlimited),
+    image: item.image || null,
+    raw: item
+  }));
+}
+
+export function mapSmashEggSequences(apiResponse) {
+  return normalizeApiList(apiResponse)
+    .map(seq => ({
+      id: seq.uuid || seq.id,
+      uuid: seq.uuid,
+      item_order: seq.item_order,
+      item_name: seq.item_name,
+      item_uuid: seq.item_uuid
+    }))
+    .sort((a, b) => Number(a.item_order ?? 0) - Number(b.item_order ?? 0));
+}
+
 export function mapRedemptionItems(apiResponse) {
   return apiResponse.map(item => {
     const originalPrice = item.tokens_needed;
