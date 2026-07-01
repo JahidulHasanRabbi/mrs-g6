@@ -6,7 +6,7 @@ import RewardsTable from "../../components/admin/smash-egg/RewardsTable";
 import RewardForm from "../../components/admin/smash-egg/RewardForm";
 import SmashSequenceModal from "../../components/admin/smash-egg/SmashSequenceModal";
 import CostSettingModal from "../../components/admin/penalty-kick/CostSettingModal";
-import GameStatusModal from "../../components/admin/penalty-kick/GameStatusModal";
+import GameStatusModal from "../../components/admin/smash-egg/GameStatusModal";
 import ConfirmDialog from "../../components/admin/ui/ConfirmDialog";
 import { useToast } from "../../components/admin/ui/Toast";
 import * as adminApi from "../../api/adminApi";
@@ -449,12 +449,12 @@ export default function SmashEggPage() {
 
       <GameStatusModal
         open={statusOpen}
-        initial={statusData}
+        initial={statusData.gameplay}
         onClose={() => setStatusOpen(false)}
-        onSave={async (payload) => {
+        onSave={async (isOpen) => {
           try {
             await saveSettings(
-              { game_status: payload.gameplay ? 1 : 2, maintenance_mode: Boolean(payload.maintenance) },
+              { game_status: isOpen ? 1 : 2, maintenance_mode: false },
               "Game status saved",
             );
           } catch (error) {

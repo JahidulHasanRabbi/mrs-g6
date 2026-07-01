@@ -21,6 +21,7 @@ import {
   getMemberDepositRewardItems,
   getMemberReferrerRewardItems,
   getMemberWithdrawalRewardItems,
+  getPublicLeaderboardStatus,
 } from "../../api/memberApi";
 
 // type = leaderboard info/ranking API. termsCategory = main T&C API category.
@@ -162,8 +163,33 @@ function Top20LeaderboardPageInner() {
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [data, setData] = useState(EMPTY_BOARD);
   const [loading, setLoading] = useState(true);
+  // null = not checked yet, so the maintenance overlay never flashes on load.
+  const [maintenance, setMaintenance] = useState(null);
+  const isMaintenance = maintenance === true;
   // Cache each tab's loaded board so switching back doesn't refetch.
   const boardCache = useRef({});
+
+  // Single admin toggle (PUT /leaderboard/status/ { is_open }) covers all
+  // three boards (Deposit/Withdraw/Referral) at once — there's no per-type
+  // switch, so this one check gates the whole page.
+  useEffect(() => {
+    getPublicLeaderboardStatus()
+      .then((s) => setMaintenance(s?.is_open === false))
+      .catch(() => setMaintenance(false));
+  }, []);
+
+  useEffect(() => {
+    if (!isMaintenance || typeof document === "undefined") return undefined;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    window.scrollTo({ top: 0, left: 0 });
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, [isMaintenance]);
 
   const tabParam = searchParams.get("tab");
   const activeTab =
@@ -182,6 +208,7 @@ function Top20LeaderboardPageInner() {
   );
 
   useEffect(() => {
+    if (maintenance !== false) return undefined;
     let cancelled = false;
     // Already loaded this tab - show cached data, skip the API calls.
     if (boardCache.current[activeTab]) {
@@ -228,7 +255,7 @@ function Top20LeaderboardPageInner() {
     return () => {
       cancelled = true;
     };
-  }, [activeTab]);
+  }, [activeTab, maintenance]);
 
   const config = LEADERBOARD_CONFIG[activeTab];
 
@@ -320,6 +347,28 @@ function Top20LeaderboardPageInner() {
       )}
       <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
       <FooterNav />
+
+      {isMaintenance && (
+        <div className="fixed inset-x-0 top-[68px] bottom-[100px] z-30 grid place-items-center bg-black/70 px-6 backdrop-blur-md">
+          <div
+            className="w-full max-w-[360px] rounded-[16px] border border-white/15 px-6 py-7 text-center shadow-[0_16px_50px_rgba(0,0,0,0.45)]"
+            style={{ backgroundColor: "rgba(7,25,13,0.95)" }}
+          >
+            <p
+              className="text-[20px] font-bold"
+              style={{ color: "#e9af41", fontFamily: "var(--font-inter)" }}
+            >
+              Leaderboard is under maintenance
+            </p>
+            <p
+              className="mt-3 text-[12px] leading-5 text-[#a8bdb4]"
+              style={{ fontFamily: "var(--font-inter)" }}
+            >
+              Please check back later.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

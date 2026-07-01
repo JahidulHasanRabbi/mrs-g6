@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { generateLeaderboardRanking } from "../../api/adminApi";
+import { generateLeaderboardRanking, getLeaderboardStatus, updateLeaderboardStatus } from "../../api/adminApi";
 import Button from "../../components/admin/ui/Button";
 import { useToast } from "../../components/admin/ui/Toast";
+import LeaderboardStatusModal from "../../components/admin/leaderboards/LeaderboardStatusModal";
 
 const BOARDS = {
   "/admin/leaderboards/deposit": { title: "Deposit", type: 1 },
@@ -35,12 +36,43 @@ function RankingIcon() {
   );
 }
 
+function StatusIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2" y="7" width="20" height="10" rx="5" />
+      <circle cx="8" cy="12" r="3" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 export default function LeaderboardsLayout({ children }) {
   const pathname = usePathname();
   const title = resolveTitle(pathname);
   const board = resolveBoard(pathname);
   const toast = useToast();
   const [generating, setGenerating] = useState(false);
+  const [statusOpen, setStatusOpen] = useState(false);
+  const [leaderboardOpen, setLeaderboardOpen] = useState(true);
+
+  useEffect(() => {
+    getLeaderboardStatus()
+      .then((s) => setLeaderboardOpen(s?.is_open !== false))
+      .catch(() => {});
+  }, []);
+
+  const onSaveStatus = async (isOpen) => {
+    try {
+      await updateLeaderboardStatus(isOpen);
+      setLeaderboardOpen(isOpen);
+      toast.success("Leaderboard status saved", {
+        description: isOpen ? "Leaderboards are now open." : "Leaderboards are now closed.",
+      });
+    } catch (error) {
+      toast.error("Failed to save leaderboard status", {
+        description: error?.data?.detail || error?.message,
+      });
+    }
+  };
 
   const onGenerateRanking = async () => {
     if (!board || generating) return;
@@ -83,21 +115,40 @@ export default function LeaderboardsLayout({ children }) {
               {title}
             </h1>
           </div>
-          {board && (
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
             <Button
               type="button"
+              variant="secondary"
               size="lg"
-              loading={generating}
-              iconLeft={<RankingIcon />}
-              onClick={onGenerateRanking}
+              iconLeft={<StatusIcon />}
+              onClick={() => setStatusOpen(true)}
               className="w-full sm:w-auto"
             >
-              Generate Ranking
+              Leaderboard Status
             </Button>
-          )}
+            {board && (
+              <Button
+                type="button"
+                size="lg"
+                loading={generating}
+                iconLeft={<RankingIcon />}
+                onClick={onGenerateRanking}
+                className="w-full sm:w-auto"
+              >
+                Generate Ranking
+              </Button>
+            )}
+          </div>
         </div>
         {children}
       </div>
+
+      <LeaderboardStatusModal
+        open={statusOpen}
+        initial={leaderboardOpen}
+        onClose={() => setStatusOpen(false)}
+        onSave={onSaveStatus}
+      />
     </main>
   );
 }
