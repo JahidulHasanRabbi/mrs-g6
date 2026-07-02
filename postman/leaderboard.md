@@ -84,6 +84,7 @@ Notes that apply to every endpoint:
 | PUT | `/leaderboard/referral-fake-data/{uuid}/` | Update a Referral fake row |
 | PATCH | `/leaderboard/referral-fake-data/{uuid}/archive/` | Archive a Referral fake row |
 | POST | `/leaderboard/generate-ranking/` | Compute & store the Top 20 batch for one board |
+| GET | `/leaderboard/real-ranking/` | Live, unmasked ranking for one board — all real members, no fake rows, not capped at 20 |
 | GET | `/leaderboard/public/info/` | Read Info (optional `?type=`) |
 | GET | `/leaderboard/public/status/` | Read the global open/closed flag |
 | GET | `/leaderboard/public/campaign/` | Read Campaign (optional `?type=`) |
@@ -405,9 +406,51 @@ Response (list, up to 20, rank ascending)
 | :--- | :--- | :--- |
 | rank | Int | 1–20 |
 | display\_name | Str | Masked real member name (e.g. `J**n`) or the fake row's `player` |
-| amount | Str (Decimal) | Deposit/Withdraw total, or referral score, in RM |
+| amount | Str (Decimal) | Deposit/Withdraw total, or referral qualifying deposit total, in RM |
+| count | Int | Deposit/Withdraw: number of qualifying transactions. Referral: number of qualified referred members (each must deposit ≥ RM 200 within the same calendar month). |
 
 Returns **400** if `leaderboard_type` is missing, not an integer, or not 1/2/3.
+
+---
+
+# ADMIN — REAL RANKING
+
+### GET /leaderboard/real-ranking/
+
+Computed live on every request from this calendar month's transactions/referrals —
+nothing is read from or written to `LeaderboardRecord`. Excludes fake rows entirely and
+is **not** capped at 20; every real member with qualifying activity this month appears.
+Names are the member's real `full_name` (unmasked).
+
+Query Parameters
+
+| Field | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| type | Int | Yes | 1 = Deposit, 2 = Withdraw, 3 = Referral |
+
+Returns **400** if `type` is missing, not an integer, or not 1/2/3.
+
+Response (list, ordered by amount desc, then count desc, then earliest-to-reach-it first; not paginated)
+
+Deposit (`type=1`) / Withdraw (`type=2`)
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| rank | Int | 1-based, no cap |
+| member\_id | Int | |
+| full\_name | Str | Member's real name (or phone number / "Unknown" fallback) — unmasked |
+| amount | Str (Decimal) | Deposit/Withdraw total in RM for this calendar month |
+| count | Int | Number of qualifying transactions this month |
+
+Referral (`type=3`)
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| rank | Int | 1-based, no cap |
+| member\_id | Int | The referrer |
+| full\_name | Str | Referrer's real name — unmasked |
+| amount | Str (Decimal) | Total qualifying deposit made by this referrer's downlines this month, in RM |
+| new\_member | Int | Number of downlines who qualified this month (each must deposit ≥ RM 200 within the same calendar month) |
 
 ---
 
@@ -448,4 +491,5 @@ Response (list, up to 20, rank ascending)
 | :--- | :--- | :--- |
 | rank | Int | 1–20 |
 | display\_name | Str | Masked real member name or fake row's `player` |
-| amount | Str (Decimal) | Deposit/Withdraw total, or referral score, in RM |
+| amount | Str (Decimal) | Deposit/Withdraw total, or referral qualifying deposit total, in RM |
+| count | Int | Deposit/Withdraw: number of qualifying transactions. Referral: number of qualified referred members (each must deposit ≥ RM 200 within the same calendar month). |

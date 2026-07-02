@@ -1038,6 +1038,11 @@ export async function generateLeaderboardRanking(type) {
   return await apiRequest(ENDPOINTS.LEADERBOARD.GENERATE_RANKING, { method: 'POST', body: { leaderboard_type: type } }, true, 'admin');
 }
 
+export async function getLeaderboardRealRanking(type) {
+  const qs = buildQueryParams({ type });
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.REAL_RANKING}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
 // ---------------------------------------------------------------------------
 // Deposit Leaderboard
 // ---------------------------------------------------------------------------

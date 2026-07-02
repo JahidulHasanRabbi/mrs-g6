@@ -7,6 +7,7 @@ import SettingsSection from "../../../components/admin/world-cup/SettingsSection
 import InformationTable from "../../../components/admin/leaderboards/deposit/InformationTable";
 import DepositRewardTable from "../../../components/admin/leaderboards/deposit/DepositRewardTable";
 import DepositPlayerTable from "../../../components/admin/leaderboards/deposit/DepositPlayerTable";
+import RankingTable from "../../../components/admin/leaderboards/RankingTable";
 import ConfirmArchive from "../../../components/admin/world-cup/ConfirmArchive";
 import {
   getDepositBanners,
@@ -14,6 +15,7 @@ import {
   getDepositRewardItems,
   archiveDepositRewardItem,
   getDepositDummyPlayers,
+  getLeaderboardRealRanking,
 } from "../../../api/adminApi";
 
 const PAGE_SIZE = 7;
@@ -64,16 +66,29 @@ function normalizePlayer(p) {
   };
 }
 
+function normalizeRanking(row) {
+  return {
+    id: row.member_id ?? row.rank,
+    rank: row.rank ?? 0,
+    memberId: row.member_id ?? "",
+    fullName: row.full_name ?? "",
+    amount: row.amount ?? 0,
+    count: row.count ?? 0,
+  };
+}
+
 export default function DepositSettingsPage() {
   const router = useRouter();
 
   const [banners, setBanners] = useState([]);
   const [rewards, setRewards] = useState([]);
   const [players, setPlayers] = useState([]);
+  const [rankings, setRankings] = useState([]);
 
   const [bannerPage, setBannerPage] = useState(1);
   const [rewardPage, setRewardPage] = useState(1);
   const [playerPage, setPlayerPage] = useState(1);
+  const [rankingPage, setRankingPage] = useState(1);
 
   const [archiveTarget, setArchiveTarget] = useState(null);
 
@@ -82,13 +97,16 @@ export default function DepositSettingsPage() {
       getDepositBanners().catch(() => null),
       getDepositRewardItems().catch(() => null),
       getDepositDummyPlayers().catch(() => null),
-    ]).then(([bannersRes, rewardsRes, playersRes]) => {
+      getLeaderboardRealRanking(1).catch(() => null),
+    ]).then(([bannersRes, rewardsRes, playersRes, rankingRes]) => {
       const bList = bannersRes ? (bannersRes.results ?? bannersRes) : [];
       const rList = rewardsRes ? (rewardsRes.results ?? rewardsRes) : [];
       const pList = playersRes ? (playersRes.results ?? playersRes) : [];
+      const rankingList = rankingRes ? (rankingRes.results ?? rankingRes) : [];
       setBanners((Array.isArray(bList) ? bList : []).map(normalizeBanner));
       setRewards((Array.isArray(rList) ? rList : []).map(normalizeReward));
       setPlayers((Array.isArray(pList) ? pList : []).map(normalizePlayer));
+      setRankings((Array.isArray(rankingList) ? rankingList : []).map(normalizeRanking));
     });
   }, []);
 
@@ -103,6 +121,10 @@ export default function DepositSettingsPage() {
   const pagedPlayers = useMemo(
     () => players.slice((playerPage - 1) * PAGE_SIZE, playerPage * PAGE_SIZE),
     [players, playerPage],
+  );
+  const pagedRankings = useMemo(
+    () => rankings.slice((rankingPage - 1) * PAGE_SIZE, rankingPage * PAGE_SIZE),
+    [rankings, rankingPage],
   );
 
   const confirmArchive = async () => {
@@ -158,6 +180,11 @@ export default function DepositSettingsPage() {
           onEdit={(p) => router.push(`/admin/leaderboards/deposit/dummy?uuid=${p.uuid}`)}
         />
         <PaginatedFooter total={players.length} page={playerPage} setPage={setPlayerPage} />
+      </SettingsSection>
+
+      <SettingsSection title="Ranking Table">
+        <RankingTable rows={pagedRankings} type="deposit" />
+        <PaginatedFooter total={rankings.length} page={rankingPage} setPage={setRankingPage} />
       </SettingsSection>
 
       <ConfirmArchive
