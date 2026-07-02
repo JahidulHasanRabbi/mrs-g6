@@ -52,6 +52,16 @@ function buildItemNameLookup(responses) {
   return lookup;
 }
 
+// The API always mirrors the Manual Bonus promotion into the "VIP Type" group
+// as a generic placeholder ({ item: 7, name: "Manual Bonus" }) alongside the
+// real, individually-named entry under the "manual_code" group. Both share the
+// same code, so without filtering this out every Manual Bonus doubles up.
+function isPhantomManualBonusRow(promo) {
+  const item = promo?.item;
+  const isNumericItem = typeof item === "number" || (typeof item === "string" && /^\d+$/.test(item));
+  return isNumericItem && String(promo?.name ?? "").toLowerCase().trim() === "manual bonus";
+}
+
 function displayPromotionItem(promo, itemNameByUuid) {
   const item = promo?.item;
   if (typeof item === "string" && UUID_RE.test(item)) {
@@ -69,6 +79,7 @@ function flattenPromotions(response, itemNameByUuid = {}) {
   for (const group of groups) {
     const promos = Array.isArray(group?.promotions) ? group.promotions : Array.isArray(group?.promotion) ? group.promotion : [];
     for (const promo of promos) {
+      if (isPhantomManualBonusRow(promo)) continue;
       rows.push({
         type: group?.type || "—",
         name: promo?.name ?? "—",

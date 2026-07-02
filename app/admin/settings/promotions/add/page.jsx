@@ -106,6 +106,7 @@ function hydratePromotions(response, promotionTypes) {
   for (const group of groups) {
     const promos = Array.isArray(group?.promotions) ? group.promotions : Array.isArray(group?.promotion) ? group.promotion : [];
     for (const promo of promos) {
+      if (isPhantomManualBonusRow(promo)) continue;
       rows.push({
         promotion_type: matchTypeValue(group, promo, promotionTypes),
         item_uuid: typeof promo?.item === "string" && UUID_RE.test(promo.item) ? promo.item : "",
@@ -268,10 +269,11 @@ export default function AddPromotionPage() {
   }));
 
   const canAddPromotion = useMemo(() => {
-    const used = new Set(promotions.map((p) => String(p.promotion_type)).filter(Boolean));
     const hasUnselectedRow = promotions.some((p) => String(p.promotion_type) === "");
-    return !hasUnselectedRow && typeOptions.some((option) => !used.has(option.value));
-  }, [promotions, typeOptions]);
+    if (hasUnselectedRow) return false;
+    const used = new Set(promotions.map((p) => String(p.promotion_type)).filter(Boolean));
+    return typeOptions.some((option) => !isSingleInstanceType(promotionTypes, option.value) || !used.has(option.value));
+  }, [promotions, typeOptions, promotionTypes]);
 
   const getItemOptions = (promotionType, promo) => {
     const options = (itemsByType[String(promotionType)] || []).map((i) => ({
@@ -321,6 +323,7 @@ export default function AddPromotionPage() {
                 promo={promo}
                 typeOptions={typeOptions.filter((option) => (
                   option.value === String(promo.promotion_type)
+                  || !isSingleInstanceType(promotionTypes, option.value)
                   || !promotions.some((p, promoIndex) => promoIndex !== index && String(p.promotion_type) === option.value)
                 ))}
                 typesError={typesError}
