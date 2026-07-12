@@ -131,18 +131,10 @@ export default function Battle({ script, profile, onClaimBox, onExit }) {
   const gender = profile?.gender || "male";
 
   return (
+    // The arena backdrop is full-bleed at the ScreenShell level (passed via
+    // backgroundImage) so it sits behind the HUD too — here we only lay out
+    // the combatants over it.
     <div className="relative flex w-full flex-1 flex-col overflow-hidden">
-      {/* Battle arena backdrop over the shell's damask */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          backgroundImage: `url(${RPG_IMAGES.battleArena})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      />
-      <div className="pointer-events-none absolute inset-0" style={{ background: "rgba(4,6,20,0.35)" }} />
-
       <div className="relative z-10 flex w-full flex-1 flex-col items-center px-[18px]">
         <span className="pt-[16px] text-[11px] font-semibold tracking-[5px]" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
           PLANET BOSS
@@ -171,12 +163,18 @@ export default function Battle({ script, profile, onClaimBox, onExit }) {
           </span>
         </div>
 
-        {/* Boss art + floating damage */}
-        <div className="relative mt-[6px] flex h-[min(255px,30vh)] items-center justify-center">
+        {/* Boss art + floating damage. items-end so the boss stands on its
+            ground shadow rather than floating mid-air. */}
+        <div className="relative mt-[8px] flex h-[min(288px,33vh)] w-full items-end justify-center">
+          {/* ground shadow — plants the boss in the arena */}
+          <div
+            className="pointer-events-none absolute bottom-[6px] h-[26px] w-[160px] rounded-[50%]"
+            style={{ background: "radial-gradient(ellipse, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 70%)" }}
+          />
           <motion.img
             src={RPG_IMAGES.bossArt}
             alt={boss.name}
-            className="h-full w-auto"
+            className="relative h-full w-auto object-contain"
             style={{ filter: boss.artFilter === "none" ? undefined : boss.artFilter }}
             animate={
               victorious
@@ -215,14 +213,20 @@ export default function Battle({ script, profile, onClaimBox, onExit }) {
           </AnimatePresence>
         </div>
 
-        {/* Player */}
-        <motion.img
-          src={RPG_IMAGES.hero[gender].back}
-          alt="Your hero"
-          className="mt-[2px] h-[min(110px,13vh)] w-auto"
-          animate={phase === PHASES.BOSS_ATTACK ? { x: [0, -8, 8, -5, 0] } : { y: [0, -3, 0] }}
-          transition={phase === PHASES.BOSS_ATTACK ? { duration: 0.5 } : { duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
-        />
+        {/* Player — grounded on the arena's magic circle */}
+        <div className="relative mt-[2px] flex flex-col items-center">
+          <div
+            className="pointer-events-none absolute bottom-[4px] h-[14px] w-[80px] rounded-[50%]"
+            style={{ background: "radial-gradient(ellipse, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 70%)" }}
+          />
+          <motion.img
+            src={RPG_IMAGES.hero[gender].back}
+            alt="Your hero"
+            className="relative h-[min(112px,13vh)] w-auto"
+            animate={phase === PHASES.BOSS_ATTACK ? { x: [0, -8, 8, -5, 0] } : { y: [0, -3, 0] }}
+            transition={phase === PHASES.BOSS_ATTACK ? { duration: 0.5 } : { duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </div>
 
         {/* Power line */}
         <div className="mt-[6px] grid w-full max-w-[340px] grid-cols-3 items-center">

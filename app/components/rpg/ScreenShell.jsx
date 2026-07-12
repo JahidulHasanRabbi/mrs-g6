@@ -18,6 +18,10 @@ export default function ScreenShell({
   onInfoClick,
   onMenuClick,
   hideHud = false,
+  // Optional full-bleed backdrop (e.g. the battle arena). When set it covers
+  // the whole shell — behind the top bar and HUD too — so the scene reads as
+  // one image instead of the damask showing through above the content.
+  backgroundImage,
   children,
 }) {
   return (
@@ -38,6 +42,15 @@ export default function ScreenShell({
             "radial-gradient(40% 22% at 88% 22%, rgba(167,139,250,0.18) 0%, rgba(167,139,250,0) 70%), radial-gradient(45% 25% at 10% 88%, rgba(47,230,200,0.14) 0%, rgba(47,230,200,0) 70%), radial-gradient(35% 18% at 15% 8%, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 70%)",
         }}
       />
+      {backgroundImage && (
+        <>
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: "cover", backgroundPosition: "center" }}
+          />
+          <div className="pointer-events-none absolute inset-0" style={{ background: "rgba(4,6,20,0.35)" }} />
+        </>
+      )}
 
       <RpgTopBar onInfoClick={onInfoClick} onMenuClick={onMenuClick} />
 
