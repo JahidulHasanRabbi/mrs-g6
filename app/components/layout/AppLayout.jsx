@@ -37,6 +37,8 @@ export default function AppLayout({ children }) {
     pathname === "/penalty-kick" || pathname?.startsWith("/penalty-kick/");
   const isMissionsPage = pathname === "/missions";
   const isLeaderboardPage = pathname === "/leaderboard";
+  // The RPG game draws its own top bar + bottom nav (see app/rpg/page.js).
+  const isRpgPage = pathname === "/rpg" || pathname?.startsWith("/rpg/");
 
   // Don't show layout on home page
   if (isHomePage) {
@@ -47,7 +49,7 @@ export default function AppLayout({ children }) {
   // FooterNav and need a full-bleed surface — skip the global header/
   // footer chrome here so we don't end up with two stacked headers
   // (the global hamburger + the page's "LEADERBOARDS" bar).
-  if (isPenaltyKickPage || isMissionsPage || isLeaderboardPage) {
+  if (isPenaltyKickPage || isMissionsPage || isLeaderboardPage || isRpgPage) {
     return <>{children}</>;
   }
 
