@@ -31,7 +31,7 @@ export default function RpgNav({ view, onNavigate }) {
   const activeTab = TAB_FOR_VIEW[view] || RPG_VIEWS.HOME;
   return (
     <nav
-      className="absolute inset-x-0 bottom-0 z-30 flex items-start justify-center border-t"
+      className="fixed bottom-0 left-1/2 z-40 flex w-full max-w-[475px] -translate-x-1/2 items-start justify-center border-t"
       style={{ background: RPG_COLORS.chrome, borderColor: RPG_COLORS.navGold }}
     >
       {NAV_ITEMS.map((item) => {

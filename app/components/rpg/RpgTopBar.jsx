@@ -11,7 +11,7 @@ import { RPG_IMAGES } from "./rpgAssets";
 export default function RpgTopBar({ onInfoClick, onMenuClick }) {
   return (
     <header
-      className="absolute inset-x-0 top-0 z-30 flex h-[64px] items-center justify-between border-b px-[24px]"
+      className="fixed top-0 left-1/2 z-40 flex h-[64px] w-full max-w-[475px] -translate-x-1/2 items-center justify-between border-b px-[24px]"
       style={{
         background: RPG_COLORS.chrome,
         borderColor: RPG_COLORS.chromeGold,
