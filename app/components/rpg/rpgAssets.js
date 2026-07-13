@@ -45,6 +45,33 @@ export const RPG_IMAGES = {
   bossArt: "/assets/rpg/boss/meteor-colossus.webp",
 };
 
+// ---------------------------------------------------------------------------
+// Boss animation frames (frame-ready)
+//
+// BossSprite plays a per-state frame SEQUENCE when one is supplied here, and
+// otherwise falls back to a procedural animation of the single `bossArt`
+// sprite. To use real art later, drop PNG/webp frames under
+// public/assets/rpg/boss/<bossId>/ and list them here — e.g.
+//
+//   meteor: {
+//     hurt:   ["/assets/rpg/boss/meteor/hurt-1.webp", "…hurt-2.webp"],
+//     attack: ["/assets/rpg/boss/meteor/attack-1.webp", "…attack-2.webp"],
+//   }
+//
+// Any state left empty keeps the procedural effect. `default` applies to every
+// boss (they currently share one sprite); a per-boss key overrides it.
+export const BOSS_FRAMES = {
+  default: { idle: [], hurt: [], attack: [], defeat: [] },
+};
+
+export function bossFramesFor(bossId, state) {
+  return (
+    (BOSS_FRAMES[bossId] && BOSS_FRAMES[bossId][state]) ||
+    (BOSS_FRAMES.default && BOSS_FRAMES.default[state]) ||
+    []
+  );
+}
+
 function collectUrls(node, out) {
   if (typeof node === "string") {
     out.push(node);
@@ -61,7 +88,8 @@ let preloadStarted = false;
 export function preloadRpgAssets() {
   if (preloadStarted || typeof window === "undefined") return;
   preloadStarted = true;
-  collectUrls(RPG_IMAGES, []).forEach((src) => {
+  const urls = collectUrls(RPG_IMAGES, []).concat(collectUrls(BOSS_FRAMES, []));
+  urls.forEach((src) => {
     const img = new Image();
     img.src = src;
     if (img.decode) img.decode().catch(() => {});

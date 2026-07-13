@@ -15,6 +15,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { RPG_COLORS, RPG_FONTS } from "../constants";
 import { RPG_IMAGES } from "../rpgAssets";
 import { GoldCta } from "../primitives";
+import BossSprite from "../BossSprite";
 
 const PHASES = {
   IDLE: "IDLE",
@@ -27,6 +28,8 @@ const PHASES = {
 const ROLL_MS = 950;
 const HIT_GAP_MS = 260;
 const BOSS_ATTACK_MS = 750;
+const BOSS_WINDUP_MS = 220;
+const BOSS_STRIKE_MS = 310;
 
 const fmt = (n) => Number(n).toLocaleString("en-GB");
 
@@ -59,6 +62,10 @@ export default function Battle({ script, profile, onClaimBox, onExit }) {
   const [hits, setHits] = useState([]); // floating damage numbers
   const [striking, setStriking] = useState(false); // hero attack-pose pulse
   const [hitSeq, setHitSeq] = useState(0); // increments per landed hit (keys impact FX)
+  // Code-driven in-between poses derived from the existing Colossus sprite.
+  const [bossFrame, setBossFrame] = useState("idle");
+  const [bossAttackSeq, setBossAttackSeq] = useState(0);
+  const [heroHit, setHeroHit] = useState(false);
   const timers = useRef([]);
 
   const boss = script?.boss;
@@ -113,7 +120,11 @@ export default function Battle({ script, profile, onClaimBox, onExit }) {
           // drop back to the stance.
           setStriking(true);
           setHitSeq((n) => n + 1);
+          setBossFrame("hit");
           later(() => setStriking(false), 200);
+          later(() => setBossFrame("hurt"), 70);
+          later(() => setBossFrame("recover"), 150);
+          later(() => setBossFrame("idle"), 240);
         }, (h + 1) * HIT_GAP_MS);
       }
 
@@ -123,7 +134,18 @@ export default function Battle({ script, profile, onClaimBox, onExit }) {
           setPhase(PHASES.VICTORY);
         } else {
           setPhase(PHASES.BOSS_ATTACK);
+          setBossFrame("windup");
           later(() => {
+            setBossFrame("strike");
+            setBossAttackSeq((n) => n + 1);
+          }, BOSS_WINDUP_MS);
+          later(() => {
+            setBossFrame("recover");
+            setHeroHit(true);
+            later(() => setHeroHit(false), 170);
+          }, BOSS_STRIKE_MS);
+          later(() => {
+            setBossFrame("idle");
             setRoundIndex((i) => i + 1);
             setPhase(PHASES.IDLE);
           }, BOSS_ATTACK_MS);
@@ -192,39 +214,33 @@ export default function Battle({ script, profile, onClaimBox, onExit }) {
             )}
           </AnimatePresence>
 
+          {/* Colossus attack: wind-up → fire punch → hero impact. */}
+          <AnimatePresence>
+            {bossFrame === "strike" && (
+              <motion.div
+                key={`boss-fire-${bossAttackSeq}`}
+                className="pointer-events-none absolute left-1/2 z-20 h-[34px] w-[34px] -translate-x-1/2 rounded-full"
+                style={{ background: "radial-gradient(circle, #fff7a3 0%, #ffb000 22%, #ff4b12 48%, rgba(255,52,0,0) 72%)", boxShadow: "0 0 26px rgba(255,85,10,0.9)" }}
+                initial={{ bottom: "62%", opacity: 0, scale: 0.4 }}
+                animate={{ bottom: "17%", opacity: [0, 1, 1, 0], scale: [0.4, 1.15, 0.7] }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.24, ease: "easeIn" }}
+              />
+            )}
+          </AnimatePresence>
+
           {/* Boss art + impact + floating damage */}
           <div className="relative flex min-h-0 w-full flex-[5] items-end justify-center">
             <div
               className="pointer-events-none absolute bottom-[6px] h-[24px] w-[150px] rounded-[50%]"
               style={{ background: "radial-gradient(ellipse, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 70%)" }}
             />
-            <motion.img
-              src={RPG_IMAGES.bossArt}
-              alt={boss.name}
-              className="relative h-full max-h-full w-auto object-contain"
-              style={{ filter: boss.artFilter === "none" ? undefined : boss.artFilter }}
-              animate={
-                victorious
-                  ? { opacity: 0.15, y: 26, scale: 0.94 }
-                  : striking
-                    ? { x: [0, 9, -7, 4, 0], scale: 0.965 }
-                    : phase === PHASES.PLAYER_ATTACK
-                      ? { x: [0, -7, 6, -4, 0] }
-                      : phase === PHASES.BOSS_ATTACK
-                        ? { y: [0, 22, 0], scale: [1, 1.06, 1] }
-                        : { y: [0, -5, 0] }
-              }
-              transition={
-                victorious
-                  ? { duration: 0.7 }
-                  : striking
-                    ? { duration: 0.2, ease: "easeOut" }
-                    : phase === PHASES.PLAYER_ATTACK
-                      ? { duration: 0.5, repeat: Infinity }
-                      : phase === PHASES.BOSS_ATTACK
-                        ? { duration: 0.7 }
-                        : { duration: 3, repeat: Infinity, ease: "easeInOut" }
-              }
+            {/* Frame-ready boss: plays real frames when registered in
+                BOSS_FRAMES, else animates the base sprite per state. */}
+            <BossSprite
+              boss={boss}
+              state={victorious ? "defeat" : bossFrame}
+              seq={hitSeq + bossAttackSeq}
             />
             {/* Impact burst where the shot lands on the boss */}
             <AnimatePresence>
@@ -288,18 +304,37 @@ export default function Battle({ script, profile, onClaimBox, onExit }) {
               animate={
                 striking && strikeSrc
                   ? { scale: 1.18, y: -22, x: 0 }
-                  : phase === PHASES.BOSS_ATTACK
+                  : heroHit
+                    ? { x: [0, 13, -15, 7, 0], y: [0, 5, 0], scale: [1, 0.93, 1] }
+                    : phase === PHASES.BOSS_ATTACK
                     ? { x: [0, -8, 8, -5, 0], scale: 1, y: 0 }
                     : { y: [0, -3, 0], scale: 1, x: 0 }
               }
               transition={
                 striking && strikeSrc
                   ? { duration: 0.12, ease: "easeOut" }
-                  : phase === PHASES.BOSS_ATTACK
+                  : heroHit
+                    ? { duration: 0.22, ease: "easeOut" }
+                    : phase === PHASES.BOSS_ATTACK
                     ? { duration: 0.5 }
                     : { duration: 2.6, repeat: Infinity, ease: "easeInOut" }
               }
             />
+            <AnimatePresence>
+              {heroHit && (
+                <motion.span
+                  key={`hero-hit-${bossAttackSeq}`}
+                  className="pointer-events-none absolute bottom-[42%] text-[18px] font-bold"
+                  style={{ color: "#ff876f", fontFamily: RPG_FONTS.number, textShadow: "0 2px 6px rgba(0,0,0,0.9)" }}
+                  initial={{ opacity: 0, y: 8, scale: 0.75 }}
+                  animate={{ opacity: 1, y: -38, scale: 1.15 }}
+                  exit={{ opacity: 0, y: -58 }}
+                  transition={{ duration: 0.45, ease: "easeOut" }}
+                >
+                  BLOCKED!
+                </motion.span>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
