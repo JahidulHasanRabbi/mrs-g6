@@ -31,6 +31,7 @@ const PRIORITY_SORT_RANK = { high: 0, medium: 1, low: 2, inactive: 3 };
 const BRAND_OPTIONS = ["KG", "LV", "EP", "AB", "UB", "N1"];
 const SALES_SORT_OPTIONS = ["High to Low", "Low to High"];
 const WINLOSS_SORT_OPTIONS = ["High to Low", "Low to High"];
+const FOLLOWED_UP_OPTIONS = ["Yes", "No"];
 
 // A role carries the Retention permission if its permissions list includes
 // the "access_retention" key (Others > Type, per /admins/permissions/).
@@ -70,7 +71,7 @@ function memberPriorityRank(row) {
 const COLUMNS = [
   { key: "name",        label: "Username",            minW: 197 },
   { key: "brand",       label: "Brand",               minW: 124 },
-  { key: "phone",       label: "Phone Number",        minW: 124 },
+  { key: "phone",       label: "Phone Number",        minW: 150 },
   { key: "vip",         label: "MRS Level",           minW: 124 },
   { key: "sales",       label: "Total Sales",         minW: 124 },
   { key: "winloss",     label: "Total Win/Loss",      minW: 124 },
@@ -257,6 +258,7 @@ function FollowUpList({ date, onDateChange }) {
   const [query, setQuery] = useState("");
   const [salesSort, setSalesSort] = useState("");
   const [winSort, setWinSort] = useState("");
+  const [followedUp, setFollowedUp] = useState("");
   const [page, setPage] = useState(1);
 
   const pickSalesSort = useCallback((v) => {
@@ -316,7 +318,7 @@ function FollowUpList({ date, onDateChange }) {
 
   useEffect(() => {
     setPage(1);
-  }, [walletLevel, brand, priority, vip, retention, query, date]);
+  }, [walletLevel, brand, priority, vip, retention, query, date, followedUp]);
 
   const [debouncedQuery, setDebouncedQuery] = useState(query);
   useEffect(() => {
@@ -336,6 +338,7 @@ function FollowUpList({ date, onDateChange }) {
       try {
         const sales = salesSort ? (salesSort === "High to Low" ? "High" : "Low") : undefined;
         const win_lose = winSort ? (winSort === "High to Low" ? "High" : "Low") : undefined;
+        const followed_up = followedUp ? followedUp === "Yes" : undefined;
         const res = await getRetentionMembers({
           page,
           page_size: PAGE_SIZE,
@@ -349,6 +352,7 @@ function FollowUpList({ date, onDateChange }) {
           date: date || undefined,
           sales,
           win_lose,
+          followed_up,
         });
         if (cancelled) return;
         const results = Array.isArray(res?.results) ? res.results : Array.isArray(res) ? res : [];
@@ -367,7 +371,7 @@ function FollowUpList({ date, onDateChange }) {
     return () => {
       cancelled = true;
     };
-  }, [page, walletLevel, brand, priority, vip, retentionUuid, retention, debouncedQuery, date, salesSort, winSort, reloadKey]);
+  }, [page, walletLevel, brand, priority, vip, retentionUuid, retention, debouncedQuery, date, salesSort, winSort, followedUp, reloadKey]);
 
   // Client-side sort of the current page (backend ordering covers cross-page).
   const sortedRows = useMemo(() => {
@@ -419,6 +423,7 @@ function FollowUpList({ date, onDateChange }) {
           <FilterPill label="Win/Lose" value={winSort} onChange={pickWinSort} options={WINLOSS_SORT_OPTIONS} />
           <FilterPill label="Brand" value={brand} onChange={setBrand} options={BRAND_OPTIONS} />
           <FilterPill label="All Retention" value={retention} onChange={setRetention} options={retentionPics.map((u) => u.full_name || u.username).filter(Boolean)} />
+          <FilterPill label="Followed Up" value={followedUp} onChange={setFollowedUp} options={FOLLOWED_UP_OPTIONS} />
           <DayPicker value={date} onChange={onDateChange} />
           <SearchInput value={query} onChange={setQuery} />
         </div>
@@ -716,7 +721,7 @@ function TableRow({ row, pics, onChanged }) {
         </Link>
       </Cell>
       <DataCell value={row.brand} minW={COLUMNS[1].minW} />
-      <DataCell value={row.phone_number} minW={COLUMNS[2].minW} />
+      <DataCell value={row.phone_number} minW={COLUMNS[2].minW} nowrap />
       <DataCell value={row.ns_level || row.vip_level} minW={COLUMNS[3].minW} />
       <DataCell value={formatCurrency(row.total_sales ?? row.daily_sales)} minW={COLUMNS[4].minW} />
       <DataCell value={formatCurrency(row.total_win_lose ?? row.total_winlose ?? row.daily_win_loss)} minW={COLUMNS[5].minW} />
@@ -1046,10 +1051,10 @@ function ThreeDotsIcon() {
   );
 }
 
-function DataCell({ value, minW }) {
+function DataCell({ value, minW, nowrap = false }) {
   return (
     <Cell minW={minW}>
-      <span className="min-w-0 break-words text-[12px] font-medium text-white leading-[18px]">
+      <span className={`min-w-0 text-[12px] font-medium text-white leading-[18px] ${nowrap ? "whitespace-nowrap" : "break-words"}`}>
         {value ?? "—"}
       </span>
     </Cell>

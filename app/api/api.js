@@ -20,6 +20,15 @@ export const ENDPOINTS = {
     PROFILE: (uuid) => `/member/profile/${uuid}/`,
     UPDATE_PROFILE: (uuid) => `/member/profile/${uuid}/update-profile/`,
     ALL_LUCKY_SPIN_ITEMS: '/lucky-spin/lucky-spin-items/',
+    ALL_SMASH_EGG_ITEMS: '/smash-egg/smash-egg-items/',
+    ALL_SMASH_EGG_SEQUENCES: '/smash-egg/smash-sequences/',
+    SMASH_EGG_SETTINGS: '/smash-egg/smash-egg-settings/',
+    SMASH_EGG_WINNING_LIST: '/smash-egg/winning-list/',
+    SMASH_EGG_HISTORY: (uuid) => `/member/${uuid}/smash-history/`,
+    ONE_SMASH: (uuid) => `/member/${uuid}/one-smash/`,
+    TEN_SMASH: (uuid) => `/member/${uuid}/ten-smash/`,
+    FIFTY_SMASH: (uuid) => `/member/${uuid}/fifty-smash/`,
+    HUNDRED_SMASH: (uuid) => `/member/${uuid}/hundred-smash/`,
     ALL_REDEMPTION_ITEMS: '/redemption/redemption-items/',
     AVAILABLE_REDEMPTION_ITEMS: '/redemption/redemption-items/available-items/',
     REDEEM_ITEM: (uuid) => `/redemption/redemption-items/${uuid}/redeem/`
@@ -70,6 +79,13 @@ export const ENDPOINTS = {
     LUCKY_SPIN_SEQUENCES: '/lucky-spin/lucky-spin-sequences/',
     LUCKY_SPIN_SEQUENCE: (uuid) => `/lucky-spin/lucky-spin-sequences/${uuid}/`,
     CHANGE_SPIN_SEQUENCES: '/lucky-spin/lucky-spin-sequences/change-spin-sequences/',
+    SMASH_EGG_ITEMS: '/smash-egg/smash-egg-items/',
+    SMASH_EGG_ITEM: (uuid) => `/smash-egg/smash-egg-items/${uuid}/`,
+    ARCHIVE_SMASH_EGG_ITEM: (uuid) => `/smash-egg/smash-egg-items/${uuid}/archive/`,
+    SMASH_EGG_SEQUENCES: '/smash-egg/smash-sequences/',
+    SMASH_EGG_SEQUENCE: (uuid) => `/smash-egg/smash-sequences/${uuid}/`,
+    CHANGE_SMASH_EGG_SEQUENCES: '/smash-egg/smash-sequences/change-smash-sequences/',
+    SMASH_EGG_SETTINGS: '/smash-egg/smash-egg-settings/',
     MEMBERS: '/member/members/',
     TOKEN_REPORT: '/member/token-report/',
     REWARD_REPORT: '/member/reward-report/',
@@ -112,6 +128,12 @@ export const ENDPOINTS = {
     PROMOTIONS: '/settings/promotions/',
     PROMOTIONS_BY_STATION: (stationUuid) => `/settings/promotions/get-by-station/${stationUuid}/`,
     MISSION_SETTINGS: '/mission/settings/'
+  },
+  USAGE_REPORT: {
+    SUMMARY: '/usage-report/summary/',
+    GAMES: '/usage-report/games/',
+    RETENTION: '/usage-report/games/retention/',
+    INSIGHTS: '/usage-report/insights/',
   },
   EXTERNAL: {
     SPECIAL_CODE: '/third-party/special-codes/',
@@ -158,6 +180,50 @@ export const ENDPOINTS = {
     DUMMY_COUNTRY_ARCHIVE: (uuid) => `/worldcup/dummy-countries/${uuid}/archive/`,
     RANKING_REALTIME: '/worldcup/ranking/realtime/',
     DASHBOARD_KPI: '/worldcup/dashboard/kpi/',
+  },
+  // Unified Leaderboard API (Deposit / Withdraw / Referral).
+  // Info & Campaign are shared endpoints selected by ?type= (1/2/3);
+  // Status is a single global open/closed flag. Reward items and fake data
+  // are per-board paths. See postman/leaderboard.md.
+  LEADERBOARD: {
+    INFO: '/leaderboard/info/',
+    INFO_SINGLE: (uuid) => `/leaderboard/info/${uuid}/`,
+    INFO_ARCHIVE: (uuid) => `/leaderboard/info/${uuid}/archive/`,
+    STATUS: '/leaderboard/status/',
+    CAMPAIGN: '/leaderboard/campaign/',
+    CAMPAIGN_SINGLE: (uuid) => `/leaderboard/campaign/${uuid}/`,
+    CAMPAIGN_ARCHIVE: (uuid) => `/leaderboard/campaign/${uuid}/archive/`,
+
+    DEPOSIT_REWARD_ITEMS: '/leaderboard/deposit-reward-items/',
+    DEPOSIT_REWARD_ITEM: (uuid) => `/leaderboard/deposit-reward-items/${uuid}/`,
+    DEPOSIT_REWARD_ITEM_ARCHIVE: (uuid) => `/leaderboard/deposit-reward-items/${uuid}/archive/`,
+    DEPOSIT_FAKE_DATA: '/leaderboard/deposit-fake-data/',
+    DEPOSIT_FAKE_DATA_SINGLE: (uuid) => `/leaderboard/deposit-fake-data/${uuid}/`,
+    DEPOSIT_FAKE_DATA_ARCHIVE: (uuid) => `/leaderboard/deposit-fake-data/${uuid}/archive/`,
+
+    WITHDRAW_REWARD_ITEMS: '/leaderboard/withdraw-reward-items/',
+    WITHDRAW_REWARD_ITEM: (uuid) => `/leaderboard/withdraw-reward-items/${uuid}/`,
+    WITHDRAW_REWARD_ITEM_ARCHIVE: (uuid) => `/leaderboard/withdraw-reward-items/${uuid}/archive/`,
+    WITHDRAW_FAKE_DATA: '/leaderboard/withdraw-fake-data/',
+    WITHDRAW_FAKE_DATA_SINGLE: (uuid) => `/leaderboard/withdraw-fake-data/${uuid}/`,
+    WITHDRAW_FAKE_DATA_ARCHIVE: (uuid) => `/leaderboard/withdraw-fake-data/${uuid}/archive/`,
+
+    REFERRAL_REWARD_ITEMS: '/leaderboard/referral-reward-items/',
+    REFERRAL_REWARD_ITEM: (uuid) => `/leaderboard/referral-reward-items/${uuid}/`,
+    REFERRAL_REWARD_ITEM_ARCHIVE: (uuid) => `/leaderboard/referral-reward-items/${uuid}/archive/`,
+    REFERRAL_FAKE_DATA: '/leaderboard/referral-fake-data/',
+    REFERRAL_FAKE_DATA_SINGLE: (uuid) => `/leaderboard/referral-fake-data/${uuid}/`,
+    REFERRAL_FAKE_DATA_ARCHIVE: (uuid) => `/leaderboard/referral-fake-data/${uuid}/archive/`,
+
+    GENERATE_RANKING: '/leaderboard/generate-ranking/',
+    REAL_RANKING: '/leaderboard/real-ranking/',
+
+    PUBLIC_INFO: '/leaderboard/public/info/',
+    PUBLIC_STATUS: '/leaderboard/public/status/',
+    PUBLIC_CAMPAIGN: '/leaderboard/public/campaign/',
+    PUBLIC_DEPOSIT_RANKING: '/leaderboard/public/deposit-ranking/',
+    PUBLIC_WITHDRAW_RANKING: '/leaderboard/public/withdraw-ranking/',
+    PUBLIC_REFERRAL_RANKING: '/leaderboard/public/referral-ranking/',
   },
   CRM: {
     // User Access Panel

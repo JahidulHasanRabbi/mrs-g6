@@ -24,6 +24,22 @@ import {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+// Types that represent a single station-wide setting rather than a catalog of
+// named entries - only one of these should exist per station. Everything else
+// (Manual Bonus, Lucky Spin Item, Redemption Item, Penalty Kick Bonus, Smash
+// Egg Bonus) is backed by a catalog/free-form name, so a station can have many.
+const SINGLE_INSTANCE_LABELS = new Set(["monthly vip", "upgrade vip", "birthday bonus"]);
+
+// The API always mirrors the Manual Bonus promotion into the "VIP Type" group
+// as a generic placeholder ({ item: 7, name: "Manual Bonus" }) alongside the
+// real, individually-named entry under the "manual_code" group. Both share the
+// same code, so without filtering this out every Manual Bonus doubles up.
+function isPhantomManualBonusRow(promo) {
+  const item = promo?.item;
+  const isNumericItem = typeof item === "number" || (typeof item === "string" && /^\d+$/.test(item));
+  return isNumericItem && normalizeLabel(promo?.name) === "manual bonus";
+}
+
 function emptyPromotion(promotionType = "") {
   return { promotion_type: promotionType, item_uuid: "", item_name: "", promotion_code: "" };
 }
@@ -49,6 +65,11 @@ function typeByLabel(promotionTypes, label) {
 // Manual Bonus has no catalog item — admins type a free-form item_name instead.
 function manualBonusTypeValue(promotionTypes) {
   return typeByLabel(promotionTypes, "Manual Bonus");
+}
+
+function isSingleInstanceType(promotionTypes, typeValue) {
+  const found = promotionTypes.find((t) => String(t.value) === String(typeValue));
+  return found ? SINGLE_INSTANCE_LABELS.has(normalizeLabel(found.label)) : false;
 }
 
 function typeFromGroup(groupType, promotionTypes) {
@@ -85,6 +106,7 @@ function hydratePromotions(response, promotionTypes) {
   for (const group of groups) {
     const promos = Array.isArray(group?.promotions) ? group.promotions : Array.isArray(group?.promotion) ? group.promotion : [];
     for (const promo of promos) {
+      if (isPhantomManualBonusRow(promo)) continue;
       rows.push({
         promotion_type: matchTypeValue(group, promo, promotionTypes),
         item_uuid: typeof promo?.item === "string" && UUID_RE.test(promo.item) ? promo.item : "",
@@ -247,10 +269,11 @@ export default function AddPromotionPage() {
   }));
 
   const canAddPromotion = useMemo(() => {
-    const used = new Set(promotions.map((p) => String(p.promotion_type)).filter(Boolean));
     const hasUnselectedRow = promotions.some((p) => String(p.promotion_type) === "");
-    return !hasUnselectedRow && typeOptions.some((option) => !used.has(option.value));
-  }, [promotions, typeOptions]);
+    if (hasUnselectedRow) return false;
+    const used = new Set(promotions.map((p) => String(p.promotion_type)).filter(Boolean));
+    return typeOptions.some((option) => !isSingleInstanceType(promotionTypes, option.value) || !used.has(option.value));
+  }, [promotions, typeOptions, promotionTypes]);
 
   const getItemOptions = (promotionType, promo) => {
     const options = (itemsByType[String(promotionType)] || []).map((i) => ({
@@ -300,6 +323,7 @@ export default function AddPromotionPage() {
                 promo={promo}
                 typeOptions={typeOptions.filter((option) => (
                   option.value === String(promo.promotion_type)
+                  || !isSingleInstanceType(promotionTypes, option.value)
                   || !promotions.some((p, promoIndex) => promoIndex !== index && String(p.promotion_type) === option.value)
                 ))}
                 typesError={typesError}

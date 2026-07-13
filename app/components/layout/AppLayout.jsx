@@ -35,8 +35,10 @@ export default function AppLayout({ children }) {
   // screen draws its own header + FooterNav over a full-bleed backdrop.
   const isPenaltyKickPage =
     pathname === "/penalty-kick" || pathname?.startsWith("/penalty-kick/");
+  const isSmashEggPage = pathname === "/smash-egg";
   const isMissionsPage = pathname === "/missions";
-  const isLeaderboardPage = pathname === "/leaderboard";
+  const isLeaderboardPage =
+    pathname === "/leaderboard" || pathname?.startsWith("/leaderboard/");
   // The RPG game draws its own top bar + bottom nav (see app/rpg/page.js).
   const isRpgPage = pathname === "/rpg" || pathname?.startsWith("/rpg/");
 
@@ -49,7 +51,7 @@ export default function AppLayout({ children }) {
   // FooterNav and need a full-bleed surface — skip the global header/
   // footer chrome here so we don't end up with two stacked headers
   // (the global hamburger + the page's "LEADERBOARDS" bar).
-  if (isPenaltyKickPage || isMissionsPage || isLeaderboardPage || isRpgPage) {
+  if (isPenaltyKickPage || isSmashEggPage || isMissionsPage || isLeaderboardPage || isRpgPage) {
     return <>{children}</>;
   }
 

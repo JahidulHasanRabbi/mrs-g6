@@ -12,10 +12,21 @@ export const MENU_CONFIG = {
       { icon: "/assets/images/kasih-spin-icon.png", label: "Lucky Spin", link: "/spin" },
       { icon: "/assets/penalty-kick/icons/soccer-gold.svg", label: "Penalty Kick", link: "/penalty-kick" },
       { icon: "/assets/rpg/ui/logo-gem.svg", label: "RPG", link: "/rpg" },
+      { icon: "/assets/smash-egg/egg-icon.svg", label: "Smash Egg", link: "/smash-egg" },
     ],
   },
   mainItems: [
-    { icon: "/assets/images/leaderboard-icon.png", label: "Leaderboard", link: "/leaderboard" },
+    {
+      icon: "/assets/images/leaderboard-icon.png",
+      label: "Leaderboard",
+      link: "/leaderboard",
+      children: [
+        { icon: "/assets/images/leaderboard-icon.png", label: "WorldCup Leaderboard", link: "/leaderboard" },
+        { icon: "/assets/leaderboard/wallet-icon.svg", label: "Top 20 Deposit", link: "/leaderboard/top-20?tab=deposit" },
+        { icon: "/assets/leaderboard/withdrawal-icon.svg", label: "Top 20 Withdraw", link: "/leaderboard/top-20?tab=withdrawal" },
+        { icon: "/assets/leaderboard/referrer-icon.svg", label: "Top 20 Referral", link: "/leaderboard/top-20?tab=referrer" },
+      ],
+    },
     { icon: "/assets/penalty-kick/icons/flag-gold.svg", label: "Missions", link: "/missions" },
     { icon: "/assets/images/vip-membership-icon.png", label: "VIP Membership", link: "/vip" },
     { icon: "/assets/images/pagcor-mart-icon.png", label: "Mart", link: "/mart" },

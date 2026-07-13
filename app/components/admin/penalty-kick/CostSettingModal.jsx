@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import ModalShell from "./ModalShell";
 
-export default function CostSettingModal({ open, onClose, initial, onSave }) {
+export default function CostSettingModal({ open, onClose, initial, onSave, label = "Token cost per Kick" }) {
   const [cost, setCost] = useState(initial?.cost ?? "10.00");
 
   useEffect(() => {
@@ -19,7 +19,7 @@ export default function CostSettingModal({ open, onClose, initial, onSave }) {
   return (
     <ModalShell title="Cost Setting" open={open} onClose={onClose} onSave={handleSave}>
       <div>
-        <label className="mb-2 block text-[14px] font-semibold text-white">Token cost per Kick</label>
+        <label className="mb-2 block text-[14px] font-semibold text-white">{label}</label>
         <input
           type="number"
           min="0"

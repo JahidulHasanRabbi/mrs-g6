@@ -13,16 +13,20 @@ import * as adminApi from "../../api/adminApi";
 const PAGE_SIZE = 7;
 
 const MRS_PAGES = [
-  { slug: "/",                     label: "Home" },
-  { slug: "/personal-data",        label: "Personal Data" },
-  { slug: "/profile",              label: "Profile" },
-  { slug: "/mart",                 label: "Redemption Mart" },
-  { slug: "/spin",                 label: "Lucky Spin" },
-  { slug: "/penalty-kick",         label: "Penalty Kick" },
-  { slug: "/leaderboard",          label: "Leaderboard" },
-  { slug: "/missions",             label: "Missions" },
-  { slug: "/terms-and-conditions", label: "Terms & Conditions" },
-  { slug: "/vip",                  label: "VIP" },
+  { slug: "/",                                  label: "Home" },
+  { slug: "/personal-data",                     label: "Personal Data" },
+  { slug: "/profile",                           label: "Profile" },
+  { slug: "/mart",                              label: "Redemption Mart" },
+  { slug: "/spin",                              label: "Lucky Spin" },
+  { slug: "/smash-egg",                         label: "Smash Egg" },
+  { slug: "/penalty-kick",                      label: "Penalty Kick" },
+  { slug: "/leaderboard",                       label: "WorldCup Leaderboard" },
+  { slug: "/leaderboard/top-20?tab=deposit",    label: "Top 20 Deposit" },
+  { slug: "/leaderboard/top-20?tab=withdrawal", label: "Top 20 Withdraw" },
+  { slug: "/leaderboard/top-20?tab=referrer",   label: "Top 20 Referral" },
+  { slug: "/missions",                          label: "Missions" },
+  { slug: "/terms-and-conditions",              label: "Terms & Conditions" },
+  { slug: "/vip",                               label: "VIP" },
 ];
 
 const MRS_SLUGS = new Set(MRS_PAGES.map((p) => p.slug));
