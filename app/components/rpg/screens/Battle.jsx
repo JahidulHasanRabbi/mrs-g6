@@ -61,6 +61,7 @@ export default function Battle({ script, profile, onClaimBox, onExit }) {
   const [hpFraction, setHpFraction] = useState(1);
   const [hits, setHits] = useState([]); // floating damage numbers
   const [striking, setStriking] = useState(false); // hero attack-pose pulse
+  const [strikeIdx, setStrikeIdx] = useState(0); // frame index into the strike sequence
   const [hitSeq, setHitSeq] = useState(0); // increments per landed hit (keys impact FX)
   // Code-driven in-between poses derived from the existing Colossus sprite.
   const [bossFrame, setBossFrame] = useState("idle");
@@ -117,11 +118,16 @@ export default function Battle({ script, profile, onClaimBox, onExit }) {
           setHpFraction(prevFraction + (targetFraction - prevFraction) * t);
           setHits((prev) => [...prev.slice(-4), { id: `${roundIndex}-${h}`, dmg: hitDamages[roundIndex][h] }]);
           // Punch pose + energy shot + boss impact on the landed hit, then
-          // drop back to the stance.
+          // drop back to the stance. The strike frames flip spark→nova over
+          // the pulse (~55ms/frame).
           setStriking(true);
+          setStrikeIdx(0);
           setHitSeq((n) => n + 1);
           setBossFrame("hit");
-          later(() => setStriking(false), 200);
+          later(() => setStrikeIdx(1), 55);
+          later(() => setStrikeIdx(2), 110);
+          later(() => setStrikeIdx(3), 165);
+          later(() => setStriking(false), 220);
           later(() => setBossFrame("hurt"), 70);
           later(() => setBossFrame("recover"), 150);
           later(() => setBossFrame("idle"), 240);
@@ -159,7 +165,12 @@ export default function Battle({ script, profile, onClaimBox, onExit }) {
   const victorious = phase === PHASES.VICTORY;
   const hpNow = Math.round(boss.hp * hpFraction);
   const gender = profile?.gender || "male";
-  const strikeSrc = RPG_IMAGES.heroStrike[gender]; // undefined for female → lunge fallback
+  // Strike frame sequence for this gender (undefined for female → lunge fallback).
+  const strikeFrames = RPG_IMAGES.heroStrike[gender];
+  const strikeSrc =
+    Array.isArray(strikeFrames) && strikeFrames.length
+      ? strikeFrames[Math.min(strikeIdx, strikeFrames.length - 1)]
+      : null;
 
   return (
     // The arena backdrop is full-bleed at the ScreenShell level (passed via
