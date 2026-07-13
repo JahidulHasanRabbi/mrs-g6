@@ -5,7 +5,7 @@
 // CLOSED → OPENING → REVEALED flow. The reward is decided (and applied) the
 // instant OPEN BOX is pressed — the shake is just suspense.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { RPG_COLORS, RPG_FONTS, RPG_GRADIENTS, RPG_VIEWS, MYSTERY_BOX_TABLE } from "../constants";
 import { RPG_IMAGES } from "../rpgAssets";
@@ -42,6 +42,12 @@ export default function MysteryBox({ boxId, onProfileUpdate, onNavigate }) {
   const [stage, setStage] = useState(STAGES.CLOSED);
   const [box, setBox] = useState(undefined); // undefined = loading, null = none
   const [reward, setReward] = useState(null);
+  // The lid pops partway through OPENING: closed chest shakes, then we swap to
+  // the open-chest art with a light burst before the reward card appears.
+  const [lidOpen, setLidOpen] = useState(false);
+  const timers = useRef([]);
+
+  useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
   // Recover the pending box: prefer the URL's id, else the newest pending one
   // (covers reloads); with nothing pending, bounce back to the challenge list.
@@ -71,9 +77,13 @@ export default function MysteryBox({ boxId, onProfileUpdate, onNavigate }) {
       const result = await rpgApi.openMysteryBox(box.id);
       onProfileUpdate(result.profile);
       setReward(result.reward);
-      setTimeout(() => setStage(STAGES.REVEALED), 1200);
+      // Shake the closed chest, pop the lid (swap to open art + burst), then
+      // reveal the reward.
+      timers.current.push(setTimeout(() => setLidOpen(true), 650));
+      timers.current.push(setTimeout(() => setStage(STAGES.REVEALED), 1250));
     } catch {
       setStage(STAGES.CLOSED);
+      setLidOpen(false);
     }
   };
 
@@ -96,30 +106,66 @@ export default function MysteryBox({ boxId, onProfileUpdate, onNavigate }) {
       </p>
 
       {/* Chest with gold aura */}
-      <div className="relative mt-[8px] grid h-[230px] w-full place-items-center">
-        <div
+      <div className="relative mt-[8px] grid h-[240px] w-full place-items-center">
+        {/* gold aura — brightens as the lid opens */}
+        <motion.div
           className="pointer-events-none absolute size-[260px] rounded-full"
           style={{ background: "radial-gradient(circle, rgba(255,201,77,0.35) 0%, rgba(255,201,77,0.12) 45%, rgba(255,201,77,0) 70%)" }}
+          animate={{ scale: lidOpen ? 1.15 : 1, opacity: lidOpen ? 1 : 0.85 }}
+          transition={{ duration: 0.5 }}
         />
+        {/* light burst at the moment the lid pops */}
+        <AnimatePresence>
+          {lidOpen && stage === STAGES.OPENING && (
+            <motion.div
+              key="burst"
+              className="pointer-events-none absolute size-[210px] rounded-full"
+              style={{ background: "radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,201,77,0.5) 32%, rgba(255,201,77,0) 66%)" }}
+              initial={{ scale: 0.3, opacity: 0 }}
+              animate={{ scale: 1.9, opacity: [0, 1, 0] }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Closed chest — idles, then shakes; fades out as the lid pops */}
         <motion.img
           src={RPG_IMAGES.chest}
           alt="Mystery box"
-          className="h-[200px] w-auto"
+          className="absolute h-[200px] w-auto"
           animate={
-            stage === STAGES.OPENING
-              ? { rotate: [0, -4, 4, -6, 6, -3, 3, 0], scale: [1, 1.04, 1.08], filter: "brightness(1.6)" }
-              : stage === STAGES.REVEALED
-                ? { scale: 0.8, opacity: 0.35, y: 18 }
-                : { y: [0, -7, 0] }
+            stage === STAGES.CLOSED
+              ? { y: [0, -7, 0], opacity: 1 }
+              : lidOpen
+                ? { opacity: 0 }
+                : { rotate: [0, -4, 4, -6, 6, -3, 3, 0], scale: [1, 1.04, 1.08], filter: "brightness(1.5)", opacity: 1 }
           }
           transition={
-            stage === STAGES.OPENING
-              ? { duration: 1.1 }
-              : stage === STAGES.REVEALED
-                ? { duration: 0.4 }
-                : { duration: 3, repeat: Infinity, ease: "easeInOut" }
+            stage === STAGES.CLOSED
+              ? { duration: 3, repeat: Infinity, ease: "easeInOut" }
+              : lidOpen
+                ? { duration: 0.15 }
+                : { duration: 0.65 }
           }
         />
+
+        {/* Open chest — pops in when the lid opens, dims behind the reward */}
+        <motion.img
+          src={RPG_IMAGES.chestOpen}
+          alt=""
+          aria-hidden="true"
+          className="absolute h-[214px] w-auto"
+          initial={{ opacity: 0, scale: 0.85 }}
+          animate={
+            !lidOpen
+              ? { opacity: 0, scale: 0.85 }
+              : stage === STAGES.REVEALED
+                ? { opacity: 0.45, scale: 0.82, y: 14 }
+                : { opacity: 1, scale: [1.18, 1], y: 0 }
+          }
+          transition={{ duration: stage === STAGES.REVEALED ? 0.4 : 0.5, ease: "easeOut" }}
+        />
+
         {/* Reward pop */}
         <AnimatePresence>
           {stage === STAGES.REVEALED && reward && (

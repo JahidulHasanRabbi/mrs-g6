@@ -22,10 +22,17 @@ export default function ScreenShell({
   // the whole shell — behind the top bar and HUD too — so the scene reads as
   // one image instead of the damask showing through above the content.
   backgroundImage,
+  // `fit`: lock the screen to exactly one viewport (no page scroll) and let
+  // the content flex to fit. Used by the battle screen so the ATTACK button
+  // is always on-screen. Other screens keep min-height + normal scrolling.
+  fit = false,
   children,
 }) {
   return (
-    <div className="relative flex min-h-[100dvh] w-full flex-col overflow-hidden" style={{ background: "#07130d" }}>
+    <div
+      className={`relative flex w-full flex-col overflow-hidden ${fit ? "h-[100dvh]" : "min-h-[100dvh]"}`}
+      style={{ background: "#07130d" }}
+    >
       {/* Backdrop: damask tile + the design's ambient colour glows */}
       <div
         className="pointer-events-none absolute inset-0"
@@ -55,14 +62,14 @@ export default function ScreenShell({
       <RpgTopBar onInfoClick={onInfoClick} onMenuClick={onMenuClick} />
 
       {/* Content column between the fixed bars */}
-      <div className="relative z-10 flex w-full flex-1 flex-col pt-[64px] pb-[92px]">
+      <div className={`relative z-10 flex w-full flex-1 flex-col pt-[64px] pb-[92px] ${fit ? "min-h-0" : ""}`}>
         {!hideHud && <HudStrip profile={profile} />}
         {/* Keyed remount, enter-only fade. Deliberately NOT AnimatePresence
             mode="wait": waiting on an exit animation stalls the screen swap
             entirely in rAF-throttled (backgrounded) tabs. */}
         <motion.div
           key={view}
-          className="flex w-full flex-1 flex-col"
+          className={`flex w-full flex-1 flex-col ${fit ? "min-h-0" : ""}`}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.22, ease: "easeOut" }}

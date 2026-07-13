@@ -194,6 +194,7 @@ function RpgPageInner() {
         onInfoClick={openInfo}
         onMenuClick={openMenu}
         backgroundImage={view === RPG_VIEWS.BATTLE ? RPG_IMAGES.battleArena : undefined}
+        fit={view === RPG_VIEWS.BATTLE}
       >
         {view === RPG_VIEWS.HOME && (
           <RpgHome profile={profile} equipment={equipment} onNavigate={navigate} />

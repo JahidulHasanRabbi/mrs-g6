@@ -57,6 +57,7 @@ export default function Battle({ script, profile, onClaimBox, onExit }) {
   const [shownRoll, setShownRoll] = useState(1);
   const [hpFraction, setHpFraction] = useState(1);
   const [hits, setHits] = useState([]); // floating damage numbers
+  const [striking, setStriking] = useState(false); // hero attack-pose pulse
   const timers = useRef([]);
 
   const boss = script?.boss;
@@ -107,10 +108,14 @@ export default function Battle({ script, profile, onClaimBox, onExit }) {
           const t = (h + 1) / round.roll;
           setHpFraction(prevFraction + (targetFraction - prevFraction) * t);
           setHits((prev) => [...prev.slice(-4), { id: `${roundIndex}-${h}`, dmg: hitDamages[roundIndex][h] }]);
+          // Punch pose on the landed hit, then drop back to the stance.
+          setStriking(true);
+          later(() => setStriking(false), 170);
         }, (h + 1) * HIT_GAP_MS);
       }
 
       later(() => {
+        setStriking(false);
         if (round.cumulative > threshold) {
           setPhase(PHASES.VICTORY);
         } else {
@@ -129,150 +134,170 @@ export default function Battle({ script, profile, onClaimBox, onExit }) {
   const victorious = phase === PHASES.VICTORY;
   const hpNow = Math.round(boss.hp * hpFraction);
   const gender = profile?.gender || "male";
+  const strikeSrc = RPG_IMAGES.heroStrike[gender]; // undefined for female → lunge fallback
 
   return (
     // The arena backdrop is full-bleed at the ScreenShell level (passed via
     // backgroundImage) so it sits behind the HUD too — here we only lay out
     // the combatants over it.
-    <div className="relative flex w-full flex-1 flex-col overflow-hidden">
-      <div className="relative z-10 flex w-full flex-1 flex-col items-center px-[18px]">
-        <span className="pt-[16px] text-[11px] font-semibold tracking-[5px]" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
-          PLANET BOSS
-        </span>
-        <h2 className="text-[24px] font-bold tracking-[2px]" style={{ color: "#fff", fontFamily: RPG_FONTS.display, textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}>
-          {boss.name.toUpperCase()}
-        </h2>
-
-        {/* Boss HP bar */}
-        <div
-          className="relative mt-[8px] h-[18px] w-full max-w-[330px] overflow-hidden rounded-full border"
-          style={{ background: "rgba(20,8,20,0.7)", borderColor: "rgba(255,60,100,0.5)" }}
-        >
-          <motion.div
-            className="h-full rounded-full"
-            style={{ background: "linear-gradient(90deg, #ff5c8a 0%, #e33) " }}
-            initial={false}
-            animate={{ width: `${hpFraction * 100}%` }}
-            transition={{ type: "spring", stiffness: 110, damping: 20 }}
-          />
-          <span
-            className="absolute inset-0 grid place-items-center text-[10px] font-bold tracking-[1px]"
-            style={{ color: "#fff", fontFamily: RPG_FONTS.display, textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}
-          >
-            {fmt(hpNow)} / {fmt(boss.hp)}
+    <div className="relative flex w-full min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="relative z-10 flex w-full min-h-0 flex-1 flex-col items-center px-[18px] pb-[6px]">
+        {/* Header — fixed height */}
+        <div className="flex w-full shrink-0 flex-col items-center">
+          <span className="pt-[12px] text-[11px] font-semibold tracking-[5px]" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
+            PLANET BOSS
           </span>
+          <h2 className="text-[24px] font-bold tracking-[2px]" style={{ color: "#fff", fontFamily: RPG_FONTS.display, textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}>
+            {boss.name.toUpperCase()}
+          </h2>
+          <div
+            className="relative mt-[6px] h-[18px] w-full max-w-[330px] overflow-hidden rounded-full border"
+            style={{ background: "rgba(20,8,20,0.7)", borderColor: "rgba(255,60,100,0.5)" }}
+          >
+            <motion.div
+              className="h-full rounded-full"
+              style={{ background: "linear-gradient(90deg, #ff5c8a 0%, #e33) " }}
+              initial={false}
+              animate={{ width: `${hpFraction * 100}%` }}
+              transition={{ type: "spring", stiffness: 110, damping: 20 }}
+            />
+            <span
+              className="absolute inset-0 grid place-items-center text-[10px] font-bold tracking-[1px]"
+              style={{ color: "#fff", fontFamily: RPG_FONTS.display, textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}
+            >
+              {fmt(hpNow)} / {fmt(boss.hp)}
+            </span>
+          </div>
         </div>
 
-        {/* Boss art + floating damage. items-end so the boss stands on its
-            ground shadow rather than floating mid-air. */}
-        <div className="relative mt-[8px] flex h-[min(288px,33vh)] w-full items-end justify-center">
-          {/* ground shadow — plants the boss in the arena */}
-          <div
-            className="pointer-events-none absolute bottom-[6px] h-[26px] w-[160px] rounded-[50%]"
-            style={{ background: "radial-gradient(ellipse, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 70%)" }}
-          />
-          <motion.img
-            src={RPG_IMAGES.bossArt}
-            alt={boss.name}
-            className="relative h-full w-auto object-contain"
-            style={{ filter: boss.artFilter === "none" ? undefined : boss.artFilter }}
+        {/* Combat — flexible middle that shrinks so the controls always fit
+            on one screen. Boss + player scale to the space they're given. */}
+        <div className="flex w-full min-h-0 flex-1 flex-col items-center justify-end pt-[8px]">
+          {/* Boss art + floating damage */}
+          <div className="relative flex min-h-0 w-full flex-[5] items-end justify-center">
+            <div
+              className="pointer-events-none absolute bottom-[6px] h-[24px] w-[150px] rounded-[50%]"
+              style={{ background: "radial-gradient(ellipse, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 70%)" }}
+            />
+            <motion.img
+              src={RPG_IMAGES.bossArt}
+              alt={boss.name}
+              className="relative h-full max-h-full w-auto object-contain"
+              style={{ filter: boss.artFilter === "none" ? undefined : boss.artFilter }}
+              animate={
+                victorious
+                  ? { opacity: 0.15, y: 26, scale: 0.94 }
+                  : phase === PHASES.PLAYER_ATTACK
+                    ? { x: [0, -7, 6, -4, 0] }
+                    : phase === PHASES.BOSS_ATTACK
+                      ? { y: [0, 22, 0], scale: [1, 1.06, 1] }
+                      : { y: [0, -5, 0] }
+              }
+              transition={
+                victorious
+                  ? { duration: 0.7 }
+                  : phase === PHASES.PLAYER_ATTACK
+                    ? { duration: 0.5, repeat: Infinity }
+                    : phase === PHASES.BOSS_ATTACK
+                      ? { duration: 0.7 }
+                      : { duration: 3, repeat: Infinity, ease: "easeInOut" }
+              }
+            />
+            <AnimatePresence>
+              {hits.map((hit) => (
+                <motion.span
+                  key={hit.id}
+                  className="absolute text-[20px] font-bold"
+                  style={{ color: "#ffd76a", fontFamily: RPG_FONTS.number, textShadow: "0 2px 6px rgba(0,0,0,0.8)" }}
+                  initial={{ opacity: 0, y: 10, x: (hit.id.charCodeAt(0) % 2 ? -1 : 1) * ((hit.dmg % 50) + 10), scale: 0.7 }}
+                  animate={{ opacity: 1, y: -56, scale: 1.15 }}
+                  exit={{ opacity: 0, y: -85 }}
+                  transition={{ duration: 0.7, ease: "easeOut" }}
+                  onAnimationComplete={() => setHits((prev) => prev.filter((h) => h.id !== hit.id))}
+                >
+                  -{fmt(hit.dmg)}
+                </motion.span>
+              ))}
+            </AnimatePresence>
+          </div>
+
+          {/* Player — grounded on the arena's magic circle. On each landed
+              hit the back-view stance swaps to the strike pose (male moveset;
+              females keep the lunge). */}
+          <div className="relative flex min-h-0 w-full flex-[2] items-end justify-center">
+            <div
+              className="pointer-events-none absolute bottom-[2px] h-[12px] w-[74px] rounded-[50%]"
+              style={{ background: "radial-gradient(ellipse, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 70%)" }}
+            />
+            <motion.img
+              src={striking && strikeSrc ? strikeSrc : RPG_IMAGES.hero[gender].back}
+              alt="Your hero"
+              className="relative h-full max-h-full w-auto object-contain"
+              style={{ transformOrigin: "bottom center" }}
+              animate={
+                striking && strikeSrc
+                  ? { scale: 1.16, y: -6, x: 0 }
+                  : phase === PHASES.BOSS_ATTACK
+                    ? { x: [0, -8, 8, -5, 0], scale: 1, y: 0 }
+                    : { y: [0, -3, 0], scale: 1, x: 0 }
+              }
+              transition={
+                striking && strikeSrc
+                  ? { duration: 0.12, ease: "easeOut" }
+                  : phase === PHASES.BOSS_ATTACK
+                    ? { duration: 0.5 }
+                    : { duration: 2.6, repeat: Infinity, ease: "easeInOut" }
+              }
+            />
+          </div>
+        </div>
+
+        {/* Footer — fixed height, always on screen */}
+        <div className="flex w-full shrink-0 flex-col items-center">
+          <div className="mt-[4px] grid w-full max-w-[340px] grid-cols-3 items-center">
+            <span className="text-[11px] font-semibold tracking-[3px]" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
+              YOUR POWER
+            </span>
+            <span
+              className="text-center text-[30px] font-bold"
+              style={{ color: RPG_COLORS.gold, fontFamily: RPG_FONTS.number, textShadow: "0 0 18px rgba(255,201,77,0.5)" }}
+            >
+              {fmt(profile?.power ?? 0)}
+            </span>
+            <span className="text-right text-[9px] leading-[13px]" style={{ color: RPG_COLORS.slotEmpty, fontFamily: RPG_FONTS.display }}>
+              Boss strikes once after your attacks
+            </span>
+          </div>
+
+          <motion.button
+            type="button"
+            onClick={startRoll}
+            disabled={phase !== PHASES.IDLE}
+            className="mt-[6px]"
+            style={{ filter: "drop-shadow(0 0 16px rgba(47,230,200,0.45))" }}
             animate={
-              victorious
-                ? { opacity: 0.15, y: 26, scale: 0.94 }
-                : phase === PHASES.PLAYER_ATTACK
-                  ? { x: [0, -7, 6, -4, 0] }
-                  : phase === PHASES.BOSS_ATTACK
-                    ? { y: [0, 22, 0], scale: [1, 1.06, 1] }
-                    : { y: [0, -5, 0] }
+              phase === PHASES.ROLLING
+                ? { rotate: [0, -18, 14, -10, 16, -6, 0], x: [0, -6, 5, -4, 3, 0], y: [0, -10, 4, -8, 2, 0] }
+                : { rotate: 0, x: 0, y: 0 }
             }
-            transition={
-              victorious
-                ? { duration: 0.7 }
-                : phase === PHASES.PLAYER_ATTACK
-                  ? { duration: 0.5, repeat: Infinity }
-                  : phase === PHASES.BOSS_ATTACK
-                    ? { duration: 0.7 }
-                    : { duration: 3, repeat: Infinity, ease: "easeInOut" }
-            }
-          />
-          <AnimatePresence>
-            {hits.map((hit) => (
-              <motion.span
-                key={hit.id}
-                className="absolute text-[20px] font-bold"
-                style={{ color: "#ffd76a", fontFamily: RPG_FONTS.number, textShadow: "0 2px 6px rgba(0,0,0,0.8)" }}
-                initial={{ opacity: 0, y: 10, x: (hit.id.charCodeAt(0) % 2 ? -1 : 1) * ((hit.dmg % 50) + 10), scale: 0.7 }}
-                animate={{ opacity: 1, y: -56, scale: 1.15 }}
-                exit={{ opacity: 0, y: -85 }}
-                transition={{ duration: 0.7, ease: "easeOut" }}
-                onAnimationComplete={() => setHits((prev) => prev.filter((h) => h.id !== hit.id))}
-              >
-                -{fmt(hit.dmg)}
-              </motion.span>
-            ))}
-          </AnimatePresence>
-        </div>
-
-        {/* Player — grounded on the arena's magic circle */}
-        <div className="relative mt-[2px] flex flex-col items-center">
-          <div
-            className="pointer-events-none absolute bottom-[4px] h-[14px] w-[80px] rounded-[50%]"
-            style={{ background: "radial-gradient(ellipse, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 70%)" }}
-          />
-          <motion.img
-            src={RPG_IMAGES.hero[gender].back}
-            alt="Your hero"
-            className="relative h-[min(112px,13vh)] w-auto"
-            animate={phase === PHASES.BOSS_ATTACK ? { x: [0, -8, 8, -5, 0] } : { y: [0, -3, 0] }}
-            transition={phase === PHASES.BOSS_ATTACK ? { duration: 0.5 } : { duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
-          />
-        </div>
-
-        {/* Power line */}
-        <div className="mt-[6px] grid w-full max-w-[340px] grid-cols-3 items-center">
-          <span className="text-[11px] font-semibold tracking-[3px]" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
-            YOUR POWER
-          </span>
-          <span
-            className="text-center text-[30px] font-bold"
-            style={{ color: RPG_COLORS.gold, fontFamily: RPG_FONTS.number, textShadow: "0 0 18px rgba(255,201,77,0.5)" }}
+            transition={phase === PHASES.ROLLING ? { duration: 0.95, ease: "easeInOut" } : { duration: 0.2 }}
+            whileTap={phase === PHASES.IDLE ? { scale: 0.92 } : undefined}
+            aria-label="Roll the dice"
           >
-            {fmt(profile?.power ?? 0)}
+            <DieFace value={shownRoll} size={80} />
+          </motion.button>
+          <span className="mt-[6px] text-[13px] font-bold tracking-[4px]" style={{ color: RPG_COLORS.cyanSoft, fontFamily: RPG_FONTS.display }}>
+            {phase === PHASES.ROLLING ? "ROLLING..." : `ROLL DICE${roundIndex > 0 && phase === PHASES.IDLE ? ` · TOTAL ${rounds[roundIndex - 1]?.cumulative ?? 0}/${threshold}` : ""}`}
           </span>
-          <span className="text-right text-[9px] leading-[13px]" style={{ color: RPG_COLORS.slotEmpty, fontFamily: RPG_FONTS.display }}>
-            Boss strikes once after your attacks
+          <span className="mt-[3px] text-[10px]" style={{ color: RPG_COLORS.slotEmpty, fontFamily: RPG_FONTS.display }}>
+            Dice number = number of attacks · 100–500 dmg each
           </span>
-        </div>
 
-        {/* Dice */}
-        <motion.button
-          type="button"
-          onClick={startRoll}
-          disabled={phase !== PHASES.IDLE}
-          className="mt-[8px]"
-          style={{ filter: "drop-shadow(0 0 16px rgba(47,230,200,0.45))" }}
-          animate={
-            phase === PHASES.ROLLING
-              ? { rotate: [0, -18, 14, -10, 16, -6, 0], x: [0, -6, 5, -4, 3, 0], y: [0, -10, 4, -8, 2, 0] }
-              : { rotate: 0, x: 0, y: 0 }
-          }
-          transition={phase === PHASES.ROLLING ? { duration: 0.95, ease: "easeInOut" } : { duration: 0.2 }}
-          whileTap={phase === PHASES.IDLE ? { scale: 0.92 } : undefined}
-          aria-label="Roll the dice"
-        >
-          <DieFace value={shownRoll} />
-        </motion.button>
-        <span className="mt-[8px] text-[13px] font-bold tracking-[4px]" style={{ color: RPG_COLORS.cyanSoft, fontFamily: RPG_FONTS.display }}>
-          {phase === PHASES.ROLLING ? "ROLLING..." : `ROLL DICE${roundIndex > 0 && phase === PHASES.IDLE ? ` · TOTAL ${rounds[roundIndex - 1]?.cumulative ?? 0}/${threshold}` : ""}`}
-        </span>
-        <span className="mt-[4px] text-[10px]" style={{ color: RPG_COLORS.slotEmpty, fontFamily: RPG_FONTS.display }}>
-          Dice number = number of attacks · 100–500 dmg each
-        </span>
-
-        <div className="mt-auto w-full max-w-[340px] pb-[10px] pt-[10px]">
-          <GoldCta onClick={startRoll} disabled={phase !== PHASES.IDLE}>
-            {phase === PHASES.IDLE ? "⚔ ATTACK" : phase === PHASES.BOSS_ATTACK ? "BOSS ATTACKS..." : "FIGHTING..."}
-          </GoldCta>
+          <div className="mt-[10px] w-full max-w-[340px]">
+            <GoldCta onClick={startRoll} disabled={phase !== PHASES.IDLE}>
+              {phase === PHASES.IDLE ? "⚔ ATTACK" : phase === PHASES.BOSS_ATTACK ? "BOSS ATTACKS..." : "FIGHTING..."}
+            </GoldCta>
+          </div>
         </div>
       </div>
 
