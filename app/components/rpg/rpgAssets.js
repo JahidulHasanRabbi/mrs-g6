@@ -17,7 +17,7 @@ export const RPG_IMAGES = {
   // Attack pose shown on each landed hit during a boss battle. Only the male
   // moveset exists so far; females fall back to the lunge motion.
   heroStrike: {
-    male: "/assets/rpg/hero/male-moveset/strike-1.webp",
+    male: "/assets/rpg/hero/male-moveset/strike-one.webp",
   },
   chest: "/assets/rpg/chest/chest-closed.webp",
   chestOpen: "/assets/rpg/chest/chest-open.webp",
