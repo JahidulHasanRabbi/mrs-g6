@@ -14,16 +14,11 @@ export const RPG_IMAGES = {
       back: "/assets/rpg/hero/female-back.webp",
     },
   },
-  // Attack frame SEQUENCE played on each landed hit during a boss battle —
-  // the energy punch builds spark → burst → beam → nova. Only the male
-  // moveset exists so far; females fall back to the lunge motion.
+  // Attack frame(s) played on each landed hit during a boss battle. An array
+  // so more frames can be added back later; currently just the first pose
+  // (strike-2/3/4 removed). Females fall back to the lunge motion.
   heroStrike: {
-    male: [
-      "/assets/rpg/hero/male-moveset/strike-1.webp",
-      "/assets/rpg/hero/male-moveset/strike-2.webp",
-      "/assets/rpg/hero/male-moveset/strike-3.webp",
-      "/assets/rpg/hero/male-moveset/strike-4.webp",
-    ],
+    male: ["/assets/rpg/hero/male-moveset/strike-1.webp"],
   },
   chest: "/assets/rpg/chest/chest-closed.webp",
   chestOpen: "/assets/rpg/chest/chest-open.webp",
