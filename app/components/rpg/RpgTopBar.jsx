@@ -1,9 +1,9 @@
 "use client";
 
-// Fixed 64px top bar shared by every RPG screen (Figma TopNav 2090:2488):
-// gem + "RPG" wordmark on the left, info + hamburger on the right. Uses the
-// same dark-green/gold chrome as the rest of MRS so players always recognise
-// the way back to the station.
+// Fixed 64px top bar shared by every RPG screen. Layout matches the other
+// MRS games (see penalty-kick TopHud): hamburger menu on the LEFT next to the
+// wordmark, info on the RIGHT — so the "way back to the station" is always in
+// the same corner across games. Dark-green/gold chrome as elsewhere.
 
 import { RPG_COLORS, RPG_FONTS } from "./constants";
 import { RPG_IMAGES } from "./rpgAssets";
@@ -19,22 +19,22 @@ export default function RpgTopBar({ onInfoClick, onMenuClick }) {
       }}
     >
       <div className="flex items-center gap-[12px]">
-        <img src={RPG_IMAGES.ui.logoGem} alt="" className="size-[18px]" />
-        <span
-          className="text-[24px] uppercase leading-none tracking-[-1.2px]"
-          style={{ color: RPG_COLORS.cyan, fontFamily: RPG_FONTS.logo }}
-        >
-          RPG
-        </span>
-      </div>
-      <div className="flex items-center gap-[16px]">
-        <button type="button" onClick={onInfoClick} aria-label="Game info" className="active:scale-90 transition-transform">
-          <img src={RPG_IMAGES.ui.info} alt="" className="size-[36px] rounded-full object-cover" />
-        </button>
         <button type="button" onClick={onMenuClick} aria-label="Open menu" className="active:scale-90 transition-transform">
           <img src={RPG_IMAGES.ui.menu} alt="" className="size-[36px] object-cover" />
         </button>
+        <div className="flex items-center gap-[10px]">
+          <img src={RPG_IMAGES.ui.logoGem} alt="" className="size-[18px]" />
+          <span
+            className="text-[24px] uppercase leading-none tracking-[-1.2px]"
+            style={{ color: RPG_COLORS.cyan, fontFamily: RPG_FONTS.logo }}
+          >
+            RPG
+          </span>
+        </div>
       </div>
+      <button type="button" onClick={onInfoClick} aria-label="Game info" className="active:scale-90 transition-transform">
+        <img src={RPG_IMAGES.ui.info} alt="" className="size-[36px] rounded-full object-cover" />
+      </button>
     </header>
   );
 }
