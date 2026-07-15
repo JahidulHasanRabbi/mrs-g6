@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import AppLayout from "./components/layout/AppLayout";
 import { MemberRouteGuard } from "./components/guards/MemberRouteGuard";
 import { UserProvider } from "./contexts/UserContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 
 export default function LayoutShell({ children }) {
   const pathname = usePathname();
@@ -23,11 +24,13 @@ export default function LayoutShell({ children }) {
 
   return (
     <UserProvider>
-      <MemberRouteGuard>
-        <div className="min-h-screen max-w-[475px] mx-auto overflow-hidden">
-          <AppLayout>{children}</AppLayout>
-        </div>
-      </MemberRouteGuard>
+      <ThemeProvider>
+        <MemberRouteGuard>
+          <div className="min-h-screen max-w-[475px] mx-auto overflow-hidden">
+            <AppLayout>{children}</AppLayout>
+          </div>
+        </MemberRouteGuard>
+      </ThemeProvider>
     </UserProvider>
   );
 }

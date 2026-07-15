@@ -8,12 +8,14 @@ import { Header } from "../header";
 import MartHeader from "../mart/MartHeader";
 import { HOME_ASSETS } from "../home/homeAssets";
 import { useUser } from "../../contexts/UserContext";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export default function AppLayout({ children }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [hasAnimated, setHasAnimated] = useState(false);
   const pathname = usePathname();
   const { userData, profilePicture } = useUser();
+  const { isAcebet77 } = useTheme();
 
   // Track initial mount to show animations only once
   useEffect(() => {
@@ -42,6 +44,12 @@ export default function AppLayout({ children }) {
 
   // Don't show layout on home page
   if (isHomePage) {
+    return <>{children}</>;
+  }
+
+  // Acebet77-themed spin page draws its own shell (AcebetShell) — skip the
+  // default header/footer chrome like the self-contained game pages below.
+  if (isAcebet77 && isSpinPage) {
     return <>{children}</>;
   }
 

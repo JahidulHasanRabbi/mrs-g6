@@ -14,8 +14,10 @@ import { oneSpin, tenSpin, fiftySpin, getMemberInfo, getAllLuckySpinItems } from
 import { mapSpinResults, mapLuckySpinItems } from "../api/responseMappers";
 import { tokenStorage } from "../api/tokenStorage";
 import { useUser } from "../contexts/UserContext";
+import { useTheme } from "../contexts/ThemeContext";
+import Acebet77SpinPage from "../components/themes/acebet77/Acebet77SpinPage";
 
-export default function SpinPage() {
+function DefaultSpinPage() {
   const [imageError, setImageError] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
@@ -325,4 +327,10 @@ export default function SpinPage() {
       />
     </>
   );
+}
+
+export default function SpinPage() {
+  const { isAcebet77 } = useTheme();
+  if (isAcebet77) return <Acebet77SpinPage />;
+  return <DefaultSpinPage />;
 }
