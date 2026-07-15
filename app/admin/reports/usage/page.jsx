@@ -24,14 +24,14 @@ const GAME_OPTIONS = [
   { value: "4", label: "Prediction" },
 ];
 
-// Summary KPIs map 1:1 to the flat /usage-report/summary/ response. The endpoint
-// returns only these scalar fields — there are no change/percent-vs-previous
-// fields in the spec, so the cards show the raw value only.
+// The all-games view maps to /usage-report/summary/. For a selected game, these
+// same cards are populated from that game's /usage-report/games/ row because
+// the summary endpoint intentionally ignores the `game` query parameter.
 const SUMMARY_CARDS = [
-  { key: "total_active_users", label: "Active Users", icon: "users", hint: "Distinct members who played any game" },
-  { key: "total_sessions", label: "Total Sessions", icon: "plays", hint: "Total plays across all games" },
-  { key: "total_tokens_consumed", label: "Tokens Consumed", icon: "tokens", hint: "Tokens spent across all games" },
-  { key: "total_rewards_given", label: "Rewards Given", prefix: "RM", icon: "rm", hint: "Penalty Kick + Smash Egg only" },
+  { key: "total_active_users", label: "Active Users", icon: "users", hint: "Distinct members who played in this view" },
+  { key: "total_sessions", label: "Total Sessions", icon: "plays", hint: "Total plays in this view" },
+  { key: "total_tokens_consumed", label: "Tokens Consumed", icon: "tokens", hint: "Tokens spent in this view" },
+  { key: "total_rewards_given", label: "Rewards Given", prefix: "RM", icon: "rm", hint: "RM paid out where tracked" },
   { key: "average_session_per_user", label: "Avg Sessions/User", decimals: 2, icon: "avg", hint: "Sessions ÷ active users" },
 ];
 
@@ -142,6 +142,29 @@ function rowsOf(res) {
   if (Array.isArray(res?.results)) return res.results;
   if (Array.isArray(res)) return res;
   return [];
+}
+
+function gameSummary(overallSummary, gameRows, game) {
+  if (game === "all") return overallSummary;
+
+  const row = gameRows.find((item) => String(item.game) === String(game));
+  if (!row) {
+    return {
+      total_active_users: 0,
+      total_sessions: 0,
+      total_tokens_consumed: 0,
+      total_rewards_given: null,
+      average_session_per_user: 0,
+    };
+  }
+
+  return {
+    total_active_users: row.unique_players,
+    total_sessions: row.sessions,
+    total_tokens_consumed: row.tokens_consumed,
+    total_rewards_given: row.credit_rm,
+    average_session_per_user: row.avg_sessions_per_player,
+  };
 }
 
 // Insights is one row per day and defaults to page_size 20 (max 100). For
@@ -584,6 +607,7 @@ function UsageReportContent() {
   const [trend, setTrend] = useState([]);
 
   const selectedGameLabel = useMemo(() => GAME_OPTIONS.find((option) => option.value === game)?.label || "All Games", [game]);
+  const metricSummary = useMemo(() => gameSummary(summary, games, game), [summary, games, game]);
 
   const handlePreset = useCallback((next) => {
     setPreset(next);
@@ -649,7 +673,7 @@ function UsageReportContent() {
 
       <div className="relative">
         <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {SUMMARY_CARDS.map((metric) => <MetricCard key={metric.key} metric={metric} summary={summary} />)}
+          {SUMMARY_CARDS.map((metric) => <MetricCard key={metric.key} metric={metric} summary={metricSummary} />)}
         </div>
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
