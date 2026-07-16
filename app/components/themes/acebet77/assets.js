@@ -51,6 +51,17 @@ export const ACEBET_ASSETS = {
     spinNow: `${BASE}/spin/spin-now.png`,
     btnPlay: `${BASE}/spin/btn-play.png`,
     panel: `${BASE}/spin/panel-ornate.png`,
+    // Asset map consumed by the shared <LuckySpinGrid> so the themed wheel runs
+    // the exact same spin/selection engine as the default portal — only the art
+    // changes. Keys mirror SPIN_ASSETS (background/itemEmptyGold/itemEmptyGreen/
+    // centerButton/centerButtonStop). No dedicated stop art, so reuse spin-now.
+    grid: {
+      background: `${BASE}/spin/wheel-frame.png`,
+      itemEmptyGold: `${BASE}/spin/slot-gold.png`,
+      itemEmptyGreen: `${BASE}/spin/slot-green.png`,
+      centerButton: `${BASE}/spin/spin-now.png`,
+      centerButtonStop: `${BASE}/spin/spin-now.png`,
+    },
   },
   egg: {
     bg: `${BASE}/egg/bg-hall.png`,

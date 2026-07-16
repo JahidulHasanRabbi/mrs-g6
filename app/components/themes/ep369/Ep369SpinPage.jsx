@@ -2,44 +2,35 @@
 
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { motion, useMotionValue, animate } from 'framer-motion';
+import { motion } from 'framer-motion';
 import Ep369Shell from './Ep369Shell';
 import Ep369Dialog from './Ep369Dialog';
 import Ep369Button from './Ep369Button';
 import Ep369OrnateCard from './Ep369OrnateCard';
+import LuckySpinGrid from '../../spin/LuckySpinGrid';
 import { EP369_ASSETS, EP369_COLORS } from './assets';
 import { oneSpin, tenSpin, fiftySpin, getAllLuckySpinItems } from '../../../api/memberApi';
 import { mapSpinResults, mapLuckySpinItems } from '../../../api/responseMappers';
 import { tokenStorage } from '../../../api/tokenStorage';
 import { useUser } from '../../../contexts/UserContext';
 
-const SLOT_COUNT = 8;
-// Tile centers (% of the square wheel art) in clockwise ring order from the
-// top-left, so the highlight visibly circles the 3x3 grid around SPIN NOW.
-const SLOT_CENTERS = [
-  { l: 24, t: 23 }, { l: 50, t: 23 }, { l: 76, t: 23 }, { l: 76, t: 50 },
-  { l: 76, t: 77 }, { l: 50, t: 77 }, { l: 24, t: 77 }, { l: 24, t: 50 },
-];
-const HILITE = 27;
+// EP369 Lucky Spin. The wheel is the shared <LuckySpinGrid> — the same
+// spin/selection engine as the default portal — fed EP369's artwork. Only the
+// images change; ring cycling, deceleration, winner highlight and manual-stop
+// all come from the shared code.
+const EP369_GEOMETRY = { framePad: 5.75, tile: 27, center: 27 };
 
-/**
- * EP369 Lucky Spin (Figma 101:4639 wheel / 101:4568 intro / 101:4603 panel).
- * A single motion value drives the highlight racing around the eight prize
- * tiles and lands on the slot matching the server result.
- */
 export default function Ep369SpinPage() {
   const [spinItems, setSpinItems] = useState([]);
   const [itemsLoading, setItemsLoading] = useState(true);
   const [isSpinning, setIsSpinning] = useState(false);
-  const [highlightIndex, setHighlightIndex] = useState(null);
   const [dialog, setDialog] = useState(null);
   const { refreshUserData } = useUser();
 
   const spinResultsRef = useRef(null);
+  const spinErrorRef = useRef(null);
+  const gridSpinTriggerRef = useRef(null);
   const isProcessingRef = useRef(false);
-  const spin = useMotionValue(0);
-  const spinRef = useRef(0);
-  const spinAnimRef = useRef(null);
 
   useEffect(() => {
     async function fetchItems() {
@@ -53,11 +44,17 @@ export default function Ep369SpinPage() {
       }
     }
     fetchItems();
-    return () => spinAnimRef.current?.stop();
   }, []);
 
-  const finishSpin = useCallback(() => {
+  const handleSpinComplete = useCallback(() => {
     setIsSpinning(false);
+
+    if (spinErrorRef.current) {
+      setDialog({ type: 'error', title: 'Spin Failed', message: spinErrorRef.current });
+      spinErrorRef.current = null;
+      return;
+    }
+
     const results = spinResultsRef.current;
     spinResultsRef.current = null;
     if (!results) return;
@@ -76,48 +73,30 @@ export default function Ep369SpinPage() {
     }
   }, []);
 
-  const spinToWinner = useCallback((targetIndex, onDone) => {
-    const from = spinRef.current;
-    const base = from + SLOT_COUNT * 5;
-    const extra = (((targetIndex - (Math.round(base) % SLOT_COUNT)) % SLOT_COUNT) + SLOT_COUNT) % SLOT_COUNT;
-    const to = base + extra;
-    spinRef.current = to;
-    const litFor = (v) => ((Math.round(v) % SLOT_COUNT) + SLOT_COUNT) % SLOT_COUNT;
-    spinAnimRef.current = animate(spin, to, {
-      duration: 3.4,
-      ease: [0.1, 0.6, 0.2, 1],
-      onUpdate: (v) => setHighlightIndex(litFor(v)),
-      onComplete: () => {
-        setHighlightIndex(targetIndex);
-        onDone();
-      },
-    });
-  }, [spin]);
-
-  const handleSpin = useCallback(
+  const handleSpinAction = useCallback(
     async (spinFunction, spinType) => {
       const memberUuid = tokenStorage.getMemberUuid();
       if (!memberUuid) {
         setDialog({ type: 'error', title: 'Error', message: 'Please log in to spin.' });
-        return;
+        return false;
       }
-      if (isSpinning || isProcessingRef.current) return;
+      if (isSpinning || isProcessingRef.current) return false;
       isProcessingRef.current = true;
 
       try {
+        spinResultsRef.current = null;
+        spinErrorRef.current = null;
         const response = await spinFunction(memberUuid);
         const results = mapSpinResults(response);
         spinResultsRef.current = results;
         setIsSpinning(true);
         await refreshUserData();
-
-        const winnerUuid = results[0]?.uuid;
-        let targetIndex = spinItems.findIndex((item) => item.uuid === winnerUuid);
-        if (targetIndex < 0) targetIndex = Math.floor(SLOT_COUNT / 2);
-        spinToWinner(targetIndex % SLOT_COUNT, finishSpin);
+        isProcessingRef.current = false;
+        return true;
       } catch (error) {
         console.error(`Error during ${spinType}:`, error);
         setIsSpinning(false);
+        isProcessingRef.current = false;
         const errorDetails = error.data?.details || error.data?.detail || error.message || '';
         const lowerError = errorDetails.toLowerCase();
         const insufficient =
@@ -133,12 +112,32 @@ export default function Ep369SpinPage() {
             ? "You don't have enough points to spin. Please earn more points first!"
             : errorDetails || 'An error occurred. Please try again.',
         });
-      } finally {
-        isProcessingRef.current = false;
+        return false;
       }
     },
-    [isSpinning, spinItems, refreshUserData, spinToWinner, finishSpin]
+    [isSpinning, refreshUserData]
   );
+
+  const handleCenterSpin = useCallback(async () => {
+    const ok = await handleSpinAction(oneSpin, 'one spin');
+    if (ok && spinResultsRef.current?.length > 0) {
+      return { uuid: spinResultsRef.current[0].uuid };
+    }
+    return ok;
+  }, [handleSpinAction]);
+
+  const handleMultiSpin = useCallback(
+    async (spinFunction, spinType) => {
+      const ok = await handleSpinAction(spinFunction, spinType);
+      const trigger = gridSpinTriggerRef.current;
+      if (ok && trigger && spinResultsRef.current?.length > 0) {
+        trigger(spinResultsRef.current[0].uuid);
+      }
+    },
+    [handleSpinAction]
+  );
+
+  const closeDialog = useCallback(() => setDialog(null), []);
 
   const handleReturnToWebsite = useCallback(() => {
     const savedO = tokenStorage.getRedirectO();
@@ -149,8 +148,6 @@ export default function Ep369SpinPage() {
     const base = savedO.startsWith('http') ? savedO : `https://${savedO}`;
     window.location.href = `${base.replace(/\/$/, '')}/promotion`;
   }, []);
-
-  const lit = highlightIndex != null ? SLOT_CENTERS[highlightIndex] : null;
 
   return (
     <Ep369Shell bg={EP369_ASSETS.spin.bg}>
@@ -164,44 +161,18 @@ export default function Ep369SpinPage() {
           <Image src={EP369_ASSETS.spin.title} alt="Lucky Spin" fill priority className="object-contain" sizes="300px" />
         </motion.div>
 
-        <div className="relative w-full max-w-[360px] aspect-square">
-          <Image src={EP369_ASSETS.spin.wheel} alt="" fill priority className="object-contain" sizes="360px" />
+        {/* Wheel — shared engine, EP369 art */}
+        <LuckySpinGrid
+          assets={EP369_ASSETS.spin.grid}
+          themed={EP369_GEOMETRY}
+          items={spinItems}
+          isSpinning={isSpinning}
+          onSpinClick={handleCenterSpin}
+          onSpinComplete={handleSpinComplete}
+          spinTriggerRef={gridSpinTriggerRef}
+        />
 
-          {lit && (
-            <div
-              className="pointer-events-none absolute rounded-[16px] transition-all duration-100"
-              style={{
-                left: `${lit.l - HILITE / 2}%`,
-                top: `${lit.t - HILITE / 2}%`,
-                width: `${HILITE}%`,
-                height: `${HILITE}%`,
-                border: `3px solid ${EP369_COLORS.goldBright}`,
-                boxShadow: `0 0 18px 4px rgba(242,195,107,0.9), inset 0 0 14px rgba(255,246,223,0.5)`,
-                background: 'rgba(255,246,223,0.14)',
-              }}
-            />
-          )}
-
-          <motion.button
-            onClick={() => handleSpin(oneSpin, 'one spin')}
-            disabled={isSpinning || itemsLoading}
-            aria-label="Spin now"
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[26%] aspect-square rounded-full cursor-pointer disabled:cursor-not-allowed"
-            whileTap={{ scale: 0.92 }}
-          />
-        </div>
-
-        {itemsLoading ? (
-          <div className="relative flex h-[56px] w-[280px] items-center justify-center">
-            <img src={EP369_ASSETS.spin.btnPlay} alt="" className="absolute inset-0 h-full w-full object-cover" />
-            <span
-              className="relative z-10 text-[16px]"
-              style={{ fontFamily: 'var(--font-berkshire-swash), cursive', color: EP369_COLORS.goldBright }}
-            >
-              Loading...
-            </span>
-          </div>
-        ) : (
+        {!itemsLoading && (
           <div className="flex w-full items-center justify-center gap-4">
             {[
               { label: 'Play x10', fn: tenSpin, type: 'ten spins' },
@@ -209,7 +180,7 @@ export default function Ep369SpinPage() {
             ].map((btn) => (
               <button
                 key={btn.label}
-                onClick={() => handleSpin(btn.fn, btn.type)}
+                onClick={() => handleMultiSpin(btn.fn, btn.type)}
                 disabled={isSpinning}
                 className="relative flex h-[56px] w-[160px] items-center justify-center overflow-hidden cursor-pointer transition-transform active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
               >
@@ -257,7 +228,7 @@ export default function Ep369SpinPage() {
         </div>
       </div>
 
-      <Ep369Dialog open={!!dialog} onClose={() => setDialog(null)}>
+      <Ep369Dialog open={!!dialog} onClose={closeDialog}>
         <Ep369OrnateCard>
           <div className="flex items-center gap-2">
             {dialog?.type === 'win' && <img src={EP369_ASSETS.ui.iconParty} alt="" className="h-6 w-6" />}
@@ -291,13 +262,13 @@ export default function Ep369SpinPage() {
         </Ep369OrnateCard>
         {dialog?.type === 'win' ? (
           <>
-            <Ep369Button onClick={() => setDialog(null)}>Spin Again</Ep369Button>
+            <Ep369Button onClick={closeDialog}>Spin Again</Ep369Button>
             <Ep369Button variant="gold" onClick={handleReturnToWebsite}>
               Return To Website
             </Ep369Button>
           </>
         ) : (
-          <Ep369Button onClick={() => setDialog(null)}>Close</Ep369Button>
+          <Ep369Button onClick={closeDialog}>Close</Ep369Button>
         )}
       </Ep369Dialog>
     </Ep369Shell>

@@ -93,6 +93,9 @@ const SpinItem = memo(function SpinItem({
   isSpinning,
   isLowEnd,
   isMidEnd,
+  // Themed skins place tiles by absolute % over a square frame instead of the
+  // default 3x3 CSS grid; `pos` (when set) carries {x,y,size} in % of frame.
+  pos = null,
 }) {
   const winnerScale = isLowEnd ? 1.14 : isMidEnd ? 1.18 : 1.2;
   const animate = isWinner
@@ -103,9 +106,25 @@ const SpinItem = memo(function SpinItem({
   const transition = isWinner
     ? TRANS_WINNER
     : (isLowEnd ? TRANS_IDLE_LOW : TRANS_IDLE_HIGH);
+  const zClass = isWinner ? "z-20" : isActive ? "z-10" : "";
+  const wrapClassName = pos
+    ? `absolute ${zClass}`
+    : `relative ${GRID_AREA[index]} w-full h-full ${zClass}`;
+  // Position by the tile's top-left corner (centre minus half-size) rather than
+  // a translate(-50%): framer-motion drives this element's `transform` for the
+  // scale/rotate animations and would clobber any translate we set here.
+  const wrapStyle = pos
+    ? {
+        left: `${pos.x - pos.size / 2}%`,
+        top: `${pos.y - pos.size / 2}%`,
+        width: `${pos.size}%`,
+        height: `${pos.size}%`,
+      }
+    : undefined;
   return (
     <motion.div
-      className={`relative ${GRID_AREA[index]} w-full h-full ${isWinner ? "z-20" : isActive ? "z-10" : ""}`}
+      className={wrapClassName}
+      style={wrapStyle}
       initial={{ opacity: 0, scale: 0, rotate: -180 }}
       animate={{ opacity: 1, scale: 1, rotate: 0 }}
       transition={{
@@ -163,7 +182,7 @@ const SpinItem = memo(function SpinItem({
               ? PRIZE_WINNER_TRANSITION
               : { duration: 0.4, delay: index * 0.1 + 0.3, ease: "easeOut" }
           }
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[60px] h-[57px] flex items-center justify-center"
+          className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center justify-center ${pos ? "w-[52%] h-[52%]" : "w-[60px] h-[57px]"}`}
         >
           <img
             alt=""
@@ -206,7 +225,41 @@ const GRID_WIN_ANGLE = [315, 0, 45, 270, 90, 225, 180, 135];
 
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
-export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIsSpinning, onSpinComplete, spinTriggerRef, items = [], winningUuid = null }) {
+// Themed skins (acebet77/ubetclub/ep369) reuse this exact engine and only swap
+// the artwork. Their frames are square with an evenly-spaced 3x3 interior, so
+// the eight tiles are positioned by absolute % rather than the default's fixed
+// pixel FluidFrame grid. `framePad` is the inset (% of frame) from edge to the
+// grid area, `tile`/`center` are element sizes as % of the frame.
+const DEFAULT_THEMED_GEOMETRY = { framePad: 12, tile: 25, center: 27 };
+
+function themedSlotCenters({ framePad }) {
+  const span = 100 - 2 * framePad;
+  const lo = framePad + span / 6;
+  const mid = 50;
+  const hi = framePad + (span * 5) / 6;
+  // Grid index layout (matches the default's GRID_AREA / GRID_WIN_ANGLE):
+  //   [0][1][2]
+  //   [3][ ][4]
+  //   [5][6][7]
+  return [
+    { x: lo, y: lo }, { x: mid, y: lo }, { x: hi, y: lo },
+    { x: lo, y: mid }, { x: hi, y: mid },
+    { x: lo, y: hi }, { x: mid, y: hi }, { x: hi, y: hi },
+  ];
+}
+
+export default memo(function LuckySpinGrid({
+  onSpinClick,
+  isSpinning: externalIsSpinning,
+  onSpinComplete,
+  spinTriggerRef,
+  items = [],
+  winningUuid = null,
+  // Themeable art. Defaults to the built-in MRS assets so the default portal
+  // renders exactly as before; themed skins pass their own image map + geometry.
+  assets = SPIN_ASSETS,
+  themed = null,
+}) {
   const [activeGridIndex, setActiveGridIndex] = useState(null);
   // Separate from `activeGridIndex` so the dramatic winner highlight kicks
   // in *immediately* when the spinner lands — not 700ms later when the
@@ -261,15 +314,15 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
   }, [items]);
 
   const gridItems = useMemo(() => [
-    { background: SPIN_ASSETS.itemEmptyGold, prize: itemRewards[0]?.image, uuid: itemRewards[0]?.uuid },
-    { background: SPIN_ASSETS.itemEmptyGreen, prize: itemRewards[1]?.image, uuid: itemRewards[1]?.uuid },
-    { background: SPIN_ASSETS.itemEmptyGold, prize: itemRewards[2]?.image, uuid: itemRewards[2]?.uuid },
-    { background: SPIN_ASSETS.itemEmptyGreen, prize: itemRewards[3]?.image, uuid: itemRewards[3]?.uuid },
-    { background: SPIN_ASSETS.itemEmptyGreen, prize: itemRewards[4]?.image, uuid: itemRewards[4]?.uuid },
-    { background: SPIN_ASSETS.itemEmptyGold, prize: itemRewards[5]?.image, uuid: itemRewards[5]?.uuid },
-    { background: SPIN_ASSETS.itemEmptyGreen, prize: itemRewards[6]?.image, uuid: itemRewards[6]?.uuid },
-    { background: SPIN_ASSETS.itemEmptyGold, prize: itemRewards[7]?.image, uuid: itemRewards[7]?.uuid },
-  ], [itemRewards]);
+    { background: assets.itemEmptyGold, prize: itemRewards[0]?.image, uuid: itemRewards[0]?.uuid },
+    { background: assets.itemEmptyGreen, prize: itemRewards[1]?.image, uuid: itemRewards[1]?.uuid },
+    { background: assets.itemEmptyGold, prize: itemRewards[2]?.image, uuid: itemRewards[2]?.uuid },
+    { background: assets.itemEmptyGreen, prize: itemRewards[3]?.image, uuid: itemRewards[3]?.uuid },
+    { background: assets.itemEmptyGreen, prize: itemRewards[4]?.image, uuid: itemRewards[4]?.uuid },
+    { background: assets.itemEmptyGold, prize: itemRewards[5]?.image, uuid: itemRewards[5]?.uuid },
+    { background: assets.itemEmptyGreen, prize: itemRewards[6]?.image, uuid: itemRewards[6]?.uuid },
+    { background: assets.itemEmptyGold, prize: itemRewards[7]?.image, uuid: itemRewards[7]?.uuid },
+  ], [itemRewards, assets]);
 
   const stopSpin = useCallback(
     (finalGridIndex, { wasManualStop = false } = {}) => {
@@ -435,6 +488,86 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
     };
   }, []);
 
+  // Shared centre button — identical rotation/tap/manual-stop behaviour in both
+  // the default and themed layouts; only the artwork, size and fit differ.
+  const centerButton = ({ sizeClass = "", sizeStyle, imgFit = "object-cover" }) => (
+    <motion.div
+      className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-30 cursor-pointer ${sizeClass}`}
+      style={sizeStyle}
+      initial={{ opacity: 0, scale: 0, rotate: 360 }}
+      animate={{ opacity: 1, scale: 1, rotate: 0 }}
+      transition={{ duration: 0.8, delay: 1.0, ease: "easeOut" }}
+      whileHover={{ scale: spinning ? 1.05 : 1.1 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={spinning ? requestManualStop : startSpin}
+      aria-label={spinning ? "Stop spin" : "Spin now"}
+    >
+      {/* Center button artwork. Swaps to the "SPIN STOP" asset while
+          spinning so the player sees the affordance change (client
+          wanted the literal stop label baked into the artwork rather
+          than a separate overlay). Keeps rotating in both states. */}
+      <motion.div
+        className="w-full h-full"
+        style={{ rotate: centerRotateSpring, willChange: spinning ? "transform" : "auto" }}
+      >
+        {/* Plain <img> on purpose. next/image was serving the SSR-rendered
+            initial src and not honouring the swap to spn-stop.png when
+            `spinning` flipped, even with a re-mount key. A regular <img>
+            updates immediately when src changes. */}
+        <img
+          key={spinning ? "stop" : "spin"}
+          alt={spinning ? "Stop spin" : "Spin Now Button"}
+          src={spinning ? (assets.centerButtonStop || assets.centerButton) : assets.centerButton}
+          width={143}
+          height={143}
+          className={`w-full h-full ${imgFit} select-none`}
+          draggable="false"
+        />
+      </motion.div>
+    </motion.div>
+  );
+
+  // Themed skins: same engine, square frame, tiles positioned by absolute %.
+  if (themed) {
+    const geo = { ...DEFAULT_THEMED_GEOMETRY, ...themed };
+    const centers = themedSlotCenters(geo);
+    return (
+      <motion.div
+        className="relative mx-auto w-full max-w-[380px] aspect-square"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        style={{ willChange: "transform, opacity" }}
+      >
+        <Image
+          alt="Spin Grid Background"
+          src={assets.background}
+          fill
+          priority
+          className="object-contain pointer-events-none"
+          sizes="380px"
+        />
+        {gridItems.map((item, index) => (
+          <SpinItem
+            key={index}
+            index={index}
+            isActive={activeGridIndex === index}
+            isWinner={winnerGridIndex === index}
+            isSpinning={spinning}
+            isLowEnd={isLowEnd}
+            isMidEnd={isMidEnd}
+            pos={{ ...centers[index], size: geo.tile }}
+            {...item}
+          />
+        ))}
+        {centerButton({
+          sizeStyle: { width: `${geo.center}%`, aspectRatio: "1 / 1" },
+          imgFit: "object-contain",
+        })}
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       className="w-full"
@@ -446,7 +579,7 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
       <FluidFrame designWidth={376} designHeight={348}>
       <Image
         alt="Spin Grid Background"
-        src={SPIN_ASSETS.background}
+        src={assets.background}
         fill
         className="object-cover pointer-events-none"
       />
@@ -465,43 +598,7 @@ export default memo(function LuckySpinGrid({ onSpinClick, isSpinning: externalIs
           />
         ))}
 
-        <motion.div
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[143px] h-[143px] z-30 cursor-pointer"
-          initial={{ opacity: 0, scale: 0, rotate: 360 }}
-          animate={{ opacity: 1, scale: 1, rotate: 0 }}
-          transition={{
-            duration: 0.8,
-            delay: 1.0,
-            ease: "easeOut"
-          }}
-          whileHover={{ scale: spinning ? 1.05 : 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={spinning ? requestManualStop : startSpin}
-          aria-label={spinning ? "Stop spin" : "Spin now"}
-        >
-          {/* Center button artwork. Swaps to the "SPIN STOP" asset while
-              spinning so the player sees the affordance change (client
-              wanted the literal stop label baked into the artwork rather
-              than a separate overlay). Keeps rotating in both states. */}
-          <motion.div
-            className="w-full h-full"
-            style={{ rotate: centerRotateSpring, willChange: spinning ? "transform" : "auto" }}
-          >
-            {/* Plain <img> on purpose. next/image was serving the SSR-rendered
-                initial src and not honouring the swap to spn-stop.png when
-                `spinning` flipped, even with a re-mount key. A regular <img>
-                updates immediately when src changes. */}
-            <img
-              key={spinning ? "stop" : "spin"}
-              alt={spinning ? "Stop spin" : "Spin Now Button"}
-              src={spinning ? SPIN_ASSETS.centerButtonStop : SPIN_ASSETS.centerButton}
-              width={143}
-              height={143}
-              className="w-full h-full object-cover select-none"
-              draggable="false"
-            />
-          </motion.div>
-        </motion.div>
+        {centerButton({ sizeClass: "w-[143px] h-[143px]", imgFit: "object-cover" })}
       </div>
       </FluidFrame>
     </motion.div>

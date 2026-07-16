@@ -40,6 +40,16 @@ export const EP369_ASSETS = {
     wheel: `${BASE}/spin/wheel.png`,
     panel: `${BASE}/spin/panel.png`,
     btnPlay: `${BASE}/spin/btn-play.png`,
+    // Decomposed pieces (cropped from wheel.png) fed to the shared
+    // <LuckySpinGrid> so the themed wheel runs the exact same spin/selection
+    // engine as the default portal. Keys mirror SPIN_ASSETS.
+    grid: {
+      background: `${BASE}/spin/grid-frame.png`,
+      itemEmptyGold: `${BASE}/spin/tile-gold.png`,
+      itemEmptyGreen: `${BASE}/spin/tile-green.png`,
+      centerButton: `${BASE}/spin/center.png`,
+      centerButtonStop: `${BASE}/spin/center.png`,
+    },
   },
   egg: {
     bg: `${BASE}/egg/bg-hall.png`,

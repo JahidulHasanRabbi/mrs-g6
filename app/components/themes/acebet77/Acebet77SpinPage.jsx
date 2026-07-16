@@ -2,48 +2,35 @@
 
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { motion, useMotionValue, animate } from 'framer-motion';
+import { motion } from 'framer-motion';
 import AcebetShell from './AcebetShell';
 import AcebetDialog from './AcebetDialog';
 import AcebetButton from './AcebetButton';
 import AcebetOrnateCard from './AcebetOrnateCard';
+import LuckySpinGrid from '../../spin/LuckySpinGrid';
 import { ACEBET_ASSETS, ACEBET_COLORS } from './assets';
 import { oneSpin, tenSpin, fiftySpin, getAllLuckySpinItems } from '../../../api/memberApi';
 import { mapSpinResults, mapLuckySpinItems } from '../../../api/responseMappers';
 import { tokenStorage } from '../../../api/tokenStorage';
 import { useUser } from '../../../contexts/UserContext';
 
-const SLOT_COUNT = 8;
-// Prize-tile centres (% of the square wheel art) in clockwise ring order from
-// the top-left: corners (even indices) are gold plaques, edges (odd) green.
-const SLOT_CENTERS = [
-  { l: 22.5, t: 21.5 }, { l: 50, t: 21 }, { l: 76.5, t: 21.5 }, { l: 77, t: 49.5 },
-  { l: 76.5, t: 78 }, { l: 50, t: 78 }, { l: 22.5, t: 78 }, { l: 22, t: 50 },
-];
-const SLOT_SIZE = 23; // tile size, % of wheel
+// Acebet77 Lucky Spin. The wheel itself is the shared <LuckySpinGrid> — the
+// same spin/selection engine the default portal uses — fed acebet's artwork and
+// a square-frame geometry. Only the images change; the timing, ring cycling,
+// deceleration, winner highlight and manual-stop all come from the shared code.
+const ACEBET_GEOMETRY = { framePad: 15, tile: 23, center: 27 };
 
-/**
- * Acebet77 Lucky Spin (updated Figma 15:195 idle / 30:118 spinning /
- * 14:117 loading / 39:116 rewards panel). The wheel is a flat 3x3 prize grid
- * with a centre SPIN NOW button: a single motion value drives the highlight
- * racing around the eight tiles and lands on the slot matching the server
- * result, so the animation can never drift out of sync.
- */
 export default function Acebet77SpinPage() {
   const [spinItems, setSpinItems] = useState([]);
   const [itemsLoading, setItemsLoading] = useState(true);
   const [isSpinning, setIsSpinning] = useState(false);
-  const [highlightIndex, setHighlightIndex] = useState(null);
   const [dialog, setDialog] = useState(null); // { type: 'win'|'error', title, message }
   const { refreshUserData } = useUser();
 
   const spinResultsRef = useRef(null);
+  const spinErrorRef = useRef(null);
+  const gridSpinTriggerRef = useRef(null);
   const isProcessingRef = useRef(false);
-  // The centre medallion is the spinner: this drives its rotation. The wheel
-  // itself is a fixed grid, so nothing races around the tiles.
-  const rotation = useMotionValue(0);
-  const rotationRef = useRef(0);
-  const spinAnimRef = useRef(null);
 
   useEffect(() => {
     async function fetchItems() {
@@ -57,11 +44,19 @@ export default function Acebet77SpinPage() {
       }
     }
     fetchItems();
-    return () => spinAnimRef.current?.stop();
   }, []);
 
-  const finishSpin = useCallback(() => {
+  // Fires when the wheel animation lands (auto or manual stop). Builds the
+  // result dialog from the server result captured before the spin started.
+  const handleSpinComplete = useCallback(() => {
     setIsSpinning(false);
+
+    if (spinErrorRef.current) {
+      setDialog({ type: 'error', title: 'Spin Failed', message: spinErrorRef.current });
+      spinErrorRef.current = null;
+      return;
+    }
+
     const results = spinResultsRef.current;
     spinResultsRef.current = null;
     if (!results) return;
@@ -80,48 +75,32 @@ export default function Acebet77SpinPage() {
     }
   }, []);
 
-  // Spin the centre medallion several whole turns (settling upright), then
-  // light up the winning tile once it stops. No highlight races around the
-  // grid — the medallion is the spinner, matching Figma 30:118.
-  const spinToWinner = useCallback((targetIndex, onDone) => {
-    const from = rotationRef.current;
-    const to = from + 360 * 6; // 6 full turns → settles upright
-    rotationRef.current = to;
-    setHighlightIndex(null);
-    spinAnimRef.current = animate(rotation, to, {
-      duration: 3.6,
-      ease: [0.12, 0.7, 0.2, 1],
-      onComplete: () => {
-        setHighlightIndex(targetIndex); // reveal the winner
-        setTimeout(onDone, 650);        // brief glow before the dialog
-      },
-    });
-  }, [rotation]);
-
-  const handleSpin = useCallback(
+  // Runs the API call, stashes the result, and returns success/failure. Shared
+  // by the centre button and the x10/x50 plaques (identical to the default).
+  const handleSpinAction = useCallback(
     async (spinFunction, spinType) => {
       const memberUuid = tokenStorage.getMemberUuid();
       if (!memberUuid) {
         setDialog({ type: 'error', title: 'Error', message: 'Please log in to spin.' });
-        return;
+        return false;
       }
-      if (isSpinning || isProcessingRef.current) return;
+      if (isSpinning || isProcessingRef.current) return false;
       isProcessingRef.current = true;
 
       try {
+        spinResultsRef.current = null;
+        spinErrorRef.current = null;
         const response = await spinFunction(memberUuid);
         const results = mapSpinResults(response);
         spinResultsRef.current = results;
         setIsSpinning(true);
         await refreshUserData();
-
-        const winnerUuid = results[0]?.uuid;
-        let targetIndex = spinItems.findIndex((item) => item.uuid === winnerUuid);
-        if (targetIndex < 0) targetIndex = Math.floor(SLOT_COUNT / 2);
-        spinToWinner(targetIndex % SLOT_COUNT, finishSpin);
+        isProcessingRef.current = false;
+        return true;
       } catch (error) {
         console.error(`Error during ${spinType}:`, error);
         setIsSpinning(false);
+        isProcessingRef.current = false;
         const errorDetails = error.data?.details || error.data?.detail || error.message || '';
         const lowerError = errorDetails.toLowerCase();
         const insufficient =
@@ -137,17 +116,34 @@ export default function Acebet77SpinPage() {
             ? "You don't have enough points to spin. Please earn more points first!"
             : errorDetails || 'An error occurred. Please try again.',
         });
-      } finally {
-        isProcessingRef.current = false;
+        return false;
       }
     },
-    [isSpinning, spinItems, refreshUserData, spinToWinner, finishSpin]
+    [isSpinning, refreshUserData]
   );
 
-  const closeDialog = useCallback(() => {
-    setDialog(null);
-    setHighlightIndex(null); // clear the winner glow when leaving the result
-  }, []);
+  // Centre button (one spin): return the winning uuid so the grid can animate.
+  const handleCenterSpin = useCallback(async () => {
+    const ok = await handleSpinAction(oneSpin, 'one spin');
+    if (ok && spinResultsRef.current?.length > 0) {
+      return { uuid: spinResultsRef.current[0].uuid };
+    }
+    return ok;
+  }, [handleSpinAction]);
+
+  // x10 / x50: run the API then drive the same wheel animation via the trigger.
+  const handleMultiSpin = useCallback(
+    async (spinFunction, spinType) => {
+      const ok = await handleSpinAction(spinFunction, spinType);
+      const trigger = gridSpinTriggerRef.current;
+      if (ok && trigger && spinResultsRef.current?.length > 0) {
+        trigger(spinResultsRef.current[0].uuid);
+      }
+    },
+    [handleSpinAction]
+  );
+
+  const closeDialog = useCallback(() => setDialog(null), []);
 
   const handleReturnToWebsite = useCallback(() => {
     const savedO = tokenStorage.getRedirectO();
@@ -158,13 +154,6 @@ export default function Acebet77SpinPage() {
     const base = savedO.startsWith('http') ? savedO : `https://${savedO}`;
     window.location.href = `${base.replace(/\/$/, '')}/promotion`;
   }, []);
-
-  // Eight slots filled from the spin-items API (like the default theme):
-  // corners gold, edges green. "?" only shows if the API returns fewer items.
-  const slots = Array.from({ length: SLOT_COUNT }, (_, i) => ({
-    item: spinItems[i] || null,
-    isGold: i % 2 === 0,
-  }));
 
   return (
     <AcebetShell bg={ACEBET_ASSETS.spin.bg}>
@@ -179,87 +168,16 @@ export default function Acebet77SpinPage() {
           <Image src={ACEBET_ASSETS.spin.title} alt="Lucky Spin" fill priority className="object-contain" sizes="318px" />
         </motion.div>
 
-        {/* Wheel: ornate frame + 8 API-driven prize slots + centre SPIN NOW */}
-        <div className="relative w-full max-w-[370px] aspect-square">
-          <Image src={ACEBET_ASSETS.spin.wheelFrame} alt="" fill priority className="object-contain" sizes="370px" />
-
-          {/* Prize slots — plaque + the API item's image (or "?" fallback). The
-              winning tile lights up once the spin settles (highlightIndex). */}
-          {!itemsLoading &&
-            slots.map((slot, i) => {
-              const pos = SLOT_CENTERS[i];
-              const isLit = highlightIndex === i;
-              return (
-                <div
-                  key={i}
-                  className="pointer-events-none absolute transition-all duration-150"
-                  style={{
-                    left: `${pos.l}%`,
-                    top: `${pos.t}%`,
-                    width: `${SLOT_SIZE}%`,
-                    height: `${SLOT_SIZE}%`,
-                    transform: isLit ? 'translate(-50%,-50%) scale(1.14)' : 'translate(-50%,-50%)',
-                    filter: isLit ? 'brightness(1.5) drop-shadow(0 0 12px rgba(255,225,109,0.95))' : 'none',
-                    zIndex: isLit ? 3 : 2,
-                  }}
-                >
-                  <img
-                    src={slot.isGold ? ACEBET_ASSETS.spin.slotGold : ACEBET_ASSETS.spin.slotGreen}
-                    alt=""
-                    className="absolute inset-0 h-full w-full object-contain"
-                  />
-                  <div className="absolute inset-[20%] flex items-center justify-center">
-                    {slot.item?.image ? (
-                      <img
-                        src={slot.item.image}
-                        alt={slot.item.reward_name || ''}
-                        className="max-h-full max-w-full object-contain"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                    ) : slot.isGold ? null : (
-                      // Green plaques are blank, so draw the "?" mystery marker;
-                      // gold plaques already have one baked into the art.
-                      <span className="text-[26px] font-bold leading-none" style={{ color: '#0d3b1e', fontFamily: 'var(--font-acme), sans-serif' }}>
-                        ?
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-
-          {/* Centre SPIN NOW medallion — overlaid so it can rotate while
-              spinning. Outer wrapper owns the centring translate; the inner
-              motion element owns the rotation so framer-motion's transform
-              doesn't clobber the centring. */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[30%] aspect-square z-[4]">
-            <motion.button
-              onClick={() => handleSpin(oneSpin, 'one spin')}
-              disabled={isSpinning || itemsLoading}
-              aria-label="Spin now"
-              className="relative w-full h-full cursor-pointer disabled:cursor-not-allowed"
-              whileTap={{ scale: 0.94 }}
-              style={{ rotate: rotation }}
-            >
-              <Image src={ACEBET_ASSETS.spin.spinNow} alt="Spin Now" fill className="object-contain" sizes="130px" />
-            </motion.button>
-          </div>
-        </div>
-
-        {/* Loading plaque (Figma 14:117) */}
-        {itemsLoading && (
-          <div className="relative flex items-center justify-center h-[58px] w-[280px]">
-            <img src={ACEBET_ASSETS.spin.btnPlay} alt="" className="absolute inset-0 w-full h-full object-fill" />
-            <span
-              className="relative z-10 text-[16px]"
-              style={{ fontFamily: 'var(--font-berkshire-swash), cursive', color: ACEBET_COLORS.goldBright }}
-            >
-              Loading...
-            </span>
-          </div>
-        )}
+        {/* Wheel — shared engine, acebet art */}
+        <LuckySpinGrid
+          assets={ACEBET_ASSETS.spin.grid}
+          themed={ACEBET_GEOMETRY}
+          items={spinItems}
+          isSpinning={isSpinning}
+          onSpinClick={handleCenterSpin}
+          onSpinComplete={handleSpinComplete}
+          spinTriggerRef={gridSpinTriggerRef}
+        />
 
         {/* Multi-spin buttons */}
         {!itemsLoading && (
@@ -270,7 +188,7 @@ export default function Acebet77SpinPage() {
             ].map((btn) => (
               <button
                 key={btn.label}
-                onClick={() => handleSpin(btn.fn, btn.type)}
+                onClick={() => handleMultiSpin(btn.fn, btn.type)}
                 disabled={isSpinning}
                 className="relative flex items-center justify-center h-[58px] w-[164px] cursor-pointer active:scale-95 transition-transform disabled:opacity-60 disabled:cursor-not-allowed"
               >
@@ -319,8 +237,7 @@ export default function Acebet77SpinPage() {
         </div>
       </div>
 
-      {/* Result / error dialog: heading + detail inside the ornate frame,
-          action buttons below (keeps the heading clear of the crown). */}
+      {/* Result / error dialog */}
       <AcebetDialog open={!!dialog} onClose={closeDialog} frameless>
         <AcebetOrnateCard>
           <div className="flex items-center gap-2">
