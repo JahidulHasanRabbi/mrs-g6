@@ -5,12 +5,9 @@ import GreenCta, { OutlinePillCta } from "./GreenCta";
 import RedeemAllButton from "./RedeemAllButton";
 import { ICONS } from "./constants";
 import { usePkColors } from "./usePkColors";
-import AcebetOrnateCard from "../themes/acebet77/AcebetOrnateCard";
-import AcebetButton from "../themes/acebet77/AcebetButton";
-import { ACEBET_ASSETS, ACEBET_COLORS } from "../themes/acebet77/assets";
 
 export default function GoalDialog({ reward, onKickAgain, onRedeemAll, onReturn }) {
-  const { colors: COLORS, soft, isAcebet77 } = usePkColors();
+  const { colors: COLORS, soft, theme } = usePkColors();
   const itemType = String(reward?.item_type || "").toUpperCase();
   const amount = reward?.credit_amount ?? reward?.amount ?? reward?.token_amount ?? reward?.score_amount;
   const rewardText = reward?.reward_name
@@ -21,18 +18,19 @@ export default function GoalDialog({ reward, onKickAgain, onRedeemAll, onReturn 
       ? `${amount} ${itemType === "TOKEN" ? "Token" : "Reward"}${Number(amount) === 1 ? "" : "s"}`
       : "a reward";
 
-  // Acebet77: crowned ornate frame holds only the heading + reward; the
-  // action buttons sit BELOW the frame (Figma node 4:634), so nothing
-  // overflows the fixed frame art.
-  if (isAcebet77) {
+  // Themed skins (acebet77 / ubetclub): crowned ornate frame holds only the
+  // heading + reward; the action buttons sit BELOW the frame (Figma 4:634 /
+  // 77:2511), so nothing overflows the fixed frame art.
+  if (theme) {
+    const { OrnateCard, Button, palette, assets } = theme;
     return (
       <div className="flex w-full max-w-[360px] flex-col items-center gap-3">
-        <AcebetOrnateCard>
+        <OrnateCard>
           <div className="flex items-center gap-2">
-            <img src={ACEBET_ASSETS.ui.iconParty} alt="" className="h-6 w-6" />
+            <img src={assets.ui.iconParty} alt="" className="h-6 w-6" />
             <p
               className="text-[20px] uppercase tracking-[2px]"
-              style={{ fontFamily: "var(--font-acme), sans-serif", color: ACEBET_COLORS.cream }}
+              style={{ fontFamily: "var(--font-acme), sans-serif", color: palette.cream }}
             >
               Congratulations
             </p>
@@ -45,23 +43,23 @@ export default function GoalDialog({ reward, onKickAgain, onRedeemAll, onReturn 
             style={{
               fontSize: "clamp(20px, 6vw, 26px)",
               fontFamily: "var(--font-acme), sans-serif",
-              color: ACEBET_COLORS.tokenYellow,
+              color: palette.accent,
               textShadow: "0 0 14px rgba(255,225,109,0.6)",
             }}
           >
             {rewardText}
           </p>
-        </AcebetOrnateCard>
-        <AcebetButton onClick={onKickAgain}>Kick Again?</AcebetButton>
+        </OrnateCard>
+        <Button onClick={onKickAgain}>Kick Again?</Button>
         {onRedeemAll && (
-          <AcebetButton variant="gold" onClick={onRedeemAll}>
+          <Button variant="gold" onClick={onRedeemAll}>
             Redeem All
-          </AcebetButton>
+          </Button>
         )}
         <button
           onClick={onReturn}
           className="mt-1 text-[12px] underline"
-          style={{ color: ACEBET_COLORS.sand, fontFamily: "var(--font-rubik), sans-serif" }}
+          style={{ color: palette.sand, fontFamily: "var(--font-rubik), sans-serif" }}
         >
           Return to website
         </button>

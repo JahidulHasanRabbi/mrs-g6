@@ -22,10 +22,10 @@ function SectionBadge({ children, align = "center" }) {
   );
 }
 
-function SwipeIllustration() {
+function SwipeIllustration({ compact = false }) {
   const { colors: COLORS } = usePkColors();
   return (
-    <svg viewBox="0 0 240 156" className="my-2 h-[156px] w-full">
+    <svg viewBox="0 0 240 156" className={`my-2 w-full ${compact ? "h-[92px]" : "h-[156px]"}`}>
       <defs>
         <marker id="arrowHead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
           <path d="M0,0 L10,5 L0,10 z" fill={COLORS.primary} />
@@ -50,11 +50,14 @@ function SwipeIllustration() {
 }
 
 export default function InfoDialog({ onClose, onOpenTerms }) {
-  const { colors: COLORS, soft } = usePkColors();
+  // Ubetclub's ornate frame stretches to fit content (unlike acebet's growing
+  // 3-slice), so the swipe illustration renders compact there to keep the
+  // frame short enough that the heading stays clear of the crown.
+  const { colors: COLORS, soft, isUbetclub } = usePkColors();
   return (
     <GlassCard>
       <SectionBadge>Information</SectionBadge>
-      <SwipeIllustration />
+      <SwipeIllustration compact={isUbetclub} />
       <h3
         className="mb-5 text-center text-[20px] font-bold tracking-wider uppercase"
         style={{

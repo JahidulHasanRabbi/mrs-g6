@@ -10,7 +10,7 @@ export default function GreenCta({
   showPlayIcon = true,
   className = "",
 }) {
-  const { colors: COLORS, isAcebet77 } = usePkColors();
+  const { colors: COLORS, isThemed } = usePkColors();
   return (
     <button
       type="button"
@@ -21,7 +21,7 @@ export default function GreenCta({
         backgroundColor: COLORS.primary,
         color: COLORS.primaryDeep,
         boxShadow: `0 4px 0 ${COLORS.primaryShadow}, 0 0 24px ${COLORS.glow35}`,
-        fontFamily: isAcebet77
+        fontFamily: isThemed
           ? "var(--font-berkshire-swash), cursive"
           : "'Lexend', sans-serif",
       }}

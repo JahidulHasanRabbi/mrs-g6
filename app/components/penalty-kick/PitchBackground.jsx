@@ -7,10 +7,9 @@
 import { COLORS } from "./constants";
 import { IMAGES } from "./assets";
 import { usePkColors } from "./usePkColors";
-import { ACEBET_ASSETS } from "../themes/acebet77/assets";
 
 export default function PitchBackground({ variant = "close", children }) {
-  const { isAcebet77 } = usePkColors();
+  const { isAcebet77, isThemed, theme } = usePkColors();
   // close variant uses a CSS background to render a zoomed-in crop of the
   // photo (≈ 200 % of container width), bottom-anchored so the grass-heavy
   // lower half of the photo fills the visible area. The native photo only
@@ -18,7 +17,10 @@ export default function PitchBackground({ variant = "close", children }) {
   // a thin strip, and the keeper+ball end up squashed against each other.
   const isClose = variant === "close";
 
-  if (isAcebet77) {
+  if (isThemed) {
+    const stadium = theme.assets.pk.bgStadium;
+    const crowd = theme.assets.pk.bgCrowd;
+
     // Acebet77 golden arena (Figma 4:704 wide / 4:595 close). The art has a
     // goal painted into it, but gameplay renders its own interactive
     // GoalFrame + Keeper. The close variant therefore lays a SINGLE
@@ -26,55 +28,90 @@ export default function PitchBackground({ variant = "close", children }) {
     // no seam anywhere in the pitch) and paints the crowd/floodlights as a
     // separate top layer that fades into the grass, so the rendered goal
     // line sits cleanly on unbroken grass.
+    if (isAcebet77) {
+      return (
+        <div className="absolute inset-0 overflow-hidden" style={{ backgroundColor: "#0b0903" }}>
+          {isClose ? (
+            <>
+              <div
+                aria-hidden="true"
+                className="absolute inset-0"
+                style={{
+                  backgroundImage: `url(${stadium})`,
+                  backgroundSize: "auto 240%",
+                  backgroundPosition: "center bottom",
+                  backgroundRepeat: "no-repeat",
+                }}
+              />
+              <div
+                aria-hidden="true"
+                className="absolute inset-x-0 top-0"
+                style={{
+                  height: "56vh",
+                  backgroundImage: `url(${stadium})`,
+                  backgroundSize: "auto 200%",
+                  backgroundPosition: "center top",
+                  backgroundRepeat: "no-repeat",
+                  WebkitMaskImage: "linear-gradient(180deg, #000 62%, transparent 100%)",
+                  maskImage: "linear-gradient(180deg, #000 62%, transparent 100%)",
+                }}
+              />
+            </>
+          ) : (
+            <img
+              src={crowd}
+              alt=""
+              draggable={false}
+              aria-hidden="true"
+              className="absolute inset-0 h-full w-full select-none"
+              style={{ objectFit: "cover", objectPosition: "center 40%" }}
+            />
+          )}
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.05) 22%, rgba(0,0,0,0.0) 45%, rgba(0,0,0,0.35) 78%, rgba(0,0,0,0.85) 100%)",
+            }}
+          />
+          {children}
+        </div>
+      );
+    }
+
+    // Ubetclub red New-Year arena (Figma 77:2629 wide / 77:2445 close). Unlike
+    // the acebet art this photo has its grass as a mid band with an ornate red
+    // carpet in the foreground, so a single bottom-anchored crop reads best:
+    // the zoom lifts the grass horizon up behind the rendered goal and keeps
+    // the red carpet as the penalty-spot foreground.
     return (
-      <div className="absolute inset-0 overflow-hidden" style={{ backgroundColor: "#0b0903" }}>
+      <div className="absolute inset-0 overflow-hidden" style={{ backgroundColor: "#12060a" }}>
         {isClose ? (
-          <>
-            {/* Continuous grass base: `auto 240%` bottom-anchored shows only
-                the art's grass (below its painted goal at ~58%), so the whole
-                field is one seamless texture. */}
-            <div
-              aria-hidden="true"
-              className="absolute inset-0"
-              style={{
-                backgroundImage: `url(${ACEBET_ASSETS.pk.bgStadium})`,
-                backgroundSize: "auto 240%",
-                backgroundPosition: "center bottom",
-                backgroundRepeat: "no-repeat",
-              }}
-            />
-            {/* Crowd + floodlights + royal box on top, showing the art's upper
-                half, faded out at the bottom so it dissolves into the grass
-                behind the goal line (~48vh). */}
-            <div
-              aria-hidden="true"
-              className="absolute inset-x-0 top-0"
-              style={{
-                height: "56vh",
-                backgroundImage: `url(${ACEBET_ASSETS.pk.bgStadium})`,
-                backgroundSize: "auto 200%",
-                backgroundPosition: "center top",
-                backgroundRepeat: "no-repeat",
-                WebkitMaskImage: "linear-gradient(180deg, #000 62%, transparent 100%)",
-                maskImage: "linear-gradient(180deg, #000 62%, transparent 100%)",
-              }}
-            />
-          </>
+          <div
+            aria-hidden="true"
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url(${stadium})`,
+              backgroundSize: "auto 175%",
+              backgroundPosition: "center bottom",
+              backgroundRepeat: "no-repeat",
+            }}
+          />
         ) : (
           <img
-            src={ACEBET_ASSETS.pk.bgCrowd}
+            src={stadium}
             alt=""
             draggable={false}
             aria-hidden="true"
             className="absolute inset-0 h-full w-full select-none"
-            style={{ objectFit: "cover", objectPosition: "center 40%" }}
+            style={{ objectFit: "cover", objectPosition: "center 38%" }}
           />
         )}
         <div
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              "linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.05) 22%, rgba(0,0,0,0.0) 45%, rgba(0,0,0,0.35) 78%, rgba(0,0,0,0.85) 100%)",
+              "linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.05) 22%, rgba(0,0,0,0.0) 45%, rgba(0,0,0,0.3) 78%, rgba(0,0,0,0.82) 100%)",
           }}
         />
         {children}
