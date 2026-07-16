@@ -16,6 +16,7 @@ import { tokenStorage } from "../api/tokenStorage";
 import { useUser } from "../contexts/UserContext";
 import { useTheme } from "../contexts/ThemeContext";
 import Acebet77SpinPage from "../components/themes/acebet77/Acebet77SpinPage";
+import UbetclubSpinPage from "../components/themes/ubetclub/UbetclubSpinPage";
 
 function DefaultSpinPage() {
   const [imageError, setImageError] = useState(false);
@@ -330,7 +331,8 @@ function DefaultSpinPage() {
 }
 
 export default function SpinPage() {
-  const { isAcebet77 } = useTheme();
+  const { isAcebet77, isUbetclub } = useTheme();
   if (isAcebet77) return <Acebet77SpinPage />;
+  if (isUbetclub) return <UbetclubSpinPage />;
   return <DefaultSpinPage />;
 }
