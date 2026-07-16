@@ -254,12 +254,6 @@ export default function Acebet77SpinPage() {
         <div className="relative w-full max-w-[402px] aspect-[1448/1086]">
           <Image src={ACEBET_ASSETS.spin.panel} alt="" fill className="object-contain" sizes="402px" />
           <div className="absolute inset-[13%] flex flex-col">
-            <p
-              className="text-center text-[18px] tracking-[2px] uppercase mb-2"
-              style={{ fontFamily: 'var(--font-acme), sans-serif', color: ACEBET_COLORS.cream }}
-            >
-              Rewards
-            </p>
             <div className="flex-1 overflow-y-auto pr-1 [scrollbar-width:thin]">
               {spinItems.length === 0 ? (
                 <p className="text-center text-[13px] mt-6" style={{ color: ACEBET_COLORS.sand, fontFamily: 'var(--font-rubik), sans-serif' }}>

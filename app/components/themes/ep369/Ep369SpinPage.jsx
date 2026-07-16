@@ -228,12 +228,6 @@ export default function Ep369SpinPage() {
         <div className="relative w-full max-w-[370px] aspect-[1672/941]">
           <Image src={EP369_ASSETS.spin.panel} alt="" fill className="object-contain" sizes="370px" />
           <div className="absolute inset-[11%] flex flex-col">
-            <p
-              className="mb-2 text-center text-[18px] uppercase tracking-[2px]"
-              style={{ fontFamily: 'var(--font-acme), sans-serif', color: EP369_COLORS.cream }}
-            >
-              Rewards
-            </p>
             <div className="flex-1 overflow-y-auto pr-1 [scrollbar-width:thin]">
               {spinItems.length === 0 ? (
                 <p className="mt-4 text-center text-[13px]" style={{ color: EP369_COLORS.sand, fontFamily: 'var(--font-rubik), sans-serif' }}>
