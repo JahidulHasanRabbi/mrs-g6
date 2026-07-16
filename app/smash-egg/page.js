@@ -30,6 +30,8 @@ import {
 import { mapSmashEggItems } from "../api/responseMappers";
 import { tokenStorage } from "../api/tokenStorage";
 import { BASE_URL } from "../api/api";
+import { useTheme } from "../contexts/ThemeContext";
+import Acebet77SmashEggPage from "../components/themes/acebet77/Acebet77SmashEggPage";
 
 const HISTORY_PAGE_SIZE = 10;
 const SMASH_EGG_TERMS_CATEGORY = 6;
@@ -138,7 +140,7 @@ function formatPrizeSummary(results, rewards) {
   };
 }
 
-export default function SmashEggPage() {
+function DefaultSmashEggPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCracked, setIsCracked] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -501,4 +503,10 @@ export default function SmashEggPage() {
       </AnimatePresence>
     </div>
   );
+}
+
+export default function SmashEggPage() {
+  const { isAcebet77 } = useTheme();
+  if (isAcebet77) return <Acebet77SmashEggPage />;
+  return <DefaultSmashEggPage />;
 }
