@@ -41,11 +41,10 @@ export const ACEBET_ASSETS = {
   spin: {
     bg: `${BASE}/spin/bg-spin.png`,
     title: `${BASE}/spin/title-lucky-spin.png`,
-    wheelBase: `${BASE}/spin/wheel-base.png`,
-    spinNow: `${BASE}/spin/btn-spin-now.png`,
+    // Updated Figma (15:195): the wheel is now a flat 3x3 prize grid with a
+    // centre SPIN NOW button, not the old radial rotating wheel.
+    wheel: `${BASE}/spin/wheel.png`,
     btnPlay: `${BASE}/spin/btn-play.png`,
-    slotGold: `${BASE}/spin/slot-gold.png`,
-    slotGreen: `${BASE}/spin/slot-green.png`,
     panel: `${BASE}/spin/panel-ornate.png`,
   },
   egg: {

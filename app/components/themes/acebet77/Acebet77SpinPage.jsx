@@ -14,27 +14,20 @@ import { tokenStorage } from '../../../api/tokenStorage';
 import { useUser } from '../../../contexts/UserContext';
 
 const SLOT_COUNT = 8;
-// Slot centers sit on a ring at 22.5% of the wheel width, offset 22.5° so the
-// eight slots fall inside the eight painted sectors of the wheel artwork.
-const SLOT_RADIUS_PCT = 22.5;
-const SLOT_SIZE_PCT = 11.5;
-// Angular offset of slot 0 from the top (12 o'clock), so the eight slots fall
-// inside the painted sectors. The spin math (crown pointer) references this.
-const SLOT_ANGLE_OFFSET = 22.5;
-
-function slotPosition(index) {
-  const angle = ((-90 + SLOT_ANGLE_OFFSET + index * 45) * Math.PI) / 180;
-  return {
-    left: `${50 + SLOT_RADIUS_PCT * Math.cos(angle) - SLOT_SIZE_PCT / 2}%`,
-    top: `${50 + SLOT_RADIUS_PCT * Math.sin(angle) - SLOT_SIZE_PCT / 2}%`,
-  };
-}
+// Tile centres (% of the square wheel art) in clockwise ring order from the
+// top-left, so the highlight visibly circles the 3x3 grid around SPIN NOW.
+const SLOT_CENTERS = [
+  { l: 24, t: 23 }, { l: 50, t: 23 }, { l: 76, t: 23 }, { l: 76, t: 50 },
+  { l: 76, t: 77 }, { l: 50, t: 77 }, { l: 24, t: 77 }, { l: 24, t: 50 },
+];
+const HILITE = 27; // highlight box size, % of wheel
 
 /**
- * Acebet77 Lucky Spin (Figma nodes 15:195 idle / 30:118 spinning /
- * 14:117 loading / 39:116 rewards panel). Reuses the standard spin APIs:
- * the wheel highlight runs around the eight prize slots and lands on the
- * slot matching the server result.
+ * Acebet77 Lucky Spin (updated Figma 15:195 idle / 30:118 spinning /
+ * 14:117 loading / 39:116 rewards panel). The wheel is a flat 3x3 prize grid
+ * with a centre SPIN NOW button: a single motion value drives the highlight
+ * racing around the eight tiles and lands on the slot matching the server
+ * result, so the animation can never drift out of sync.
  */
 export default function Acebet77SpinPage() {
   const [spinItems, setSpinItems] = useState([]);
@@ -46,11 +39,8 @@ export default function Acebet77SpinPage() {
 
   const spinResultsRef = useRef(null);
   const isProcessingRef = useRef(false);
-  // Single source of truth for the spin: the wheel's rotation. The lit slot is
-  // derived from this exact value on every frame (see handleSpin's onUpdate),
-  // so the spinning medallion and the item highlight can never drift apart.
-  const rotation = useMotionValue(0);
-  const rotationRef = useRef(0);
+  const spin = useMotionValue(0);
+  const spinRef = useRef(0);
   const spinAnimRef = useRef(null);
 
   useEffect(() => {
@@ -88,30 +78,16 @@ export default function Acebet77SpinPage() {
     }
   }, []);
 
-  // Spin the wheel to the winning slot. A single framer-motion animation drives
-  // the rotation; the lit slot is computed from that same rotation on every
-  // frame, so the medallion and the highlight are always in lockstep. The wheel
-  // does whole turns plus the exact fraction needed to land the winner under the
-  // highlight, and ends on a 45°-aligned angle so the medallion sits upright.
+  // Race the highlight around the ring and land on the winner. One motion value
+  // is the single source of truth; the lit tile is derived from it each frame.
   const spinToWinner = useCallback((targetIndex, onDone) => {
-    const SEG = 360 / SLOT_COUNT; // 45° per slot
-    // The medallion's crown is the pointer: at rotation R it points at screen
-    // angle (-90 + R). Slot i sits at angle (-90 + SLOT_ANGLE_OFFSET + i*SEG),
-    // so the crown points at slot i when R ≡ SLOT_ANGLE_OFFSET + i*SEG. We
-    // derive the lit slot from that exact relationship, and land the spin so
-    // the crown points at the winner — the pointer and the highlight are the
-    // same thing, spatially and in time.
-    const from = rotationRef.current;
-    const desired = SLOT_ANGLE_OFFSET + targetIndex * SEG; // target R (mod 360)
-    const base = from + 360 * 5; // at least 5 full turns
-    const extra = (((desired - (base % 360)) % 360) + 360) % 360;
+    const from = spinRef.current;
+    const base = from + SLOT_COUNT * 5; // at least 5 full loops
+    const extra = (((targetIndex - (Math.round(base) % SLOT_COUNT)) % SLOT_COUNT) + SLOT_COUNT) % SLOT_COUNT;
     const to = base + extra;
-    rotationRef.current = to;
-
-    // Which slot the crown currently points at (round to nearest sector).
-    const litFor = (rot) =>
-      ((Math.round((rot - SLOT_ANGLE_OFFSET) / SEG) % SLOT_COUNT) + SLOT_COUNT) % SLOT_COUNT;
-    spinAnimRef.current = animate(rotation, to, {
+    spinRef.current = to;
+    const litFor = (v) => ((Math.round(v) % SLOT_COUNT) + SLOT_COUNT) % SLOT_COUNT;
+    spinAnimRef.current = animate(spin, to, {
       duration: 3.6,
       ease: [0.12, 0.7, 0.2, 1],
       onUpdate: (v) => setHighlightIndex(litFor(v)),
@@ -120,7 +96,7 @@ export default function Acebet77SpinPage() {
         onDone();
       },
     });
-  }, [rotation]);
+  }, [spin]);
 
   const handleSpin = useCallback(
     async (spinFunction, spinType) => {
@@ -178,10 +154,7 @@ export default function Acebet77SpinPage() {
     window.location.href = `${base.replace(/\/$/, '')}/promotion`;
   }, []);
 
-  const slots = Array.from({ length: SLOT_COUNT }, (_, i) => ({
-    item: spinItems[i] || null,
-    isGold: i % 2 === 0,
-  }));
+  const lit = highlightIndex != null ? SLOT_CENTERS[highlightIndex] : null;
 
   return (
     <AcebetShell bg={ACEBET_ASSETS.spin.bg}>
@@ -196,79 +169,34 @@ export default function Acebet77SpinPage() {
           <Image src={ACEBET_ASSETS.spin.title} alt="Lucky Spin" fill priority className="object-contain" sizes="318px" />
         </motion.div>
 
-        {/* Wheel */}
-        <div className="relative w-full max-w-[402px] aspect-square">
-          <Image src={ACEBET_ASSETS.spin.wheelBase} alt="" fill priority className="object-contain" sizes="402px" />
+        {/* Wheel: flat 3x3 prize grid + centre SPIN NOW (Figma 15:195) */}
+        <div className="relative w-full max-w-[370px] aspect-[370/367]">
+          <Image src={ACEBET_ASSETS.spin.wheel} alt="" fill priority className="object-contain" sizes="370px" />
 
-          {!itemsLoading &&
-            slots.map((slot, i) => {
-              const pos = slotPosition(i);
-              const isLit = highlightIndex === i;
-              return (
-                <div
-                  key={i}
-                  className="absolute transition-all duration-100"
-                  style={{
-                    ...pos,
-                    width: `${SLOT_SIZE_PCT}%`,
-                    height: `${SLOT_SIZE_PCT}%`,
-                    filter: isLit
-                      ? 'brightness(1.6) drop-shadow(0 0 12px rgba(255,225,109,0.95))'
-                      : 'none',
-                    transform: isLit ? 'scale(1.18)' : 'scale(1)',
-                    zIndex: isLit ? 3 : 2,
-                  }}
-                >
-                  <img
-                    src={slot.isGold ? ACEBET_ASSETS.spin.slotGold : ACEBET_ASSETS.spin.slotGreen}
-                    alt=""
-                    className="absolute inset-0 w-full h-full object-contain"
-                  />
-                  <div className="absolute inset-[18%] flex items-center justify-center">
-                    {slot.item?.image ? (
-                      <img
-                        src={slot.item.image}
-                        alt={slot.item.reward_name || ''}
-                        className="max-w-full max-h-full object-contain"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                          e.currentTarget.nextSibling?.style && (e.currentTarget.nextSibling.style.display = 'block');
-                        }}
-                      />
-                    ) : null}
-                    <span
-                      className="font-bold text-[16px]"
-                      style={{
-                        color: '#3d2c07',
-                        display: slot.item?.image ? 'none' : 'block',
-                        fontFamily: 'var(--font-acme), sans-serif',
-                      }}
-                    >
-                      ?
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+          {/* Moving highlight over the winning tile */}
+          {lit && (
+            <div
+              className="pointer-events-none absolute rounded-[14px] transition-all duration-100"
+              style={{
+                left: `${lit.l - HILITE / 2}%`,
+                top: `${lit.t - HILITE / 2}%`,
+                width: `${HILITE}%`,
+                height: `${HILITE}%`,
+                border: `3px solid ${ACEBET_COLORS.goldBright}`,
+                boxShadow: '0 0 18px 4px rgba(255,225,109,0.9), inset 0 0 14px rgba(255,246,223,0.5)',
+                background: 'rgba(255,246,223,0.14)',
+              }}
+            />
+          )}
 
-          {/* Center SPIN NOW medallion. It visibly spins (whole turns, so it
-              settles upright) while the slot highlight lands on the winner —
-              together they read as a real spin with a clear result. */}
-          {/* Outer wrapper owns the centering translate; the inner motion
-              element owns the rotation so framer-motion's transform doesn't
-              clobber the centering. */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[34.5%] aspect-square z-[4]">
-            <motion.button
-              onClick={() => handleSpin(oneSpin, 'one spin')}
-              disabled={isSpinning || itemsLoading}
-              aria-label="Spin now"
-              className="relative w-full h-full cursor-pointer disabled:cursor-not-allowed"
-              whileTap={{ scale: 0.94 }}
-              style={{ rotate: rotation }}
-            >
-              <Image src={ACEBET_ASSETS.spin.spinNow} alt="Spin Now" fill className="object-contain" sizes="140px" />
-            </motion.button>
-          </div>
+          {/* Centre SPIN NOW (baked into the wheel art) — transparent hit area */}
+          <motion.button
+            onClick={() => handleSpin(oneSpin, 'one spin')}
+            disabled={isSpinning || itemsLoading}
+            aria-label="Spin now"
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[30%] aspect-square rounded-full cursor-pointer disabled:cursor-not-allowed"
+            whileTap={{ scale: 0.92 }}
+          />
         </div>
 
         {/* Loading plaque (Figma 14:117) */}
