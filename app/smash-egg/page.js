@@ -33,6 +33,7 @@ import { BASE_URL } from "../api/api";
 import { useTheme } from "../contexts/ThemeContext";
 import Acebet77SmashEggPage from "../components/themes/acebet77/Acebet77SmashEggPage";
 import UbetclubSmashEggPage from "../components/themes/ubetclub/UbetclubSmashEggPage";
+import Ep369SmashEggPage from "../components/themes/ep369/Ep369SmashEggPage";
 
 const HISTORY_PAGE_SIZE = 10;
 const SMASH_EGG_TERMS_CATEGORY = 6;
@@ -507,8 +508,9 @@ function DefaultSmashEggPage() {
 }
 
 export default function SmashEggPage() {
-  const { isAcebet77, isUbetclub } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369 } = useTheme();
   if (isAcebet77) return <Acebet77SmashEggPage />;
   if (isUbetclub) return <UbetclubSmashEggPage />;
+  if (isEp369) return <Ep369SmashEggPage />;
   return <DefaultSmashEggPage />;
 }
