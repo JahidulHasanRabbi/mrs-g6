@@ -15,6 +15,7 @@ import SmashEggTerms from '../../smash-egg/SmashEggTerms';
 import ThemedResultModal from '../../smash-egg/ThemedResultModal';
 import SmashEggHistoryDialog from '../../smash-egg/SmashEggHistoryDialog';
 import { useSmashEggGame, HISTORY_PAGE_SIZE } from '../../smash-egg/useSmashEggGame';
+import { SMASH_EGG_ASSETS } from '../../smash-egg/smashEggAssets';
 import { EP369_ASSETS, EP369_COLORS } from './assets';
 
 const WELCOME_SEEN_KEY = 'mrs_ep369_egg_welcome_seen';
@@ -117,7 +118,7 @@ export default function Ep369SmashEggPage() {
   }
 
   return (
-    <Ep369Shell bg={EP369_ASSETS.egg.bg} onInfoClick={openHistory}>
+    <Ep369Shell bg={EP369_ASSETS.egg.bg} onInfoClick={openHistory} title="SMASH EGG" titleIcon={SMASH_EGG_ASSETS.headerEggIcon}>
       <div className="relative flex flex-col items-center px-4">
         <motion.div
           className="pointer-events-none absolute left-1/2 top-[70px] h-[540px] w-[540px] -translate-x-1/2"

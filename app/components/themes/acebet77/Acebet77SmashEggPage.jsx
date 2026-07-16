@@ -15,6 +15,7 @@ import SmashEggTerms from '../../smash-egg/SmashEggTerms';
 import ThemedResultModal from '../../smash-egg/ThemedResultModal';
 import SmashEggHistoryDialog from '../../smash-egg/SmashEggHistoryDialog';
 import { useSmashEggGame, HISTORY_PAGE_SIZE } from '../../smash-egg/useSmashEggGame';
+import { SMASH_EGG_ASSETS } from '../../smash-egg/smashEggAssets';
 import { ACEBET_ASSETS, ACEBET_COLORS } from './assets';
 
 const WELCOME_SEEN_KEY = 'mrs_acebet77_egg_welcome_seen';
@@ -117,7 +118,7 @@ export default function Acebet77SmashEggPage() {
   }
 
   return (
-    <AcebetShell bg={ACEBET_ASSETS.egg.bg} onInfoClick={openHistory}>
+    <AcebetShell bg={ACEBET_ASSETS.egg.bg} onInfoClick={openHistory} title="SMASH EGG" titleIcon={SMASH_EGG_ASSETS.headerEggIcon}>
       <div className="relative flex flex-col items-center px-4">
         {/* Light rays behind the egg */}
         <motion.div

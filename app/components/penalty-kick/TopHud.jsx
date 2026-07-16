@@ -33,12 +33,33 @@ function IconButton({ src, onClick, label, imgStyle }) {
 export default function TopHud({ onInfoClick, onMenuClick, onNavMenuClick }) {
   const { theme } = usePkColors();
 
-  // Themed header (Figma 59:811 / 77:2505): ornate hamburger left, info badge
-  // right, no page title. History stays reachable via its gold flag icon.
+  // Themed header: ornate hamburger + the "PENALTY KICK" title (parity with the
+  // default portal's header), info badge + history flag on the right. The title
+  // matches the shared ThemeHeader (Acme 22px gold) so every themed game header
+  // reads consistently.
   if (theme) {
     return (
       <div className="flex w-full items-center justify-between p-4">
-        <IconButton src={theme.assets.ui.hamburger} onClick={onNavMenuClick} label="Navigation menu" />
+        <div className="flex items-center gap-2">
+          <IconButton src={theme.assets.ui.hamburger} onClick={onNavMenuClick} label="Navigation menu" />
+          {theme.iconBall && (
+            <span className="grid h-[24px] w-[24px] place-items-center">
+              <img src={theme.iconBall} alt="" className="h-[24px] w-[24px] object-contain select-none" draggable={false} />
+            </span>
+          )}
+          <h1
+            className="whitespace-nowrap uppercase leading-none"
+            style={{
+              fontFamily: "var(--font-acme), 'Acme', sans-serif",
+              fontSize: 22,
+              letterSpacing: "-1px",
+              color: "#ffd700",
+              textShadow: "0 2px 6px rgba(0,0,0,0.75)",
+            }}
+          >
+            PENALTY KICK
+          </h1>
+        </div>
         <div className="flex items-center gap-4">
           <IconButton
             src={ICONS.history}

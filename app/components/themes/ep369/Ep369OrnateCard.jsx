@@ -18,7 +18,7 @@ export default function Ep369OrnateCard({ children, className = "" }) {
         backgroundRepeat: "no-repeat",
       }}
     >
-      <div className="flex min-h-[240px] flex-col items-center justify-center text-center px-[14%] pt-[27%] pb-[22%]">
+      <div className="flex min-h-[240px] flex-col items-center justify-center text-center px-[14%] pt-[34%] pb-[22%]">
         {children}
       </div>
     </div>
