@@ -25,7 +25,7 @@ function SectionBadge({ children, align = "center" }) {
 function SwipeIllustration({ compact = false }) {
   const { colors: COLORS } = usePkColors();
   return (
-    <svg viewBox="0 0 240 156" className={`my-2 w-full ${compact ? "h-[92px]" : "h-[156px]"}`}>
+    <svg viewBox="0 0 240 156" className={`w-full ${compact ? "my-1 h-[62px]" : "my-2 h-[156px]"}`}>
       <defs>
         <marker id="arrowHead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
           <path d="M0,0 L10,5 L0,10 z" fill={COLORS.primary} />
