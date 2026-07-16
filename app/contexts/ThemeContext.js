@@ -17,6 +17,7 @@ const ThemeContext = createContext({
   themeId: THEME_IDS.DEFAULT,
   isAcebet77: false,
   isUbetclub: false,
+  isEp369: false,
   isThemed: false,
 });
 
@@ -49,6 +50,7 @@ export function ThemeProvider({ children }) {
         themeId,
         isAcebet77: themeId === THEME_IDS.ACEBET77,
         isUbetclub: themeId === THEME_IDS.UBETCLUB,
+        isEp369: themeId === THEME_IDS.EP369,
         // True for any non-default skin — lets shared chrome (AppLayout,
         // penalty-kick components) branch once instead of per-theme.
         isThemed: themeId !== THEME_IDS.DEFAULT,
