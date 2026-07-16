@@ -13,13 +13,14 @@ import { ACEBET_ASSETS, ACEBET_COLORS } from './assets';
 const fluid = (px) => `min(${px}px, ${((px / 475) * 100).toFixed(2)}vw)`;
 
 // Boxes match the medallion art aspect (~0.85 w/h) so the ornate frames
-// aren't letterboxed. Home is larger and rides up in the center notch.
+// aren't letterboxed. Sized to sit fully inside the gold bar's side height —
+// only the raised center notch is tall enough for the larger HOME medallion.
 const NAV_ITEMS = [
-  { id: 'leaderboard', icon: ACEBET_ASSETS.nav.leaderboard, label: 'LEADERBOARD', link: '/leaderboard', width: 42, height: 48 },
-  { id: 'hot', icon: ACEBET_ASSETS.nav.hot, label: 'HOT', action: 'hot', width: 42, height: 48 },
-  { id: 'home', icon: ACEBET_ASSETS.nav.home, label: 'HOME', link: '/', width: 56, height: 66, isCenter: true },
-  { id: 'profile', icon: ACEBET_ASSETS.nav.profile, label: 'PROFILE', link: '/profile', width: 42, height: 48 },
-  { id: 'livechat', icon: ACEBET_ASSETS.nav.livechat, label: 'LIVECHAT', action: 'livechat', width: 42, height: 48 },
+  { id: 'leaderboard', icon: ACEBET_ASSETS.nav.leaderboard, label: 'LEADERBOARD', link: '/leaderboard', width: 34, height: 40 },
+  { id: 'hot', icon: ACEBET_ASSETS.nav.hot, label: 'HOT', action: 'hot', width: 34, height: 40 },
+  { id: 'home', icon: ACEBET_ASSETS.nav.home, label: 'HOME', link: '/', width: 50, height: 58, isCenter: true },
+  { id: 'profile', icon: ACEBET_ASSETS.nav.profile, label: 'PROFILE', link: '/profile', width: 34, height: 40 },
+  { id: 'livechat', icon: ACEBET_ASSETS.nav.livechat, label: 'LIVECHAT', action: 'livechat', width: 34, height: 40 },
 ];
 
 function NavItem({ item, isActive, onAction }) {

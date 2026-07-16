@@ -9,8 +9,11 @@ export default function GlassCard({ children, className = "", style }) {
   const { isAcebet77 } = usePkColors();
 
   // Acebet77 dialogs (Figma 61:1002 info / 61:1128 terms / 61:1300 history /
-  // 4:634 goal): same content, wrapped in the crowned ornate gold frame
-  // instead of the glass panel.
+  // 4:634 goal): same content, wrapped in the crowned ornate gold frame.
+  // Built as a 3-slice (fixed crown top + stretchable rail middle + fixed
+  // flourish bottom) so the frame GROWS with its content — the heading always
+  // sits below the crown and the last line stays above the flourish, no matter
+  // how much content there is (fixes headings/links spilling out of the box).
   if (isAcebet77) {
     return (
       <motion.div
@@ -18,16 +21,31 @@ export default function GlassCard({ children, className = "", style }) {
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 6 }}
         transition={{ duration: 0.25, ease: "easeOut" }}
-        className={`relative w-full max-w-[374px] px-[30px] pt-[72px] pb-[36px] ${className}`}
+        className={`relative flex w-full max-w-[360px] flex-col ${className}`}
         style={style}
       >
         <img
-          src={ACEBET_ASSETS.ui.dialogFrameTall}
+          src={ACEBET_ASSETS.ui.frameTop}
           alt=""
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 h-full w-full object-fill"
+          className="pointer-events-none block w-full select-none"
         />
-        <div className="relative z-10">{children}</div>
+        <div
+          className="relative -my-px flex flex-col items-center px-[12%] py-1"
+          style={{
+            backgroundImage: `url(${ACEBET_ASSETS.ui.frameMid})`,
+            backgroundSize: "100% 100%",
+            backgroundRepeat: "no-repeat",
+          }}
+        >
+          {children}
+        </div>
+        <img
+          src={ACEBET_ASSETS.ui.frameBottom}
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none block w-full select-none"
+        />
       </motion.div>
     );
   }

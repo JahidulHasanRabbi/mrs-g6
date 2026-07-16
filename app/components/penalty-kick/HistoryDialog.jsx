@@ -7,6 +7,9 @@ import { ICONS } from "./constants";
 import { usePkColors } from "./usePkColors";
 import { getMemberRewardHistory } from "../../api/memberApi";
 import { tokenStorage } from "../../api/tokenStorage";
+import AcebetOrnateCard from "../themes/acebet77/AcebetOrnateCard";
+import AcebetButton from "../themes/acebet77/AcebetButton";
+import { ACEBET_ASSETS, ACEBET_COLORS } from "../themes/acebet77/assets";
 
 const PRIZE_PAGE_SIZE = 10;
 
@@ -127,7 +130,7 @@ export default function HistoryDialog({
   onClose,
   onRedeemAll,
 }) {
-  const { colors: COLORS, soft } = usePkColors();
+  const { colors: COLORS, soft, isAcebet77 } = usePkColors();
   const [activeTab, setActiveTab] = useState("game");
   const [prizeRows, setPrizeRows] = useState([]);
   const [prizePage, setPrizePage] = useState(1);
@@ -166,6 +169,68 @@ export default function HistoryDialog({
   const activeCurrentPage = activeTab === "game" ? currentPage : prizePage;
   const activeTotalPages = activeTab === "game" ? totalPages : prizeTotalPages;
   const handlePageChange = activeTab === "game" ? onPageChange : loadPrizePage;
+
+  // Acebet77 (Figma 61:1300): a single "GAME HISTORY" list inside the ornate
+  // frame with the Redeem All button below it — no tabs / pagination chrome.
+  if (isAcebet77) {
+    return (
+      <div className="flex w-full max-w-[360px] flex-col items-center gap-3">
+        <AcebetOrnateCard>
+          <p
+            className="text-[15px] uppercase tracking-[1px]"
+            style={{ fontFamily: "var(--font-acme), sans-serif", color: ACEBET_COLORS.cream }}
+          >
+            Game History
+          </p>
+          <div className="mt-3 flex max-h-[46vh] w-full flex-col gap-2 overflow-y-auto pr-1 text-left">
+            {rows.length === 0 ? (
+              <p
+                className="py-6 text-center text-[12px]"
+                style={{ color: ACEBET_COLORS.sand, fontFamily: "var(--font-rubik), sans-serif" }}
+              >
+                No game history yet.
+              </p>
+            ) : (
+              rows.map((r) => {
+                const amt = Number(r.amount ?? 0);
+                const hasAmt = Number.isFinite(amt) && amt > 0;
+                const isMiss = /miss/i.test(r.label || "");
+                return (
+                  <div
+                    key={r.id}
+                    className="flex items-center gap-3 rounded-[8px] px-1 py-1.5"
+                    style={{ opacity: r.claimed ? 0.45 : 1 }}
+                  >
+                    <div
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-full"
+                      style={{ background: "radial-gradient(circle, rgba(242,186,51,0.28), rgba(242,186,51,0.06))", border: "1px solid rgba(242,186,51,0.25)" }}
+                    >
+                      <img src={ACEBET_ASSETS.pk.iconBall} alt="" className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[14px] font-semibold" style={{ color: ACEBET_COLORS.cream, fontFamily: "var(--font-rubik), sans-serif" }}>
+                        {r.label}
+                      </p>
+                      <p className="truncate text-[10px]" style={{ color: ACEBET_COLORS.sand, fontFamily: "var(--font-rubik), sans-serif" }}>
+                        {r.claimed ? "Redeemed" : r.sub}
+                      </p>
+                    </div>
+                    <p
+                      className="shrink-0 text-[14px] font-bold"
+                      style={{ color: isMiss ? "#ff5a5a" : ACEBET_COLORS.goldBright, fontFamily: "var(--font-acme), sans-serif" }}
+                    >
+                      {isMiss ? "-" : hasAmt ? "+" : ""}{hasAmt ? amt.toFixed(2) : ""}
+                    </p>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </AcebetOrnateCard>
+        <AcebetButton onClick={onRedeemAll} disabled={!hasRedeemableRows}>Redeem All</AcebetButton>
+      </div>
+    );
+  }
 
   return (
     <GlassCard
