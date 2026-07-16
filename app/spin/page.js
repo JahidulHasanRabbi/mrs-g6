@@ -17,6 +17,7 @@ import { useUser } from "../contexts/UserContext";
 import { useTheme } from "../contexts/ThemeContext";
 import Acebet77SpinPage from "../components/themes/acebet77/Acebet77SpinPage";
 import UbetclubSpinPage from "../components/themes/ubetclub/UbetclubSpinPage";
+import Ep369SpinPage from "../components/themes/ep369/Ep369SpinPage";
 
 function DefaultSpinPage() {
   const [imageError, setImageError] = useState(false);
@@ -331,8 +332,9 @@ function DefaultSpinPage() {
 }
 
 export default function SpinPage() {
-  const { isAcebet77, isUbetclub } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369 } = useTheme();
   if (isAcebet77) return <Acebet77SpinPage />;
   if (isUbetclub) return <UbetclubSpinPage />;
+  if (isEp369) return <Ep369SpinPage />;
   return <DefaultSpinPage />;
 }
