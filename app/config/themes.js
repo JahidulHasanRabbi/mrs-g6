@@ -16,12 +16,14 @@
 export const THEME_IDS = {
   DEFAULT: 'default',
   ACEBET77: 'acebet77',
+  UBETCLUB: 'ubetclub',
 };
 
 // Substring rules matched against the hostname of the stored origin URL.
 // First match wins.
 const ORIGIN_THEME_RULES = [
   { match: 'acebet77', themeId: THEME_IDS.ACEBET77 },
+  { match: 'ubetclub', themeId: THEME_IDS.UBETCLUB },
   // e.g. { match: 'kgame99', themeId: THEME_IDS.KGAME99 },
 ];
 

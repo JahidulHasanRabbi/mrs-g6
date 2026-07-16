@@ -110,7 +110,7 @@ export default function RootLayout({
             returning themed member never sees a default-theme flash. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var o=(localStorage.getItem('mrs_redirect_o')||'').toLowerCase();document.documentElement.setAttribute('data-theme',o.indexOf('acebet77')>-1?'acebet77':'default');}catch(e){}`,
+            __html: `try{var o=(localStorage.getItem('mrs_redirect_o')||'').toLowerCase();var t='default';if(o.indexOf('acebet77')>-1)t='acebet77';else if(o.indexOf('ubetclub')>-1)t='ubetclub';document.documentElement.setAttribute('data-theme',t);}catch(e){}`,
           }}
         />
         <ToastProvider>

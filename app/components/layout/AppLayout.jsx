@@ -15,7 +15,7 @@ export default function AppLayout({ children }) {
   const [hasAnimated, setHasAnimated] = useState(false);
   const pathname = usePathname();
   const { userData, profilePicture } = useUser();
-  const { isAcebet77 } = useTheme();
+  const { isThemed } = useTheme();
 
   // Track initial mount to show animations only once
   useEffect(() => {
@@ -47,9 +47,10 @@ export default function AppLayout({ children }) {
     return <>{children}</>;
   }
 
-  // Acebet77-themed spin page draws its own shell (AcebetShell) — skip the
-  // default header/footer chrome like the self-contained game pages below.
-  if (isAcebet77 && isSpinPage) {
+  // A themed spin page draws its own shell (e.g. AcebetShell / UbetclubShell)
+  // — skip the default header/footer chrome like the self-contained game
+  // pages below.
+  if (isThemed && isSpinPage) {
     return <>{children}</>;
   }
 
