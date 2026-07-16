@@ -39,8 +39,10 @@ export default function Acebet77SpinPage() {
 
   const spinResultsRef = useRef(null);
   const isProcessingRef = useRef(false);
-  const spin = useMotionValue(0);
-  const spinRef = useRef(0);
+  // The centre medallion is the spinner: this drives its rotation. The wheel
+  // itself is a fixed grid, so nothing races around the tiles.
+  const rotation = useMotionValue(0);
+  const rotationRef = useRef(0);
   const spinAnimRef = useRef(null);
 
   useEffect(() => {
@@ -78,25 +80,23 @@ export default function Acebet77SpinPage() {
     }
   }, []);
 
-  // Race the highlight around the ring and land on the winner. One motion value
-  // is the single source of truth; the lit tile is derived from it each frame.
+  // Spin the centre medallion several whole turns (settling upright), then
+  // light up the winning tile once it stops. No highlight races around the
+  // grid — the medallion is the spinner, matching Figma 30:118.
   const spinToWinner = useCallback((targetIndex, onDone) => {
-    const from = spinRef.current;
-    const base = from + SLOT_COUNT * 5; // at least 5 full loops
-    const extra = (((targetIndex - (Math.round(base) % SLOT_COUNT)) % SLOT_COUNT) + SLOT_COUNT) % SLOT_COUNT;
-    const to = base + extra;
-    spinRef.current = to;
-    const litFor = (v) => ((Math.round(v) % SLOT_COUNT) + SLOT_COUNT) % SLOT_COUNT;
-    spinAnimRef.current = animate(spin, to, {
+    const from = rotationRef.current;
+    const to = from + 360 * 6; // 6 full turns → settles upright
+    rotationRef.current = to;
+    setHighlightIndex(null);
+    spinAnimRef.current = animate(rotation, to, {
       duration: 3.6,
       ease: [0.12, 0.7, 0.2, 1],
-      onUpdate: (v) => setHighlightIndex(litFor(v)),
       onComplete: () => {
-        setHighlightIndex(targetIndex);
-        onDone();
+        setHighlightIndex(targetIndex); // reveal the winner
+        setTimeout(onDone, 650);        // brief glow before the dialog
       },
     });
-  }, [spin]);
+  }, [rotation]);
 
   const handleSpin = useCallback(
     async (spinFunction, spinType) => {
@@ -144,6 +144,11 @@ export default function Acebet77SpinPage() {
     [isSpinning, spinItems, refreshUserData, spinToWinner, finishSpin]
   );
 
+  const closeDialog = useCallback(() => {
+    setDialog(null);
+    setHighlightIndex(null); // clear the winner glow when leaving the result
+  }, []);
+
   const handleReturnToWebsite = useCallback(() => {
     const savedO = tokenStorage.getRedirectO();
     if (!savedO) {
@@ -189,14 +194,22 @@ export default function Acebet77SpinPage() {
             />
           )}
 
-          {/* Centre SPIN NOW (baked into the wheel art) — transparent hit area */}
-          <motion.button
-            onClick={() => handleSpin(oneSpin, 'one spin')}
-            disabled={isSpinning || itemsLoading}
-            aria-label="Spin now"
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[30%] aspect-square rounded-full cursor-pointer disabled:cursor-not-allowed"
-            whileTap={{ scale: 0.92 }}
-          />
+          {/* Centre SPIN NOW medallion — erased from the wheel art and overlaid
+              here so it can rotate while spinning. Outer wrapper owns the
+              centring translate; the inner motion element owns the rotation so
+              framer-motion's transform doesn't clobber the centring. */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[30%] aspect-square z-[4]">
+            <motion.button
+              onClick={() => handleSpin(oneSpin, 'one spin')}
+              disabled={isSpinning || itemsLoading}
+              aria-label="Spin now"
+              className="relative w-full h-full cursor-pointer disabled:cursor-not-allowed"
+              whileTap={{ scale: 0.94 }}
+              style={{ rotate: rotation }}
+            >
+              <Image src={ACEBET_ASSETS.spin.spinNow} alt="Spin Now" fill className="object-contain" sizes="130px" />
+            </motion.button>
+          </div>
         </div>
 
         {/* Loading plaque (Figma 14:117) */}
@@ -278,7 +291,7 @@ export default function Acebet77SpinPage() {
 
       {/* Result / error dialog: heading + detail inside the ornate frame,
           action buttons below (keeps the heading clear of the crown). */}
-      <AcebetDialog open={!!dialog} onClose={() => setDialog(null)} frameless>
+      <AcebetDialog open={!!dialog} onClose={closeDialog} frameless>
         <AcebetOrnateCard>
           <div className="flex items-center gap-2">
             {dialog?.type === 'win' && (
@@ -314,13 +327,13 @@ export default function Acebet77SpinPage() {
         </AcebetOrnateCard>
         {dialog?.type === 'win' ? (
           <>
-            <AcebetButton onClick={() => setDialog(null)}>Spin Again</AcebetButton>
+            <AcebetButton onClick={closeDialog}>Spin Again</AcebetButton>
             <AcebetButton variant="gold" onClick={handleReturnToWebsite}>
               Return To Website
             </AcebetButton>
           </>
         ) : (
-          <AcebetButton onClick={() => setDialog(null)}>Close</AcebetButton>
+          <AcebetButton onClick={closeDialog}>Close</AcebetButton>
         )}
       </AcebetDialog>
     </AcebetShell>
