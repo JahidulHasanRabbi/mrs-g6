@@ -1,211 +1,92 @@
 "use client";
 
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Ep369Shell from './Ep369Shell';
 import Ep369Dialog from './Ep369Dialog';
 import Ep369Button from './Ep369Button';
 import Ep369OrnateCard from './Ep369OrnateCard';
+import TokenBalance from '../../smash-egg/TokenBalance';
+import DrawButtons from '../../smash-egg/DrawButtons';
 import PrizeList from '../../smash-egg/PrizeList';
 import WinnerList from '../../smash-egg/WinnerList';
 import SmashEggTerms from '../../smash-egg/SmashEggTerms';
-import { buildRewardBoard, mapWinningHistory, SMASH_EGG_TERMS_CATEGORY } from '../../smash-egg/smashEggData';
+import ThemedResultModal from '../../smash-egg/ThemedResultModal';
+import SmashEggHistoryDialog from '../../smash-egg/SmashEggHistoryDialog';
+import { useSmashEggGame, HISTORY_PAGE_SIZE } from '../../smash-egg/useSmashEggGame';
 import { EP369_ASSETS, EP369_COLORS } from './assets';
-import {
-  getAllSmashEggItems,
-  getSmashEggSettings,
-  getSmashEggWinningList,
-  getPublicTermsAndConditions,
-  oneSmash,
-} from '../../../api/memberApi';
-import { mapSmashEggItems } from '../../../api/responseMappers';
-import { tokenStorage } from '../../../api/tokenStorage';
-import { useUser } from '../../../contexts/UserContext';
 
 const WELCOME_SEEN_KEY = 'mrs_ep369_egg_welcome_seen';
 
 /**
  * EP369 Smash Egg (Figma 101:4339 loading / 101:4261 welcome / 101:4215 idle /
- * 101:4092 cracked / 101:4138 jackpot). Reuses the standard smash-egg APIs.
+ * 101:4092 cracked / 101:4138 jackpot). Runs the shared useSmashEggGame engine
+ * so its features + logic mirror the default portal exactly — only the skin
+ * (background, egg art, boot/welcome flourish) differs.
  */
 export default function Ep369SmashEggPage() {
+  const {
+    isCracked,
+    isProcessing,
+    isModalOpen,
+    wonPrize,
+    tokenBalance,
+    tokensPerRound,
+    gameEnabled,
+    maintenanceMode,
+    termsText,
+    rewardBoard,
+    winningHistory,
+    isLoading,
+    historyOpen,
+    historyRows,
+    historyLoading,
+    historyPage,
+    historyTotal,
+    setHistoryOpen,
+    handleEggTap,
+    handleDraw,
+    openHistory,
+    loadHistoryPage,
+    closeModal,
+    handleReturnToWebsite,
+  } = useSmashEggGame();
+
+  // Boot/loading + welcome are themed presentational flourishes (kept per the
+  // Figma). Data loads in the shared hook; the boot screen finishes once the
+  // hook reports the initial rewards + settings are ready.
   const [booting, setBooting] = useState(true);
   const [bootProgress, setBootProgress] = useState(0);
   const [showWelcome, setShowWelcome] = useState(false);
-  const [isCracked, setIsCracked] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [resultDialog, setResultDialog] = useState(null);
-  const [tokensPerRound, setTokensPerRound] = useState(10);
-  const [gameEnabled, setGameEnabled] = useState(true);
-  const [maintenanceMode, setMaintenanceMode] = useState(false);
-  const [smashRewards, setSmashRewards] = useState([]);
-  const [winningHistory, setWinningHistory] = useState([]);
-  const [termsText, setTermsText] = useState('');
-  const { userData, refreshUserData } = useUser();
-  const router = useRouter();
-
-  const tokenBalance = userData?.balance ?? 0;
-  const rewardBoard = useMemo(() => buildRewardBoard(smashRewards), [smashRewards]);
 
   useEffect(() => {
-    let cancelled = false;
-    const progressTimer = setInterval(() => {
+    if (!booting) return undefined;
+    const timer = setInterval(() => {
       setBootProgress((p) => Math.min(p + Math.random() * 22, 92));
     }, 180);
+    return () => clearInterval(timer);
+  }, [booting]);
 
-    async function boot() {
-      try {
-        const [itemsRes, settingsRes] = await Promise.allSettled([
-          getAllSmashEggItems(),
-          getSmashEggSettings(),
-        ]);
-        if (cancelled) return;
-        if (itemsRes.status === 'fulfilled') {
-          setSmashRewards(mapSmashEggItems(itemsRes.value));
-        }
-        if (settingsRes.status === 'fulfilled') {
-          const settings = settingsRes.value;
-          if (settings?.cost_per_smash != null) setTokensPerRound(Number(settings.cost_per_smash));
-          setGameEnabled(Number(settings?.game_status ?? 1) === 1 && !settings?.maintenance_mode);
-          setMaintenanceMode(Boolean(settings?.maintenance_mode));
-        }
-      } finally {
-        if (!cancelled) {
-          clearInterval(progressTimer);
-          setBootProgress(100);
-          setTimeout(() => {
-            if (cancelled) return;
-            setBooting(false);
-            try {
-              if (!sessionStorage.getItem(WELCOME_SEEN_KEY)) setShowWelcome(true);
-            } catch {
-              setShowWelcome(true);
-            }
-          }, 450);
-        }
-      }
-    }
-    boot();
-
-    return () => {
-      cancelled = true;
-      clearInterval(progressTimer);
-    };
-  }, []);
-
-  // Live winner feed — poll every 30s (same cadence as the default portal).
   useEffect(() => {
-    let cancelled = false;
-    async function loadWinners() {
+    if (!booting || isLoading) return undefined;
+    setBootProgress(100);
+    const t = setTimeout(() => {
+      setBooting(false);
       try {
-        const response = await getSmashEggWinningList();
-        if (!cancelled) setWinningHistory(mapWinningHistory(response));
-      } catch (error) {
-        console.error('Failed to load smash egg winners:', error);
+        if (!sessionStorage.getItem(WELCOME_SEEN_KEY)) setShowWelcome(true);
+      } catch {
+        setShowWelcome(true);
       }
-    }
-    loadWinners();
-    const interval = setInterval(loadWinners, 30000);
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, []);
-
-  // Smash Egg terms live under category 6.
-  useEffect(() => {
-    let cancelled = false;
-    async function loadTerms() {
-      try {
-        const response = await getPublicTermsAndConditions(SMASH_EGG_TERMS_CATEGORY);
-        if (!cancelled) setTermsText(response?.terms_and_conditions ?? '');
-      } catch (error) {
-        console.error('Failed to load smash egg terms:', error);
-      }
-    }
-    loadTerms();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    }, 450);
+    return () => clearTimeout(t);
+  }, [booting, isLoading]);
 
   const dismissWelcome = useCallback(() => {
     setShowWelcome(false);
     try {
       sessionStorage.setItem(WELCOME_SEEN_KEY, '1');
     } catch {}
-  }, []);
-
-  const smashResultsRef = useRef(null);
-
-  const handleSmash = useCallback(async () => {
-    const memberUuid = tokenStorage.getMemberUuid();
-    if (!memberUuid) {
-      setResultDialog({ title: 'Oops', message: 'Please log in to smash.' });
-      return;
-    }
-    if (!gameEnabled) {
-      setResultDialog({
-        title: maintenanceMode ? 'Maintenance' : 'Closed',
-        message: maintenanceMode ? 'Smash Egg is under maintenance.' : 'Smash Egg is currently closed.',
-      });
-      return;
-    }
-    if (isProcessing || isCracked) return;
-
-    setIsProcessing(true);
-    try {
-      const response = await oneSmash(memberUuid);
-      const results = Array.isArray(response) ? response : [response].filter(Boolean);
-      smashResultsRef.current = results;
-      setIsCracked(true);
-      refreshUserData?.().catch(() => {});
-      setTimeout(() => {
-        const first = smashResultsRef.current?.[0];
-        setResultDialog({
-          title: 'Congratulations',
-          prize: first?.reward_name || 'Reward',
-          image: first?.image || null,
-        });
-        setIsProcessing(false);
-      }, 1200);
-    } catch (error) {
-      const message =
-        error?.data?.details || error?.data?.detail || error?.message || 'Smash failed. Please try again.';
-      const lowerMessage = String(message).toLowerCase();
-      if (lowerMessage.includes('maintenance') || lowerMessage.includes('close')) {
-        setGameEnabled(false);
-        setMaintenanceMode(lowerMessage.includes('maintenance'));
-      }
-      setResultDialog({ title: 'Oops', message });
-      setIsProcessing(false);
-      setIsCracked(false);
-    }
-  }, [gameEnabled, maintenanceMode, isProcessing, isCracked, refreshUserData]);
-
-  const closeResult = useCallback(() => {
-    setResultDialog(null);
-    setIsCracked(false);
-  }, []);
-
-  const handleClaimNow = useCallback(() => {
-    const savedO = tokenStorage.getRedirectO?.();
-    if (!savedO) {
-      window.location.href = '/promotion';
-      return;
-    }
-    const base = String(savedO).startsWith('http') ? savedO : `https://${savedO}`;
-    window.location.href = `${base.replace(/\/$/, '')}/promotion`;
-  }, []);
-
-  const handleDownloadNow = useCallback(() => {
-    const savedO = tokenStorage.getRedirectO?.();
-    if (savedO) {
-      const base = String(savedO).startsWith('http') ? savedO : `https://${savedO}`;
-      window.location.href = base;
-    }
   }, []);
 
   // --- Loading screen (Figma 101:4339) ---
@@ -236,7 +117,7 @@ export default function Ep369SmashEggPage() {
   }
 
   return (
-    <Ep369Shell bg={EP369_ASSETS.egg.bg} onInfoClick={() => router.push('/terms-and-conditions')}>
+    <Ep369Shell bg={EP369_ASSETS.egg.bg} onInfoClick={openHistory}>
       <div className="relative flex flex-col items-center px-4">
         <motion.div
           className="pointer-events-none absolute left-1/2 top-[70px] h-[540px] w-[540px] -translate-x-1/2"
@@ -246,22 +127,15 @@ export default function Ep369SmashEggPage() {
           <Image src={EP369_ASSETS.egg.rays} alt="" fill className="object-contain" sizes="540px" />
         </motion.div>
 
-        <div className="relative z-10 mt-2 flex flex-col items-center gap-4">
-          <div className="flex h-[46px] items-center gap-2 rounded-full border border-[rgba(255,225,109,0.3)] bg-[rgba(57,53,40,0.8)] px-[25px] backdrop-blur-[6px]">
-            <img src={EP369_ASSETS.ui.iconCoin} alt="" className="h-[18px] w-[18px]" />
-            <p className="text-[16px]" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: '#eae2cf' }}>
-              Free Token Balance: <span style={{ color: '#ffe16d' }}>{tokenBalance}</span>
-            </p>
-          </div>
-          <div className="flex h-[46px] items-center rounded-full border border-[rgba(77,71,50,0.4)] bg-[rgba(46,42,30,0.7)] px-[25px] backdrop-blur-[6px]">
-            <p className="text-[16px]" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: '#d0c6ab' }}>
-              {tokensPerRound} Tokens / round
-            </p>
-          </div>
+        {/* Token balance — shared with the default portal (Token Balance +
+            Tokens / round). */}
+        <div className="relative z-10 mt-2">
+          <TokenBalance balance={tokenBalance} tokensPerRound={tokensPerRound} />
         </div>
 
+        {/* The egg — tap to smash once (parity with the default portal). */}
         <motion.button
-          onClick={handleSmash}
+          onClick={handleEggTap}
           disabled={isProcessing}
           aria-label="Smash the egg"
           className="relative z-10 mt-6 h-[330px] w-[248px] cursor-pointer disabled:cursor-not-allowed"
@@ -293,20 +167,9 @@ export default function Ep369SmashEggPage() {
           </AnimatePresence>
         </motion.button>
 
-        <div className="relative z-10 mt-6 flex w-full justify-center">
-          <button
-            onClick={handleSmash}
-            disabled={isProcessing}
-            className="relative flex h-[70px] w-full max-w-[358px] items-center justify-center overflow-hidden cursor-pointer transition-transform active:scale-[0.97] disabled:opacity-70 disabled:cursor-not-allowed"
-          >
-            <img src={EP369_ASSETS.ui.btnGreen} alt="" className="absolute inset-0 h-full w-full object-cover" />
-            <span
-              className="relative z-10 text-[24px]"
-              style={{ fontFamily: 'var(--font-berkshire-swash), cursive', color: EP369_COLORS.goldBright }}
-            >
-              {isProcessing ? 'Smashing…' : 'Click to Smash'}
-            </span>
-          </button>
+        {/* Draw buttons (10 / 50 / 100) — parity with the default portal. */}
+        <div className="relative z-10 mt-6 w-full max-w-[390px]">
+          <DrawButtons onDraw={handleDraw} disabled={isProcessing || !gameEnabled} tokensPerRound={tokensPerRound} />
         </div>
 
         {/* Prize list / winner feed / T&C — parity with the default portal,
@@ -318,7 +181,20 @@ export default function Ep369SmashEggPage() {
         </div>
       </div>
 
-      {/* Welcome dialog (Figma 101:4261) */}
+      {!gameEnabled && (
+        <div className="fixed inset-x-0 top-[64px] bottom-[120px] z-30 grid place-items-center bg-black/70 px-6 backdrop-blur-md">
+          <div className="w-full max-w-[360px] rounded-xl border border-[rgba(255,246,223,0.16)] bg-[#231f14]/95 px-6 py-7 text-center shadow-[0_16px_50px_rgba(0,0,0,0.45)]">
+            <p className="text-[20px] text-[#ffd700]" style={{ fontFamily: "var(--font-acme), 'Acme', sans-serif" }}>
+              {maintenanceMode ? 'Smash Egg is under maintenance' : 'Smash Egg is currently closed'}
+            </p>
+            <p className="mt-3 text-[12px] leading-5 text-[#d0c6ab]" style={{ fontFamily: "var(--font-rubik), 'Rubik', sans-serif" }}>
+              Please check back later.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Welcome dialog (Figma 101:4261) — themed flourish, kept per design. */}
       <Ep369Dialog open={showWelcome} onClose={dismissWelcome}>
         <Ep369OrnateCard>
           <div className="flex items-center gap-2">
@@ -342,65 +218,45 @@ export default function Ep369SmashEggPage() {
         <Ep369Button onClick={dismissWelcome}>Start Playing</Ep369Button>
       </Ep369Dialog>
 
-      {/* Result dialog (Figma 101:4138) */}
-      <Ep369Dialog open={!!resultDialog} onClose={closeResult}>
-        {resultDialog?.prize ? (
-          <>
-            <Ep369OrnateCard>
-              <div className="flex items-center gap-2">
-                <img src={EP369_ASSETS.ui.iconParty} alt="" className="h-6 w-6" />
-                <p className="text-center text-[18px] uppercase tracking-[2px]" style={{ fontFamily: 'var(--font-acme), sans-serif', color: EP369_COLORS.cream }}>
-                  {resultDialog.title}
-                </p>
-              </div>
-              <div className="mt-3 flex w-full flex-col items-center gap-1 rounded-[10px] border border-[rgba(242,195,107,0.4)] bg-[rgba(0,16,2,0.72)] px-4 py-3">
-                <p className="text-[11px] uppercase tracking-[1px]" style={{ color: EP369_COLORS.goldBright, fontFamily: 'var(--font-acme), sans-serif' }}>
-                  You&apos;ve unlocked
-                </p>
-                {resultDialog.image && (
-                  <img src={resultDialog.image} alt="" className="my-1 h-12 w-12 object-contain" />
-                )}
-                <p
-                  className="max-w-full break-words text-center font-bold"
-                  style={{
-                    fontSize:
-                      (resultDialog.prize?.length ?? 0) > 22
-                        ? 'clamp(14px, 4.2vw, 18px)'
-                        : (resultDialog.prize?.length ?? 0) > 12
-                          ? 'clamp(18px, 6vw, 24px)'
-                          : 'clamp(24px, 8vw, 32px)',
-                    lineHeight: 1.1,
-                    fontFamily: 'var(--font-acme), sans-serif',
-                    background: 'linear-gradient(180deg, #fff2c0 0%, #f2c36b 45%, #dd8f1f 100%)',
-                    WebkitBackgroundClip: 'text',
-                    backgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    filter: 'drop-shadow(0 2px 1px rgba(0,0,0,0.5))',
-                  }}
-                >
-                  {resultDialog.prize}
-                </p>
-              </div>
-            </Ep369OrnateCard>
-            <Ep369Button onClick={handleClaimNow}>Claim Now</Ep369Button>
-            <Ep369Button variant="gold" onClick={handleDownloadNow}>
-              Download Now
-            </Ep369Button>
-          </>
-        ) : (
-          <>
-            <Ep369OrnateCard>
-              <p className="text-center text-[20px] uppercase tracking-[2px]" style={{ fontFamily: 'var(--font-acme), sans-serif', color: EP369_COLORS.cream }}>
-                {resultDialog?.title}
-              </p>
-              <p className="mt-3 text-center text-[14px]" style={{ color: EP369_COLORS.sand, fontFamily: 'var(--font-rubik), sans-serif' }}>
-                {resultDialog?.message}
-              </p>
-            </Ep369OrnateCard>
-            <Ep369Button onClick={closeResult}>Close</Ep369Button>
-          </>
+      {/* Result modal — same content + actions as the default portal (You Won
+          + prize summary + Return to website (Claim) + Close), dressed in the
+          EP369 ornate popup frame. */}
+      <ThemedResultModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        onReturn={handleReturnToWebsite}
+        prize={wonPrize}
+        frameBg="/assets/ep369-popup.png"
+        insets={{ x: '11%', top: '14%', bottom: '14%' }}
+      />
+
+      {/* Winning record — shared Smash History dialog, opened from the info
+          button (parity with the default portal). */}
+      <AnimatePresence>
+        {historyOpen && (
+          <motion.div
+            key="smash-history"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 grid place-items-center px-4"
+            style={{ backgroundColor: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(6px)' }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setHistoryOpen(false);
+            }}
+          >
+            <SmashEggHistoryDialog
+              rows={historyRows}
+              loading={historyLoading}
+              total={historyTotal}
+              currentPage={historyPage}
+              totalPages={Math.max(1, Math.ceil(historyTotal / HISTORY_PAGE_SIZE))}
+              onPageChange={loadHistoryPage}
+              onClose={() => setHistoryOpen(false)}
+            />
+          </motion.div>
         )}
-      </Ep369Dialog>
+      </AnimatePresence>
     </Ep369Shell>
   );
 }

@@ -185,17 +185,8 @@ export default function Ep369SpinPage() {
   }, []);
 
   return (
-    <Ep369Shell bg={EP369_ASSETS.spin.bg} onInfoClick={() => router.push('/terms-and-conditions')}>
+    <Ep369Shell bg={EP369_ASSETS.spin.bg} onInfoClick={() => router.push('/terms-and-conditions')} balance={tokenBalance}>
       <div className="flex flex-col items-center gap-5 px-4">
-        {/* Free-token balance pill — parity with the default portal's header
-            balance (the themed shell has no balance slot). */}
-        <div className="flex h-[46px] items-center gap-2 rounded-full border border-[rgba(255,225,109,0.3)] bg-[rgba(57,53,40,0.8)] px-[25px] backdrop-blur-[6px]">
-          <img src={EP369_ASSETS.ui.iconCoin} alt="" className="h-[18px] w-[18px]" />
-          <p className="text-[16px]" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: '#eae2cf' }}>
-            Free Token Balance: <span style={{ color: '#ffe16d' }}>{tokenBalance}</span>
-          </p>
-        </div>
-
         <motion.div
           className="relative w-[300px] h-[150px] shrink-0"
           initial={{ opacity: 0, y: -20 }}
@@ -219,8 +210,8 @@ export default function Ep369SpinPage() {
         {!itemsLoading && (
           <div className="flex w-full items-center justify-center gap-4">
             {[
-              { label: 'Play x10', fn: tenSpin, type: 'ten spins' },
-              { label: 'Play x50', fn: fiftySpin, type: 'fifty spins' },
+              { label: 'SPIN X10', fn: tenSpin, type: 'ten spins' },
+              { label: 'SPIN X50', fn: fiftySpin, type: 'fifty spins' },
             ].map((btn) => (
               <button
                 key={btn.label}

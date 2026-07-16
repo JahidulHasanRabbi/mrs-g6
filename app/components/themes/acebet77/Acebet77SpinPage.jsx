@@ -189,17 +189,8 @@ export default function Acebet77SpinPage() {
   }, []);
 
   return (
-    <AcebetShell bg={ACEBET_ASSETS.spin.bg} onInfoClick={() => router.push('/terms-and-conditions')}>
+    <AcebetShell bg={ACEBET_ASSETS.spin.bg} onInfoClick={() => router.push('/terms-and-conditions')} balance={tokenBalance}>
       <div className="flex flex-col items-center gap-6 px-4">
-        {/* Free-token balance pill — parity with the default portal's header. */}
-        <div className="flex items-center gap-2 h-[46px] px-[25px] rounded-full border border-[rgba(255,225,109,0.3)] bg-[rgba(57,53,40,0.8)] backdrop-blur-[6px]">
-          <img src={ACEBET_ASSETS.ui.iconCoins} alt="" className="w-[18px] h-[18px]" />
-          <p className="text-[16px]" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: ACEBET_COLORS.creamMuted }}>
-            Free Token Balance:{' '}
-            <span style={{ color: ACEBET_COLORS.tokenYellow }}>{tokenBalance}</span>
-          </p>
-        </div>
-
         {/* LUCKY SPIN title */}
         <motion.div
           className="relative w-[318px] h-[106px] shrink-0"
@@ -225,8 +216,8 @@ export default function Acebet77SpinPage() {
         {!itemsLoading && (
           <div className="flex items-center justify-center gap-4 w-full">
             {[
-              { label: 'Play x10', fn: tenSpin, type: 'ten spins' },
-              { label: 'Play x50', fn: fiftySpin, type: 'fifty spins' },
+              { label: 'SPIN X10', fn: tenSpin, type: 'ten spins' },
+              { label: 'SPIN X50', fn: fiftySpin, type: 'fifty spins' },
             ].map((btn) => (
               <button
                 key={btn.label}

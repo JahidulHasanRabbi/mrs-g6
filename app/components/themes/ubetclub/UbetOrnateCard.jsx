@@ -26,7 +26,7 @@ export default function UbetOrnateCard({ children, className = "" }) {
       {/* min-height keeps sparse dialogs near the frame's native aspect so the
           crown/flourish don't squish; justify-center centres content in the
           red interior. */}
-      <div className="flex min-h-[248px] flex-col items-center justify-center text-center px-[13%] pt-[25%] pb-[15%]">
+      <div className="flex min-h-[248px] flex-col items-center justify-center text-center px-[14%] pt-[28%] pb-[22%]">
         {children}
       </div>
     </div>

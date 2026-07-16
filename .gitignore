@@ -46,3 +46,5 @@ CLAUDE.md
 
 # graphify knowledge graph outputs
 /graphify-out/
+# Playwright MCP scratch artifacts
+.playwright-mcp/

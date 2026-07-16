@@ -395,6 +395,14 @@ export default memo(function LuckySpinGrid({
     const spinId = ++spinIdCounterRef.current;
     activeSpinIdRef.current = spinId;
 
+    // Reset the centre "SPIN NOW" medallion to a clean baseline (pointing up)
+    // at the start of every spin. Without this the rotation accumulated from
+    // the previous spin carries over, so on the 2nd+ spin the medallion's
+    // spin speed visibly desyncs from the tile-highlight cycling. jump()
+    // repositions instantly — no backwards unwind — so both start in sync.
+    centerRotate.jump(0);
+    centerRotateSpring.jump(0);
+
     // Find the position in ORDER array that corresponds to this grid index.
     // Fixed at 3 rounds (24 steps + 0..7 target offset = 24-31 total steps)
     // — variance was previously 4-6 rounds, which pushed natural spins to
@@ -463,7 +471,7 @@ export default memo(function LuckySpinGrid({
     };
 
     rafRef.current = requestAnimationFrame(tick);
-  }, [spinning, stopSpin, centerRotate, isLowEnd, isMidEnd, gridItems, onSpinComplete]);
+  }, [spinning, stopSpin, centerRotate, centerRotateSpring, isLowEnd, isMidEnd, gridItems, onSpinComplete]);
 
   const startSpin = useCallback(async () => {
     if (spinning) return;

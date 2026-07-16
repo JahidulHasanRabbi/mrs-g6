@@ -10,6 +10,12 @@ import { EP369_ASSETS } from './assets';
  * EP369 page chrome: full-bleed emerald-forest background, top app bar
  * (hamburger left, info right) and the ornate green bottom navigation.
  */
+function formatBalance(value) {
+  const amount = Number(String(value ?? 0).replace(/,/g, ''));
+  if (!Number.isFinite(amount)) return '0.00';
+  return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 export default function Ep369Shell({
   bg,
   children,
@@ -18,6 +24,7 @@ export default function Ep369Shell({
   showHeader = true,
   contentPadding = true,
   bgOverlay = null,
+  balance = null,
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -39,6 +46,14 @@ export default function Ep369Shell({
           >
             <Image src={EP369_ASSETS.ui.hamburger} alt="Menu" fill className="object-contain" sizes="36px" />
           </button>
+          {balance !== null && (
+            <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 h-[38px] px-4 rounded-full border border-[rgba(255,225,109,0.3)] bg-[rgba(57,53,40,0.85)] backdrop-blur-[6px]">
+              <img src={EP369_ASSETS.ui.iconCoin} alt="" className="w-[16px] h-[16px]" />
+              <span className="text-[15px] font-semibold" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: '#ffe16d' }}>
+                {formatBalance(balance)}
+              </span>
+            </div>
+          )}
           {onInfoClick ? (
             <button
               onClick={onInfoClick}
