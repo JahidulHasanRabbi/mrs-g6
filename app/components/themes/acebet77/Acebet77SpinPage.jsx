@@ -14,13 +14,13 @@ import { tokenStorage } from '../../../api/tokenStorage';
 import { useUser } from '../../../contexts/UserContext';
 
 const SLOT_COUNT = 8;
-// Tile centres (% of the square wheel art) in clockwise ring order from the
-// top-left, so the highlight visibly circles the 3x3 grid around SPIN NOW.
+// Prize-tile centres (% of the square wheel art) in clockwise ring order from
+// the top-left: corners (even indices) are gold plaques, edges (odd) green.
 const SLOT_CENTERS = [
-  { l: 24, t: 23 }, { l: 50, t: 23 }, { l: 76, t: 23 }, { l: 76, t: 50 },
-  { l: 76, t: 77 }, { l: 50, t: 77 }, { l: 24, t: 77 }, { l: 24, t: 50 },
+  { l: 22.5, t: 21.5 }, { l: 50, t: 21 }, { l: 76.5, t: 21.5 }, { l: 77, t: 49.5 },
+  { l: 76.5, t: 78 }, { l: 50, t: 78 }, { l: 22.5, t: 78 }, { l: 22, t: 50 },
 ];
-const HILITE = 27; // highlight box size, % of wheel
+const SLOT_SIZE = 23; // tile size, % of wheel
 
 /**
  * Acebet77 Lucky Spin (updated Figma 15:195 idle / 30:118 spinning /
@@ -159,7 +159,12 @@ export default function Acebet77SpinPage() {
     window.location.href = `${base.replace(/\/$/, '')}/promotion`;
   }, []);
 
-  const lit = highlightIndex != null ? SLOT_CENTERS[highlightIndex] : null;
+  // Eight slots filled from the spin-items API (like the default theme):
+  // corners gold, edges green. "?" only shows if the API returns fewer items.
+  const slots = Array.from({ length: SLOT_COUNT }, (_, i) => ({
+    item: spinItems[i] || null,
+    isGold: i % 2 === 0,
+  }));
 
   return (
     <AcebetShell bg={ACEBET_ASSETS.spin.bg}>
@@ -174,30 +179,61 @@ export default function Acebet77SpinPage() {
           <Image src={ACEBET_ASSETS.spin.title} alt="Lucky Spin" fill priority className="object-contain" sizes="318px" />
         </motion.div>
 
-        {/* Wheel: flat 3x3 prize grid + centre SPIN NOW (Figma 15:195) */}
-        <div className="relative w-full max-w-[370px] aspect-[370/367]">
-          <Image src={ACEBET_ASSETS.spin.wheel} alt="" fill priority className="object-contain" sizes="370px" />
+        {/* Wheel: ornate frame + 8 API-driven prize slots + centre SPIN NOW */}
+        <div className="relative w-full max-w-[370px] aspect-square">
+          <Image src={ACEBET_ASSETS.spin.wheelFrame} alt="" fill priority className="object-contain" sizes="370px" />
 
-          {/* Moving highlight over the winning tile */}
-          {lit && (
-            <div
-              className="pointer-events-none absolute rounded-[14px] transition-all duration-100"
-              style={{
-                left: `${lit.l - HILITE / 2}%`,
-                top: `${lit.t - HILITE / 2}%`,
-                width: `${HILITE}%`,
-                height: `${HILITE}%`,
-                border: `3px solid ${ACEBET_COLORS.goldBright}`,
-                boxShadow: '0 0 18px 4px rgba(255,225,109,0.9), inset 0 0 14px rgba(255,246,223,0.5)',
-                background: 'rgba(255,246,223,0.14)',
-              }}
-            />
-          )}
+          {/* Prize slots — plaque + the API item's image (or "?" fallback). The
+              winning tile lights up once the spin settles (highlightIndex). */}
+          {!itemsLoading &&
+            slots.map((slot, i) => {
+              const pos = SLOT_CENTERS[i];
+              const isLit = highlightIndex === i;
+              return (
+                <div
+                  key={i}
+                  className="pointer-events-none absolute transition-all duration-150"
+                  style={{
+                    left: `${pos.l}%`,
+                    top: `${pos.t}%`,
+                    width: `${SLOT_SIZE}%`,
+                    height: `${SLOT_SIZE}%`,
+                    transform: isLit ? 'translate(-50%,-50%) scale(1.14)' : 'translate(-50%,-50%)',
+                    filter: isLit ? 'brightness(1.5) drop-shadow(0 0 12px rgba(255,225,109,0.95))' : 'none',
+                    zIndex: isLit ? 3 : 2,
+                  }}
+                >
+                  <img
+                    src={slot.isGold ? ACEBET_ASSETS.spin.slotGold : ACEBET_ASSETS.spin.slotGreen}
+                    alt=""
+                    className="absolute inset-0 h-full w-full object-contain"
+                  />
+                  <div className="absolute inset-[20%] flex items-center justify-center">
+                    {slot.item?.image ? (
+                      <img
+                        src={slot.item.image}
+                        alt={slot.item.reward_name || ''}
+                        className="max-h-full max-w-full object-contain"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : slot.isGold ? null : (
+                      // Green plaques are blank, so draw the "?" mystery marker;
+                      // gold plaques already have one baked into the art.
+                      <span className="text-[26px] font-bold leading-none" style={{ color: '#0d3b1e', fontFamily: 'var(--font-acme), sans-serif' }}>
+                        ?
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
 
-          {/* Centre SPIN NOW medallion — erased from the wheel art and overlaid
-              here so it can rotate while spinning. Outer wrapper owns the
-              centring translate; the inner motion element owns the rotation so
-              framer-motion's transform doesn't clobber the centring. */}
+          {/* Centre SPIN NOW medallion — overlaid so it can rotate while
+              spinning. Outer wrapper owns the centring translate; the inner
+              motion element owns the rotation so framer-motion's transform
+              doesn't clobber the centring. */}
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[30%] aspect-square z-[4]">
             <motion.button
               onClick={() => handleSpin(oneSpin, 'one spin')}

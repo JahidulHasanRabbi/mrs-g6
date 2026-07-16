@@ -41,10 +41,13 @@ export const ACEBET_ASSETS = {
   spin: {
     bg: `${BASE}/spin/bg-spin.png`,
     title: `${BASE}/spin/title-lucky-spin.png`,
-    // Updated Figma (15:195): the wheel is now a flat 3x3 prize grid. The
-    // centre SPIN NOW medallion is erased from wheel.png and overlaid live
-    // (spinNow) so it can rotate while spinning (Figma 30:118).
-    wheel: `${BASE}/spin/wheel.png`,
+    // Updated Figma (15:195): the wheel is a 3x3 prize grid. The ornate frame
+    // is the static border; the eight gem plaques are placed as live slots and
+    // filled with the API prize items (like the default theme), and the centre
+    // SPIN NOW medallion rotates while spinning (Figma 30:118).
+    wheelFrame: `${BASE}/spin/wheel-frame.png`,
+    slotGold: `${BASE}/spin/slot-gold.png`,
+    slotGreen: `${BASE}/spin/slot-green.png`,
     spinNow: `${BASE}/spin/spin-now.png`,
     btnPlay: `${BASE}/spin/btn-play.png`,
     panel: `${BASE}/spin/panel-ornate.png`,
