@@ -37,7 +37,6 @@ export const EP369_ASSETS = {
   spin: {
     bg: `${BASE}/spin/bg-spin.png`,
     title: `${BASE}/spin/title-lucky-spin.png`,
-    wheel: `${BASE}/spin/wheel.png`,
     panel: `${BASE}/spin/panel.png`,
     btnPlay: `${BASE}/spin/btn-play.png`,
     // Decomposed pieces (cropped from wheel.png) fed to the shared
@@ -45,10 +44,19 @@ export const EP369_ASSETS = {
     // engine as the default portal. Keys mirror SPIN_ASSETS.
     grid: {
       background: `${BASE}/spin/grid-frame.png`,
-      itemEmptyGold: `${BASE}/spin/tile-gold.png`,
-      itemEmptyGreen: `${BASE}/spin/tile-green.png`,
+      // Reuse the default portal's gold/green gem plaques — cropping our own
+      // from the small baked wheel.png upscaled poorly, and these are already
+      // theme-neutral gem art that fits any skin.
+      itemEmptyGold: '/assets/lucky-spin/lucky-spin-grid/2.png',
+      itemEmptyGreen: '/assets/lucky-spin/lucky-spin-grid/1.png',
       centerButton: `${BASE}/spin/center.png`,
       centerButtonStop: `${BASE}/spin/center.png`,
+      // EP369's center medallion is four-fold radially symmetric (identical gem
+      // at N/E/S/W), so rotating it toward the winning tile shows no direction.
+      // This accent draws a small pointer triangle at the top edge of the
+      // rotating button so the aim reads. Only EP369 sets it — the other skins'
+      // art already has a single directional cue baked in.
+      pointerAccent: '#ffe16d',
     },
   },
   egg: {

@@ -34,56 +34,13 @@ import { useTheme } from "../contexts/ThemeContext";
 import Acebet77SmashEggPage from "../components/themes/acebet77/Acebet77SmashEggPage";
 import UbetclubSmashEggPage from "../components/themes/ubetclub/UbetclubSmashEggPage";
 import Ep369SmashEggPage from "../components/themes/ep369/Ep369SmashEggPage";
+import {
+  SMASH_EGG_TERMS_CATEGORY,
+  buildRewardBoard,
+  mapWinningHistory,
+} from "../components/smash-egg/smashEggData";
 
 const HISTORY_PAGE_SIZE = 10;
-const SMASH_EGG_TERMS_CATEGORY = 6;
-
-function buildRewardBoard(items) {
-  const prizeItems = items
-    .filter((item) => item.itemType !== "Free credit")
-    .map((item, index) => ({
-      rank: index + 1,
-      name: item.name,
-      image: item.itemType === "Prize" ? item.image : null,
-      itemType: item.itemType,
-    }));
-
-  const creditRanges = items
-    .filter((item) => item.itemType === "Free credit")
-    .map((item) => `RM${item.minWithdraw || 0} ~ RM${item.maxWithdraw || 0}`);
-
-  return { prizes: prizeItems, creditRanges };
-}
-
-function maskName(name) {
-  if (!name) return "";
-  if (name.includes("*")) return name;
-  if (name.length <= 2) return `${name[0] || ""}*`;
-  if (name.length <= 4) return `${name[0]}${"*".repeat(name.length - 2)}${name[name.length - 1]}`;
-  return `${name.slice(0, 2)}${"*".repeat(name.length - 4)}${name.slice(-2)}`;
-}
-
-function mapWinningHistory(items) {
-  const rows = Array.isArray(items)
-    ? items
-    : Array.isArray(items?.value)
-      ? items.value
-      : Array.isArray(items?.results)
-        ? items.results
-        : [];
-
-  return rows.map((item) => {
-    const date = item.datetime_obtained
-      ? new Date(item.datetime_obtained).toISOString().slice(0, 10)
-      : "";
-
-    return {
-      date,
-      name: maskName(item.display_name),
-      prize: item.prize_name,
-    };
-  });
-}
 
 function normalizeSmashResults(response) {
   if (Array.isArray(response)) return response;
@@ -378,14 +335,20 @@ function DefaultSmashEggPage() {
             className="object-cover"
             priority
           />
-          <div className="absolute -left-[81px] top-[71px] w-[552px] h-[556px]">
+          {/* Sunburst behind the egg — slow continuous spin, matching the
+              themed smash pages (ubetclub / acebet77 / ep369). */}
+          <motion.div
+            className="absolute -left-[81px] top-[71px] w-[552px] h-[556px]"
+            animate={{ rotate: 360 }}
+            transition={{ repeat: Infinity, duration: 60, ease: "linear" }}
+          >
             <Image
               src={SMASH_EGG_ASSETS.bgGlow}
               alt=""
               fill
               className="object-cover"
             />
-          </div>
+          </motion.div>
         </div>
 
         {/* Token Balance */}

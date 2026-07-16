@@ -292,6 +292,16 @@ export default memo(function LuckySpinGrid({
   // spin time (anti-spam).
   const manualStopRef = useRef(false);
   const targetGridIndexRef = useRef(0);
+  // Internal source of truth for "a spin is in flight", independent of the
+  // parent-supplied `isSpinning` prop. The prop can lag a render behind the
+  // rAF loop's own lifecycle, which previously let a second spin start (and
+  // its delayed center-rotation snap/dialog callbacks race) while the first
+  // spin's tick loop was still technically running — desyncing the arrow
+  // from the tile it had actually landed on. Every spin gets a unique id;
+  // a spin's delayed callbacks check they're still the active id before
+  // applying anything, so a superseded spin can never clobber a newer one.
+  const activeSpinIdRef = useRef(0);
+  const spinIdCounterRef = useRef(0);
 
   // Store items with UUIDs in fixed positions (no random shuffling)
   const itemRewards = useMemo(() => {
@@ -325,7 +335,7 @@ export default memo(function LuckySpinGrid({
   ], [itemRewards, assets]);
 
   const stopSpin = useCallback(
-    (finalGridIndex, { wasManualStop = false } = {}) => {
+    (finalGridIndex, { wasManualStop = false, spinId } = {}) => {
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
         rafRef.current = null;
@@ -337,8 +347,10 @@ export default memo(function LuckySpinGrid({
       // Rotate the center button arrow to point at the winning tile.
       // Find the numerically nearest equivalent of the target angle so the
       // spring only travels a short arc rather than unwinding from a large
-      // accumulated value.
+      // accumulated value. Guarded by spinId: if a newer spin has since
+      // started, this stale callback must not touch the rotation.
       setTimeout(() => {
+        if (activeSpinIdRef.current !== spinId) return;
         const target = GRID_WIN_ANGLE[finalGridIndex] ?? 0;
         const current = centerRotate.get();
         const turns = Math.round((current - target) / 360);
@@ -349,17 +361,20 @@ export default memo(function LuckySpinGrid({
       // before the parent reacts. The flag is passed through so the parent
       // can suppress the result dialog on manual stops (the player chose to
       // halt early; surfacing the result is enough — see slide 8 follow-up).
-      if (onSpinComplete) {
-        setTimeout(() => {
-          onSpinComplete(finalGridIndex, { wasManualStop });
-        }, 700);
-      }
+      // Also releases the internal spin lock so a new spin can start.
+      setTimeout(() => {
+        if (activeSpinIdRef.current === spinId) activeSpinIdRef.current = 0;
+        onSpinComplete?.(finalGridIndex, { wasManualStop });
+      }, 700);
     },
     [centerRotate, onSpinComplete]
   );
 
   const startSpinAnimation = useCallback((targetUuid = null) => {
-    if (spinning) return;
+    // Internal lock is the source of truth — the parent's `isSpinning` prop
+    // can lag a render behind, which previously let a second spin start
+    // while the first spin's rAF loop was still actually running.
+    if (spinning || activeSpinIdRef.current !== 0) return;
 
     // The winning tile is decided solely by the server result's uuid, which
     // always maps to one of the items already rendered on the wheel (the same
@@ -376,6 +391,9 @@ export default memo(function LuckySpinGrid({
       onSpinComplete?.(null);
       return;
     }
+
+    const spinId = ++spinIdCounterRef.current;
+    activeSpinIdRef.current = spinId;
 
     // Find the position in ORDER array that corresponds to this grid index.
     // Fixed at 3 rounds (24 steps + 0..7 target offset = 24-31 total steps)
@@ -431,12 +449,12 @@ export default memo(function LuckySpinGrid({
         // winning tile so the user sees the spinner come to rest on the
         // winning gem rather than overshooting it.
         if (stoppingFast && gridIndex === targetGridIndexRef.current) {
-          stopSpin(gridIndex, { wasManualStop: true });
+          stopSpin(gridIndex, { wasManualStop: true, spinId });
           return;
         }
 
         if (stepCountRef.current >= totalStepsRef.current) {
-          stopSpin(gridIndex, { wasManualStop: false });
+          stopSpin(gridIndex, { wasManualStop: false, spinId });
           return;
         }
       }
@@ -523,6 +541,27 @@ export default memo(function LuckySpinGrid({
           className={`w-full h-full ${imgFit} select-none`}
           draggable="false"
         />
+        {/* Optional directional pointer. Most center-button artwork bakes in a
+            visible cue at the top (arrow / crown / star spike) so that rotating
+            the button toward GRID_WIN_ANGLE reads as "pointing" at the winner.
+            When a theme's art is radially symmetric (e.g. EP369's four-fold
+            gem), there's no visible direction — set `assets.pointerAccent` and
+            we render a small triangle at the top edge so the rotation reads.
+            It lives inside the rotating layer, so it aims with the button. */}
+        {assets.pointerAccent && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2"
+            style={{
+              width: 0,
+              height: 0,
+              borderLeft: "9px solid transparent",
+              borderRight: "9px solid transparent",
+              borderBottom: `15px solid ${assets.pointerAccent}`,
+              filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.55))",
+            }}
+          />
+        )}
       </motion.div>
     </motion.div>
   );

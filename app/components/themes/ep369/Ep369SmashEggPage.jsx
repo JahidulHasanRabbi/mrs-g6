@@ -1,16 +1,23 @@
 "use client";
 
 import Image from 'next/image';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import Ep369Shell from './Ep369Shell';
 import Ep369Dialog from './Ep369Dialog';
 import Ep369Button from './Ep369Button';
 import Ep369OrnateCard from './Ep369OrnateCard';
+import PrizeList from '../../smash-egg/PrizeList';
+import WinnerList from '../../smash-egg/WinnerList';
+import SmashEggTerms from '../../smash-egg/SmashEggTerms';
+import { buildRewardBoard, mapWinningHistory, SMASH_EGG_TERMS_CATEGORY } from '../../smash-egg/smashEggData';
 import { EP369_ASSETS, EP369_COLORS } from './assets';
 import {
   getAllSmashEggItems,
   getSmashEggSettings,
+  getSmashEggWinningList,
+  getPublicTermsAndConditions,
   oneSmash,
 } from '../../../api/memberApi';
 import { mapSmashEggItems } from '../../../api/responseMappers';
@@ -33,9 +40,14 @@ export default function Ep369SmashEggPage() {
   const [tokensPerRound, setTokensPerRound] = useState(10);
   const [gameEnabled, setGameEnabled] = useState(true);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [smashRewards, setSmashRewards] = useState([]);
+  const [winningHistory, setWinningHistory] = useState([]);
+  const [termsText, setTermsText] = useState('');
   const { userData, refreshUserData } = useUser();
+  const router = useRouter();
 
   const tokenBalance = userData?.balance ?? 0;
+  const rewardBoard = useMemo(() => buildRewardBoard(smashRewards), [smashRewards]);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,11 +57,14 @@ export default function Ep369SmashEggPage() {
 
     async function boot() {
       try {
-        const [, settingsRes] = await Promise.allSettled([
+        const [itemsRes, settingsRes] = await Promise.allSettled([
           getAllSmashEggItems(),
           getSmashEggSettings(),
         ]);
         if (cancelled) return;
+        if (itemsRes.status === 'fulfilled') {
+          setSmashRewards(mapSmashEggItems(itemsRes.value));
+        }
         if (settingsRes.status === 'fulfilled') {
           const settings = settingsRes.value;
           if (settings?.cost_per_smash != null) setTokensPerRound(Number(settings.cost_per_smash));
@@ -77,6 +92,42 @@ export default function Ep369SmashEggPage() {
     return () => {
       cancelled = true;
       clearInterval(progressTimer);
+    };
+  }, []);
+
+  // Live winner feed — poll every 30s (same cadence as the default portal).
+  useEffect(() => {
+    let cancelled = false;
+    async function loadWinners() {
+      try {
+        const response = await getSmashEggWinningList();
+        if (!cancelled) setWinningHistory(mapWinningHistory(response));
+      } catch (error) {
+        console.error('Failed to load smash egg winners:', error);
+      }
+    }
+    loadWinners();
+    const interval = setInterval(loadWinners, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Smash Egg terms live under category 6.
+  useEffect(() => {
+    let cancelled = false;
+    async function loadTerms() {
+      try {
+        const response = await getPublicTermsAndConditions(SMASH_EGG_TERMS_CATEGORY);
+        if (!cancelled) setTermsText(response?.terms_and_conditions ?? '');
+      } catch (error) {
+        console.error('Failed to load smash egg terms:', error);
+      }
+    }
+    loadTerms();
+    return () => {
+      cancelled = true;
     };
   }, []);
 
@@ -185,7 +236,7 @@ export default function Ep369SmashEggPage() {
   }
 
   return (
-    <Ep369Shell bg={EP369_ASSETS.egg.bg}>
+    <Ep369Shell bg={EP369_ASSETS.egg.bg} onInfoClick={() => router.push('/terms-and-conditions')}>
       <div className="relative flex flex-col items-center px-4">
         <motion.div
           className="pointer-events-none absolute left-1/2 top-[70px] h-[540px] w-[540px] -translate-x-1/2"
@@ -256,6 +307,14 @@ export default function Ep369SmashEggPage() {
               {isProcessing ? 'Smashing…' : 'Click to Smash'}
             </span>
           </button>
+        </div>
+
+        {/* Prize list / winner feed / T&C — parity with the default portal,
+            reusing the theme-agnostic dark-glass cards unmodified. */}
+        <div className="relative z-10 mt-8 flex w-full flex-col items-center gap-6 pb-4">
+          <PrizeList prizes={rewardBoard.prizes} creditRanges={rewardBoard.creditRanges} />
+          <WinnerList winners={winningHistory} />
+          <SmashEggTerms termsText={termsText} />
         </div>
       </div>
 

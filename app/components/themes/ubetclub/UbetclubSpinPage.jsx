@@ -2,14 +2,17 @@
 
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import UbetclubShell from './UbetclubShell';
 import UbetDialog from './UbetDialog';
 import UbetButton from './UbetButton';
 import UbetOrnateCard from './UbetOrnateCard';
 import LuckySpinGrid from '../../spin/LuckySpinGrid';
+import SpinWinningPanel from '../../spin/SpinWinningPanel';
+import SmashEggTerms from '../../smash-egg/SmashEggTerms';
 import { UBET_ASSETS, UBET_COLORS } from './assets';
-import { oneSpin, tenSpin, fiftySpin, getAllLuckySpinItems } from '../../../api/memberApi';
+import { oneSpin, tenSpin, fiftySpin, getAllLuckySpinItems, getPublicTermsAndConditions } from '../../../api/memberApi';
 import { mapSpinResults, mapLuckySpinItems } from '../../../api/responseMappers';
 import { tokenStorage } from '../../../api/tokenStorage';
 import { useUser } from '../../../contexts/UserContext';
@@ -18,14 +21,31 @@ import { useUser } from '../../../contexts/UserContext';
 // spin/selection engine as the default portal — fed ubetclub's artwork. Only
 // the images change; ring cycling, deceleration, winner highlight and
 // manual-stop all come from the shared code.
-const UBET_GEOMETRY = { framePad: 5.75, tile: 27, center: 27 };
+const UBET_GEOMETRY = { framePad: 5.75, tile: 27, center: 33 };
+
+// Derives a short "Token / Prize / Free credit" label from the raw item_type
+// enum so the rewards panel can show more than just the reward name.
+function ubetItemTypeLabel(value) {
+  if (value == null) return 'Free credit';
+  const normalized = String(value).replace(/_/g, ' ').trim().toUpperCase();
+  if (normalized === 'FREE CREDIT' || normalized === '1') return 'Free credit';
+  if (normalized === 'TOKEN' || normalized === '2') return 'Token';
+  if (normalized === 'PRIZE' || normalized === 'ITEM' || normalized === '3') return 'Prize';
+  return String(value);
+}
 
 export default function UbetclubSpinPage() {
   const [spinItems, setSpinItems] = useState([]);
   const [itemsLoading, setItemsLoading] = useState(true);
   const [isSpinning, setIsSpinning] = useState(false);
   const [dialog, setDialog] = useState(null); // { type: 'win'|'error', title, message }
-  const { refreshUserData } = useUser();
+  const [userWinnings, setUserWinnings] = useState([]);
+  const [activeWinningView, setActiveWinningView] = useState('record');
+  const [termsText, setTermsText] = useState('');
+  const { userData, refreshUserData } = useUser();
+  const router = useRouter();
+
+  const tokenBalance = userData?.balance ?? 0;
 
   const spinResultsRef = useRef(null);
   const spinErrorRef = useRef(null);
@@ -46,6 +66,23 @@ export default function UbetclubSpinPage() {
     fetchItems();
   }, []);
 
+  // Lucky Spin terms live under category 1 (matches the default portal).
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchTerms() {
+      try {
+        const response = await getPublicTermsAndConditions(1);
+        if (!cancelled) setTermsText(response?.terms_and_conditions ?? '');
+      } catch (error) {
+        console.error('Failed to load spin terms:', error);
+      }
+    }
+    fetchTerms();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleSpinComplete = useCallback(() => {
     setIsSpinning(false);
 
@@ -60,6 +97,13 @@ export default function UbetclubSpinPage() {
     if (!results) return;
 
     if (results.length > 0) {
+      // Record the win in the session "Winning List".
+      const newWinnings = results.map((r) => ({
+        date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+        reward: r.reward_name,
+      }));
+      setUserWinnings((prev) => [...newWinnings, ...prev]);
+
       const rewardCounts = {};
       results.forEach((r) => {
         rewardCounts[r.reward_name] = (rewardCounts[r.reward_name] || 0) + 1;
@@ -150,8 +194,16 @@ export default function UbetclubSpinPage() {
   }, []);
 
   return (
-    <UbetclubShell bg={UBET_ASSETS.spin.bg}>
+    <UbetclubShell bg={UBET_ASSETS.spin.bg} onInfoClick={() => router.push('/terms-and-conditions')}>
       <div className="flex flex-col items-center gap-5 px-4">
+        {/* Free-token balance pill — parity with the default portal's header. */}
+        <div className="flex h-[46px] items-center gap-2 rounded-full border border-[rgba(255,225,109,0.3)] bg-[rgba(57,53,40,0.8)] px-[25px] backdrop-blur-[6px]">
+          <img src={UBET_ASSETS.ui.iconCoin} alt="" className="h-[18px] w-[18px]" />
+          <p className="text-[16px]" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: '#eae2cf' }}>
+            Free Token Balance: <span style={{ color: '#ffe16d' }}>{tokenBalance}</span>
+          </p>
+        </div>
+
         {/* LUCKY SPIN title */}
         <motion.div
           className="relative w-[300px] h-[128px] shrink-0"
@@ -201,34 +253,83 @@ export default function UbetclubSpinPage() {
         {/* Rewards panel (Figma 77:2702 ornate frame) */}
         <div className="relative w-full max-w-[370px] aspect-[1448/1086]">
           <Image src={UBET_ASSETS.spin.panel} alt="" fill className="object-contain" sizes="370px" />
-          <div className="absolute inset-[13%] flex flex-col">
-            <div className="flex-1 overflow-y-auto pr-1 [scrollbar-width:thin]">
+          {/* Panel art's crown/flourish decorations eat more of the top than the
+              bottom, so the safe content box needs asymmetric insets — a uniform
+              inset let row icons sit under the top crown ornament. */}
+          <div className="absolute inset-x-[13%] top-[24%] bottom-[15%] flex flex-col">
+            <div className="scrollbar-ubet flex-1 space-y-2 overflow-y-auto pr-1.5">
               {spinItems.length === 0 ? (
                 <p className="mt-6 text-center text-[13px]" style={{ color: UBET_COLORS.sand, fontFamily: 'var(--font-rubik), sans-serif' }}>
                   {itemsLoading ? 'Loading rewards…' : 'No rewards available.'}
                 </p>
               ) : (
-                spinItems.map((item, i) => (
-                  <div
-                    key={item.uuid || i}
-                    className="flex items-center gap-3 border-b border-[rgba(242,195,107,0.18)] py-[7px] last:border-b-0"
-                  >
-                    {item.image ? (
-                      <img src={item.image} alt="" className="h-7 w-7 shrink-0 object-contain" />
-                    ) : (
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center text-[14px]" style={{ color: UBET_COLORS.gold }}>
-                        🧧
+                spinItems.map((item, i) => {
+                  const typeLabel = ubetItemTypeLabel(item.item_type);
+                  const hasTokens = item.token_amount != null && Number(item.token_amount) > 0;
+                  const meta = hasTokens ? `${typeLabel} · ${item.token_amount} token` : typeLabel;
+                  return (
+                    <div
+                      key={item.uuid || i}
+                      className="flex items-center gap-2.5 rounded-[10px] border border-[rgba(242,195,107,0.22)] bg-[rgba(24,8,10,0.55)] px-2.5 py-1.5"
+                    >
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[8px] border border-[rgba(242,195,107,0.3)] bg-[rgba(72,14,15,0.6)]">
+                        {item.image ? (
+                          <img src={item.image} alt="" className="h-full w-full object-contain" />
+                        ) : (
+                          <span className="text-[16px]">🧧</span>
+                        )}
                       </span>
-                    )}
-                    <span className="text-[13px]" style={{ color: UBET_COLORS.creamMuted, fontFamily: 'var(--font-rubik), sans-serif' }}>
-                      {item.reward_name}
-                    </span>
-                  </div>
-                ))
+                      <div className="flex min-w-0 flex-1 flex-col">
+                        <span
+                          className="truncate text-[13px] leading-tight"
+                          style={{ color: UBET_COLORS.cream, fontFamily: 'var(--font-rubik), sans-serif' }}
+                        >
+                          {item.reward_name}
+                        </span>
+                        <span
+                          className="truncate text-[10px] uppercase tracking-[0.5px]"
+                          style={{ color: UBET_COLORS.goldBright, fontFamily: 'var(--font-rubik), sans-serif' }}
+                        >
+                          {meta}
+                        </span>
+                      </div>
+                      <span
+                        className="shrink-0 rounded-full border border-[rgba(242,195,107,0.3)] px-2 py-0.5 text-[10px] font-semibold"
+                        style={{ color: UBET_COLORS.tokenYellow, fontFamily: 'var(--font-rubik), sans-serif' }}
+                      >
+                        {item.unlimited ? '∞' : `x${item.quantity ?? 0}`}
+                      </span>
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>
         </div>
+
+        {/* Winning Record / Winning List toggle + panels, then T&C. */}
+        <div className="flex w-full items-center justify-center gap-3">
+          <UbetButton
+            variant={activeWinningView === 'record' ? 'gold' : 'red'}
+            className={`!max-w-[150px] ${activeWinningView === 'record' ? '' : 'opacity-60'}`}
+            textSize={14}
+            onClick={() => setActiveWinningView('record')}
+          >
+            Winning Record
+          </UbetButton>
+          <UbetButton
+            variant={activeWinningView === 'list' ? 'gold' : 'red'}
+            className={`!max-w-[150px] ${activeWinningView === 'list' ? '' : 'opacity-60'}`}
+            textSize={14}
+            onClick={() => setActiveWinningView('list')}
+          >
+            Winning List
+          </UbetButton>
+        </div>
+
+        <SpinWinningPanel variant={activeWinningView} rows={userWinnings} />
+
+        <SmashEggTerms termsText={termsText} />
       </div>
 
       {/* Result / error dialog */}

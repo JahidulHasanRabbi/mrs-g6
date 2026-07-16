@@ -2,14 +2,17 @@
 
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Ep369Shell from './Ep369Shell';
 import Ep369Dialog from './Ep369Dialog';
 import Ep369Button from './Ep369Button';
 import Ep369OrnateCard from './Ep369OrnateCard';
 import LuckySpinGrid from '../../spin/LuckySpinGrid';
+import SpinWinningPanel from '../../spin/SpinWinningPanel';
+import SmashEggTerms from '../../smash-egg/SmashEggTerms';
 import { EP369_ASSETS, EP369_COLORS } from './assets';
-import { oneSpin, tenSpin, fiftySpin, getAllLuckySpinItems } from '../../../api/memberApi';
+import { oneSpin, tenSpin, fiftySpin, getAllLuckySpinItems, getPublicTermsAndConditions } from '../../../api/memberApi';
 import { mapSpinResults, mapLuckySpinItems } from '../../../api/responseMappers';
 import { tokenStorage } from '../../../api/tokenStorage';
 import { useUser } from '../../../contexts/UserContext';
@@ -18,14 +21,20 @@ import { useUser } from '../../../contexts/UserContext';
 // spin/selection engine as the default portal — fed EP369's artwork. Only the
 // images change; ring cycling, deceleration, winner highlight and manual-stop
 // all come from the shared code.
-const EP369_GEOMETRY = { framePad: 5.75, tile: 27, center: 27 };
+const EP369_GEOMETRY = { framePad: 15, tile: 23, center: 27 };
 
 export default function Ep369SpinPage() {
   const [spinItems, setSpinItems] = useState([]);
   const [itemsLoading, setItemsLoading] = useState(true);
   const [isSpinning, setIsSpinning] = useState(false);
   const [dialog, setDialog] = useState(null);
-  const { refreshUserData } = useUser();
+  const [userWinnings, setUserWinnings] = useState([]);
+  const [activeWinningView, setActiveWinningView] = useState('record');
+  const [termsText, setTermsText] = useState('');
+  const { userData, refreshUserData } = useUser();
+  const router = useRouter();
+
+  const tokenBalance = userData?.balance ?? 0;
 
   const spinResultsRef = useRef(null);
   const spinErrorRef = useRef(null);
@@ -46,6 +55,23 @@ export default function Ep369SpinPage() {
     fetchItems();
   }, []);
 
+  // Lucky Spin terms live under category 1 (matches the default portal).
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchTerms() {
+      try {
+        const response = await getPublicTermsAndConditions(1);
+        if (!cancelled) setTermsText(response?.terms_and_conditions ?? '');
+      } catch (error) {
+        console.error('Failed to load spin terms:', error);
+      }
+    }
+    fetchTerms();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleSpinComplete = useCallback(() => {
     setIsSpinning(false);
 
@@ -60,6 +86,15 @@ export default function Ep369SpinPage() {
     if (!results) return;
 
     if (results.length > 0) {
+      // Record the win in the session "Winning List" — the spin already
+      // resolved server-side, so the history reflects it regardless of how
+      // the animation ended.
+      const newWinnings = results.map((r) => ({
+        date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+        reward: r.reward_name,
+      }));
+      setUserWinnings((prev) => [...newWinnings, ...prev]);
+
       const rewardCounts = {};
       results.forEach((r) => {
         rewardCounts[r.reward_name] = (rewardCounts[r.reward_name] || 0) + 1;
@@ -150,8 +185,17 @@ export default function Ep369SpinPage() {
   }, []);
 
   return (
-    <Ep369Shell bg={EP369_ASSETS.spin.bg}>
+    <Ep369Shell bg={EP369_ASSETS.spin.bg} onInfoClick={() => router.push('/terms-and-conditions')}>
       <div className="flex flex-col items-center gap-5 px-4">
+        {/* Free-token balance pill — parity with the default portal's header
+            balance (the themed shell has no balance slot). */}
+        <div className="flex h-[46px] items-center gap-2 rounded-full border border-[rgba(255,225,109,0.3)] bg-[rgba(57,53,40,0.8)] px-[25px] backdrop-blur-[6px]">
+          <img src={EP369_ASSETS.ui.iconCoin} alt="" className="h-[18px] w-[18px]" />
+          <p className="text-[16px]" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: '#eae2cf' }}>
+            Free Token Balance: <span style={{ color: '#ffe16d' }}>{tokenBalance}</span>
+          </p>
+        </div>
+
         <motion.div
           className="relative w-[300px] h-[150px] shrink-0"
           initial={{ opacity: 0, y: -20 }}
@@ -198,7 +242,10 @@ export default function Ep369SpinPage() {
 
         <div className="relative w-full max-w-[370px] aspect-[1672/941]">
           <Image src={EP369_ASSETS.spin.panel} alt="" fill className="object-contain" sizes="370px" />
-          <div className="absolute inset-[11%] flex flex-col">
+          {/* Panel art's leaf/gem decorations intrude further on the sides
+              (diamond gem accents) and top/bottom (leaf crossbars) than a
+              uniform inset accounted for, letting row icons sit under them. */}
+          <div className="absolute inset-x-[15%] inset-y-[26%] flex flex-col">
             <div className="flex-1 overflow-y-auto pr-1 [scrollbar-width:thin]">
               {spinItems.length === 0 ? (
                 <p className="mt-4 text-center text-[13px]" style={{ color: EP369_COLORS.sand, fontFamily: 'var(--font-rubik), sans-serif' }}>
@@ -226,6 +273,34 @@ export default function Ep369SpinPage() {
             </div>
           </div>
         </div>
+
+        {/* Winning Record / Winning List toggle + panels, then T&C — parity
+            with the default portal's spin page, restyled for the dark theme. */}
+        <div className="flex w-full items-center justify-center gap-3">
+          <Ep369Button
+            variant={activeWinningView === 'record' ? 'gold' : 'green'}
+            className={`!max-w-[150px] ${activeWinningView === 'record' ? '' : 'opacity-60'}`}
+            textSize={14}
+            onClick={() => setActiveWinningView('record')}
+          >
+            Winning Record
+          </Ep369Button>
+          <Ep369Button
+            variant={activeWinningView === 'list' ? 'gold' : 'green'}
+            className={`!max-w-[150px] ${activeWinningView === 'list' ? '' : 'opacity-60'}`}
+            textSize={14}
+            onClick={() => setActiveWinningView('list')}
+          >
+            Winning List
+          </Ep369Button>
+        </div>
+
+        <SpinWinningPanel
+          variant={activeWinningView}
+          rows={userWinnings}
+        />
+
+        <SmashEggTerms termsText={termsText} />
       </div>
 
       <Ep369Dialog open={!!dialog} onClose={closeDialog}>

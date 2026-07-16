@@ -175,9 +175,14 @@ export default function EggAnimation({ isCracked, onTap }) {
         animate={
           slamPhase && !showEffects
             ? { y: [0, -30, 8], scale: [1, 1.08, 0.93], rotate: [0, -2, 0] }
-            : showEffects
+            : showEffects || isCracked
               ? { y: 0, scale: 1, rotate: 0 }
-              : {}
+              : {
+                  // Gentle idle bob while the egg waits to be smashed — parity
+                  // with the themed smash pages (ubetclub / acebet77 / ep369).
+                  y: [0, -8, 0],
+                  transition: { repeat: Infinity, duration: 2.4, ease: "easeInOut" },
+                }
         }
         transition={
           slamPhase && !showEffects

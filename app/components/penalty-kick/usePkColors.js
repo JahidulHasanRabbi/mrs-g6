@@ -31,6 +31,11 @@ const GOLD_PK_COLORS = {
   primaryDeep: "#2a1d02",
   primaryShadow: "#7a5a10",
   primaryGradStart: "#e4a825",
+  // The default muted text (#BBCBBB) is a pale grey-green that reads fine on
+  // the default dark backdrop but washes out against the themed gold-framed
+  // dialog card — the "Terms & Conditions" link in InfoDialog uses it and was
+  // near-illegible. Lift it to a warm cream on themed skins.
+  textMuted: "#f2cb7a",
   greenSoft10: "rgba(242,186,51,0.1)",
   greenSoft20: "rgba(242,186,51,0.2)",
   greenSoft50: "rgba(242,186,51,0.5)",

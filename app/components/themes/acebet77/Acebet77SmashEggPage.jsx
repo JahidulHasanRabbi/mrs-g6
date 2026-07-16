@@ -1,16 +1,23 @@
 "use client";
 
 import Image from 'next/image';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import AcebetShell from './AcebetShell';
 import AcebetDialog from './AcebetDialog';
 import AcebetButton from './AcebetButton';
 import AcebetOrnateCard from './AcebetOrnateCard';
+import PrizeList from '../../smash-egg/PrizeList';
+import WinnerList from '../../smash-egg/WinnerList';
+import SmashEggTerms from '../../smash-egg/SmashEggTerms';
+import { buildRewardBoard, mapWinningHistory, SMASH_EGG_TERMS_CATEGORY } from '../../smash-egg/smashEggData';
 import { ACEBET_ASSETS, ACEBET_COLORS } from './assets';
 import {
   getAllSmashEggItems,
   getSmashEggSettings,
+  getSmashEggWinningList,
+  getPublicTermsAndConditions,
   oneSmash,
 } from '../../../api/memberApi';
 import { mapSmashEggItems } from '../../../api/responseMappers';
@@ -32,12 +39,16 @@ export default function Acebet77SmashEggPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [resultDialog, setResultDialog] = useState(null); // { title, items, message }
   const [smashRewards, setSmashRewards] = useState([]);
+  const [winningHistory, setWinningHistory] = useState([]);
+  const [termsText, setTermsText] = useState('');
   const [tokensPerRound, setTokensPerRound] = useState(10);
   const [gameEnabled, setGameEnabled] = useState(true);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const { userData, refreshUserData } = useUser();
+  const router = useRouter();
 
   const tokenBalance = userData?.balance ?? 0;
+  const rewardBoard = useMemo(() => buildRewardBoard(smashRewards), [smashRewards]);
 
   // Boot sequence: load rewards + settings while the loading screen's
   // progress bar fills (Figma 4:588), then surface the welcome dialog once
@@ -85,6 +96,42 @@ export default function Acebet77SmashEggPage() {
     return () => {
       cancelled = true;
       clearInterval(progressTimer);
+    };
+  }, []);
+
+  // Live winner feed — poll every 30s (same cadence as the default portal).
+  useEffect(() => {
+    let cancelled = false;
+    async function loadWinners() {
+      try {
+        const response = await getSmashEggWinningList();
+        if (!cancelled) setWinningHistory(mapWinningHistory(response));
+      } catch (error) {
+        console.error('Failed to load smash egg winners:', error);
+      }
+    }
+    loadWinners();
+    const interval = setInterval(loadWinners, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Smash Egg terms live under category 6.
+  useEffect(() => {
+    let cancelled = false;
+    async function loadTerms() {
+      try {
+        const response = await getPublicTermsAndConditions(SMASH_EGG_TERMS_CATEGORY);
+        if (!cancelled) setTermsText(response?.terms_and_conditions ?? '');
+      } catch (error) {
+        console.error('Failed to load smash egg terms:', error);
+      }
+    }
+    loadTerms();
+    return () => {
+      cancelled = true;
     };
   }, []);
 
@@ -193,7 +240,7 @@ export default function Acebet77SmashEggPage() {
   }
 
   return (
-    <AcebetShell bg={ACEBET_ASSETS.egg.bg}>
+    <AcebetShell bg={ACEBET_ASSETS.egg.bg} onInfoClick={() => router.push('/terms-and-conditions')}>
       <div className="relative flex flex-col items-center px-4">
         {/* Light rays behind the egg */}
         <motion.div
@@ -271,6 +318,14 @@ export default function Acebet77SmashEggPage() {
               </span>
             </button>
           </div>
+        </div>
+
+        {/* Prize list / winner feed / T&C — parity with the default portal,
+            reusing the theme-agnostic dark-glass cards unmodified. */}
+        <div className="relative z-10 mt-8 flex w-full flex-col items-center gap-6 pb-4">
+          <PrizeList prizes={rewardBoard.prizes} creditRanges={rewardBoard.creditRanges} />
+          <WinnerList winners={winningHistory} />
+          <SmashEggTerms termsText={termsText} />
         </div>
       </div>
 

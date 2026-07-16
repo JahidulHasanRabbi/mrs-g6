@@ -2,14 +2,17 @@
 
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import AcebetShell from './AcebetShell';
 import AcebetDialog from './AcebetDialog';
 import AcebetButton from './AcebetButton';
 import AcebetOrnateCard from './AcebetOrnateCard';
 import LuckySpinGrid from '../../spin/LuckySpinGrid';
+import SpinWinningPanel from '../../spin/SpinWinningPanel';
+import SmashEggTerms from '../../smash-egg/SmashEggTerms';
 import { ACEBET_ASSETS, ACEBET_COLORS } from './assets';
-import { oneSpin, tenSpin, fiftySpin, getAllLuckySpinItems } from '../../../api/memberApi';
+import { oneSpin, tenSpin, fiftySpin, getAllLuckySpinItems, getPublicTermsAndConditions } from '../../../api/memberApi';
 import { mapSpinResults, mapLuckySpinItems } from '../../../api/responseMappers';
 import { tokenStorage } from '../../../api/tokenStorage';
 import { useUser } from '../../../contexts/UserContext';
@@ -25,7 +28,13 @@ export default function Acebet77SpinPage() {
   const [itemsLoading, setItemsLoading] = useState(true);
   const [isSpinning, setIsSpinning] = useState(false);
   const [dialog, setDialog] = useState(null); // { type: 'win'|'error', title, message }
-  const { refreshUserData } = useUser();
+  const [userWinnings, setUserWinnings] = useState([]);
+  const [activeWinningView, setActiveWinningView] = useState('record');
+  const [termsText, setTermsText] = useState('');
+  const { userData, refreshUserData } = useUser();
+  const router = useRouter();
+
+  const tokenBalance = userData?.balance ?? 0;
 
   const spinResultsRef = useRef(null);
   const spinErrorRef = useRef(null);
@@ -46,6 +55,23 @@ export default function Acebet77SpinPage() {
     fetchItems();
   }, []);
 
+  // Lucky Spin terms live under category 1 (matches the default portal).
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchTerms() {
+      try {
+        const response = await getPublicTermsAndConditions(1);
+        if (!cancelled) setTermsText(response?.terms_and_conditions ?? '');
+      } catch (error) {
+        console.error('Failed to load spin terms:', error);
+      }
+    }
+    fetchTerms();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Fires when the wheel animation lands (auto or manual stop). Builds the
   // result dialog from the server result captured before the spin started.
   const handleSpinComplete = useCallback(() => {
@@ -62,6 +88,13 @@ export default function Acebet77SpinPage() {
     if (!results) return;
 
     if (results.length > 0) {
+      // Record the win in the session "Winning List".
+      const newWinnings = results.map((r) => ({
+        date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+        reward: r.reward_name,
+      }));
+      setUserWinnings((prev) => [...newWinnings, ...prev]);
+
       const rewardCounts = {};
       results.forEach((r) => {
         rewardCounts[r.reward_name] = (rewardCounts[r.reward_name] || 0) + 1;
@@ -156,8 +189,17 @@ export default function Acebet77SpinPage() {
   }, []);
 
   return (
-    <AcebetShell bg={ACEBET_ASSETS.spin.bg}>
+    <AcebetShell bg={ACEBET_ASSETS.spin.bg} onInfoClick={() => router.push('/terms-and-conditions')}>
       <div className="flex flex-col items-center gap-6 px-4">
+        {/* Free-token balance pill — parity with the default portal's header. */}
+        <div className="flex items-center gap-2 h-[46px] px-[25px] rounded-full border border-[rgba(255,225,109,0.3)] bg-[rgba(57,53,40,0.8)] backdrop-blur-[6px]">
+          <img src={ACEBET_ASSETS.ui.iconCoins} alt="" className="w-[18px] h-[18px]" />
+          <p className="text-[16px]" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: ACEBET_COLORS.creamMuted }}>
+            Free Token Balance:{' '}
+            <span style={{ color: ACEBET_COLORS.tokenYellow }}>{tokenBalance}</span>
+          </p>
+        </div>
+
         {/* LUCKY SPIN title */}
         <motion.div
           className="relative w-[318px] h-[106px] shrink-0"
@@ -207,7 +249,11 @@ export default function Acebet77SpinPage() {
         {/* Rewards panel (Figma 39:116 ornate frame) */}
         <div className="relative w-full max-w-[402px] aspect-[1448/1086]">
           <Image src={ACEBET_ASSETS.spin.panel} alt="" fill className="object-contain" sizes="402px" />
-          <div className="absolute inset-[13%] flex flex-col">
+          {/* The frame's crown ornament intrudes ~20% from the top and its
+              flourish ~13% from the bottom, while the side gems sit ~9% in — a
+              uniform 13% inset let rows slide under the crown, so use an
+              asymmetric safe-content box. */}
+          <div className="absolute inset-x-[9%] top-[20%] bottom-[13%] flex flex-col">
             <div className="flex-1 overflow-y-auto pr-1 [scrollbar-width:thin]">
               {spinItems.length === 0 ? (
                 <p className="text-center text-[13px] mt-6" style={{ color: ACEBET_COLORS.sand, fontFamily: 'var(--font-rubik), sans-serif' }}>
@@ -235,6 +281,30 @@ export default function Acebet77SpinPage() {
             </div>
           </div>
         </div>
+
+        {/* Winning Record / Winning List toggle + panels, then T&C. */}
+        <div className="flex w-full items-center justify-center gap-3">
+          <AcebetButton
+            variant={activeWinningView === 'record' ? 'gold' : 'dark'}
+            className={`!max-w-[150px] ${activeWinningView === 'record' ? '' : 'opacity-60'}`}
+            textSize={14}
+            onClick={() => setActiveWinningView('record')}
+          >
+            Winning Record
+          </AcebetButton>
+          <AcebetButton
+            variant={activeWinningView === 'list' ? 'gold' : 'dark'}
+            className={`!max-w-[150px] ${activeWinningView === 'list' ? '' : 'opacity-60'}`}
+            textSize={14}
+            onClick={() => setActiveWinningView('list')}
+          >
+            Winning List
+          </AcebetButton>
+        </div>
+
+        <SpinWinningPanel variant={activeWinningView} rows={userWinnings} />
+
+        <SmashEggTerms termsText={termsText} />
       </div>
 
       {/* Result / error dialog */}
