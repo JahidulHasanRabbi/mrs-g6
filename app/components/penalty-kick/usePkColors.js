@@ -5,10 +5,13 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { THEME_IDS } from "../../config/themes";
 import { ACEBET_ASSETS, ACEBET_COLORS } from "../themes/acebet77/assets";
 import { UBET_ASSETS, UBET_COLORS } from "../themes/ubetclub/assets";
+import { EP369_ASSETS, EP369_COLORS } from "../themes/ep369/assets";
 import AcebetOrnateCard from "../themes/acebet77/AcebetOrnateCard";
 import AcebetButton from "../themes/acebet77/AcebetButton";
 import UbetOrnateCard from "../themes/ubetclub/UbetOrnateCard";
 import UbetButton from "../themes/ubetclub/UbetButton";
+import Ep369OrnateCard from "../themes/ep369/Ep369OrnateCard";
+import Ep369Button from "../themes/ep369/Ep369Button";
 
 // Glow strings were hardcoded green rgba() literals across the phase
 // components; they live here now so a theme can recolor them in one place.
@@ -71,6 +74,21 @@ const THEME_PACKS = {
       missRed: "#ff5a5a",
     },
   },
+  [THEME_IDS.EP369]: {
+    pkColors: GOLD_PK_COLORS,
+    accent: "242,186,51",
+    OrnateCard: Ep369OrnateCard,
+    Button: Ep369Button,
+    assets: EP369_ASSETS,
+    iconBall: EP369_ASSETS.pk.iconBall,
+    palette: {
+      cream: EP369_COLORS.cream,
+      sand: EP369_COLORS.sand,
+      accent: EP369_COLORS.tokenYellow,
+      gold: EP369_COLORS.goldBright,
+      missRed: "#ff5a5a",
+    },
+  },
 };
 
 /**
@@ -81,13 +99,14 @@ const THEME_PACKS = {
  * display palette and asset map so each PK component needs a single branch.
  */
 export function usePkColors() {
-  const { themeId, isAcebet77, isUbetclub, isThemed } = useTheme();
+  const { themeId, isAcebet77, isUbetclub, isEp369, isThemed } = useTheme();
   const pack = THEME_PACKS[themeId] || null;
   const base = pack ? pack.accent : "84,233,138";
   return {
     colors: pack ? pack.pkColors : DEFAULT_PK_COLORS,
     isAcebet77,
     isUbetclub,
+    isEp369,
     isThemed,
     themeId,
     theme: pack

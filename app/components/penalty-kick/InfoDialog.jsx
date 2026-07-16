@@ -50,14 +50,15 @@ function SwipeIllustration({ compact = false }) {
 }
 
 export default function InfoDialog({ onClose, onOpenTerms }) {
-  // Ubetclub's ornate frame stretches to fit content (unlike acebet's growing
-  // 3-slice), so the swipe illustration renders compact there to keep the
-  // frame short enough that the heading stays clear of the crown.
-  const { colors: COLORS, soft, isUbetclub } = usePkColors();
+  // The ubetclub/ep369 ornate frames stretch to fit content (unlike acebet's
+  // growing 3-slice), so the swipe illustration renders compact on those skins
+  // to keep the frame short enough that the heading stays clear of the crown.
+  const { colors: COLORS, soft, isThemed, isAcebet77 } = usePkColors();
+  const compact = isThemed && !isAcebet77;
   return (
     <GlassCard>
       <SectionBadge>Information</SectionBadge>
-      <SwipeIllustration compact={isUbetclub} />
+      <SwipeIllustration compact={compact} />
       <h3
         className="mb-5 text-center text-[20px] font-bold tracking-wider uppercase"
         style={{

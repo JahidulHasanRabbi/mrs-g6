@@ -79,11 +79,11 @@ export default function PitchBackground({ variant = "close", children }) {
       );
     }
 
-    // Ubetclub red New-Year arena (Figma 77:2629 wide / 77:2445 close). Unlike
-    // the acebet art this photo has its grass as a mid band with an ornate red
-    // carpet in the foreground, so a single bottom-anchored crop reads best:
-    // the zoom lifts the grass horizon up behind the rendered goal and keeps
-    // the red carpet as the penalty-spot foreground.
+    // Ubetclub / EP369 arenas (Figma 77:2445 red carpet / 101:4346 forest).
+    // Unlike the acebet art these photos have grass as a mid band with an
+    // ornate foreground, so a single bottom-anchored crop reads best: the zoom
+    // lifts the grass horizon up behind the rendered goal and keeps the
+    // decorative foreground as the penalty-spot area.
     return (
       <div className="absolute inset-0 overflow-hidden" style={{ backgroundColor: "#12060a" }}>
         {isClose ? (
