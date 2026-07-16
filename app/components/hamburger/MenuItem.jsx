@@ -82,17 +82,18 @@ function MenuItem({
       style={{ willChange: disabled ? "auto" : "transform, background-color" }}
     >
       <motion.div
+        className="relative shrink-0"
         whileHover={!disabled ? { scale: 1.1, rotate: 5 } : {}}
         transition={{ type: "spring", stiffness: 400, damping: 10 }}
+        style={{ width: iconSize, height: iconSize }}
       >
         <Image
           src={icon}
           alt=""
-          width={iconSize}
-          height={iconSize}
+          fill
+          sizes={`${iconSize}px`}
           aria-hidden="true"
           className="object-contain"
-          style={{ width: iconSize, height: iconSize }}
         />
       </motion.div>
       <span

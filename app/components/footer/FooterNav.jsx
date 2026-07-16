@@ -40,11 +40,7 @@ const FooterNavItem = memo(({ item, isActive, onAction }) => {
     >
       <motion.div
         className="relative flex items-center justify-center"
-        style={
-          isCenter
-            ? { width: fluid(width), height: fluid(height) }
-            : { height: fluid(height) }
-        }
+        style={{ width: fluid(width), height: fluid(height) }}
         whileHover={!isCenter ? {
           rotate: [0, -10, 10, -10, 0],
           transition: { duration: 0.5 }
@@ -53,15 +49,10 @@ const FooterNavItem = memo(({ item, isActive, onAction }) => {
         <Image
           src={icon}
           alt={label}
-          width={width}
-          height={height}
+          fill
+          sizes={fluid(width)}
           className="object-contain"
           priority={isCenter}
-          style={
-            isCenter
-              ? { width: "100%", height: "100%" }
-              : { height: fluid(height), width: "auto" }
-          }
         />
       </motion.div>
       <motion.p

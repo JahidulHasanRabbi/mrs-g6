@@ -23,7 +23,7 @@ const Row = ({ index, label, onClick, top, complete }) => {
       </span>
 
       <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[18px] h-[18px]">
-        <Image alt="" src={PROFILE_ASSETS.numberBadge} fill className="object-cover" />
+        <Image alt="" src={PROFILE_ASSETS.numberBadge} fill sizes="18px" className="object-cover" />
         <span className="absolute inset-0 flex items-center justify-center text-[#fde685] text-[8px] font-medium font-['Poppins']">
           {index + 1}
         </span>
@@ -47,7 +47,7 @@ const Row = ({ index, label, onClick, top, complete }) => {
       )}
 
       <span className="absolute right-0 top-1/2 -translate-y-1/2 w-[16px] h-[18px]">
-        <Image alt="" src={PROFILE_ASSETS.editIcon} fill className="object-cover" />
+        <Image alt="" src={PROFILE_ASSETS.editIcon} fill sizes="16px" className="object-cover" />
       </span>
     </motion.button>
   );
@@ -80,7 +80,13 @@ export default function EditProfileSection({
     >
       <FluidFrame designWidth={403} designHeight={295}>
       <div className="absolute left-1/2 top-0 -translate-x-1/2 origin-top w-[366px] h-[268px] scale-[1.1]">
-        <Image alt="" src={PROFILE_ASSETS.editProfileBg} fill className="object-cover" />
+        <Image
+          alt=""
+          src={PROFILE_ASSETS.editProfileBg}
+          fill
+          sizes="(max-width: 403px) 100vw, 403px"
+          className="object-cover"
+        />
 
         <motion.p
           className="absolute left-[45px] top-[35px] -translate-y-1/2 text-[#60803c] text-[16px] font-bold font-['Times_New_Roman']"

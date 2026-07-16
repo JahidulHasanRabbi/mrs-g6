@@ -21,7 +21,13 @@ function RankBadge({ rank }) {
   if (!badge) return null;
   return (
     <div className="relative w-6 h-8 shrink-0">
-      <Image src={badge} alt={`Rank ${rank}`} fill className="object-contain" />
+      <Image
+        src={badge}
+        alt={`Rank ${rank}`}
+        fill
+        sizes="24px"
+        className="object-contain"
+      />
     </div>
   );
 }
@@ -47,7 +53,13 @@ function PrizeRow({ rank, name, image, itemType, index }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={image} alt={name} className="h-full w-full object-cover p-px" />
         ) : (
-          <Image src={SMASH_EGG_ASSETS.coinsIcon} alt="" fill className="object-contain p-3" />
+          <Image
+            src={SMASH_EGG_ASSETS.coinsIcon}
+            alt=""
+            fill
+            sizes="48px"
+            className="object-contain p-3"
+          />
         )}
       </div>
 
@@ -85,6 +97,7 @@ function FreeCreditCard({ label, index }) {
           src={SMASH_EGG_ASSETS.coinsIcon}
           alt=""
           fill
+          sizes="26px"
           className="object-contain"
         />
       </div>

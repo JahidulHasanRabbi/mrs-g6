@@ -35,7 +35,9 @@ export const FOOTER_CONFIG = {
       icon: '/assets/images/footer-leaderboard.png',
       label: 'LEADERBOARD',
       link: '/leaderboard',
-      width: 40,
+      // The source artwork is 3:2 and was previously rendered at 40px high
+      // with an automatic 60px width. Keep that exact visual footprint.
+      width: 60,
       height: 40,
     },
     {

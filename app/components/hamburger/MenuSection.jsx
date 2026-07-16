@@ -47,15 +47,16 @@ function MenuSection({ title, icon, children, defaultOpen = true, variants }) {
         style={{ willChange: "transform, background-color, box-shadow" }}
       >
         <div className="flex items-center gap-2 min-w-0">
-          <Image
-            src={icon}
-            alt=""
-            width={30}
-            height={30}
-            aria-hidden="true"
-            className="object-contain"
-            style={{ width: 30, height: 30 }}
-          />
+          <div className="relative h-[30px] w-[30px] shrink-0">
+            <Image
+              src={icon}
+              alt=""
+              fill
+              sizes="30px"
+              aria-hidden="true"
+              className="object-contain"
+            />
+          </div>
           <span
             className="font-bold text-[12px] text-white leading-[1.5] tracking-[-0.132px] whitespace-nowrap"
             style={{ fontFamily: '"Times New Roman", serif' }}
