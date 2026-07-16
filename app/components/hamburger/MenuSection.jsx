@@ -54,6 +54,7 @@ function MenuSection({ title, icon, children, defaultOpen = true, variants }) {
             height={30}
             aria-hidden="true"
             className="object-contain"
+            style={{ width: 30, height: 30 }}
           />
           <span
             className="font-bold text-[12px] text-white leading-[1.5] tracking-[-0.132px] whitespace-nowrap"

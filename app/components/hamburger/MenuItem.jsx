@@ -92,6 +92,7 @@ function MenuItem({
           height={iconSize}
           aria-hidden="true"
           className="object-contain"
+          style={{ width: iconSize, height: iconSize }}
         />
       </motion.div>
       <span

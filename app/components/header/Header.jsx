@@ -39,6 +39,7 @@ function Header({ onMenuClick, showAnimation = false, balance = null, profilePho
               width={36}
               height={36}
               className="object-contain"
+              style={{ width: 36, height: 36 }}
               priority
             />
             <p
