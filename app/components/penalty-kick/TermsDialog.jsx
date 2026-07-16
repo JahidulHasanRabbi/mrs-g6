@@ -2,7 +2,7 @@
 
 import GlassCard from "./GlassCard";
 import GreenCta from "./GreenCta";
-import { COLORS } from "./constants";
+import { usePkColors } from "./usePkColors";
 
 const TERMS_INTRO =
   "By participating in the Penalty Kick game, users agree to follow all gameplay rules and maintain fair play at all times.";
@@ -14,6 +14,7 @@ const TERMS = [
 ];
 
 export default function TermsDialog({ onClose, termsText }) {
+  const { colors: COLORS } = usePkColors();
   const hasApiValue = termsText !== null && termsText !== undefined;
   const lines = hasApiValue
     ? String(termsText).split(/\r?\n/).map((line) => line.trim()).filter(Boolean)

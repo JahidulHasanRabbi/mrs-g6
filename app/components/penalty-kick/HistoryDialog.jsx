@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import GlassCard from "./GlassCard";
 import GreenCta from "./GreenCta";
-import { COLORS, ICONS } from "./constants";
+import { ICONS } from "./constants";
+import { usePkColors } from "./usePkColors";
 import { getMemberRewardHistory } from "../../api/memberApi";
 import { tokenStorage } from "../../api/tokenStorage";
 
@@ -27,6 +28,7 @@ function formatAmount(value) {
 }
 
 function HistoryRow({ row }) {
+  const { colors: COLORS, soft } = usePkColors();
   const amount = Number(row.amount ?? 0);
   const hasAmount = Number.isFinite(amount) && amount > 0;
   const typeLabel = ITEM_TYPE_DISPLAY[String(row.sub || "").toUpperCase()] || row.sub || "—";
@@ -40,8 +42,8 @@ function HistoryRow({ row }) {
       <div
         className="grid h-10 w-10 shrink-0 place-items-center rounded-[10px]"
         style={{
-          background: "linear-gradient(145deg, rgba(84,233,138,0.28), rgba(84,233,138,0.08))",
-          border: "1px solid rgba(84,233,138,0.16)",
+          background: `linear-gradient(145deg, ${soft(0.28)}, ${soft(0.08)})`,
+          border: `1px solid ${soft(0.16)}`,
         }}
       >
         <span
@@ -125,6 +127,7 @@ export default function HistoryDialog({
   onClose,
   onRedeemAll,
 }) {
+  const { colors: COLORS, soft } = usePkColors();
   const [activeTab, setActiveTab] = useState("game");
   const [prizeRows, setPrizeRows] = useState([]);
   const [prizePage, setPrizePage] = useState(1);
@@ -167,13 +170,13 @@ export default function HistoryDialog({
   return (
     <GlassCard
       className="max-w-[390px] p-5"
-      style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.38), 0 0 34px rgba(84,233,138,0.08)" }}
+      style={{ boxShadow: `0 20px 60px rgba(0,0,0,0.38), 0 0 34px ${soft(0.08)}` }}
     >
       <div
         className="mb-3 flex items-center justify-between rounded-[10px] px-4 py-3"
         style={{
-          background: "linear-gradient(90deg, rgba(84,233,138,0.16), rgba(84,233,138,0.06))",
-          border: "1px solid rgba(84,233,138,0.10)",
+          background: `linear-gradient(90deg, ${soft(0.16)}, ${soft(0.06)})`,
+          border: `1px solid ${soft(0.1)}`,
         }}
       >
         <h3
@@ -202,8 +205,8 @@ export default function HistoryDialog({
             onClick={() => setActiveTab(tab)}
             className="flex-1 rounded-[8px] py-2 text-[11px] font-semibold uppercase tracking-[0.5px] transition-colors"
             style={{
-              background: activeTab === tab ? "rgba(84,233,138,0.12)" : "rgba(255,255,255,0.04)",
-              border: `1px solid ${activeTab === tab ? "rgba(84,233,138,0.35)" : "rgba(255,255,255,0.08)"}`,
+              background: activeTab === tab ? soft(0.12) : "rgba(255,255,255,0.04)",
+              border: `1px solid ${activeTab === tab ? soft(0.35) : "rgba(255,255,255,0.08)"}`,
               color: activeTab === tab ? COLORS.primary : "rgba(255,255,255,0.45)",
               fontFamily: "'Lexend', sans-serif",
             }}

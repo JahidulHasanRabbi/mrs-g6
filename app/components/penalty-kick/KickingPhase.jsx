@@ -4,9 +4,10 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import GoalFrame from "./GoalFrame";
 import Keeper from "./Keeper";
 import Ball from "./Ball";
-import { COLORS, DURATIONS } from "./constants";
+import { DURATIONS } from "./constants";
 import { buildTrajectory } from "./physics";
 import { useResponsiveScale } from "./useResponsiveScale";
+import { usePkColors } from "./usePkColors";
 
 // Ball is 100 px at the 475-px design width; scale it down on narrow phones
 // so it keeps the same on-screen proportion (and matches the resting ball in
@@ -50,6 +51,7 @@ function measureViewportVh() {
 //   outcome — { outcome: 'goal'|'save', saveDelayMs, keeperAim }
 //   onLanded — fired once the ball reaches the goal line
 export default function KickingPhase({ swipe, outcome, onLanded }) {
+  const { colors: COLORS } = usePkColors();
   const [t, setT] = useState(0);
   const surfaceRef = useRef(null);
   // dims gets overwritten in useLayoutEffect (before first paint) with
@@ -141,8 +143,7 @@ export default function KickingPhase({ swipe, outcome, onLanded }) {
           transition: "opacity 0.2s ease-out",
           WebkitTextStroke: "2px rgba(0,0,0,0.9)",
           paintOrder: "stroke fill",
-          textShadow:
-            "0 2px 4px rgba(0,0,0,0.85), 0 0 14px rgba(84,233,138,0.55), 0 0 28px rgba(84,233,138,0.35)",
+          textShadow: `0 2px 4px rgba(0,0,0,0.85), 0 0 14px ${COLORS.glow55}, 0 0 28px ${COLORS.glow35}`,
         }}
       >
         {outcome.outcome === "goal"

@@ -43,6 +43,8 @@ import { tokenStorage } from "../api/tokenStorage";
 import { useUser } from "../contexts/UserContext";
 import { HamburgerMenu } from "../components/hamburger";
 import { preloadGameAssets } from "../components/penalty-kick/assets";
+import { usePkColors } from "../components/penalty-kick/usePkColors";
+import AcebetBottomNav from "../components/themes/acebet77/AcebetBottomNav";
 
 const HISTORY_PAGE_SIZE = 10;
 const ITEM_TYPE_LABELS = {
@@ -144,6 +146,7 @@ function mapHistoryRow(row) {
 export default function PenaltyKickPage() {
   const router = useRouter();
   const { userData, refreshUserData } = useUser();
+  const { colors: themeColors, isAcebet77 } = usePkColors();
   // muted/toggleMuted destructured but unused — the Figma header dropped the
   // mute toggle. Audio still works (and respects the persisted-mute flag the
   // hook owns); the toggle can be reintroduced from a sub-menu later if needed.
@@ -533,21 +536,22 @@ export default function PenaltyKickPage() {
 
       {/* Same FooterNav the rest of the member pages use. It pins itself
           fixed bottom: 0 at max-w-475, so it overlays the bottom of the
-          scene exactly where the old ArcadeFooter sat. */}
-      <FooterNav />
+          scene exactly where the old ArcadeFooter sat. The Acebet77 skin
+          swaps in its ornate gold bar (Figma 59:665). */}
+      {isAcebet77 ? <AcebetBottomNav /> : <FooterNav />}
 
       {!config.enabled && (
         <div className="absolute inset-x-0 top-[68px] bottom-[100px] z-30 grid place-items-center bg-black/70 px-6 backdrop-blur-md">
           <div className="w-full max-w-[360px] rounded-[16px] border border-white/15 bg-[#071906]/95 px-6 py-7 text-center shadow-[0_16px_50px_rgba(0,0,0,0.45)]">
             <p
               className="text-[20px] font-bold"
-              style={{ color: COLORS.primary, fontFamily: "'Lexend', sans-serif" }}
+              style={{ color: themeColors.primary, fontFamily: "'Lexend', sans-serif" }}
             >
               {unavailableMessage}
             </p>
             <p
               className="mt-3 text-[12px] leading-5"
-              style={{ color: COLORS.textMuted, fontFamily: "'Lexend', sans-serif" }}
+              style={{ color: themeColors.textMuted, fontFamily: "'Lexend', sans-serif" }}
             >
               Please check back later.
             </p>

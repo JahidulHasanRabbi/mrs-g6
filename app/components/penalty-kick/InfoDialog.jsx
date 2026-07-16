@@ -2,9 +2,10 @@
 
 import GlassCard from "./GlassCard";
 import GreenCta from "./GreenCta";
-import { COLORS, ICONS } from "./constants";
+import { usePkColors } from "./usePkColors";
 
 function SectionBadge({ children, align = "center" }) {
+  const { colors: COLORS } = usePkColors();
   return (
     <div
       className="mb-4 w-full rounded-[4px] px-4 py-2 text-[14px] tracking-[0.5px] uppercase"
@@ -22,6 +23,7 @@ function SectionBadge({ children, align = "center" }) {
 }
 
 function SwipeIllustration() {
+  const { colors: COLORS } = usePkColors();
   return (
     <svg viewBox="0 0 240 156" className="my-2 h-[156px] w-full">
       <defs>
@@ -48,6 +50,7 @@ function SwipeIllustration() {
 }
 
 export default function InfoDialog({ onClose, onOpenTerms }) {
+  const { colors: COLORS, soft } = usePkColors();
   return (
     <GlassCard>
       <SectionBadge>Information</SectionBadge>
@@ -57,7 +60,7 @@ export default function InfoDialog({ onClose, onOpenTerms }) {
         style={{
           color: COLORS.primary,
           fontFamily: "'Lexend', sans-serif",
-          textShadow: "0 0 10px rgba(84,233,138,0.45)",
+          textShadow: `0 0 10px ${soft(0.45)}`,
         }}
       >
         Swipe to Kick

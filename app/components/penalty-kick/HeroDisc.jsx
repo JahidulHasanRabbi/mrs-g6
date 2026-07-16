@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { COLORS, ICONS } from "./constants";
+import { ICONS } from "./constants";
+import { usePkColors } from "./usePkColors";
 
 // Soccer-ball glyph used by the Loading + Launch hero discs. Rendered via
 // a CSS mask so the icon tints white over the dark disc — matches the
@@ -36,6 +37,7 @@ function HeroBallIcon({ size = 67 }) {
 // `spin` toggles the slow rotate animation (used while Loading); when off
 // the icon stays still (used on Launch where it just bobs subtly).
 export default function HeroDisc({ spin = true }) {
+  const { colors: COLORS } = usePkColors();
   return (
     <div className="relative" style={{ width: 192, height: 192 }}>
       <div

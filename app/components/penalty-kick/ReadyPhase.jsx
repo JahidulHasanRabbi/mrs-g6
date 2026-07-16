@@ -1,13 +1,14 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { COLORS } from "./constants";
 import GoalFrame from "./GoalFrame";
 import Keeper from "./Keeper";
 import Ball from "./Ball";
 import { useResponsiveScale } from "./useResponsiveScale";
+import { usePkColors } from "./usePkColors";
 
 export default function ReadyPhase({ surfaceHandlers, setSurface }) {
+  const { colors: COLORS } = usePkColors();
   // 100 px at the 475 design width; scales down on narrow phones and matches
   // the kicking ball so there's no size pop when the swipe fires.
   const ballSize = Math.round(100 * useResponsiveScale());
@@ -42,8 +43,7 @@ export default function ReadyPhase({ surfaceHandlers, setSurface }) {
           // the green color stays vivid. Green glow on top for brand.
           WebkitTextStroke: "2px rgba(0,0,0,0.9)",
           paintOrder: "stroke fill",
-          textShadow:
-            "0 2px 4px rgba(0,0,0,0.85), 0 0 14px rgba(84,233,138,0.55), 0 0 28px rgba(84,233,138,0.35)",
+          textShadow: `0 2px 4px rgba(0,0,0,0.85), 0 0 14px ${COLORS.glow55}, 0 0 28px ${COLORS.glow35}`,
         }}
       >
         Swipe To Kick
