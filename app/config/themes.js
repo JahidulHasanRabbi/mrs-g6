@@ -18,6 +18,7 @@ export const THEME_IDS = {
   ACEBET77: 'acebet77',
   UBETCLUB: 'ubetclub',
   EP369: 'ep369',
+  KGAME99: 'kgame99',
 };
 
 // Substring rules matched against the hostname of the stored origin URL.
@@ -26,7 +27,7 @@ const ORIGIN_THEME_RULES = [
   { match: 'acebet77', themeId: THEME_IDS.ACEBET77 },
   { match: 'ubetclub', themeId: THEME_IDS.UBETCLUB },
   { match: 'ep369', themeId: THEME_IDS.EP369 },
-  // e.g. { match: 'kgame99', themeId: THEME_IDS.KGAME99 },
+  { match: 'kgame99', themeId: THEME_IDS.KGAME99 },
 ];
 
 /**

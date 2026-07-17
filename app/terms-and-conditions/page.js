@@ -8,9 +8,11 @@ import { useTheme } from "../contexts/ThemeContext";
 import AcebetShell from "../components/themes/acebet77/AcebetShell";
 import UbetclubShell from "../components/themes/ubetclub/UbetclubShell";
 import Ep369Shell from "../components/themes/ep369/Ep369Shell";
+import KgameShell from "../components/themes/kgame99/KgameShell";
 import { ACEBET_ASSETS, ACEBET_COLORS } from "../components/themes/acebet77/assets";
 import { UBET_ASSETS, UBET_COLORS } from "../components/themes/ubetclub/assets";
 import { EP369_ASSETS, EP369_COLORS } from "../components/themes/ep369/assets";
+import { KGAME99_ASSETS, KGAME99_COLORS } from "../components/themes/kgame99/assets";
 
 function ThemedTermsContent({ accent, muted }) {
   return (
@@ -47,7 +49,7 @@ function ThemedTermsContent({ accent, muted }) {
 }
 
 export default function TermsAndConditionsPage() {
-  const { isAcebet77, isUbetclub, isEp369 } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99 } = useTheme();
 
   if (isAcebet77) {
     return (
@@ -70,6 +72,14 @@ export default function TermsAndConditionsPage() {
       <Ep369Shell bg={EP369_ASSETS.spin.bg}>
         <ThemedTermsContent accent={EP369_COLORS.goldBright} muted={EP369_COLORS.sand} />
       </Ep369Shell>
+    );
+  }
+
+  if (isKgame99) {
+    return (
+      <KgameShell bg={KGAME99_ASSETS.spin.bg}>
+        <ThemedTermsContent accent={KGAME99_COLORS.goldBright} muted={KGAME99_COLORS.sand} />
+      </KgameShell>
     );
   }
 

@@ -7,7 +7,22 @@ import { usePkColors } from "./usePkColors";
 // Soccer-ball glyph used by the Loading + Launch hero discs. Rendered via
 // a CSS mask so the icon tints white over the dark disc — matches the
 // Figma "Animated Hero Visual / Soccer Ball Core" treatment (66.67 px).
-function HeroBallIcon({ size = 67 }) {
+function HeroBallIcon({ size = 67, src = null }) {
+  // Themed skins pass their own ball art (e.g. kgame99's crystal soccer ball,
+  // matching the Figma loading spinner); the default skin keeps the white
+  // masked glyph.
+  if (src) {
+    return (
+      <img
+        src={src}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+        className="block select-none object-contain"
+        style={{ width: size, height: size }}
+      />
+    );
+  }
   return (
     <span
       aria-hidden="true"
@@ -37,7 +52,8 @@ function HeroBallIcon({ size = 67 }) {
 // `spin` toggles the slow rotate animation (used while Loading); when off
 // the icon stays still (used on Launch where it just bobs subtly).
 export default function HeroDisc({ spin = true }) {
-  const { colors: COLORS } = usePkColors();
+  const { colors: COLORS, theme } = usePkColors();
+  const ballSrc = theme?.iconBall || null;
   return (
     <div className="relative" style={{ width: 192, height: 192 }}>
       <div
@@ -78,7 +94,7 @@ export default function HeroDisc({ spin = true }) {
               transform: "translateX(-50%)",
             }}
           >
-            <HeroBallIcon />
+            <HeroBallIcon src={ballSrc} />
           </div>
         </motion.div>
       ) : (
@@ -89,7 +105,7 @@ export default function HeroDisc({ spin = true }) {
           animate={{ y: [0, -3, 0] }}
           transition={{ duration: 2.4, ease: "easeInOut", repeat: Infinity }}
         >
-          <HeroBallIcon />
+          <HeroBallIcon src={ballSrc} />
         </motion.div>
       )}
     </div>

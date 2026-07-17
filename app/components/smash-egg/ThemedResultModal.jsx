@@ -82,6 +82,10 @@ export default function ThemedResultModal({
   frameBg,
   insets = { x: "10%", top: "18%", bottom: "13%" },
   titleColor = "#fff6df",
+  // Optional themed button component (e.g. KgameButton). When provided the
+  // actions render as the skin's ornate buttons instead of the default plain
+  // gold/dark pills, so the popup matches the active theme.
+  Button = null,
 }) {
   return (
     <AnimatePresence>
@@ -128,32 +132,47 @@ export default function ThemedResultModal({
 
             {/* Actions below the frame (Figma composition — never overlaps the
                 frame art). Same actions as the default portal. */}
-            <div className="flex w-full max-w-[320px] flex-col gap-3">
-              {onReturn && (
-                <button
-                  onClick={onReturn}
-                  className="w-full cursor-pointer rounded-xl border-b-4 border-[#3a3000] py-4 text-base leading-4 text-[#3a3000]"
-                  style={{
-                    fontFamily: "var(--font-acme), 'Acme', sans-serif",
-                    background: "linear-gradient(to bottom, #ffd700, #544600)",
-                    boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
-                  }}
-                >
-                  Return to website (Claim)
-                </button>
+            <div className="flex w-full max-w-[320px] flex-col items-center gap-3">
+              {Button ? (
+                <>
+                  {onReturn && (
+                    <Button variant="gold" textSize={14} onClick={onReturn}>
+                      Return to website (Claim)
+                    </Button>
+                  )}
+                  <Button variant="dark" textSize={17} onClick={onClose}>
+                    Close
+                  </Button>
+                </>
+              ) : (
+                <>
+                  {onReturn && (
+                    <button
+                      onClick={onReturn}
+                      className="w-full cursor-pointer rounded-xl border-b-4 border-[#3a3000] py-4 text-base leading-4 text-[#3a3000]"
+                      style={{
+                        fontFamily: "var(--font-acme), 'Acme', sans-serif",
+                        background: "linear-gradient(to bottom, #ffd700, #544600)",
+                        boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
+                      }}
+                    >
+                      Return to website (Claim)
+                    </button>
+                  )}
+                  <button
+                    onClick={onClose}
+                    className="w-full cursor-pointer rounded-xl border border-[#fff6df]/30 py-4 text-base leading-4 text-[#fff6df]"
+                    style={{
+                      fontFamily: "var(--font-acme), 'Acme', sans-serif",
+                      background: "rgba(0,0,0,0.45)",
+                      backdropFilter: "blur(6px)",
+                      WebkitBackdropFilter: "blur(6px)",
+                    }}
+                  >
+                    Close
+                  </button>
+                </>
               )}
-              <button
-                onClick={onClose}
-                className="w-full cursor-pointer rounded-xl border border-[#fff6df]/30 py-4 text-base leading-4 text-[#fff6df]"
-                style={{
-                  fontFamily: "var(--font-acme), 'Acme', sans-serif",
-                  background: "rgba(0,0,0,0.45)",
-                  backdropFilter: "blur(6px)",
-                  WebkitBackdropFilter: "blur(6px)",
-                }}
-              >
-                Close
-              </button>
             </div>
           </motion.div>
         </motion.div>

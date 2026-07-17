@@ -31,6 +31,7 @@ export default function ThemeHeader({
   onMenuClick,
   onInfoClick,
   balance = null,
+  balanceAlign = 'center',
   title = null,
   titleIcon = null,
   hamburgerFit = 'object-contain',
@@ -74,8 +75,8 @@ export default function ThemeHeader({
         )}
       </div>
 
-      {/* Centre: optional balance pill */}
-      {balance !== null && (
+      {/* Centre: optional balance pill (default alignment) */}
+      {balance !== null && balanceAlign === 'center' && (
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 h-[38px] px-4 rounded-full border border-[rgba(255,225,109,0.3)] bg-[rgba(57,53,40,0.85)] backdrop-blur-[6px]">
           {coinIcon && <img src={coinIcon} alt="" className="w-[16px] h-[16px]" />}
           <span className="text-[15px] font-semibold" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: '#ffe16d' }}>
@@ -84,18 +85,28 @@ export default function ThemeHeader({
         </div>
       )}
 
-      {/* Right: optional info button */}
-      {onInfoClick ? (
-        <button
-          onClick={onInfoClick}
-          aria-label="Information"
-          className="relative w-9 h-9 cursor-pointer active:scale-95 transition-transform rounded-full overflow-hidden"
-        >
-          <Image src={infoIcon} alt="Info" fill className={`${infoFit} scale-110`} sizes="36px" />
-        </button>
-      ) : (
-        <span className="w-9 h-9" />
-      )}
+      {/* Right: optional balance pill (right alignment) + info button */}
+      <div className="relative flex items-center gap-2">
+        {balance !== null && balanceAlign === 'right' && (
+          <div className="flex items-center gap-2 h-[36px] px-3 rounded-full border border-[rgba(255,225,109,0.3)] bg-[rgba(57,53,40,0.85)] backdrop-blur-[6px]">
+            {coinIcon && <img src={coinIcon} alt="" className="w-[16px] h-[16px]" />}
+            <span className="text-[14px] font-semibold" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: '#ffe16d' }}>
+              {formatBalance(balance)}
+            </span>
+          </div>
+        )}
+        {onInfoClick ? (
+          <button
+            onClick={onInfoClick}
+            aria-label="Information"
+            className="relative w-9 h-9 cursor-pointer active:scale-95 transition-transform rounded-full overflow-hidden"
+          >
+            <Image src={infoIcon} alt="Info" fill className={`${infoFit} scale-110`} sizes="36px" />
+          </button>
+        ) : (
+          <span className="w-9 h-9" />
+        )}
+      </div>
     </header>
   );
 }

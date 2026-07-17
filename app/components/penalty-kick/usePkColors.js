@@ -6,12 +6,15 @@ import { THEME_IDS } from "../../config/themes";
 import { ACEBET_ASSETS, ACEBET_COLORS } from "../themes/acebet77/assets";
 import { UBET_ASSETS, UBET_COLORS } from "../themes/ubetclub/assets";
 import { EP369_ASSETS, EP369_COLORS } from "../themes/ep369/assets";
+import { KGAME99_ASSETS, KGAME99_COLORS } from "../themes/kgame99/assets";
 import AcebetOrnateCard from "../themes/acebet77/AcebetOrnateCard";
 import AcebetButton from "../themes/acebet77/AcebetButton";
 import UbetOrnateCard from "../themes/ubetclub/UbetOrnateCard";
 import UbetButton from "../themes/ubetclub/UbetButton";
 import Ep369OrnateCard from "../themes/ep369/Ep369OrnateCard";
 import Ep369Button from "../themes/ep369/Ep369Button";
+import KgameOrnateCard from "../themes/kgame99/KgameOrnateCard";
+import KgameButton from "../themes/kgame99/KgameButton";
 
 // Glow strings were hardcoded green rgba() literals across the phase
 // components; they live here now so a theme can recolor them in one place.
@@ -42,6 +45,25 @@ const GOLD_PK_COLORS = {
   glow55: "rgba(242,186,51,0.55)",
   glow40: "rgba(242,186,51,0.4)",
   glow35: "rgba(242,186,51,0.35)",
+};
+
+// Kgame99 is the celestial-blue skin: its gameplay headings (KICK OFF / GOAL /
+// SWIPE TO KICK / INITIALIZING ARENA / CONGRATULATIONS), swipe arrows and the
+// loading progress bar render in electric blue with a blue glow — matching the
+// Figma frames (154:446 / 154:492 / 154:558), which use #0059ff, not gold.
+const KGAME99_PK_COLORS = {
+  ...DEFAULT_PK_COLORS,
+  primary: "#0059ff",
+  primaryDeep: "#04122e",
+  primaryShadow: "#0a327a",
+  primaryGradStart: "#032d73",
+  textMuted: "#cfe0f2",
+  greenSoft10: "rgba(0,89,255,0.12)",
+  greenSoft20: "rgba(0,89,255,0.22)",
+  greenSoft50: "rgba(0,89,255,0.5)",
+  glow55: "rgba(0,89,255,0.8)",
+  glow40: "rgba(0,89,255,0.5)",
+  glow35: "rgba(0,89,255,0.35)",
 };
 
 // One pack per themed skin. Each supplies the gold gameplay palette, the accent
@@ -94,6 +116,21 @@ const THEME_PACKS = {
       missRed: "#ff5a5a",
     },
   },
+  [THEME_IDS.KGAME99]: {
+    pkColors: KGAME99_PK_COLORS,
+    accent: "0,89,255",
+    OrnateCard: KgameOrnateCard,
+    Button: KgameButton,
+    assets: KGAME99_ASSETS,
+    iconBall: KGAME99_ASSETS.pk.iconBall,
+    palette: {
+      cream: KGAME99_COLORS.cream,
+      sand: KGAME99_COLORS.sand,
+      accent: KGAME99_COLORS.tokenYellow,
+      gold: KGAME99_COLORS.goldBright,
+      missRed: "#ff5a5a",
+    },
+  },
 };
 
 /**
@@ -104,7 +141,7 @@ const THEME_PACKS = {
  * display palette and asset map so each PK component needs a single branch.
  */
 export function usePkColors() {
-  const { themeId, isAcebet77, isUbetclub, isEp369, isThemed } = useTheme();
+  const { themeId, isAcebet77, isUbetclub, isEp369, isKgame99, isThemed } = useTheme();
   const pack = THEME_PACKS[themeId] || null;
   const base = pack ? pack.accent : "84,233,138";
   return {
@@ -112,6 +149,7 @@ export function usePkColors() {
     isAcebet77,
     isUbetclub,
     isEp369,
+    isKgame99,
     isThemed,
     themeId,
     theme: pack

@@ -50,15 +50,69 @@ function SwipeIllustration({ compact = false }) {
 }
 
 export default function InfoDialog({ onClose, onOpenTerms }) {
-  // The ubetclub/ep369 ornate frames stretch to fit content (unlike acebet's
-  // growing 3-slice), so the swipe illustration renders compact on those skins
-  // to keep the frame short enough that the heading stays clear of the crown.
-  const { colors: COLORS, soft, isThemed, isAcebet77 } = usePkColors();
-  const compact = isThemed && !isAcebet77;
+  const { colors: COLORS, soft, theme } = usePkColors();
+
+  // Themed skins: keep the info inside the skin's ornate frame but render the
+  // themed Button (and Terms link) BELOW it, exactly like TermsDialog / the
+  // Figma result dialogs — the earlier build stuffed the plain green CTA inside
+  // the growing 3-slice frame, which (a) left an off-theme gold pill and (b) on
+  // kgame99 stretched the ~142px-tall rail slice so far that its castle art
+  // smeared into vertical streaks. Compact content + button-below fixes both.
+  if (theme) {
+    const { OrnateCard, Button, palette } = theme;
+    return (
+      <div className="flex w-full max-w-[360px] flex-col items-center gap-3">
+        <OrnateCard>
+          {/* Dark inner panel (same pattern as the theme's welcome/result
+              dialogs) — it covers the frame-mid rail art whose castle spires
+              would otherwise read as vertical streaks behind the content, and
+              lifts the gold arrows + text for contrast. */}
+          <div className="relative w-full">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute -inset-x-3 -inset-y-1 rounded-[14px]"
+              style={{ backgroundColor: "rgba(8,20,44,0.55)" }}
+            />
+            <div className="relative flex flex-col items-center">
+              <p
+                className="text-[15px] uppercase tracking-[1px]"
+                style={{ fontFamily: "var(--font-acme), sans-serif", color: palette.cream }}
+              >
+                Information
+              </p>
+              <SwipeIllustration compact />
+              <h3
+                className="mt-1 text-[20px] font-bold uppercase tracking-wider"
+                style={{
+                  color: COLORS.primary,
+                  fontFamily: "var(--font-acme), sans-serif",
+                  textShadow: `0 0 10px ${soft(0.45)}`,
+                }}
+              >
+                Swipe to Kick
+              </h3>
+            </div>
+          </div>
+        </OrnateCard>
+
+        <Button onClick={onClose}>Close</Button>
+
+        <button
+          type="button"
+          onClick={onOpenTerms}
+          className="text-[12px] underline"
+          style={{ color: palette.sand, fontFamily: "var(--font-rubik), sans-serif" }}
+        >
+          Terms & Conditions
+        </button>
+      </div>
+    );
+  }
+
   return (
     <GlassCard>
       <SectionBadge>Information</SectionBadge>
-      <SwipeIllustration compact={compact} />
+      <SwipeIllustration compact={false} />
       <h3
         className="mb-5 text-center text-[20px] font-bold tracking-wider uppercase"
         style={{

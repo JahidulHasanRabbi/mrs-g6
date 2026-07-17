@@ -19,6 +19,7 @@ import { useTheme } from "../contexts/ThemeContext";
 import Acebet77SmashEggPage from "../components/themes/acebet77/Acebet77SmashEggPage";
 import UbetclubSmashEggPage from "../components/themes/ubetclub/UbetclubSmashEggPage";
 import Ep369SmashEggPage from "../components/themes/ep369/Ep369SmashEggPage";
+import Kgame99SmashEggPage from "../components/themes/kgame99/Kgame99SmashEggPage";
 import { useSmashEggGame, HISTORY_PAGE_SIZE } from "../components/smash-egg/useSmashEggGame";
 
 function DefaultSmashEggPage() {
@@ -212,9 +213,10 @@ function DefaultSmashEggPage() {
 }
 
 export default function SmashEggPage() {
-  const { isAcebet77, isUbetclub, isEp369 } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99 } = useTheme();
   if (isAcebet77) return <Acebet77SmashEggPage />;
   if (isUbetclub) return <UbetclubSmashEggPage />;
   if (isEp369) return <Ep369SmashEggPage />;
+  if (isKgame99) return <Kgame99SmashEggPage />;
   return <DefaultSmashEggPage />;
 }

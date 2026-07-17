@@ -8,7 +8,8 @@ import { DURATIONS } from "./constants";
 import { usePkColors } from "./usePkColors";
 
 export default function LoadingPhase({ onComplete }) {
-  const { colors: COLORS } = usePkColors();
+  const { colors: COLORS, theme } = usePkColors();
+  const Button = theme?.Button;
   const [progress, setProgress] = useState(0);
   const onCompleteRef = useRef(onComplete);
   useEffect(() => { onCompleteRef.current = onComplete; });
@@ -81,7 +82,12 @@ export default function LoadingPhase({ onComplete }) {
         Connecting to Global Leaderboards...
       </p>
 
-      <GreenCta disabled>Start</GreenCta>
+      {/* Themed skins use their ornate button image; default keeps the CTA. */}
+      {Button ? (
+        <Button disabled>Start</Button>
+      ) : (
+        <GreenCta disabled>Start</GreenCta>
+      )}
     </div>
   );
 }

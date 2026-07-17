@@ -6,7 +6,8 @@ import HeroDisc from "./HeroDisc";
 import { usePkColors } from "./usePkColors";
 
 export default function LaunchPhase({ onStart }) {
-  const { colors: COLORS } = usePkColors();
+  const { colors: COLORS, theme } = usePkColors();
+  const Button = theme?.Button;
   return (
     <div className="flex w-full flex-col items-center justify-center px-6 py-10">
       <motion.div
@@ -33,7 +34,12 @@ export default function LaunchPhase({ onStart }) {
         Kick Off!!
       </motion.h2>
 
-      <GreenCta onClick={onStart}>Start</GreenCta>
+      {/* Themed skins use their ornate button image; default keeps the CTA. */}
+      {Button ? (
+        <Button onClick={onStart}>Start</Button>
+      ) : (
+        <GreenCta onClick={onStart}>Start</GreenCta>
+      )}
     </div>
   );
 }

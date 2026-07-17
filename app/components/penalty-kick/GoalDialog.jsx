@@ -26,29 +26,46 @@ export default function GoalDialog({ reward, onKickAgain, onRedeemAll, onReturn 
     return (
       <div className="flex w-full max-w-[360px] flex-col items-center gap-3">
         <OrnateCard>
-          <div className="flex items-center gap-2">
-            <img src={assets.ui.iconParty} alt="" className="h-6 w-6" />
-            <p
-              className="text-[20px] uppercase tracking-[2px]"
-              style={{ fontFamily: "var(--font-acme), sans-serif", color: palette.cream }}
-            >
-              Congratulations
-            </p>
+          {/* Dark inner panel (same as InfoDialog): keeps the heading clear of
+              the crown, gives the reward text a clean readable surface, and
+              contains long reward names gracefully — the frame-mid rail art no
+              longer shows through as streaks behind long messages. */}
+          <div className="relative w-full pt-1">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-x-[-8px] bottom-[-4px] top-1 rounded-[14px]"
+              style={{ backgroundColor: "rgba(8,20,44,0.55)" }}
+            />
+            <div className="relative flex flex-col items-center gap-1.5 px-3 py-2.5">
+              <div className="flex items-center gap-2">
+                <img src={assets.ui.iconParty} alt="" className="h-6 w-6 shrink-0" />
+                <p
+                  className="text-[19px] uppercase tracking-[2px]"
+                  style={{
+                    fontFamily: "var(--font-acme), sans-serif",
+                    color: COLORS.primary,
+                    textShadow: `0 0 12px ${soft(0.7)}`,
+                  }}
+                >
+                  Congratulations
+                </p>
+              </div>
+              <p className="text-[13px]" style={{ color: "#fff", fontFamily: "var(--font-rubik), sans-serif" }}>
+                You won
+              </p>
+              <p
+                className="max-h-[112px] max-w-[248px] overflow-y-auto text-center leading-[1.15] [scrollbar-width:thin]"
+                style={{
+                  fontSize: "clamp(17px, 4.8vw, 23px)",
+                  fontFamily: "var(--font-acme), sans-serif",
+                  color: palette.accent,
+                  textShadow: "0 0 14px rgba(255,225,109,0.6)",
+                }}
+              >
+                {rewardText}
+              </p>
+            </div>
           </div>
-          <p className="mt-3 text-[13px]" style={{ color: "#fff", fontFamily: "var(--font-rubik), sans-serif" }}>
-            You won
-          </p>
-          <p
-            className="mt-1 px-2 text-center leading-tight"
-            style={{
-              fontSize: "clamp(20px, 6vw, 26px)",
-              fontFamily: "var(--font-acme), sans-serif",
-              color: palette.accent,
-              textShadow: "0 0 14px rgba(255,225,109,0.6)",
-            }}
-          >
-            {rewardText}
-          </p>
         </OrnateCard>
         <Button onClick={onKickAgain}>Kick Again?</Button>
         {onRedeemAll && (
