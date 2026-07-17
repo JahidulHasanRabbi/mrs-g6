@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getPublicTermsAndConditions } from "../../api/memberApi";
+import { useTheme } from "../../contexts/ThemeContext";
+import { getMemberThemeStyles } from "../../config/memberThemeStyles";
 
 // Parse "title: X\ndescription: Y" format into sections array
 function parseTextToSections(text) {
@@ -24,7 +26,7 @@ function parseTextToSections(text) {
   return sections;
 }
 
-const CollapsibleTermItem = ({ number, title, description, index }) => {
+const CollapsibleTermItem = ({ number, title, description, index, appearance }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -43,18 +45,16 @@ const CollapsibleTermItem = ({ number, title, description, index }) => {
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full text-left group cursor-pointer relative overflow-hidden rounded-[12px] p-5"
         style={{
-          background: isExpanded
-            ? "linear-gradient(135deg, rgba(233, 175, 65, 0.12) 0%, rgba(233, 175, 65, 0.05) 100%)"
-            : "linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%)",
-          border: `1px solid ${isExpanded ? 'rgba(233, 175, 65, 0.3)' : 'rgba(233, 175, 65, 0.15)'}`,
+          background: isExpanded ? appearance.itemExpanded : appearance.item,
+          border: `1px solid ${isExpanded ? appearance.borderExpanded : appearance.border}`,
           boxShadow: isExpanded
-            ? "0px 4px 20px rgba(233, 175, 65, 0.15), inset 0px 1px 0px rgba(255, 255, 255, 0.1)"
+            ? `0px 4px 20px ${appearance.glow}, inset 0px 1px 0px rgba(255,255,255,0.1)`
             : "0px 2px 8px rgba(0, 0, 0, 0.3)",
           transition: "all 0.3s ease",
         }}
         whileHover={{
           scale: 1.01,
-          boxShadow: "0px 6px 24px rgba(233, 175, 65, 0.2), inset 0px 1px 0px rgba(255, 255, 255, 0.15)"
+          boxShadow: `0px 6px 24px ${appearance.glow}, inset 0px 1px 0px rgba(255,255,255,0.15)`
         }}
         whileTap={{ scale: 0.99 }}
       >
@@ -62,13 +62,13 @@ const CollapsibleTermItem = ({ number, title, description, index }) => {
           <div
             className="flex items-center justify-center w-[36px] h-[36px] rounded-full shrink-0"
             style={{
-              background: "linear-gradient(135deg, #e9af41 0%, #b07c2a 100%)",
-              boxShadow: "0px 4px 12px rgba(233, 175, 65, 0.4), inset 0px 1px 2px rgba(255, 255, 255, 0.3)",
+              background: appearance.number,
+              boxShadow: `0px 4px 12px ${appearance.glow}, inset 0px 1px 2px rgba(255,255,255,0.3)`,
             }}
           >
             <span
-              className="text-[#3d1a02] text-[18px] font-extrabold"
-              style={{ textShadow: "0px 1px 1px rgba(255,255,255,0.3)" }}
+              className="text-[18px] font-extrabold"
+              style={{ color: appearance.numberText, textShadow: "0px 1px 1px rgba(255,255,255,0.3)" }}
             >
               {number}
             </span>
@@ -77,7 +77,7 @@ const CollapsibleTermItem = ({ number, title, description, index }) => {
             <h4
               className="text-[17px] font-bold leading-tight group-hover:text-[#fcd064] transition-colors"
               style={{
-                color: isExpanded ? "#fcd064" : "#e9af41",
+                color: isExpanded ? appearance.accentBright : appearance.accent,
                 textShadow: "0px 2px 6px rgba(0,0,0,0.8)"
               }}
             >
@@ -87,8 +87,8 @@ const CollapsibleTermItem = ({ number, title, description, index }) => {
           <motion.div
             animate={{ rotate: isExpanded ? 180 : 0 }}
             transition={{ duration: 0.3, type: "spring" }}
-            className="text-[#e9af41] text-[16px] font-bold shrink-0"
-            style={{ textShadow: "0px 2px 4px rgba(0,0,0,0.6)" }}
+            className="text-[16px] font-bold shrink-0"
+            style={{ color: appearance.accent, textShadow: "0px 2px 4px rgba(0,0,0,0.6)" }}
           >
             ▼
           </motion.div>
@@ -103,8 +103,8 @@ const CollapsibleTermItem = ({ number, title, description, index }) => {
             >
               <div className="pl-[52px] pr-2">
                 <p
-                  className="text-white/90 text-[15px] font-medium leading-relaxed whitespace-pre-line"
-                  style={{ textShadow: "0px 1px 3px rgba(0,0,0,0.8)" }}
+                  className="text-[15px] font-medium leading-relaxed whitespace-pre-line"
+                  style={{ color: appearance.text, textShadow: "0px 1px 3px rgba(0,0,0,0.8)" }}
                 >
                   {description}
                 </p>
@@ -120,6 +120,8 @@ const CollapsibleTermItem = ({ number, title, description, index }) => {
 export default function FancyTermsConditions() {
   const [terms, setTerms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { themeId } = useTheme();
+  const appearance = getMemberThemeStyles(themeId).terms;
 
   useEffect(() => {
     async function fetchTerms() {
@@ -150,19 +152,22 @@ export default function FancyTermsConditions() {
       <div
         className="relative rounded-[24px] p-8 sm:p-10 overflow-hidden"
         style={{
-          background: "linear-gradient(180deg, rgba(13, 31, 19, 0.92) 0%, rgba(8, 20, 12, 0.98) 100%)",
-          boxShadow: "0px 20px 60px -10px rgba(0, 0, 0, 0.8), 0px 0px 0px 1px rgba(233, 175, 65, 0.3)",
+          background: appearance.card,
+          boxShadow: `0px 20px 60px -10px rgba(0,0,0,0.8), 0px 0px 0px 1px ${appearance.borderExpanded}`,
           backdropFilter: "blur(20px)",
         }}
       >
         {/* Subtle corner accents */}
-        <div className="absolute top-0 left-0 w-16 h-16 border-t-[3px] border-l-[3px] border-[#e9af41] rounded-tl-[24px] opacity-40" />
-        <div className="absolute top-0 right-0 w-16 h-16 border-t-[3px] border-r-[3px] border-[#e9af41] rounded-tr-[24px] opacity-40" />
-        <div className="absolute bottom-0 left-0 w-16 h-16 border-b-[3px] border-l-[3px] border-[#e9af41] rounded-bl-[24px] opacity-40" />
-        <div className="absolute bottom-0 right-0 w-16 h-16 border-b-[3px] border-r-[3px] border-[#e9af41] rounded-br-[24px] opacity-40" />
+        <div className="absolute top-0 left-0 w-16 h-16 border-t-[3px] border-l-[3px] rounded-tl-[24px] opacity-40" style={{ borderColor: appearance.accent }} />
+        <div className="absolute top-0 right-0 w-16 h-16 border-t-[3px] border-r-[3px] rounded-tr-[24px] opacity-40" style={{ borderColor: appearance.accent }} />
+        <div className="absolute bottom-0 left-0 w-16 h-16 border-b-[3px] border-l-[3px] rounded-bl-[24px] opacity-40" style={{ borderColor: appearance.accent }} />
+        <div className="absolute bottom-0 right-0 w-16 h-16 border-b-[3px] border-r-[3px] rounded-br-[24px] opacity-40" style={{ borderColor: appearance.accent }} />
 
         {/* Ambient glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[60%] h-[200px] bg-[#e9af41] rounded-full blur-[120px] opacity-[0.08] pointer-events-none" />
+        <div
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-[60%] h-[200px] rounded-full blur-[120px] opacity-[0.12] pointer-events-none"
+          style={{ backgroundColor: appearance.accent }}
+        />
 
         {/* Terms List */}
         <div className="space-y-3 relative">
@@ -173,8 +178,8 @@ export default function FancyTermsConditions() {
                 key={i}
                 className="rounded-[12px] p-5 animate-pulse"
                 style={{
-                  background: "linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)",
-                  border: "1px solid rgba(233, 175, 65, 0.15)",
+                  background: appearance.item,
+                  border: `1px solid ${appearance.border}`,
                 }}
               >
                 <div className="flex items-center gap-4">
@@ -184,7 +189,7 @@ export default function FancyTermsConditions() {
               </div>
             ))
           ) : terms.length === 0 ? (
-            <div className="text-center py-8 text-white/40 text-sm">
+            <div className="text-center py-8 text-sm" style={{ color: appearance.muted }}>
               No terms and conditions available.
             </div>
           ) : (
@@ -195,6 +200,7 @@ export default function FancyTermsConditions() {
                 index={index}
                 title={term.title}
                 description={term.description}
+                appearance={appearance}
               />
             ))
           )}

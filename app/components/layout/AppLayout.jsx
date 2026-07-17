@@ -47,10 +47,10 @@ export default function AppLayout({ children }) {
     return <>{children}</>;
   }
 
-  // A themed spin page draws its own shell (e.g. AcebetShell / UbetclubShell)
+  // Themed Spin and Terms pages draw their own station shell.
   // — skip the default header/footer chrome like the self-contained game
   // pages below.
-  if (isThemed && isSpinPage) {
+  if (isThemed && (isSpinPage || isTermsPage)) {
     return <>{children}</>;
   }
 

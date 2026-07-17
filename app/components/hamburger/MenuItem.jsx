@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { memo } from "react";
 import { motion } from "framer-motion";
 import { tokenStorage } from "../../api/tokenStorage";
+import MenuIcon from "./MenuIcon";
 
 /**
  * MenuItem Component
@@ -26,6 +26,7 @@ function MenuItem({
   onClose,
   onAction,
   disabled = false,
+  appearance,
 }) {
   const iconSize = 24;
   const textSize = "text-[11px]";
@@ -72,7 +73,7 @@ function MenuItem({
       whileHover={
         !disabled
           ? {
-              backgroundColor: "rgba(255, 255, 255, 0.06)",
+              backgroundColor: appearance.itemHover,
               x: 4,
               transition: { duration: 0.2 },
             }
@@ -85,20 +86,13 @@ function MenuItem({
         className="relative shrink-0"
         whileHover={!disabled ? { scale: 1.1, rotate: 5 } : {}}
         transition={{ type: "spring", stiffness: 400, damping: 10 }}
-        style={{ width: iconSize, height: iconSize }}
+        style={{ width: iconSize, height: iconSize, color: appearance.itemIcon }}
       >
-        <Image
-          src={icon}
-          alt=""
-          fill
-          sizes={`${iconSize}px`}
-          aria-hidden="true"
-          className="object-contain"
-        />
+        <MenuIcon src={icon} size={iconSize} />
       </motion.div>
       <span
-        className={`${textSize} font-['Times_New_Roman'] text-white leading-[1.5] tracking-[-0.11px]`}
-        style={{ fontFamily: '"Times New Roman", serif' }}
+        className={`${textSize} font-['Times_New_Roman'] leading-[1.5] tracking-[-0.11px]`}
+        style={{ fontFamily: '"Times New Roman", serif', color: appearance.itemText }}
       >
         {label}
       </span>

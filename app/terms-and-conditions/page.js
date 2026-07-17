@@ -1,15 +1,83 @@
 "use client";
 
+import { motion } from "framer-motion";
 import AnimatedSection from "../components/ui/AnimatedSection";
 import AnimatedSectionWrapper from "../components/ui/AnimatedSectionWrapper";
 import FancyTermsConditions from "../components/spin/FancyTermsConditions";
+import { useTheme } from "../contexts/ThemeContext";
+import AcebetShell from "../components/themes/acebet77/AcebetShell";
+import UbetclubShell from "../components/themes/ubetclub/UbetclubShell";
+import Ep369Shell from "../components/themes/ep369/Ep369Shell";
+import { ACEBET_ASSETS, ACEBET_COLORS } from "../components/themes/acebet77/assets";
+import { UBET_ASSETS, UBET_COLORS } from "../components/themes/ubetclub/assets";
+import { EP369_ASSETS, EP369_COLORS } from "../components/themes/ep369/assets";
+
+function ThemedTermsContent({ accent, muted }) {
+  return (
+    <div className="flex min-h-screen flex-col items-center px-4 pb-8">
+      <motion.div
+        className="pb-6 pt-5 text-center"
+        initial={{ opacity: 0, y: -18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 190, damping: 18 }}
+      >
+        <p
+          className="text-[11px] uppercase tracking-[4px]"
+          style={{ color: muted, fontFamily: "var(--font-rubik), sans-serif" }}
+        >
+          Member Information
+        </p>
+        <h1
+          className="mt-2 text-[28px] uppercase tracking-[2px]"
+          style={{
+            color: accent,
+            fontFamily: "var(--font-acme), sans-serif",
+            textShadow: `0 0 18px ${accent}55`,
+          }}
+        >
+          Terms &amp; Conditions
+        </h1>
+      </motion.div>
+
+      <div className="w-full pb-4">
+        <FancyTermsConditions />
+      </div>
+    </div>
+  );
+}
 
 export default function TermsAndConditionsPage() {
+  const { isAcebet77, isUbetclub, isEp369 } = useTheme();
+
+  if (isAcebet77) {
+    return (
+      <AcebetShell bg={ACEBET_ASSETS.spin.bg}>
+        <ThemedTermsContent accent={ACEBET_COLORS.goldBright} muted={ACEBET_COLORS.sand} />
+      </AcebetShell>
+    );
+  }
+
+  if (isUbetclub) {
+    return (
+      <UbetclubShell bg={UBET_ASSETS.spin.bg}>
+        <ThemedTermsContent accent={UBET_COLORS.goldBright} muted={UBET_COLORS.sand} />
+      </UbetclubShell>
+    );
+  }
+
+  if (isEp369) {
+    return (
+      <Ep369Shell bg={EP369_ASSETS.spin.bg}>
+        <ThemedTermsContent accent={EP369_COLORS.goldBright} muted={EP369_COLORS.sand} />
+      </Ep369Shell>
+    );
+  }
+
   return (
     <>
-      <AnimatedSection title="" imageSrc='/assets/terms-condition/terms-and-condition.png' imageAlt="terms and conditions" />
+      <AnimatedSection title="" imageSrc="/assets/terms-condition/terms-and-condition.png" imageAlt="terms and conditions" />
       <AnimatedSectionWrapper animation="fadeInUp" delay={0.14} viewportAmount={0.2}>
-        <div className="flex justify-center px-4 py-4 mb-20">
+        <div className="mb-20 flex justify-center px-4 py-4">
           <FancyTermsConditions />
         </div>
       </AnimatedSectionWrapper>

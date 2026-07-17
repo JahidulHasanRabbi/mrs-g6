@@ -1,14 +1,15 @@
 "use client";
 
-import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { memo, useMemo, useState, useEffect, useCallback } from "react";
 import { useHamburgerMenu } from "./useHamburgerMenu";
-import { MENU_CONFIG, ANIMATION_CONFIG, THEME_CONFIG } from "./menuConfig";
+import { MENU_CONFIG, ANIMATION_CONFIG } from "./menuConfig";
 import MenuSection from "./MenuSection";
 import MenuItem from "./MenuItem";
 import FeedbackModal from "../ui/FeedbackModal";
 import { getPublicBanners } from "@/app/api/memberApi";
+import { useTheme } from "@/app/contexts/ThemeContext";
+import { getMemberThemeStyles } from "@/app/config/memberThemeStyles";
 
 /**
  * HamburgerMenu Component
@@ -30,6 +31,8 @@ function HamburgerMenu({ isOpen, onClose, side = "left" }) {
   useHamburgerMenu(isOpen, onClose);
 
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const { themeId } = useTheme();
+  const menuStyle = getMemberThemeStyles(themeId).menu;
 
   const handleMenuAction = useCallback(async (actionType) => {
     if (actionType === "feedback") {
@@ -113,7 +116,9 @@ function HamburgerMenu({ isOpen, onClose, side = "left" }) {
               className={`pointer-events-auto absolute top-0 ${side === "right" ? "right-0" : "left-0"} h-dvh w-[220px] overflow-y-auto overscroll-contain`}
               style={{
                 scrollbarGutter: "stable",
-                backgroundColor: THEME_CONFIG.background,
+                background: menuStyle.drawer,
+                scrollbarColor: `${menuStyle.scrollbar} transparent`,
+                boxShadow: `12px 0 38px ${menuStyle.glow}`,
                 willChange: "transform, opacity",
               }}
               role="dialog"
@@ -122,33 +127,40 @@ function HamburgerMenu({ isOpen, onClose, side = "left" }) {
             >
               {/* Header */}
               <motion.div variants={rowVariants} initial="hidden" animate="show">
-                <MenuHeader onClose={onClose} />
+                <MenuHeader onClose={onClose} appearance={menuStyle} />
               </motion.div>
 
               {/* Banner */}
               <motion.div variants={rowVariants} initial="hidden" animate="show">
-                <MenuBanner />
+                <MenuBanner appearance={menuStyle} />
               </motion.div>
 
               {/* Menu Items */}
               <nav className="px-3 pb-20" role="navigation">
                 <motion.div
-                  className="rounded-[10px] bg-[#265134] px-2 py-2"
+                  className="rounded-[10px] border px-2 py-2"
                   variants={panelVariants}
                   initial="hidden"
                   animate="show"
-                  style={{ willChange: "opacity" }}
+                  style={{
+                    background: menuStyle.panel,
+                    borderColor: menuStyle.panelBorder,
+                    boxShadow: `0 12px 30px ${menuStyle.glow}`,
+                    willChange: "opacity",
+                  }}
                 >
                   {/* Mini Games Section */}
                   <MenuSection
                     title={MENU_CONFIG.miniGames.title}
                     icon={MENU_CONFIG.miniGames.icon}
+                    appearance={menuStyle}
                   >
                     {MENU_CONFIG.miniGames.items.map((item, index) => (
                       <MenuItem
                         key={index}
                         {...item}
                         onClose={onClose}
+                        appearance={menuStyle}
                       />
                     ))}
                   </MenuSection>
@@ -162,6 +174,7 @@ function HamburgerMenu({ isOpen, onClose, side = "left" }) {
                           title={item.label}
                           icon={item.icon}
                           defaultOpen={false}
+                          appearance={menuStyle}
                         >
                           {item.children.map((child, childIndex) => (
                             <MenuItem
@@ -169,6 +182,7 @@ function HamburgerMenu({ isOpen, onClose, side = "left" }) {
                               {...child}
                               onClose={onClose}
                               onAction={handleMenuAction}
+                              appearance={menuStyle}
                             />
                           ))}
                         </MenuSection>
@@ -178,6 +192,7 @@ function HamburgerMenu({ isOpen, onClose, side = "left" }) {
                           {...item}
                           onClose={onClose}
                           onAction={handleMenuAction}
+                          appearance={menuStyle}
                         />
                       )
                     ))}
@@ -188,6 +203,7 @@ function HamburgerMenu({ isOpen, onClose, side = "left" }) {
                   <MenuSection
                     title={MENU_CONFIG.stayConnected.title}
                     icon={MENU_CONFIG.stayConnected.icon}
+                    appearance={menuStyle}
                   >
                     {MENU_CONFIG.stayConnected.items.map((item, index) => (
                       <MenuItem
@@ -195,6 +211,7 @@ function HamburgerMenu({ isOpen, onClose, side = "left" }) {
                         {...item}
                         onClose={onClose}
                         onAction={handleMenuAction}
+                        appearance={menuStyle}
                       />
                     ))}
                   </MenuSection>
@@ -208,6 +225,7 @@ function HamburgerMenu({ isOpen, onClose, side = "left" }) {
                         {...item}
                         onClose={onClose}
                         onAction={handleMenuAction}
+                        appearance={menuStyle}
                       />
                     ))}
                   </div>
@@ -229,10 +247,14 @@ function HamburgerMenu({ isOpen, onClose, side = "left" }) {
  * MenuHeader - Logo and close button
  * Updated with new Figma design
  */
-const MenuHeader = memo(({ onClose }) => (
+const MenuHeader = memo(({ onClose, appearance }) => (
   <div
     className="relative flex items-center justify-center h-[50px] rounded-[10px] backdrop-blur-[10px]"
-    style={{ backgroundColor: THEME_CONFIG.headerBg }}
+    style={{
+      background: appearance.header,
+      borderBottom: `1px solid ${appearance.panelBorder}`,
+      boxShadow: `0 8px 22px ${appearance.glow}`,
+    }}
   >
     <motion.button
       onClick={onClose}
@@ -245,11 +267,9 @@ const MenuHeader = memo(({ onClose }) => (
       }}
       whileTap={{ scale: 0.9 }}
     >
-      <img
-        src="/assets/images/close-icon.svg"
-        alt="Close"
-        className="w-full h-full object-contain"
-      />
+      <svg viewBox="0 0 16 16" className="h-full w-full" fill="none" style={{ color: appearance.scrollbar }}>
+        <path d="M3 3l10 10M13 3 3 13" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+      </svg>
     </motion.button>
   </div>
 ));
@@ -261,7 +281,7 @@ MenuHeader.displayName = "MenuHeader";
  * Fetches and displays Side Panel banners (location = 2)
  * Cached to avoid reloading on every menu open
  */
-const MenuBanner = memo(() => {
+const MenuBanner = memo(({ appearance }) => {
   const [banner, setBanner] = useState(null);
   const [loading, setLoading] = useState(true);
   const [hasFetched, setHasFetched] = useState(false);
@@ -313,7 +333,8 @@ const MenuBanner = memo(() => {
         className={`flex h-[79px] w-[130px] items-center justify-center rounded-[12px] overflow-hidden shadow-[0px_5px_20px_0px_rgba(0,0,0,0.25)] ${banner ? 'cursor-pointer' : ''}`}
         onClick={handleBannerClick}
         style={{
-          backgroundColor: loading || !banner ? 'rgba(38, 81, 52, 0.3)' : 'transparent'
+          backgroundColor: loading || !banner ? appearance.bannerPlaceholder : 'transparent',
+          border: `1px solid ${appearance.panelBorder}`,
         }}
       >
         {loading ? (
