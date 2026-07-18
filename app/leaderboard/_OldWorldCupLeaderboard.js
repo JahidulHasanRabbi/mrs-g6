@@ -3,6 +3,8 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useUser } from "../contexts/UserContext";
+import { useTheme } from "../contexts/ThemeContext";
+import ThemedPageShell from "../components/themes/shared/ThemedPageShell";
 import { FooterNav } from "../components/footer";
 import { HamburgerMenu } from "../components/hamburger";
 import { LB_SCREENS, LB_TABS } from "../components/leaderboard/constants";
@@ -94,11 +96,16 @@ function LeaderboardPageInner() {
     [router, pathname],
   );
 
-  const { authReady, memberUuid } = useUser();
+  const { authReady, memberUuid, userData } = useUser();
+  // On a theme, the page is wrapped in the themed shell (themed header +
+  // lucky-spin background + themed bottom nav), so the leaderboard's own header,
+  // background and footer are suppressed below. The themed header has no sound
+  // control, so mute the crowd ambience too.
+  const { isThemed } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [maintenance, setMaintenance] = useState(null);
   const isMaintenance = maintenance === true;
-  const { muted, toggleMuted } = useCrowdAmbience({ disabled: maintenance !== false });
+  const { muted, toggleMuted } = useCrowdAmbience({ disabled: isThemed || maintenance !== false });
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [joinBlocked, setJoinBlocked] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -261,17 +268,23 @@ function LeaderboardPageInner() {
   const needsNation = profile && profile.hasOnboarded && !profile.hasNation;
   const unlocked = profile && profile.hasOnboarded && profile.hasNation;
 
-  return (
+  const page = (
     <div
       className="relative flex min-h-[100dvh] w-full flex-col overflow-hidden"
-      style={{ background: "radial-gradient(circle at top, #1e2c2a 0%, #121414 55%, #0a0c0c 100%)" }}
+      style={
+        isThemed
+          ? undefined
+          : { background: "radial-gradient(circle at top, #1e2c2a 0%, #121414 55%, #0a0c0c 100%)" }
+      }
     >
-      <LBHeader
-        onInfoClick={() => setIsInfoOpen(true)}
-        onMenuClick={() => setIsMenuOpen(true)}
-        onSoundToggle={toggleMuted}
-        soundMuted={muted}
-      />
+      {!isThemed && (
+        <LBHeader
+          onInfoClick={() => setIsInfoOpen(true)}
+          onMenuClick={() => setIsMenuOpen(true)}
+          onSoundToggle={toggleMuted}
+          soundMuted={muted}
+        />
+      )}
 
       <div className="flex-1 pb-[140px]">
         {needsOnboarding && (
@@ -401,9 +414,11 @@ function LeaderboardPageInner() {
         )}
       </div>
 
-      <FooterNav />
+      {!isThemed && <FooterNav />}
 
-      <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+      {!isThemed && (
+        <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+      )}
 
       {isInfoOpen && <InfoModal onClose={() => setIsInfoOpen(false)} />}
 
@@ -438,6 +453,16 @@ function LeaderboardPageInner() {
       )}
     </div>
   );
+
+  // The info chip lives in the themed header; wire it to the same info modal.
+  if (isThemed) {
+    return (
+      <ThemedPageShell onInfoClick={() => setIsInfoOpen(true)} balance={userData?.balance}>
+        {page}
+      </ThemedPageShell>
+    );
+  }
+  return page;
 }
 
 // useSearchParams() requires a Suspense boundary at the route level when the

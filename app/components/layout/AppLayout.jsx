@@ -9,6 +9,7 @@ import MartHeader from "../mart/MartHeader";
 import { HOME_ASSETS } from "../home/homeAssets";
 import { useUser } from "../../contexts/UserContext";
 import { useTheme } from "../../contexts/ThemeContext";
+import ThemedPageShell from "../themes/shared/ThemedPageShell";
 
 export default function AppLayout({ children }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -60,6 +61,17 @@ export default function AppLayout({ children }) {
   // (the global hamburger + the page's "LEADERBOARDS" bar).
   if (isPenaltyKickPage || isSmashEggPage || isMissionsPage || isLeaderboardPage) {
     return <>{children}</>;
+  }
+
+  // Remaining content-only member pages (profile, vip, mart, personal-data).
+  // When a theme is active, wrap them in the themed shell — full-bleed lucky-spin
+  // background + themed header + themed bottom nav — instead of the default green
+  // chrome below, so themed members never fall back to the default look. These
+  // pages' content isn't skinned yet; only the surrounding chrome changes.
+  if (isThemed) {
+    return (
+      <ThemedPageShell balance={userData.balance}>{children}</ThemedPageShell>
+    );
   }
 
   return (

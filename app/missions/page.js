@@ -13,6 +13,8 @@ import {
   MISSION_COLORS,
 } from "../components/penalty-kick/missions/data";
 import { useUser } from "../contexts/UserContext";
+import { useTheme } from "../contexts/ThemeContext";
+import ThemedPageShell from "../components/themes/shared/ThemedPageShell";
 import { HOME_ASSETS } from "../components/home/homeAssets";
 import {
   claimMissionReward,
@@ -185,6 +187,10 @@ function MissionTermsDialog({ loading, termsText, error, onClose }) {
 
 export default function MissionsPage() {
   const { userData, refreshUserData } = useUser();
+  // On a theme, the whole page is wrapped in the themed shell (themed header +
+  // lucky-spin background + themed bottom nav), so its own header/bg/footer are
+  // suppressed below.
+  const { isThemed } = useTheme();
   const [activeTab, setActiveTab] = useState("daily");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   // Sign of the last tab move (+1 → moved right, -1 → moved left) so the
@@ -311,27 +317,33 @@ export default function MissionsPage() {
     }
   };
 
-  return (
+  const page = (
     <div
       className="relative flex min-h-[100dvh] w-full flex-col"
-      style={{
-        // Deep-green base + the shared VIP floral pattern, matching the Figma
-        // backdrop. Same asset the rest of the member portal uses, fixed so it
-        // stays put while the mission list scrolls.
-        backgroundColor: MISSION_COLORS.bg,
-        backgroundImage: `url(${HOME_ASSETS.backgroundPattern})`,
-        backgroundSize: "cover",
-        backgroundPosition: "top center",
-        backgroundRepeat: "no-repeat",
-        backgroundAttachment: "fixed",
-      }}
+      style={
+        isThemed
+          ? undefined
+          : {
+              // Deep-green base + the shared VIP floral pattern, matching the
+              // Figma backdrop. Same asset the rest of the member portal uses,
+              // fixed so it stays put while the mission list scrolls.
+              backgroundColor: MISSION_COLORS.bg,
+              backgroundImage: `url(${HOME_ASSETS.backgroundPattern})`,
+              backgroundSize: "cover",
+              backgroundPosition: "top center",
+              backgroundRepeat: "no-repeat",
+              backgroundAttachment: "fixed",
+            }
+      }
     >
       {/* Top HUD bar (gold "Missions" + info / menu chips) from the Figma
           "Missions Hub" frame. The hamburger opens the shared member nav. */}
-      <MissionsHeader
-        onInfoClick={openTerms}
-        onMenuClick={() => setIsMenuOpen(true)}
-      />
+      {!isThemed && (
+        <MissionsHeader
+          onInfoClick={openTerms}
+          onMenuClick={() => setIsMenuOpen(true)}
+        />
+      )}
 
       {/* pb clears the fixed 100px FooterNav. */}
       <div className="flex flex-col gap-6 px-5 pb-32 pt-2">
@@ -513,9 +525,11 @@ export default function MissionsPage() {
         )}
       </div>
 
-      <FooterNav />
+      {!isThemed && <FooterNav />}
 
-      <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+      {!isThemed && (
+        <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+      )}
 
       {termsOpen && (
         <MissionTermsDialog
@@ -549,4 +563,14 @@ export default function MissionsPage() {
       )}
     </div>
   );
+
+  // The info chip lives in the themed header; wire it to the same terms dialog.
+  if (isThemed) {
+    return (
+      <ThemedPageShell onInfoClick={openTerms} balance={userData?.balance}>
+        {page}
+      </ThemedPageShell>
+    );
+  }
+  return page;
 }
