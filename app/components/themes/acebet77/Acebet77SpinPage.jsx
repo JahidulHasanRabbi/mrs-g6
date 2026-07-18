@@ -9,8 +9,9 @@ import AcebetDialog from './AcebetDialog';
 import AcebetButton from './AcebetButton';
 import AcebetOrnateCard from './AcebetOrnateCard';
 import LuckySpinGrid from '../../spin/LuckySpinGrid';
-import SpinWinningPanel from '../../spin/SpinWinningPanel';
-import SmashEggTerms from '../../smash-egg/SmashEggTerms';
+import FramedWinningPanel from '../shared/FramedWinningPanel';
+import FramedTerms from '../shared/FramedTerms';
+import { buildFramedSkin } from '../shared/framedSkin';
 import { ACEBET_ASSETS, ACEBET_COLORS } from './assets';
 import { oneSpin, tenSpin, fiftySpin, getAllLuckySpinItems, getPublicTermsAndConditions } from '../../../api/memberApi';
 import { mapSpinResults, mapLuckySpinItems } from '../../../api/responseMappers';
@@ -22,6 +23,7 @@ import { useUser } from '../../../contexts/UserContext';
 // a square-frame geometry. Only the images change; the timing, ring cycling,
 // deceleration, winner highlight and manual-stop all come from the shared code.
 const ACEBET_GEOMETRY = { framePad: 15, tile: 23, center: 27 };
+const ACEBET_FRAMED_SKIN = buildFramedSkin(ACEBET_ASSETS, ACEBET_COLORS, { x: '9%', top: '20%', bottom: '13%' });
 
 export default function Acebet77SpinPage() {
   const [spinItems, setSpinItems] = useState([]);
@@ -293,9 +295,9 @@ export default function Acebet77SpinPage() {
           </AcebetButton>
         </div>
 
-        <SpinWinningPanel variant={activeWinningView} rows={userWinnings} />
+        <FramedWinningPanel skin={ACEBET_FRAMED_SKIN} variant={activeWinningView} rows={userWinnings} />
 
-        <SmashEggTerms termsText={termsText} />
+        <FramedTerms skin={ACEBET_FRAMED_SKIN} termsText={termsText} />
       </div>
 
       {/* Result / error dialog */}

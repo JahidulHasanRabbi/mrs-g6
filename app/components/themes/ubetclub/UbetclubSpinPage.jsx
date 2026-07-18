@@ -9,13 +9,16 @@ import UbetDialog from './UbetDialog';
 import UbetButton from './UbetButton';
 import UbetOrnateCard from './UbetOrnateCard';
 import LuckySpinGrid from '../../spin/LuckySpinGrid';
-import SpinWinningPanel from '../../spin/SpinWinningPanel';
-import SmashEggTerms from '../../smash-egg/SmashEggTerms';
+import FramedWinningPanel from '../shared/FramedWinningPanel';
+import FramedTerms from '../shared/FramedTerms';
+import { buildFramedSkin } from '../shared/framedSkin';
 import { UBET_ASSETS, UBET_COLORS } from './assets';
 import { oneSpin, tenSpin, fiftySpin, getAllLuckySpinItems, getPublicTermsAndConditions } from '../../../api/memberApi';
 import { mapSpinResults, mapLuckySpinItems } from '../../../api/responseMappers';
 import { tokenStorage } from '../../../api/tokenStorage';
 import { useUser } from '../../../contexts/UserContext';
+
+const UBET_FRAMED_SKIN = buildFramedSkin(UBET_ASSETS, UBET_COLORS, { x: '13%', top: '24%', bottom: '15%' });
 
 // Ubetclub Lucky Spin. The wheel is the shared <LuckySpinGrid> — the same
 // spin/selection engine as the default portal — fed ubetclub's artwork. Only
@@ -319,9 +322,9 @@ export default function UbetclubSpinPage() {
           </UbetButton>
         </div>
 
-        <SpinWinningPanel variant={activeWinningView} rows={userWinnings} />
+        <FramedWinningPanel skin={UBET_FRAMED_SKIN} variant={activeWinningView} rows={userWinnings} />
 
-        <SmashEggTerms termsText={termsText} />
+        <FramedTerms skin={UBET_FRAMED_SKIN} termsText={termsText} />
       </div>
 
       {/* Result / error dialog */}

@@ -9,9 +9,10 @@ import AcebetButton from './AcebetButton';
 import AcebetOrnateCard from './AcebetOrnateCard';
 import TokenBalance from '../../smash-egg/TokenBalance';
 import DrawButtons from '../../smash-egg/DrawButtons';
-import PrizeList from '../../smash-egg/PrizeList';
-import WinnerList from '../../smash-egg/WinnerList';
-import SmashEggTerms from '../../smash-egg/SmashEggTerms';
+import FramedPrizeList from '../shared/FramedPrizeList';
+import FramedWinnerList from '../shared/FramedWinnerList';
+import FramedTerms from '../shared/FramedTerms';
+import { buildFramedSkin } from '../shared/framedSkin';
 import ThemedResultModal from '../../smash-egg/ThemedResultModal';
 import SmashEggHistoryDialog from '../../smash-egg/SmashEggHistoryDialog';
 import { useSmashEggGame, HISTORY_PAGE_SIZE } from '../../smash-egg/useSmashEggGame';
@@ -19,6 +20,7 @@ import { SMASH_EGG_ASSETS } from '../../smash-egg/smashEggAssets';
 import { ACEBET_ASSETS, ACEBET_COLORS } from './assets';
 
 const WELCOME_SEEN_KEY = 'mrs_acebet77_egg_welcome_seen';
+const ACEBET_FRAMED_SKIN = buildFramedSkin(ACEBET_ASSETS, ACEBET_COLORS, { x: '9%', top: '20%', bottom: '13%' });
 
 /**
  * Acebet77 Smash Egg (Figma nodes 4:588 loading / 4:533 welcome / 4:503 idle /
@@ -177,9 +179,9 @@ export default function Acebet77SmashEggPage() {
         {/* Prize list / winner feed / T&C — parity with the default portal,
             reusing the theme-agnostic dark-glass cards unmodified. */}
         <div className="relative z-10 mt-8 flex w-full flex-col items-center gap-6 pb-4">
-          <PrizeList prizes={rewardBoard.prizes} creditRanges={rewardBoard.creditRanges} />
-          <WinnerList winners={winningHistory} />
-          <SmashEggTerms termsText={termsText} />
+          <FramedPrizeList skin={ACEBET_FRAMED_SKIN} prizes={rewardBoard.prizes} creditRanges={rewardBoard.creditRanges} />
+          <FramedWinnerList skin={ACEBET_FRAMED_SKIN} winners={winningHistory} />
+          <FramedTerms skin={ACEBET_FRAMED_SKIN} termsText={termsText} />
         </div>
       </div>
 

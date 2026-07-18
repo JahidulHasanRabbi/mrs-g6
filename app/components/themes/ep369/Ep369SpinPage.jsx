@@ -9,13 +9,16 @@ import Ep369Dialog from './Ep369Dialog';
 import Ep369Button from './Ep369Button';
 import Ep369OrnateCard from './Ep369OrnateCard';
 import LuckySpinGrid from '../../spin/LuckySpinGrid';
-import SpinWinningPanel from '../../spin/SpinWinningPanel';
-import SmashEggTerms from '../../smash-egg/SmashEggTerms';
+import FramedWinningPanel from '../shared/FramedWinningPanel';
+import FramedTerms from '../shared/FramedTerms';
+import { buildFramedSkin } from '../shared/framedSkin';
 import { EP369_ASSETS, EP369_COLORS } from './assets';
 import { oneSpin, tenSpin, fiftySpin, getAllLuckySpinItems, getPublicTermsAndConditions } from '../../../api/memberApi';
 import { mapSpinResults, mapLuckySpinItems } from '../../../api/responseMappers';
 import { tokenStorage } from '../../../api/tokenStorage';
 import { useUser } from '../../../contexts/UserContext';
+
+const EP369_FRAMED_SKIN = buildFramedSkin(EP369_ASSETS, EP369_COLORS, { x: '15%', top: '26%', bottom: '26%' });
 
 // EP369 Lucky Spin. The wheel is the shared <LuckySpinGrid> — the same
 // spin/selection engine as the default portal — fed EP369's artwork. Only the
@@ -286,12 +289,9 @@ export default function Ep369SpinPage() {
           </Ep369Button>
         </div>
 
-        <SpinWinningPanel
-          variant={activeWinningView}
-          rows={userWinnings}
-        />
+        <FramedWinningPanel skin={EP369_FRAMED_SKIN} variant={activeWinningView} rows={userWinnings} />
 
-        <SmashEggTerms termsText={termsText} />
+        <FramedTerms skin={EP369_FRAMED_SKIN} termsText={termsText} />
       </div>
 
       <Ep369Dialog open={!!dialog} onClose={closeDialog}>

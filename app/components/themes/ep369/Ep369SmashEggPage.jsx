@@ -9,9 +9,10 @@ import Ep369Button from './Ep369Button';
 import Ep369OrnateCard from './Ep369OrnateCard';
 import TokenBalance from '../../smash-egg/TokenBalance';
 import DrawButtons from '../../smash-egg/DrawButtons';
-import PrizeList from '../../smash-egg/PrizeList';
-import WinnerList from '../../smash-egg/WinnerList';
-import SmashEggTerms from '../../smash-egg/SmashEggTerms';
+import FramedPrizeList from '../shared/FramedPrizeList';
+import FramedWinnerList from '../shared/FramedWinnerList';
+import FramedTerms from '../shared/FramedTerms';
+import { buildFramedSkin } from '../shared/framedSkin';
 import ThemedResultModal from '../../smash-egg/ThemedResultModal';
 import SmashEggHistoryDialog from '../../smash-egg/SmashEggHistoryDialog';
 import { useSmashEggGame, HISTORY_PAGE_SIZE } from '../../smash-egg/useSmashEggGame';
@@ -19,6 +20,7 @@ import { SMASH_EGG_ASSETS } from '../../smash-egg/smashEggAssets';
 import { EP369_ASSETS, EP369_COLORS } from './assets';
 
 const WELCOME_SEEN_KEY = 'mrs_ep369_egg_welcome_seen';
+const EP369_FRAMED_SKIN = buildFramedSkin(EP369_ASSETS, EP369_COLORS, { x: '15%', top: '26%', bottom: '26%' });
 
 /**
  * EP369 Smash Egg (Figma 101:4339 loading / 101:4261 welcome / 101:4215 idle /
@@ -176,9 +178,9 @@ export default function Ep369SmashEggPage() {
         {/* Prize list / winner feed / T&C — parity with the default portal,
             reusing the theme-agnostic dark-glass cards unmodified. */}
         <div className="relative z-10 mt-8 flex w-full flex-col items-center gap-6 pb-4">
-          <PrizeList prizes={rewardBoard.prizes} creditRanges={rewardBoard.creditRanges} />
-          <WinnerList winners={winningHistory} />
-          <SmashEggTerms termsText={termsText} />
+          <FramedPrizeList skin={EP369_FRAMED_SKIN} prizes={rewardBoard.prizes} creditRanges={rewardBoard.creditRanges} />
+          <FramedWinnerList skin={EP369_FRAMED_SKIN} winners={winningHistory} />
+          <FramedTerms skin={EP369_FRAMED_SKIN} termsText={termsText} />
         </div>
       </div>
 

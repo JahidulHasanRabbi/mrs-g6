@@ -9,9 +9,10 @@ import UbetButton from './UbetButton';
 import UbetOrnateCard from './UbetOrnateCard';
 import TokenBalance from '../../smash-egg/TokenBalance';
 import DrawButtons from '../../smash-egg/DrawButtons';
-import PrizeList from '../../smash-egg/PrizeList';
-import WinnerList from '../../smash-egg/WinnerList';
-import SmashEggTerms from '../../smash-egg/SmashEggTerms';
+import FramedPrizeList from '../shared/FramedPrizeList';
+import FramedWinnerList from '../shared/FramedWinnerList';
+import FramedTerms from '../shared/FramedTerms';
+import { buildFramedSkin } from '../shared/framedSkin';
 import ThemedResultModal from '../../smash-egg/ThemedResultModal';
 import SmashEggHistoryDialog from '../../smash-egg/SmashEggHistoryDialog';
 import { useSmashEggGame, HISTORY_PAGE_SIZE } from '../../smash-egg/useSmashEggGame';
@@ -19,6 +20,7 @@ import { SMASH_EGG_ASSETS } from '../../smash-egg/smashEggAssets';
 import { UBET_ASSETS, UBET_COLORS } from './assets';
 
 const WELCOME_SEEN_KEY = 'mrs_ubetclub_egg_welcome_seen';
+const UBET_FRAMED_SKIN = buildFramedSkin(UBET_ASSETS, UBET_COLORS, { x: '13%', top: '24%', bottom: '15%' });
 
 /**
  * Ubetclub Smash Egg (Figma 77:2438 loading / 77:2359 welcome / 77:2312 idle /
@@ -177,9 +179,9 @@ export default function UbetclubSmashEggPage() {
         {/* Prize list / winner feed / T&C — parity with the default portal,
             reusing the theme-agnostic dark-glass cards unmodified. */}
         <div className="relative z-10 mt-8 flex w-full flex-col items-center gap-6 pb-4">
-          <PrizeList prizes={rewardBoard.prizes} creditRanges={rewardBoard.creditRanges} />
-          <WinnerList winners={winningHistory} />
-          <SmashEggTerms termsText={termsText} />
+          <FramedPrizeList skin={UBET_FRAMED_SKIN} prizes={rewardBoard.prizes} creditRanges={rewardBoard.creditRanges} />
+          <FramedWinnerList skin={UBET_FRAMED_SKIN} winners={winningHistory} />
+          <FramedTerms skin={UBET_FRAMED_SKIN} termsText={termsText} />
         </div>
       </div>
 
