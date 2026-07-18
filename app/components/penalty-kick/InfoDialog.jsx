@@ -51,6 +51,8 @@ function SwipeIllustration({ compact = false }) {
 
 export default function InfoDialog({ onClose, onOpenTerms }) {
   const { colors: COLORS, soft, theme } = usePkColors();
+  // (kgame99 + lv918 use the growing 3-slice/single-frame ornate card; the
+  // shared `theme` branch below handles them the same way.)
 
   // Themed skins: keep the info inside the skin's ornate frame but render the
   // themed Button (and Terms link) BELOW it, exactly like TermsDialog / the

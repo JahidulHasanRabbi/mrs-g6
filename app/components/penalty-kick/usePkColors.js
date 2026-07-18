@@ -7,6 +7,7 @@ import { ACEBET_ASSETS, ACEBET_COLORS } from "../themes/acebet77/assets";
 import { UBET_ASSETS, UBET_COLORS } from "../themes/ubetclub/assets";
 import { EP369_ASSETS, EP369_COLORS } from "../themes/ep369/assets";
 import { KGAME99_ASSETS, KGAME99_COLORS } from "../themes/kgame99/assets";
+import { LV918_ASSETS, LV918_COLORS } from "../themes/lv918/assets";
 import AcebetOrnateCard from "../themes/acebet77/AcebetOrnateCard";
 import AcebetButton from "../themes/acebet77/AcebetButton";
 import UbetOrnateCard from "../themes/ubetclub/UbetOrnateCard";
@@ -15,6 +16,8 @@ import Ep369OrnateCard from "../themes/ep369/Ep369OrnateCard";
 import Ep369Button from "../themes/ep369/Ep369Button";
 import KgameOrnateCard from "../themes/kgame99/KgameOrnateCard";
 import KgameButton from "../themes/kgame99/KgameButton";
+import Lv918OrnateCard from "../themes/lv918/Lv918OrnateCard";
+import Lv918Button from "../themes/lv918/Lv918Button";
 
 // Glow strings were hardcoded green rgba() literals across the phase
 // components; they live here now so a theme can recolor them in one place.
@@ -64,6 +67,23 @@ const KGAME99_PK_COLORS = {
   glow55: "rgba(0,89,255,0.8)",
   glow40: "rgba(0,89,255,0.5)",
   glow35: "rgba(0,89,255,0.35)",
+};
+
+// Lv918 skin — rose/magenta royal-palace theme: its gameplay headings (GOAL /
+// SWIPE TO KICK / CONGRATULATIONS) and glows render magenta (Figma 180:*).
+const LV918_PK_COLORS = {
+  ...DEFAULT_PK_COLORS,
+  primary: "#e0338a",
+  primaryDeep: "#2a0a1f",
+  primaryShadow: "#7a1a4e",
+  primaryGradStart: "#c02574",
+  textMuted: "#f3d3e4",
+  greenSoft10: "rgba(224,51,138,0.12)",
+  greenSoft20: "rgba(224,51,138,0.22)",
+  greenSoft50: "rgba(224,51,138,0.5)",
+  glow55: "rgba(224,51,138,0.8)",
+  glow40: "rgba(224,51,138,0.5)",
+  glow35: "rgba(224,51,138,0.35)",
 };
 
 // One pack per themed skin. Each supplies the gold gameplay palette, the accent
@@ -131,6 +151,21 @@ const THEME_PACKS = {
       missRed: "#ff5a5a",
     },
   },
+  [THEME_IDS.LV918]: {
+    pkColors: LV918_PK_COLORS,
+    accent: "224,51,138",
+    OrnateCard: Lv918OrnateCard,
+    Button: Lv918Button,
+    assets: LV918_ASSETS,
+    iconBall: LV918_ASSETS.pk.iconBall,
+    palette: {
+      cream: LV918_COLORS.cream,
+      sand: LV918_COLORS.sand,
+      accent: LV918_COLORS.tokenYellow,
+      gold: LV918_COLORS.goldBright,
+      missRed: "#ff5a5a",
+    },
+  },
 };
 
 /**
@@ -141,7 +176,7 @@ const THEME_PACKS = {
  * display palette and asset map so each PK component needs a single branch.
  */
 export function usePkColors() {
-  const { themeId, isAcebet77, isUbetclub, isEp369, isKgame99, isThemed } = useTheme();
+  const { themeId, isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isThemed } = useTheme();
   const pack = THEME_PACKS[themeId] || null;
   const base = pack ? pack.accent : "84,233,138";
   return {
@@ -150,6 +185,7 @@ export function usePkColors() {
     isUbetclub,
     isEp369,
     isKgame99,
+    isLv918,
     isThemed,
     themeId,
     theme: pack
