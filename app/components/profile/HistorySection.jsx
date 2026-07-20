@@ -5,6 +5,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { getMemberTokenHistory, getMemberRewardHistory } from "../../api/memberApi";
 import { tokenStorage } from "../../api/tokenStorage";
+import { useTheme } from "../../contexts/ThemeContext";
+import { ACEBET_ASSETS, ACEBET_COLORS } from "../themes/acebet77/assets";
 
 const PAGE_SIZE = 6;
 
@@ -87,7 +89,7 @@ const HISTORY_CONFIG = {
   },
 };
 
-function HistoryButton({ title, onClick, delay = 0 }) {
+function HistoryButton({ title, onClick, delay = 0, bannerSrc, textColor, objectFit = "object-cover" }) {
   return (
     <motion.button
       type="button"
@@ -99,13 +101,16 @@ function HistoryButton({ title, onClick, delay = 0 }) {
       aria-label={`Open ${title}`}
     >
       <Image
-        src="/assets/profile/history-title-banner.png"
+        src={bannerSrc}
         alt=""
         fill
         sizes="146px"
-        className="object-cover drop-shadow-[0_4px_10px_rgba(233,175,65,0.35)]"
+        className={`${objectFit} drop-shadow-[0_4px_10px_rgba(233,175,65,0.35)]`}
       />
-      <span className="relative z-10 font-['Times_New_Roman'] text-[14px] font-bold tracking-[0.01em] text-[#60803c]">
+      <span
+        className="relative z-10 font-['Times_New_Roman'] text-[14px] font-bold tracking-[0.01em]"
+        style={{ color: textColor }}
+      >
         {title}
       </span>
     </motion.button>
@@ -193,11 +198,23 @@ function HistoryPagination({ currentPage, totalPages, onPageChange }) {
 
 function HistoryModal({ type, onClose }) {
   const config = HISTORY_CONFIG[type];
+  const { isAcebet77 } = useTheme();
   const [currentPage, setCurrentPage] = useState(1);
   const [modalScale, setModalScale] = useState(1);
   const [rows, setRows] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
+
+  // Asset swap only: frame image + Close button image for acebet77. Text
+  // colors and positions stay identical (they already use gold on green,
+  // which reads as gold on dark just as well).
+  const frameSrc = isAcebet77
+    ? ACEBET_ASSETS.frames.scroll
+    : "/assets/profile/history-frame.png";
+  const closeSrc = isAcebet77
+    ? ACEBET_ASSETS.spin.btnPlay
+    : "/assets/profile/close-icon.png";
+  const closeTextColor = isAcebet77 ? ACEBET_COLORS.goldBright : "#6c5212";
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
@@ -292,7 +309,7 @@ function HistoryModal({ type, onClose }) {
       >
         <div className="relative h-full w-full overflow-hidden">
           <Image
-            src="/assets/profile/history-frame.png"
+            src={frameSrc}
             alt=""
             fill
             sizes="376px"
@@ -329,7 +346,15 @@ function HistoryModal({ type, onClose }) {
               ))}
             </div>
 
-            <div className="flex flex-col gap-[10px]">
+            {/* Rows scroll internally instead of pushing past the pagination
+                and Close button below. Multi-line values (e.g. long reward
+                names) previously ran through the pagination row and overlaid
+                its text. The cap matches the space between the header (bottom
+                of contentTop + ~30px header row) and the pagination row. */}
+            <div
+              className="flex flex-col gap-[10px] overflow-y-auto pr-1 [scrollbar-color:rgba(233,175,65,0.5)_transparent] [scrollbar-width:thin]"
+              style={{ maxHeight: "195px" }}
+            >
               {loading ? (
                 <div className="text-center font-['Times_New_Roman'] text-[12px] text-[#f8f0db]/50 pt-10">
                   Loading...
@@ -386,13 +411,16 @@ function HistoryModal({ type, onClose }) {
               className="relative flex h-[58px] w-[204px] items-center justify-center transition-transform duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f3cb68] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0b2416]"
             >
               <Image
-                src="/assets/profile/close-icon.png"
+                src={closeSrc}
                 alt=""
                 fill
                 sizes="204px"
-                className="object-cover"
+                className={isAcebet77 ? "object-fill" : "object-cover"}
               />
-              <span className="relative z-10 font-['Times_New_Roman'] text-[18px] font-bold tracking-[0.02em] text-[#6c5212] drop-shadow-[0_1px_0_rgba(255,248,205,0.7)]">
+              <span
+                className="relative z-10 font-['Times_New_Roman'] text-[18px] font-bold tracking-[0.02em] drop-shadow-[0_1px_0_rgba(255,248,205,0.7)]"
+                style={{ color: closeTextColor }}
+              >
                 Close
               </span>
             </button>
@@ -405,6 +433,14 @@ function HistoryModal({ type, onClose }) {
 
 export default function HistorySection() {
   const [activeHistory, setActiveHistory] = useState(null);
+  const { isAcebet77 } = useTheme();
+
+  // Asset swap only: acebet77 uses its dark-gold plaque (btn-play.png) with
+  // gold text so the buttons match the surrounding theme; every other theme
+  // keeps the default green banner. No logic changes.
+  const buttonSkin = isAcebet77
+    ? { bannerSrc: ACEBET_ASSETS.spin.btnPlay, textColor: ACEBET_COLORS.goldBright, objectFit: "object-fill" }
+    : { bannerSrc: "/assets/profile/history-title-banner.png", textColor: "#60803c", objectFit: "object-cover" };
 
   return (
     <>
@@ -413,11 +449,13 @@ export default function HistorySection() {
           title="Token History"
           onClick={() => setActiveHistory("token")}
           delay={0.1}
+          {...buttonSkin}
         />
         <HistoryButton
           title="Reward History"
           onClick={() => setActiveHistory("reward")}
           delay={0.18}
+          {...buttonSkin}
         />
       </div>
 

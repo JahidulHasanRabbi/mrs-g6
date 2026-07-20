@@ -53,10 +53,37 @@ function ThemedTermsContent({ accent, muted }) {
 export default function TermsAndConditionsPage() {
   const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918 } = useTheme();
 
+  // Same content structure as ThemedTermsContent (heading + FancyTermsConditions),
+  // but the heading text is swapped for the acebet77 "Terms & Condition" plaque
+  // image, and the terms body is wrapped in the ornate crown frame — assets
+  // only, FancyTermsConditions and its data are unchanged.
   if (isAcebet77) {
     return (
       <AcebetShell bg={ACEBET_ASSETS.spin.bg}>
-        <ThemedTermsContent accent={ACEBET_COLORS.goldBright} muted={ACEBET_COLORS.sand} />
+        <div className="flex min-h-screen flex-col items-center px-4 pb-8">
+          <motion.img
+            src={ACEBET_ASSETS.terms.title}
+            alt="Terms & Conditions"
+            draggable={false}
+            className="mt-5 mb-4 h-auto w-[340px] max-w-[92%] select-none object-contain"
+            initial={{ opacity: 0, y: -18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 18 }}
+          />
+          <div className="relative w-full max-w-[500px]">
+            {/* Crown ornate frame — decorative border stretched to whatever height
+                FancyTermsConditions renders at. The terms card sits inside. */}
+            <img
+              src={ACEBET_ASSETS.frames.crown}
+              alt=""
+              draggable={false}
+              className="pointer-events-none absolute inset-0 h-full w-full select-none object-fill"
+            />
+            <div className="relative px-[8%] pt-[16%] pb-[14%]">
+              <FancyTermsConditions />
+            </div>
+          </div>
+        </div>
       </AcebetShell>
     );
   }

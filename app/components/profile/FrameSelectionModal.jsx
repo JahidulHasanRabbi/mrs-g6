@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
 import ProfileFrame from "./ProfileFrame";
 import { useUser } from "../../contexts/UserContext";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export default function FrameSelectionModal({
   isOpen,
@@ -13,6 +14,18 @@ export default function FrameSelectionModal({
   profilePicture,
 }) {
   const { availableFrames, isLoadingFrames } = useUser();
+  const { isAcebet77 } = useTheme();
+
+  // Asset-only skin: acebet77 uses a pure dark background + gold/sand accents
+  // instead of the default green gradient (functionality untouched — same
+  // frame list, same selection behaviour, same close/keyboard handling).
+  const modalBg = isAcebet77
+    ? "linear-gradient(to bottom, #0a0805 0%, #17130c 100%)"
+    : "linear-gradient(to bottom, #0a1a0a 0%, #102810 100%)";
+  const subtitleColor = isAcebet77 ? "#d0c6ab" : "#a8c08a";
+  const tierColor = isAcebet77 ? "#d0c6ab" : "#a8c08a";
+  const checkBg = isAcebet77 ? "#e9af41" : "#3a8a2a";
+  const checkStroke = isAcebet77 ? "#171006" : "#fff";
 
   useEffect(() => {
     if (!isOpen) return;
@@ -40,9 +53,7 @@ export default function FrameSelectionModal({
             aria-modal="true"
             aria-label="Choose profile frame"
             className="relative w-full max-w-[440px] rounded-2xl border-2 border-[#e9af41] shadow-[0_8px_30px_rgba(0,0,0,0.6)]"
-            style={{
-              background: "linear-gradient(to bottom, #0a1a0a 0%, #102810 100%)",
-            }}
+            style={{ background: modalBg }}
             initial={{ scale: 0.9, y: 20, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.95, y: 10, opacity: 0 }}
@@ -63,7 +74,7 @@ export default function FrameSelectionModal({
               </button>
             </div>
 
-            <p className="px-5 pt-1 text-[#a8c08a] text-[11px] font-['Times_New_Roman']">
+            <p className="px-5 pt-1 text-[11px] font-['Times_New_Roman']" style={{ color: subtitleColor }}>
               Pick a frame to display around your photo. More frames will unlock
               with tournaments, events &amp; festivals.
             </p>
@@ -104,16 +115,19 @@ export default function FrameSelectionModal({
                         {frame.name}
                       </span>
                       {frame.vip_tier && (
-                        <span className="text-[9px] text-[#a8c08a] font-['Times_New_Roman'] text-center">
+                        <span className="text-[9px] font-['Times_New_Roman'] text-center" style={{ color: tierColor }}>
                           {frame.vip_tier}
                         </span>
                       )}
                       {isActive && (
-                        <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#3a8a2a]">
+                        <span
+                          className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full"
+                          style={{ backgroundColor: checkBg }}
+                        >
                           <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
                             <path
                               d="M2.5 6.2 L4.9 8.6 L9.5 3.6"
-                              stroke="#fff"
+                              stroke={checkStroke}
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"

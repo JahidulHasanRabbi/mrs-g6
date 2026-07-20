@@ -2,8 +2,45 @@
 
 import { motion } from "framer-motion";
 import { FORM_COLORS } from "./constants";
+import { useTheme } from "../../contexts/ThemeContext";
+import { ACEBET_ASSETS, ACEBET_COLORS } from "../themes/acebet77/assets";
 
 export default function SubmitButton({ onClick, label = "Saved Change", disabled = false }) {
+  const { isAcebet77 } = useTheme();
+
+  // acebet77 skin: render the theme's dark gold-trim plaque (btn-play.png) with
+  // gold text so the button matches the surrounding theme instead of the
+  // default bright pill. Other themes keep the default pill exactly as before.
+  if (isAcebet77) {
+    return (
+      <motion.button
+        onClick={onClick}
+        disabled={disabled}
+        className="relative w-full h-[52px] overflow-hidden my-8"
+        style={{ opacity: disabled ? 0.6 : 1 }}
+        whileHover={{ scale: disabled ? 1 : 1.02 }}
+        whileTap={{ scale: disabled ? 1 : 0.98 }}
+      >
+        <img
+          src={ACEBET_ASSETS.spin.btnPlay}
+          alt=""
+          draggable={false}
+          className="pointer-events-none absolute inset-0 h-full w-full select-none object-fill"
+        />
+        <span
+          className="relative z-10 text-base leading-normal"
+          style={{
+            fontFamily: '"Times New Roman", serif',
+            fontWeight: "bold",
+            color: ACEBET_COLORS.goldBright,
+          }}
+        >
+          {label}
+        </span>
+      </motion.button>
+    );
+  }
+
   return (
     <motion.button
       onClick={onClick}

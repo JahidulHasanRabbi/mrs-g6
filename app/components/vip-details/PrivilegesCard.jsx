@@ -3,11 +3,19 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { VIP_DETAILS_ASSETS } from "./vipDetailsAssets";
+import { useTheme } from "../../contexts/ThemeContext";
+import { ACEBET_ASSETS } from "../themes/acebet77/assets";
 
 export default function PrivilegesCard({ level = "Bronze", tierData = null, tierIndex = 0, isActive = true }) {
+  const { isAcebet77 } = useTheme();
   const bgOrder = ['bronze', 'silver', 'gold', 'platinum', 'diamond'];
 
-  let currentBg = VIP_DETAILS_ASSETS.privilegesBg[level.toLowerCase()];
+  // acebet77 uses one shared crown-ornate frame (Figma 285:285) for every
+  // tier — asset-only swap; the rest of the card (crest, stats, positions)
+  // is unchanged.
+  let currentBg = isAcebet77
+    ? ACEBET_ASSETS.vip.cardFrame
+    : VIP_DETAILS_ASSETS.privilegesBg[level.toLowerCase()];
 
   if (!currentBg) {
     const lowerName = level.toLowerCase();
@@ -41,7 +49,11 @@ export default function PrivilegesCard({ level = "Bronze", tierData = null, tier
           alt={`${level} Privileges Background`}
           src={currentBg}
           fill
-          className="object-cover"
+          // acebet77's shared frame is a full rectangular ornate frame — stretch
+          // to fill the card exactly (like the theme's other frame usages).
+          // Default themes keep the original object-cover so their per-tier
+          // photographic backgrounds don't distort.
+          className={isAcebet77 ? "object-fill" : "object-cover"}
           priority={isActive}
           sizes="344px"
         />

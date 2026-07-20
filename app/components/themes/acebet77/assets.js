@@ -89,6 +89,39 @@ export const ACEBET_ASSETS = {
     iconShotHud: `${BASE}/pk/icon-shot-hud.svg`,
     prizePanel: `${BASE}/pk/prize-panel.png`,
   },
+  // Profile / Terms / VIP page assets (Figma nodes 285:*, 282:*, 289:2399).
+  // Title plaques carry their labels baked in; frames are theme-neutral so any
+  // page's body sits inside the same ornate art.
+  profile: {
+    title: `${BASE}/profile/title-profile.png`,      // "My Profile" plaque
+    badgeNum: `${BASE}/profile/badge-num.png`,       // circular numbered bullet (1..6)
+    iconChevron: `${BASE}/profile/icon-chevron.png`, // ">" chevron in each row
+    iconStar: `${BASE}/profile/icon-star.svg`,       // gold star next to level name
+    iconArrow: `${BASE}/profile/icon-arrow.svg`,     // pagination arrow (token history)
+  },
+  vip: {
+    // Assets swapped for VIP: the title banner AND the tier card frame that
+    // <PrivilegesCard> renders behind its content. The gem chain and card
+    // logic itself (VipLevelChain / PrivilegesCarousel) are unchanged.
+    title: `${BASE}/vip/title-vip.png`,
+    // Figma 285:285 — crown-topped ornate card with lion crest area, used as
+    // the shared background for every tier when acebet77 is active (replaces
+    // the default green/tier-coloured backgrounds).
+    cardFrame: `${BASE}/vip/card-frame.png`,
+  },
+  terms: {
+    title: `${BASE}/ui/title-terms.png`,      // "Terms & Condition" plaque
+  },
+  // Two ornate frames reused across profile/terms/vip/token-history:
+  // - frameCrown: rectangular frame topped with a crown + jewel dividers on
+  //   the sides. Used for the terms body, the profile VIP-card, and the VIP
+  //   benefits list.
+  // - frameScroll: scroll-shaped frame with rolled tops/bottoms. Used for the
+  //   Edit Profiles list and the Token History overlay.
+  frames: {
+    crown: `${BASE}/ui/frame-crown.png`,
+    scroll: `${BASE}/ui/frame-scroll.png`,
+  },
 };
 
 // Shared palette (from Figma inspection)

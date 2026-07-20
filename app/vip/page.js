@@ -7,8 +7,21 @@ import LoadingState from "../components/ui/LoadingState";
 import ErrorDisplay from "../components/ui/ErrorDisplay";
 import { getVipTiers } from "../api/memberApi";
 import { mapVipTiers } from "../api/responseMappers";
+import { useTheme } from "../contexts/ThemeContext";
+import Acebet77VipPage from "../components/themes/acebet77/Acebet77VipPage";
 
 export default function VipDetailsPage() {
+  const { isAcebet77 } = useTheme();
+
+  // acebet77 uses the SAME logic as this page — just swaps the title-banner
+  // asset. All data/functionality (VipLevelChain, PrivilegesCarousel, tier
+  // fetching, error/retry) is preserved via that component.
+  if (isAcebet77) return <Acebet77VipPage />;
+
+  return <DefaultVipDetailsPage />;
+}
+
+function DefaultVipDetailsPage() {
   const [selectedLevel, setSelectedLevel] = useState("Bronze");
   const [vipTiers, setVipTiers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);

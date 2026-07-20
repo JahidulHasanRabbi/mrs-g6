@@ -62,7 +62,12 @@ const STYLE_PACKS = {
       numberText: "#171006",
       text: "#fff6df",
       muted: "#d0c6ab",
-      card: "linear-gradient(180deg, rgba(26,21,13,0.96) 0%, rgba(3,3,4,0.98) 100%)",
+      // Card BG made transparent so FancyTermsConditions renders the accordion
+      // items directly inside the acebet77 crown ornate frame — otherwise a
+      // dark rounded panel sits inside the frame and we get a heavy double
+      // container (frame-inside-frame). The border alpha is also dropped so
+      // no faint 1px rectangle traces the old panel edge.
+      card: "transparent",
       item: "linear-gradient(135deg, rgba(233,175,65,0.06) 0%, rgba(255,255,255,0.015) 100%)",
       itemExpanded: "linear-gradient(135deg, rgba(233,175,65,0.18) 0%, rgba(176,124,42,0.08) 100%)",
       border: "rgba(233,175,65,0.22)",
