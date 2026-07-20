@@ -44,11 +44,11 @@ export const EP369_ASSETS = {
     // engine as the default portal. Keys mirror SPIN_ASSETS.
     grid: {
       background: `${BASE}/spin/grid-frame.png`,
-      // Reuse the default portal's gold/green gem plaques — cropping our own
-      // from the small baked wheel.png upscaled poorly, and these are already
-      // theme-neutral gem art that fits any skin.
-      itemEmptyGold: '/assets/lucky-spin/lucky-spin-grid/2.png',
-      itemEmptyGreen: '/assets/lucky-spin/lucky-spin-grid/1.png',
+      // Theme-owned emerald "?" tiles (Figma 290:2893 corner variant /
+      // 290:2894 edge variant). Key/file names keep the shared gold/green
+      // map shape.
+      itemEmptyGold: `${BASE}/spin/slot-gold.png`,
+      itemEmptyGreen: `${BASE}/spin/slot-green.png`,
       centerButton: `${BASE}/spin/center.png`,
       centerButtonStop: `${BASE}/spin/center.png`,
       // EP369's center medallion is four-fold radially symmetric (identical gem

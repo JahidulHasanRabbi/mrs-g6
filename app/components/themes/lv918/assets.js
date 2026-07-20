@@ -48,6 +48,8 @@ export const LV918_ASSETS = {
     // (like the default theme), and the centre SPIN NOW medallion rotates while
     // spinning.
     wheelFrame: `${BASE}/spin/wheel-frame.png`,
+    // Key/file names keep the shared gold/green map shape; the art is the pink
+    // crystal "?" tiles (Figma 295:5246 corner variant / 295:5258 edge variant).
     slotGold: `${BASE}/spin/slot-gold.png`,
     slotGreen: `${BASE}/spin/slot-green.png`,
     spinNow: `${BASE}/spin/spin-now.png`,

@@ -48,6 +48,8 @@ export const KGAME99_ASSETS = {
     // (like the default theme), and the centre SPIN NOW medallion rotates while
     // spinning.
     wheelFrame: `${BASE}/spin/wheel-frame.png`,
+    // Key/file names keep the shared gold/green map shape; the art is the blue
+    // crystal "?" tiles (Figma 293:4409 corner variant / 293:4410 edge variant).
     slotGold: `${BASE}/spin/slot-gold.png`,
     slotGreen: `${BASE}/spin/slot-green.png`,
     spinNow: `${BASE}/spin/spin-now.png`,

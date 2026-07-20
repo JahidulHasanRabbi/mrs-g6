@@ -46,6 +46,8 @@ export const ACEBET_ASSETS = {
     // filled with the API prize items (like the default theme), and the centre
     // SPIN NOW medallion rotates while spinning (Figma 30:118).
     wheelFrame: `${BASE}/spin/wheel-frame.png`,
+    // Key/file names keep the shared gold/green map shape; the art is the black
+    // onyx "?" tiles (Figma 283:142 corner variant / 283:143 edge variant).
     slotGold: `${BASE}/spin/slot-gold.png`,
     slotGreen: `${BASE}/spin/slot-green.png`,
     spinNow: `${BASE}/spin/spin-now.png`,
