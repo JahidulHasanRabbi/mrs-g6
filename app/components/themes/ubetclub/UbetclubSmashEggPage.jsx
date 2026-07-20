@@ -222,9 +222,9 @@ export default function UbetclubSmashEggPage() {
         <UbetButton onClick={dismissWelcome}>Start Playing</UbetButton>
       </UbetDialog>
 
-      {/* Result modal — same content + actions as the default portal (You Won
-          + prize summary + Return to website (Claim) + Close), dressed in the
-          Ubetclub ornate popup frame. */}
+      {/* Result modal — same content + actions as the default portal.
+          Passing Button={UbetButton} makes Return / Close render as the
+          theme's red/gold ornate plaques instead of the default yellow pill. */}
       <ThemedResultModal
         isOpen={isModalOpen}
         onClose={closeModal}
@@ -232,6 +232,8 @@ export default function UbetclubSmashEggPage() {
         prize={wonPrize}
         frameBg="/assets/ubetclub-popup.png"
         insets={{ x: '10%', top: '17%', bottom: '13%' }}
+        titleColor={UBET_COLORS.goldBright}
+        Button={UbetButton}
       />
 
       {/* Winning record — shared Smash History dialog, opened from the info

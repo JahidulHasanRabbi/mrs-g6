@@ -120,8 +120,13 @@ const CollapsibleTermItem = ({ number, title, description, index, appearance }) 
 export default function FancyTermsConditions() {
   const [terms, setTerms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { themeId } = useTheme();
+  const { themeId, isAcebet77, isUbetclub } = useTheme();
   const appearance = getMemberThemeStyles(themeId).terms;
+  // Themes that wrap this component inside their own ornate crown frame don't
+  // want the extra corner brackets + ambient glow drawing a second container
+  // inside the frame. terms.card is already set transparent for them; drop
+  // the decorative chrome too so only the accordion items show.
+  const isWrappedByThemeFrame = isAcebet77 || isUbetclub;
 
   useEffect(() => {
     async function fetchTerms() {
@@ -148,26 +153,33 @@ export default function FancyTermsConditions() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
     >
-      {/* Main Card Container */}
+      {/* Main Card Container. On themes that wrap this in their own ornate
+          frame (acebet77 / ubetclub) we drop the card shadow + outline ring
+          so nothing paints a "second panel" inside the frame. */}
       <div
-        className="relative rounded-[24px] p-8 sm:p-10 overflow-hidden"
+        className={`relative rounded-[24px] overflow-hidden ${isWrappedByThemeFrame ? "p-0" : "p-8 sm:p-10"}`}
         style={{
           background: appearance.card,
-          boxShadow: `0px 20px 60px -10px rgba(0,0,0,0.8), 0px 0px 0px 1px ${appearance.borderExpanded}`,
-          backdropFilter: "blur(20px)",
+          boxShadow: isWrappedByThemeFrame
+            ? "none"
+            : `0px 20px 60px -10px rgba(0,0,0,0.8), 0px 0px 0px 1px ${appearance.borderExpanded}`,
+          backdropFilter: isWrappedByThemeFrame ? "none" : "blur(20px)",
         }}
       >
-        {/* Subtle corner accents */}
-        <div className="absolute top-0 left-0 w-16 h-16 border-t-[3px] border-l-[3px] rounded-tl-[24px] opacity-40" style={{ borderColor: appearance.accent }} />
-        <div className="absolute top-0 right-0 w-16 h-16 border-t-[3px] border-r-[3px] rounded-tr-[24px] opacity-40" style={{ borderColor: appearance.accent }} />
-        <div className="absolute bottom-0 left-0 w-16 h-16 border-b-[3px] border-l-[3px] rounded-bl-[24px] opacity-40" style={{ borderColor: appearance.accent }} />
-        <div className="absolute bottom-0 right-0 w-16 h-16 border-b-[3px] border-r-[3px] rounded-br-[24px] opacity-40" style={{ borderColor: appearance.accent }} />
-
-        {/* Ambient glow */}
-        <div
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-[60%] h-[200px] rounded-full blur-[120px] opacity-[0.12] pointer-events-none"
-          style={{ backgroundColor: appearance.accent }}
-        />
+        {/* Corner accents + ambient glow — only for the default card look.
+            The theme frame's own crown/rails provide the border chrome. */}
+        {!isWrappedByThemeFrame && (
+          <>
+            <div className="absolute top-0 left-0 w-16 h-16 border-t-[3px] border-l-[3px] rounded-tl-[24px] opacity-40" style={{ borderColor: appearance.accent }} />
+            <div className="absolute top-0 right-0 w-16 h-16 border-t-[3px] border-r-[3px] rounded-tr-[24px] opacity-40" style={{ borderColor: appearance.accent }} />
+            <div className="absolute bottom-0 left-0 w-16 h-16 border-b-[3px] border-l-[3px] rounded-bl-[24px] opacity-40" style={{ borderColor: appearance.accent }} />
+            <div className="absolute bottom-0 right-0 w-16 h-16 border-b-[3px] border-r-[3px] rounded-br-[24px] opacity-40" style={{ borderColor: appearance.accent }} />
+            <div
+              className="absolute top-0 left-1/2 -translate-x-1/2 w-[60%] h-[200px] rounded-full blur-[120px] opacity-[0.12] pointer-events-none"
+              style={{ backgroundColor: appearance.accent }}
+            />
+          </>
+        )}
 
         {/* Terms List */}
         <div className="space-y-3 relative">

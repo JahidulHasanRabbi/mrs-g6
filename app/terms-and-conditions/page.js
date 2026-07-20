@@ -88,10 +88,37 @@ export default function TermsAndConditionsPage() {
     );
   }
 
+  // Same asset-swap treatment as acebet77 — heading text → plaque image,
+  // FancyTermsConditions body wrapped inside the red crown ornate frame.
+  // Same asset-swap treatment as acebet77 — heading text → plaque image,
+  // FancyTermsConditions body wrapped inside the red crown ornate frame.
+  // The ubetclub crown frame has wider side ornaments and a taller crown
+  // than acebet77's, so use deeper padding here than the acebet77 branch.
   if (isUbetclub) {
     return (
       <UbetclubShell bg={UBET_ASSETS.spin.bg}>
-        <ThemedTermsContent accent={UBET_COLORS.goldBright} muted={UBET_COLORS.sand} />
+        <div className="flex min-h-screen flex-col items-center px-4 pb-8">
+          <motion.img
+            src={UBET_ASSETS.terms.title}
+            alt="Terms & Conditions"
+            draggable={false}
+            className="mt-5 mb-4 h-auto w-[340px] max-w-[92%] select-none object-contain"
+            initial={{ opacity: 0, y: -18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 18 }}
+          />
+          <div className="relative w-full max-w-[500px]">
+            <img
+              src={UBET_ASSETS.frames.crown}
+              alt=""
+              draggable={false}
+              className="pointer-events-none absolute inset-0 h-full w-full select-none object-fill"
+            />
+            <div className="relative px-[14%] pt-[20%] pb-[16%]">
+              <FancyTermsConditions />
+            </div>
+          </div>
+        </div>
       </UbetclubShell>
     );
   }

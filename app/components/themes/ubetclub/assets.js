@@ -64,6 +64,37 @@ export const UBET_ASSETS = {
     bgCrowd: `${BASE}/pk/bg-stadium.png`, // wide (loading/launch) reuses the stadium art
     iconBall: `${BASE}/pk/icon-ball.svg`,
   },
+  // Profile / Terms / VIP page assets (Figma nodes 77:2702, 288:1619, 288:2060,
+  // 289:2298). Title plaques carry their labels baked in; the two frames
+  // (crown + scroll) are theme-neutral and reused across pages exactly like
+  // the acebet77 counterparts.
+  profile: {
+    title: `${BASE}/profile/title-profile.png`,      // "My Profile" plaque
+    badgeNum: `${BASE}/profile/badge-num.png`,       // circular numbered bullet
+    iconStar: `${BASE}/profile/icon-star.svg`,       // gold star next to level name
+    iconArrow: `${BASE}/profile/icon-arrow.svg`,     // pagination arrow (token history)
+  },
+  vip: {
+    title: `${BASE}/vip/title-vip.png`,       // "VIP Details" plaque
+    crest: `${BASE}/vip/crest-lion.png`,      // lion crown crest above benefit list
+    iconCheck: `${BASE}/vip/icon-check.png`,  // gold tick beside each benefit row
+    // The VIP card frame the shared PrivilegesCard renders as the tier
+    // background when the theme is active. Same file as frames.crown — kept
+    // as a dedicated key so the intent reads clearly from PrivilegesCard.
+    cardFrame: `${BASE}/ui/frame-crown.png`,
+  },
+  terms: {
+    title: `${BASE}/ui/title-terms.png`,      // "Terms & Condition" plaque
+  },
+  // Two ornate frames reused across the acebet77-equivalent surfaces:
+  // - frameCrown: red crown-topped ornate frame. Used for terms body, VIP
+  //   progress card on the profile, and the VIP details benefit card.
+  // - frameScroll: red scroll frame with rolled tops/bottoms. Used for the
+  //   Edit Profiles list and the Token History modal.
+  frames: {
+    crown: `${BASE}/ui/frame-crown.png`,
+    scroll: `${BASE}/ui/frame-scroll.png`,
+  },
 };
 
 // Shared palette (from Figma inspection of the 77:* frames).

@@ -14,18 +14,31 @@ export default function FrameSelectionModal({
   profilePicture,
 }) {
   const { availableFrames, isLoadingFrames } = useUser();
-  const { isAcebet77 } = useTheme();
+  const { isAcebet77, isUbetclub } = useTheme();
 
-  // Asset-only skin: acebet77 uses a pure dark background + gold/sand accents
-  // instead of the default green gradient (functionality untouched — same
-  // frame list, same selection behaviour, same close/keyboard handling).
-  const modalBg = isAcebet77
-    ? "linear-gradient(to bottom, #0a0805 0%, #17130c 100%)"
-    : "linear-gradient(to bottom, #0a1a0a 0%, #102810 100%)";
-  const subtitleColor = isAcebet77 ? "#d0c6ab" : "#a8c08a";
-  const tierColor = isAcebet77 ? "#d0c6ab" : "#a8c08a";
-  const checkBg = isAcebet77 ? "#e9af41" : "#3a8a2a";
-  const checkStroke = isAcebet77 ? "#171006" : "#fff";
+  // Asset-only skin: themed decks each get their own pure-dark background +
+  // gold/sand accents instead of the default green gradient. Functionality
+  // untouched — same frame list, selection behaviour, and close/keyboard.
+  let modalBg, subtitleColor, tierColor, checkBg, checkStroke;
+  if (isAcebet77) {
+    modalBg = "linear-gradient(to bottom, #0a0805 0%, #17130c 100%)";
+    subtitleColor = "#d0c6ab";
+    tierColor = "#d0c6ab";
+    checkBg = "#e9af41";
+    checkStroke = "#171006";
+  } else if (isUbetclub) {
+    modalBg = "linear-gradient(to bottom, #18080a 0%, #3d0d10 100%)";
+    subtitleColor = "#d8c9a0";
+    tierColor = "#d8c9a0";
+    checkBg = "#f2c36b";
+    checkStroke = "#280506";
+  } else {
+    modalBg = "linear-gradient(to bottom, #0a1a0a 0%, #102810 100%)";
+    subtitleColor = "#a8c08a";
+    tierColor = "#a8c08a";
+    checkBg = "#3a8a2a";
+    checkStroke = "#fff";
+  }
 
   useEffect(() => {
     if (!isOpen) return;

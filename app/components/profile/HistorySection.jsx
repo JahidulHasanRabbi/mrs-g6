@@ -7,6 +7,7 @@ import { getMemberTokenHistory, getMemberRewardHistory } from "../../api/memberA
 import { tokenStorage } from "../../api/tokenStorage";
 import { useTheme } from "../../contexts/ThemeContext";
 import { ACEBET_ASSETS, ACEBET_COLORS } from "../themes/acebet77/assets";
+import { UBET_ASSETS, UBET_COLORS } from "../themes/ubetclub/assets";
 
 const PAGE_SIZE = 6;
 
@@ -198,23 +199,31 @@ function HistoryPagination({ currentPage, totalPages, onPageChange }) {
 
 function HistoryModal({ type, onClose }) {
   const config = HISTORY_CONFIG[type];
-  const { isAcebet77 } = useTheme();
+  const { isAcebet77, isUbetclub } = useTheme();
   const [currentPage, setCurrentPage] = useState(1);
   const [modalScale, setModalScale] = useState(1);
   const [rows, setRows] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  // Asset swap only: frame image + Close button image for acebet77. Text
-  // colors and positions stay identical (they already use gold on green,
-  // which reads as gold on dark just as well).
+  // Asset swap only: frame image + Close button image per theme. Column
+  // labels + row data + positions stay identical.
+  const themed = isAcebet77 || isUbetclub;
   const frameSrc = isAcebet77
     ? ACEBET_ASSETS.frames.scroll
-    : "/assets/profile/history-frame.png";
+    : isUbetclub
+      ? UBET_ASSETS.frames.scroll
+      : "/assets/profile/history-frame.png";
   const closeSrc = isAcebet77
     ? ACEBET_ASSETS.spin.btnPlay
-    : "/assets/profile/close-icon.png";
-  const closeTextColor = isAcebet77 ? ACEBET_COLORS.goldBright : "#6c5212";
+    : isUbetclub
+      ? UBET_ASSETS.spin.btnPlay
+      : "/assets/profile/close-icon.png";
+  const closeTextColor = isAcebet77
+    ? ACEBET_COLORS.goldBright
+    : isUbetclub
+      ? UBET_COLORS.goldBright
+      : "#6c5212";
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
@@ -320,22 +329,24 @@ function HistoryModal({ type, onClose }) {
           <h3
             id="history-modal-title"
             className="absolute left-1/2 -translate-x-1/2 font-['Times_New_Roman'] text-[20px] font-bold text-[#f1cf75] drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]"
-            style={{ top: isAcebet77 ? "78px" : "42px" }}
+            style={{ top: themed ? "78px" : "42px" }}
           >
             {config.title}
           </h3>
 
-          {/* The acebet77 scroll frame has thicker rolled tops/bottoms and
-              wider gold rails on the sides than the default green frame, so
-              the fixed contentOffset that centres the table in the green
-              frame overflows into acebet77's left ornament. Shift the table
-              inward and shrink its width to sit inside the dark interior. */}
+          {/* The themed scroll frames (acebet77 / ubetclub) have thicker
+              rolled tops/bottoms and wider gold rails on the sides than the
+              default green frame, so the fixed contentOffset overflows into
+              their left ornament. Shift the table inward and shrink its
+              width to sit inside the dark interior. Ubetclub's frame has
+              even wider side ornaments than acebet77's, so it needs a
+              deeper inset. */}
           <div
             className="absolute overflow-hidden rounded-[12px] border border-transparent"
             style={{
-              left: isAcebet77 ? "48px" : config.contentOffset,
+              left: isUbetclub ? "60px" : isAcebet77 ? "48px" : config.contentOffset,
               top: config.contentTop,
-              width: isAcebet77 ? "280px" : config.contentWidth,
+              width: isUbetclub ? "256px" : isAcebet77 ? "280px" : config.contentWidth,
             }}
           >
             <div
@@ -421,7 +432,7 @@ function HistoryModal({ type, onClose }) {
                 alt=""
                 fill
                 sizes="204px"
-                className={isAcebet77 ? "object-fill" : "object-cover"}
+                className={themed ? "object-fill" : "object-cover"}
               />
               <span
                 className="relative z-10 font-['Times_New_Roman'] text-[18px] font-bold tracking-[0.02em] drop-shadow-[0_1px_0_rgba(255,248,205,0.7)]"
@@ -439,14 +450,19 @@ function HistoryModal({ type, onClose }) {
 
 export default function HistorySection() {
   const [activeHistory, setActiveHistory] = useState(null);
-  const { isAcebet77 } = useTheme();
+  const { isAcebet77, isUbetclub } = useTheme();
 
-  // Asset swap only: acebet77 uses its dark-gold plaque (btn-play.png) with
-  // gold text so the buttons match the surrounding theme; every other theme
-  // keeps the default green banner. No logic changes.
-  const buttonSkin = isAcebet77
-    ? { bannerSrc: ACEBET_ASSETS.spin.btnPlay, textColor: ACEBET_COLORS.goldBright, objectFit: "object-fill" }
-    : { bannerSrc: "/assets/profile/history-title-banner.png", textColor: "#60803c", objectFit: "object-cover" };
+  // Asset swap only: themed decks use their own plaque + text colour so the
+  // Token/Reward History buttons match the surrounding theme; every other
+  // theme keeps the default green banner. No logic changes.
+  let buttonSkin;
+  if (isAcebet77) {
+    buttonSkin = { bannerSrc: ACEBET_ASSETS.spin.btnPlay, textColor: ACEBET_COLORS.goldBright, objectFit: "object-fill" };
+  } else if (isUbetclub) {
+    buttonSkin = { bannerSrc: UBET_ASSETS.spin.btnPlay, textColor: UBET_COLORS.goldBright, objectFit: "object-fill" };
+  } else {
+    buttonSkin = { bannerSrc: "/assets/profile/history-title-banner.png", textColor: "#60803c", objectFit: "object-cover" };
+  }
 
   return (
     <>

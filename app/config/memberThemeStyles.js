@@ -100,7 +100,10 @@ const STYLE_PACKS = {
       numberText: "#280506",
       text: "#fff6df",
       muted: "#d8c9a0",
-      card: "linear-gradient(180deg, rgba(72,14,15,0.96) 0%, rgba(24,8,10,0.99) 100%)",
+      // Match the acebet77 treatment: on ubetclub the acebet-style crown frame
+      // wraps FancyTermsConditions on the /terms-and-conditions page, so the
+      // inner card panel is transparent to avoid a frame-inside-frame stack.
+      card: "transparent",
       item: "linear-gradient(135deg, rgba(193,30,30,0.09) 0%, rgba(255,255,255,0.02) 100%)",
       itemExpanded: "linear-gradient(135deg, rgba(193,30,30,0.28) 0%, rgba(242,195,107,0.08) 100%)",
       border: "rgba(242,195,107,0.2)",

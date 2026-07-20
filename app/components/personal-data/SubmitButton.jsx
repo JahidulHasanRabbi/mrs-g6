@@ -4,14 +4,22 @@ import { motion } from "framer-motion";
 import { FORM_COLORS } from "./constants";
 import { useTheme } from "../../contexts/ThemeContext";
 import { ACEBET_ASSETS, ACEBET_COLORS } from "../themes/acebet77/assets";
+import { UBET_ASSETS, UBET_COLORS } from "../themes/ubetclub/assets";
 
 export default function SubmitButton({ onClick, label = "Saved Change", disabled = false }) {
-  const { isAcebet77 } = useTheme();
+  const { isAcebet77, isUbetclub } = useTheme();
 
-  // acebet77 skin: render the theme's dark gold-trim plaque (btn-play.png) with
-  // gold text so the button matches the surrounding theme instead of the
-  // default bright pill. Other themes keep the default pill exactly as before.
-  if (isAcebet77) {
+  // acebet77 / ubetclub skin: render the theme's dark ornate plaque
+  // (btn-play.png) with gold text so the button matches the surrounding
+  // theme instead of the default bright yellow pill. Other themes keep the
+  // default pill exactly as before.
+  const themedSkin = isAcebet77
+    ? { src: ACEBET_ASSETS.spin.btnPlay, color: ACEBET_COLORS.goldBright }
+    : isUbetclub
+      ? { src: UBET_ASSETS.spin.btnPlay, color: UBET_COLORS.goldBright }
+      : null;
+
+  if (themedSkin) {
     return (
       <motion.button
         onClick={onClick}
@@ -22,7 +30,7 @@ export default function SubmitButton({ onClick, label = "Saved Change", disabled
         whileTap={{ scale: disabled ? 1 : 0.98 }}
       >
         <img
-          src={ACEBET_ASSETS.spin.btnPlay}
+          src={themedSkin.src}
           alt=""
           draggable={false}
           className="pointer-events-none absolute inset-0 h-full w-full select-none object-fill"
@@ -32,7 +40,7 @@ export default function SubmitButton({ onClick, label = "Saved Change", disabled
           style={{
             fontFamily: '"Times New Roman", serif',
             fontWeight: "bold",
-            color: ACEBET_COLORS.goldBright,
+            color: themedSkin.color,
           }}
         >
           {label}

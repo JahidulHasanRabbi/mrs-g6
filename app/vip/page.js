@@ -9,14 +9,16 @@ import { getVipTiers } from "../api/memberApi";
 import { mapVipTiers } from "../api/responseMappers";
 import { useTheme } from "../contexts/ThemeContext";
 import Acebet77VipPage from "../components/themes/acebet77/Acebet77VipPage";
+import UbetclubVipPage from "../components/themes/ubetclub/UbetclubVipPage";
 
 export default function VipDetailsPage() {
-  const { isAcebet77 } = useTheme();
+  const { isAcebet77, isUbetclub } = useTheme();
 
-  // acebet77 uses the SAME logic as this page — just swaps the title-banner
-  // asset. All data/functionality (VipLevelChain, PrivilegesCarousel, tier
-  // fetching, error/retry) is preserved via that component.
+  // acebet77 / ubetclub each swap the title-banner asset for their own
+  // themed plaque. All data/functionality (VipLevelChain, PrivilegesCarousel,
+  // tier fetching, error/retry) is preserved by the wrapper component.
   if (isAcebet77) return <Acebet77VipPage />;
+  if (isUbetclub) return <UbetclubVipPage />;
 
   return <DefaultVipDetailsPage />;
 }

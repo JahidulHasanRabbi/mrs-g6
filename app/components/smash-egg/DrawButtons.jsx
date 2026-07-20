@@ -1,6 +1,9 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useTheme } from "../../contexts/ThemeContext";
+import { ACEBET_COLORS } from "../themes/acebet77/assets";
+import { UBET_COLORS } from "../themes/ubetclub/assets";
 
 const DRAW_OPTIONS = [
   { draws: 10, featured: false },
@@ -18,12 +21,35 @@ function formatTokenAmount(value) {
 }
 
 function DrawButton({ draws, tokens, featured, onClick, disabled }) {
-  const bgGradient = featured
-    ? "linear-gradient(to bottom, #ffd700, #544600)"
-    : "linear-gradient(to bottom, #ffb77d, #6e3900)";
-  const borderColor = featured ? "#3a3000" : "#4d2600";
-  const textColor = featured ? "#3a3000" : "#4d2600";
-  const tokenTextColor = featured ? "rgba(58,48,0,0.8)" : "rgba(77,38,0,0.8)";
+  const { isAcebet77, isUbetclub } = useTheme();
+
+  // Colour-only skin per theme. Featured (50 draws) uses the theme's brighter
+  // gold gradient; the non-featured 10 / 100 buttons use the deep-theme
+  // gradient so the row reads as one set of themed plaques. Logic is
+  // unchanged.
+  let bgGradient, borderColor, textColor, tokenTextColor;
+  if (isAcebet77) {
+    bgGradient = featured
+      ? "linear-gradient(to bottom, #ffd76b, #8a5514)"
+      : "linear-gradient(to bottom, #17130c, #050505)";
+    borderColor = featured ? "#3a2600" : ACEBET_COLORS.gold;
+    textColor = featured ? "#171006" : ACEBET_COLORS.goldBright;
+    tokenTextColor = featured ? "rgba(23,16,6,0.75)" : "rgba(242,186,51,0.85)";
+  } else if (isUbetclub) {
+    bgGradient = featured
+      ? "linear-gradient(to bottom, #f2c36b, #8a5514)"
+      : "linear-gradient(to bottom, #4a0e11, #180708)";
+    borderColor = featured ? "#3a1a0a" : UBET_COLORS.gold;
+    textColor = featured ? "#280506" : UBET_COLORS.goldBright;
+    tokenTextColor = featured ? "rgba(40,5,6,0.75)" : "rgba(242,195,107,0.85)";
+  } else {
+    bgGradient = featured
+      ? "linear-gradient(to bottom, #ffd700, #544600)"
+      : "linear-gradient(to bottom, #ffb77d, #6e3900)";
+    borderColor = featured ? "#3a3000" : "#4d2600";
+    textColor = featured ? "#3a3000" : "#4d2600";
+    tokenTextColor = featured ? "rgba(58,48,0,0.8)" : "rgba(77,38,0,0.8)";
+  }
   const shadow = featured
     ? "0 25px 50px -12px rgba(0,0,0,0.25)"
     : "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)";

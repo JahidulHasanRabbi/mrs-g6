@@ -5,6 +5,7 @@ import { useState, useCallback } from "react";
 import { submitFeedback as submitFeedbackApi } from "@/app/api/memberApi";
 import { tokenStorage } from "@/app/api/tokenStorage";
 import { useTheme } from "../../contexts/ThemeContext";
+import { UBET_ASSETS } from "../themes/ubetclub/assets";
 
 /**
  * FeedbackModal — collects a star rating + free-text message from the player.
@@ -16,27 +17,44 @@ export default function FeedbackModal({ isOpen, onClose }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(null);
-  const { isAcebet77 } = useTheme();
+  const { isAcebet77, isUbetclub } = useTheme();
 
-  // Colour-only skin overrides for acebet77 (pure dark + gold instead of the
-  // default green gradient). Logic, layout, and copy are unchanged.
-  const skin = isAcebet77
-    ? {
-        modalBg: "linear-gradient(180deg, #17130c 0%, #050505 100%)",
-        borderColor: "#e9af41",
-        starOff: "#3a2f1a",
-        starOn: "#f2ba33",
-        submitBg: "linear-gradient(180deg, #f2cb7a 0%, #b57718 100%)",
-        submitText: "#171006",
-      }
-    : {
-        modalBg: "linear-gradient(180deg, #1a3a22 0%, #07190d 100%)",
-        borderColor: "#c08f32",
-        starOff: "#3d4a3a",
-        starOn: "#fde685",
-        submitBg: "linear-gradient(180deg, #7da348 0%, #4d7530 100%)",
-        submitText: "#ffffff",
-      };
+  // Colour-only skin overrides for themed decks. Logic, layout, and copy are
+  // all unchanged; only the modal gradient / border / stars / submit button
+  // switch to the theme palette.
+  let skin;
+  if (isAcebet77) {
+    skin = {
+      modalBg: "linear-gradient(180deg, #17130c 0%, #050505 100%)",
+      borderColor: "#e9af41",
+      starOff: "#3a2f1a",
+      starOn: "#f2ba33",
+      submitBg: "linear-gradient(180deg, #f2cb7a 0%, #b57718 100%)",
+      submitText: "#171006",
+    };
+  } else if (isUbetclub) {
+    skin = {
+      // Deeper, more solid red gradient so the modal reads as a themed
+      // panel rather than a translucent overlay.
+      modalBg: "linear-gradient(180deg, #4a0e11 0%, #180708 100%)",
+      borderColor: "#f2c36b",
+      starOff: "#5a2d20",
+      starOn: "#f2c36b",
+      // Use the theme's actual red plaque asset for Submit/Close so those
+      // buttons match the History / Edit-profile plaques on the same skin.
+      submitImage: UBET_ASSETS.spin.btnPlay,
+      submitText: "#f2c36b",
+    };
+  } else {
+    skin = {
+      modalBg: "linear-gradient(180deg, #1a3a22 0%, #07190d 100%)",
+      borderColor: "#c08f32",
+      starOff: "#3d4a3a",
+      starOn: "#fde685",
+      submitBg: "linear-gradient(180deg, #7da348 0%, #4d7530 100%)",
+      submitText: "#ffffff",
+    };
+  }
 
   const reset = useCallback(() => {
     setRating(0);
@@ -221,19 +239,38 @@ export default function FeedbackModal({ isOpen, onClose }) {
                   >
                     Cancel
                   </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="flex-1 rounded-full px-3 py-2 text-[12px] font-bold shadow-md disabled:opacity-50"
-                    style={{
-                      background: skin.submitBg,
-                      color: skin.submitText,
-                      fontFamily: '"Times New Roman", serif',
-                      textShadow: isAcebet77 ? "none" : "0 1px 2px rgba(0,0,0,0.35)",
-                    }}
-                  >
-                    {isSubmitting ? "Sending…" : "Submit"}
-                  </button>
+                  {skin.submitImage ? (
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="relative flex-1 h-[38px] overflow-hidden text-[12px] font-bold disabled:opacity-50"
+                      style={{ fontFamily: '"Times New Roman", serif' }}
+                    >
+                      <img
+                        src={skin.submitImage}
+                        alt=""
+                        draggable={false}
+                        className="pointer-events-none absolute inset-0 h-full w-full select-none object-fill"
+                      />
+                      <span className="relative z-10" style={{ color: skin.submitText }}>
+                        {isSubmitting ? "Sending…" : "Submit"}
+                      </span>
+                    </button>
+                  ) : (
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="flex-1 rounded-full px-3 py-2 text-[12px] font-bold shadow-md disabled:opacity-50"
+                      style={{
+                        background: skin.submitBg,
+                        color: skin.submitText,
+                        fontFamily: '"Times New Roman", serif',
+                        textShadow: isAcebet77 ? "none" : "0 1px 2px rgba(0,0,0,0.35)",
+                      }}
+                    >
+                      {isSubmitting ? "Sending…" : "Submit"}
+                    </button>
+                  )}
                 </div>
               </form>
             ) : (
@@ -251,18 +288,36 @@ export default function FeedbackModal({ isOpen, onClose }) {
                 >
                   We appreciate your input and will use it to improve the experience.
                 </p>
-                <button
-                  onClick={handleClose}
-                  className="mt-2 rounded-full px-6 py-2 text-[12px] font-bold shadow-md"
-                  style={{
-                    background: skin.submitBg,
-                    color: skin.submitText,
-                    fontFamily: '"Times New Roman", serif',
-                    textShadow: isAcebet77 ? "none" : "0 1px 2px rgba(0,0,0,0.35)",
-                  }}
-                >
-                  Close
-                </button>
+                {skin.submitImage ? (
+                  <button
+                    onClick={handleClose}
+                    className="relative mt-2 h-[38px] w-[140px] overflow-hidden text-[12px] font-bold"
+                    style={{ fontFamily: '"Times New Roman", serif' }}
+                  >
+                    <img
+                      src={skin.submitImage}
+                      alt=""
+                      draggable={false}
+                      className="pointer-events-none absolute inset-0 h-full w-full select-none object-fill"
+                    />
+                    <span className="relative z-10" style={{ color: skin.submitText }}>
+                      Close
+                    </span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleClose}
+                    className="mt-2 rounded-full px-6 py-2 text-[12px] font-bold shadow-md"
+                    style={{
+                      background: skin.submitBg,
+                      color: skin.submitText,
+                      fontFamily: '"Times New Roman", serif',
+                      textShadow: isAcebet77 ? "none" : "0 1px 2px rgba(0,0,0,0.35)",
+                    }}
+                  >
+                    Close
+                  </button>
+                )}
               </div>
             )}
           </motion.div>

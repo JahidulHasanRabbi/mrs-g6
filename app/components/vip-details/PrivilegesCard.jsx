@@ -5,17 +5,19 @@ import { motion } from "framer-motion";
 import { VIP_DETAILS_ASSETS } from "./vipDetailsAssets";
 import { useTheme } from "../../contexts/ThemeContext";
 import { ACEBET_ASSETS } from "../themes/acebet77/assets";
+import { UBET_ASSETS } from "../themes/ubetclub/assets";
 
 export default function PrivilegesCard({ level = "Bronze", tierData = null, tierIndex = 0, isActive = true }) {
-  const { isAcebet77 } = useTheme();
+  const { isAcebet77, isUbetclub } = useTheme();
   const bgOrder = ['bronze', 'silver', 'gold', 'platinum', 'diamond'];
 
-  // acebet77 uses one shared crown-ornate frame (Figma 285:285) for every
+  // acebet77 / ubetclub each use one shared crown-ornate frame for every
   // tier — asset-only swap; the rest of the card (crest, stats, positions)
   // is unchanged.
-  let currentBg = isAcebet77
-    ? ACEBET_ASSETS.vip.cardFrame
-    : VIP_DETAILS_ASSETS.privilegesBg[level.toLowerCase()];
+  let currentBg;
+  if (isAcebet77) currentBg = ACEBET_ASSETS.vip.cardFrame;
+  else if (isUbetclub) currentBg = UBET_ASSETS.vip.cardFrame;
+  else currentBg = VIP_DETAILS_ASSETS.privilegesBg[level.toLowerCase()];
 
   if (!currentBg) {
     const lowerName = level.toLowerCase();
@@ -49,11 +51,10 @@ export default function PrivilegesCard({ level = "Bronze", tierData = null, tier
           alt={`${level} Privileges Background`}
           src={currentBg}
           fill
-          // acebet77's shared frame is a full rectangular ornate frame — stretch
-          // to fill the card exactly (like the theme's other frame usages).
-          // Default themes keep the original object-cover so their per-tier
-          // photographic backgrounds don't distort.
-          className={isAcebet77 ? "object-fill" : "object-cover"}
+          // Themed shared frames stretch to fill the card exactly (like their
+          // other frame usages). Default themes keep object-cover so their
+          // per-tier photographic backgrounds don't distort.
+          className={isAcebet77 || isUbetclub ? "object-fill" : "object-cover"}
           priority={isActive}
           sizes="344px"
         />
