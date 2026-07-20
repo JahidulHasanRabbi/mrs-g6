@@ -319,17 +319,23 @@ function HistoryModal({ type, onClose }) {
 
           <h3
             id="history-modal-title"
-            className="absolute left-1/2 top-[42px] -translate-x-1/2 font-['Times_New_Roman'] text-[20px] font-bold text-[#f1cf75] drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]"
+            className="absolute left-1/2 -translate-x-1/2 font-['Times_New_Roman'] text-[20px] font-bold text-[#f1cf75] drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]"
+            style={{ top: isAcebet77 ? "78px" : "42px" }}
           >
             {config.title}
           </h3>
 
+          {/* The acebet77 scroll frame has thicker rolled tops/bottoms and
+              wider gold rails on the sides than the default green frame, so
+              the fixed contentOffset that centres the table in the green
+              frame overflows into acebet77's left ornament. Shift the table
+              inward and shrink its width to sit inside the dark interior. */}
           <div
             className="absolute overflow-hidden rounded-[12px] border border-transparent"
             style={{
-              left: config.contentOffset,
+              left: isAcebet77 ? "48px" : config.contentOffset,
               top: config.contentTop,
-              width: config.contentWidth,
+              width: isAcebet77 ? "280px" : config.contentWidth,
             }}
           >
             <div
