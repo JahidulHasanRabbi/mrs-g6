@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useCallback } from "react";
 import { submitFeedback as submitFeedbackApi } from "@/app/api/memberApi";
 import { tokenStorage } from "@/app/api/tokenStorage";
+import { useTheme } from "../../contexts/ThemeContext";
 
 /**
  * FeedbackModal — collects a star rating + free-text message from the player.
@@ -15,6 +16,27 @@ export default function FeedbackModal({ isOpen, onClose }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(null);
+  const { isAcebet77 } = useTheme();
+
+  // Colour-only skin overrides for acebet77 (pure dark + gold instead of the
+  // default green gradient). Logic, layout, and copy are unchanged.
+  const skin = isAcebet77
+    ? {
+        modalBg: "linear-gradient(180deg, #17130c 0%, #050505 100%)",
+        borderColor: "#e9af41",
+        starOff: "#3a2f1a",
+        starOn: "#f2ba33",
+        submitBg: "linear-gradient(180deg, #f2cb7a 0%, #b57718 100%)",
+        submitText: "#171006",
+      }
+    : {
+        modalBg: "linear-gradient(180deg, #1a3a22 0%, #07190d 100%)",
+        borderColor: "#c08f32",
+        starOff: "#3d4a3a",
+        starOn: "#fde685",
+        submitBg: "linear-gradient(180deg, #7da348 0%, #4d7530 100%)",
+        submitText: "#ffffff",
+      };
 
   const reset = useCallback(() => {
     setRating(0);
@@ -101,8 +123,8 @@ export default function FeedbackModal({ isOpen, onClose }) {
             transition={{ type: "spring", stiffness: 280, damping: 26 }}
             onClick={(event) => event.stopPropagation()}
             style={{
-              background: "linear-gradient(180deg, #1a3a22 0%, #07190d 100%)",
-              border: "2px solid #c08f32",
+              background: skin.modalBg,
+              border: `2px solid ${skin.borderColor}`,
               boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
             }}
           >
@@ -143,7 +165,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
                         className="text-3xl leading-none transition-transform hover:scale-110"
                         aria-label={`Rate ${n} star${n > 1 ? "s" : ""}`}
                       >
-                        <span style={{ color: (hoverRating || rating) >= n ? "#fde685" : "#3d4a3a" }}>★</span>
+                        <span style={{ color: (hoverRating || rating) >= n ? skin.starOn : skin.starOff }}>★</span>
                       </button>
                     ))}
                   </div>
@@ -164,8 +186,15 @@ export default function FeedbackModal({ isOpen, onClose }) {
                     rows={4}
                     maxLength={500}
                     placeholder="Tell us what's on your mind..."
-                    className="w-full resize-none rounded-lg border border-[#c08f32]/40 bg-black/30 px-3 py-2 text-[13px] text-white placeholder-white/30 focus:border-[#fde685] focus:outline-none"
-                    style={{ fontFamily: '"Times New Roman", serif' }}
+                    className="w-full resize-none rounded-lg bg-black/30 px-3 py-2 text-[13px] text-white placeholder-white/30 focus:outline-none"
+                    style={{
+                      fontFamily: '"Times New Roman", serif',
+                      borderWidth: 1,
+                      borderStyle: "solid",
+                      borderColor: `${skin.borderColor}66`,
+                    }}
+                    onFocus={(e) => (e.target.style.borderColor = skin.starOn)}
+                    onBlur={(e) => (e.target.style.borderColor = `${skin.borderColor}66`)}
                   />
                   <div className="mt-1 text-right text-[10px] text-white/40">{message.length}/500</div>
                 </div>
@@ -181,19 +210,26 @@ export default function FeedbackModal({ isOpen, onClose }) {
                     type="button"
                     onClick={handleClose}
                     disabled={isSubmitting}
-                    className="flex-1 rounded-full border border-[#c08f32]/60 px-3 py-2 text-[12px] font-bold text-[#fde685] hover:bg-white/5 disabled:opacity-40"
-                    style={{ fontFamily: '"Times New Roman", serif' }}
+                    className="flex-1 rounded-full px-3 py-2 text-[12px] font-bold hover:bg-white/5 disabled:opacity-40"
+                    style={{
+                      fontFamily: '"Times New Roman", serif',
+                      color: skin.starOn,
+                      borderWidth: 1,
+                      borderStyle: "solid",
+                      borderColor: `${skin.borderColor}99`,
+                    }}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 rounded-full px-3 py-2 text-[12px] font-bold text-white shadow-md disabled:opacity-50"
+                    className="flex-1 rounded-full px-3 py-2 text-[12px] font-bold shadow-md disabled:opacity-50"
                     style={{
-                      background: "linear-gradient(180deg, #7da348 0%, #4d7530 100%)",
+                      background: skin.submitBg,
+                      color: skin.submitText,
                       fontFamily: '"Times New Roman", serif',
-                      textShadow: "0 1px 2px rgba(0,0,0,0.35)",
+                      textShadow: isAcebet77 ? "none" : "0 1px 2px rgba(0,0,0,0.35)",
                     }}
                   >
                     {isSubmitting ? "Sending…" : "Submit"}
@@ -217,11 +253,12 @@ export default function FeedbackModal({ isOpen, onClose }) {
                 </p>
                 <button
                   onClick={handleClose}
-                  className="mt-2 rounded-full px-6 py-2 text-[12px] font-bold text-white shadow-md"
+                  className="mt-2 rounded-full px-6 py-2 text-[12px] font-bold shadow-md"
                   style={{
-                    background: "linear-gradient(180deg, #7da348 0%, #4d7530 100%)",
+                    background: skin.submitBg,
+                    color: skin.submitText,
                     fontFamily: '"Times New Roman", serif',
-                    textShadow: "0 1px 2px rgba(0,0,0,0.35)",
+                    textShadow: isAcebet77 ? "none" : "0 1px 2px rgba(0,0,0,0.35)",
                   }}
                 >
                   Close
