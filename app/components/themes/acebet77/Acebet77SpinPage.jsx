@@ -22,7 +22,13 @@ import { useUser } from '../../../contexts/UserContext';
 // same spin/selection engine the default portal uses — fed acebet's artwork and
 // a square-frame geometry. Only the images change; the timing, ring cycling,
 // deceleration, winner highlight and manual-stop all come from the shared code.
-const ACEBET_GEOMETRY = { framePad: 14, tile: 21, center: 24 };
+// The onyx "?" plaque PNGs carry ~17% transparent padding, so a tile's visible
+// gold frame is only ~0.83× its box. To fill the frame's 3x3 interior the way
+// the reference art does (plaques nearly touching, no dark gaps), the box has to
+// be sized up accordingly: box 27% → visible ~22.3% at a 24% column pitch leaves
+// a ~1.7% seam between neighbours. framePad stays 14 so the outer columns keep
+// landing just inside the gold border.
+const ACEBET_GEOMETRY = { framePad: 14, tile: 27, center: 26 };
 const ACEBET_FRAMED_SKIN = buildFramedSkin(ACEBET_ASSETS, ACEBET_COLORS, { x: '9%', top: '20%', bottom: '13%' }, { scrollbarClass: 'scrollbar-acebet77' });
 
 export default function Acebet77SpinPage() {

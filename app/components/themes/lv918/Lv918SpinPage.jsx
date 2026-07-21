@@ -37,7 +37,10 @@ function formatWinDate(value) {
 // same spin/selection engine the default portal uses — fed lv918's artwork and
 // a square-frame geometry. Only the images change; the timing, ring cycling,
 // deceleration, winner highlight and manual-stop all come from the shared code.
-const LV918_GEOMETRY = { framePad: 14, tile: 21, center: 24 };
+// Plaque PNGs carry transparent padding (visible frame ~0.86× the box here), so
+// the box is sized up to ~26% → visible ~22% at the 24% column pitch, closing
+// the dark gaps between tiles so the 3x3 grid reads as full like the reference.
+const LV918_GEOMETRY = { framePad: 14, tile: 26, center: 24 };
 
 export default function Lv918SpinPage() {
   const [spinItems, setSpinItems] = useState([]);

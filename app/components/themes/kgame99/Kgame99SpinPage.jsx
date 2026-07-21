@@ -36,7 +36,10 @@ function formatWinDate(value) {
 // same spin/selection engine the default portal uses — fed kgame99's artwork and
 // a square-frame geometry. Only the images change; the timing, ring cycling,
 // deceleration, winner highlight and manual-stop all come from the shared code.
-const KGAME99_GEOMETRY = { framePad: 14, tile: 21, center: 24 };
+// This theme's plaque PNGs are nearly edge-to-edge (visible frame ~0.96× the
+// box), so a smaller box (~23%) already yields ~22% visible at the 24% column
+// pitch — enough to close the dark gaps and read as a full 3x3 like the reference.
+const KGAME99_GEOMETRY = { framePad: 14, tile: 23, center: 24 };
 
 export default function Kgame99SpinPage() {
   const [spinItems, setSpinItems] = useState([]);

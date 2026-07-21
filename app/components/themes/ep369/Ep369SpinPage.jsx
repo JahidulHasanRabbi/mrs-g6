@@ -24,7 +24,10 @@ const EP369_FRAMED_SKIN = buildFramedSkin(EP369_ASSETS, EP369_COLORS, { x: '15%'
 // spin/selection engine as the default portal — fed EP369's artwork. Only the
 // images change; ring cycling, deceleration, winner highlight and manual-stop
 // all come from the shared code.
-const EP369_GEOMETRY = { framePad: 14, tile: 21, center: 24 };
+// Plaque PNGs carry transparent padding (visible frame ~0.86× the box here), so
+// the box is sized up to ~25% → visible ~22% at the 24% column pitch, closing
+// the dark gaps between tiles so the 3x3 grid reads as full like the reference.
+const EP369_GEOMETRY = { framePad: 14, tile: 25, center: 24 };
 
 export default function Ep369SpinPage() {
   const [spinItems, setSpinItems] = useState([]);

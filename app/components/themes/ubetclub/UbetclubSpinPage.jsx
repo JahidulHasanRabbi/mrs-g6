@@ -24,7 +24,10 @@ const UBET_FRAMED_SKIN = buildFramedSkin(UBET_ASSETS, UBET_COLORS, { x: '13%', t
 // spin/selection engine as the default portal — fed ubetclub's artwork. Only
 // the images change; ring cycling, deceleration, winner highlight and
 // manual-stop all come from the shared code.
-const UBET_GEOMETRY = { framePad: 14, tile: 21, center: 24 };
+// Plaque PNGs carry transparent padding (visible frame ~0.89× the box here), so
+// the box is sized up to ~25% → visible ~22% at the 24% column pitch, closing
+// the dark gaps between tiles so the 3x3 grid reads as full like the reference.
+const UBET_GEOMETRY = { framePad: 14, tile: 25, center: 24 };
 
 // Derives a short "Token / Prize / Free credit" label from the raw item_type
 // enum so the rewards panel can show more than just the reward name.
