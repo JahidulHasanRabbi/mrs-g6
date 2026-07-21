@@ -34,11 +34,20 @@ export const RPG_IMAGES = {
     navChallenge: "/assets/rpg/icons/nav-challenge.svg",
     navMission: "/assets/rpg/icons/nav-mission.svg",
   },
+  // Outline SVG icons — used for EMPTY equipment slots (dimmed placeholder).
   equipment: {
     weapon: "/assets/rpg/equipment/weapon.svg",
     helmet: "/assets/rpg/equipment/helmet.svg",
     armor: "/assets/rpg/equipment/armor.svg",
     boots: "/assets/rpg/equipment/boots.svg",
+  },
+  // Real gear art (Figma "Equipment" set, background-keyed) — used for
+  // EQUIPPED slots and owned backpack items (Hero Item design 2284:2415).
+  equipmentArt: {
+    weapon: "/assets/rpg/equipment/weapon.webp",
+    helmet: "/assets/rpg/equipment/helmet.webp",
+    armor: "/assets/rpg/equipment/armor.webp",
+    boots: "/assets/rpg/equipment/boots.webp",
   },
   // Per-boss arena backdrops (Figma "Backgrounds" set). Each is a full-bleed
   // 820-wide webp with a magic-circle floor the hero stands on. battleArena is

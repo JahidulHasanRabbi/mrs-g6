@@ -164,7 +164,7 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
                 borderColor: isSelected ? "rgba(255,92,138,0.7)" : RPG_COLORS.violetBorderStrong,
               }}
             >
-              <img src={RPG_IMAGES.equipment[item.slot]} alt="" className="size-[30px]" />
+              <img src={RPG_IMAGES.equipmentArt[item.slot]} alt="" className="size-[34px] object-contain" />
               <span
                 className="max-w-full truncate px-[4px] text-[8px] tracking-[0.5px]"
                 style={{ color: RPG_COLORS.slotLabel, fontFamily: RPG_FONTS.display }}

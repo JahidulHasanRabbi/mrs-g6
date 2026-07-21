@@ -79,9 +79,9 @@ export function SlotChip({ slot, item, powerTag = "+1,000", onClick, size = "md"
       }}
     >
       <img
-        src={RPG_IMAGES.equipment[slot]}
+        src={equipped ? RPG_IMAGES.equipmentArt[slot] : RPG_IMAGES.equipment[slot]}
         alt=""
-        className="size-[30px]"
+        className={equipped ? "size-[34px] object-contain" : "size-[30px]"}
         style={{ opacity: equipped ? 1 : 0.75 }}
       />
       <span
