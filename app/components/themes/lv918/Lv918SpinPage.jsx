@@ -37,7 +37,7 @@ function formatWinDate(value) {
 // same spin/selection engine the default portal uses — fed lv918's artwork and
 // a square-frame geometry. Only the images change; the timing, ring cycling,
 // deceleration, winner highlight and manual-stop all come from the shared code.
-const LV918_GEOMETRY = { framePad: 15, tile: 23, center: 27 };
+const LV918_GEOMETRY = { framePad: 14, tile: 21, center: 24 };
 
 export default function Lv918SpinPage() {
   const [spinItems, setSpinItems] = useState([]);
@@ -357,7 +357,7 @@ export default function Lv918SpinPage() {
         <div className="relative aspect-6/5 w-full max-w-95">
           <img src={LV918_ASSETS.spin.panel} alt="" draggable={false} className="absolute inset-0 h-full w-full select-none object-fill" />
           <div className="absolute inset-x-[15%] top-[20%] bottom-[19%]">
-            <div className="h-full overflow-y-auto px-2 py-1 [scrollbar-color:rgba(146,64,102,0.55)_transparent] [scrollbar-width:thin]">
+            <div className="h-full overflow-y-auto px-2 py-1 scrollbar-lv918">
               {spinItems.length === 0 ? (
                 <p className="mt-6 text-center text-[13px]" style={{ color: LV918_COLORS.inkSoft, fontFamily: 'var(--font-rubik), sans-serif' }}>
                   {itemsLoading ? 'Loading rewards…' : 'No rewards available.'}

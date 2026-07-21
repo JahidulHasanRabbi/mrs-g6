@@ -9,17 +9,19 @@ import { useTheme } from "../contexts/ThemeContext";
 import Acebet77ProfilePage from "../components/themes/acebet77/Acebet77ProfilePage";
 import UbetclubProfilePage from "../components/themes/ubetclub/UbetclubProfilePage";
 import Ep369ProfilePage from "../components/themes/ep369/Ep369ProfilePage";
+import Kgame99ProfilePage from "../components/themes/kgame99/Kgame99ProfilePage";
 
 const hasValue = (v) => v != null && String(v).trim() !== "";
 
 export default function ProfilePage() {
   const router = useRouter();
   const { userData, profilePicture, profileData } = useUser();
-  const { isAcebet77, isUbetclub, isEp369 } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99 } = useTheme();
 
   if (isAcebet77) return <Acebet77ProfilePage />;
   if (isUbetclub) return <UbetclubProfilePage />;
   if (isEp369) return <Ep369ProfilePage />;
+  if (isKgame99) return <Kgame99ProfilePage />;
 
   const completion = {
     displayPhoto: hasValue(profilePicture),

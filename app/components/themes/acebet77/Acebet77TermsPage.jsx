@@ -73,7 +73,7 @@ export default function Acebet77TermsPage() {
                 takes up the top ~22%, the flourish under it another ~3%, so
                 start the copy at ~26% and pad ~14% from each side to clear
                 the gold rails. */}
-            <div className="absolute inset-x-[14%] top-[26%] bottom-[13%] overflow-y-auto pr-1 [scrollbar-color:rgba(233,175,65,0.5)_transparent] [scrollbar-width:thin]">
+            <div className="absolute inset-x-[14%] top-[26%] bottom-[13%] overflow-y-auto pr-1 scrollbar-acebet77">
               {loading ? (
                 <p
                   className="pt-4 text-center text-[13px]"

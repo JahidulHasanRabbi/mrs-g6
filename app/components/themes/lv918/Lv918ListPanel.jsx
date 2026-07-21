@@ -23,7 +23,7 @@ export default function Lv918ListPanel({ children, height = 300, className = '' 
       {/* Content sits inside the ornate border (clears the crown + side gems),
           directly on the pink interior. */}
       <div className="absolute inset-x-[15%] top-[21%] bottom-[16%] overflow-hidden rounded-[12px]">
-        <div className="h-full overflow-y-auto px-2.5 py-2 [scrollbar-color:rgba(146,64,102,0.55)_transparent] [scrollbar-width:thin]">
+        <div className="h-full overflow-y-auto px-2.5 py-2 scrollbar-lv918">
           {children}
         </div>
       </div>

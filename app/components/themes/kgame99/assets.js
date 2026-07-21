@@ -96,6 +96,25 @@ export const KGAME99_ASSETS = {
     iconShotHud: `${BASE}/pk/icon-shot-hud.svg`,
     prizePanel: `${BASE}/pk/prize-panel.png`,
   },
+  profile: {
+    title: `${BASE}/profile/title-profile.png`,
+    badgeNum: `${BASE}/profile/badge-num.png`,
+    iconChevron: `${BASE}/profile/icon-chevron.png`,
+    iconStar: `${BASE}/profile/icon-star.png`,
+  },
+  vip: {
+    title: `${BASE}/vip/title-vip.png`,
+    crest: `${BASE}/vip/crest-lion.png`,
+    iconCheck: `${BASE}/vip/icon-check.png`,
+    cardFrame: `${BASE}/ui/frame-crown.png`,
+  },
+  terms: {
+    title: `${BASE}/ui/title-terms.png`,
+  },
+  frames: {
+    crown: `${BASE}/ui/frame-crown.png`,
+    scroll: `${BASE}/ui/frame-scroll.png`,
+  },
 };
 
 // Shared palette (from Figma inspection of the 154:* frames). Blue-tinted mirror
@@ -108,4 +127,9 @@ export const KGAME99_COLORS = {
   sand: '#a7c3e2',
   tokenYellow: '#ffe16d',
   dark: '#0a1a2f',
+  navyBlue: '#0a4e9e',
+  navyPanel: '#0f2a4a',
+  navyDeep: '#061527',
+  lightBlue: '#dbecff',
+  progressTrack: '#51340c',
 };

@@ -7,6 +7,7 @@ import { tokenStorage } from "@/app/api/tokenStorage";
 import { useTheme } from "../../contexts/ThemeContext";
 import { UBET_ASSETS } from "../themes/ubetclub/assets";
 import { EP369_ASSETS } from "../themes/ep369/assets";
+import { KGAME99_ASSETS } from "../themes/kgame99/assets";
 
 /**
  * FeedbackModal — collects a star rating + free-text message from the player.
@@ -18,7 +19,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(null);
-  const { isAcebet77, isUbetclub, isEp369 } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99 } = useTheme();
 
   let skin;
   if (isAcebet77) {
@@ -47,6 +48,15 @@ export default function FeedbackModal({ isOpen, onClose }) {
       starOn: "#f2c36b",
       submitImage: EP369_ASSETS.spin.btnPlay,
       submitText: "#f2c36b",
+    };
+  } else if (isKgame99) {
+    skin = {
+      modalBg: "linear-gradient(180deg, #0f2a4a 0%, #061527 100%)",
+      borderColor: "#e2b24a",
+      starOff: "#1a2a4a",
+      starOn: "#f5c451",
+      submitImage: KGAME99_ASSETS.spin.btnPlay,
+      submitText: "#f5c451",
     };
   } else {
     skin = {

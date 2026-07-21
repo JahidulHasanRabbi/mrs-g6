@@ -65,7 +65,7 @@ export default function UbetclubTermsPage() {
               draggable={false}
               className="absolute inset-0 h-full w-full select-none object-fill"
             />
-            <div className="absolute inset-x-[14%] top-[26%] bottom-[13%] overflow-y-auto pr-1 [scrollbar-color:rgba(242,195,107,0.5)_transparent] [scrollbar-width:thin]">
+            <div className="absolute inset-x-[14%] top-[26%] bottom-[13%] overflow-y-auto pr-1 scrollbar-ubet">
               {loading ? (
                 <p
                   className="pt-4 text-center text-[13px]"

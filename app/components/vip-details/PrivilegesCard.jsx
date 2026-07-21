@@ -7,15 +7,17 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { ACEBET_ASSETS } from "../themes/acebet77/assets";
 import { UBET_ASSETS } from "../themes/ubetclub/assets";
 import { EP369_ASSETS } from "../themes/ep369/assets";
+import { KGAME99_ASSETS } from "../themes/kgame99/assets";
 
 export default function PrivilegesCard({ level = "Bronze", tierData = null, tierIndex = 0, isActive = true }) {
-  const { isAcebet77, isUbetclub, isEp369 } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99 } = useTheme();
   const bgOrder = ['bronze', 'silver', 'gold', 'platinum', 'diamond'];
 
   let currentBg;
   if (isAcebet77) currentBg = ACEBET_ASSETS.vip.cardFrame;
   else if (isUbetclub) currentBg = UBET_ASSETS.vip.cardFrame;
   else if (isEp369) currentBg = EP369_ASSETS.vip.cardFrame;
+  else if (isKgame99) currentBg = KGAME99_ASSETS.vip.cardFrame;
   else currentBg = VIP_DETAILS_ASSETS.privilegesBg[level.toLowerCase()];
 
   if (!currentBg) {
@@ -53,7 +55,7 @@ export default function PrivilegesCard({ level = "Bronze", tierData = null, tier
           // Themed shared frames stretch to fill the card exactly (like their
           // other frame usages). Default themes keep object-cover so their
           // per-tier photographic backgrounds don't distort.
-          className={isAcebet77 || isUbetclub || isEp369 ? "object-fill" : "object-cover"}
+          className={isAcebet77 || isUbetclub || isEp369 || isKgame99 ? "object-fill" : "object-cover"}
           priority={isActive}
           sizes="344px"
         />

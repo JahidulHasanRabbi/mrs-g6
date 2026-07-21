@@ -47,6 +47,8 @@ const CollapsibleTermItem = ({ number, title, description, index, appearance }) 
         style={{
           background: isExpanded ? appearance.itemExpanded : appearance.item,
           border: `1px solid ${isExpanded ? appearance.borderExpanded : appearance.border}`,
+          backdropFilter: appearance.itemBlur || "none",
+          WebkitBackdropFilter: appearance.itemBlur || "none",
           boxShadow: isExpanded
             ? `0px 4px 20px ${appearance.glow}, inset 0px 1px 0px rgba(255,255,255,0.1)`
             : "0px 2px 8px rgba(0, 0, 0, 0.3)",
@@ -68,7 +70,7 @@ const CollapsibleTermItem = ({ number, title, description, index, appearance }) 
           >
             <span
               className="text-[18px] font-extrabold"
-              style={{ color: appearance.numberText, textShadow: "0px 1px 1px rgba(255,255,255,0.3)" }}
+              style={{ color: appearance.numberText, textShadow: appearance.numberShadow || "0px 1px 1px rgba(255,255,255,0.3)" }}
             >
               {number}
             </span>
@@ -78,7 +80,7 @@ const CollapsibleTermItem = ({ number, title, description, index, appearance }) 
               className="text-[17px] font-bold leading-tight group-hover:text-[#fcd064] transition-colors"
               style={{
                 color: isExpanded ? appearance.accentBright : appearance.accent,
-                textShadow: "0px 2px 6px rgba(0,0,0,0.8)"
+                textShadow: appearance.titleShadow || "0px 2px 6px rgba(0,0,0,0.8)"
               }}
             >
               {title}
@@ -88,7 +90,7 @@ const CollapsibleTermItem = ({ number, title, description, index, appearance }) 
             animate={{ rotate: isExpanded ? 180 : 0 }}
             transition={{ duration: 0.3, type: "spring" }}
             className="text-[16px] font-bold shrink-0"
-            style={{ color: appearance.accent, textShadow: "0px 2px 4px rgba(0,0,0,0.6)" }}
+            style={{ color: appearance.accent, textShadow: appearance.chevronShadow || "0px 2px 4px rgba(0,0,0,0.6)" }}
           >
             ▼
           </motion.div>
@@ -104,7 +106,7 @@ const CollapsibleTermItem = ({ number, title, description, index, appearance }) 
               <div className="pl-[52px] pr-2">
                 <p
                   className="text-[15px] font-medium leading-relaxed whitespace-pre-line"
-                  style={{ color: appearance.text, textShadow: "0px 1px 3px rgba(0,0,0,0.8)" }}
+                  style={{ color: appearance.text, textShadow: appearance.descShadow || "0px 1px 3px rgba(0,0,0,0.8)" }}
                 >
                   {description}
                 </p>
@@ -120,13 +122,13 @@ const CollapsibleTermItem = ({ number, title, description, index, appearance }) 
 export default function FancyTermsConditions() {
   const [terms, setTerms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { themeId, isAcebet77, isUbetclub, isEp369 } = useTheme();
+  const { themeId, isAcebet77, isUbetclub, isEp369, isKgame99 } = useTheme();
   const appearance = getMemberThemeStyles(themeId).terms;
   // Themes that wrap this component inside their own ornate crown frame don't
   // want the extra corner brackets + ambient glow drawing a second container
   // inside the frame. terms.card is already set transparent for them; drop
   // the decorative chrome too so only the accordion items show.
-  const isWrappedByThemeFrame = isAcebet77 || isUbetclub || isEp369;
+  const isWrappedByThemeFrame = isAcebet77 || isUbetclub || isEp369 || isKgame99;
 
   useEffect(() => {
     async function fetchTerms() {

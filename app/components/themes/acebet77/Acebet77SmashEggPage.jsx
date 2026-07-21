@@ -20,7 +20,7 @@ import { SMASH_EGG_ASSETS } from '../../smash-egg/smashEggAssets';
 import { ACEBET_ASSETS, ACEBET_COLORS } from './assets';
 
 const WELCOME_SEEN_KEY = 'mrs_acebet77_egg_welcome_seen';
-const ACEBET_FRAMED_SKIN = buildFramedSkin(ACEBET_ASSETS, ACEBET_COLORS, { x: '9%', top: '20%', bottom: '13%' });
+const ACEBET_FRAMED_SKIN = buildFramedSkin(ACEBET_ASSETS, ACEBET_COLORS, { x: '9%', top: '20%', bottom: '13%' }, { scrollbarClass: 'scrollbar-acebet77' });
 
 /**
  * Acebet77 Smash Egg (Figma nodes 4:588 loading / 4:533 welcome / 4:503 idle /

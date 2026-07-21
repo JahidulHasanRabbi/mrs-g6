@@ -155,7 +155,20 @@ export default function TermsAndConditionsPage() {
   if (isKgame99) {
     return (
       <KgameShell bg={KGAME99_ASSETS.spin.bg}>
-        <ThemedTermsContent accent={KGAME99_COLORS.goldBright} muted={KGAME99_COLORS.sand} />
+        <div className="flex min-h-screen flex-col items-center px-4 pb-8">
+          <motion.img
+            src={KGAME99_ASSETS.terms.title}
+            alt="Terms & Conditions"
+            draggable={false}
+            className="mt-5 mb-4 h-auto w-[340px] max-w-[92%] select-none object-contain"
+            initial={{ opacity: 0, y: -18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 18 }}
+          />
+          <div className="w-full max-w-[500px]">
+            <FancyTermsConditions />
+          </div>
+        </div>
       </KgameShell>
     );
   }

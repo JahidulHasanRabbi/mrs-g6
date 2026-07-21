@@ -9,6 +9,7 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { ACEBET_ASSETS, ACEBET_COLORS } from "../themes/acebet77/assets";
 import { UBET_ASSETS, UBET_COLORS } from "../themes/ubetclub/assets";
 import { EP369_ASSETS, EP369_COLORS } from "../themes/ep369/assets";
+import { KGAME99_ASSETS, KGAME99_COLORS } from "../themes/kgame99/assets";
 
 const PAGE_SIZE = 6;
 
@@ -29,30 +30,28 @@ const HISTORY_CONFIG = {
     contentOffset: "30px",
     contentTop: "114px",
     paginationTop: "346px",
-    gridTemplateColumns:
-      "minmax(0,26%) minmax(0,26%) minmax(0,26%) minmax(0,22%)",
+    gridTemplateColumns: "58px 1fr 1fr 48px",
     columns: [
       {
         key: "created",
-        label: "Date/time",
-        cellClassName: "whitespace-nowrap overflow-hidden pl-1",
-        headerAlign: "text-left pl-1",
+        label: "Date",
+        cellClassName: "whitespace-nowrap overflow-hidden",
       },
       {
         key: "category",
         label: "Category",
-        cellClassName: "break-words overflow-hidden pr-1",
+        cellClassName: "overflow-hidden truncate",
       },
       {
         key: "token_details",
-        label: "Token details",
-        cellClassName: "break-words overflow-hidden pr-1",
+        label: "Details",
+        cellClassName: "overflow-hidden truncate",
       },
       {
         key: "amount",
         label: "Amount",
-        cellClassName: "break-words overflow-hidden text-right pr-1",
-        headerAlign: "text-right pr-1",
+        cellClassName: "overflow-hidden text-right tabular-nums",
+        headerAlign: "text-right",
       },
     ],
   },
@@ -62,30 +61,27 @@ const HISTORY_CONFIG = {
     contentOffset: "30px",
     contentTop: "114px",
     paginationTop: "346px",
-    gridTemplateColumns:
-      "minmax(0,24%) minmax(0,24%) minmax(0,26%) minmax(0,26%)",
+    gridTemplateColumns: "58px 40px 1fr 1fr",
     columns: [
       {
         key: "created",
-        label: "Date/time",
-        cellClassName: "whitespace-nowrap overflow-hidden pl-1",
-        headerAlign: "text-left pl-1",
+        label: "Date",
+        cellClassName: "whitespace-nowrap overflow-hidden",
       },
       {
         key: "category",
-        label: "Category",
-        cellClassName: "break-words overflow-hidden pr-1",
+        label: "Type",
+        cellClassName: "overflow-hidden truncate",
       },
       {
         key: "reward_details",
-        label: "Reward details",
-        cellClassName: "break-words overflow-hidden pr-1",
+        label: "Details",
+        cellClassName: "overflow-hidden truncate",
       },
       {
         key: "reward_name",
-        label: "Reward name",
-        cellClassName: "break-words overflow-hidden text-right pr-1",
-        headerAlign: "text-right pr-1",
+        label: "Reward",
+        cellClassName: "overflow-hidden truncate",
       },
     ],
   },
@@ -200,35 +196,41 @@ function HistoryPagination({ currentPage, totalPages, onPageChange }) {
 
 function HistoryModal({ type, onClose }) {
   const config = HISTORY_CONFIG[type];
-  const { isAcebet77, isUbetclub, isEp369 } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99 } = useTheme();
   const [currentPage, setCurrentPage] = useState(1);
   const [modalScale, setModalScale] = useState(1);
   const [rows, setRows] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const themed = isAcebet77 || isUbetclub || isEp369;
+  const themed = isAcebet77 || isUbetclub || isEp369 || isKgame99;
   const frameSrc = isAcebet77
     ? ACEBET_ASSETS.frames.scroll
     : isUbetclub
       ? UBET_ASSETS.frames.scroll
       : isEp369
         ? EP369_ASSETS.frames.scroll
-        : "/assets/profile/history-frame.png";
+        : isKgame99
+          ? KGAME99_ASSETS.frames.scroll
+          : "/assets/profile/history-frame.png";
   const closeSrc = isAcebet77
     ? ACEBET_ASSETS.spin.btnPlay
     : isUbetclub
       ? UBET_ASSETS.spin.btnPlay
       : isEp369
         ? EP369_ASSETS.spin.btnPlay
-        : "/assets/profile/close-icon.png";
+        : isKgame99
+          ? KGAME99_ASSETS.spin.btnPlay
+          : "/assets/profile/close-icon.png";
   const closeTextColor = isAcebet77
     ? ACEBET_COLORS.goldBright
     : isUbetclub
       ? UBET_COLORS.goldBright
       : isEp369
         ? EP369_COLORS.goldBright
-        : "#6c5212";
+        : isKgame99
+          ? KGAME99_COLORS.goldBright
+          : "#6c5212";
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
@@ -347,21 +349,21 @@ function HistoryModal({ type, onClose }) {
               even wider side ornaments than acebet77's, so it needs a
               deeper inset. */}
           <div
-            className="absolute overflow-hidden rounded-[12px] border border-transparent"
+            className="absolute overflow-hidden"
             style={{
-              left: isUbetclub ? "60px" : (isAcebet77 || isEp369) ? "48px" : config.contentOffset,
+              left: isUbetclub ? "62px" : (isAcebet77 || isEp369 || isKgame99) ? "56px" : config.contentOffset,
               top: config.contentTop,
-              width: isUbetclub ? "256px" : (isAcebet77 || isEp369) ? "280px" : config.contentWidth,
+              width: isUbetclub ? "252px" : (isAcebet77 || isEp369 || isKgame99) ? "264px" : config.contentWidth,
             }}
           >
             <div
-              className="grid items-start gap-x-[6px] pb-[12px] font-['Times_New_Roman'] text-[min(11px,3vw)] font-normal text-[#efc868]"
+              className="grid items-end gap-x-[8px] border-b border-[#efc868]/25 pb-[6px] mb-[8px] font-['Times_New_Roman'] text-[10px] font-bold uppercase tracking-[0.04em] text-[#efc868]"
               style={{ gridTemplateColumns: config.gridTemplateColumns }}
             >
               {config.columns.map((column) => (
                 <div
                   key={column.key}
-                  className={`whitespace-pre-line px-0 leading-[1.1] ${column.headerAlign || "text-left"}`}
+                  className={`whitespace-nowrap leading-[1.2] ${column.headerAlign || "text-left"}`}
                 >
                   {column.label}
                 </div>
@@ -374,7 +376,7 @@ function HistoryModal({ type, onClose }) {
                 its text. The cap matches the space between the header (bottom
                 of contentTop + ~30px header row) and the pagination row. */}
             <div
-              className="flex flex-col gap-[10px] overflow-y-auto pr-1 [scrollbar-color:rgba(233,175,65,0.5)_transparent] [scrollbar-width:thin]"
+              className={`flex flex-col gap-[10px] overflow-y-auto pr-1 ${isEp369 ? 'scrollbar-ep369' : isAcebet77 ? 'scrollbar-acebet77' : isUbetclub ? 'scrollbar-ubet' : 'scrollbar-gold'}`}
               style={{ maxHeight: "195px" }}
             >
               {loading ? (
@@ -389,7 +391,7 @@ function HistoryModal({ type, onClose }) {
                 rows.map((row, rowIndex) => (
                   <div
                     key={`${config.title}-${row.id || rowIndex}`}
-                    className="grid items-start gap-x-[6px] font-['Times_New_Roman'] text-[min(10.5px,2.8vw)] leading-[1.15] text-[#f8f0db]"
+                    className="grid items-center gap-x-[8px] font-['Times_New_Roman'] text-[10.5px] leading-[1.2] text-[#f8f0db]"
                     style={{ gridTemplateColumns: config.gridTemplateColumns }}
                   >
                     {config.columns.map((column) => {
@@ -403,7 +405,8 @@ function HistoryModal({ type, onClose }) {
                       return (
                         <div
                           key={column.key}
-                          className={`px-0 text-left break-words ${column.cellClassName || ""}`}
+                          className={`px-0 text-left ${column.cellClassName || ""}`}
+                          title={typeof cellValue === "string" ? cellValue : undefined}
                         >
                           {cellValue}
                         </div>
@@ -455,7 +458,7 @@ function HistoryModal({ type, onClose }) {
 
 export default function HistorySection() {
   const [activeHistory, setActiveHistory] = useState(null);
-  const { isAcebet77, isUbetclub, isEp369 } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99 } = useTheme();
 
   let buttonSkin;
   if (isAcebet77) {
@@ -464,6 +467,8 @@ export default function HistorySection() {
     buttonSkin = { bannerSrc: UBET_ASSETS.spin.btnPlay, textColor: UBET_COLORS.goldBright, objectFit: "object-fill" };
   } else if (isEp369) {
     buttonSkin = { bannerSrc: EP369_ASSETS.spin.btnPlay, textColor: EP369_COLORS.goldBright, objectFit: "object-fill" };
+  } else if (isKgame99) {
+    buttonSkin = { bannerSrc: KGAME99_ASSETS.spin.btnPlay, textColor: KGAME99_COLORS.goldBright, objectFit: "object-fill" };
   } else {
     buttonSkin = { bannerSrc: "/assets/profile/history-title-banner.png", textColor: "#60803c", objectFit: "object-cover" };
   }

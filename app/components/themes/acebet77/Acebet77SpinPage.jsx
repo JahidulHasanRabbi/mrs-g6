@@ -22,8 +22,8 @@ import { useUser } from '../../../contexts/UserContext';
 // same spin/selection engine the default portal uses — fed acebet's artwork and
 // a square-frame geometry. Only the images change; the timing, ring cycling,
 // deceleration, winner highlight and manual-stop all come from the shared code.
-const ACEBET_GEOMETRY = { framePad: 15, tile: 23, center: 27 };
-const ACEBET_FRAMED_SKIN = buildFramedSkin(ACEBET_ASSETS, ACEBET_COLORS, { x: '9%', top: '20%', bottom: '13%' });
+const ACEBET_GEOMETRY = { framePad: 14, tile: 21, center: 24 };
+const ACEBET_FRAMED_SKIN = buildFramedSkin(ACEBET_ASSETS, ACEBET_COLORS, { x: '9%', top: '20%', bottom: '13%' }, { scrollbarClass: 'scrollbar-acebet77' });
 
 export default function Acebet77SpinPage() {
   const [spinItems, setSpinItems] = useState([]);
@@ -247,7 +247,7 @@ export default function Acebet77SpinPage() {
               uniform 13% inset let rows slide under the crown, so use an
               asymmetric safe-content box. */}
           <div className="absolute inset-x-[9%] top-[20%] bottom-[13%] flex flex-col">
-            <div className="flex-1 overflow-y-auto pr-1 [scrollbar-width:thin]">
+            <div className="flex-1 overflow-y-auto pr-1 scrollbar-acebet77">
               {spinItems.length === 0 ? (
                 <p className="text-center text-[13px] mt-6" style={{ color: ACEBET_COLORS.sand, fontFamily: 'var(--font-rubik), sans-serif' }}>
                   {itemsLoading ? 'Loading rewards…' : 'No rewards available.'}

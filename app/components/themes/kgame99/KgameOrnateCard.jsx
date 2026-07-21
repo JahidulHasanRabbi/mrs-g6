@@ -27,7 +27,7 @@ export default function KgameOrnateCard({ children, className = "" }) {
           through, muted enough for the dialogs' light text to read. */}
       <div className="absolute inset-x-[12.5%] top-[22%] bottom-[16%] overflow-hidden rounded-[14px] ring-1 ring-inset ring-[rgba(242,203,122,0.35)]">
         <div className="absolute inset-0 bg-[rgba(18,38,74,0.44)] shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-[5px]" />
-        <div className="relative flex h-full flex-col items-center justify-center overflow-y-auto px-3 py-2 text-center [scrollbar-width:thin]">
+        <div className="relative flex h-full flex-col items-center justify-center overflow-y-auto px-3 py-2 text-center scrollbar-kgame99">
           {children}
         </div>
       </div>

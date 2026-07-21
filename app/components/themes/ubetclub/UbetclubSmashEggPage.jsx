@@ -20,7 +20,7 @@ import { SMASH_EGG_ASSETS } from '../../smash-egg/smashEggAssets';
 import { UBET_ASSETS, UBET_COLORS } from './assets';
 
 const WELCOME_SEEN_KEY = 'mrs_ubetclub_egg_welcome_seen';
-const UBET_FRAMED_SKIN = buildFramedSkin(UBET_ASSETS, UBET_COLORS, { x: '13%', top: '24%', bottom: '15%' });
+const UBET_FRAMED_SKIN = buildFramedSkin(UBET_ASSETS, UBET_COLORS, { x: '13%', top: '24%', bottom: '15%' }, { scrollbarClass: 'scrollbar-ubet' });
 
 /**
  * Ubetclub Smash Egg (Figma 77:2438 loading / 77:2359 welcome / 77:2312 idle /

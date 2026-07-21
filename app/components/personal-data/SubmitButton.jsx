@@ -6,9 +6,10 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { ACEBET_ASSETS, ACEBET_COLORS } from "../themes/acebet77/assets";
 import { UBET_ASSETS, UBET_COLORS } from "../themes/ubetclub/assets";
 import { EP369_ASSETS, EP369_COLORS } from "../themes/ep369/assets";
+import { KGAME99_ASSETS, KGAME99_COLORS } from "../themes/kgame99/assets";
 
 export default function SubmitButton({ onClick, label = "Saved Change", disabled = false }) {
-  const { isAcebet77, isUbetclub, isEp369 } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99 } = useTheme();
 
   const themedSkin = isAcebet77
     ? { src: ACEBET_ASSETS.spin.btnPlay, color: ACEBET_COLORS.goldBright }
@@ -16,7 +17,9 @@ export default function SubmitButton({ onClick, label = "Saved Change", disabled
       ? { src: UBET_ASSETS.spin.btnPlay, color: UBET_COLORS.goldBright }
       : isEp369
         ? { src: EP369_ASSETS.spin.btnPlay, color: EP369_COLORS.goldBright }
-        : null;
+        : isKgame99
+          ? { src: KGAME99_ASSETS.spin.btnPlay, color: KGAME99_COLORS.goldBright }
+          : null;
 
   if (themedSkin) {
     return (

@@ -230,7 +230,7 @@ const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 // the eight tiles are positioned by absolute % rather than the default's fixed
 // pixel FluidFrame grid. `framePad` is the inset (% of frame) from edge to the
 // grid area, `tile`/`center` are element sizes as % of the frame.
-const DEFAULT_THEMED_GEOMETRY = { framePad: 12, tile: 25, center: 27 };
+const DEFAULT_THEMED_GEOMETRY = { framePad: 14, tile: 21, center: 24 };
 
 function themedSlotCenters({ framePad }) {
   const span = 100 - 2 * framePad;

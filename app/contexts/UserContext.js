@@ -19,12 +19,14 @@ const UserContext = createContext();
 
 export function UserProvider({ children }) {
   const [userData, setUserData] = useState({
-    name: "Jhon Doe",
+    name: "",
     balance: "0.00",
-    currentLevel: "Gold",
-    nextLevel: "Platinum",
-    progress: 61.6,
-    tokensNeeded: 20000,
+    currentLevel: "",
+    nextLevel: "",
+    progress: 0,
+    tokensNeeded: 0,
+    currentTierIcon: null,
+    nextTierIcon: null,
   });
   const [profilePicture, setProfilePicture] = useState(null);
   const [profileData, setProfileData] = useState(null);
@@ -133,12 +135,14 @@ export function UserProvider({ children }) {
       if (!memberUuid) {
         // Reset to defaults when logged out / token expired / cleared
         setUserData({
-          name: "Jhon Doe",
+          name: "",
           balance: "0.00",
-          currentLevel: "Gold",
-          nextLevel: "Platinum",
-          progress: 61.6,
-          tokensNeeded: 20000,
+          currentLevel: "",
+          nextLevel: "",
+          progress: 0,
+          tokensNeeded: 0,
+          currentTierIcon: null,
+          nextTierIcon: null,
         });
         setProfilePicture(null);
         setProfileData(null);
@@ -157,11 +161,36 @@ export function UserProvider({ children }) {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2
         });
+
+        let tierProgress = {};
+        if (allVipTiers.length > 0 && memberInfo.tier) {
+          const sorted = [...allVipTiers].sort((a, b) =>
+            parseFloat(a.lifetime_deposit_required) - parseFloat(b.lifetime_deposit_required)
+          );
+          const idx = sorted.findIndex(t => t.name === memberInfo.tier);
+          if (idx !== -1) {
+            const cur = sorted[idx];
+            const nxt = idx < sorted.length - 1 ? sorted[idx + 1] : null;
+            const dep = parseFloat(memberInfo.total_deposit) || 0;
+            const curReq = parseFloat(cur.lifetime_deposit_required) || 0;
+            const nxtReq = nxt ? parseFloat(nxt.lifetime_deposit_required) || 0 : curReq;
+            const range = nxt ? nxtReq - curReq : 1;
+            tierProgress = {
+              nextLevel: nxt ? nxt.name : cur.name,
+              progress: nxt ? Math.min(100, Math.max(0, ((dep - curReq) / range) * 100)) : 100,
+              tokensNeeded: nxt ? Math.max(0, nxtReq - dep) : 0,
+              currentTierIcon: cur.rank_icon || null,
+              nextTierIcon: nxt?.rank_icon || null,
+            };
+          }
+        }
+
         setUserData(prev => ({
           ...prev,
           name: memberInfo.username || prev.name,
           balance: formattedBalance,
           currentLevel: memberInfo.tier || prev.currentLevel,
+          ...tierProgress,
         }));
 
         // Only show frames belonging to the user's exact VIP tier
@@ -209,11 +238,36 @@ export function UserProvider({ children }) {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       });
+
+      let tierProgress = {};
+      if (allVipTiers.length > 0 && memberInfo.tier) {
+        const sorted = [...allVipTiers].sort((a, b) =>
+          parseFloat(a.lifetime_deposit_required) - parseFloat(b.lifetime_deposit_required)
+        );
+        const idx = sorted.findIndex(t => t.name === memberInfo.tier);
+        if (idx !== -1) {
+          const cur = sorted[idx];
+          const nxt = idx < sorted.length - 1 ? sorted[idx + 1] : null;
+          const dep = parseFloat(memberInfo.total_deposit) || 0;
+          const curReq = parseFloat(cur.lifetime_deposit_required) || 0;
+          const nxtReq = nxt ? parseFloat(nxt.lifetime_deposit_required) || 0 : curReq;
+          const range = nxt ? nxtReq - curReq : 1;
+          tierProgress = {
+            nextLevel: nxt ? nxt.name : cur.name,
+            progress: nxt ? Math.min(100, Math.max(0, ((dep - curReq) / range) * 100)) : 100,
+            tokensNeeded: nxt ? Math.max(0, nxtReq - dep) : 0,
+            currentTierIcon: cur.rank_icon || null,
+            nextTierIcon: nxt?.rank_icon || null,
+          };
+        }
+      }
+
       setUserData(prev => ({
         ...prev,
         name: memberInfo.username || prev.name,
         balance: formattedBalance,
         currentLevel: memberInfo.tier || prev.currentLevel,
+        ...tierProgress,
       }));
     } catch (error) {
       console.error('Error refreshing user data:', error);

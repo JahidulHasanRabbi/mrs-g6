@@ -25,8 +25,8 @@ export default function KgameListPanel({ children, height = 300, className = '' 
           gems) — translucent so the castle-cloud interior still shows through,
           just muted enough for the light gold/cream text to read. */}
       <div className="absolute inset-x-[15%] top-[21%] bottom-[16%] overflow-hidden rounded-[12px] ring-1 ring-inset ring-[rgba(242,203,122,0.30)]">
-        <div className="absolute inset-0 bg-[rgba(18,38,74,0.42)] shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-[5px]" />
-        <div className="relative h-full overflow-y-auto px-2.5 py-2 [scrollbar-width:thin]">
+        <div className="absolute inset-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)]" />
+        <div className="relative h-full overflow-y-auto px-2.5 py-2 scrollbar-kgame99">
           {children}
         </div>
       </div>
