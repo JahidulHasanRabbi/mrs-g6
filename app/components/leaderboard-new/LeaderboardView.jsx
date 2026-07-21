@@ -40,8 +40,8 @@ export default function LeaderboardView({
       <div className="flex flex-col items-center gap-2 w-full pt-2">
         <div className="text-center w-full">
           <p
-            className="text-3xl sm:text-4xl font-extrabold text-[#e5e2e1] leading-10 sm:leading-[48px]"
-            style={{ fontFamily: "var(--font-inter)" }}
+            className="text-3xl sm:text-4xl font-extrabold leading-10 sm:leading-[48px]"
+            style={{ fontFamily: "var(--font-inter)", color: "var(--lb-heading)" }}
           >
             TOP 20
           </p>
@@ -59,8 +59,8 @@ export default function LeaderboardView({
         {/* Period label */}
         {periodLabel && (
           <p
-            className="text-base text-[#ddc1ae] text-center"
-            style={{ fontFamily: "var(--font-inter)" }}
+            className="text-base text-center"
+            style={{ fontFamily: "var(--font-inter)", color: "var(--lb-heading-muted)" }}
           >
             {periodLabel}
           </p>

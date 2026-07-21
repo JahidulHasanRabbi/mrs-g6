@@ -30,6 +30,15 @@
   --lb-card-overlay: rgba(18, 20, 20, 0.7);
   --lb-panel-light: rgba(255, 255, 255, 0.05);
   --lb-mission-card-fill: rgba(255, 255, 255, 0.05);
+  /* Text that sits DIRECTLY on the page backdrop (section titles, subtitles)
+   * and the active-tab label on the gold tab frame. Light on the dark default
+   * themes; bright themes (kgame99) override to dark ink so it reads on the
+   * bright sky. NOTE: these are backdrop-only — card/dialog text keeps the
+   * light MISSION_COLORS/LB_COLORS tokens since those cards are dark. */
+  --lb-heading: #E2E2E2;
+  --lb-heading-muted: #BBCBBB;
+  --lb-tab-active: #60803C;
+  --lb-tabs-fill: rgba(26, 28, 28, 0.6);
 }
 :root[data-theme="acebet77"] {
   --lb-accent: #e9af41;
@@ -58,6 +67,11 @@
   --lb-card-overlay: rgba(8, 22, 42, 0.9);
   --lb-panel-light: rgba(14, 34, 62, 0.72);
   --lb-mission-card-fill: rgba(14, 34, 62, 0.82);
+  /* Dark ink for text on the bright sky; navy tab container so labels read. */
+  --lb-heading: #08213f;
+  --lb-heading-muted: #1f4368;
+  --lb-tab-active: #0a1a2f;
+  --lb-tabs-fill: rgba(14, 34, 62, 0.9);
 }
 :root[data-theme="lv918"] {
   --lb-accent: #e8b53a;

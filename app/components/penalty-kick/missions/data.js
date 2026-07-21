@@ -75,6 +75,6 @@ export const MISSION_COLORS = {
   green: "var(--lb-accent)",
   track: "#333535",
   pillFill: "#282A2B",
-  tabsFill: "rgba(26,28,28,0.6)",
+  tabsFill: "var(--lb-tabs-fill)",
   iconChip: "rgba(255,221,116,0.2)",
 };
