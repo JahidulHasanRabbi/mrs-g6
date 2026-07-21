@@ -14,11 +14,21 @@ export const RPG_IMAGES = {
       back: "/assets/rpg/hero/female-back.webp",
     },
   },
-  // Attack frame(s) played on each landed hit during a boss battle. An array
-  // so more frames can be added back later; currently just the first pose
-  // (strike-2/3/4 removed). Females fall back to the lunge motion.
+  // Back-facing punch sequence played on each landed hit during a boss battle
+  // (Figma attack frames, background-keyed). Frame order is punch → guard →
+  // recover so the extended punch lands with the impact FX. Both genders now
+  // have a real 3-frame sequence.
   heroStrike: {
-    male: ["/assets/rpg/hero/male-moveset/strike-1.webp"],
+    male: [
+      "/assets/rpg/hero/male-moveset/strike-1.webp",
+      "/assets/rpg/hero/male-moveset/strike-2.webp",
+      "/assets/rpg/hero/male-moveset/strike-3.webp",
+    ],
+    female: [
+      "/assets/rpg/hero/female-moveset/strike-1.webp",
+      "/assets/rpg/hero/female-moveset/strike-2.webp",
+      "/assets/rpg/hero/female-moveset/strike-3.webp",
+    ],
   },
   chest: "/assets/rpg/chest/chest-closed.webp",
   chestOpen: "/assets/rpg/chest/chest-open.webp",
