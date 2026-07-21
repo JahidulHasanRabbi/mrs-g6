@@ -44,6 +44,9 @@ export const RPG_IMAGES = {
   // 820-wide webp with a magic-circle floor the hero stands on. battleArena is
   // the default fallback for any boss without a dedicated arena.
   battleArena: "/assets/rpg/bg/battle-arena.webp",
+  // Home sits over a moonlit-ruins realm (Figma Home design 2026:3034) rather
+  // than the plain damask tile used by the other in-game screens.
+  homeRealm: "/assets/rpg/bg/home-realm.webp",
   arena: {
     starlight: "/assets/rpg/bg/arena-starlight.webp",
     comet: "/assets/rpg/bg/arena-comet.webp",
