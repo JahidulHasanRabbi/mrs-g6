@@ -40,11 +40,36 @@ export const RPG_IMAGES = {
     armor: "/assets/rpg/equipment/armor.svg",
     boots: "/assets/rpg/equipment/boots.svg",
   },
+  // Per-boss arena backdrops (Figma "Backgrounds" set). Each is a full-bleed
+  // 820-wide webp with a magic-circle floor the hero stands on. battleArena is
+  // the default fallback for any boss without a dedicated arena.
   battleArena: "/assets/rpg/bg/battle-arena.webp",
-  // Only Meteor Colossus has boss art in the Figma file — every boss renders
-  // this image with a per-boss CSS tint (see BOSSES[].artFilter).
-  bossArt: "/assets/rpg/boss/meteor-colossus.webp",
+  arena: {
+    starlight: "/assets/rpg/bg/arena-starlight.webp",
+    comet: "/assets/rpg/bg/arena-comet.webp",
+    meteor: "/assets/rpg/bg/arena-meteor.webp",
+    nebula: "/assets/rpg/bg/arena-nebula.webp",
+  },
+  // Real per-boss character art (Figma "Bosses" set), background-keyed to
+  // transparent cutouts. Each boss now has its own sprite — the old CSS
+  // hue-tint of a single shared image is gone (BOSSES[].artFilter is "none").
+  bossArt: {
+    starlight: "/assets/rpg/boss/starlight.webp",
+    comet: "/assets/rpg/boss/comet.webp",
+    meteor: "/assets/rpg/boss/meteor.webp",
+    nebula: "/assets/rpg/boss/nebula.webp",
+  },
 };
+
+// Resolve a boss's sprite, falling back to the Meteor art if an id is unknown.
+export function bossArtFor(bossId) {
+  return (RPG_IMAGES.bossArt && RPG_IMAGES.bossArt[bossId]) || RPG_IMAGES.bossArt.meteor;
+}
+
+// Resolve a boss's arena backdrop, falling back to the default battle arena.
+export function arenaFor(bossId) {
+  return (RPG_IMAGES.arena && RPG_IMAGES.arena[bossId]) || RPG_IMAGES.battleArena;
+}
 
 // ---------------------------------------------------------------------------
 // Boss animation frames (frame-ready)

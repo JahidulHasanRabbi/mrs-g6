@@ -20,7 +20,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { RPG_IMAGES, bossFramesFor } from "./rpgAssets";
+import { bossArtFor, bossFramesFor } from "./rpgAssets";
 
 const FRAME_MS = 90;
 const LOOPING = new Set(["idle"]);
@@ -64,7 +64,8 @@ export default function BossSprite({ boss, state = "idle", seq = 0 }) {
   }, [useFrames, state, seq, frames.length]);
 
   const filter = boss.artFilter && boss.artFilter !== "none" ? boss.artFilter : undefined;
-  const src = useFrames ? frames[idx] : RPG_IMAGES.bossArt;
+  const artSrc = bossArtFor(boss.id);
+  const src = useFrames ? frames[idx] : artSrc;
   const proc = PROC[state] || PROC.idle;
   // Idle loops (stable key); one-shots remount per `seq`/state so they replay.
   const animKey = LOOPING.has(state) ? "idle" : `${state}-${seq}`;
@@ -86,7 +87,7 @@ export default function BossSprite({ boss, state = "idle", seq = 0 }) {
       {!useFrames && FLASH_STATES.has(state) && (
         <motion.img
           key={`flash-${state}-${seq}`}
-          src={RPG_IMAGES.bossArt}
+          src={artSrc}
           alt=""
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 m-auto h-full max-h-full w-auto object-contain"

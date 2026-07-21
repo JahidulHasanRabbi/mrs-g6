@@ -77,9 +77,9 @@ export const powerFor = (level, equippedCount) =>
 // power gate is met; dice only pace the animation.
 //
 // `planetGradient` reproduces the Figma planet spheres (they're vectors in
-// the design, so no raster asset). `artFilter`: only Meteor Colossus has
-// boss art in the Figma file — the other three reuse it with a CSS tint
-// until dedicated art lands.
+// the design, so no raster asset). Each boss now has its own character art +
+// arena backdrop (see rpgAssets: bossArt / arena), so `artFilter` is "none"
+// everywhere — it's kept only as a per-boss tint hook for future art.
 export const BOSSES = [
   {
     id: "starlight",
@@ -93,7 +93,7 @@ export const BOSSES = [
     planetGradient:
       "radial-gradient(circle at 35% 30%, #eafbff 0%, #b5eaff 22%, #7fd8ff 45%, #67bae9 54%, #4f9cd4 62%, #367dbe 71%, #1e5fa8 80%)",
     planetGlow: "0 0 11px rgba(127,216,255,0.5)",
-    artFilter: "hue-rotate(175deg) saturate(0.55) brightness(1.35)",
+    artFilter: "none",
   },
   {
     id: "comet",
@@ -107,7 +107,7 @@ export const BOSSES = [
     planetGradient:
       "radial-gradient(circle at 65% 65%, #0e1b4a 0%, #172b6d 28%, #1f3b8f 55%, #2b5da9 66%, #377fc3 78%, #43a1dd 89%, #4fc3f7 100%)",
     planetGlow: "0 0 11px rgba(79,195,247,0.45)",
-    artFilter: "hue-rotate(215deg) saturate(0.8) brightness(0.95)",
+    artFilter: "none",
   },
   {
     id: "meteor",
@@ -135,7 +135,7 @@ export const BOSSES = [
     planetGradient:
       "radial-gradient(circle at 40% 35%, #e6d7ff 0%, #c3a1ff 25%, #a78bfa 45%, #8b5cf6 62%, #6d3fd4 76%, #4c2699 88%, #32175f 100%)",
     planetGlow: "0 0 22px rgba(124,77,255,0.4)",
-    artFilter: "hue-rotate(255deg) saturate(0.9) brightness(1.05)",
+    artFilter: "none",
   },
 ];
 

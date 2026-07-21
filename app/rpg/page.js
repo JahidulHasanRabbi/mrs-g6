@@ -16,7 +16,7 @@ import { useUser } from "../contexts/UserContext";
 import { HamburgerMenu } from "../components/hamburger";
 import { RPG_VIEWS, RPG_COLORS, RPG_FONTS } from "../components/rpg/constants";
 import * as rpgApi from "../components/rpg/rpgApi";
-import { preloadRpgAssets, RPG_IMAGES } from "../components/rpg/rpgAssets";
+import { preloadRpgAssets, arenaFor } from "../components/rpg/rpgAssets";
 import ScreenShell from "../components/rpg/ScreenShell";
 import CharacterSelect from "../components/rpg/screens/CharacterSelect";
 import RpgHome from "../components/rpg/screens/RpgHome";
@@ -193,7 +193,9 @@ function RpgPageInner() {
         onNavigate={navigate}
         onInfoClick={openInfo}
         onMenuClick={openMenu}
-        backgroundImage={view === RPG_VIEWS.BATTLE ? RPG_IMAGES.battleArena : undefined}
+        backgroundImage={
+          view === RPG_VIEWS.BATTLE && battleScript ? arenaFor(battleScript.boss.id) : undefined
+        }
         fit={view === RPG_VIEWS.BATTLE}
       >
         {view === RPG_VIEWS.HOME && (
