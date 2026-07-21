@@ -1,6 +1,7 @@
 "use client";
 
 import { COLORS, ICONS } from "./constants";
+import { usePkColors } from "./usePkColors";
 
 function formatTokenAmount(value) {
   const amount = typeof value === "number" ? value : Number(String(value ?? "").replace(/,/g, ""));
@@ -15,14 +16,14 @@ function formatTokenAmount(value) {
 // 569:2158 — gap-between layout, Tokens chip keeps the icon on the LEFT,
 // Token/Shot chip mirrors it (icon on the RIGHT). 142-px fixed Tokens
 // width matches the design; Token/Shot is content-sized.
-function PillBody({ label, value, valueColor, glowColor, align = "left" }) {
+function PillBody({ label, value, valueColor, glowColor, labelColor, align = "left" }) {
   return (
     <div
       className={`flex flex-col leading-tight ${align === "right" ? "items-end text-right" : "items-start text-left"}`}
     >
       <span
         className="text-[10px] uppercase tracking-wide"
-        style={{ color: COLORS.textMuted, fontFamily: "'Lexend', sans-serif" }}
+        style={{ color: labelColor || COLORS.textMuted, fontFamily: "'Lexend', sans-serif" }}
       >
         {label}
       </span>
@@ -73,6 +74,11 @@ function PillIcon({ iconSrc, iconBg }) {
 }
 
 export default function TokenPills({ tokens = 0, perShot = 0 }) {
+  // Token/Shot is the "signature accent" pill — green on the default skin, but
+  // it must follow each theme's accent (blue on kgame99, magenta on lv918, gold
+  // on acebet/ubet/ep369) instead of staying green. The Tokens pill stays gold,
+  // which reads well on every backdrop.
+  const { colors, soft } = usePkColors();
   return (
     <div className="flex w-full items-center justify-between px-5">
       {/* Tokens — icon left, label/value right */}
@@ -92,6 +98,7 @@ export default function TokenPills({ tokens = 0, perShot = 0 }) {
           value={formatTokenAmount(tokens)}
           valueColor={COLORS.goldText}
           glowColor="rgba(255,221,116,0.4)"
+          labelColor={colors.textMuted}
         />
       </div>
 
@@ -106,11 +113,12 @@ export default function TokenPills({ tokens = 0, perShot = 0 }) {
         <PillBody
           label="Token/shot"
           value={formatTokenAmount(perShot)}
-          valueColor={COLORS.primary}
-          glowColor="rgba(84,233,138,0.4)"
+          valueColor={colors.primary}
+          glowColor={soft(0.4)}
+          labelColor={colors.textMuted}
           align="right"
         />
-        <PillIcon iconSrc={ICONS.flag} iconBg={COLORS.primaryGradStart} />
+        <PillIcon iconSrc={ICONS.flag} iconBg={colors.primary} />
       </div>
     </div>
   );
