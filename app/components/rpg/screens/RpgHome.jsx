@@ -6,11 +6,13 @@
 
 import { motion } from "framer-motion";
 import { RPG_COLORS, RPG_FONTS, RPG_VIEWS, EQUIP_SLOTS } from "../constants";
-import { RPG_IMAGES } from "../rpgAssets";
+import { heroPoseFor } from "../rpgAssets";
 import { SlotChip } from "../primitives";
 
 export default function RpgHome({ profile, equipment, onNavigate }) {
   const gender = profile?.gender || "male";
+  // Hero visually wears whatever's equipped (falls back to the base pose).
+  const heroPose = heroPoseFor(gender, equipment);
   return (
     <div className="flex w-full flex-1 flex-col items-center px-[18px]">
       <button
@@ -38,11 +40,16 @@ export default function RpgHome({ profile, equipment, onNavigate }) {
       </button>
 
       <motion.img
-        src={RPG_IMAGES.hero[gender].front}
+        key={heroPose}
+        src={heroPose}
         alt="Your hero"
         className="mt-[4px] h-[min(345px,42vh)] w-auto"
-        animate={{ y: [0, -8, 0] }}
-        transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut" }}
+        initial={{ opacity: 0.4 }}
+        animate={{ opacity: 1, y: [0, -8, 0] }}
+        transition={{
+          opacity: { duration: 0.25 },
+          y: { duration: 3.6, repeat: Infinity, ease: "easeInOut" },
+        }}
       />
 
       <div className="mt-[14px] flex w-full items-stretch justify-center gap-[10px]">

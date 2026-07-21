@@ -84,6 +84,62 @@ export function arenaFor(bossId) {
 }
 
 // ---------------------------------------------------------------------------
+// Equipped hero poses (Figma hero-pose set)
+//
+// The hero on Home visually wears whatever gear is equipped. Each pose art is
+// keyed by a 4-bit gear mask: weapon=8, helmet=4, armor=2, boots=1. Files live
+// at /assets/rpg/hero/<gender>/<mask 2-digit>.webp. Not every combo was drawn
+// (male lacks the full 4-piece; female lacks armor+boots), so heroPoseFor()
+// falls back to the closest available pose — most equipped pieces matched,
+// fewest shown-but-not-equipped.
+// ---------------------------------------------------------------------------
+
+export const HERO_POSE_MASKS = {
+  male: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+  female: [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+};
+
+const popcount = (n) => {
+  let c = 0;
+  for (let x = n; x; x >>= 1) c += x & 1;
+  return c;
+};
+
+// Bitmask of equipped slots from an equipment view-model (equipment.slots).
+export function equipMask(equipment) {
+  const s = equipment?.slots || {};
+  return (s.weapon ? 8 : 0) | (s.helmet ? 4 : 0) | (s.armor ? 2 : 0) | (s.boots ? 1 : 0);
+}
+
+export function heroPoseFor(gender, equipment) {
+  const g = gender === "female" ? "female" : "male";
+  const avail = HERO_POSE_MASKS[g];
+  const want = equipMask(equipment);
+  let best = 0;
+  if (avail.includes(want)) {
+    best = want;
+  } else {
+    // Score each available pose: reward matched equipped pieces, penalise gear
+    // the pose shows that isn't actually equipped; tie-break toward more pieces.
+    let bestScore = -Infinity;
+    for (const m of avail) {
+      // Reward matched pieces, penalise gear shown-but-not-equipped, tie-break
+      // toward more pieces and toward keeping the weapon visible when equipped.
+      const score =
+        popcount(m & want) * 3 -
+        popcount(m & ~want) * 2 +
+        popcount(m) * 0.1 +
+        (m & want & 8 ? 0.5 : 0);
+      if (score > bestScore) {
+        bestScore = score;
+        best = m;
+      }
+    }
+  }
+  return `/assets/rpg/hero/${g}/${String(best).padStart(2, "0")}.webp`;
+}
+
+// ---------------------------------------------------------------------------
 // Boss animation frames (frame-ready)
 //
 // BossSprite plays a per-state frame SEQUENCE when one is supplied here, and
