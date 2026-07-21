@@ -15,15 +15,15 @@ export default function KgameWinnerList({ winners = [] }) {
       <KgameSectionHeading>Winner</KgameSectionHeading>
       <KgameListPanel height={300}>
         {rows.length === 0 ? (
-          <p className="pt-2 text-[13px]" style={{ color: KGAME99_COLORS.sand, fontFamily: 'var(--font-rubik), sans-serif' }}>
+          <p className="pt-2 text-[13px]" style={{ color: '#42597a', fontFamily: 'var(--font-rubik), sans-serif' }}>
             No winners yet.
           </p>
         ) : (
           rows.map((w, i) => (
             <div key={`${w.date}-${w.name}-${i}`} className="border-l border-[#c3a813] py-2 pl-[13px]">
-              <p className="text-[10px] leading-[15px]" style={{ color: '#b9c9de', fontFamily: 'var(--font-rubik), sans-serif' }}>{w.date}</p>
-              <p className="text-[15px] leading-6" style={{ color: KGAME99_COLORS.goldBright, fontFamily: 'var(--font-acme), sans-serif' }}>{w.name}</p>
-              <p className="truncate text-[15px] leading-6" style={{ color: '#ffb77d', fontFamily: 'var(--font-acme), sans-serif' }}>{w.prize}</p>
+              <p className="text-[10px] leading-[15px]" style={{ color: '#5a6f8c', fontFamily: 'var(--font-rubik), sans-serif' }}>{w.date}</p>
+              <p className="text-[15px] leading-6" style={{ color: '#1c4fa8', fontFamily: 'var(--font-acme), sans-serif' }}>{w.name}</p>
+              <p className="truncate text-[15px] leading-6" style={{ color: KGAME99_COLORS.dark, fontFamily: 'var(--font-acme), sans-serif' }}>{w.prize}</p>
             </div>
           ))
         )}

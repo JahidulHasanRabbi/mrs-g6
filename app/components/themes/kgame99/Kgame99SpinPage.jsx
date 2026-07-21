@@ -363,7 +363,7 @@ export default function Kgame99SpinPage() {
             <div className="h-full w-full overflow-hidden rounded-2xl ring-1 ring-inset ring-[rgba(242,203,122,0.30)]">
               <div className="h-full overflow-y-auto px-2.5 py-1 scrollbar-kgame99">
                 {spinItems.length === 0 ? (
-                  <p className="mt-6 text-center text-[13px]" style={{ color: KGAME99_COLORS.sand, fontFamily: 'var(--font-rubik), sans-serif' }}>
+                  <p className="mt-6 text-center text-[13px]" style={{ color: '#42597a', fontFamily: 'var(--font-rubik), sans-serif' }}>
                     {itemsLoading ? 'Loading rewards…' : 'No rewards available.'}
                   </p>
                 ) : (
@@ -382,7 +382,7 @@ export default function Kgame99SpinPage() {
                       <span
                         className="min-w-0 flex-1 truncate text-[13px]"
                         title={item.reward_name}
-                        style={{ color: KGAME99_COLORS.cream, fontFamily: 'var(--font-rubik), sans-serif' }}
+                        style={{ color: KGAME99_COLORS.dark, fontFamily: 'var(--font-rubik), sans-serif' }}
                       >
                         {item.reward_name}
                       </span>

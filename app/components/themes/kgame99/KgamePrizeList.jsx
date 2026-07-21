@@ -43,7 +43,7 @@ export default function KgamePrizeList({ prizes = [], creditRanges = [] }) {
                   <p className="text-[9px] leading-[13px]" style={{ fontFamily: 'var(--font-acme), sans-serif', color: r.accent }}>
                     RANK {String(prize.rank).padStart(2, '0')}
                   </p>
-                  <p className="truncate text-[13px] leading-[18px]" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: KGAME99_COLORS.cream }}>
+                  <p className="truncate text-[13px] leading-[18px]" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: KGAME99_COLORS.dark }}>
                     {prize.name}
                   </p>
                 </div>
@@ -62,8 +62,8 @@ export default function KgamePrizeList({ prizes = [], creditRanges = [] }) {
                 <div key={`${label}-${i}`} className="flex items-center gap-1.5 rounded-md bg-[rgba(255,255,255,0.07)] px-2 py-1.5 ring-1 ring-inset ring-[rgba(242,203,122,0.22)]">
                   <img src={SMASH_EGG_ASSETS.coinsIcon} alt="" className="h-5 w-5 shrink-0 object-contain" />
                   <div className="min-w-0">
-                    <p className="text-[8px] uppercase leading-[11px]" style={{ fontFamily: 'var(--font-acme), sans-serif', color: '#ffb77d' }}>Free Credit</p>
-                    <p className="truncate text-[9px] leading-[12px]" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: KGAME99_COLORS.creamMuted }}>{label}</p>
+                    <p className="text-[8px] uppercase leading-[11px]" style={{ fontFamily: 'var(--font-acme), sans-serif', color: '#b0781a' }}>Free Credit</p>
+                    <p className="truncate text-[9px] leading-[12px]" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: '#5a6f8c' }}>{label}</p>
                   </div>
                 </div>
               ))}

@@ -16,14 +16,14 @@ export default function KgameTerms({ termsText = '' }) {
       <KgameSectionHeading>Terms &amp; Conditions</KgameSectionHeading>
       <KgameListPanel height={250}>
         {terms.length === 0 ? (
-          <p className="pt-2 text-[13px]" style={{ color: KGAME99_COLORS.sand, fontFamily: 'var(--font-rubik), sans-serif' }}>
+          <p className="pt-2 text-[13px]" style={{ color: '#42597a', fontFamily: 'var(--font-rubik), sans-serif' }}>
             No terms and conditions available.
           </p>
         ) : (
           terms.map((term, i) => (
             <div key={i} className="flex items-start gap-2 py-1">
               <img src={SMASH_EGG_ASSETS.termsIcon} alt="" className="mt-[3px] h-4 w-[18px] shrink-0 object-contain" />
-              <p className="flex-1 text-[13px] leading-5" style={{ color: KGAME99_COLORS.creamMuted, fontFamily: 'var(--font-acme), sans-serif' }}>{term}</p>
+              <p className="flex-1 text-[13px] leading-5" style={{ color: KGAME99_COLORS.dark, fontFamily: 'var(--font-acme), sans-serif' }}>{term}</p>
             </div>
           ))
         )}
