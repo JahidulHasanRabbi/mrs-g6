@@ -21,7 +21,7 @@ function CountryTile({ country, selected, onClick }) {
         background: "#282A2B",
         border: selected ? `1px solid ${LB_COLORS.primary}` : "1px solid rgba(255,255,255,0.05)",
         boxShadow: selected
-          ? "0 4px 0 rgba(0,0,0,0.3), 0 0 12px 0 rgba(84,233,138,0.5)"
+          ? "0 4px 0 rgba(0,0,0,0.3), 0 0 12px 0 rgba(var(--lb-accent-rgb), 0.5)"
           : "0 4px 0 rgba(0,0,0,0.3)",
       }}
     >

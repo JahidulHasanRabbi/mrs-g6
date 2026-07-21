@@ -17,7 +17,7 @@ function Arrow({ dir, onClick }) {
     <button
       onClick={onClick}
       className="grid h-9 w-9 shrink-0 place-items-center rounded-full"
-      style={{ background: "rgba(84,233,138,0.15)", color: LB_COLORS.primary }}
+      style={{ background: "rgba(var(--lb-accent-rgb), 0.15)", color: LB_COLORS.primary }}
     >
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
         {dir === "left" ? <path d="M15 6l-6 6 6 6" /> : <path d="M9 6l6 6-6 6" />}
@@ -85,7 +85,7 @@ export default function Onboarding({ onJoinNow }) {
               ) : (
                 <div
                   className="grid h-[150px] w-[150px] place-items-center rounded-full"
-                  style={{ background: "rgba(84,233,138,0.06)", fontSize: 72 }}
+                  style={{ background: "rgba(var(--lb-accent-rgb), 0.06)", fontSize: 72 }}
                   aria-hidden="true"
                 >
                   {s.emoji}
@@ -103,7 +103,7 @@ export default function Onboarding({ onJoinNow }) {
               fontWeight: 700,
               fontSize: 18,
               letterSpacing: "1.2px",
-              textShadow: "0 0 10px rgba(84,233,138,0.8)",
+              textShadow: "0 0 10px rgba(var(--lb-accent-rgb), 0.8)",
             }}
           >
             {s.title}

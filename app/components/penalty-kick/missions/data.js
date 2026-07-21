@@ -57,14 +57,22 @@ export const MISSIONS = [
 // the pitch's #121414 / neon-green scheme.
 export const MISSION_COLORS = {
   bg: "#07190D",
-  cardFill: "rgba(255,255,255,0.05)",
-  cardBorder: "rgba(255,255,255,0.1)",
+  // Near-transparent on dark themes; opaque navy on kgame99's bright backdrop
+  // (see --lb-mission-card-fill in app/globals.css) so cards + text stay legible.
+  cardFill: "var(--lb-mission-card-fill)",
+  // Neutral on the default theme; gold-tinted on a custom theme (see
+  // --lb-card-border in app/globals.css) so mission cards read as themed.
+  cardBorder: "var(--lb-card-border)",
   title: "#E2E2E2",
   muted: "#BBCBBB",
   gold: "#FFDD74",
   goldDeep: "#E9AF41",
   goldText: "#60803C",
-  green: "#54E98A",
+  // Completed-state accent. Resolves to the theme-aware accent variable
+  // (app/globals.css): the original World-Cup green on the default theme, the
+  // active portal theme's gold otherwise. Only /missions renders MissionCard,
+  // so this never touches the green penalty-kick arcade.
+  green: "var(--lb-accent)",
   track: "#333535",
   pillFill: "#282A2B",
   tabsFill: "rgba(26,28,28,0.6)",

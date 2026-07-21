@@ -27,7 +27,7 @@ function rowStyle(highlight) {
     return {
       background: LB_COLORS.panelLight,
       border: `1px solid ${LB_COLORS.borderGreen50}`,
-      boxShadow: "0 0 10px 0 rgba(84,233,138,0.8), 0 0 20px 0 rgba(84,233,138,0.4)",
+      boxShadow: "0 0 10px 0 rgba(var(--lb-accent-rgb), 0.8), 0 0 20px 0 rgba(var(--lb-accent-rgb), 0.4)",
     };
   }
   return { background: LB_COLORS.panelLight };

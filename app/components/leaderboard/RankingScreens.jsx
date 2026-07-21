@@ -239,7 +239,7 @@ export function MyPredictionsPanel({ onViewPrize, rows: propRows, loading: propL
             : rows.map((p) => {
             const resultStyle =
               p.result === "win"
-                ? { bg: "rgba(84,233,138,0.15)", color: LB_COLORS.primary, label: "Win" }
+                ? { bg: "rgba(var(--lb-accent-rgb), 0.15)", color: LB_COLORS.primary, label: "Win" }
                 : p.result === "loss"
                 ? { bg: "rgba(255,59,48,0.15)", color: LB_COLORS.red, label: "Loss" }
                 : p.result === "draw"

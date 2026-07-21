@@ -1,10 +1,15 @@
+// The "primary"/"green"/"rank" accent tokens resolve to CSS variables defined
+// in app/globals.css (:root + per-theme :root[data-theme=...] overrides), so the
+// leaderboard re-tints to the active portal theme's gold. On the default theme
+// the variables fall back to the original World-Cup green. Everything else
+// (panels, neutrals, tier colors) stays fixed across themes.
 export const LB_COLORS = {
   bg: "#121414",
-  primary: "#54E98A",
-  primaryDeep: "#003919",
-  primarySoft: "rgba(84,233,138,0.1)",
-  primarySoft20: "rgba(84,233,138,0.2)",
-  primaryGreenBtn: "#54E98A",
+  primary: "var(--lb-accent)",
+  primaryDeep: "var(--lb-on-accent)",
+  primarySoft: "rgba(var(--lb-accent-rgb), 0.1)",
+  primarySoft20: "rgba(var(--lb-accent-rgb), 0.2)",
+  primaryGreenBtn: "var(--lb-accent)",
   gold: "#FFDD74",
   goldStrong: "#E9DD54",
   blueTier: "#5FBAFF",
@@ -13,16 +18,16 @@ export const LB_COLORS = {
   textPrimary: "#E2E2E2",
   textMuted: "#BBCBBB",
   textWhite: "#FFFFFF",
-  rankGreen: "#51FF90",
+  rankGreen: "var(--lb-rank)",
   red: "#FF3B30",
   blue: "#007AFF",
   orange: "#FF9500",
   panelDark: "rgba(40,42,43,0.95)",
-  panelLight: "rgba(255,255,255,0.05)",
-  cardOverlay: "rgba(18,20,20,0.7)",
+  panelLight: "var(--lb-panel-light)",
+  cardOverlay: "var(--lb-card-overlay)",
   borderSoft: "rgba(255,255,255,0.1)",
-  borderGreen30: "rgba(84,233,138,0.3)",
-  borderGreen50: "rgba(84,233,138,0.5)",
+  borderGreen30: "rgba(var(--lb-accent-rgb), 0.3)",
+  borderGreen50: "rgba(var(--lb-accent-rgb), 0.5)",
 };
 
 export const LB_SCREENS = {

@@ -76,7 +76,7 @@ function PrizePlaceholder({ name, image }) {
     <div
       className="grid h-[160px] w-full place-items-center rounded-[4px]"
       style={{
-        background: "linear-gradient(135deg,#1a3a25 0%,#2a4d2a 35%,#3d2a1a 65%,#5b3a1a 100%)",
+        background: "var(--lb-prize-grad)",
         border: "1px solid rgba(255,255,255,0.06)",
       }}
     >
@@ -175,7 +175,7 @@ export function PlayerPrizesPanel({ onViewLeaderboards, onViewDetails }) {
               style={{
                 background: LB_COLORS.panelLight,
                 border: p.rank === 1 ? `1px solid ${LB_COLORS.borderGreen50}` : "none",
-                boxShadow: p.rank === 1 ? "0 0 10px 0 rgba(84,233,138,0.8), 0 0 20px 0 rgba(84,233,138,0.4)" : "none",
+                boxShadow: p.rank === 1 ? "0 0 10px 0 rgba(var(--lb-accent-rgb), 0.8), 0 0 20px 0 rgba(var(--lb-accent-rgb), 0.4)" : "none",
               }}
             >
               <div className="w-7 text-[12px]" style={{ color: placeColor(p.rank), fontFamily: "'Lexend',sans-serif" }}>
@@ -191,7 +191,7 @@ export function PlayerPrizesPanel({ onViewLeaderboards, onViewDetails }) {
                 type="button"
                 onClick={() => onViewDetails?.(p)}
                 className="grid h-[44px] w-[71px] place-items-center overflow-hidden rounded-[4px]"
-                style={{ background: "linear-gradient(135deg,#1a3a25 0%,#2a4d2a 100%)", color: LB_COLORS.primary, fontFamily: "'Lexend',sans-serif", fontSize: 10 }}
+                style={{ background: "var(--lb-prize-grad-btn)", color: LB_COLORS.primary, fontFamily: "'Lexend',sans-serif", fontSize: 10 }}
                 aria-label={`View ${placeRangeLabel(p.rank, p.quantity)} prize details`}
               >
                 {p.image ? (
@@ -239,7 +239,7 @@ export function PredictionPrizesPanel({ onViewPredictions }) {
                 style={{
                   background: LB_COLORS.panelLight,
                   border: rank === 1 ? `1px solid ${LB_COLORS.borderGreen50}` : "none",
-                  boxShadow: rank === 1 ? "0 0 10px 0 rgba(84,233,138,0.8), 0 0 20px 0 rgba(84,233,138,0.4)" : "none",
+                  boxShadow: rank === 1 ? "0 0 10px 0 rgba(var(--lb-accent-rgb), 0.8), 0 0 20px 0 rgba(var(--lb-accent-rgb), 0.4)" : "none",
                 }}
               >
                 <div className="flex-1 text-left text-[12px]" style={{ color, fontFamily: "'Lexend',sans-serif" }}>{r.condition}</div>
@@ -296,7 +296,7 @@ export function PrizeInfo({ prize, onBack }) {
             type="button"
             onClick={onBack}
             className="w-full rounded-[8px] py-2 text-[14px]"
-            style={{ background: "#2ECC71", color: "#005027", fontFamily: "'Lexend',sans-serif" }}
+            style={{ background: LB_COLORS.primary, color: LB_COLORS.primaryDeep, fontFamily: "'Lexend',sans-serif" }}
           >
             Back
           </button>
