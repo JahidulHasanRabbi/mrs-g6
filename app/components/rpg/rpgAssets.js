@@ -106,7 +106,7 @@ export function arenaFor(bossId) {
 
 export const HERO_POSE_MASKS = {
   male: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
-  female: [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+  female: [0, 1, 2, 4, 5, 6, 7, 8, 9, 12, 13, 14, 15],
 };
 
 const popcount = (n) => {
@@ -125,21 +125,22 @@ export function heroPoseFor(gender, equipment) {
   const g = gender === "female" ? "female" : "male";
   const avail = HERO_POSE_MASKS[g];
   const want = equipMask(equipment);
+  // Exact pose for the equipped set, when it exists.
   let best = 0;
   if (avail.includes(want)) {
     best = want;
   } else {
-    // Score each available pose: reward matched equipped pieces, penalise gear
-    // the pose shows that isn't actually equipped; tie-break toward more pieces.
-    let bestScore = -Infinity;
+    // SUBSET-ONLY: a pose is eligible only when every piece it shows is
+    // actually equipped (m has no bit outside `want`). This guarantees the
+    // hero can never display gear the player hasn't equipped. Among eligible
+    // poses pick the one covering the most equipped pieces (mask 0 is always
+    // eligible, so there is always a result).
+    let bestScore = -1;
     for (const m of avail) {
-      // Reward matched pieces, penalise gear shown-but-not-equipped, tie-break
-      // toward more pieces and toward keeping the weapon visible when equipped.
-      const score =
-        popcount(m & want) * 3 -
-        popcount(m & ~want) * 2 +
-        popcount(m) * 0.1 +
-        (m & want & 8 ? 0.5 : 0);
+      if ((m & ~want) !== 0) continue; // shows gear that isn't equipped — skip
+      // Coverage dominates; among equal-coverage subsets prefer one that keeps
+      // the (equipped) weapon visible — still never adds unequipped gear.
+      const score = popcount(m & want) * 2 + (m & 8 ? 1 : 0);
       if (score > bestScore) {
         bestScore = score;
         best = m;
