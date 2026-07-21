@@ -70,18 +70,8 @@ export default function TermsAndConditionsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", stiffness: 200, damping: 18 }}
           />
-          <div className="relative w-full max-w-[500px]">
-            {/* Crown ornate frame — decorative border stretched to whatever height
-                FancyTermsConditions renders at. The terms card sits inside. */}
-            <img
-              src={ACEBET_ASSETS.frames.crown}
-              alt=""
-              draggable={false}
-              className="pointer-events-none absolute inset-0 h-full w-full select-none object-fill"
-            />
-            <div className="relative px-[8%] pt-[16%] pb-[14%]">
-              <FancyTermsConditions />
-            </div>
+          <div className="w-full max-w-[500px]">
+            <FancyTermsConditions />
           </div>
         </div>
       </AcebetShell>
@@ -107,16 +97,8 @@ export default function TermsAndConditionsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", stiffness: 200, damping: 18 }}
           />
-          <div className="relative w-full max-w-[500px]">
-            <img
-              src={UBET_ASSETS.frames.crown}
-              alt=""
-              draggable={false}
-              className="pointer-events-none absolute inset-0 h-full w-full select-none object-fill"
-            />
-            <div className="relative px-[14%] pt-[20%] pb-[16%]">
-              <FancyTermsConditions />
-            </div>
+          <div className="w-full max-w-[500px]">
+            <FancyTermsConditions />
           </div>
         </div>
       </UbetclubShell>
@@ -136,16 +118,8 @@ export default function TermsAndConditionsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", stiffness: 200, damping: 18 }}
           />
-          <div className="relative w-full max-w-[500px]">
-            <img
-              src={EP369_ASSETS.frames.crown}
-              alt=""
-              draggable={false}
-              className="pointer-events-none absolute inset-0 h-full w-full select-none object-fill"
-            />
-            <div className="relative px-[10%] pt-[18%] pb-[14%]">
-              <FancyTermsConditions />
-            </div>
+          <div className="w-full max-w-[500px]">
+            <FancyTermsConditions />
           </div>
         </div>
       </Ep369Shell>

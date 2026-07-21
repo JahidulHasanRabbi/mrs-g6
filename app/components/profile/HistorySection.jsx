@@ -351,9 +351,12 @@ function HistoryModal({ type, onClose }) {
           <div
             className="absolute overflow-hidden"
             style={{
-              left: isUbetclub ? "62px" : (isAcebet77 || isEp369 || isKgame99) ? "56px" : config.contentOffset,
+              left: isUbetclub ? "62px" : (isAcebet77 || isEp369 || isKgame99) ? "58px" : config.contentOffset,
               top: config.contentTop,
-              width: isUbetclub ? "252px" : (isAcebet77 || isEp369 || isKgame99) ? "264px" : config.contentWidth,
+              // Pull the box in from the frame's gold side rails so the
+              // right-aligned Amount column clears the ornament instead of
+              // riding it (was clipped against the rail on small devices).
+              width: isUbetclub ? "236px" : (isAcebet77 || isEp369 || isKgame99) ? "246px" : config.contentWidth,
             }}
           >
             <div

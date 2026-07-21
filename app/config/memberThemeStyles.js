@@ -68,8 +68,9 @@ const STYLE_PACKS = {
       // container (frame-inside-frame). The border alpha is also dropped so
       // no faint 1px rectangle traces the old panel edge.
       card: "transparent",
-      item: "linear-gradient(135deg, rgba(233,175,65,0.06) 0%, rgba(255,255,255,0.015) 100%)",
-      itemExpanded: "linear-gradient(135deg, rgba(233,175,65,0.18) 0%, rgba(176,124,42,0.08) 100%)",
+      item: "linear-gradient(135deg, rgba(28,20,9,0.82) 0%, rgba(13,10,5,0.88) 100%)",
+      itemExpanded: "linear-gradient(135deg, rgba(52,37,14,0.9) 0%, rgba(24,17,7,0.92) 100%)",
+      itemBlur: "blur(8px)",
       border: "rgba(233,175,65,0.22)",
       borderExpanded: "rgba(242,203,122,0.55)",
       number: "linear-gradient(135deg, #f2cb7a 0%, #b57718 100%)",
@@ -104,8 +105,9 @@ const STYLE_PACKS = {
       // wraps FancyTermsConditions on the /terms-and-conditions page, so the
       // inner card panel is transparent to avoid a frame-inside-frame stack.
       card: "transparent",
-      item: "linear-gradient(135deg, rgba(193,30,30,0.09) 0%, rgba(255,255,255,0.02) 100%)",
-      itemExpanded: "linear-gradient(135deg, rgba(193,30,30,0.28) 0%, rgba(242,195,107,0.08) 100%)",
+      item: "linear-gradient(135deg, rgba(46,9,10,0.82) 0%, rgba(24,6,7,0.88) 100%)",
+      itemExpanded: "linear-gradient(135deg, rgba(74,13,14,0.9) 0%, rgba(40,8,9,0.92) 100%)",
+      itemBlur: "blur(8px)",
       border: "rgba(242,195,107,0.2)",
       borderExpanded: "rgba(242,195,107,0.55)",
       number: "linear-gradient(135deg, #f2c36b 0%, #dd8f1f 100%)",
@@ -137,8 +139,9 @@ const STYLE_PACKS = {
       text: "#fff6df",
       muted: "#bcd0a8",
       card: "transparent",
-      item: "linear-gradient(135deg, rgba(42,126,65,0.09) 0%, rgba(255,255,255,0.02) 100%)",
-      itemExpanded: "linear-gradient(135deg, rgba(42,126,65,0.25) 0%, rgba(242,195,107,0.07) 100%)",
+      item: "linear-gradient(135deg, rgba(10,42,21,0.82) 0%, rgba(4,20,10,0.88) 100%)",
+      itemExpanded: "linear-gradient(135deg, rgba(18,66,33,0.9) 0%, rgba(8,32,16,0.92) 100%)",
+      itemBlur: "blur(8px)",
       border: "rgba(242,195,107,0.18)",
       borderExpanded: "rgba(242,195,107,0.5)",
       number: "linear-gradient(135deg, #f2c36b 0%, #b47b18 100%)",
