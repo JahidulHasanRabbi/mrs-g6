@@ -11,6 +11,7 @@ import {
   getPenaltyKickItems,
   getPromotionsByStation,
   getRedemptionItems,
+  getSmashEggItems,
   getStationList,
 } from "../../../../api/adminApi";
 
@@ -29,6 +30,13 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 // (Manual Bonus, Lucky Spin Item, Redemption Item, Penalty Kick Bonus, Smash
 // Egg Bonus) is backed by a catalog/free-form name, so a station can have many.
 const SINGLE_INSTANCE_LABELS = new Set(["monthly vip", "upgrade vip", "birthday bonus"]);
+
+const ITEM_CATALOGS = [
+  { key: "lucky_spin", labels: ["lucky spin item", "lucky spin"], typeValues: ["4"], load: () => getLuckySpinItems() },
+  { key: "redemption", labels: ["redemption item", "redemption"], typeValues: ["5"], load: () => getRedemptionItems() },
+  { key: "penalty_kick", labels: ["penalty kick bonus", "penalty kick"], typeValues: ["6"], load: () => getPenaltyKickItems({ page_size: 1000 }) },
+  { key: "smash_egg", labels: ["smash egg bonus", "smash egg"], typeValues: [], load: () => getSmashEggItems() },
+];
 
 // The API always mirrors the Manual Bonus promotion into the "VIP Type" group
 // as a generic placeholder ({ item: 7, name: "Manual Bonus" }) alongside the
@@ -70,6 +78,13 @@ function manualBonusTypeValue(promotionTypes) {
 function isSingleInstanceType(promotionTypes, typeValue) {
   const found = promotionTypes.find((t) => String(t.value) === String(typeValue));
   return found ? SINGLE_INSTANCE_LABELS.has(normalizeLabel(found.label)) : false;
+}
+
+function catalogForType(promotionTypes, typeValue) {
+  const value = String(typeValue ?? "");
+  if (value === "") return null;
+  const label = normalizeLabel(promotionTypes.find((t) => String(t.value) === value)?.label);
+  return ITEM_CATALOGS.find((c) => c.typeValues.includes(value) || c.labels.includes(label)) || null;
 }
 
 function typeFromGroup(groupType, promotionTypes) {
@@ -130,7 +145,8 @@ export default function AddPromotionPage() {
   const [promotionTypes, setPromotionTypes] = useState([]);
   const [typesError, setTypesError] = useState(false);
 
-  const [itemsByType, setItemsByType] = useState({});
+  const [itemsByCatalog, setItemsByCatalog] = useState({});
+  const [itemsLoading, setItemsLoading] = useState(true);
   const [itemsError, setItemsError] = useState(false);
 
   const [promotions, setPromotions] = useState([emptyPromotion()]);
@@ -164,23 +180,21 @@ export default function AddPromotionPage() {
   }, []);
 
   useEffect(() => {
-    Promise.allSettled([
-      getLuckySpinItems(),
-      getRedemptionItems(),
-      getPenaltyKickItems({ page_size: 1000 }),
-    ])
-      .then(([luckySpin, redemption, penaltyKick]) => {
-        setItemsByType({
-          4: luckySpin.status === "fulfilled" ? normalizeListResponse(luckySpin.value) : [],
-          5: redemption.status === "fulfilled" ? normalizeListResponse(redemption.value) : [],
-          6: penaltyKick.status === "fulfilled" ? normalizeListResponse(penaltyKick.value) : [],
+    Promise.allSettled(ITEM_CATALOGS.map((catalog) => Promise.resolve().then(catalog.load)))
+      .then((results) => {
+        const next = {};
+        results.forEach((result, index) => {
+          next[ITEM_CATALOGS[index].key] =
+            result.status === "fulfilled" ? normalizeListResponse(result.value) : [];
         });
-        setItemsError([luckySpin, redemption, penaltyKick].some((result) => result.status === "rejected"));
+        setItemsByCatalog(next);
+        setItemsError(results.some((result) => result.status === "rejected"));
       })
       .catch(() => {
-        setItemsByType({});
+        setItemsByCatalog({});
         setItemsError(true);
-      });
+      })
+      .finally(() => setItemsLoading(false));
   }, []);
 
   // POST replaces the full set of promotions for the station, so hydrate the
@@ -276,7 +290,9 @@ export default function AddPromotionPage() {
   }, [promotions, typeOptions, promotionTypes]);
 
   const getItemOptions = (promotionType, promo) => {
-    const options = (itemsByType[String(promotionType)] || []).map((i) => ({
+    const catalog = catalogForType(promotionTypes, promotionType);
+    const items = catalog ? itemsByCatalog[catalog.key] || [] : [];
+    const options = items.map((i) => ({
       value: i.uuid,
       label: i.name || i.reward_name || i.title || i.uuid,
     }));
@@ -329,6 +345,8 @@ export default function AddPromotionPage() {
                 typesError={typesError}
                 itemOptions={getItemOptions(promo.promotion_type, promo)}
                 itemsError={itemsError}
+                itemsLoading={itemsLoading}
+                hasItemCatalog={Boolean(catalogForType(promotionTypes, promo.promotion_type)) || Boolean(promo.item_uuid)}
                 isManualBonus={Boolean(manualBonusType) && String(promo.promotion_type) === manualBonusType}
                 onChange={updatePromotion}
                 onRemove={promotions.length > 1 ? () => removePromotionRow(index) : null}
@@ -440,7 +458,7 @@ function SelectField({ label, value, onChange, options, placeholder, allowEmpty 
   );
 }
 
-function PromotionEntry({ index, promo, typeOptions, typesError, itemOptions, itemsError, isManualBonus, onChange, onRemove }) {
+function PromotionEntry({ index, promo, typeOptions, typesError, itemOptions, itemsError, itemsLoading, hasItemCatalog, isManualBonus, onChange, onRemove }) {
   return (
     <div className="flex w-full flex-col gap-4 rounded-[12px] border border-[#fbeed2]/20 p-4">
       <div className="flex items-center justify-between">
@@ -484,7 +502,7 @@ function PromotionEntry({ index, promo, typeOptions, typesError, itemOptions, it
             onChange={onChange(index, "item_name")}
             placeholder="e.g. Birthday Bonus"
           />
-        ) : (
+        ) : hasItemCatalog ? (
           <SelectField
             label="Item (optional)"
             value={promo.item_uuid}
@@ -493,14 +511,14 @@ function PromotionEntry({ index, promo, typeOptions, typesError, itemOptions, it
             allowEmpty
             emptyLabel="No item"
             placeholder={
-              itemsError
-                ? "Failed to load items"
-                : itemOptions.length === 0
-                  ? "Loading..."
-                  : "Select item"
+              itemsLoading
+                ? "Loading..."
+                : itemsError
+                  ? "Failed to load items"
+                  : "No items available"
             }
           />
-        )}
+        ) : null}
       </div>
     </div>
   );
