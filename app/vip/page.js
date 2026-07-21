@@ -10,15 +10,14 @@ import { mapVipTiers } from "../api/responseMappers";
 import { useTheme } from "../contexts/ThemeContext";
 import Acebet77VipPage from "../components/themes/acebet77/Acebet77VipPage";
 import UbetclubVipPage from "../components/themes/ubetclub/UbetclubVipPage";
+import Ep369VipPage from "../components/themes/ep369/Ep369VipPage";
 
 export default function VipDetailsPage() {
-  const { isAcebet77, isUbetclub } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369 } = useTheme();
 
-  // acebet77 / ubetclub each swap the title-banner asset for their own
-  // themed plaque. All data/functionality (VipLevelChain, PrivilegesCarousel,
-  // tier fetching, error/retry) is preserved by the wrapper component.
   if (isAcebet77) return <Acebet77VipPage />;
   if (isUbetclub) return <UbetclubVipPage />;
+  if (isEp369) return <Ep369VipPage />;
 
   return <DefaultVipDetailsPage />;
 }

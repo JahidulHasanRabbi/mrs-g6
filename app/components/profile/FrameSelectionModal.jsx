@@ -14,11 +14,8 @@ export default function FrameSelectionModal({
   profilePicture,
 }) {
   const { availableFrames, isLoadingFrames } = useUser();
-  const { isAcebet77, isUbetclub } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369 } = useTheme();
 
-  // Asset-only skin: themed decks each get their own pure-dark background +
-  // gold/sand accents instead of the default green gradient. Functionality
-  // untouched — same frame list, selection behaviour, and close/keyboard.
   let modalBg, subtitleColor, tierColor, checkBg, checkStroke;
   if (isAcebet77) {
     modalBg = "linear-gradient(to bottom, #0a0805 0%, #17130c 100%)";
@@ -32,6 +29,12 @@ export default function FrameSelectionModal({
     tierColor = "#d8c9a0";
     checkBg = "#f2c36b";
     checkStroke = "#280506";
+  } else if (isEp369) {
+    modalBg = "linear-gradient(to bottom, #001002 0%, #0d3d1c 100%)";
+    subtitleColor = "#bcd0a8";
+    tierColor = "#bcd0a8";
+    checkBg = "#e9af41";
+    checkStroke = "#04140a";
   } else {
     modalBg = "linear-gradient(to bottom, #0a1a0a 0%, #102810 100%)";
     subtitleColor = "#a8c08a";

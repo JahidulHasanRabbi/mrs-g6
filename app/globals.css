@@ -185,6 +185,90 @@
   scrollbar-color: #dd8f1f rgba(24, 8, 10, 0.5);
 }
 
+/* EP369 scrollbar — gold thumb on dark emerald track */
+.scrollbar-ep369::-webkit-scrollbar {
+  width: 5px;
+}
+.scrollbar-ep369::-webkit-scrollbar-track {
+  background: rgba(9, 48, 23, 0.5);
+  border-radius: 999px;
+}
+.scrollbar-ep369::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #f2c36b 0%, #e9af41 100%);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 225, 109, 0.25);
+}
+.scrollbar-ep369::-webkit-scrollbar-thumb:hover {
+  background: #ffe16d;
+}
+.scrollbar-ep369 {
+  scrollbar-width: thin;
+  scrollbar-color: #e9af41 rgba(9, 48, 23, 0.5);
+}
+
+/* Acebet77 scrollbar — gold thumb on dark track */
+.scrollbar-acebet77::-webkit-scrollbar {
+  width: 5px;
+}
+.scrollbar-acebet77::-webkit-scrollbar-track {
+  background: rgba(10, 10, 28, 0.5);
+  border-radius: 999px;
+}
+.scrollbar-acebet77::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #f2c36b 0%, #e9af41 100%);
+  border-radius: 999px;
+  border: 1px solid rgba(233, 175, 65, 0.3);
+}
+.scrollbar-acebet77::-webkit-scrollbar-thumb:hover {
+  background: #ffe16d;
+}
+.scrollbar-acebet77 {
+  scrollbar-width: thin;
+  scrollbar-color: #e9af41 rgba(10, 10, 28, 0.5);
+}
+
+/* Kgame99 scrollbar — warm gold thumb on dark track */
+.scrollbar-kgame99::-webkit-scrollbar {
+  width: 5px;
+}
+.scrollbar-kgame99::-webkit-scrollbar-track {
+  background: rgba(20, 12, 4, 0.5);
+  border-radius: 999px;
+}
+.scrollbar-kgame99::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #f2cb7a 0%, #c9a050 100%);
+  border-radius: 999px;
+  border: 1px solid rgba(242, 203, 122, 0.3);
+}
+.scrollbar-kgame99::-webkit-scrollbar-thumb:hover {
+  background: #ffe16d;
+}
+.scrollbar-kgame99 {
+  scrollbar-width: thin;
+  scrollbar-color: #c9a050 rgba(20, 12, 4, 0.5);
+}
+
+/* LV918 scrollbar — rose/mauve thumb on dark plum track */
+.scrollbar-lv918::-webkit-scrollbar {
+  width: 5px;
+}
+.scrollbar-lv918::-webkit-scrollbar-track {
+  background: rgba(40, 12, 28, 0.5);
+  border-radius: 999px;
+}
+.scrollbar-lv918::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #c06888 0%, #924066 100%);
+  border-radius: 999px;
+  border: 1px solid rgba(192, 104, 136, 0.3);
+}
+.scrollbar-lv918::-webkit-scrollbar-thumb:hover {
+  background: #d88aaa;
+}
+.scrollbar-lv918 {
+  scrollbar-width: thin;
+  scrollbar-color: #924066 rgba(40, 12, 28, 0.5);
+}
+
 /* Spinner animation for loading states */
 @keyframes spin {
   0% { transform: rotate(0deg); }

@@ -5,14 +5,12 @@ import { FORM_COLORS } from "./constants";
 import { useTheme } from "../../contexts/ThemeContext";
 import { ACEBET_COLORS } from "../themes/acebet77/assets";
 import { UBET_COLORS } from "../themes/ubetclub/assets";
+import { EP369_COLORS } from "../themes/ep369/assets";
 
 export default function ProgressBar({ progress = 0 }) {
   const progressPercentage = Math.min(100, Math.max(0, progress));
-  const { isAcebet77, isUbetclub } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369 } = useTheme();
 
-  // Asset-level colour swaps only — bar / text colours match the surrounding
-  // theme. On dark themes the default black text is unreadable, so we use
-  // the theme gold. Fill + animation logic are unchanged.
   let trackClass = "relative h-3 bg-gray-200 rounded-full overflow-hidden";
   let textColor = FORM_COLORS.textButton;
   if (isAcebet77) {
@@ -21,6 +19,9 @@ export default function ProgressBar({ progress = 0 }) {
   } else if (isUbetclub) {
     trackClass = "relative h-3 rounded-full overflow-hidden border border-[#8a5514] bg-[#3d0d10]";
     textColor = UBET_COLORS.goldBright;
+  } else if (isEp369) {
+    trackClass = "relative h-3 rounded-full overflow-hidden border border-[#2a7e41] bg-[#0d3d1c]";
+    textColor = EP369_COLORS.gold;
   }
 
   return (

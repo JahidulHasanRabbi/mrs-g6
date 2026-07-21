@@ -8,19 +8,18 @@ import { useUser } from "../contexts/UserContext";
 import { useTheme } from "../contexts/ThemeContext";
 import Acebet77ProfilePage from "../components/themes/acebet77/Acebet77ProfilePage";
 import UbetclubProfilePage from "../components/themes/ubetclub/UbetclubProfilePage";
+import Ep369ProfilePage from "../components/themes/ep369/Ep369ProfilePage";
 
 const hasValue = (v) => v != null && String(v).trim() !== "";
 
 export default function ProfilePage() {
   const router = useRouter();
   const { userData, profilePicture, profileData } = useUser();
-  const { isAcebet77, isUbetclub } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369 } = useTheme();
 
-  // Themed profile pages — same content structure, only the assets/frames
-  // differ. Other themes continue to fall through to ThemedPageShell
-  // wrapping the default profile UI.
   if (isAcebet77) return <Acebet77ProfilePage />;
   if (isUbetclub) return <UbetclubProfilePage />;
+  if (isEp369) return <Ep369ProfilePage />;
 
   const completion = {
     displayPhoto: hasValue(profilePicture),

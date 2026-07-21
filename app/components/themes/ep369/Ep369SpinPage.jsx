@@ -18,7 +18,7 @@ import { mapSpinResults, mapLuckySpinItems } from '../../../api/responseMappers'
 import { tokenStorage } from '../../../api/tokenStorage';
 import { useUser } from '../../../contexts/UserContext';
 
-const EP369_FRAMED_SKIN = buildFramedSkin(EP369_ASSETS, EP369_COLORS, { x: '15%', top: '26%', bottom: '26%' });
+const EP369_FRAMED_SKIN = buildFramedSkin(EP369_ASSETS, EP369_COLORS, { x: '15%', top: '26%', bottom: '26%' }, { scrollbarClass: 'scrollbar-ep369' });
 
 // EP369 Lucky Spin. The wheel is the shared <LuckySpinGrid> — the same
 // spin/selection engine as the default portal — fed EP369's artwork. Only the
@@ -240,7 +240,7 @@ export default function Ep369SpinPage() {
               (diamond gem accents) and top/bottom (leaf crossbars) than a
               uniform inset accounted for, letting row icons sit under them. */}
           <div className="absolute inset-x-[15%] inset-y-[26%] flex flex-col">
-            <div className="flex-1 overflow-y-auto pr-1 [scrollbar-width:thin]">
+            <div className="flex-1 overflow-y-auto pr-1 scrollbar-ep369">
               {spinItems.length === 0 ? (
                 <p className="mt-4 text-center text-[13px]" style={{ color: EP369_COLORS.sand, fontFamily: 'var(--font-rubik), sans-serif' }}>
                   {itemsLoading ? 'Loading rewards…' : 'No rewards available.'}

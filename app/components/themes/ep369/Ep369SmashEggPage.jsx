@@ -20,7 +20,7 @@ import { SMASH_EGG_ASSETS } from '../../smash-egg/smashEggAssets';
 import { EP369_ASSETS, EP369_COLORS } from './assets';
 
 const WELCOME_SEEN_KEY = 'mrs_ep369_egg_welcome_seen';
-const EP369_FRAMED_SKIN = buildFramedSkin(EP369_ASSETS, EP369_COLORS, { x: '15%', top: '26%', bottom: '26%' });
+const EP369_FRAMED_SKIN = buildFramedSkin(EP369_ASSETS, EP369_COLORS, { x: '15%', top: '26%', bottom: '26%' }, { scrollbarClass: 'scrollbar-ep369' });
 
 /**
  * EP369 Smash Egg (Figma 101:4339 loading / 101:4261 welcome / 101:4215 idle /

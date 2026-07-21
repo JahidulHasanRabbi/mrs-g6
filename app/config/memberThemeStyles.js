@@ -136,7 +136,7 @@ const STYLE_PACKS = {
       numberText: "#031407",
       text: "#fff6df",
       muted: "#bcd0a8",
-      card: "linear-gradient(180deg, rgba(13,61,28,0.96) 0%, rgba(0,16,2,0.99) 100%)",
+      card: "transparent",
       item: "linear-gradient(135deg, rgba(42,126,65,0.09) 0%, rgba(255,255,255,0.02) 100%)",
       itemExpanded: "linear-gradient(135deg, rgba(42,126,65,0.25) 0%, rgba(242,195,107,0.07) 100%)",
       border: "rgba(242,195,107,0.18)",

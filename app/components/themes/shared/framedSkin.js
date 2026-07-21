@@ -8,7 +8,7 @@
  * `insets` are the safe content box inside the panel art (the ornate crown/
  * flourish/side gems eat into the frame), tuned per theme's panel image.
  */
-export function buildFramedSkin(ASSETS, COLORS, insets) {
+export function buildFramedSkin(ASSETS, COLORS, insets, { scrollbarClass = '' } = {}) {
   const cream = COLORS.cream || '#fff6df';
   const creamMuted = COLORS.creamMuted || cream;
   return {
@@ -28,5 +28,6 @@ export function buildFramedSkin(ASSETS, COLORS, insets) {
       freeCreditValue: creamMuted,
     },
     rankAccents: { 1: '#00d15a', 2: COLORS.goldBright, 3: '#fd8b00' },
+    scrollbarClass,
   };
 }

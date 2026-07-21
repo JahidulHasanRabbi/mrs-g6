@@ -51,12 +51,6 @@ export const EP369_ASSETS = {
       itemEmptyGreen: `${BASE}/spin/slot-green.png`,
       centerButton: `${BASE}/spin/center.png`,
       centerButtonStop: `${BASE}/spin/center.png`,
-      // EP369's center medallion is four-fold radially symmetric (identical gem
-      // at N/E/S/W), so rotating it toward the winning tile shows no direction.
-      // This accent draws a small pointer triangle at the top edge of the
-      // rotating button so the aim reads. Only EP369 sets it — the other skins'
-      // art already has a single directional cue baked in.
-      pointerAccent: '#ffe16d',
     },
   },
   egg: {
@@ -69,6 +63,25 @@ export const EP369_ASSETS = {
     bgStadium: `${BASE}/pk/bg-stadium.png`,
     bgCrowd: `${BASE}/pk/bg-stadium.png`,
     iconBall: `${BASE}/pk/icon-ball.svg`,
+  },
+  profile: {
+    title: `${BASE}/profile/title-profile.png`,
+    badgeNum: `${BASE}/profile/badge-num.png`,
+    iconChevron: `${BASE}/profile/icon-chevron.png`,
+    iconStar: `${BASE}/profile/icon-star.svg`,
+  },
+  vip: {
+    title: `${BASE}/vip/title-vip.png`,
+    crest: `${BASE}/vip/crest-lion.png`,
+    iconCheck: `${BASE}/vip/icon-check.png`,
+    cardFrame: `${BASE}/ui/frame-crown.png`,
+  },
+  terms: {
+    title: `${BASE}/ui/title-terms.png`,
+  },
+  frames: {
+    crown: `${BASE}/ui/frame-crown.png`,
+    scroll: `${BASE}/ui/frame-scroll.png`,
   },
 };
 

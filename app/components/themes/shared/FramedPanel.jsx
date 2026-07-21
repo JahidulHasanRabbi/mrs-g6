@@ -18,7 +18,7 @@ export default function FramedPanel({ skin, height = 300, children, className = 
         style={{ left: insets.x, right: insets.x, top: insets.top, bottom: insets.bottom, boxShadow: `inset 0 0 0 1px ${ring}` }}
       >
         <div className="absolute inset-0" style={{ background: scrim, backdropFilter: 'blur(3px)' }} />
-        <div className="relative h-full overflow-y-auto px-2.5 py-2 [scrollbar-width:thin]">{children}</div>
+        <div className={`relative h-full overflow-y-auto px-2.5 py-2 ${skin.scrollbarClass || '[scrollbar-width:thin]'}`}>{children}</div>
       </div>
     </div>
   );

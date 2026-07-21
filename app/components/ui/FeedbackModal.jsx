@@ -6,6 +6,7 @@ import { submitFeedback as submitFeedbackApi } from "@/app/api/memberApi";
 import { tokenStorage } from "@/app/api/tokenStorage";
 import { useTheme } from "../../contexts/ThemeContext";
 import { UBET_ASSETS } from "../themes/ubetclub/assets";
+import { EP369_ASSETS } from "../themes/ep369/assets";
 
 /**
  * FeedbackModal — collects a star rating + free-text message from the player.
@@ -17,11 +18,8 @@ export default function FeedbackModal({ isOpen, onClose }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(null);
-  const { isAcebet77, isUbetclub } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369 } = useTheme();
 
-  // Colour-only skin overrides for themed decks. Logic, layout, and copy are
-  // all unchanged; only the modal gradient / border / stars / submit button
-  // switch to the theme palette.
   let skin;
   if (isAcebet77) {
     skin = {
@@ -34,15 +32,20 @@ export default function FeedbackModal({ isOpen, onClose }) {
     };
   } else if (isUbetclub) {
     skin = {
-      // Deeper, more solid red gradient so the modal reads as a themed
-      // panel rather than a translucent overlay.
       modalBg: "linear-gradient(180deg, #4a0e11 0%, #180708 100%)",
       borderColor: "#f2c36b",
       starOff: "#5a2d20",
       starOn: "#f2c36b",
-      // Use the theme's actual red plaque asset for Submit/Close so those
-      // buttons match the History / Edit-profile plaques on the same skin.
       submitImage: UBET_ASSETS.spin.btnPlay,
+      submitText: "#f2c36b",
+    };
+  } else if (isEp369) {
+    skin = {
+      modalBg: "linear-gradient(180deg, #0d3d1c 0%, #001002 100%)",
+      borderColor: "#e9af41",
+      starOff: "#1a3a22",
+      starOn: "#f2c36b",
+      submitImage: EP369_ASSETS.spin.btnPlay,
       submitText: "#f2c36b",
     };
   } else {
@@ -265,7 +268,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
                         background: skin.submitBg,
                         color: skin.submitText,
                         fontFamily: '"Times New Roman", serif',
-                        textShadow: isAcebet77 ? "none" : "0 1px 2px rgba(0,0,0,0.35)",
+                        textShadow: (isAcebet77 || isEp369) ? "none" : "0 1px 2px rgba(0,0,0,0.35)",
                       }}
                     >
                       {isSubmitting ? "Sending…" : "Submit"}

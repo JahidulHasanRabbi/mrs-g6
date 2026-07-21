@@ -126,7 +126,28 @@ export default function TermsAndConditionsPage() {
   if (isEp369) {
     return (
       <Ep369Shell bg={EP369_ASSETS.spin.bg}>
-        <ThemedTermsContent accent={EP369_COLORS.goldBright} muted={EP369_COLORS.sand} />
+        <div className="flex min-h-screen flex-col items-center px-4 pb-8">
+          <motion.img
+            src={EP369_ASSETS.terms.title}
+            alt="Terms & Conditions"
+            draggable={false}
+            className="mt-5 mb-4 h-auto w-[340px] max-w-[92%] select-none object-contain"
+            initial={{ opacity: 0, y: -18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 18 }}
+          />
+          <div className="relative w-full max-w-[500px]">
+            <img
+              src={EP369_ASSETS.frames.crown}
+              alt=""
+              draggable={false}
+              className="pointer-events-none absolute inset-0 h-full w-full select-none object-fill"
+            />
+            <div className="relative px-[10%] pt-[18%] pb-[14%]">
+              <FancyTermsConditions />
+            </div>
+          </div>
+        </div>
       </Ep369Shell>
     );
   }

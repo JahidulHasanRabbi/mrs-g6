@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useTheme } from "../../contexts/ThemeContext";
 import { ACEBET_COLORS } from "../themes/acebet77/assets";
 import { UBET_COLORS } from "../themes/ubetclub/assets";
+import { EP369_COLORS } from "../themes/ep369/assets";
 
 const DRAW_OPTIONS = [
   { draws: 10, featured: false },
@@ -21,12 +22,8 @@ function formatTokenAmount(value) {
 }
 
 function DrawButton({ draws, tokens, featured, onClick, disabled }) {
-  const { isAcebet77, isUbetclub } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369 } = useTheme();
 
-  // Colour-only skin per theme. Featured (50 draws) uses the theme's brighter
-  // gold gradient; the non-featured 10 / 100 buttons use the deep-theme
-  // gradient so the row reads as one set of themed plaques. Logic is
-  // unchanged.
   let bgGradient, borderColor, textColor, tokenTextColor;
   if (isAcebet77) {
     bgGradient = featured
@@ -42,6 +39,13 @@ function DrawButton({ draws, tokens, featured, onClick, disabled }) {
     borderColor = featured ? "#3a1a0a" : UBET_COLORS.gold;
     textColor = featured ? "#280506" : UBET_COLORS.goldBright;
     tokenTextColor = featured ? "rgba(40,5,6,0.75)" : "rgba(242,195,107,0.85)";
+  } else if (isEp369) {
+    bgGradient = featured
+      ? "linear-gradient(to bottom, #f2c36b, #8a5514)"
+      : "linear-gradient(to bottom, #0d3d1c, #001002)";
+    borderColor = featured ? "#2a5a14" : EP369_COLORS.gold;
+    textColor = featured ? "#04140a" : EP369_COLORS.goldBright;
+    tokenTextColor = featured ? "rgba(4,20,10,0.75)" : "rgba(242,195,107,0.85)";
   } else {
     bgGradient = featured
       ? "linear-gradient(to bottom, #ffd700, #544600)"

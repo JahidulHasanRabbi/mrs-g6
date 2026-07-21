@@ -5,19 +5,18 @@ import { FORM_COLORS } from "./constants";
 import { useTheme } from "../../contexts/ThemeContext";
 import { ACEBET_ASSETS, ACEBET_COLORS } from "../themes/acebet77/assets";
 import { UBET_ASSETS, UBET_COLORS } from "../themes/ubetclub/assets";
+import { EP369_ASSETS, EP369_COLORS } from "../themes/ep369/assets";
 
 export default function SubmitButton({ onClick, label = "Saved Change", disabled = false }) {
-  const { isAcebet77, isUbetclub } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369 } = useTheme();
 
-  // acebet77 / ubetclub skin: render the theme's dark ornate plaque
-  // (btn-play.png) with gold text so the button matches the surrounding
-  // theme instead of the default bright yellow pill. Other themes keep the
-  // default pill exactly as before.
   const themedSkin = isAcebet77
     ? { src: ACEBET_ASSETS.spin.btnPlay, color: ACEBET_COLORS.goldBright }
     : isUbetclub
       ? { src: UBET_ASSETS.spin.btnPlay, color: UBET_COLORS.goldBright }
-      : null;
+      : isEp369
+        ? { src: EP369_ASSETS.spin.btnPlay, color: EP369_COLORS.goldBright }
+        : null;
 
   if (themedSkin) {
     return (
