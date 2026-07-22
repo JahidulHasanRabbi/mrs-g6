@@ -76,6 +76,7 @@ function defaultState() {
     equipment: { weapon: null, helmet: null, armor: null, boots: null },
     backpack: [], // [{ id, slot, name }]
     nextItemId: 1,
+    starterGearSeeded: false,
     attempts: { date: todayStr(), freeUsed: false, paid: 0 },
     pendingBoxes: [], // [{ id, bossId }]
     nextBoxId: 1,
@@ -216,6 +217,7 @@ export async function getRpgProfile({ seedTokens } = {}) {
     state.tokens = Math.max(0, Math.floor(seedTokens));
     state.tokensSeeded = true;
   }
+  grantStarterGear(state);
   saveState(state);
   return profileView(state);
 }
@@ -228,6 +230,7 @@ export async function createHero(gender) {
     throw apiError("BAD_GENDER", "Choose male or female.");
   }
   state.hero = { gender };
+  grantStarterGear(state);
   saveState(state);
   return profileView(state);
 }
@@ -333,6 +336,19 @@ function makeItem(state, slot) {
   const item = { id: `item_${state.nextItemId}`, slot, name };
   state.nextItemId += 1;
   return item;
+}
+
+// TEMPORARY (mock only): stock the backpack with a one-time starter set (one
+// item per slot, UNEQUIPPED) so the equipment art is visible before the real
+// backend lands. Left unequipped so the player equips via the UI and early-game
+// power stays balanced. Idempotent via `starterGearSeeded`.
+// Remove this (and its two call sites) once real equipment comes from the API.
+function grantStarterGear(state) {
+  if (state.starterGearSeeded || !state.hero) return;
+  EQUIP_SLOTS.forEach((slot) => {
+    if (state.backpack.length < BACKPACK_CAPACITY) state.backpack.push(makeItem(state, slot));
+  });
+  state.starterGearSeeded = true;
 }
 
 // ---------------------------------------------------------------------------
