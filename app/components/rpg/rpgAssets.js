@@ -113,7 +113,7 @@ export const HERO_POSE_MASKS = {
 // boss. Keyed by the same 4-bit gear mask. Only male art exists so far; female
 // falls back to the front pose until its back art is added.
 export const HERO_BATTLE_MASKS = {
-  male: [0, 1, 2, 5, 6, 7, 8, 9, 11, 12, 13],
+  male: [0, 1, 2, 4, 6, 7, 8, 9, 11, 12, 13, 14, 15],
   female: [],
 };
 
