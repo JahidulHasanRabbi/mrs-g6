@@ -51,7 +51,7 @@ export default function ThemedEditProfileList({
         }}
       >
         <p
-          className="mb-2 text-center text-[15px] tracking-wide"
+          className="mb-2 mt-3 text-center text-[15px] tracking-wide"
           style={{ color: colors.heading, fontFamily: acme, textShadow: `0 0 10px ${colors.heading}55` }}
         >
           Edit Profiles

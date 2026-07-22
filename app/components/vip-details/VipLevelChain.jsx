@@ -204,6 +204,7 @@ export default function VipLevelChain({ selectedLevel, onLevelSelect, vipTiers =
                   fontSize: "clamp(8px, 2.4vw, 12px)",
                   maxWidth: "clamp(52px, 16vw, 80px)",
                   wordBreak: "break-word",
+                  textShadow: "0 1px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.5)",
                 }}
               >
                 {level.name}

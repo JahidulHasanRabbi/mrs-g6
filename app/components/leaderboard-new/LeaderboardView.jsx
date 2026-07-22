@@ -33,6 +33,7 @@ export default function LeaderboardView({
           src={config.icon}
           alt={config.label}
           className="w-12 h-12 sm:w-16 sm:h-16"
+          style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.5))" }}
         />
       </div>
 
@@ -41,7 +42,11 @@ export default function LeaderboardView({
         <div className="text-center w-full">
           <p
             className="text-3xl sm:text-4xl font-extrabold leading-10 sm:leading-[48px]"
-            style={{ fontFamily: "var(--font-inter)", color: "var(--lb-heading)" }}
+            style={{
+              fontFamily: "var(--font-inter)",
+              color: "var(--lb-heading)",
+              textShadow: "0 1px 4px rgba(0,0,0,0.6), 0 0 12px rgba(0,0,0,0.3)",
+            }}
           >
             TOP 20
           </p>
@@ -50,6 +55,7 @@ export default function LeaderboardView({
             style={{
               color: config.color,
               fontFamily: "var(--font-inter)",
+              textShadow: "0 1px 4px rgba(0,0,0,0.6), 0 0 12px rgba(0,0,0,0.3)",
             }}
           >
             {config.title}
@@ -60,7 +66,11 @@ export default function LeaderboardView({
         {periodLabel && (
           <p
             className="text-base text-center"
-            style={{ fontFamily: "var(--font-inter)", color: "var(--lb-heading-muted)" }}
+            style={{
+              fontFamily: "var(--font-inter)",
+              color: "var(--lb-heading-muted)",
+              textShadow: "0 1px 3px rgba(0,0,0,0.5)",
+            }}
           >
             {periodLabel}
           </p>
@@ -88,6 +98,7 @@ export default function LeaderboardView({
                   style={{
                     color: config.colorLight,
                     fontFamily: "var(--font-inter)",
+                    textShadow: "0 1px 3px rgba(0,0,0,0.5)",
                   }}
                 >
                   {note}

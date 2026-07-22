@@ -2,8 +2,8 @@
 
 /**
  * Kgame99 section heading — gold-gradient text shown OUTSIDE the ornate panels
- * (Winning Record / Prize List / Winner / Terms). A navy drop-shadow keeps it
- * legible over the light celestial background.
+ * (Winning Record / Prize List / Winner / Terms). A strong navy drop-shadow keeps
+ * it legible over the bright celestial background.
  */
 export default function KgameSectionHeading({ children, className = '' }) {
   return (
@@ -15,7 +15,7 @@ export default function KgameSectionHeading({ children, className = '' }) {
         WebkitBackgroundClip: 'text',
         backgroundClip: 'text',
         color: 'transparent',
-        filter: 'drop-shadow(0 2px 3px rgba(4,20,48,0.6))',
+        filter: 'drop-shadow(0 1px 1px rgba(4,20,48,0.9)) drop-shadow(0 2px 4px rgba(4,20,48,0.7)) drop-shadow(0 0 8px rgba(4,20,48,0.5))',
       }}
     >
       {children}

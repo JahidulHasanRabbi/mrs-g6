@@ -100,7 +100,10 @@ export default function PrivilegesCard({ level = "Bronze", tierData = null, tier
                   className="object-contain"
                 />
               </div>
-              <div className="text-[#fcd064] font-bold font-['Times_New_Roman'] leading-tight text-[15px] max-[400px]:text-[13px]">
+              <div
+                className="text-[#fcd064] font-bold font-['Times_New_Roman'] leading-tight text-[15px] max-[400px]:text-[13px]"
+                style={{ textShadow: "0 1px 3px rgba(0,0,0,0.7), 0 0 8px rgba(0,0,0,0.4)" }}
+              >
                 <p>{stat.label}:</p>
                 <p>{stat.value}</p>
               </div>

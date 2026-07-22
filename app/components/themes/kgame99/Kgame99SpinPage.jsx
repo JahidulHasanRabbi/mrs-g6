@@ -11,6 +11,7 @@ import KgameOrnateCard from './KgameOrnateCard';
 import KgameBottomNav from './KgameBottomNav';
 import LuckySpinGrid from '../../spin/LuckySpinGrid';
 import KgameListPanel from './KgameListPanel';
+import KgameSectionHeading from './KgameSectionHeading';
 import { SMASH_EGG_ASSETS } from '../../smash-egg/smashEggAssets';
 import { KGAME99_ASSETS, KGAME99_COLORS } from './assets';
 import { oneSpin, tenSpin, fiftySpin, getAllLuckySpinItems, getPublicTermsAndConditions, getWinningList } from '../../../api/memberApi';
@@ -441,19 +442,7 @@ export default function Kgame99SpinPage() {
         </KgameListPanel>
 
         {/* Terms & Conditions — heading OUTSIDE the frame, in theme gold. */}
-        <h2
-          className="mt-1 text-center text-[19px] uppercase leading-none tracking-[2px]"
-          style={{
-            fontFamily: 'var(--font-acme), sans-serif',
-            background: 'linear-gradient(180deg, #fff3c4 0%, #f5c451 48%, #dc9d16 100%)',
-            WebkitBackgroundClip: 'text',
-            backgroundClip: 'text',
-            color: 'transparent',
-            filter: 'drop-shadow(0 2px 3px rgba(4,20,48,0.6))',
-          }}
-        >
-          Terms &amp; Conditions
-        </h2>
+        <KgameSectionHeading className="mt-1">Terms &amp; Conditions</KgameSectionHeading>
         <KgameListPanel height={250}>
           {(() => {
             const terms = String(termsText || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
