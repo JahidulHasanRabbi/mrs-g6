@@ -52,6 +52,49 @@ export const ENDPOINTS = {
     CLAIM: (uuid) => `/mission/missions/${uuid}/claim/`,
     PROGRESS_HISTORY: '/mission/missions/progress-history/',
   },
+  // Phase 3 planet RPG (docs/MRS - G6 Avatar API Documentation.md).
+  // Shared by the member-facing game and the back-office pages.
+  AVATAR: {
+    GAME_STATUS: '/avatar/game-status/',
+    SETTINGS: '/avatar/settings/',
+    CHECK_IN_SETTINGS: '/avatar/check-in-settings/',
+    // Member — avatar
+    PROFILE: '/avatar/member-avatar/profile/',
+    START_JOURNEY: '/avatar/member-avatar/start-journey/',
+    LEVEL_UP: '/avatar/member-avatar/level-up/',
+    MY_EQUIPMENT: '/avatar/member-avatar/my-equipment/',
+    EQUIP: '/avatar/member-avatar/equip/',
+    UNEQUIP: '/avatar/member-avatar/unequip/',
+    DISCARD: '/avatar/member-avatar/discard/',
+    BATTLE_POINT_HISTORY: '/avatar/member-avatar/battle-point-history/',
+    // Member — check-in
+    CHECK_IN_STATUS: '/avatar/member-check-in/status/',
+    CHECK_IN_CLAIM: '/avatar/member-check-in/claim/',
+    // Member — missions
+    MY_MISSIONS: '/avatar/avatar-missions/my-missions/',
+    MISSION_CLAIM: (uuid) => `/avatar/avatar-missions/${uuid}/claim/`,
+    MISSION_CLAIM_HISTORY: '/avatar/avatar-missions/claim-history/',
+    // Member — challenge
+    CHALLENGE_STATUS: '/avatar/member-challenge/status/',
+    CHALLENGE_ATTACK: '/avatar/member-challenge/attack/',
+    CHALLENGE_OPEN_BOX: '/avatar/member-challenge/open-box/',
+    CHALLENGE_MY_BOXES: '/avatar/member-challenge/my-boxes/',
+    CHALLENGE_BATTLE_HISTORY: '/avatar/member-challenge/battle-history/',
+    // Back office — fixed catalogs (GET + PUT/PATCH only, no create/archive)
+    EQUIPMENT_ITEMS: '/avatar/equipment-items/',
+    EQUIPMENT_ITEM: (uuid) => `/avatar/equipment-items/${uuid}/`,
+    BOSSES: '/avatar/bosses/',
+    BOSS: (uuid) => `/avatar/bosses/${uuid}/`,
+    // Back office — avatar missions (full CRUD + archive)
+    MISSIONS: '/avatar/avatar-missions/',
+    MISSION: (uuid) => `/avatar/avatar-missions/${uuid}/`,
+    MISSION_ARCHIVE: (uuid) => `/avatar/avatar-missions/${uuid}/archive/`,
+    // Back office — mystery box items (full CRUD + archive)
+    MYSTERY_BOX_ITEMS: '/avatar/mystery-box-items/',
+    MYSTERY_BOX_ITEM: (uuid) => `/avatar/mystery-box-items/${uuid}/`,
+    MYSTERY_BOX_ITEM_ARCHIVE: (uuid) => `/avatar/mystery-box-items/${uuid}/archive/`,
+    MYSTERY_BOX_PROBABILITY_TOTAL: '/avatar/mystery-box-items/probability-total/'
+  },
   ADMIN: {
     // Previous admin login API:
     // LOGIN: '/login/admin-access-token/',
