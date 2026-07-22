@@ -1,39 +1,34 @@
 "use client";
 
-// How-to-play modal opened from the top bar info icon. Also hosts the
-// "reset progress" action — useful while the game runs on the mock service.
+// How-to-play modal opened from the top bar info icon. Every number comes
+// from the live game settings carried on `profile` (/avatar/settings/), so the
+// rules always match what the back office has configured.
 
-import { useState } from "react";
-import { RPG_COLORS, RPG_FONTS, EXTRA_ATTEMPT_COST, DISCARD_COST } from "./constants";
+import { RPG_COLORS, RPG_FONTS, EXTRA_ATTEMPT_COST, DISCARD_COST, POWER_PER_LEVEL, EQUIP_POWER, MAX_LEVEL } from "./constants";
 import { GoldCta } from "./primitives";
-import * as rpgApi from "./rpgApi";
-import NoticeModal from "./NoticeModal";
 
-const RULES = [
-  ["LEVEL UP", "Spend Battle Points (BP) to level your avatar — BP cost = current level × 100. Each level grants +500 Power."],
-  ["EQUIP GEAR", "Weapons, helmets, armor and boots each add +1,000 Power. Spare gear lives in your backpack (100 slots)."],
-  ["CHALLENGE BOSSES", `Each planet boss needs a minimum Power. Roll the dice — every pip is an attack. One free attempt daily; extras cost ${EXTRA_ATTEMPT_COST} Tokens.`],
-  ["MYSTERY BOXES", "Every boss kill drops a Mystery Box with Tokens, BP, free credit, rare gear or instant level-ups."],
-  ["EARN MORE", `Missions and the daily check-in pay Tokens and BP. Discarding gear costs ${DISCARD_COST} Tokens per item.`],
-];
+const fmt = (n) => Number(n).toLocaleString("en-GB");
 
-export default function InfoModal({ open, onClose, onReset }) {
-  const [confirmReset, setConfirmReset] = useState(false);
-  const [busy, setBusy] = useState(false);
+function rulesFor(profile) {
+  const perLevel = profile?.powerPerLevel ?? POWER_PER_LEVEL;
+  const multiplier = profile?.bpPerLevelMultiplier ?? 100;
+  const capacity = profile?.backpackCapacity ?? 100;
+  const extraCost = profile?.extraAttemptCost ?? EXTRA_ATTEMPT_COST;
+  const discardCost = profile?.discardCost ?? DISCARD_COST;
+  const maxLevel = profile?.maxLevel ?? MAX_LEVEL;
+  return [
+    ["LEVEL UP", `Spend Battle Points (BP) to level your avatar — BP cost = current level × ${multiplier}. Each level grants +${fmt(perLevel)} Power (max Lv.${maxLevel}).`],
+    ["EQUIP GEAR", `Weapons, helmets, armor and boots each add Power. Spare gear lives in your backpack (${fmt(capacity)} slots).`],
+    ["CHALLENGE BOSSES", `Each planet boss needs a minimum Power. Roll the dice — every pip is an attack. Free daily attempts are shared across bosses; extras cost ${extraCost} Tokens.`],
+    ["MYSTERY BOXES", "Every boss kill drops a Mystery Box with Tokens, BP, free credit, rare gear or instant level-ups."],
+    ["EARN MORE", `Missions and the daily check-in pay Battle Points. Discarding gear costs ${discardCost} Tokens per item.`],
+  ];
+}
 
+export default function InfoModal({ open, onClose, profile }) {
   if (!open) return null;
 
-  const handleReset = async () => {
-    setBusy(true);
-    try {
-      const profile = await rpgApi.resetRpgState();
-      onReset(profile);
-    } finally {
-      setBusy(false);
-      setConfirmReset(false);
-      onClose();
-    }
-  };
+  const RULES = rulesFor(profile);
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 px-6 backdrop-blur-sm" onClick={onClose}>
@@ -66,26 +61,7 @@ export default function InfoModal({ open, onClose, onReset }) {
             GOT IT
           </GoldCta>
         </div>
-        <button
-          type="button"
-          onClick={() => setConfirmReset(true)}
-          className="mt-[12px] w-full text-center text-[10px] tracking-[1px] underline underline-offset-2"
-          style={{ color: RPG_COLORS.slotEmpty, fontFamily: RPG_FONTS.display }}
-        >
-          Reset game progress
-        </button>
       </div>
-
-      <NoticeModal
-        open={confirmReset}
-        title="RESET PROGRESS?"
-        message="Your hero, level, equipment, tokens and BP will be wiped. This cannot be undone."
-        confirmLabel="RESET EVERYTHING"
-        cancelLabel="KEEP PLAYING"
-        busy={busy}
-        onConfirm={handleReset}
-        onClose={() => setConfirmReset(false)}
-      />
     </div>
   );
 }

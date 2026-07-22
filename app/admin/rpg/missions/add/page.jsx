@@ -17,6 +17,7 @@ import {
 import {
   ActionButton,
   Card,
+  DateField,
   Field,
   GOLD_BG,
   INPUT_BASE,
@@ -188,20 +189,10 @@ function AvatarMissionForm() {
             <SectionTitle>Schedule</SectionTitle>
             <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-3">
               <Field label="Start Date" hint="Optional — leave empty to run immediately.">
-                <input
-                  type="date"
-                  value={form.startDate}
-                  onChange={(e) => set("startDate")(e.target.value)}
-                  className={`${INPUT_BASE} [color-scheme:dark]`}
-                />
+                <DateField value={form.startDate} onChange={set("startDate")} />
               </Field>
               <Field label="End Date" hint="Optional — must not be before start date.">
-                <input
-                  type="date"
-                  value={form.endDate}
-                  onChange={(e) => set("endDate")(e.target.value)}
-                  className={`${INPUT_BASE} [color-scheme:dark]`}
-                />
+                <DateField value={form.endDate} onChange={set("endDate")} min={form.startDate || undefined} />
               </Field>
             </div>
           </div>

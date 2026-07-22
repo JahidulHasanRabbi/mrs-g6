@@ -7,8 +7,8 @@
 // unwinds through the player's path. Transient things (battle scripts, open
 // dialogs) stay in component state and never enter the URL.
 //
-// There is no RPG backend yet — every data call goes through the mock
-// service in app/components/rpg/rpgApi.js (localStorage-backed, API-shaped).
+// Every data call goes through app/components/rpg/rpgApi.js, which adapts the
+// /avatar/* member API (app/api/memberApi.js) into the screens' view-models.
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -35,7 +35,7 @@ function RpgPageInner() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { authReady, memberUuid, userData, isLoadingProfile } = useUser();
+  const { authReady, memberUuid } = useUser();
 
   const viewParam = searchParams.get("view") || RPG_VIEWS.HOME;
   const view = VALID_VIEWS.has(viewParam) ? viewParam : RPG_VIEWS.HOME;
@@ -46,7 +46,8 @@ function RpgPageInner() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
   const [createError, setCreateError] = useState(null);
-  const seededRef = useRef(false);
+  const [loadError, setLoadError] = useState(null);
+  const loadedRef = useRef(false);
 
   const navigate = useCallback(
     (nextView, extra, opts) => {
@@ -69,26 +70,19 @@ function RpgPageInner() {
     preloadRpgAssets();
   }, []);
 
-  // Initial load + one-time token seeding. The RPG wallet starts from the
-  // member's real token balance (once it has loaded) but is mock-only after
-  // that — we never mutate the real balance without a backend.
+  // Initial load. The profile (level, BP, power) comes from
+  // /avatar/member-avatar/profile/, the token balance from the member record —
+  // both real, both authoritative.
   useEffect(() => {
-    if (!authReady || seededRef.current) return;
-    const balanceReady = Boolean(memberUuid) && !isLoadingProfile;
-    // With a member session, wait until the real balance has loaded so the
-    // one-time seed uses it; without one (dev/no auth) seed the playable
-    // floor of 100 tokens immediately.
-    if (memberUuid && !balanceReady) return;
-    seededRef.current = true;
-    const parsed = Number(String(userData?.balance ?? "").replace(/,/g, ""));
-    const seedTokens = Number.isFinite(parsed) ? Math.max(Math.floor(parsed), 100) : 100;
+    if (!authReady || loadedRef.current) return;
+    loadedRef.current = true;
     // No cancellation: the guard above makes this a one-shot, and dropping
     // the response on a dep change would strand the page on LOADING.
     rpgApi
-      .getRpgProfile({ seedTokens })
+      .getRpgProfile()
       .then(setProfile)
-      .catch(() => {});
-  }, [authReady, memberUuid, isLoadingProfile, userData?.balance]);
+      .catch((err) => setLoadError(err?.message || "Could not load the game. Please try again."));
+  }, [authReady, memberUuid]);
 
   // Equipment powers the Home slot chips; refresh when the hero exists and
   // whenever the player lands on a screen that shows gear (a mystery box may
@@ -160,27 +154,29 @@ function RpgPageInner() {
 
   if (!profile) {
     return (
-      <div className="grid min-h-[100dvh] w-full place-items-center" style={{ background: "#07130d" }}>
-        <p className="text-[14px] tracking-[3px]" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
-          LOADING...
+      <div className="grid min-h-[100dvh] w-full place-items-center px-[32px]" style={{ background: "#07130d" }}>
+        <p
+          className="text-center text-[14px] leading-[22px] tracking-[3px]"
+          style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}
+        >
+          {loadError || "LOADING..."}
         </p>
       </div>
     );
   }
 
-  const handleReset = (freshProfile) => {
-    setProfile(freshProfile);
-    setEquipment(null);
-    setBattleScript(null);
-    navigate(RPG_VIEWS.HOME, undefined, { replace: true });
-  };
-
   if (!profile.hasHero) {
     return (
       <>
-        <CharacterSelect onCreate={handleCreateHero} onInfoClick={openInfo} onMenuClick={openMenu} error={createError} />
+        <CharacterSelect
+          onCreate={handleCreateHero}
+          onInfoClick={openInfo}
+          onMenuClick={openMenu}
+          error={createError}
+          profile={profile}
+        />
         <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
-        <InfoModal open={infoOpen} onClose={() => setInfoOpen(false)} onReset={handleReset} />
+        <InfoModal open={infoOpen} onClose={() => setInfoOpen(false)} profile={profile} />
       </>
     );
   }
@@ -232,12 +228,27 @@ function RpgPageInner() {
           <RpgMissions onProfileUpdate={handleProfileUpdate} onNavigate={navigate} />
         )}
         {view === RPG_VIEWS.CHECKIN && (
-          <CheckIn onProfileUpdate={handleProfileUpdate} onNavigate={navigate} />
+          <CheckIn onProfileUpdate={handleProfileUpdate} />
         )}
       </ScreenShell>
 
+      {/* game_status 2 — reads still work, every action is refused by the API.
+          Same overlay treatment as the penalty-kick closed state. */}
+      {!profile.gameOpen && (
+        <div className="fixed inset-x-0 bottom-[100px] top-[68px] z-30 grid place-items-center bg-black/70 px-6 backdrop-blur-md">
+          <div className="w-full max-w-[360px] rounded-[16px] border border-white/15 bg-[#071906]/95 px-6 py-7 text-center shadow-[0_16px_50px_rgba(0,0,0,0.45)]">
+            <p className="text-[20px] font-bold" style={{ color: RPG_COLORS.gold, fontFamily: RPG_FONTS.display }}>
+              RPG is currently closed
+            </p>
+            <p className="mt-3 text-[12px] leading-5" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
+              Please check back later.
+            </p>
+          </div>
+        </div>
+      )}
+
       <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
-      <InfoModal open={infoOpen} onClose={() => setInfoOpen(false)} onReset={handleReset} />
+      <InfoModal open={infoOpen} onClose={() => setInfoOpen(false)} profile={profile} />
     </>
   );
 }

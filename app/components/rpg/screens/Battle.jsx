@@ -396,7 +396,7 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
             {phase === PHASES.ROLLING ? "ROLLING..." : `ROLL DICE${roundIndex > 0 && phase === PHASES.IDLE ? ` · TOTAL ${rounds[roundIndex - 1]?.cumulative ?? 0}/${threshold}` : ""}`}
           </span>
           <span className="mt-[3px] text-[10px]" style={{ color: RPG_COLORS.slotEmpty, fontFamily: RPG_FONTS.display }}>
-            Dice number = number of attacks · 100–500 dmg each
+            Dice number = number of attacks · beat {threshold} to win
           </span>
 
           <div className="mt-[10px] w-full max-w-[340px]">

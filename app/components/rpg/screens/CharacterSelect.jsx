@@ -14,7 +14,11 @@ import { Panel, StatRow, GoldCta } from "../primitives";
 
 const GENDERS = ["male", "female"];
 
-export default function CharacterSelect({ onCreate, onInfoClick, onMenuClick, error }) {
+export default function CharacterSelect({ onCreate, onInfoClick, onMenuClick, error, profile }) {
+  // Starting stats mirror the live game settings (/avatar/settings/).
+  const basePower = profile?.powerPerLevel ?? POWER_PER_LEVEL;
+  const slotCount = profile?.equipmentSlotCount ?? EQUIP_SLOTS.length;
+  const maxLevel = profile?.maxLevel ?? MAX_LEVEL;
   const [gender, setGender] = useState("male");
   const [busy, setBusy] = useState(false);
 
@@ -117,9 +121,9 @@ export default function CharacterSelect({ onCreate, onInfoClick, onMenuClick, er
         {/* Stats card */}
         <Panel className="mt-[8px] flex flex-col gap-[10px]">
           <StatRow label="Starting Level" value="Lv.1" />
-          <StatRow label="Base Power" value={POWER_PER_LEVEL.toLocaleString("en-GB")} valueColor={RPG_COLORS.cyan} />
-          <StatRow label="Equipment Slots" value={String(EQUIP_SLOTS.length)} />
-          <StatRow label="Max Level" value={`Lv.${MAX_LEVEL}`} valueColor={RPG_COLORS.gold} />
+          <StatRow label="Base Power" value={basePower.toLocaleString("en-GB")} valueColor={RPG_COLORS.cyan} />
+          <StatRow label="Equipment Slots" value={String(slotCount)} />
+          <StatRow label="Max Level" value={`Lv.${maxLevel}`} valueColor={RPG_COLORS.gold} />
         </Panel>
 
         {error ? (

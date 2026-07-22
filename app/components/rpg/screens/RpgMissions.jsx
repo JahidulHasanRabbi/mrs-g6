@@ -1,8 +1,9 @@
 "use client";
 
-// RPG Missions screen (Figma 2026:3643): DAILY / WEEKLY / CHALLENGE tabs and
-// mission cards with progress + GO / CLAIM / CLAIMED actions. Entirely on the
-// mock service — deliberately NOT wired to the site-wide missions API.
+// RPG Missions screen (Figma 2026:3643): category tabs and mission cards with
+// progress + GO / CLAIM / CLAIMED actions. Backed by
+// /avatar/avatar-missions/my-missions/ — its own module, deliberately NOT the
+// site-wide platform missions API.
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
@@ -12,10 +13,11 @@ import * as rpgApi from "../rpgApi";
 import { GoldCta, ProgressBar } from "../primitives";
 import NoticeModal from "../NoticeModal";
 
-const TAB_LABELS = { daily: "DAILY", weekly: "WEEKLY", challenge: "CHALLENGE" };
+// The API's four categories (1 Daily, 2 Weekly, 3 Monthly, 4 Achievement).
+const TAB_LABELS = { daily: "DAILY", weekly: "WEEKLY", monthly: "MONTHLY", achievement: "ACHIEVEMENT" };
 
 function MissionIcon({ mission }) {
-  if (mission.metric === "checkinToday" || mission.metric === "checkinWeek") {
+  if (mission.metric === "checkinToday") {
     return <span className="text-[20px]" style={{ color: RPG_COLORS.cyan }}>⚡</span>;
   }
   if (mission.metric === "deposit") {
@@ -31,9 +33,9 @@ function MissionIcon({ mission }) {
 
 function rewardText(reward) {
   const parts = [];
+  if (reward.bp) parts.push(`${Number(reward.bp).toLocaleString("en-GB")} BP`);
   if (reward.tokens) parts.push(`${reward.tokens} Token${reward.tokens > 1 ? "s" : ""}`);
-  if (reward.bp) parts.push(`${reward.bp} BP`);
-  return parts.join(" · ");
+  return parts.join(" · ") || "No reward";
 }
 
 export default function RpgMissions({ onProfileUpdate, onNavigate }) {
@@ -42,11 +44,14 @@ export default function RpgMissions({ onProfileUpdate, onNavigate }) {
   const [claimed, setClaimed] = useState(null); // reward notice
   const [busyId, setBusyId] = useState(null);
 
+  const [loading, setLoading] = useState(true);
+
   const load = () => {
     rpgApi
       .getRpgMissions()
       .then((d) => setMissions(d.missions))
-      .catch(() => {});
+      .catch((err) => setClaimed({ title: "OOPS", message: err?.message || "Could not load missions." }))
+      .finally(() => setLoading(false));
   };
   useEffect(load, []);
 
@@ -88,7 +93,9 @@ export default function RpgMissions({ onProfileUpdate, onNavigate }) {
               key={t}
               type="button"
               onClick={() => setTab(t)}
-              className="relative min-w-0 flex-1 rounded-[10px] py-[10px] text-[13px] font-bold tracking-[3px]"
+              // 4 categories share the strip, so the label is tighter than
+              // the 3-tab design to keep every tab on one line.
+              className="relative min-w-0 flex-1 rounded-[10px] px-[2px] py-[10px] text-[11px] font-bold tracking-[1px]"
               style={{ color: active ? RPG_COLORS.cyanSoft : "#6e5fa8", fontFamily: RPG_FONTS.display }}
             >
               {active && (
@@ -107,6 +114,14 @@ export default function RpgMissions({ onProfileUpdate, onNavigate }) {
 
       {/* Cards */}
       <div className="mt-[14px] flex flex-col gap-[14px] pb-[10px]">
+        {!loading && visible.length === 0 ? (
+          <p
+            className="py-[28px] text-center text-[12px]"
+            style={{ color: RPG_COLORS.slotEmpty, fontFamily: RPG_FONTS.display }}
+          >
+            No {TAB_LABELS[tab].toLowerCase()} missions running right now.
+          </p>
+        ) : null}
         {visible.map((m) => {
           const pct = Math.min(100, (m.progress / m.target) * 100);
           return (

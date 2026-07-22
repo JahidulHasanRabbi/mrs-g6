@@ -518,3 +518,141 @@ export async function getMemberReferrerRewardItems(params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.LEADERBOARD.REFERRAL_REWARD_ITEMS}${qs}`, { method: 'GET' }, true, 'member');
 }
+
+// ============================================================================
+// AVATAR RPG (Phase 3) — MEMBER / USER
+// docs/MRS - G6 Avatar API Documentation.md — all endpoints under /avatar/.
+// The view-model mapping for the game screens lives in
+// app/components/rpg/rpgApi.js; these are the raw API calls.
+// ============================================================================
+
+// GET /avatar/game-status/  — 1 = OPEN, 2 = CLOSE
+export async function getAvatarGameStatus() {
+  return await apiRequest(ENDPOINTS.AVATAR.GAME_STATUS, { method: 'GET' }, true, 'member');
+}
+
+// GET /avatar/settings/ — shared game math (max level, costs, capacity, dice)
+export async function getAvatarSettings() {
+  return await apiRequest(ENDPOINTS.AVATAR.SETTINGS, { method: 'GET' }, true, 'member');
+}
+
+// GET /avatar/member-avatar/profile/ — {journey_started:false} until start-journey
+export async function getAvatarProfile() {
+  return await apiRequest(ENDPOINTS.AVATAR.PROFILE, { method: 'GET' }, true, 'member');
+}
+
+// POST /avatar/member-avatar/start-journey/  — gender: 1 = MALE, 2 = FEMALE
+export async function startAvatarJourney(gender) {
+  return await apiRequest(ENDPOINTS.AVATAR.START_JOURNEY, {
+    method: 'POST',
+    body: { gender }
+  }, true, 'member');
+}
+
+// POST /avatar/member-avatar/level-up/ — deducts next_level_cost battle points
+export async function avatarLevelUp() {
+  return await apiRequest(ENDPOINTS.AVATAR.LEVEL_UP, { method: 'POST' }, true, 'member');
+}
+
+// GET /avatar/member-avatar/my-equipment/  (?is_equipped=true|false)
+export async function getMyAvatarEquipment(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.AVATAR.MY_EQUIPMENT}${qs}`, { method: 'GET' }, true, 'member');
+}
+
+// POST /avatar/member-avatar/equip/ — equipment_uuid is the MEMBER equipment uuid
+export async function equipAvatarEquipment(equipmentUuid) {
+  return await apiRequest(ENDPOINTS.AVATAR.EQUIP, {
+    method: 'POST',
+    body: { equipment_uuid: equipmentUuid }
+  }, true, 'member');
+}
+
+// POST /avatar/member-avatar/unequip/ — back into the backpack (needs space)
+export async function unequipAvatarEquipment(equipmentUuid) {
+  return await apiRequest(ENDPOINTS.AVATAR.UNEQUIP, {
+    method: 'POST',
+    body: { equipment_uuid: equipmentUuid }
+  }, true, 'member');
+}
+
+// POST /avatar/member-avatar/discard/ — charges discard_equipment_cost tokens, 204
+export async function discardAvatarEquipment(equipmentUuid) {
+  return await apiRequest(ENDPOINTS.AVATAR.DISCARD, {
+    method: 'POST',
+    body: { equipment_uuid: equipmentUuid }
+  }, true, 'member');
+}
+
+// GET /avatar/member-avatar/battle-point-history/ (paginated)
+export async function getAvatarBattlePointHistory(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.AVATAR.BATTLE_POINT_HISTORY}${qs}`, { method: 'GET' }, true, 'member');
+}
+
+// GET /avatar/member-check-in/status/ — rolling 7-day streak + last 30 history
+export async function getAvatarCheckInStatus() {
+  return await apiRequest(ENDPOINTS.AVATAR.CHECK_IN_STATUS, { method: 'GET' }, true, 'member');
+}
+
+// POST /avatar/member-check-in/claim/ — random(min,max) × multiplier battle points
+export async function claimAvatarCheckIn() {
+  return await apiRequest(ENDPOINTS.AVATAR.CHECK_IN_CLAIM, { method: 'POST' }, true, 'member');
+}
+
+// GET /avatar/avatar-missions/my-missions/  (?category=1..4)
+export async function getMyAvatarMissions(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.AVATAR.MY_MISSIONS}${qs}`, { method: 'GET' }, true, 'member');
+}
+
+// POST /avatar/avatar-missions/{uuid}/claim/
+export async function claimAvatarMission(uuid) {
+  return await apiRequest(ENDPOINTS.AVATAR.MISSION_CLAIM(uuid), { method: 'POST' }, true, 'member');
+}
+
+// GET /avatar/avatar-missions/claim-history/ (paginated)
+export async function getAvatarMissionClaimHistory(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.AVATAR.MISSION_CLAIM_HISTORY}${qs}`, { method: 'GET' }, true, 'member');
+}
+
+// GET /avatar/member-challenge/status/ — bosses, free attempts, unopened boxes
+export async function getAvatarChallengeStatus() {
+  return await apiRequest(ENDPOINTS.AVATAR.CHALLENGE_STATUS, { method: 'GET' }, true, 'member');
+}
+
+// POST /avatar/member-challenge/attack/ — returns the full dice script + box uuid
+export async function attackAvatarBoss(bossUuid) {
+  return await apiRequest(ENDPOINTS.AVATAR.CHALLENGE_ATTACK, {
+    method: 'POST',
+    body: { boss_uuid: bossUuid }
+  }, true, 'member');
+}
+
+// POST /avatar/member-challenge/open-box/ — draws + applies the reward
+export async function openAvatarMysteryBox(boxUuid) {
+  return await apiRequest(ENDPOINTS.AVATAR.CHALLENGE_OPEN_BOX, {
+    method: 'POST',
+    body: { box_uuid: boxUuid }
+  }, true, 'member');
+}
+
+// GET /avatar/member-challenge/my-boxes/ (paginated, ?is_opened=true|false)
+export async function getMyAvatarBoxes(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.AVATAR.CHALLENGE_MY_BOXES}${qs}`, { method: 'GET' }, true, 'member');
+}
+
+// GET /avatar/mystery-box-items/ — the admin-configured reward catalog, read
+// with the member token to render the "possible rewards" panel.
+export async function getAvatarMysteryBoxCatalog(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.AVATAR.MYSTERY_BOX_ITEMS}${qs}`, { method: 'GET' }, true, 'member');
+}
+
+// GET /avatar/member-challenge/battle-history/ (paginated)
+export async function getAvatarBattleHistory(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.AVATAR.CHALLENGE_BATTLE_HISTORY}${qs}`, { method: 'GET' }, true, 'member');
+}

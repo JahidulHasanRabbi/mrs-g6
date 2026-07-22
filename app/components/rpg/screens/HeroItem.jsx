@@ -36,6 +36,8 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
   const backpack = equipment?.backpack || [];
   const capacity = equipment?.capacity ?? 100;
   const slots = equipment?.slots || {};
+  // Discard price comes from the live game settings (/avatar/settings/).
+  const discardCost = equipment?.profile?.discardCost ?? DISCARD_COST;
   // Grid keeps at least 3 rows of cells like the design's empty state.
   const cellCount = Math.max(12, Math.ceil(backpack.length / 4) * 4);
 
@@ -75,6 +77,10 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
       setManageMode(false);
     } catch (err) {
       failNotice(err, "Could not discard.");
+      // A batch can fail partway (tokens run out) — resync so the grid never
+      // keeps showing items the server already deleted.
+      rpgApi.getEquipment().then(onEquipmentUpdate).catch(() => {});
+      setSelected([]);
     } finally {
       setBusy(false);
       setConfirmIds(null);
@@ -288,7 +294,7 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
           <img src="/assets/rpg/icons/trash.svg" alt="" className="size-[18px]" />
           <span className="text-[11px] font-semibold tracking-[2px]" style={{ color: "#ff8faf", fontFamily: RPG_FONTS.display }}>
             {manageMode && selected.length
-              ? `DISCARD ${selected.length} SELECTED · −${selected.length * DISCARD_COST} TOKENS`
+              ? `DISCARD ${selected.length} SELECTED · −${selected.length * discardCost} TOKENS`
               : "DRAG ITEM HERE TO DISCARD"}
           </span>
         </button>
@@ -297,7 +303,7 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
       <NoticeModal
         open={Boolean(confirmIds)}
         title="DISCARD EQUIPMENT?"
-        message={`Discarding costs ${DISCARD_COST} Tokens per item (${(confirmIds?.length || 0) * DISCARD_COST} Tokens total). This cannot be undone.`}
+        message={`Discarding costs ${discardCost} Tokens per item (${(confirmIds?.length || 0) * discardCost} Tokens total). This cannot be undone.`}
         confirmLabel="DISCARD"
         cancelLabel="KEEP IT"
         busy={busy}

@@ -55,26 +55,26 @@ export const RPG_VIEWS = {
 };
 
 // ---------------------------------------------------------------------------
-// Game math (Phase 3 spec)
+// Game math — spec defaults (Phase 3 sheets 3a / 3b).
+//
+// These are FALLBACKS only. The live values come from /avatar/settings/ and
+// ride on the profile view-model (powerPerLevel, maxLevel, discardCost,
+// extraAttemptCost, backpackCapacity, equipmentSlotCount), so a back-office
+// change takes effect without a deploy.
 // ---------------------------------------------------------------------------
 
 export const MAX_LEVEL = 100;
 export const POWER_PER_LEVEL = 500;
 export const EQUIP_POWER = 1000;
 export const EQUIP_SLOTS = ["weapon", "helmet", "armor", "boots"];
-export const BACKPACK_CAPACITY = 100;
 export const EXTRA_ATTEMPT_COST = 10; // tokens
 export const DISCARD_COST = 10; // tokens per item
 
-// BP required to go from `level` to `level + 1`.
-export const bpToNext = (level) => level * 100;
-
-export const powerFor = (level, equippedCount) =>
-  level * POWER_PER_LEVEL + equippedCount * EQUIP_POWER;
-
-// Planet bosses (3b Challenge). `diceThreshold`: the boss dies once the
-// cumulative dice total exceeds it — the battle is always winnable when the
-// power gate is met; dice only pace the animation.
+// Planet bosses (3b Challenge) — the VISUAL identity only: name, theme and
+// the CSS planet spheres. Every stat (power required, HP, dice threshold,
+// reward slot, unlock state) is overwritten from
+// /avatar/member-challenge/status/ by rpgApi.bossView; the numbers below are
+// the spec defaults kept so the art entry is complete on its own.
 //
 // `planetGradient` reproduces the Figma planet spheres (they're vectors in
 // the design, so no raster asset). Each boss now has its own character art +
@@ -164,35 +164,12 @@ export const EQUIPMENT_NAMES = {
   boots: ["Skystep Boots", "Comet Striders", "Titan Greaves", "Astral Walkers"],
 };
 
-// RPG mission definitions (mock — no backend). `metric` keys map to counters
-// the mock service maintains; `go` is the in-game view a GO button opens.
-export const RPG_MISSIONS = [
-  { id: "d-checkin", tab: "daily", title: "Check In 1 Day", reward: { tokens: 1, bp: 10 }, target: 1, metric: "checkinToday", go: RPG_VIEWS.CHECKIN },
-  { id: "d-deposit", tab: "daily", title: "Daily Deposit RM100", reward: { tokens: 5 }, target: 100, metric: "deposit", go: null },
-  { id: "d-games", tab: "daily", title: "Play 3 Mini Games", reward: { bp: 100 }, target: 3, metric: "gamesPlayed", go: null },
-  { id: "d-boss", tab: "daily", title: "Defeat 1 Planet Boss", reward: { bp: 50 }, target: 1, metric: "bossesToday", go: RPG_VIEWS.CHALLENGE },
-  { id: "w-checkin", tab: "weekly", title: "Check In 7 Days", reward: { tokens: 10, bp: 200 }, target: 7, metric: "checkinWeek", go: RPG_VIEWS.CHECKIN },
-  { id: "w-boss", tab: "weekly", title: "Defeat 5 Planet Bosses", reward: { tokens: 5, bp: 300 }, target: 5, metric: "bossesWeek", go: RPG_VIEWS.CHALLENGE },
-  { id: "w-box", tab: "weekly", title: "Open 5 Mystery Boxes", reward: { bp: 250 }, target: 5, metric: "boxesWeek", go: RPG_VIEWS.CHALLENGE },
-  { id: "c-level10", tab: "challenge", title: "Reach Avatar Lv.10", reward: { tokens: 20, bp: 500 }, target: 10, metric: "level", go: RPG_VIEWS.LEVEL },
-  { id: "c-gear4", tab: "challenge", title: "Equip All 4 Equipment", reward: { bp: 400 }, target: 4, metric: "equipped", go: RPG_VIEWS.ITEMS },
-  { id: "c-nebula", tab: "challenge", title: "Defeat Nebula Warden", reward: { tokens: 30, bp: 1000 }, target: 1, metric: "nebulaKills", go: RPG_VIEWS.CHALLENGE },
-];
+// Mission tabs — the API's four categories (1 Daily, 2 Weekly, 3 Monthly,
+// 4 Achievement). The missions themselves are configured in the back office
+// and come from /avatar/avatar-missions/my-missions/.
+export const MISSION_TABS = ["daily", "weekly", "monthly", "achievement"];
 
-export const MISSION_TABS = ["daily", "weekly", "challenge"];
-
-// Daily check-in (design 2026:3862): 7-day week strip, Monday start.
-// Day 3 pays double BP ("×2 BP BONUS"), days 5+ pay the higher tier, and a
-// full week tops day 7 with the weekly prize.
-export const CHECKIN_RULES = {
-  days: [
-    { tokens: 1, bp: 10 },
-    { tokens: 1, bp: 10 },
-    { tokens: 1, bp: 20, double: true },
-    { tokens: 1, bp: 10 },
-    { tokens: 2, bp: 20 },
-    { tokens: 2, bp: 20 },
-    { tokens: 2, bp: 20, weekly: true },
-  ],
-  weeklyPrize: { tokens: 5, mysteryBox: true },
-};
+// Check-in is a rolling 7-day streak configured in the back office
+// (/avatar/check-in-settings/); a missed day restarts at day 1. Rewards are
+// battle points only: random(min, max) × multiplier.
+export const CHECKIN_STREAK_DAYS = 7;

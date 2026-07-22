@@ -1,205 +1,207 @@
-// Feature-local, API-shaped mock service for the RPG mini-game.
+// RPG mini-game service — real /avatar/* backend adapter.
 //
-// There is no RPG backend yet. Every function here is async, latency
-// simulated, and returns view-models shaped like future API responses so the
-// screens never know they're talking to localStorage. When the backend lands,
-// swap the internals for apiRequest(...) calls without touching components.
+// Screens consume the same view-models the old localStorage mock produced, so
+// this file is the ONLY place that knows the API's integer enums and response
+// shapes. Raw calls live in app/api/memberApi.js (global API layer); the
+// enum ↔ frontend-key maps live in app/config/avatarOptions.js (global config).
 //
-// State is one JSON blob per member under `mrs_member_rpg_<memberUuid>`
-// (naming follows app/api/tokenStorage.js). Outcomes that matter (dice rolls,
-// box drops) come from a counter-seeded PRNG persisted in the blob, so a
-// mid-animation refresh can never reroll a result — mimicking server
-// authority.
+// View-model contract (unchanged from the mock):
+//   profile   → { hasHero, gender, level, maxLevel, bp, tokens, bpToNext,
+//                 expPct, equippedCount, power, powerPerLevel, equipPower,
+//                 levelPower, bpPerLevelMultiplier, canLevelUp, gameOpen,
+//                 discardCost, extraAttemptCost }
+//   equipment → { slots: {weapon|helmet|armor|boots: item|null},
+//                 backpack: [item], capacity, profile }
+//   item      → { id (member equipment uuid), slot, name, power, equipped }
+//   boss      → constants.BOSSES visual entry merged with server stats
+//               { uuid, requiredPower, hp, diceThreshold, rewardSlot,
+//                 locked, deficit, totalDefeats }
 
+import {
+  getAvatarGameStatus,
+  getAvatarSettings,
+  getAvatarProfile,
+  startAvatarJourney,
+  avatarLevelUp,
+  getMyAvatarEquipment,
+  equipAvatarEquipment,
+  unequipAvatarEquipment,
+  discardAvatarEquipment,
+  getAvatarCheckInStatus,
+  claimAvatarCheckIn,
+  getMyAvatarMissions,
+  claimAvatarMission,
+  getAvatarChallengeStatus,
+  attackAvatarBoss,
+  openAvatarMysteryBox,
+  getMyAvatarBoxes,
+  getAvatarMysteryBoxCatalog,
+  getMemberInfo,
+} from "../../api/memberApi";
 import { tokenStorage } from "../../api/tokenStorage";
 import {
-  MAX_LEVEL,
-  EQUIP_POWER,
-  POWER_PER_LEVEL,
-  EQUIP_SLOTS,
-  BACKPACK_CAPACITY,
-  EXTRA_ATTEMPT_COST,
-  DISCARD_COST,
-  bpToNext,
-  powerFor,
-  BOSSES,
-  MYSTERY_BOX_TABLE,
-  EQUIPMENT_NAMES,
-  RPG_MISSIONS,
-  CHECKIN_RULES,
-} from "./constants";
+  GENDER_KEY_BY_CODE,
+  GENDER_CODE_BY_KEY,
+  SLOT_KEY_BY_CODE,
+  PLANET_KEY_BY_CODE,
+} from "../../config/avatarOptions";
+import { BOSSES, RPG_VIEWS } from "./constants";
 
-const VERSION = 1;
-const LATENCY_MS = 220;
+// ---------------------------------------------------------------------------
+// Errors — surface the backend's message (screens show err.message in
+// NoticeModal), keep a code for programmatic checks.
+// ---------------------------------------------------------------------------
 
-const wait = (ms = LATENCY_MS) => new Promise((r) => setTimeout(r, ms));
+// The API's player-facing reason lives in `details` ("Already checked in
+// today", "Battle power is too low…"); `error` is only the generic bucket
+// ("Invalid request"), so `details` is read first.
+function gameError(err, fallback) {
+  const data = err?.data;
+  let message = null;
+  if (typeof data === "string") {
+    message = data;
+  } else if (data && typeof data === "object") {
+    const details = data.details;
+    if (typeof details === "string") {
+      message = details;
+    } else if (details && typeof details === "object") {
+      // Field validation shape: { field: ["msg"] }
+      for (const val of Object.values(details)) {
+        const msg = Array.isArray(val) ? val[0] : val;
+        if (typeof msg === "string") {
+          message = msg;
+          break;
+        }
+      }
+    }
+    if (!message && data.detail) message = String(data.detail);
+    if (!message && typeof data.error === "string") message = data.error;
+  }
+  const out = new Error(message || fallback || "Something went wrong. Please try again.");
+  out.code = err?.status;
+  return out;
+}
 
-const apiError = (code, message) => {
-  const err = new Error(message);
-  err.code = code;
-  return err;
+const rethrow = (fallback) => (err) => {
+  throw gameError(err, fallback);
 };
 
 // ---------------------------------------------------------------------------
-// Storage
+// Session caches — settings rarely change; challenge status is cached so
+// startBattle can resolve a planet key back to its boss uuid.
 // ---------------------------------------------------------------------------
 
-function storageKey() {
-  const uuid =
-    (typeof window !== "undefined" && tokenStorage.getMemberUuid()) || "anon";
-  return `mrs_member_rpg_${uuid}`;
-}
+// Nothing is cached between calls: every read hits the API. Module-level
+// state would outlive a member switch (/auth?id=… is a client-side push, so
+// the module is never reloaded) and there is no cheap way to be sure it is
+// still valid — so we just always ask.
+const getSettings = getAvatarSettings;
 
-function todayStr() {
-  const d = new Date();
-  const p = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
-
-// Monday-based start of the current week, as YYYY-MM-DD.
-function weekStartStr() {
-  const d = new Date();
-  const day = (d.getDay() + 6) % 7; // Mon=0 … Sun=6
-  d.setDate(d.getDate() - day);
-  const p = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
-
-function defaultState() {
-  return {
-    v: VERSION,
-    hero: null, // { gender }
-    level: 1,
-    bp: 0,
-    tokens: 0,
-    tokensSeeded: false,
-    equipment: { weapon: null, helmet: null, armor: null, boots: null },
-    backpack: [], // [{ id, slot, name }]
-    nextItemId: 1,
-    starterGearSeeded: false,
-    attempts: { date: todayStr(), freeUsed: false, paid: 0 },
-    pendingBoxes: [], // [{ id, bossId }]
-    nextBoxId: 1,
-    rngCounter: 0,
-    checkIn: { weekStart: weekStartStr(), days: [false, false, false, false, false, false, false], history: [] },
-    counters: { bossesToday: 0, bossesWeek: 0, boxesWeek: 0, nebulaKills: 0, countersDate: todayStr(), countersWeek: weekStartStr() },
-    claimedMissions: {}, // id -> date/weekStart it was claimed for
-  };
-}
-
-let cache = null;
-let cacheKey = null;
-
-function loadState() {
-  const key = storageKey();
-  if (cache && cacheKey === key) return cache;
-  let state = null;
+// Members' token balance lives on the member record, not the avatar profile.
+async function fetchTokens() {
+  const uuid = typeof window !== "undefined" ? tokenStorage.getMemberUuid() : null;
+  if (!uuid) return 0;
   try {
-    const raw = localStorage.getItem(key);
-    if (raw) state = JSON.parse(raw);
+    const info = await getMemberInfo(uuid);
+    const n = Number(info?.current_tokens);
+    return Number.isFinite(n) ? n : 0;
   } catch {
-    state = null;
+    return 0;
   }
-  if (!state || state.v !== VERSION) state = defaultState();
-  cache = state;
-  cacheKey = key;
-  rollover(state);
-  return state;
-}
-
-function saveState(state) {
-  cache = state;
-  cacheKey = storageKey();
-  try {
-    localStorage.setItem(cacheKey, JSON.stringify(state));
-  } catch {
-    // Storage full/blocked — keep playing off the in-memory cache.
-  }
-}
-
-// Lazy date rollovers (no timers): daily attempts + daily/weekly counters +
-// check-in week reset happen on read.
-function rollover(state) {
-  const today = todayStr();
-  const week = weekStartStr();
-  if (state.attempts.date !== today) {
-    state.attempts = { date: today, freeUsed: false, paid: 0 };
-  }
-  if (state.counters.countersDate !== today) {
-    state.counters.countersDate = today;
-    state.counters.bossesToday = 0;
-  }
-  if (state.counters.countersWeek !== week) {
-    state.counters.countersWeek = week;
-    state.counters.bossesWeek = 0;
-    state.counters.boxesWeek = 0;
-  }
-  if (state.checkIn.weekStart !== week) {
-    state.checkIn = { weekStart: week, days: [false, false, false, false, false, false, false], history: state.checkIn.history || [] };
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Deterministic RNG — one draw per counter tick, seeded off the member key,
-// so outcomes are decided the moment they're persisted.
-// ---------------------------------------------------------------------------
-
-function hashStr(s) {
-  let h = 0;
-  for (let i = 0; i < s.length; i += 1) {
-    h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
-  }
-  return h >>> 0;
-}
-
-function mulberry32(seed) {
-  let a = seed >>> 0;
-  return function next() {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function draw(state) {
-  const seed = hashStr(storageKey()) ^ Math.imul(state.rngCounter + 1, 0x9e3779b9);
-  state.rngCounter += 1;
-  return mulberry32(seed)();
 }
 
 // ---------------------------------------------------------------------------
 // View-model mappers
 // ---------------------------------------------------------------------------
 
-function equippedCount(state) {
-  return EQUIP_SLOTS.filter((s) => state.equipment[s]).length;
-}
-
-function profileView(state) {
-  const nextCost = bpToNext(state.level);
+function itemView(row) {
   return {
-    hasHero: Boolean(state.hero),
-    gender: state.hero?.gender || null,
-    level: state.level,
-    maxLevel: MAX_LEVEL,
-    bp: state.bp,
-    tokens: state.tokens,
-    bpToNext: nextCost,
-    expPct: state.level >= MAX_LEVEL ? 100 : Math.min(100, Math.round((state.bp / nextCost) * 100)),
-    equippedCount: equippedCount(state),
-    power: powerFor(state.level, equippedCount(state)),
-    powerPerLevel: POWER_PER_LEVEL,
-    equipPower: EQUIP_POWER,
-    canLevelUp: state.level < MAX_LEVEL && state.bp >= nextCost,
+    id: row.uuid,
+    slot: SLOT_KEY_BY_CODE[row.slot_type] || "weapon",
+    name: row.item_name,
+    power: row.power_bonus,
+    equipped: Boolean(row.is_equipped),
   };
 }
 
-function itemView(item, state) {
+function profileView({ profile, settings, equippedRows, tokens, gameStatus }) {
+  const hasHero = Boolean(profile?.journey_started);
+  const level = profile?.level ?? 1;
+  const maxLevel = profile?.max_level ?? settings?.max_level ?? 100;
+  const bp = profile?.current_battle_points ?? 0;
+  const bpToNext = profile?.next_level_cost ?? level * (settings?.battle_point_per_level_multiplier ?? 100);
+  const power = profile?.battle_power ?? 0;
+  const powerPerLevel = settings?.battle_power_per_level ?? 500;
+  const equipPower = (equippedRows || []).reduce((s, r) => s + (r.power_bonus || 0), 0);
   return {
-    ...item,
-    equipped: EQUIP_SLOTS.some((s) => state.equipment[s]?.id === item.id),
+    hasHero,
+    gender: hasHero ? GENDER_KEY_BY_CODE[profile.gender] || null : null,
+    level,
+    maxLevel,
+    bp,
+    tokens: tokens ?? 0,
+    bpToNext,
+    expPct: level >= maxLevel ? 100 : Math.min(100, Math.round((bp / (bpToNext || 1)) * 100)),
+    equippedCount: (equippedRows || []).length,
+    power,
+    levelPower: power - equipPower,
+    equipPower,
+    powerPerLevel,
+    bpPerLevelMultiplier: settings?.battle_point_per_level_multiplier ?? 100,
+    equipmentSlotCount: settings?.equipment_slot_count ?? 4,
+    backpackCapacity: settings?.backpack_capacity ?? 100,
+    discardCost: settings?.discard_equipment_cost ?? 10,
+    extraAttemptCost: settings?.extra_attempt_token_cost ?? 10,
+    canLevelUp: level < maxLevel && bp >= bpToNext,
+    gameOpen: (gameStatus ?? settings?.game_status ?? 1) === 1,
+  };
+}
+
+// Fetch everything the profile view needs in one go.
+async function loadProfileView({ withGameStatus = false } = {}) {
+  const [settings, profile, equippedRows, tokens, status] = await Promise.all([
+    getSettings(),
+    getAvatarProfile(),
+    getMyAvatarEquipment({ is_equipped: true }).catch(() => []),
+    fetchTokens(),
+    withGameStatus ? getAvatarGameStatus().catch(() => null) : Promise.resolve(null),
+  ]);
+  return profileView({
+    profile,
+    settings,
+    equippedRows: profile?.journey_started ? equippedRows : [],
+    tokens,
+    gameStatus: status?.game_status,
+  });
+}
+
+function equipmentView(rows, profile) {
+  const slots = { weapon: null, helmet: null, armor: null, boots: null };
+  const backpack = [];
+  (rows || []).forEach((row) => {
+    const item = itemView(row);
+    if (item.equipped && slots[item.slot] === null) slots[item.slot] = item;
+    else backpack.push(item);
+  });
+  return { slots, backpack, capacity: profile.backpackCapacity, profile };
+}
+
+// Merge a server boss over its fixed visual identity (constants.BOSSES is
+// keyed by planet — gradients, names, art keys used by rpgAssets).
+function bossView(server, battlePower) {
+  const key = PLANET_KEY_BY_CODE[server.planet] || "starlight";
+  const base = BOSSES.find((b) => b.id === key) || BOSSES[0];
+  const locked = !server.is_unlocked;
+  return {
+    ...base,
+    uuid: server.uuid,
+    requiredPower: server.power_required,
+    hp: server.hp,
+    diceThreshold: server.dice_threshold,
+    rewardSlot: SLOT_KEY_BY_CODE[server.equipment_reward_slot] || base.rewardSlot,
+    locked,
+    deficit: Math.max(0, server.power_required - (battlePower ?? 0)),
+    totalDefeats: server.total_defeats ?? 0,
   };
 }
 
@@ -207,148 +209,106 @@ function itemView(item, state) {
 // Profile / hero
 // ---------------------------------------------------------------------------
 
-// `seedTokens` (a parsed number) is applied exactly once per member: the RPG
-// wallet starts from the member's real token balance but then lives its own
-// life — we never write back to the real balance (no backend to honor it).
-export async function getRpgProfile({ seedTokens } = {}) {
-  await wait();
-  const state = loadState();
-  if (!state.tokensSeeded && Number.isFinite(seedTokens)) {
-    state.tokens = Math.max(0, Math.floor(seedTokens));
-    state.tokensSeeded = true;
+export async function getRpgProfile() {
+  try {
+    return await loadProfileView({ withGameStatus: true });
+  } catch (err) {
+    throw gameError(err, "Could not load your avatar profile.");
   }
-  grantStarterGear(state);
-  saveState(state);
-  return profileView(state);
 }
 
 export async function createHero(gender) {
-  await wait();
-  const state = loadState();
-  if (state.hero) throw apiError("HERO_EXISTS", "Hero already created.");
-  if (gender !== "male" && gender !== "female") {
-    throw apiError("BAD_GENDER", "Choose male or female.");
+  const code = GENDER_CODE_BY_KEY[gender];
+  if (!code) throw gameError(null, "Choose male or female.");
+  try {
+    await startAvatarJourney(code);
+  } catch (err) {
+    throw gameError(err, "Could not create your hero. Please try again.");
   }
-  state.hero = { gender };
-  grantStarterGear(state);
-  saveState(state);
-  return profileView(state);
+  return loadProfileView();
 }
 
 export async function levelUp() {
-  await wait();
-  const state = loadState();
-  if (!state.hero) throw apiError("NO_HERO", "Create a hero first.");
-  if (state.level >= MAX_LEVEL) throw apiError("MAX_LEVEL", "Already at max level.");
-  const cost = bpToNext(state.level);
-  if (state.bp < cost) throw apiError("INSUFFICIENT_BP", `Need ${cost.toLocaleString("en-GB")} BP to level up.`);
-  state.bp -= cost;
-  state.level += 1;
-  saveState(state);
-  return profileView(state);
-}
-
-// Dev/testing helper surfaced from the info modal.
-export async function resetRpgState() {
-  await wait(80);
-  const state = defaultState();
-  saveState(state);
-  return profileView(state);
+  try {
+    await avatarLevelUp();
+  } catch (err) {
+    throw gameError(err, "Could not level up.");
+  }
+  return loadProfileView();
 }
 
 // ---------------------------------------------------------------------------
 // Equipment / backpack
 // ---------------------------------------------------------------------------
 
+async function loadEquipmentView() {
+  const [settings, rows, profile, tokens] = await Promise.all([
+    getSettings(),
+    getMyAvatarEquipment(),
+    getAvatarProfile(),
+    fetchTokens(),
+  ]);
+  const equippedRows = rows.filter((r) => r.is_equipped);
+  const pv = profileView({ profile, settings, equippedRows, tokens });
+  return equipmentView(rows, pv);
+}
+
 export async function getEquipment() {
-  await wait();
-  const state = loadState();
-  return {
-    slots: EQUIP_SLOTS.reduce((acc, s) => {
-      acc[s] = state.equipment[s] ? itemView(state.equipment[s], state) : null;
-      return acc;
-    }, {}),
-    backpack: state.backpack.map((i) => itemView(i, state)),
-    capacity: BACKPACK_CAPACITY,
-    profile: profileView(state),
-  };
+  try {
+    return await loadEquipmentView();
+  } catch (err) {
+    throw gameError(err, "Could not load your equipment.");
+  }
 }
 
 export async function equipItem(itemId) {
-  await wait();
-  const state = loadState();
-  const idx = state.backpack.findIndex((i) => i.id === itemId);
-  if (idx === -1) throw apiError("NOT_FOUND", "Item not in backpack.");
-  const item = state.backpack[idx];
-  state.backpack.splice(idx, 1);
-  const current = state.equipment[item.slot];
-  if (current) state.backpack.push(current); // swap back into the bag
-  state.equipment[item.slot] = item;
-  saveState(state);
-  return getEquipmentSync(state);
+  try {
+    await equipAvatarEquipment(itemId);
+  } catch (err) {
+    throw gameError(err, "Could not equip that item.");
+  }
+  return loadEquipmentView();
 }
 
 export async function unequipItem(slot) {
-  await wait();
-  const state = loadState();
-  const item = state.equipment[slot];
-  if (!item) throw apiError("EMPTY_SLOT", "Nothing equipped in that slot.");
-  if (state.backpack.length >= BACKPACK_CAPACITY) {
-    throw apiError("BACKPACK_FULL", "Backpack is full — discard something first.");
+  // The API unequips by member-equipment uuid, so resolve the slot first.
+  let rows;
+  try {
+    rows = await getMyAvatarEquipment({ is_equipped: true });
+  } catch (err) {
+    throw gameError(err, "Could not load your equipment.");
   }
-  state.equipment[slot] = null;
-  state.backpack.push(item);
-  saveState(state);
-  return getEquipmentSync(state);
+  const slotCode = { weapon: 1, helmet: 2, armor: 3, boots: 4 }[slot];
+  const row = (rows || []).find((r) => r.slot_type === slotCode);
+  if (!row) throw gameError(null, "Nothing equipped in that slot.");
+  try {
+    await unequipAvatarEquipment(row.uuid);
+  } catch (err) {
+    throw gameError(err, "Could not unequip that item.");
+  }
+  return loadEquipmentView();
 }
 
+// The API discards one item per call and charges tokens each time, so a batch
+// runs sequentially and stops at the first refusal (e.g. not enough tokens).
+// Items discarded before the failure stay discarded — the error carries how
+// far it got so the screen can say so.
 export async function discardItems(itemIds) {
-  await wait();
-  const state = loadState();
   const ids = Array.isArray(itemIds) ? itemIds : [itemIds];
-  const cost = ids.length * DISCARD_COST;
-  if (state.tokens < cost) {
-    throw apiError("INSUFFICIENT_TOKENS", `Discarding costs ${DISCARD_COST} Tokens per item (${cost} total).`);
+  let done = 0;
+  for (const id of ids) {
+    try {
+      await discardAvatarEquipment(id);
+      done += 1;
+    } catch (err) {
+      const error = gameError(err, "Could not discard.");
+      if (done > 0) {
+        error.message = `${error.message} (${done} of ${ids.length} discarded)`;
+      }
+      throw error;
+    }
   }
-  const missing = ids.filter((id) => !state.backpack.some((i) => i.id === id));
-  if (missing.length) throw apiError("NOT_FOUND", "Item not in backpack.");
-  state.tokens -= cost;
-  state.backpack = state.backpack.filter((i) => !ids.includes(i.id));
-  saveState(state);
-  return getEquipmentSync(state);
-}
-
-function getEquipmentSync(state) {
-  return {
-    slots: EQUIP_SLOTS.reduce((acc, s) => {
-      acc[s] = state.equipment[s] ? itemView(state.equipment[s], state) : null;
-      return acc;
-    }, {}),
-    backpack: state.backpack.map((i) => itemView(i, state)),
-    capacity: BACKPACK_CAPACITY,
-    profile: profileView(state),
-  };
-}
-
-function makeItem(state, slot) {
-  const names = EQUIPMENT_NAMES[slot];
-  const name = names[Math.floor(draw(state) * names.length)];
-  const item = { id: `item_${state.nextItemId}`, slot, name };
-  state.nextItemId += 1;
-  return item;
-}
-
-// TEMPORARY (mock only): stock the backpack with a one-time starter set (one
-// item per slot, UNEQUIPPED) so the equipment art is visible before the real
-// backend lands. Left unequipped so the player equips via the UI and early-game
-// power stays balanced. Idempotent via `starterGearSeeded`.
-// Remove this (and its two call sites) once real equipment comes from the API.
-function grantStarterGear(state) {
-  if (state.starterGearSeeded || !state.hero) return;
-  EQUIP_SLOTS.forEach((slot) => {
-    if (state.backpack.length < BACKPACK_CAPACITY) state.backpack.push(makeItem(state, slot));
-  });
-  state.starterGearSeeded = true;
+  return loadEquipmentView();
 }
 
 // ---------------------------------------------------------------------------
@@ -356,274 +316,279 @@ function grantStarterGear(state) {
 // ---------------------------------------------------------------------------
 
 export async function getBosses() {
-  await wait();
-  const state = loadState();
-  const power = powerFor(state.level, equippedCount(state));
+  let status;
+  try {
+    status = await getAvatarChallengeStatus();
+  } catch (err) {
+    throw gameError(err, "Could not load the challenge.");
+  }
+  const [settings, tokens] = await Promise.all([getSettings(), fetchTokens()]);
   return {
-    bosses: BOSSES.map((b) => ({
-      ...b,
-      locked: power < b.requiredPower,
-      deficit: Math.max(0, b.requiredPower - power),
-    })),
-    freeAttemptAvailable: !state.attempts.freeUsed,
-    extraAttemptCost: EXTRA_ATTEMPT_COST,
-    tokens: state.tokens,
-    power,
-    profile: profileView(state),
+    bosses: (status.bosses || []).map((b) => bossView(b, status.battle_power)),
+    freeAttemptAvailable: (status.free_attempts_remaining ?? 0) > 0,
+    freeAttemptsRemaining: status.free_attempts_remaining ?? 0,
+    extraAttemptCost: status.extra_attempt_token_cost ?? settings.extra_attempt_token_cost ?? 10,
+    unopenedBoxes: status.unopened_boxes ?? 0,
+    tokens,
+    power: status.battle_power ?? 0,
+    gameOpen: (status.game_status ?? 1) === 1,
   };
 }
 
-// Validates and *fully decides* the battle up front: the roll script and the
-// reward box are persisted before the component animates anything, so a
-// refresh can lose the show but never the outcome.
+// The attack response fully decides the battle: the roll script and the
+// reward box come back at once, so the Battle screen is pure theatre — a
+// refresh can lose the show but never the outcome (the box stays claimable
+// via my-boxes).
 export async function startBattle(bossId) {
-  await wait();
-  const state = loadState();
-  if (!state.hero) throw apiError("NO_HERO", "Create a hero first.");
-  const boss = BOSSES.find((b) => b.id === bossId);
-  if (!boss) throw apiError("NOT_FOUND", "Unknown boss.");
-  const power = powerFor(state.level, equippedCount(state));
-  if (power < boss.requiredPower) {
-    throw apiError("LOCKED", `Need ${(boss.requiredPower - power).toLocaleString("en-GB")} more Power.`);
+  // bossId is the planet art key ("starlight"...) the screens use; the attack
+  // endpoint needs the boss uuid, so read the current status to resolve it.
+  let status;
+  try {
+    status = await getAvatarChallengeStatus();
+  } catch (err) {
+    throw gameError(err, "Could not load the challenge.");
   }
-  let paidWithTokens = false;
-  if (state.attempts.freeUsed) {
-    if (state.tokens < EXTRA_ATTEMPT_COST) {
-      throw apiError("INSUFFICIENT_TOKENS", `Extra attempts cost ${EXTRA_ATTEMPT_COST} Tokens.`);
-    }
-    state.tokens -= EXTRA_ATTEMPT_COST;
-    state.attempts.paid += 1;
-    paidWithTokens = true;
-  } else {
-    state.attempts.freeUsed = true;
+  const planetCode = { starlight: 1, comet: 2, meteor: 3, nebula: 4 }[bossId];
+  const server = (status.bosses || []).find((b) => b.planet === planetCode);
+  if (!server) throw gameError(null, "Unknown boss.");
+
+  let attack;
+  try {
+    attack = await attackAvatarBoss(server.uuid);
+  } catch (err) {
+    throw gameError(err, "Could not start the battle.");
   }
 
-  // Roll until the cumulative total clears the boss threshold.
-  const rounds = [];
-  let cumulative = 0;
-  while (cumulative <= boss.diceThreshold) {
-    const roll = 1 + Math.floor(draw(state) * 6);
-    cumulative += roll;
-    rounds.push({ roll, cumulative });
-  }
-
-  const boxId = `box_${state.nextBoxId}`;
-  state.nextBoxId += 1;
-  state.pendingBoxes.push({ id: boxId, bossId: boss.id });
-  state.counters.bossesToday += 1;
-  state.counters.bossesWeek += 1;
-  if (boss.id === "nebula") state.counters.nebulaKills += 1;
-  saveState(state);
-
+  const profile = await loadProfileView();
   return {
-    boss,
-    rounds,
-    threshold: boss.diceThreshold,
-    boxId,
-    paidWithTokens,
-    tokens: state.tokens,
-    power,
-    profile: profileView(state),
+    boss: bossView({ ...server, is_unlocked: true }, attack.battle_power),
+    rounds: (attack.dice_rounds || []).map((r) => ({ roll: r.roll, cumulative: r.cumulative })),
+    threshold: attack.dice_threshold ?? server.dice_threshold,
+    boxId: attack.mystery_box_uuid,
+    paidWithTokens: !attack.is_free,
+    tokenCost: attack.token_cost ?? 0,
+    tokens: profile.tokens,
+    power: attack.battle_power ?? profile.power,
+    profile,
   };
+}
+
+function boxView(row) {
+  const key = PLANET_KEY_BY_CODE[row.planet] || null;
+  const boss = key ? BOSSES.find((b) => b.id === key) || null : null;
+  return { id: row.uuid, bossId: key, boss, created: row.created };
+}
+
+async function unopenedBoxes() {
+  const data = await getMyAvatarBoxes({ is_opened: false, page_size: 100 });
+  const rows = data.results ?? data ?? [];
+  // Newest first regardless of server ordering.
+  return rows
+    .map(boxView)
+    .sort((a, b) => new Date(b.created || 0) - new Date(a.created || 0));
 }
 
 export async function getPendingBox(boxId) {
-  await wait(80);
-  const state = loadState();
-  const box = state.pendingBoxes.find((b) => b.id === boxId);
-  if (!box) return null;
-  return { ...box, boss: BOSSES.find((b) => b.id === box.bossId) || null };
+  try {
+    const boxes = await unopenedBoxes();
+    return boxes.find((b) => b.id === boxId) || null;
+  } catch {
+    return null;
+  }
 }
 
-// Newest first — lets the box screen recover after a reload without a boxId.
+// Newest unopened box — lets the box screen recover after a reload.
 export async function getLatestPendingBox() {
-  await wait(80);
-  const state = loadState();
-  const box = state.pendingBoxes[state.pendingBoxes.length - 1];
-  if (!box) return null;
-  return { ...box, boss: BOSSES.find((b) => b.id === box.bossId) || null };
+  try {
+    const boxes = await unopenedBoxes();
+    return boxes[0] || null;
+  } catch {
+    return null;
+  }
+}
+
+// Reward types: 1 TOKEN 2 BATTLE-POINT 3 FREE-CREDIT 4 EQUIPMENT 5 LEVEL-UP 6 GOLD-BAR
+const REWARD_TYPE_KEYS = { 1: "tokens", 2: "bp", 3: "credit", 4: "equipment", 5: "levelup", 6: "gold" };
+
+// The "possible rewards" panel — the live admin catalog, not a hardcoded
+// table. Items at probability 0 are listed by the spec but never drawn, so
+// they're filtered out of the player-facing list.
+export async function getMysteryBoxRewards() {
+  try {
+    const data = await getAvatarMysteryBoxCatalog({ page_size: 100 });
+    const rows = data.results ?? data ?? [];
+    return rows
+      .filter((r) => Number(r.probability) > 0)
+      .map((r) => ({
+        id: r.uuid,
+        type: REWARD_TYPE_KEYS[r.reward_type] || "tokens",
+        label: r.reward_name,
+        image: r.image || null,
+        probability: Number(r.probability) || 0,
+      }));
+  } catch {
+    // A missing catalog must never block opening a box.
+    return [];
+  }
 }
 
 export async function openMysteryBox(boxId) {
-  await wait();
-  const state = loadState();
-  const idx = state.pendingBoxes.findIndex((b) => b.id === boxId);
-  if (idx === -1) throw apiError("NOT_FOUND", "No mystery box to open.");
-  state.pendingBoxes.splice(idx, 1);
-
-  // Weighted draw over the spec table.
-  const total = MYSTERY_BOX_TABLE.reduce((s, r) => s + r.weight, 0);
-  let ticket = draw(state) * total;
-  let row = MYSTERY_BOX_TABLE[0];
-  for (const r of MYSTERY_BOX_TABLE) {
-    if (r.weight <= 0) continue;
-    ticket -= r.weight;
-    if (ticket <= 0) {
-      row = r;
-      break;
-    }
+  let result;
+  try {
+    result = await openAvatarMysteryBox(boxId);
+  } catch (err) {
+    throw gameError(err, "Could not open the mystery box.");
   }
-
-  const reward = { id: row.id, type: row.type, label: row.label, amount: row.amount || 0 };
-  if (row.type === "tokens") {
-    state.tokens += row.amount;
-  } else if (row.type === "bp") {
-    state.bp += row.amount;
-  } else if (row.type === "levelup") {
-    state.level = Math.min(MAX_LEVEL, state.level + row.amount);
-  } else if (row.type === "equipment") {
-    if (state.backpack.length >= BACKPACK_CAPACITY) {
-      // Bag full — convert to a token consolation so the reward never vanishes.
-      state.tokens += 10;
-      reward.converted = true;
-      reward.label = "Rare Equipment ×1 → Token ×10 (backpack full)";
-    } else {
-      const slot = EQUIP_SLOTS[Math.floor(draw(state) * EQUIP_SLOTS.length)];
-      const item = makeItem(state, slot);
-      state.backpack.push(item);
-      reward.item = item;
-    }
+  const type = REWARD_TYPE_KEYS[result.reward_type] || "tokens";
+  const reward = {
+    type,
+    label: result.reward_name || "Reward",
+    amount:
+      type === "tokens"
+        ? result.token_amount ?? 0
+        : type === "bp"
+          ? result.battle_point_amount ?? 0
+          : type === "levelup"
+            ? result.level_up_count ?? 0
+            : type === "credit"
+              ? Number(result.reward_credit_amount ?? 0)
+              : 0,
+  };
+  if (type === "equipment" && result.equipment_name) {
+    reward.item = {
+      name: result.equipment_name,
+      slot: SLOT_KEY_BY_CODE[result.equipment_slot] || "weapon",
+    };
   }
-  // "credit" / "gold" rewards are informational in the mock — nothing to apply.
-
-  state.counters.boxesWeek += 1;
-  saveState(state);
-  return { reward, profile: profileView(state) };
+  const profile = await loadProfileView();
+  return { reward, profile };
 }
 
 // ---------------------------------------------------------------------------
-// Missions (mock)
+// Missions
 // ---------------------------------------------------------------------------
 
-function missionPeriodKey(mission) {
-  if (mission.tab === "daily") return todayStr();
-  if (mission.tab === "weekly") return weekStartStr();
-  return "all-time";
-}
+// category 1..4 → tab keys; condition_action → GO deep link + icon hint.
+const TAB_BY_CATEGORY = { 1: "daily", 2: "weekly", 3: "monthly", 4: "achievement" };
+const GO_BY_ACTION = {
+  1: RPG_VIEWS.CHECKIN, // Login — check-in claim counts as a login
+  2: null, //             Deposit Amount — happens outside the game
+  3: RPG_VIEWS.CHALLENGE, // Boss Battle
+  4: RPG_VIEWS.CHALLENGE, // Obtain Equipment — mystery boxes drop gear
+  5: RPG_VIEWS.ITEMS, //   Full Equipment Set
+  6: null, //             Complete Missions — this screen itself
+};
+const METRIC_BY_ACTION = { 1: "checkinToday", 2: "deposit" }; // icon hints
 
-function missionProgress(state, mission) {
-  const c = state.counters;
-  switch (mission.metric) {
-    case "checkinToday": {
-      const dayIdx = (new Date().getDay() + 6) % 7;
-      return state.checkIn.days[dayIdx] ? 1 : 0;
-    }
-    case "checkinWeek":
-      return state.checkIn.days.filter(Boolean).length;
-    case "deposit":
-      return 0; // no deposit signal without a backend
-    case "gamesPlayed":
-      return Math.min(3, c.bossesToday); // boss fights count as mini-game plays in the mock
-    case "bossesToday":
-      return c.bossesToday;
-    case "bossesWeek":
-      return c.bossesWeek;
-    case "boxesWeek":
-      return c.boxesWeek;
-    case "level":
-      return state.level;
-    case "equipped":
-      return equippedCount(state);
-    case "nebulaKills":
-      return c.nebulaKills;
-    default:
-      return 0;
-  }
+function missionView(m) {
+  const target = m.accumulate_target ?? 1;
+  const progress = Math.min(target, m.current_value ?? 0);
+  return {
+    id: m.uuid,
+    tab: TAB_BY_CATEGORY[m.category] || "daily",
+    title: m.mission_name,
+    description: m.description || "",
+    reward: { tokens: m.reward_token_quantity || 0, bp: m.reward_battle_point_quantity || 0 },
+    target,
+    progress,
+    metric: METRIC_BY_ACTION[m.condition_action] || "bp",
+    go: GO_BY_ACTION[m.condition_action] ?? null,
+    joined: Boolean(m.joined),
+    claimed: m.status === 3,
+    claimable: m.status === 2,
+  };
 }
 
 export async function getRpgMissions() {
-  await wait();
-  const state = loadState();
-  const missions = RPG_MISSIONS.map((m) => {
-    const progress = Math.min(m.target, missionProgress(state, m));
-    const claimed = state.claimedMissions[m.id] === missionPeriodKey(m);
-    return {
-      ...m,
-      progress,
-      claimed,
-      claimable: !claimed && progress >= m.target,
-    };
-  });
-  return { missions, profile: profileView(state) };
+  try {
+    const rows = await getMyAvatarMissions();
+    return { missions: (rows || []).map(missionView) };
+  } catch (err) {
+    throw gameError(err, "Could not load missions.");
+  }
 }
 
 export async function claimRpgMission(missionId) {
-  await wait();
-  const state = loadState();
-  const mission = RPG_MISSIONS.find((m) => m.id === missionId);
-  if (!mission) throw apiError("NOT_FOUND", "Unknown mission.");
-  const period = missionPeriodKey(mission);
-  if (state.claimedMissions[mission.id] === period) {
-    throw apiError("ALREADY_CLAIMED", "Reward already claimed.");
+  let claim;
+  try {
+    claim = await claimAvatarMission(missionId);
+  } catch (err) {
+    throw gameError(err, "Could not claim.");
   }
-  if (missionProgress(state, mission) < mission.target) {
-    throw apiError("NOT_COMPLETE", "Mission not completed yet.");
-  }
-  state.claimedMissions[mission.id] = period;
-  if (mission.reward.tokens) state.tokens += mission.reward.tokens;
-  if (mission.reward.bp) state.bp += mission.reward.bp;
-  saveState(state);
-  return { reward: mission.reward, profile: profileView(state) };
+  const profile = await loadProfileView();
+  return {
+    reward: { tokens: claim.token_amount || 0, bp: claim.battle_point_amount || 0 },
+    profile,
+  };
 }
 
 // ---------------------------------------------------------------------------
-// Daily check-in
+// Daily check-in — rolling 7-day streak (a missed day restarts at day 1).
+// Rewards are battle points only: random(min, max) × multiplier.
 // ---------------------------------------------------------------------------
 
-function checkInView(state) {
-  const dayIdx = (new Date().getDay() + 6) % 7; // Mon=0
-  const days = state.checkIn.days.map((checked, i) => {
-    const rule = CHECKIN_RULES.days[i];
-    return {
-      day: i + 1,
-      checked,
-      isToday: i === dayIdx,
-      isPast: i < dayIdx && !checked,
-      bp: rule.bp,
-      tokens: rule.tokens,
-      double: Boolean(rule.double),
-      weeklyPrize: rule.weekly ? CHECKIN_RULES.weeklyPrize : null,
-    };
-  });
+// "+10 BP" / "+10–30 BP" (multiplier applied), or the admin display_text.
+function dayRewardText(day) {
+  if (day.display_text) return day.display_text;
+  const mult = day.multiplier || 1;
+  const min = (day.battle_point_minimum || 0) * mult;
+  const max = (day.battle_point_maximum || 0) * mult;
+  return min === max ? `+${min} BP` : `+${min}–${max} BP`;
+}
+
+function checkInView(status) {
+  const checkedCount = status.checked_count ?? 0;
+  const todayChecked = Boolean(status.today_checked);
+  // The streak is sequential: days 1..checked_count are claimed. Today's card
+  // is the last claimed day (already checked) or the next one to claim. Once
+  // all 7 are claimed the next check-in opens a fresh cycle at day 1 (per the
+  // API doc), so the highlight wraps rather than sticking on day 7.
+  const todayDay = todayChecked ? checkedCount : checkedCount >= 7 ? 1 : checkedCount + 1;
+  const days = (status.days || []).map((d) => ({
+    day: d.day,
+    checked: Boolean(d.is_claimed),
+    isToday: d.day === todayDay,
+    isSpecial: Boolean(d.is_special),
+    multiplier: d.multiplier || 1,
+    rewardText: d.is_claimed && d.battle_point_amount ? `+${d.battle_point_amount} BP` : dayRewardText(d),
+    claimedAmount: d.battle_point_amount || 0,
+  }));
+  const today = days.find((d) => d.isToday) || null;
   return {
     days,
-    checkedCount: state.checkIn.days.filter(Boolean).length,
-    todayChecked: state.checkIn.days[dayIdx],
-    todayDouble: Boolean(CHECKIN_RULES.days[dayIdx].double),
-    history: [...state.checkIn.history].reverse().slice(0, 30),
-    profile: profileView(state),
+    checkedCount,
+    todayChecked,
+    todayDouble: Boolean(today?.isSpecial && !todayChecked),
+    todayMultiplier: today?.multiplier || 1,
+    terms: status.check_in_terms || "",
+    history: (status.history || []).map((h) => ({
+      date: h.created || h.check_in_date,
+      day: h.day,
+      bp: h.battle_point_amount || 0,
+    })),
   };
 }
 
 export async function getCheckInStatus() {
-  await wait();
-  return checkInView(loadState());
+  try {
+    const status = await getAvatarCheckInStatus();
+    return checkInView(status);
+  } catch (err) {
+    throw gameError(err, "Could not load the check-in calendar.");
+  }
 }
 
 export async function checkIn() {
-  await wait();
-  const state = loadState();
-  if (!state.hero) throw apiError("NO_HERO", "Create a hero first.");
-  const dayIdx = (new Date().getDay() + 6) % 7;
-  if (state.checkIn.days[dayIdx]) throw apiError("ALREADY_CHECKED", "Already checked in today.");
-  state.checkIn.days[dayIdx] = true;
-
-  const rule = CHECKIN_RULES.days[dayIdx];
-  const bp = rule.bp;
-  let tokens = rule.tokens;
-  let mysteryBox = null;
-  if (rule.weekly && state.checkIn.days.every(Boolean)) {
-    tokens += CHECKIN_RULES.weeklyPrize.tokens;
-    if (CHECKIN_RULES.weeklyPrize.mysteryBox) {
-      const boxId = `box_${state.nextBoxId}`;
-      state.nextBoxId += 1;
-      state.pendingBoxes.push({ id: boxId, bossId: null });
-      mysteryBox = boxId;
-    }
+  let claim;
+  try {
+    claim = await claimAvatarCheckIn();
+  } catch (err) {
+    throw gameError(err, "Could not check in.");
   }
-  state.bp += bp;
-  state.tokens += tokens;
-  state.checkIn.history.push({ date: new Date().toISOString(), day: dayIdx + 1, bp, tokens, mysteryBox: Boolean(mysteryBox) });
-  saveState(state);
-  return { reward: { bp, tokens, mysteryBox }, ...checkInView(state) };
+  const [status, profile] = await Promise.all([getAvatarCheckInStatus(), loadProfileView()]);
+  return {
+    reward: { bp: claim.battle_point_amount || 0, day: claim.day },
+    profile,
+    ...checkInView(status),
+  };
 }

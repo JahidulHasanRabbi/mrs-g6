@@ -20,10 +20,15 @@ export default function AvatarLevel({ profile, onProfileUpdate }) {
 
   if (!profile) return null;
 
-  const atMax = profile.level >= MAX_LEVEL;
-  const levelPower = profile.level * POWER_PER_LEVEL;
-  const equipPower = profile.equippedCount * EQUIP_POWER;
-  const maxPower = MAX_LEVEL * POWER_PER_LEVEL + EQUIP_SLOTS.length * EQUIP_POWER;
+  // Every figure is server-authoritative: the level/equipment split comes from
+  // battle_power minus the equipped power_bonus sum (see rpgApi.profileView).
+  const maxLevel = profile.maxLevel ?? MAX_LEVEL;
+  const perLevel = profile.powerPerLevel ?? POWER_PER_LEVEL;
+  const slotCount = profile.equipmentSlotCount ?? EQUIP_SLOTS.length;
+  const atMax = profile.level >= maxLevel;
+  const levelPower = profile.levelPower ?? profile.level * perLevel;
+  const equipPower = profile.equipPower ?? 0;
+  const maxPower = maxLevel * perLevel + slotCount * EQUIP_POWER;
 
   const handleLevelUp = async () => {
     if (busy || atMax) return;
@@ -33,7 +38,12 @@ export default function AvatarLevel({ profile, onProfileUpdate }) {
       onProfileUpdate(p);
       setPulseKey((k) => k + 1);
     } catch (err) {
-      setNotice({ title: "NOT ENOUGH BP", message: err?.message || "Earn Battle Points from missions, check-ins and mystery boxes." });
+      // The API is authoritative about why (not enough BP, max level, game
+      // closed) — show its message rather than assuming.
+      setNotice({
+        title: "CANNOT LEVEL UP",
+        message: err?.message || "Earn Battle Points from missions, check-ins and mystery boxes.",
+      });
     } finally {
       setBusy(false);
     }
@@ -68,7 +78,7 @@ export default function AvatarLevel({ profile, onProfileUpdate }) {
           {profile.level}
         </span>
         <span className="text-[10px] tracking-[1px]" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
-          MAX Lv.{MAX_LEVEL}
+          MAX Lv.{maxLevel}
         </span>
       </motion.div>
 
@@ -91,7 +101,7 @@ export default function AvatarLevel({ profile, onProfileUpdate }) {
           />
         </div>
         <p className="text-[10px]" style={{ color: RPG_COLORS.slotEmpty, fontFamily: RPG_FONTS.display }}>
-          BP required = current level × 100 · each level grants +{POWER_PER_LEVEL} Power
+          BP required = current level × {profile.bpPerLevelMultiplier ?? 100} · each level grants +{fmt(perLevel)} Power
         </p>
       </div>
 
@@ -105,7 +115,7 @@ export default function AvatarLevel({ profile, onProfileUpdate }) {
         </span>
         <div className="flex items-center justify-between">
           <span className="text-[13px] font-semibold" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
-            Avatar Level ({profile.level} × {POWER_PER_LEVEL})
+            Avatar Level ({profile.level} × {fmt(perLevel)})
           </span>
           <span className="text-[13px] font-semibold" style={{ color: RPG_COLORS.text, fontFamily: RPG_FONTS.number }}>
             {fmt(levelPower)}
@@ -113,7 +123,7 @@ export default function AvatarLevel({ profile, onProfileUpdate }) {
         </div>
         <div className="flex items-center justify-between">
           <span className="text-[13px] font-semibold" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
-            Equipment ({profile.equippedCount} / {EQUIP_SLOTS.length} × {fmt(EQUIP_POWER)})
+            Equipment ({profile.equippedCount} / {slotCount} equipped)
           </span>
           <span className="text-[13px] font-semibold" style={{ color: RPG_COLORS.text, fontFamily: RPG_FONTS.number }}>
             {fmt(equipPower)}
@@ -129,7 +139,7 @@ export default function AvatarLevel({ profile, onProfileUpdate }) {
           </span>
         </div>
         <p className="text-[10px]" style={{ color: RPG_COLORS.slotEmpty, fontFamily: RPG_FONTS.display }}>
-          Max: Lv.{MAX_LEVEL} ({fmt(MAX_LEVEL * POWER_PER_LEVEL)}) + {EQUIP_SLOTS.length} items ({fmt(EQUIP_SLOTS.length * EQUIP_POWER)}) = {fmt(maxPower)} Power
+          Max: Lv.{maxLevel} ({fmt(maxLevel * perLevel)}) + {slotCount} items ({fmt(slotCount * EQUIP_POWER)}) = {fmt(maxPower)} Power
         </p>
       </div>
 

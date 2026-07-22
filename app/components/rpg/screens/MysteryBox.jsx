@@ -1,20 +1,26 @@
 "use client";
 
 // Mystery Box screen (Figma 2026:3567): the chest with its gold aura, the
-// "possible rewards" table straight from the spec drop table, and the
-// CLOSED → OPENING → REVEALED flow. The reward is decided (and applied) the
-// instant OPEN BOX is pressed — the shake is just suspense.
+// "possible rewards" table (the live admin catalog), and the
+// CLOSED → OPENING → REVEALED flow. The server decides and applies the reward
+// the instant OPEN BOX is pressed — the shake is just suspense.
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { RPG_COLORS, RPG_FONTS, RPG_GRADIENTS, RPG_VIEWS, MYSTERY_BOX_TABLE } from "../constants";
+import { RPG_COLORS, RPG_FONTS, RPG_GRADIENTS, RPG_VIEWS } from "../constants";
 import { RPG_IMAGES } from "../rpgAssets";
 import * as rpgApi from "../rpgApi";
 import { GoldCta } from "../primitives";
+import NoticeModal from "../NoticeModal";
 
 const STAGES = { CLOSED: "CLOSED", OPENING: "OPENING", REVEALED: "REVEALED" };
 
-function RewardIcon({ type, size = 22 }) {
+// Admin-uploaded artwork wins; otherwise fall back to a per-type glyph.
+function RewardIcon({ type, size = 22, image }) {
+  if (image) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={image} alt="" className="object-contain" style={{ width: size, height: size }} />;
+  }
   if (type === "tokens") {
     return (
       <span
@@ -27,6 +33,7 @@ function RewardIcon({ type, size = 22 }) {
     return <img src={RPG_IMAGES.icons.bpGem} alt="" style={{ width: size, height: size }} />;
   }
   if (type === "equipment") {
+    // eslint-disable-next-line @next/next/no-img-element
     return <img src={RPG_IMAGES.equipment.weapon} alt="" style={{ width: size, height: size }} />;
   }
   // credit / gold bar
@@ -42,6 +49,8 @@ export default function MysteryBox({ boxId, onProfileUpdate, onNavigate }) {
   const [stage, setStage] = useState(STAGES.CLOSED);
   const [box, setBox] = useState(undefined); // undefined = loading, null = none
   const [reward, setReward] = useState(null);
+  const [rewardTable, setRewardTable] = useState([]);
+  const [notice, setNotice] = useState(null);
   // The lid pops partway through OPENING: closed chest shakes, then we swap to
   // the open-chest art with a light burst before the reward card appears.
   const [lidOpen, setLidOpen] = useState(false);
@@ -70,6 +79,17 @@ export default function MysteryBox({ boxId, onProfileUpdate, onNavigate }) {
     if (box === null && stage === STAGES.CLOSED) onNavigate(RPG_VIEWS.CHALLENGE, undefined, { replace: true });
   }, [box, stage, onNavigate]);
 
+  // Possible rewards = the live admin catalog (probability > 0).
+  useEffect(() => {
+    let cancelled = false;
+    rpgApi.getMysteryBoxRewards().then((rows) => {
+      if (!cancelled) setRewardTable(rows);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleOpen = async () => {
     if (!box || stage !== STAGES.CLOSED) return;
     setStage(STAGES.OPENING);
@@ -81,17 +101,17 @@ export default function MysteryBox({ boxId, onProfileUpdate, onNavigate }) {
       // reveal the reward.
       timers.current.push(setTimeout(() => setLidOpen(true), 650));
       timers.current.push(setTimeout(() => setStage(STAGES.REVEALED), 1250));
-    } catch {
+    } catch (err) {
+      // e.g. "Backpack is full" — the box stays unopened and claimable.
       setStage(STAGES.CLOSED);
       setLidOpen(false);
+      setNotice({ title: "CANNOT OPEN", message: err?.message || "Could not open the mystery box." });
     }
   };
 
   const handleCollect = () => {
     onNavigate(reward?.type === "equipment" && reward?.item ? RPG_VIEWS.ITEMS : RPG_VIEWS.CHALLENGE);
   };
-
-  const visibleRewards = MYSTERY_BOX_TABLE.filter((r) => r.weight > 0);
 
   return (
     <div className="flex w-full flex-1 flex-col items-center px-[18px]">
@@ -207,14 +227,14 @@ export default function MysteryBox({ boxId, onProfileUpdate, onNavigate }) {
           ◇ POSSIBLE REWARDS ◇
         </p>
         <div className="grid grid-cols-2 gap-x-[18px]">
-          {visibleRewards.map((r) => (
+          {rewardTable.map((r) => (
             <div
               key={r.id}
               className="flex items-center gap-[10px] border-b py-[9px]"
               style={{ borderColor: "rgba(139,92,246,0.18)" }}
             >
-              <RewardIcon type={r.type} />
-              <span className="text-[12px] font-semibold" style={{ color: RPG_COLORS.text, fontFamily: RPG_FONTS.display }}>
+              <RewardIcon type={r.type} image={r.image} />
+              <span className="min-w-0 truncate text-[12px] font-semibold" style={{ color: RPG_COLORS.text, fontFamily: RPG_FONTS.display }}>
                 {r.label}
               </span>
             </div>
@@ -233,6 +253,14 @@ export default function MysteryBox({ boxId, onProfileUpdate, onNavigate }) {
           {stage === STAGES.REVEALED ? "COLLECT" : stage === STAGES.OPENING ? "OPENING..." : "OPEN BOX"}
         </GoldCta>
       </div>
+
+      <NoticeModal
+        open={Boolean(notice)}
+        title={notice?.title || ""}
+        message={notice?.message}
+        confirmLabel="OK"
+        onClose={() => setNotice(null)}
+      />
     </div>
   );
 }

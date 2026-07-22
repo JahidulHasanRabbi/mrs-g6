@@ -205,6 +205,50 @@ export function Select({ value, onChange, options, disabled }) {
   );
 }
 
+// Date input. Two behaviours the bare <input type="date"> can't give us:
+//   1. clicking anywhere in the box opens the picker, not just the tiny icon
+//      (the native input is stretched over the whole field and calls
+//      showPicker() — same trick as BannerForm / RedemptionItemDialog);
+//   2. the value always reads dd/mm/yyyy, since the native control renders in
+//      the browser's locale (mm/dd/yyyy on US machines) and can't be forced.
+// The value in/out stays the ISO yyyy-mm-dd the API expects.
+export function formatDateDMY(iso) {
+  if (!iso) return "";
+  const [y, m, d] = String(iso).slice(0, 10).split("-");
+  if (!y || !m || !d) return "";
+  return `${d}/${m}/${y}`;
+}
+
+export function DateField({ value, onChange, disabled, placeholder = "dd/mm/yyyy", min, max }) {
+  return (
+    <div className="relative">
+      <input
+        type="date"
+        value={value || ""}
+        min={min}
+        max={max}
+        onChange={(e) => onChange(e.target.value)}
+        onClick={(e) => e.currentTarget.showPicker?.()}
+        onFocus={(e) => e.currentTarget.showPicker?.()}
+        disabled={disabled}
+        // Transparent native control on top: it owns the click target and the
+        // picker, while the styled layer below shows the dd/mm/yyyy text.
+        className="absolute inset-0 z-10 w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
+        aria-label={placeholder}
+      />
+      <div className={`${INPUT_BASE} flex items-center justify-between gap-2 ${disabled ? "opacity-40" : ""}`}>
+        <span className={value ? "text-white" : "text-white/40"}>{value ? formatDateDMY(value) : placeholder}</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e9af41" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
 export function Toggle({ checked, onChange, label, disabled }) {
   return (
     <div className="flex items-center justify-between gap-4">
@@ -237,8 +281,10 @@ export function apiErrorMessage(err, fallback) {
   if (data) {
     if (data.detail) return String(data.detail);
     if (data.error) {
-      // Validation errors come as { error, details: { field: ["msg"] } }.
+      // Validation errors come as { error, details: { field: ["msg"] } }; some
+      // endpoints send a plain sentence as `details` instead.
       const details = data.details;
+      if (typeof details === "string") return details;
       if (details && typeof details === "object") {
         for (const [key, val] of Object.entries(details)) {
           const msg = Array.isArray(val) ? val[0] : val;

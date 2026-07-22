@@ -82,6 +82,20 @@ export const MYSTERY_BOX_REWARD_TYPE_LABELS = {
   6: "Gold Bar",
 };
 
+// ---------------------------------------------------------------------------
+// API enum ↔ frontend key maps — the member game (app/components/rpg/*) keys
+// its art and view-models by lowercase strings; the API speaks integers.
+// ---------------------------------------------------------------------------
+
+export const GENDER_KEY_BY_CODE = { 1: "male", 2: "female" };
+export const GENDER_CODE_BY_KEY = { male: 1, female: 2 };
+
+export const SLOT_KEY_BY_CODE = { 1: "weapon", 2: "helmet", 3: "armor", 4: "boots" };
+export const SLOT_CODE_BY_KEY = { weapon: 1, helmet: 2, armor: 3, boots: 4 };
+
+// Planet enum → the boss/arena art key used across rpgAssets + constants.BOSSES.
+export const PLANET_KEY_BY_CODE = { 1: "starlight", 2: "comet", 3: "meteor", 4: "nebula" };
+
 const toOptions = (labels) =>
   Object.entries(labels).map(([value, label]) => ({ value: Number(value), label }));
 

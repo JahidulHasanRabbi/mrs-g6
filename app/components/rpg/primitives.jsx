@@ -66,7 +66,8 @@ export function ProgressBar({ pct, gradient = RPG_GRADIENTS.exp, height = 8, cla
 export function SlotChip({
   slot,
   item,
-  powerTag = "+1,000",
+  // Falls back to the spec default only when the item carries no power_bonus.
+  powerTag,
   onClick,
   size = "md",
   // When `draggable` and something is equipped, the chip can be dragged (used
@@ -78,6 +79,9 @@ export function SlotChip({
 }) {
   const equipped = Boolean(item);
   const canDrag = draggable && equipped;
+  // The +power tag reads the item's real power_bonus from the API.
+  const tag =
+    powerTag ?? (Number.isFinite(item?.power) ? `+${Number(item.power).toLocaleString("en-GB")}` : "+1,000");
   const pad = size === "sm" ? "pt-[10px] pb-[8px] px-[4px]" : "pt-[14px] pb-[10px] px-[4px]";
   return (
     <motion.button
@@ -122,7 +126,7 @@ export function SlotChip({
             : { background: "rgba(139,92,246,0.2)", color: RPG_COLORS.slotEmpty, fontFamily: RPG_FONTS.display }
         }
       >
-        {equipped ? powerTag : "EMPTY"}
+        {equipped ? tag : "EMPTY"}
       </span>
     </motion.button>
   );
