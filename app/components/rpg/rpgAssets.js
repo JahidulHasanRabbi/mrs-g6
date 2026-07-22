@@ -109,6 +109,14 @@ export const HERO_POSE_MASKS = {
   female: [0, 1, 2, 4, 5, 6, 7, 8, 9, 12, 13, 14, 15],
 };
 
+// Back-facing poses for the boss battle (Figma mini set) — the hero faces the
+// boss. Keyed by the same 4-bit gear mask. Only male art exists so far; female
+// falls back to the front pose until its back art is added.
+export const HERO_BATTLE_MASKS = {
+  male: [0, 1, 2, 5, 7, 8, 9, 13, 15],
+  female: [],
+};
+
 const popcount = (n) => {
   let c = 0;
   for (let x = n; x; x >>= 1) c += x & 1;
@@ -148,6 +156,26 @@ export function heroPoseFor(gender, equipment) {
     }
   }
   return `/assets/rpg/hero/${g}/${String(best).padStart(2, "0")}.webp`;
+}
+
+// Back-facing pose for the battle (hero faces the boss). Subset-only, same as
+// heroPoseFor. Falls back to the front pose for a gender with no back art yet.
+export function heroBattlePoseFor(gender, equipment) {
+  const g = gender === "female" ? "female" : "male";
+  const avail = HERO_BATTLE_MASKS[g];
+  if (!avail || !avail.length) return heroPoseFor(gender, equipment);
+  const want = equipMask(equipment);
+  let best = 0;
+  let bestScore = -1;
+  for (const m of avail) {
+    if ((m & ~want) !== 0) continue; // shows gear that isn't equipped — skip
+    const score = popcount(m & want) * 2 + (m & 8 ? 1 : 0);
+    if (score > bestScore) {
+      bestScore = score;
+      best = m;
+    }
+  }
+  return `/assets/rpg/hero/${g}-battle/${String(best).padStart(2, "0")}.webp`;
 }
 
 // ---------------------------------------------------------------------------

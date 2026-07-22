@@ -13,7 +13,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { RPG_COLORS, RPG_FONTS } from "../constants";
-import { RPG_IMAGES, heroPoseFor } from "../rpgAssets";
+import { RPG_IMAGES, heroBattlePoseFor } from "../rpgAssets";
 import { GoldCta } from "../primitives";
 import BossSprite from "../BossSprite";
 
@@ -159,10 +159,10 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
   const victorious = phase === PHASES.VICTORY;
   const hpNow = Math.round(boss.hp * hpFraction);
   const gender = profile?.gender || "male";
-  // The battle hero wears the same equipped gear as Home (front-facing pose)
-  // and attacks by firing a ki blast while standing — the equipped-pose art has
-  // no per-item battle frames, so one energy-blast animation covers every item.
-  const heroPose = heroPoseFor(gender, equipment);
+  // The battle hero is BACK-facing (looking at the boss) and wears the equipped
+  // gear, then fires a ki blast while standing — the pose art has no per-item
+  // battle frames, so one energy-blast animation covers every item combo.
+  const heroPose = heroBattlePoseFor(gender, equipment);
 
   return (
     // The arena backdrop is full-bleed at the ScreenShell level (passed via
