@@ -216,6 +216,7 @@ function RpgPageInner() {
           <Battle
             script={battleScript}
             profile={profile}
+            equipment={equipment}
             onClaimBox={() => navigate(RPG_VIEWS.BOX, { box: battleScript.boxId })}
             onExit={() => navigate(RPG_VIEWS.CHALLENGE)}
           />
