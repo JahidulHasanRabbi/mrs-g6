@@ -294,7 +294,7 @@ export default function Lv918SpinPage() {
   }
 
   return (
-    <Lv918Shell bg={LV918_ASSETS.spin.bg} onInfoClick={() => router.push('/terms-and-conditions')} balance={tokenBalance}>
+    <Lv918Shell bg={LV918_ASSETS.spin.bg} onInfoClick={() => router.push('/profile')} balance={tokenBalance} profileMode>
       <div className="flex flex-col items-center gap-6 px-4">
         {/* LUCKY SPIN title */}
         <motion.div

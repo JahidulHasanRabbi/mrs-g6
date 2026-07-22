@@ -1,22 +1,19 @@
 "use client";
 
 import Image from 'next/image';
+import ProfileFrame from '../../profile/ProfileFrame';
+import { PROFILE_ASSETS } from '../../profile/profileAssets';
+import { useUser } from '../../../contexts/UserContext';
 
 /**
  * Shared themed top app bar for the member game pages (acebet77 / ubetclub /
- * ep369). One implementation for every skin — each theme only passes its own
- * icon art and (optionally) a game title or balance:
+ * ep369 / kgame99 / lv918). One implementation for every skin — each theme
+ * only passes its own icon art and (optionally) a game title or balance:
  *
  *  - hamburger (left) — always shown, opens the nav menu
- *  - titleIcon + title (left, after the hamburger) — e.g. the Smash Egg header,
- *    matching the default portal's titled header
- *  - balance pill (centred) — e.g. the Lucky Spin header, matching the default
- *    portal's header balance
- *  - info button (right) — optional
- *
- * A soft top gradient is laid behind the bar whenever a title is shown so the
- * gold title + icons read cleanly over the full-bleed themed background (the
- * default portal's Smash Egg header uses a solid bar for the same reason).
+ *  - titleIcon + title (left, after the hamburger)
+ *  - balance pill (right-aligned by default)
+ *  - profile button (right, when profileMode) or info icon (right, otherwise)
  */
 function formatBalance(value) {
   const amount = Number(String(value ?? 0).replace(/,/g, ''));
@@ -36,7 +33,10 @@ export default function ThemeHeader({
   titleIcon = null,
   hamburgerFit = 'object-contain',
   infoFit = 'object-contain',
+  profileMode = false,
 }) {
+  const { profilePicture, selectedFrameId } = useUser();
+
   return (
     <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[475px] h-[64px] z-40 flex items-center justify-between px-4">
       {title && (
@@ -85,7 +85,7 @@ export default function ThemeHeader({
         </div>
       )}
 
-      {/* Right: optional balance pill (right alignment) + info button */}
+      {/* Right: optional balance pill (right alignment) + profile/info button */}
       <div className="relative flex items-center gap-2">
         {balance !== null && balanceAlign === 'right' && (
           <div className="flex items-center gap-2 h-[36px] px-3 rounded-full border border-[rgba(255,225,109,0.3)] bg-[rgba(57,53,40,0.85)] backdrop-blur-[6px]">
@@ -96,13 +96,23 @@ export default function ThemeHeader({
           </div>
         )}
         {onInfoClick ? (
-          <button
-            onClick={onInfoClick}
-            aria-label="Information"
-            className="relative w-9 h-9 cursor-pointer active:scale-95 transition-transform rounded-full overflow-hidden"
-          >
-            <Image src={infoIcon} alt="Info" fill className={`${infoFit} scale-110`} sizes="36px" />
-          </button>
+          profileMode ? (
+            <ProfileFrame
+              src={profilePicture || PROFILE_ASSETS.profileAvatar}
+              frameId={selectedFrameId}
+              size={48}
+              alt="Profile"
+              onClick={onInfoClick}
+            />
+          ) : (
+            <button
+              onClick={onInfoClick}
+              aria-label="Information"
+              className="relative w-9 h-9 cursor-pointer active:scale-95 transition-transform rounded-full overflow-hidden"
+            >
+              <Image src={infoIcon} alt="Info" fill className={`${infoFit} scale-110`} sizes="36px" />
+            </button>
+          )
         ) : (
           <span className="w-9 h-9" />
         )}

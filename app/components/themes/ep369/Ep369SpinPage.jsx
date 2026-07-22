@@ -27,7 +27,7 @@ const EP369_FRAMED_SKIN = buildFramedSkin(EP369_ASSETS, EP369_COLORS, { x: '15%'
 // Plaque PNGs carry transparent padding (visible frame ~0.86× the box here), so
 // the box is sized up to ~25% → visible ~22% at the 24% column pitch, closing
 // the dark gaps between tiles so the 3x3 grid reads as full like the reference.
-const EP369_GEOMETRY = { framePad: 14, tile: 25, center: 24 };
+const EP369_GEOMETRY = { framePad: 14, tile: 25, center: 29 };
 
 export default function Ep369SpinPage() {
   const [spinItems, setSpinItems] = useState([]);
@@ -191,7 +191,7 @@ export default function Ep369SpinPage() {
   }, []);
 
   return (
-    <Ep369Shell bg={EP369_ASSETS.spin.bg} onInfoClick={() => router.push('/terms-and-conditions')} balance={tokenBalance}>
+    <Ep369Shell bg={EP369_ASSETS.spin.bg} onInfoClick={() => router.push('/profile')} balance={tokenBalance} profileMode>
       <div className="flex flex-col items-center gap-5 px-4">
         <motion.div
           className="relative w-[300px] h-[150px] shrink-0"

@@ -28,7 +28,7 @@ import { useUser } from '../../../contexts/UserContext';
 // be sized up accordingly: box 27% → visible ~22.3% at a 24% column pitch leaves
 // a ~1.7% seam between neighbours. framePad stays 14 so the outer columns keep
 // landing just inside the gold border.
-const ACEBET_GEOMETRY = { framePad: 14, tile: 27, center: 26 };
+const ACEBET_GEOMETRY = { framePad: 14, tile: 27, center: 27 };
 const ACEBET_FRAMED_SKIN = buildFramedSkin(ACEBET_ASSETS, ACEBET_COLORS, { x: '9%', top: '20%', bottom: '13%' }, { scrollbarClass: 'scrollbar-acebet77' });
 
 export default function Acebet77SpinPage() {
@@ -197,7 +197,7 @@ export default function Acebet77SpinPage() {
   }, []);
 
   return (
-    <AcebetShell bg={ACEBET_ASSETS.spin.bg} onInfoClick={() => router.push('/terms-and-conditions')} balance={tokenBalance}>
+    <AcebetShell bg={ACEBET_ASSETS.spin.bg} onInfoClick={() => router.push('/profile')} balance={tokenBalance} profileMode>
       <div className="flex flex-col items-center gap-6 px-4">
         {/* LUCKY SPIN title */}
         <motion.div

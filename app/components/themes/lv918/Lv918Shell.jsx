@@ -25,6 +25,7 @@ export default function Lv918Shell({
   balance = null,
   title = null,
   titleIcon = null,
+  profileMode = false,
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -51,6 +52,7 @@ export default function Lv918Shell({
           balanceAlign="right"
           title={title}
           titleIcon={titleIcon}
+          profileMode={profileMode}
         />
       )}
 

@@ -37,9 +37,9 @@ function formatWinDate(value) {
 // a square-frame geometry. Only the images change; the timing, ring cycling,
 // deceleration, winner highlight and manual-stop all come from the shared code.
 // This theme's plaque PNGs are nearly edge-to-edge (visible frame ~0.96× the
-// box), so a smaller box (~23%) already yields ~22% visible at the 24% column
-// pitch — enough to close the dark gaps and read as a full 3x3 like the reference.
-const KGAME99_GEOMETRY = { framePad: 14, tile: 23, center: 24 };
+// box). Tiles are sized past the column pitch (28 > 26) so the transparent
+// padding in each plaque PNG overlaps its neighbour, closing the visible gaps.
+const KGAME99_GEOMETRY = { framePad: 13, tile: 26, center: 26 };
 
 export default function Kgame99SpinPage() {
   const [spinItems, setSpinItems] = useState([]);
@@ -293,7 +293,7 @@ export default function Kgame99SpinPage() {
   }
 
   return (
-    <KgameShell bg={KGAME99_ASSETS.spin.bg} onInfoClick={() => router.push('/terms-and-conditions')} balance={tokenBalance}>
+    <KgameShell bg={KGAME99_ASSETS.spin.bg} onInfoClick={() => router.push('/profile')} balance={tokenBalance} profileMode>
       <div className="flex flex-col items-center gap-6 px-4">
         {/* LUCKY SPIN title */}
         <motion.div

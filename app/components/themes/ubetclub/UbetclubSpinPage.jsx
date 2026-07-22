@@ -24,10 +24,11 @@ const UBET_FRAMED_SKIN = buildFramedSkin(UBET_ASSETS, UBET_COLORS, { x: '13%', t
 // spin/selection engine as the default portal — fed ubetclub's artwork. Only
 // the images change; ring cycling, deceleration, winner highlight and
 // manual-stop all come from the shared code.
-// Plaque PNGs carry transparent padding (visible frame ~0.89× the box here), so
-// the box is sized up to ~25% → visible ~22% at the 24% column pitch, closing
-// the dark gaps between tiles so the 3x3 grid reads as full like the reference.
-const UBET_GEOMETRY = { framePad: 14, tile: 25, center: 24 };
+// Plaque PNGs carry transparent padding (visible frame ~0.89× the box here).
+// The frame art's clear interior reaches ~8% in from the edges, so the grid is
+// pushed out (framePad 11 → 25.3% column pitch) and the boxes sized up
+// (tile 28 → ~25% visible) to fill the red interior instead of floating in it.
+const UBET_GEOMETRY = { framePad: 11, tile: 28, center: 32 };
 
 // Derives a short "Token / Prize / Free credit" label from the raw item_type
 // enum so the rewards panel can show more than just the reward name.
@@ -200,7 +201,7 @@ export default function UbetclubSpinPage() {
   }, []);
 
   return (
-    <UbetclubShell bg={UBET_ASSETS.spin.bg} onInfoClick={() => router.push('/terms-and-conditions')} balance={tokenBalance}>
+    <UbetclubShell bg={UBET_ASSETS.spin.bg} onInfoClick={() => router.push('/profile')} balance={tokenBalance} profileMode>
       <div className="flex flex-col items-center gap-5 px-4">
         {/* LUCKY SPIN title */}
         <motion.div

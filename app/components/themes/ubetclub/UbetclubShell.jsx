@@ -25,6 +25,7 @@ export default function UbetclubShell({
   balance = null,
   title = null,
   titleIcon = null,
+  profileMode = false,
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -46,8 +47,10 @@ export default function UbetclubShell({
           onMenuClick={() => setIsMenuOpen(true)}
           onInfoClick={onInfoClick}
           balance={balance}
+          balanceAlign="right"
           title={title}
           titleIcon={titleIcon}
+          profileMode={profileMode}
         />
       )}
 

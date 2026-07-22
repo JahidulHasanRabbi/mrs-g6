@@ -580,7 +580,10 @@ export default memo(function LuckySpinGrid({
     const centers = themedSlotCenters(geo);
     return (
       <motion.div
-        className="relative mx-auto w-full max-w-[380px] aspect-square"
+        // 444px = the full content column of the 475px member shell minus the
+        // themed pages' px-4 gutters, so the wheel renders as large as the
+        // ornate frame art allows on every custom theme.
+        className="relative mx-auto w-full max-w-[444px] aspect-square"
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
@@ -592,7 +595,7 @@ export default memo(function LuckySpinGrid({
           fill
           priority
           className="object-contain pointer-events-none"
-          sizes="380px"
+          sizes="444px"
         />
         {gridItems.map((item, index) => (
           <SpinItem
