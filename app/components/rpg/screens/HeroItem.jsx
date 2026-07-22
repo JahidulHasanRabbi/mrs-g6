@@ -3,7 +3,9 @@
 // Hero Item screen (Figma 2026:3162): equipped slot row, backpack grid with
 // MANAGE multi-select, and the drag-to-discard zone. Interactions:
 //   - tap a backpack item        → equip it (swaps whatever's in the slot)
+//   - drag a backpack item ↑ onto the slot row → equip it
 //   - tap an equipped slot chip  → unequip back into the bag
+//   - drag an equipped slot ↓ onto the backpack → unequip it
 //   - drag an item onto the zone → confirm → discard (−10 Tokens each)
 //   - MANAGE                     → multi-select + discard via the same zone
 //     (the accessible fallback for touch scrolling vs drag conflicts)
@@ -22,8 +24,14 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
   const [confirmIds, setConfirmIds] = useState(null); // items pending discard confirm
   const [notice, setNotice] = useState(null); // { title, message }
   const [busy, setBusy] = useState(false);
-  const [dragOver, setDragOver] = useState(false);
+  // Which drop target the currently-dragged item is hovering: for highlights.
+  const [dropTarget, setDropTarget] = useState(null); // 'discard' | 'slots' | 'backpack'
   const zoneRef = useRef(null);
+  const slotsRef = useRef(null);
+  const backpackRef = useRef(null);
+  // True while a real drag is in progress, so the click that fires after a drag
+  // doesn't ALSO run the tap action (which would equip a second time → error).
+  const draggedRef = useRef(false);
 
   const backpack = equipment?.backpack || [];
   const capacity = equipment?.capacity ?? 100;
@@ -76,12 +84,10 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
   const toggleSelected = (id) =>
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
-  // Pointer-position hit test against the discard zone at drag end.
-  const overZone = (point) => {
-    const rect = zoneRef.current?.getBoundingClientRect();
-    return Boolean(
-      rect && point.x >= rect.left && point.x <= rect.right && point.y >= rect.top && point.y <= rect.bottom,
-    );
+  // Pointer-position hit test against any ref's bounding box.
+  const hitRef = (ref, point) => {
+    const r = ref.current?.getBoundingClientRect();
+    return Boolean(r && point.x >= r.left && point.x <= r.right && point.y >= r.top && point.y <= r.bottom);
   };
 
   return (
@@ -93,10 +99,40 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
         HERO ITEM
       </h2>
 
-      {/* Equipped slots */}
-      <div className="mt-[14px] flex w-full items-stretch justify-center gap-[10px]">
+      {/* Equipped slots — drop a backpack item here to equip; drag a chip down
+          to the backpack to unequip. */}
+      <div
+        ref={slotsRef}
+        className="mt-[14px] flex w-full items-stretch justify-center gap-[10px] rounded-[16px] p-[6px] transition-colors"
+        style={{
+          background: dropTarget === "slots" ? "rgba(47,230,200,0.10)" : "transparent",
+          outline: dropTarget === "slots" ? "2px dashed rgba(47,230,200,0.7)" : "2px dashed transparent",
+        }}
+      >
         {EQUIP_SLOTS.map((slot) => (
-          <SlotChip key={slot} slot={slot} item={slots[slot]} onClick={() => handleUnequip(slot)} />
+          <SlotChip
+            key={slot}
+            slot={slot}
+            item={slots[slot]}
+            draggable
+            onClick={() => {
+              if (draggedRef.current) {
+                draggedRef.current = false;
+                return;
+              }
+              handleUnequip(slot);
+            }}
+            onDragStart={() => {
+              draggedRef.current = true;
+              setDropTarget(null);
+            }}
+            onDrag={(e, info) => setDropTarget(hitRef(backpackRef, info.point) ? "backpack" : null)}
+            onDragEnd={(e, info) => {
+              const drop = hitRef(backpackRef, info.point);
+              setDropTarget(null);
+              if (drop) handleUnequip(slot);
+            }}
+          />
         ))}
       </div>
 
@@ -128,8 +164,15 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
         </div>
       </div>
 
-      {/* Backpack grid */}
-      <div className="grid grid-cols-4 gap-[10px] pt-[4px]">
+      {/* Backpack grid — drop an equipped chip here to unequip. */}
+      <div
+        ref={backpackRef}
+        className="grid grid-cols-4 gap-[10px] rounded-[12px] pt-[4px] transition-colors"
+        style={{
+          outline: dropTarget === "backpack" ? "2px dashed rgba(47,230,200,0.7)" : "2px dashed transparent",
+          outlineOffset: "4px",
+        }}
+      >
         {Array.from({ length: cellCount }, (_, i) => {
           const item = backpack[i];
           if (!item) {
@@ -151,13 +194,30 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
               dragElastic={0.2}
               dragMomentum={false}
               whileDrag={{ scale: 1.12, zIndex: 40, opacity: 0.9 }}
-              onDragStart={() => setDragOver(false)}
-              onDrag={(e, info) => setDragOver(overZone(info.point))}
-              onDragEnd={(e, info) => {
-                setDragOver(false);
-                if (overZone(info.point)) setConfirmIds([item.id]);
+              onDragStart={() => {
+                draggedRef.current = true;
+                setDropTarget(null);
               }}
-              onClick={() => (manageMode ? toggleSelected(item.id) : handleEquip(item))}
+              onDrag={(e, info) => {
+                if (hitRef(zoneRef, info.point)) setDropTarget("discard");
+                else if (hitRef(slotsRef, info.point)) setDropTarget("slots");
+                else setDropTarget(null);
+              }}
+              onDragEnd={(e, info) => {
+                const overDiscard = hitRef(zoneRef, info.point);
+                const overSlots = hitRef(slotsRef, info.point);
+                setDropTarget(null);
+                if (overDiscard) setConfirmIds([item.id]);
+                else if (overSlots) handleEquip(item);
+              }}
+              onClick={() => {
+                if (draggedRef.current) {
+                  draggedRef.current = false;
+                  return; // this "click" is the tail of a drag — ignore it
+                }
+                if (manageMode) toggleSelected(item.id);
+                else handleEquip(item);
+              }}
               className="relative flex aspect-square touch-none flex-col items-center justify-center gap-[4px] rounded-[12px] border"
               style={{
                 background: isSelected ? "rgba(255,92,138,0.12)" : "rgba(255,255,255,0.04)",
@@ -193,8 +253,8 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
           onClick={() => manageMode && selected.length && setConfirmIds(selected)}
           className="flex w-full items-center justify-center gap-[10px] rounded-[14px] border border-dashed p-[17px] transition-colors"
           style={{
-            borderColor: dragOver ? "#ff5c8a" : "rgba(255,92,138,0.5)",
-            background: dragOver ? "rgba(255,92,138,0.12)" : "transparent",
+            borderColor: dropTarget === "discard" ? "#ff5c8a" : "rgba(255,92,138,0.5)",
+            background: dropTarget === "discard" ? "rgba(255,92,138,0.12)" : "transparent",
           }}
         >
           <img src="/assets/rpg/icons/trash.svg" alt="" className="size-[18px]" />

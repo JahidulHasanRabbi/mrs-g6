@@ -63,14 +63,35 @@ export function ProgressBar({ pct, gradient = RPG_GRADIENTS.exp, height = 8, cla
 
 // Equipment slot chip (Home + Hero Item). Empty: dashed violet border with an
 // EMPTY pill. Equipped: solid cyan border with the +1,000 power tag.
-export function SlotChip({ slot, item, powerTag = "+1,000", onClick, size = "md" }) {
+export function SlotChip({
+  slot,
+  item,
+  powerTag = "+1,000",
+  onClick,
+  size = "md",
+  // When `draggable` and something is equipped, the chip can be dragged (used
+  // on Hero Item to drag an equipped piece into the backpack to unequip).
+  draggable = false,
+  onDrag,
+  onDragEnd,
+  onDragStart,
+}) {
   const equipped = Boolean(item);
+  const canDrag = draggable && equipped;
   const pad = size === "sm" ? "pt-[10px] pb-[8px] px-[4px]" : "pt-[14px] pb-[10px] px-[4px]";
   return (
-    <button
+    <motion.button
       type="button"
       onClick={onClick}
-      className={`flex min-w-0 flex-1 flex-col items-center gap-[7px] rounded-[14px] border ${pad} ${onClick ? "active:scale-95" : "cursor-default"} transition-transform`}
+      drag={canDrag}
+      dragSnapToOrigin
+      dragElastic={0.2}
+      dragMomentum={false}
+      whileDrag={canDrag ? { scale: 1.12, zIndex: 40, opacity: 0.9 } : undefined}
+      onDragStart={onDragStart}
+      onDrag={onDrag}
+      onDragEnd={onDragEnd}
+      className={`flex min-w-0 flex-1 flex-col items-center gap-[7px] rounded-[14px] border ${pad} ${canDrag ? "touch-none" : ""} ${onClick ? "active:scale-95" : "cursor-default"} transition-transform`}
       style={{
         background: equipped ? "rgba(47,230,200,0.06)" : "rgba(255,255,255,0.03)",
         borderColor: equipped ? RPG_COLORS.cyan : RPG_COLORS.violetBorderStrong,
@@ -100,7 +121,7 @@ export function SlotChip({ slot, item, powerTag = "+1,000", onClick, size = "md"
       >
         {equipped ? powerTag : "EMPTY"}
       </span>
-    </button>
+    </motion.button>
   );
 }
 
