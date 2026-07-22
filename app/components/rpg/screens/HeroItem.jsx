@@ -84,10 +84,36 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
   const toggleSelected = (id) =>
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
-  // Pointer-position hit test against any ref's bounding box.
-  const hitRef = (ref, point) => {
-    const r = ref.current?.getBoundingClientRect();
-    return Boolean(r && point.x >= r.left && point.x <= r.right && point.y >= r.top && point.y <= r.bottom);
+  // Drop-zone rects are measured once per drag (touch-none means the page
+  // can't scroll mid-drag, so they stay valid) instead of on every frame.
+  const rectsRef = useRef({});
+  const dropTargetRef = useRef(null);
+
+  const captureRects = () => {
+    rectsRef.current = {
+      discard: zoneRef.current?.getBoundingClientRect(),
+      slots: slotsRef.current?.getBoundingClientRect(),
+      backpack: backpackRef.current?.getBoundingClientRect(),
+      scrollX: window.scrollX,
+      scrollY: window.scrollY,
+    };
+  };
+
+  // info.point is in page coordinates; the cached rects are viewport-relative.
+  const hitZone = (name, point) => {
+    const { [name]: r, scrollX, scrollY } = rectsRef.current;
+    if (!r) return false;
+    const x = point.x - scrollX;
+    const y = point.y - scrollY;
+    return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+  };
+
+  // Only touch React state when the hovered zone actually changes, so a drag
+  // doesn't re-render the whole screen on every pointer move.
+  const updateDropTarget = (next) => {
+    if (dropTargetRef.current === next) return;
+    dropTargetRef.current = next;
+    setDropTarget(next);
   };
 
   return (
@@ -124,12 +150,13 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
             }}
             onDragStart={() => {
               draggedRef.current = true;
-              setDropTarget(null);
+              captureRects();
+              updateDropTarget(null);
             }}
-            onDrag={(e, info) => setDropTarget(hitRef(backpackRef, info.point) ? "backpack" : null)}
+            onDrag={(e, info) => updateDropTarget(hitZone("backpack", info.point) ? "backpack" : null)}
             onDragEnd={(e, info) => {
-              const drop = hitRef(backpackRef, info.point);
-              setDropTarget(null);
+              const drop = hitZone("backpack", info.point);
+              updateDropTarget(null);
               if (drop) handleUnequip(slot);
             }}
           />
@@ -191,22 +218,23 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
               type="button"
               drag={!manageMode}
               dragSnapToOrigin
-              dragElastic={0.2}
               dragMomentum={false}
+              dragTransition={{ bounceStiffness: 600, bounceDamping: 32 }}
               whileDrag={{ scale: 1.12, zIndex: 40, opacity: 0.9 }}
               onDragStart={() => {
                 draggedRef.current = true;
-                setDropTarget(null);
+                captureRects();
+                updateDropTarget(null);
               }}
               onDrag={(e, info) => {
-                if (hitRef(zoneRef, info.point)) setDropTarget("discard");
-                else if (hitRef(slotsRef, info.point)) setDropTarget("slots");
-                else setDropTarget(null);
+                if (hitZone("discard", info.point)) updateDropTarget("discard");
+                else if (hitZone("slots", info.point)) updateDropTarget("slots");
+                else updateDropTarget(null);
               }}
               onDragEnd={(e, info) => {
-                const overDiscard = hitRef(zoneRef, info.point);
-                const overSlots = hitRef(slotsRef, info.point);
-                setDropTarget(null);
+                const overDiscard = hitZone("discard", info.point);
+                const overSlots = hitZone("slots", info.point);
+                updateDropTarget(null);
                 if (overDiscard) setConfirmIds([item.id]);
                 else if (overSlots) handleEquip(item);
               }}

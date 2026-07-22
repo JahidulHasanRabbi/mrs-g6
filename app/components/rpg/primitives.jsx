@@ -85,13 +85,16 @@ export function SlotChip({
       onClick={onClick}
       drag={canDrag}
       dragSnapToOrigin
-      dragElastic={0.2}
       dragMomentum={false}
+      dragTransition={{ bounceStiffness: 600, bounceDamping: 32 }}
       whileDrag={canDrag ? { scale: 1.12, zIndex: 40, opacity: 0.9 } : undefined}
+      // Press feedback lives in Framer (not CSS transition-transform) so it
+      // never eases — and therefore lags — the per-frame drag transform.
+      whileTap={onClick ? { scale: 0.95 } : undefined}
       onDragStart={onDragStart}
       onDrag={onDrag}
       onDragEnd={onDragEnd}
-      className={`flex min-w-0 flex-1 flex-col items-center gap-[7px] rounded-[14px] border ${pad} ${canDrag ? "touch-none" : ""} ${onClick ? "active:scale-95" : "cursor-default"} transition-transform`}
+      className={`flex min-w-0 flex-1 flex-col items-center gap-[7px] rounded-[14px] border ${pad} ${canDrag ? "touch-none" : ""} ${onClick ? "" : "cursor-default"}`}
       style={{
         background: equipped ? "rgba(47,230,200,0.06)" : "rgba(255,255,255,0.03)",
         borderColor: equipped ? RPG_COLORS.cyan : RPG_COLORS.violetBorderStrong,
