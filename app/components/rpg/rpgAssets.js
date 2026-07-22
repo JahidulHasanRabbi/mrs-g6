@@ -43,6 +43,7 @@ export const RPG_IMAGES = {
     navHeroItem: "/assets/rpg/icons/nav-hero-item.svg",
     navChallenge: "/assets/rpg/icons/nav-challenge.svg",
     navMission: "/assets/rpg/icons/nav-mission.svg",
+    navCheckIn: "/assets/rpg/icons/nav-checkin.svg",
   },
   // Outline SVG icons — used for EMPTY equipment slots (dimmed placeholder).
   equipment: {

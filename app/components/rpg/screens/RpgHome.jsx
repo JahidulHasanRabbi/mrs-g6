@@ -5,7 +5,7 @@
 // into the Avatar Level / Hero Item screens.
 
 import { motion } from "framer-motion";
-import { RPG_COLORS, RPG_FONTS, RPG_VIEWS, EQUIP_SLOTS } from "../constants";
+import { RPG_COLORS, RPG_FONTS, RPG_GRADIENTS, RPG_VIEWS, EQUIP_SLOTS } from "../constants";
 import { heroPoseFor } from "../rpgAssets";
 import { SlotChip } from "../primitives";
 
@@ -21,11 +21,16 @@ export default function RpgHome({ profile, equipment, onNavigate }) {
         onClick={() => onNavigate(RPG_VIEWS.LEVEL)}
         aria-label="View avatar level"
       >
+        {/* The chevron marks this block as tappable — it is the only route to
+            the Avatar Level screen, and a bare number reads as a label. */}
         <span
-          className="text-[18px] font-bold tracking-[6px]"
+          className="flex items-center gap-[6px] text-[18px] font-bold tracking-[6px]"
           style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}
         >
           — POWER —
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="9 6 15 12 9 18" />
+          </svg>
         </span>
         <span
           className="text-[56px] font-bold leading-[62px]"
@@ -37,6 +42,21 @@ export default function RpgHome({ profile, equipment, onNavigate }) {
         >
           {(profile?.power ?? 0).toLocaleString("en-GB")}
         </span>
+        {/* Only while the next level is actually affordable. Static and solid
+            on purpose — this has to be read, not watched, so no pulse. */}
+        {profile?.canLevelUp ? (
+          <span
+            className="mt-[6px] rounded-full px-[16px] py-[6px] text-[12px] font-bold tracking-[2px]"
+            style={{
+              background: RPG_GRADIENTS.cta,
+              color: RPG_COLORS.darkText,
+              fontFamily: RPG_FONTS.display,
+              boxShadow: "0 0 18px rgba(255,201,77,0.45)",
+            }}
+          >
+            LEVEL UP READY
+          </span>
+        ) : null}
       </button>
 
       <motion.img

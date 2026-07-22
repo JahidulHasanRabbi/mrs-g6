@@ -17,7 +17,10 @@ export const RPG_COLORS = {
   violetBorderStrong: "rgba(139,92,246,0.5)",
   slotLabel: "#c7b9ff",
   slotEmpty: "#8f82c4",
-  navInactive: "#036d49",
+  // Inactive bottom-nav label. Lifted from the design's #036d49, which was
+  // near-unreadable against the dark green chrome once the nav grew to five
+  // tabs at a smaller label size.
+  navInactive: "#3fae86",
   gold: "#ffc94d",
   goldDeep: "#ff8a50",
   coinBorder: "#b8770f",

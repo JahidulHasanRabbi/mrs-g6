@@ -11,11 +11,21 @@
 //   6 Gold Bar     → no extra fields
 // `image` is optional; a newly picked File is sent as multipart automatically.
 // Feedback follows the penalty-kick add-reward conventions (toasts).
+//
+// Probability is entered as a PERCENT (18 = 18%) because that is how the rest
+// of the panel reads it. The API stores a 0-1 decimal with 4 places, so the
+// form converts on the way in and out: 18 <-> "0.1800". 4 decimals means the
+// finest step is 0.01%.
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "../../../../components/admin/ui/Toast";
-import { createMysteryBoxItem, getMysteryBoxItem, updateMysteryBoxItem } from "../../../../api/adminApi";
+import {
+  createMysteryBoxItem,
+  getMysteryBoxItem,
+  getMysteryBoxProbabilityTotal,
+  updateMysteryBoxItem,
+} from "../../../../api/adminApi";
 import { MYSTERY_BOX_REWARD_TYPE_OPTIONS } from "../../../../config/avatarOptions";
 import {
   ActionButton,
@@ -29,10 +39,16 @@ import {
   apiErrorMessage,
 } from "../../../../components/admin/ui/GameUI";
 
+// Percent <-> API decimal. Rounded to 2 dp because the API keeps 4 decimals
+// of a 0-1 value, i.e. 0.01% resolution.
+const toPercent = (decimal) => Math.round(Number(decimal || 0) * 1000000) / 10000;
+const toDecimal = (percent) => (Number(percent || 0) / 100).toFixed(4);
+const fmtPct = (n) => String(Math.round(Number(n || 0) * 100) / 100);
+
 const EMPTY_FORM = {
   rewardName: "",
   rewardType: 1,
-  probability: "0.0000",
+  probability: "0",
   tokenAmount: "",
   battlePointAmount: "",
   levelUpCount: "",
@@ -46,7 +62,7 @@ function toForm(api) {
   return {
     rewardName: api.reward_name ?? "",
     rewardType: api.reward_type ?? 1,
-    probability: api.probability != null ? String(api.probability) : "0.0000",
+    probability: api.probability != null ? fmtPct(toPercent(api.probability)) : "0",
     tokenAmount: api.token_amount != null ? String(api.token_amount) : "",
     battlePointAmount: api.battle_point_amount != null ? String(api.battle_point_amount) : "",
     levelUpCount: api.level_up_count != null ? String(api.level_up_count) : "",
@@ -57,11 +73,17 @@ function toForm(api) {
   };
 }
 
-function validate(form) {
+function validate(form, othersPct) {
   if (!form.rewardName.trim()) return "Reward name is required";
   const probability = Number(form.probability);
-  if (!Number.isFinite(probability) || probability < 0 || probability > 1) {
-    return "Probability must be between 0 and 1 (e.g. 0.1800 for 18%)";
+  if (!Number.isFinite(probability) || probability < 0 || probability > 100) {
+    return "Probability must be between 0% and 100%";
+  }
+  // All active items must sum to exactly 100%; going over can never be right.
+  if (othersPct != null && probability + othersPct > 100.0001) {
+    return `Total probability would be ${fmtPct(probability + othersPct)}%. The other active items already use ${fmtPct(
+      othersPct,
+    )}%, so this one cannot exceed ${fmtPct(100 - othersPct)}%.`;
   }
   const type = Number(form.rewardType);
   if (type === 1) {
@@ -98,7 +120,7 @@ function toPayload(form, imageFile) {
   const payload = {
     reward_name: form.rewardName.trim(),
     reward_type: type,
-    probability: Number(form.probability).toFixed(4),
+    probability: toDecimal(form.probability),
     // Unused numeric amounts must be 0, not null (verified against the API —
     // null is rejected with "This field may not be null.").
     token_amount: type === 1 ? Number(form.tokenAmount) : 0,
@@ -127,24 +149,52 @@ function MysteryBoxItemForm() {
   const [imagePreview, setImagePreview] = useState(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(Boolean(editingUuid));
+  // Percent already used by every OTHER active item, so the form can show what
+  // is left to reach 100% and refuse to go over.
+  const [othersPct, setOthersPct] = useState(null);
 
   useEffect(() => {
-    if (!editingUuid) return;
-    setLoading(true);
-    getMysteryBoxItem(editingUuid)
-      .then((data) => {
-        setForm(toForm(data));
-        setImagePreview(data.image || null);
+    let cancelled = false;
+    const loadItem = editingUuid ? getMysteryBoxItem(editingUuid) : Promise.resolve(null);
+
+    setLoading(Boolean(editingUuid));
+    Promise.all([loadItem, getMysteryBoxProbabilityTotal().catch(() => null)])
+      .then(([data, summary]) => {
+        if (cancelled) return;
+        if (data) {
+          setForm(toForm(data));
+          setImagePreview(data.image || null);
+        }
+        if (summary) {
+          // probability-total covers all ACTIVE items, which includes the one
+          // being edited — subtract its stored value to get "everyone else".
+          const totalPct = toPercent(summary.total);
+          const ownPct = data ? toPercent(data.probability) : 0;
+          setOthersPct(Math.max(0, Math.round((totalPct - ownPct) * 10000) / 10000));
+        }
       })
-      .catch((err) =>
-        toast.error("Failed to load item", { description: apiErrorMessage(err, "Please go back and retry.") }),
-      )
-      .finally(() => setLoading(false));
+      .catch((err) => {
+        if (!cancelled) {
+          toast.error("Failed to load item", { description: apiErrorMessage(err, "Please go back and retry.") });
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingUuid]);
 
   const set = (key) => (v) => setForm((p) => ({ ...p, [key]: v }));
   const type = Number(form.rewardType);
+
+  const currentPct = Number(form.probability) || 0;
+  const remainingPct = othersPct == null ? null : Math.round((100 - othersPct) * 10000) / 10000;
+  const totalPct = othersPct == null ? null : Math.round((othersPct + currentPct) * 10000) / 10000;
+  const overLimit = totalPct != null && totalPct > 100.0001;
+  const exactlyFull = totalPct != null && Math.abs(totalPct - 100) < 0.0001;
 
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
@@ -156,7 +206,7 @@ function MysteryBoxItemForm() {
   };
 
   const handleSave = async () => {
-    const invalid = validate(form);
+    const invalid = validate(form, othersPct);
     if (invalid) {
       toast.warning(invalid);
       return;
@@ -205,16 +255,52 @@ function MysteryBoxItemForm() {
             <Field label="Reward Type">
               <Select value={form.rewardType} onChange={set("rewardType")} options={MYSTERY_BOX_REWARD_TYPE_OPTIONS} />
             </Field>
-            <Field label="Probability" hint="0 to 1, up to 4 decimals — 0.1800 = 18%. Items at 0 are shown but never drawn.">
-              <input
-                type="number"
-                min="0"
-                max="1"
-                step="0.0001"
-                value={form.probability}
-                onChange={(e) => set("probability")(e.target.value)}
-                className={INPUT_BASE}
-              />
+            <Field label="Probability (%)" hint="Items at 0% are shown to members but never drawn.">
+              <div className="relative">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={form.probability}
+                  onChange={(e) => set("probability")(e.target.value)}
+                  className={`${INPUT_BASE} pr-9 ${overLimit ? "!border-red-400" : ""}`}
+                />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[14px] text-white/50">
+                  %
+                </span>
+              </div>
+
+              {/* Live budget: what the other active items already use, what is
+                  left, and a one-click fill for the exact remainder. */}
+              {othersPct != null && (
+                <div className="mt-2 space-y-1.5">
+                  <p className="text-[11px] text-white/50">
+                    Other active items use <span className="text-white/80">{fmtPct(othersPct)}%</span> · remaining{" "}
+                    <span className="text-white/80">{fmtPct(remainingPct)}%</span>
+                  </p>
+                  {remainingPct > 0 && Math.abs(currentPct - remainingPct) > 0.0001 && (
+                    <button
+                      type="button"
+                      onClick={() => set("probability")(fmtPct(remainingPct))}
+                      className="rounded-[6px] border border-[#f2cb7a]/60 px-2.5 py-1 text-[11px] font-semibold text-[#f2cb7a] transition-colors hover:bg-[#f2cb7a]/10"
+                    >
+                      Use remaining {fmtPct(remainingPct)}%
+                    </button>
+                  )}
+                  <p
+                    className={`text-[11px] font-semibold ${
+                      overLimit ? "text-red-400" : exactlyFull ? "text-emerald-400" : "text-amber-300"
+                    }`}
+                  >
+                    {overLimit
+                      ? `Over by ${fmtPct(totalPct - 100)}% — total would be ${fmtPct(totalPct)}%`
+                      : exactlyFull
+                        ? "Total 100% — valid"
+                        : `Total ${fmtPct(totalPct)}% — must reach 100% to be valid`}
+                  </p>
+                </div>
+              )}
             </Field>
           </div>
 
