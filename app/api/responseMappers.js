@@ -114,8 +114,19 @@ export function mapSmashEggItems(apiResponse) {
     token_amount: item.token_amount,
     unlimited: Boolean(item.unlimited),
     image: item.image || null,
+    position: item.position ?? null,
     raw: item
-  }));
+  }))
+  // The API returns items in creation order and does not sort by `position`,
+  // so ordering is the client's job: positioned items first in ascending
+  // order, unpositioned ones after them keeping the order the API sent
+  // (Array#sort is stable).
+  .sort((a, b) => {
+    if (a.position == null && b.position == null) return 0;
+    if (a.position == null) return 1;
+    if (b.position == null) return -1;
+    return a.position - b.position;
+  });
 }
 
 export function mapSmashEggSequences(apiResponse) {

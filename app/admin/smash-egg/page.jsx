@@ -49,11 +49,27 @@ function itemTypeToApi(value) {
   return value;
 }
 
+// Field errors come back as { error, details: { position: ["..."] } }, so the
+// usual `detail` lookup yields nothing for a duplicate position.
+function describeApiError(error) {
+  const details = error?.data?.details;
+  if (typeof details === "string") return details;
+  if (details && typeof details === "object") {
+    const messages = Object.values(details).flat().filter(Boolean);
+    if (messages.length) return messages.join(" ");
+  }
+  return error?.data?.detail || error?.message;
+}
+
 function buildItemPayload(data, includeImage = true) {
+  const position = String(data.position ?? "").trim();
+
   const payload = {
     reward_name: data.name,
     item_type: itemTypeToApi(data.itemType),
     unlimited: Boolean(data.unlimited),
+    // Explicit null clears a position; the API treats it the same as omitting.
+    position: position === "" ? null : Number(position),
   };
 
   if (!payload.unlimited) {
@@ -258,7 +274,7 @@ export default function SmashEggPage() {
       setView("list");
     } catch (error) {
       toast.error(formMode === "edit" ? "Failed to update reward" : "Failed to add reward", {
-        description: error?.data?.detail || error?.message,
+        description: describeApiError(error),
       });
     }
   };

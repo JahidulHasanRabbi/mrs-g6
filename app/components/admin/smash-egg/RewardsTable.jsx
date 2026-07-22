@@ -3,7 +3,8 @@
 // Smash Egg rewards table. Visual spec mirrors Figma 1727:4094 — gradient
 // header row (#141828 → #333333), a 48px image thumbnail cell, a gold-gradient
 // "Edit" button and a dark "Archive" button. Column set matches the Lucky Spin
-// / Penalty Kick rewards tables: Reward Name, Quantity, Item Type, Image, Action.
+// / Penalty Kick rewards tables, plus a Position column: Reward Name, Position,
+// Quantity, Item Type, Image, Action.
 
 const GOLD_BG = "linear-gradient(96deg, #dc9d16 1%, #f2cb7a 98%)";
 const DARK_BG = "linear-gradient(178deg, #141828 0%, #333333 99.75%)";
@@ -41,10 +42,11 @@ export default function RewardsTable({ rewards = [], onEdit, onArchive }) {
   return (
     <div className="overflow-hidden rounded-[12px] border border-white/5">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px]">
+        <table className="w-full min-w-[840px]">
           <thead>
             <tr className="text-left" style={{ backgroundImage: DARK_BG }}>
               <th className="px-6 py-4 text-[14px] font-semibold tracking-[-0.5px] text-[#fbeed2]" style={{ width: 245 }}>Reward Name</th>
+              <th className="px-6 py-4 text-[14px] font-semibold tracking-[-0.5px] text-[#fbeed2]">Position</th>
               <th className="px-6 py-4 text-[14px] font-semibold tracking-[-0.5px] text-[#fbeed2]">Quantity</th>
               <th className="px-6 py-4 text-[14px] font-semibold tracking-[-0.5px] text-[#fbeed2]">Item Type</th>
               <th className="px-6 py-4 text-center text-[14px] font-semibold tracking-[-0.5px] text-[#fbeed2]">Image</th>
@@ -54,7 +56,7 @@ export default function RewardsTable({ rewards = [], onEdit, onArchive }) {
           <tbody>
             {rewards.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-10 text-center text-[13px] text-white/50">
+                <td colSpan={6} className="px-6 py-10 text-center text-[13px] text-white/50">
                   No rewards yet. Click &quot;Add Reward&quot; to create your first one.
                 </td>
               </tr>
@@ -62,6 +64,9 @@ export default function RewardsTable({ rewards = [], onEdit, onArchive }) {
               rewards.map((r) => (
                 <tr key={r.id} className="border-b border-white/5 last:border-b-0 hover:bg-white/[0.02]">
                   <td className="px-6 py-5 text-[12px] text-white">{r.name}</td>
+                  <td className="px-6 py-5 text-[12px] text-white">
+                    {r.position == null ? <span className="text-white/40">—</span> : `#${r.position}`}
+                  </td>
                   <td className="px-6 py-5 text-[12px] text-white">
                     {r.unlimited ? "Unlimited" : Number(r.quantity ?? 0).toLocaleString("en-US")}
                   </td>

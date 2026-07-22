@@ -90,6 +90,7 @@ const EMPTY = {
   maxWithdraw: "",
   tokens: "",
   prize: "",
+  position: "",
   unlimited: false,
 };
 
@@ -109,6 +110,7 @@ export default function RewardForm({ mode = "add", initial = null, onBack, onSav
         minWithdraw: String(initial.minWithdraw ?? ""),
         maxWithdraw: String(initial.maxWithdraw ?? ""),
         tokens: String(initial.tokens ?? ""),
+        position: initial.position == null ? "" : String(initial.position),
         unlimited: Boolean(initial.unlimited),
       });
       setImagePreview(initial.image || null);
@@ -140,6 +142,7 @@ export default function RewardForm({ mode = "add", initial = null, onBack, onSav
       minWithdraw: form.minWithdraw,
       maxWithdraw: form.maxWithdraw,
       tokens: form.tokens,
+      position: form.position,
       unlimited: form.unlimited,
       image: imageFile,
     });
@@ -225,6 +228,23 @@ export default function RewardForm({ mode = "add", initial = null, onBack, onSav
           </button>
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImage} />
         </Field>
+      </div>
+
+      {/* Row 4 — Position. Orders the member-site prize list; must be unique
+          across non-archived items or the API rejects the save. */}
+      <div className="flex w-full items-start gap-10">
+        <Field label="Position">
+          <input
+            type="text"
+            inputMode="numeric"
+            value={form.position}
+            onChange={set("position")}
+            placeholder="Leave empty to show last"
+            className={FIELD}
+          />
+        </Field>
+        <div className="flex-1" />
+        <div className="flex-1" />
       </div>
 
       {/* Footer — Back / Save */}
