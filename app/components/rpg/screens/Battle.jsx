@@ -13,7 +13,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { RPG_COLORS, RPG_FONTS } from "../constants";
-import { RPG_IMAGES, heroBattlePoseFor } from "../rpgAssets";
+import { RPG_IMAGES, heroBattlePoseFor, equipMask } from "../rpgAssets";
 import { GoldCta } from "../primitives";
 import BossSprite from "../BossSprite";
 
@@ -61,6 +61,7 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
   const [hpFraction, setHpFraction] = useState(1);
   const [hits, setHits] = useState([]); // floating damage numbers
   const [striking, setStriking] = useState(false); // hero ki-blast recoil pulse
+  const [strikeIdx, setStrikeIdx] = useState(0); // frame index into the unarmed punch sequence
   const [hitSeq, setHitSeq] = useState(0); // increments per landed hit (keys impact FX)
   // Code-driven in-between poses derived from the existing Colossus sprite.
   const [bossFrame, setBossFrame] = useState("idle");
@@ -116,11 +117,16 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
           const t = (h + 1) / round.roll;
           setHpFraction(prevFraction + (targetFraction - prevFraction) * t);
           setHits((prev) => [...prev.slice(-4), { id: `${roundIndex}-${h}`, dmg: hitDamages[roundIndex][h] }]);
-          // Ki blast: the hero fires an energy shot at the boss on each landed
-          // hit with a small standing recoil, then settles back to the stance.
+          // Attack: fire an energy shot at the boss. The unarmed hero plays a
+          // back-facing punch sequence (frames step ~55ms); a geared hero just
+          // recoils (no per-item attack frames). Energy shot fires either way.
           setStriking(true);
+          setStrikeIdx(0);
           setHitSeq((n) => n + 1);
           setBossFrame("hit");
+          later(() => setStrikeIdx(1), 55);
+          later(() => setStrikeIdx(2), 110);
+          later(() => setStrikeIdx(3), 165);
           later(() => setStriking(false), 220);
           later(() => setBossFrame("hurt"), 70);
           later(() => setBossFrame("recover"), 150);
@@ -159,10 +165,17 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
   const victorious = phase === PHASES.VICTORY;
   const hpNow = Math.round(boss.hp * hpFraction);
   const gender = profile?.gender || "male";
-  // The battle hero is BACK-facing (looking at the boss) and wears the equipped
-  // gear, then fires a ki blast while standing — the pose art has no per-item
-  // battle frames, so one energy-blast animation covers every item combo.
+  // The battle hero is BACK-facing (looking at the boss). With gear equipped it
+  // shows the equipped back pose and just recoils on attack (no per-item attack
+  // frames). Unarmed, it plays the back-facing punch sequence (2271/2272). The
+  // energy shot fires either way.
   const heroPose = heroBattlePoseFor(gender, equipment);
+  const unarmed = equipMask(equipment) === 0;
+  const strikeFrames = RPG_IMAGES.heroStrike[gender];
+  const strikeSrc =
+    unarmed && Array.isArray(strikeFrames) && strikeFrames.length
+      ? strikeFrames[Math.min(strikeIdx, strikeFrames.length - 1)]
+      : null;
 
   return (
     // The arena backdrop is full-bleed at the ScreenShell level (passed via
@@ -300,13 +313,15 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
               style={{ background: "radial-gradient(ellipse, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 70%)" }}
             />
             <motion.img
-              src={heroPose}
+              src={striking && strikeSrc ? strikeSrc : heroPose}
               alt="Your hero"
               className="relative h-full max-h-full w-auto object-contain"
               style={{ transformOrigin: "bottom center" }}
               animate={
                 striking
-                  ? { scale: [1, 1.05, 1.02], y: [0, -3, -6] }
+                  ? strikeSrc
+                    ? { scale: 1.16, y: -20 }
+                    : { scale: [1, 1.05, 1.02], y: [0, -3, -6] }
                   : heroHit
                     ? { x: [0, 13, -15, 7, 0], y: [0, 5, 0], scale: [1, 0.93, 1] }
                     : phase === PHASES.BOSS_ATTACK
@@ -315,7 +330,9 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
               }
               transition={
                 striking
-                  ? { duration: 0.2, ease: "easeOut" }
+                  ? strikeSrc
+                    ? { duration: 0.12, ease: "easeOut" }
+                    : { duration: 0.2, ease: "easeOut" }
                   : heroHit
                     ? { duration: 0.22, ease: "easeOut" }
                     : phase === PHASES.BOSS_ATTACK
