@@ -113,7 +113,7 @@ export const HERO_POSE_MASKS = {
 // boss. Keyed by the same 4-bit gear mask. Only male art exists so far; female
 // falls back to the front pose until its back art is added.
 export const HERO_BATTLE_MASKS = {
-  male: [0, 1, 2, 5, 7, 8, 9, 13, 15],
+  male: [0, 1, 2, 5, 6, 7, 8, 9, 11, 12, 13],
   female: [],
 };
 
@@ -165,11 +165,16 @@ export function heroBattlePoseFor(gender, equipment) {
   const avail = HERO_BATTLE_MASKS[g];
   if (!avail || !avail.length) return heroPoseFor(gender, equipment);
   const want = equipMask(equipment);
+  if (avail.includes(want)) {
+    return `/assets/rpg/hero/${g}-battle/${String(want).padStart(2, "0")}.webp`;
+  }
+  // No exact back pose (e.g. no full-4 back art) → closest subset. Maximise
+  // covered pieces, then prefer keeping the most visible ones (weapon, helmet).
   let best = 0;
   let bestScore = -1;
   for (const m of avail) {
     if ((m & ~want) !== 0) continue; // shows gear that isn't equipped — skip
-    const score = popcount(m & want) * 2 + (m & 8 ? 1 : 0);
+    const score = popcount(m & want) * 10 + (m & 8 ? 2 : 0) + (m & 4 ? 1 : 0);
     if (score > bestScore) {
       bestScore = score;
       best = m;
