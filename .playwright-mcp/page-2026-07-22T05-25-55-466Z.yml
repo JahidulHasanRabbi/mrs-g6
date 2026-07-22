@@ -1,0 +1,46 @@
+- generic [active] [ref=f8e1]:
+  - generic [ref=f8e15]:
+    - banner [ref=f8e16]:
+      - generic [ref=f8e17]:
+        - button "Open menu" [ref=f8e18] [cursor=pointer]
+        - generic [ref=f8e19]: RPG
+      - button "Game info" [ref=f8e21] [cursor=pointer]
+    - generic [ref=f8e22]:
+      - generic [ref=f8e23]:
+        - generic [ref=f8e24]:
+          - generic [ref=f8e25]: Lv.
+          - generic [ref=f8e26]: "8"
+        - generic [ref=f8e27]: EXP
+        - generic [ref=f8e31]:
+          - generic [ref=f8e32]: T
+          - generic [ref=f8e34]:
+            - generic [ref=f8e35]: TOKEN
+            - generic [ref=f8e36]: "30"
+        - generic [ref=f8e38]:
+          - generic [ref=f8e39]: BP
+          - generic [ref=f8e40]: "100"
+      - generic [ref=f8e43]:
+        - generic [ref=f8e44]:
+          - generic [ref=f8e45]: PLANET BOSS
+          - heading "METEOR COLOSSUS" [level=2] [ref=f8e46]
+          - generic [ref=f8e47]: 150,000 / 150,000
+        - generic [ref=f8e50]:
+          - img "Meteor Colossus" [ref=f8e53]
+          - img "Your hero" [ref=f8e55]
+        - generic [ref=f8e56]:
+          - generic [ref=f8e57]:
+            - generic [ref=f8e58]: YOUR POWER
+            - generic [ref=f8e59]: 8,000
+            - generic [ref=f8e60]: Boss strikes once after your attacks
+          - button "Roll the dice" [ref=f8e61] [cursor=pointer]:
+            - img "Die showing 1" [ref=f8e62]
+          - generic [ref=f8e65]: ROLL DICE
+          - generic [ref=f8e66]: Dice number = number of attacks · 100–500 dmg each
+          - button "⚔ ATTACK" [ref=f8e68] [cursor=pointer]
+    - navigation [ref=f8e69]:
+      - button "HOME" [ref=f8e70] [cursor=pointer]
+      - button "HERO ITEM" [ref=f8e72] [cursor=pointer]
+      - button "CHALLENGE" [ref=f8e74] [cursor=pointer]
+      - button "MISSION" [ref=f8e76] [cursor=pointer]
+  - button "Open Next.js Dev Tools" [ref=f8e10] [cursor=pointer]
+  - alert [ref=f8e14]
