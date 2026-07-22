@@ -113,7 +113,10 @@ export const HERO_POSE_MASKS = {
 // falls back to the front pose until its back art is added.
 export const HERO_BATTLE_MASKS = {
   male: [0, 1, 2, 4, 6, 7, 8, 9, 11, 12, 13, 14, 15],
-  female: [],
+  // Conservative confident subset (the back-view tiara is hard to read on the
+  // rest); the subset resolver safely fills the gaps — never shows unequipped
+  // gear. Full loadout (15) has a real full back pose.
+  female: [0, 1, 5, 6, 9, 15],
 };
 
 const popcount = (n) => {
