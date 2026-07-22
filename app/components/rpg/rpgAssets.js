@@ -98,14 +98,14 @@ export function arenaFor(bossId) {
 //
 // The hero on Home visually wears whatever gear is equipped. Each pose art is
 // keyed by a 4-bit gear mask: weapon=8, helmet=4, armor=2, boots=1. Files live
-// at /assets/rpg/hero/<gender>/<mask 2-digit>.webp. Not every combo was drawn
-// (female lacks armor+boots and the full 4-piece), so heroPoseFor() falls back
-// to the closest SUBSET pose — never showing a piece that isn't equipped.
+// at /assets/rpg/hero/<gender>/<mask 2-digit>.webp. A couple of combos weren't
+// drawn (e.g. female armor+boots), so heroPoseFor() falls back to the closest
+// SUBSET pose — never showing a piece that isn't equipped.
 // ---------------------------------------------------------------------------
 
 export const HERO_POSE_MASKS = {
   male: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-  female: [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
+  female: [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
 };
 
 // Back-facing poses for the boss battle (Figma mini set) — the hero faces the
