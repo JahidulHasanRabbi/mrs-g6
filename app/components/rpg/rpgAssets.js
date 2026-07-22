@@ -99,14 +99,13 @@ export function arenaFor(bossId) {
 // The hero on Home visually wears whatever gear is equipped. Each pose art is
 // keyed by a 4-bit gear mask: weapon=8, helmet=4, armor=2, boots=1. Files live
 // at /assets/rpg/hero/<gender>/<mask 2-digit>.webp. Not every combo was drawn
-// (male lacks the full 4-piece; female lacks armor+boots), so heroPoseFor()
-// falls back to the closest available pose — most equipped pieces matched,
-// fewest shown-but-not-equipped.
+// (female lacks armor+boots and the full 4-piece), so heroPoseFor() falls back
+// to the closest SUBSET pose — never showing a piece that isn't equipped.
 // ---------------------------------------------------------------------------
 
 export const HERO_POSE_MASKS = {
   male: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
-  female: [0, 1, 2, 4, 5, 6, 7, 8, 9, 12, 13, 14, 15],
+  female: [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
 };
 
 // Back-facing poses for the boss battle (Figma mini set) — the hero faces the
@@ -129,6 +128,24 @@ export function equipMask(equipment) {
   return (s.weapon ? 8 : 0) | (s.helmet ? 4 : 0) | (s.armor ? 2 : 0) | (s.boots ? 1 : 0);
 }
 
+// Pick the available pose mask that is a SUBSET of `want` (never shows a piece
+// that isn't equipped) covering the most equipped pieces. Ties prefer the most
+// visible gear: weapon > helmet > armor > boots. mask 0 is always eligible.
+function closestSubsetMask(avail, want) {
+  let best = 0;
+  let bestScore = -1;
+  for (const m of avail) {
+    if ((m & ~want) !== 0) continue; // shows gear that isn't equipped — skip
+    const score =
+      popcount(m & want) * 100 + (m & 8 ? 8 : 0) + (m & 4 ? 4 : 0) + (m & 2 ? 2 : 0) + (m & 1 ? 1 : 0);
+    if (score > bestScore) {
+      bestScore = score;
+      best = m;
+    }
+  }
+  return best;
+}
+
 export function heroPoseFor(gender, equipment) {
   const g = gender === "female" ? "female" : "male";
   const avail = HERO_POSE_MASKS[g];
@@ -143,17 +160,7 @@ export function heroPoseFor(gender, equipment) {
     // hero can never display gear the player hasn't equipped. Among eligible
     // poses pick the one covering the most equipped pieces (mask 0 is always
     // eligible, so there is always a result).
-    let bestScore = -1;
-    for (const m of avail) {
-      if ((m & ~want) !== 0) continue; // shows gear that isn't equipped — skip
-      // Coverage dominates; among equal-coverage subsets prefer one that keeps
-      // the (equipped) weapon visible — still never adds unequipped gear.
-      const score = popcount(m & want) * 2 + (m & 8 ? 1 : 0);
-      if (score > bestScore) {
-        bestScore = score;
-        best = m;
-      }
-    }
+    best = closestSubsetMask(avail, want);
   }
   return `/assets/rpg/hero/${g}/${String(best).padStart(2, "0")}.webp`;
 }
@@ -165,21 +172,7 @@ export function heroBattlePoseFor(gender, equipment) {
   const avail = HERO_BATTLE_MASKS[g];
   if (!avail || !avail.length) return heroPoseFor(gender, equipment);
   const want = equipMask(equipment);
-  if (avail.includes(want)) {
-    return `/assets/rpg/hero/${g}-battle/${String(want).padStart(2, "0")}.webp`;
-  }
-  // No exact back pose (e.g. no full-4 back art) → closest subset. Maximise
-  // covered pieces, then prefer keeping the most visible ones (weapon, helmet).
-  let best = 0;
-  let bestScore = -1;
-  for (const m of avail) {
-    if ((m & ~want) !== 0) continue; // shows gear that isn't equipped — skip
-    const score = popcount(m & want) * 10 + (m & 8 ? 2 : 0) + (m & 4 ? 1 : 0);
-    if (score > bestScore) {
-      bestScore = score;
-      best = m;
-    }
-  }
+  const best = avail.includes(want) ? want : closestSubsetMask(avail, want);
   return `/assets/rpg/hero/${g}-battle/${String(best).padStart(2, "0")}.webp`;
 }
 
