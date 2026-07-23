@@ -134,14 +134,18 @@ export function SlotChip({
 
 // Rising violet flame tongues that billow up AROUND the hero (Mob-Psycho /
 // cursed-seal aura). Deterministic so SSR + client agree. Each licks upward,
-// stretches, sways, and dissipates on its own loop.
+// stretches, sways, and dissipates on its own loop. Dense + tall so the flames
+// fill the frame around the body and rise past the head (matches the ref art).
 const AURA_FLAMES = [
-  { left: 16, w: 17, h: 66, bottom: -2, delay: 0.0, dur: 2.0, sway: 7 },
-  { left: 30, w: 13, h: 52, bottom: 0, delay: 0.7, dur: 2.4, sway: -6 },
-  { left: 42, w: 12, h: 48, bottom: 2, delay: 1.3, dur: 2.2, sway: 5 },
-  { left: 58, w: 12, h: 50, bottom: 1, delay: 0.4, dur: 2.3, sway: -5 },
-  { left: 70, w: 15, h: 62, bottom: -2, delay: 1.0, dur: 2.1, sway: 6 },
-  { left: 84, w: 13, h: 50, bottom: 0, delay: 1.6, dur: 2.5, sway: -7 },
+  { left: 12, w: 17, h: 72, bottom: -2, delay: 0.0, dur: 2.0, sway: 8 },
+  { left: 24, w: 13, h: 62, bottom: 0, delay: 0.7, dur: 2.3, sway: -6 },
+  { left: 36, w: 12, h: 68, bottom: 2, delay: 1.3, dur: 2.1, sway: 6 },
+  { left: 50, w: 17, h: 86, bottom: 2, delay: 0.4, dur: 2.4, sway: 4 },
+  { left: 64, w: 12, h: 68, bottom: 1, delay: 1.5, dur: 2.2, sway: -5 },
+  { left: 76, w: 13, h: 62, bottom: 0, delay: 0.9, dur: 2.5, sway: 7 },
+  { left: 88, w: 17, h: 72, bottom: -2, delay: 1.8, dur: 2.0, sway: -8 },
+  { left: 44, w: 10, h: 56, bottom: 4, delay: 2.0, dur: 1.9, sway: 3 },
+  { left: 58, w: 10, h: 58, bottom: 3, delay: 1.1, dur: 2.6, sway: -4 },
 ];
 
 // Hero art wrapped in a rising violet flame aura (client request — Mob-Psycho
@@ -193,31 +197,51 @@ export function HeroShowcase({ pose, equippedCount = 0, heightClass = "h-[min(34
             height: `${f.h}%`,
             marginLeft: `${-f.w / 2}%`,
             background:
-              "radial-gradient(50% 58% at 50% 82%, rgba(243,232,255,0.55) 0%, rgba(217,70,239,0.5) 30%, rgba(168,85,247,0.48) 56%, rgba(124,77,255,0) 80%)",
+              "radial-gradient(50% 58% at 50% 82%, rgba(245,236,255,0.72) 0%, rgba(224,86,244,0.62) 28%, rgba(168,85,247,0.55) 54%, rgba(124,77,255,0) 80%)",
             borderRadius: "50% 50% 46% 46% / 66% 66% 34% 34%",
-            filter: "blur(6px)",
+            filter: "blur(5px)",
             transformOrigin: "50% 100%",
             mixBlendMode: "screen",
           }}
           initial={{ opacity: 0, y: 8, scaleY: 0.6 }}
           animate={{
-            opacity: [0, 0.85 * intensity, 0.5 * intensity, 0],
+            opacity: [0, Math.min(1, 1.05 * intensity), 0.6 * intensity, 0],
             y: [8, -rise * 0.5, -rise],
-            scaleY: [0.6, 1.25, 1.5],
+            scaleY: [0.6, 1.3, 1.6],
             x: [0, f.sway, 0],
           }}
           transition={{ duration: (fullSet ? 0.75 : 1) * f.dur, delay: f.delay, repeat: Infinity, ease: "easeOut" }}
         />
       ))}
-      {/* Contained rim glow hugging the silhouette. */}
+      {/* Silhouette rim glow — the pose used as a mask and filled bright, sitting
+          behind the hero so only the blurred edge bleeds out: a body-SHAPED
+          purple outline (the crisp glow the ref has), not a soft oval. Two
+          passes: a wide soft violet halo + a tight bright magenta edge. */}
       <motion.div
-        className="pointer-events-none absolute left-1/2 bottom-[-2%] h-[108%] w-[58%] -translate-x-1/2"
+        className="pointer-events-none absolute inset-0"
         style={{
-          background: `radial-gradient(46% 56% at 50% 52%, rgba(168,85,247,${(0.3 * intensity).toFixed(3)}) 0%, rgba(124,77,255,${(0.18 * intensity).toFixed(3)}) 48%, rgba(124,77,255,0) 74%)`,
-          filter: "blur(10px)",
+          ...maskStyle,
+          background: `linear-gradient(to top, #7c4dff, #a855f7 55%, #d946ef 100%)`,
+          filter: "blur(11px)",
+          transform: "scale(1.06)",
+          transformOrigin: "50% 100%",
+          mixBlendMode: "screen",
         }}
-        animate={{ opacity: [0.8, 1, 0.86, 1, 0.82] }}
+        animate={{ opacity: [0.55 * intensity, 0.85 * intensity, 0.6 * intensity, 0.8 * intensity, 0.55 * intensity] }}
         transition={{ duration: fullSet ? 1.2 : 1.8, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          ...maskStyle,
+          background: `linear-gradient(to top, #c084fc, #e9d5ff 60%, #f3e8ff 100%)`,
+          filter: "blur(3.5px)",
+          transform: "scale(1.02)",
+          transformOrigin: "50% 100%",
+          mixBlendMode: "screen",
+        }}
+        animate={{ opacity: [0.6, 0.95, 0.7, 0.9, 0.62] }}
+        transition={{ duration: fullSet ? 0.9 : 1.4, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.img
         key={pose}
@@ -265,13 +289,15 @@ export function HeroShowcase({ pose, equippedCount = 0, heightClass = "h-[min(34
           opacity: { duration: 0.26, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" },
         }}
       />
-      {/* Ground glow under the hero's feet. */}
-      <div
-        className="pointer-events-none absolute bottom-0 left-1/2 h-[7%] w-[60%] -translate-x-1/2 rounded-[50%]"
+      {/* Ground glow under the hero's feet — bright violet pool. */}
+      <motion.div
+        className="pointer-events-none absolute bottom-[-1%] left-1/2 h-[11%] w-[74%] -translate-x-1/2 rounded-[50%]"
         style={{
-          background: `radial-gradient(ellipse, rgba(168,85,247,${(0.42 * intensity).toFixed(3)}) 0%, rgba(124,77,255,0) 72%)`,
-          filter: "blur(4px)",
+          background: `radial-gradient(ellipse, rgba(233,213,255,${(0.4 * intensity).toFixed(3)}) 0%, rgba(168,85,247,${(0.5 * intensity).toFixed(3)}) 34%, rgba(124,77,255,0) 74%)`,
+          filter: "blur(5px)",
         }}
+        animate={{ opacity: [0.85, 1, 0.9, 1, 0.86] }}
+        transition={{ duration: fullSet ? 1.1 : 1.7, repeat: Infinity, ease: "easeInOut" }}
       />
       {/* One-shot ring burst on each pose change (keyed remount replays it) */}
       <motion.div
