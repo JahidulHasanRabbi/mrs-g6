@@ -132,131 +132,92 @@ export function SlotChip({
   );
 }
 
-// Radiating lightning bolts for the aura, drawn in a 120×160 viewBox that
-// scales to the hero. Split into two sets that flash out of phase so the aura
-// crackles like live electricity. Each bolt is a jagged path pointing outward
-// from the body's centre.
-const AURA_BOLTS_A = [
-  "M60,64 L53,46 L62,42 L50,18",
-  "M74,72 L98,62 L88,76 L114,64",
-  "M50,94 L28,106 L40,100 L16,120",
-];
-const AURA_BOLTS_B = [
-  "M70,62 L90,42 L79,47 L100,22",
-  "M46,82 L22,74 L34,83 L8,78",
-  "M60,98 L67,124 L56,117 L66,144",
+// Rising violet flame tongues that billow up AROUND the hero (Mob-Psycho /
+// cursed-seal aura). Deterministic so SSR + client agree. Each licks upward,
+// stretches, sways, and dissipates on its own loop.
+const AURA_FLAMES = [
+  { left: 16, w: 17, h: 66, bottom: -2, delay: 0.0, dur: 2.0, sway: 7 },
+  { left: 30, w: 13, h: 52, bottom: 0, delay: 0.7, dur: 2.4, sway: -6 },
+  { left: 42, w: 12, h: 48, bottom: 2, delay: 1.3, dur: 2.2, sway: 5 },
+  { left: 58, w: 12, h: 50, bottom: 1, delay: 0.4, dur: 2.3, sway: -5 },
+  { left: 70, w: 15, h: 62, bottom: -2, delay: 1.0, dur: 2.1, sway: 6 },
+  { left: 84, w: 13, h: 50, bottom: 0, delay: 1.6, dur: 2.5, sway: -7 },
 ];
 
-// Deterministic energy motes that blink around the body (no Math.random in
-// render, so SSR and client agree).
-const AURA_MOTES = [
-  { left: 26, top: 34, size: 5, delay: 0.0, dur: 1.3 },
-  { left: 74, top: 30, size: 4, delay: 0.5, dur: 1.1 },
-  { left: 32, top: 62, size: 6, delay: 0.9, dur: 1.5 },
-  { left: 70, top: 58, size: 5, delay: 0.3, dur: 1.2 },
-  { left: 50, top: 20, size: 4, delay: 1.1, dur: 1.4 },
-  { left: 60, top: 74, size: 6, delay: 0.7, dur: 1.0 },
-];
-
-function AuraBolts({ paths }) {
-  return (
-    <svg
-      viewBox="0 0 120 160"
-      preserveAspectRatio="none"
-      className="h-full w-full"
-      fill="none"
-      style={{ filter: "drop-shadow(0 0 5px rgba(168,85,247,0.9))" }}
-    >
-      {paths.map((d, i) => (
-        <g key={i} strokeLinecap="round" strokeLinejoin="round">
-          {/* soft violet body */}
-          <path d={d} stroke="#a855f7" strokeWidth="4.5" strokeOpacity="0.55" />
-          {/* hot white-violet core */}
-          <path d={d} stroke="#f3e8ff" strokeWidth="1.6" />
-        </g>
-      ))}
-    </svg>
-  );
-}
-
-// Hero art wrapped in a crackling violet energy aura (client request — modelled
-// on the "full set" avatar's electric purple lightning). The aura is ALWAYS on
-// and flares brighter with equipped gear: a violet body glow + hot core, two
-// out-of-phase lightning-bolt layers, blinking energy motes, and a ground glow.
-// Equipping still lands as an event: the pose remounts with a scale pop + burst.
+// Hero art wrapped in a rising violet flame aura (client request — Mob-Psycho
+// style). Dark-purple flames billow up behind/around the silhouette while a
+// masked electric current courses over the body itself; a rim + ground glow
+// anchor it. Everything intensifies with equipped gear, and an equip still
+// lands as an event (pose remount + ring burst).
 export function HeroShowcase({ pose, equippedCount = 0, heightClass = "h-[min(345px,42vh)]", className = "" }) {
   const t = Math.max(0, Math.min(4, equippedCount)) / 4;
-  // Strong base aura even with nothing equipped; brighter/bigger with gear.
-  const intensity = 0.6 + t * 0.4;
+  const intensity = 0.55 + t * 0.45;
+  const rise = 46 + t * 40; // flames climb higher with more gear
   const fullSet = equippedCount >= 4;
+  // The pose image, sized/placed to line up exactly with the <img> below
+  // (h-full w-auto, bottom-centered) so masked overlays register on the body.
+  const maskStyle = {
+    WebkitMaskImage: `url(${pose})`,
+    maskImage: `url(${pose})`,
+    WebkitMaskSize: "auto 100%",
+    maskSize: "auto 100%",
+    WebkitMaskPosition: "center bottom",
+    maskPosition: "center bottom",
+    WebkitMaskRepeat: "no-repeat",
+    maskRepeat: "no-repeat",
+  };
   return (
     <div className={`relative flex ${heightClass} items-end justify-center overflow-visible ${className}`}>
-      {/* Outer violet energy field — tall, envelops the body, magenta at the
-          fringe. Flickers in opacity + scale. */}
+      {/* Big billowing back-plume behind the hero — the dark-violet aura mass
+          that peaks above the head and pulses. */}
       <motion.div
-        className="pointer-events-none absolute left-1/2 bottom-[-6%] h-[124%] w-[88%] -translate-x-1/2"
+        className="pointer-events-none absolute left-1/2 bottom-[-4%] h-[128%] w-[70%] -translate-x-1/2"
         style={{
-          background: `radial-gradient(48% 60% at 50% 54%, rgba(233,213,255,${(0.30 * intensity).toFixed(3)}) 0%, rgba(168,85,247,${(0.44 * intensity).toFixed(3)}) 30%, rgba(124,77,255,${(0.28 * intensity).toFixed(3)}) 54%, rgba(217,70,239,${(0.16 * intensity).toFixed(3)}) 70%, rgba(124,77,255,0) 88%)`,
-          filter: "blur(13px)",
+          background: `radial-gradient(44% 62% at 50% 60%, rgba(233,213,255,${(0.24 * intensity).toFixed(3)}) 0%, rgba(217,70,239,${(0.34 * intensity).toFixed(3)}) 28%, rgba(168,85,247,${(0.4 * intensity).toFixed(3)}) 46%, rgba(88,28,135,${(0.34 * intensity).toFixed(3)}) 66%, rgba(76,29,149,0) 84%)`,
+          filter: "blur(14px)",
           transformOrigin: "50% 100%",
+          mixBlendMode: "screen",
         }}
-        animate={{
-          opacity: [0.82, 1, 0.88, 1, 0.84],
-          scaleY: [1, 1.07, 0.98, 1.05, 1],
-          scaleX: [1, 0.97, 1.02, 0.98, 1],
-        }}
-        transition={{ duration: fullSet ? 1.4 : 2.0, repeat: Infinity, ease: "easeInOut" }}
+        animate={{ opacity: [0.78, 1, 0.85, 1, 0.8], scaleY: [1, 1.09, 0.97, 1.06, 1], scaleX: [1, 0.96, 1.03, 0.97, 1] }}
+        transition={{ duration: fullSet ? 1.5 : 2.1, repeat: Infinity, ease: "easeInOut" }}
       />
-      {/* Bright inner core — hot white-violet centre, faster flicker. */}
-      <motion.div
-        className="pointer-events-none absolute left-1/2 bottom-0 h-[96%] w-[50%] -translate-x-1/2"
-        style={{
-          background: `radial-gradient(42% 54% at 50% 56%, rgba(245,238,255,${(0.55 * intensity).toFixed(3)}) 0%, rgba(192,132,252,${(0.42 * intensity).toFixed(3)}) 40%, rgba(124,77,255,0) 76%)`,
-          filter: "blur(10px)",
-          transformOrigin: "50% 100%",
-        }}
-        animate={{ opacity: [0.78, 1, 0.86, 1, 0.8], scaleY: [1, 1.1, 0.98, 1.07, 1] }}
-        transition={{ duration: fullSet ? 0.9 : 1.3, repeat: Infinity, ease: "easeInOut" }}
-      />
-      {/* Two lightning-bolt layers flashing out of phase → crackling energy. */}
-      <motion.div
-        className="pointer-events-none absolute left-1/2 top-[2%] h-[100%] w-[104%] -translate-x-1/2"
-        animate={{ opacity: [0.15, 0.9, 0.25, 1, 0.3].map((o) => o * (0.5 + t * 0.5)) }}
-        transition={{ duration: fullSet ? 0.42 : 0.6, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <AuraBolts paths={AURA_BOLTS_A} />
-      </motion.div>
-      <motion.div
-        className="pointer-events-none absolute left-1/2 top-[2%] h-[100%] w-[104%] -translate-x-1/2"
-        animate={{ opacity: [0.9, 0.2, 1, 0.25, 0.7].map((o) => o * (0.5 + t * 0.5)) }}
-        transition={{ duration: fullSet ? 0.5 : 0.72, repeat: Infinity, ease: "easeInOut" }}
-      >
-        <AuraBolts paths={AURA_BOLTS_B} />
-      </motion.div>
-      {/* Blinking energy motes drifting around the body. */}
-      {AURA_MOTES.map((m, i) => (
-        <motion.span
+      {/* Rising flame tongues around the body. */}
+      {AURA_FLAMES.map((f, i) => (
+        <motion.div
           key={i}
-          className="pointer-events-none absolute rounded-full"
+          className="pointer-events-none absolute"
           style={{
-            left: `${m.left}%`,
-            top: `${m.top}%`,
-            width: m.size,
-            height: m.size,
-            background: "radial-gradient(circle, #f3e8ff 0%, #a855f7 60%, rgba(124,77,255,0) 100%)",
-            filter: "blur(0.5px)",
+            left: `${f.left}%`,
+            bottom: `${f.bottom}%`,
+            width: `${f.w}%`,
+            height: `${f.h}%`,
+            marginLeft: `${-f.w / 2}%`,
+            background:
+              "radial-gradient(50% 58% at 50% 82%, rgba(243,232,255,0.55) 0%, rgba(217,70,239,0.5) 30%, rgba(168,85,247,0.48) 56%, rgba(124,77,255,0) 80%)",
+            borderRadius: "50% 50% 46% 46% / 66% 66% 34% 34%",
+            filter: "blur(6px)",
+            transformOrigin: "50% 100%",
+            mixBlendMode: "screen",
           }}
-          animate={{ opacity: [0, 0.95, 0], scale: [0.6, 1.15, 0.5], y: [2, -8, -14] }}
-          transition={{ duration: m.dur, delay: m.delay, repeat: Infinity, ease: "easeInOut" }}
+          initial={{ opacity: 0, y: 8, scaleY: 0.6 }}
+          animate={{
+            opacity: [0, 0.85 * intensity, 0.5 * intensity, 0],
+            y: [8, -rise * 0.5, -rise],
+            scaleY: [0.6, 1.25, 1.5],
+            x: [0, f.sway, 0],
+          }}
+          transition={{ duration: (fullSet ? 0.75 : 1) * f.dur, delay: f.delay, repeat: Infinity, ease: "easeOut" }}
         />
       ))}
-      {/* Ground glow under the hero's feet. */}
-      <div
-        className="pointer-events-none absolute bottom-0 left-1/2 h-[8%] w-[66%] -translate-x-1/2 rounded-[50%]"
+      {/* Contained rim glow hugging the silhouette. */}
+      <motion.div
+        className="pointer-events-none absolute left-1/2 bottom-[-2%] h-[108%] w-[58%] -translate-x-1/2"
         style={{
-          background: `radial-gradient(ellipse, rgba(168,85,247,${(0.45 * intensity).toFixed(3)}) 0%, rgba(124,77,255,0) 72%)`,
-          filter: "blur(4px)",
+          background: `radial-gradient(46% 56% at 50% 52%, rgba(168,85,247,${(0.3 * intensity).toFixed(3)}) 0%, rgba(124,77,255,${(0.18 * intensity).toFixed(3)}) 48%, rgba(124,77,255,0) 74%)`,
+          filter: "blur(10px)",
         }}
+        animate={{ opacity: [0.8, 1, 0.86, 1, 0.82] }}
+        transition={{ duration: fullSet ? 1.2 : 1.8, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.img
         key={pose}
@@ -264,7 +225,7 @@ export function HeroShowcase({ pose, equippedCount = 0, heightClass = "h-[min(34
         alt="Your hero"
         className="relative h-full w-auto"
         style={{
-          filter: `drop-shadow(0 0 ${Math.round(9 + t * 16)}px rgba(168,85,247,${(0.5 + t * 0.35).toFixed(3)})) drop-shadow(0 0 4px rgba(243,232,255,0.5))`,
+          filter: `drop-shadow(0 0 ${Math.round(8 + t * 12)}px rgba(168,85,247,${(0.45 + t * 0.35).toFixed(3)}))`,
         }}
         initial={{ opacity: 0.35, scale: 0.92 }}
         animate={{ opacity: 1, scale: 1, y: [0, -8, 0] }}
@@ -272,6 +233,44 @@ export function HeroShowcase({ pose, equippedCount = 0, heightClass = "h-[min(34
           opacity: { duration: 0.25 },
           scale: { type: "spring", stiffness: 320, damping: 18 },
           y: { duration: 3.6, repeat: Infinity, ease: "easeInOut" },
+        }}
+      />
+      {/* Body energy tint — violet wash masked to the silhouette, breathing so
+          the whole body reads as charged (screen-blend lightens, not covers). */}
+      <motion.div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          ...maskStyle,
+          background: `linear-gradient(to top, rgba(124,77,255,${(0.5 * intensity).toFixed(3)}) 0%, rgba(168,85,247,${(0.34 * intensity).toFixed(3)}) 55%, rgba(233,213,255,${(0.22 * intensity).toFixed(3)}) 100%)`,
+          mixBlendMode: "screen",
+        }}
+        animate={{ opacity: [0.5, 0.82, 0.6, 0.78, 0.55] }}
+        transition={{ duration: fullSet ? 1.1 : 1.6, repeat: Infinity, ease: "easeInOut" }}
+      />
+      {/* Electric current flowing UP through the body — thin bright violet
+          lines masked to the silhouette, travelling upward with a flicker. */}
+      <motion.div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          ...maskStyle,
+          backgroundImage:
+            "repeating-linear-gradient(114deg, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 18px, rgba(168,85,247,0.8) 20px, rgba(243,232,255,0.95) 22px, rgba(168,85,247,0.8) 24px, rgba(0,0,0,0) 27px, rgba(0,0,0,0) 48px)",
+          backgroundSize: "160% 160%",
+          mixBlendMode: "screen",
+          opacity: 0.4 + t * 0.4,
+        }}
+        animate={{ backgroundPosition: ["0px 0px", "0px -120px"], opacity: [0.3 + t * 0.35, 0.6 + t * 0.3, 0.35 + t * 0.35] }}
+        transition={{
+          backgroundPosition: { duration: fullSet ? 0.9 : 1.3, repeat: Infinity, ease: "linear" },
+          opacity: { duration: 0.26, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" },
+        }}
+      />
+      {/* Ground glow under the hero's feet. */}
+      <div
+        className="pointer-events-none absolute bottom-0 left-1/2 h-[7%] w-[60%] -translate-x-1/2 rounded-[50%]"
+        style={{
+          background: `radial-gradient(ellipse, rgba(168,85,247,${(0.42 * intensity).toFixed(3)}) 0%, rgba(124,77,255,0) 72%)`,
+          filter: "blur(4px)",
         }}
       />
       {/* One-shot ring burst on each pose change (keyed remount replays it) */}
