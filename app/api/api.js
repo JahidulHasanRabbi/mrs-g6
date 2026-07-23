@@ -57,7 +57,6 @@ export const ENDPOINTS = {
   AVATAR: {
     GAME_STATUS: '/avatar/game-status/',
     SETTINGS: '/avatar/settings/',
-    CHECK_IN_SETTINGS: '/avatar/check-in-settings/',
     // Member — avatar
     PROFILE: '/avatar/member-avatar/profile/',
     START_JOURNEY: '/avatar/member-avatar/start-journey/',
@@ -67,9 +66,6 @@ export const ENDPOINTS = {
     UNEQUIP: '/avatar/member-avatar/unequip/',
     DISCARD: '/avatar/member-avatar/discard/',
     BATTLE_POINT_HISTORY: '/avatar/member-avatar/battle-point-history/',
-    // Member — check-in
-    CHECK_IN_STATUS: '/avatar/member-check-in/status/',
-    CHECK_IN_CLAIM: '/avatar/member-check-in/claim/',
     // Member — missions
     MY_MISSIONS: '/avatar/avatar-missions/my-missions/',
     MISSION_CLAIM: (uuid) => `/avatar/avatar-missions/${uuid}/claim/`,

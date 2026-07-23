@@ -42,7 +42,7 @@ export default function AvatarLevel({ profile, onProfileUpdate }) {
       // closed) — show its message rather than assuming.
       setNotice({
         title: "CANNOT LEVEL UP",
-        message: err?.message || "Earn Battle Points from missions, check-ins and mystery boxes.",
+        message: err?.message || "Earn Battle Points from missions and mystery boxes.",
       });
     } finally {
       setBusy(false);

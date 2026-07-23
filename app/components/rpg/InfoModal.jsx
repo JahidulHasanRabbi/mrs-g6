@@ -21,7 +21,7 @@ function rulesFor(profile) {
     ["EQUIP GEAR", `Weapons, helmets, armor and boots each add Power. Spare gear lives in your backpack (${fmt(capacity)} slots).`],
     ["CHALLENGE BOSSES", `Each planet boss needs a minimum Power. Roll the dice — every pip is an attack. Free daily attempts are shared across bosses; extras cost ${extraCost} Tokens.`],
     ["MYSTERY BOXES", "Every boss kill drops a Mystery Box with Tokens, BP, free credit, rare gear or instant level-ups."],
-    ["EARN MORE", `Missions and the daily check-in pay Battle Points. Discarding gear costs ${discardCost} Tokens per item.`],
+    ["EARN MORE", `Missions pay Battle Points. Discarding gear costs ${discardCost} Tokens per item.`],
   ];
 }
 

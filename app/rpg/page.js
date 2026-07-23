@@ -26,7 +26,6 @@ import Challenge from "../components/rpg/screens/Challenge";
 import Battle from "../components/rpg/screens/Battle";
 import MysteryBox from "../components/rpg/screens/MysteryBox";
 import RpgMissions from "../components/rpg/screens/RpgMissions";
-import CheckIn from "../components/rpg/screens/CheckIn";
 import InfoModal from "../components/rpg/InfoModal";
 
 const VALID_VIEWS = new Set(Object.values(RPG_VIEWS));
@@ -226,9 +225,6 @@ function RpgPageInner() {
         )}
         {view === RPG_VIEWS.MISSIONS && (
           <RpgMissions onProfileUpdate={handleProfileUpdate} onNavigate={navigate} />
-        )}
-        {view === RPG_VIEWS.CHECKIN && (
-          <CheckIn onProfileUpdate={handleProfileUpdate} />
         )}
       </ScreenShell>
 

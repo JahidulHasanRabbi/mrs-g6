@@ -1,14 +1,9 @@
 "use client";
 
 // RPG bottom navigation (Figma 2026:3137): HOME / HERO ITEM / CHALLENGE /
-// MISSION / CHECK-IN. Active tab gets the gold gradient label; inactive labels
-// sink into the dark green. ("CHALLANGE" in the design is a typo — designer
-// note #3 names the tab "Challenge".)
-//
-// Check-In is its own tab, not a mission: it is the daily action that feeds
-// mission condition 1 (Login), which the 1 / 5 / 20-day missions then pay out
-// on. Reaching it only through a mission's GO button meant the entrance
-// disappeared the moment that mission was claimed.
+// MISSION. Active tab gets the gold gradient label; inactive labels sink into
+// the dark green. ("CHALLANGE" in the design is a typo — designer note #3
+// names the tab "Challenge".)
 
 import { RPG_COLORS, RPG_FONTS, RPG_GRADIENTS, RPG_VIEWS } from "./constants";
 import { RPG_IMAGES } from "./rpgAssets";
@@ -18,14 +13,12 @@ const NAV_ITEMS = [
   { view: RPG_VIEWS.ITEMS, label: "HERO ITEM", icon: RPG_IMAGES.icons.navHeroItem },
   { view: RPG_VIEWS.CHALLENGE, label: "CHALLENGE", icon: RPG_IMAGES.icons.navChallenge },
   { view: RPG_VIEWS.MISSIONS, label: "MISSION", icon: RPG_IMAGES.icons.navMission },
-  { view: RPG_VIEWS.CHECKIN, label: "CHECK-IN", icon: RPG_IMAGES.icons.navCheckIn },
 ];
 
 // Sub-screens highlight their parent tab.
 const TAB_FOR_VIEW = {
   [RPG_VIEWS.HOME]: RPG_VIEWS.HOME,
   [RPG_VIEWS.LEVEL]: RPG_VIEWS.HOME,
-  [RPG_VIEWS.CHECKIN]: RPG_VIEWS.CHECKIN,
   [RPG_VIEWS.ITEMS]: RPG_VIEWS.ITEMS,
   [RPG_VIEWS.CHALLENGE]: RPG_VIEWS.CHALLENGE,
   [RPG_VIEWS.BATTLE]: RPG_VIEWS.CHALLENGE,
@@ -62,8 +55,7 @@ export default function RpgNav({ view, onNavigate }) {
                   : { filter: "grayscale(1) brightness(1.9) sepia(1) hue-rotate(103deg) saturate(1.6)", opacity: 1 }
               }
             />
-            {/* Tighter than the 4-tab design so "HERO ITEM" and "CHALLENGE"
-                still fit on one line now that Check-In is a fifth tab. */}
+            {/* Tight tracking keeps "HERO ITEM" and "CHALLENGE" on one line. */}
             <span
               className="whitespace-nowrap text-[9px] font-semibold tracking-[0.5px]"
               style={

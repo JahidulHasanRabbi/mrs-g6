@@ -46,7 +46,6 @@ function pathnameToActiveItem(pathname) {
   if (pathname.startsWith("/admin/lucky-spin")) return "lucky-spin";
   if (pathname.startsWith("/admin/smash-egg")) return "smash-egg";
   if (pathname.startsWith("/admin/mission-game")) return "mission-game";
-  if (pathname.startsWith("/admin/rpg/check-in")) return "rpg-checkin";
   if (pathname.startsWith("/admin/rpg/equipment")) return "rpg-equipment";
   if (pathname.startsWith("/admin/rpg/bosses")) return "rpg-bosses";
   if (pathname.startsWith("/admin/rpg/missions")) return "rpg-missions";
@@ -171,16 +170,6 @@ const RpgGearIcon = () => (
   </svg>
 );
 
-const CalendarCheckIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="4" width="18" height="18" rx="2" />
-    <line x1="16" y1="2" x2="16" y2="6" />
-    <line x1="8" y1="2" x2="8" y2="6" />
-    <line x1="3" y1="10" x2="21" y2="10" />
-    <polyline points="9 16 11 18 15 14" />
-  </svg>
-);
-
 const SwordIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M14.5 17.5 3 6V3h3l11.5 11.5" />
@@ -271,7 +260,6 @@ const MENU_ITEMS = [
     disabled: false,
     children: [
       { id: "rpg-settings", label: "Game Settings", href: "/admin/rpg", iconNode: RpgGearIcon },
-      { id: "rpg-checkin", label: "Check-In Settings", href: "/admin/rpg/check-in", iconNode: CalendarCheckIcon },
       { id: "rpg-equipment", label: "Equipment Items", href: "/admin/rpg/equipment", iconNode: SwordIcon },
       { id: "rpg-bosses", label: "Bosses", href: "/admin/rpg/bosses", iconNode: SkullIcon },
       { id: "rpg-missions", label: "Avatar Missions", href: "/admin/rpg/missions", iconNode: TargetIcon },

@@ -27,8 +27,6 @@ import {
   equipAvatarEquipment,
   unequipAvatarEquipment,
   discardAvatarEquipment,
-  getAvatarCheckInStatus,
-  claimAvatarCheckIn,
   getMyAvatarMissions,
   claimAvatarMission,
   getAvatarChallengeStatus,
@@ -471,14 +469,14 @@ export async function openMysteryBox(boxId) {
 // category 1..4 → tab keys; condition_action → GO deep link + icon hint.
 const TAB_BY_CATEGORY = { 1: "daily", 2: "weekly", 3: "monthly", 4: "achievement" };
 const GO_BY_ACTION = {
-  1: RPG_VIEWS.CHECKIN, // Login — check-in claim counts as a login
+  1: null, //             Login — happens outside the game
   2: null, //             Deposit Amount — happens outside the game
   3: RPG_VIEWS.CHALLENGE, // Boss Battle
   4: RPG_VIEWS.CHALLENGE, // Obtain Equipment — mystery boxes drop gear
   5: RPG_VIEWS.ITEMS, //   Full Equipment Set
   6: null, //             Complete Missions — this screen itself
 };
-const METRIC_BY_ACTION = { 1: "checkinToday", 2: "deposit" }; // icon hints
+const METRIC_BY_ACTION = { 2: "deposit" }; // icon hints
 
 function missionView(m) {
   const target = m.accumulate_target ?? 1;
@@ -519,76 +517,5 @@ export async function claimRpgMission(missionId) {
   return {
     reward: { tokens: claim.token_amount || 0, bp: claim.battle_point_amount || 0 },
     profile,
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Daily check-in — rolling 7-day streak (a missed day restarts at day 1).
-// Rewards are battle points only: random(min, max) × multiplier.
-// ---------------------------------------------------------------------------
-
-// "+10 BP" / "+10–30 BP" (multiplier applied), or the admin display_text.
-function dayRewardText(day) {
-  if (day.display_text) return day.display_text;
-  const mult = day.multiplier || 1;
-  const min = (day.battle_point_minimum || 0) * mult;
-  const max = (day.battle_point_maximum || 0) * mult;
-  return min === max ? `+${min} BP` : `+${min}–${max} BP`;
-}
-
-function checkInView(status) {
-  const checkedCount = status.checked_count ?? 0;
-  const todayChecked = Boolean(status.today_checked);
-  // The streak is sequential: days 1..checked_count are claimed. Today's card
-  // is the last claimed day (already checked) or the next one to claim. Once
-  // all 7 are claimed the next check-in opens a fresh cycle at day 1 (per the
-  // API doc), so the highlight wraps rather than sticking on day 7.
-  const todayDay = todayChecked ? checkedCount : checkedCount >= 7 ? 1 : checkedCount + 1;
-  const days = (status.days || []).map((d) => ({
-    day: d.day,
-    checked: Boolean(d.is_claimed),
-    isToday: d.day === todayDay,
-    isSpecial: Boolean(d.is_special),
-    multiplier: d.multiplier || 1,
-    rewardText: d.is_claimed && d.battle_point_amount ? `+${d.battle_point_amount} BP` : dayRewardText(d),
-    claimedAmount: d.battle_point_amount || 0,
-  }));
-  const today = days.find((d) => d.isToday) || null;
-  return {
-    days,
-    checkedCount,
-    todayChecked,
-    todayDouble: Boolean(today?.isSpecial && !todayChecked),
-    todayMultiplier: today?.multiplier || 1,
-    terms: status.check_in_terms || "",
-    history: (status.history || []).map((h) => ({
-      date: h.created || h.check_in_date,
-      day: h.day,
-      bp: h.battle_point_amount || 0,
-    })),
-  };
-}
-
-export async function getCheckInStatus() {
-  try {
-    const status = await getAvatarCheckInStatus();
-    return checkInView(status);
-  } catch (err) {
-    throw gameError(err, "Could not load the check-in calendar.");
-  }
-}
-
-export async function checkIn() {
-  let claim;
-  try {
-    claim = await claimAvatarCheckIn();
-  } catch (err) {
-    throw gameError(err, "Could not check in.");
-  }
-  const [status, profile] = await Promise.all([getAvatarCheckInStatus(), loadProfileView()]);
-  return {
-    reward: { bp: claim.battle_point_amount || 0, day: claim.day },
-    profile,
-    ...checkInView(status),
   };
 }

@@ -6,9 +6,6 @@
 // small focused ModalShell dialogs, each POSTing only its slice of
 // /avatar/settings/ (the endpoint supports partial update and returns the full
 // fresh row). The card body is a read-only summary of the current values.
-//
-// check_in_terms is NOT edited here — it lives on the Check-In Settings page
-// to avoid duplicating the same field in two places.
 
 import { useEffect, useState } from "react";
 import ModalShell from "../../components/admin/penalty-kick/ModalShell";
@@ -284,10 +281,6 @@ export default function RpgSettingsPage() {
                 value={settings.description ? `${String(settings.description).slice(0, 24)}${settings.description.length > 24 ? "…" : ""}` : "—"}
               />
             </div>
-
-            <p className="mt-5 text-[12px] text-white/35">
-              Check-in terms &amp; conditions are managed on the Check-In Settings page.
-            </p>
           </>
         )}
       </div>

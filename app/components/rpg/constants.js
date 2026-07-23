@@ -54,7 +54,6 @@ export const RPG_VIEWS = {
   BOX: "box",
   MISSIONS: "missions",
   LEVEL: "level",
-  CHECKIN: "checkin",
 };
 
 // ---------------------------------------------------------------------------
@@ -171,8 +170,3 @@ export const EQUIPMENT_NAMES = {
 // 4 Achievement). The missions themselves are configured in the back office
 // and come from /avatar/avatar-missions/my-missions/.
 export const MISSION_TABS = ["daily", "weekly", "monthly", "achievement"];
-
-// Check-in is a rolling 7-day streak configured in the back office
-// (/avatar/check-in-settings/); a missed day restarts at day 1. Rewards are
-// battle points only: random(min, max) × multiplier.
-export const CHECKIN_STREAK_DAYS = 7;

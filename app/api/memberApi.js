@@ -590,16 +590,6 @@ export async function getAvatarBattlePointHistory(params = {}) {
   return await apiRequest(`${ENDPOINTS.AVATAR.BATTLE_POINT_HISTORY}${qs}`, { method: 'GET' }, true, 'member');
 }
 
-// GET /avatar/member-check-in/status/ — rolling 7-day streak + last 30 history
-export async function getAvatarCheckInStatus() {
-  return await apiRequest(ENDPOINTS.AVATAR.CHECK_IN_STATUS, { method: 'GET' }, true, 'member');
-}
-
-// POST /avatar/member-check-in/claim/ — random(min,max) × multiplier battle points
-export async function claimAvatarCheckIn() {
-  return await apiRequest(ENDPOINTS.AVATAR.CHECK_IN_CLAIM, { method: 'POST' }, true, 'member');
-}
-
 // GET /avatar/avatar-missions/my-missions/  (?category=1..4)
 export async function getMyAvatarMissions(params = {}) {
   const qs = buildQueryParams(params);

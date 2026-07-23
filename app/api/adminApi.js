@@ -1186,17 +1186,6 @@ export async function updateAvatarSettings(data) {
   return await apiRequest(ENDPOINTS.AVATAR.SETTINGS, { method: 'POST', body: data }, true, 'admin');
 }
 
-// GET /avatar/check-in-settings/ — { check_in_terms, rewards: [day rows] }
-export async function getAvatarCheckInSettings() {
-  return await apiRequest(ENDPOINTS.AVATAR.CHECK_IN_SETTINGS, { method: 'GET' }, true, 'admin');
-}
-
-// POST /avatar/check-in-settings/ — day_settings is a FULL replacement
-// (days missing from the list are deleted); check_in_terms only updates when sent
-export async function updateAvatarCheckInSettings(data) {
-  return await apiRequest(ENDPOINTS.AVATAR.CHECK_IN_SETTINGS, { method: 'POST', body: data }, true, 'admin');
-}
-
 // Equipment items — fixed catalog of 4 (one per slot). No create/archive.
 export async function getAvatarEquipmentItems(params = {}) {
   const qs = buildQueryParams(params);

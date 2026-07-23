@@ -17,9 +17,6 @@ import NoticeModal from "../NoticeModal";
 const TAB_LABELS = { daily: "DAILY", weekly: "WEEKLY", monthly: "MONTHLY", achievement: "ACHIEVEMENT" };
 
 function MissionIcon({ mission }) {
-  if (mission.metric === "checkinToday") {
-    return <span className="text-[20px]" style={{ color: RPG_COLORS.cyan }}>⚡</span>;
-  }
   if (mission.metric === "deposit") {
     return (
       <span
