@@ -10,6 +10,7 @@ import { ACEBET_ASSETS, ACEBET_COLORS } from "../themes/acebet77/assets";
 import { UBET_ASSETS, UBET_COLORS } from "../themes/ubetclub/assets";
 import { EP369_ASSETS, EP369_COLORS } from "../themes/ep369/assets";
 import { KGAME99_ASSETS, KGAME99_COLORS } from "../themes/kgame99/assets";
+import { LV918_ASSETS, LV918_COLORS } from "../themes/lv918/assets";
 
 const PAGE_SIZE = 6;
 
@@ -196,14 +197,14 @@ function HistoryPagination({ currentPage, totalPages, onPageChange }) {
 
 function HistoryModal({ type, onClose }) {
   const config = HISTORY_CONFIG[type];
-  const { isAcebet77, isUbetclub, isEp369, isKgame99 } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918 } = useTheme();
   const [currentPage, setCurrentPage] = useState(1);
   const [modalScale, setModalScale] = useState(1);
   const [rows, setRows] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const themed = isAcebet77 || isUbetclub || isEp369 || isKgame99;
+  const themed = isAcebet77 || isUbetclub || isEp369 || isKgame99 || isLv918;
   const frameSrc = isAcebet77
     ? ACEBET_ASSETS.frames.scroll
     : isUbetclub
@@ -212,7 +213,9 @@ function HistoryModal({ type, onClose }) {
         ? EP369_ASSETS.frames.scroll
         : isKgame99
           ? KGAME99_ASSETS.frames.scroll
-          : "/assets/profile/history-frame.png";
+          : isLv918
+            ? LV918_ASSETS.frames.scroll
+            : "/assets/profile/history-frame.png";
   const closeSrc = isAcebet77
     ? ACEBET_ASSETS.spin.btnPlay
     : isUbetclub
@@ -221,7 +224,9 @@ function HistoryModal({ type, onClose }) {
         ? EP369_ASSETS.spin.btnPlay
         : isKgame99
           ? KGAME99_ASSETS.spin.btnPlay
-          : "/assets/profile/close-icon.png";
+          : isLv918
+            ? LV918_ASSETS.spin.btnPlay
+            : "/assets/profile/close-icon.png";
   const closeTextColor = isAcebet77
     ? ACEBET_COLORS.goldBright
     : isUbetclub
@@ -230,7 +235,9 @@ function HistoryModal({ type, onClose }) {
         ? EP369_COLORS.goldBright
         : isKgame99
           ? KGAME99_COLORS.goldBright
-          : "#6c5212";
+          : isLv918
+            ? LV918_COLORS.goldBright
+            : "#6c5212";
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
@@ -351,12 +358,12 @@ function HistoryModal({ type, onClose }) {
           <div
             className="absolute overflow-hidden"
             style={{
-              left: isUbetclub ? "62px" : (isAcebet77 || isEp369 || isKgame99) ? "58px" : config.contentOffset,
+              left: isUbetclub ? "62px" : (isAcebet77 || isEp369 || isKgame99 || isLv918) ? "58px" : config.contentOffset,
               top: config.contentTop,
               // Pull the box in from the frame's gold side rails so the
               // right-aligned Amount column clears the ornament instead of
               // riding it (was clipped against the rail on small devices).
-              width: isUbetclub ? "236px" : (isAcebet77 || isEp369 || isKgame99) ? "246px" : config.contentWidth,
+              width: isUbetclub ? "236px" : (isAcebet77 || isEp369 || isKgame99 || isLv918) ? "246px" : config.contentWidth,
             }}
           >
             <div
@@ -461,7 +468,7 @@ function HistoryModal({ type, onClose }) {
 
 export default function HistorySection() {
   const [activeHistory, setActiveHistory] = useState(null);
-  const { isAcebet77, isUbetclub, isEp369, isKgame99 } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918 } = useTheme();
 
   let buttonSkin;
   if (isAcebet77) {
@@ -472,6 +479,8 @@ export default function HistorySection() {
     buttonSkin = { bannerSrc: EP369_ASSETS.spin.btnPlay, textColor: EP369_COLORS.goldBright, objectFit: "object-fill" };
   } else if (isKgame99) {
     buttonSkin = { bannerSrc: KGAME99_ASSETS.spin.btnPlay, textColor: KGAME99_COLORS.goldBright, objectFit: "object-fill" };
+  } else if (isLv918) {
+    buttonSkin = { bannerSrc: LV918_ASSETS.spin.btnPlay, textColor: LV918_COLORS.goldBright, objectFit: "object-fill" };
   } else {
     buttonSkin = { bannerSrc: "/assets/profile/history-title-banner.png", textColor: "#60803c", objectFit: "object-cover" };
   }

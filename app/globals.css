@@ -78,6 +78,15 @@
   --lb-accent-rgb: 232, 181, 58;
   --lb-on-accent: #2a0a1f;
   --lb-rank: #ffe16d;
+  /* Opaque dark-rose panels (lv918 sits on a bright pink backdrop). */
+  --lb-card-overlay: rgba(58, 10, 30, 0.92);
+  --lb-panel-light: rgba(74, 15, 48, 0.72);
+  --lb-mission-card-fill: rgba(74, 15, 48, 0.88);
+  /* Dark ink for text on the bright pink; deep rose tab container. */
+  --lb-heading: #2a0616;
+  --lb-heading-muted: #4a1230;
+  --lb-tab-active: #2a0a1f;
+  --lb-tabs-fill: rgba(74, 15, 48, 0.92);
 }
 /* Amber-gold prize gradients shared by every custom theme (the gold shades are
  * close enough not to warrant per-theme tuning). */

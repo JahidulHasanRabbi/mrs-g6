@@ -40,7 +40,7 @@ function formatWinDate(value) {
 // Plaque PNGs carry transparent padding (visible frame ~0.86× the box here), so
 // the box is sized up to ~26% → visible ~22% at the 24% column pitch, closing
 // the dark gaps between tiles so the 3x3 grid reads as full like the reference.
-const LV918_GEOMETRY = { framePad: 14, tile: 26, center: 24 };
+const LV918_GEOMETRY = { framePad: 16, tile: 24, center: 24 };
 
 export default function Lv918SpinPage() {
   const [spinItems, setSpinItems] = useState([]);

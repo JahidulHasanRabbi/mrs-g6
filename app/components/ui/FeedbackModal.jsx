@@ -8,10 +8,8 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { UBET_ASSETS } from "../themes/ubetclub/assets";
 import { EP369_ASSETS } from "../themes/ep369/assets";
 import { KGAME99_ASSETS } from "../themes/kgame99/assets";
+import { LV918_ASSETS } from "../themes/lv918/assets";
 
-/**
- * FeedbackModal — collects a star rating + free-text message from the player.
- */
 export default function FeedbackModal({ isOpen, onClose }) {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -19,7 +17,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(null);
-  const { isAcebet77, isUbetclub, isEp369, isKgame99 } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918 } = useTheme();
 
   let skin;
   if (isAcebet77) {
@@ -57,6 +55,15 @@ export default function FeedbackModal({ isOpen, onClose }) {
       starOn: "#f5c451",
       submitImage: KGAME99_ASSETS.spin.btnPlay,
       submitText: "#f5c451",
+    };
+  } else if (isLv918) {
+    skin = {
+      modalBg: "linear-gradient(180deg, #4a0f30 0%, #2a0518 100%)",
+      borderColor: "#e8b53a",
+      starOff: "#4a1a30",
+      starOn: "#f7c752",
+      submitImage: LV918_ASSETS.spin.btnPlay,
+      submitText: "#f7c752",
     };
   } else {
     skin = {

@@ -12,14 +12,16 @@ import Acebet77VipPage from "../components/themes/acebet77/Acebet77VipPage";
 import UbetclubVipPage from "../components/themes/ubetclub/UbetclubVipPage";
 import Ep369VipPage from "../components/themes/ep369/Ep369VipPage";
 import Kgame99VipPage from "../components/themes/kgame99/Kgame99VipPage";
+import Lv918VipPage from "../components/themes/lv918/Lv918VipPage";
 
 export default function VipDetailsPage() {
-  const { isAcebet77, isUbetclub, isEp369, isKgame99 } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918 } = useTheme();
 
   if (isAcebet77) return <Acebet77VipPage />;
   if (isUbetclub) return <UbetclubVipPage />;
   if (isEp369) return <Ep369VipPage />;
   if (isKgame99) return <Kgame99VipPage />;
+  if (isLv918) return <Lv918VipPage />;
 
   return <DefaultVipDetailsPage />;
 }

@@ -14,6 +14,7 @@ import { LoadingState } from "@/app/components/ui/LoadingState";
 import ErrorDisplay from "@/app/components/ui/ErrorDisplay";
 import SuccessModal from "@/app/components/ui/SuccessModal";
 import FluidFrame from "@/app/components/ui/FluidFrame";
+import ThemedActionButton from "@/app/components/themes/shared/ThemedActionButton";
 import { useUser } from "@/app/contexts/UserContext";
 
 export default function ProfileCard({ 
@@ -253,15 +254,22 @@ export default function ProfileCard({
     return (
       <div className="relative mx-auto w-full max-w-[336px] min-[465px]:max-w-[370px] p-4">
         <ErrorDisplay error={error} />
-        <button
-          onClick={() => {
-            fetchVipTiers();
-            fetchMemberInfo();
-          }}
-          className="mt-4 w-full px-4 py-2 bg-[#e9af41] text-[#51340c] font-bold rounded hover:bg-[#d19a35] transition-colors"
-        >
-          Retry
-        </button>
+        <div className="mt-4 flex w-full justify-center">
+          <ThemedActionButton
+            textSize={16}
+            onClick={() => { fetchVipTiers(); fetchMemberInfo(); }}
+            fallback={
+              <button
+                onClick={() => { fetchVipTiers(); fetchMemberInfo(); }}
+                className="w-full px-4 py-2 bg-[#e9af41] text-[#51340c] font-bold rounded hover:bg-[#d19a35] transition-colors"
+              >
+                Retry
+              </button>
+            }
+          >
+            Retry
+          </ThemedActionButton>
+        </div>
       </div>
     );
   }
@@ -406,23 +414,34 @@ export default function ProfileCard({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          <button
-            onClick={handleClaimWelcomeGift}
-            disabled={isClaimingGift}
-            className="w-full px-6 py-3 bg-gradient-to-r from-[#e9af41] to-[#d19a35] text-[#51340c] font-bold font-['Times_New_Roman'] text-[16px] rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {isClaimingGift ? (
-              <>
-                <span className="animate-spin">⏳</span>
-                <span>Claiming...</span>
-              </>
-            ) : (
-              <>
-                <span>🎁</span>
-                <span>Claim Welcome Gift</span>
-              </>
-            )}
-          </button>
+          <div className="flex w-full justify-center">
+            <ThemedActionButton
+              textSize={16}
+              disabled={isClaimingGift}
+              onClick={handleClaimWelcomeGift}
+              fallback={
+                <button
+                  onClick={handleClaimWelcomeGift}
+                  disabled={isClaimingGift}
+                  className="w-full px-6 py-3 bg-gradient-to-r from-[#e9af41] to-[#d19a35] text-[#51340c] font-bold font-['Times_New_Roman'] text-[16px] rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isClaimingGift ? (
+                    <>
+                      <span className="animate-spin">⏳</span>
+                      <span>Claiming...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>🎁</span>
+                      <span>Claim Welcome Gift</span>
+                    </>
+                  )}
+                </button>
+              }
+            >
+              {isClaimingGift ? "Claiming..." : "Claim Welcome Gift"}
+            </ThemedActionButton>
+          </div>
           
           {claimError && (
             <p className="mt-2 text-red-500 text-sm text-center font-['Times_New_Roman']">

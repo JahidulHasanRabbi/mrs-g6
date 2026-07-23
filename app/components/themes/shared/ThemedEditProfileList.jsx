@@ -26,6 +26,7 @@ export default function ThemedEditProfileList({
   pad = { x: "18%", top: "18%", bottom: "21%" },
   colors,
   onItem,
+  headingMt = 12,
 }) {
   const acme = "var(--font-acme), 'Times New Roman', serif";
 
@@ -51,8 +52,8 @@ export default function ThemedEditProfileList({
         }}
       >
         <p
-          className="mb-2 mt-3 text-center text-[15px] tracking-wide"
-          style={{ color: colors.heading, fontFamily: acme, textShadow: `0 0 10px ${colors.heading}55` }}
+          className="mb-2 text-center text-[15px] tracking-wide"
+          style={{ marginTop: headingMt, color: colors.heading, fontFamily: acme, textShadow: `0 0 10px ${colors.heading}55` }}
         >
           Edit Profiles
         </p>

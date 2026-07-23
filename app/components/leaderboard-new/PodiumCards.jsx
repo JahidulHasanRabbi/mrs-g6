@@ -44,7 +44,7 @@ function PodiumCard({ rank, entry, config }) {
       transition={{ delay: rank * 0.1 }}
       className="w-full rounded-lg flex flex-col gap-1 items-center justify-end p-6"
       style={{
-        backgroundColor: "rgba(32,31,31,0.75)",
+        backgroundColor: "var(--lb-card-overlay)",
         border: `${rc.borderWidth}px solid ${rc.border}`,
         boxShadow: rc.shadow,
       }}

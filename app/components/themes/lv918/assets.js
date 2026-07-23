@@ -96,6 +96,25 @@ export const LV918_ASSETS = {
     iconShotHud: `${BASE}/pk/icon-shot-hud.svg`,
     prizePanel: `${BASE}/pk/prize-panel.png`,
   },
+  profile: {
+    title: `${BASE}/profile/title-profile.png`,
+    badgeNum: `${BASE}/profile/badge-num.png`,
+    iconChevron: `${BASE}/profile/icon-chevron.png`,
+    iconStar: `${BASE}/profile/icon-star.png`,
+  },
+  vip: {
+    title: `${BASE}/vip/title-vip.png`,
+    crest: `${BASE}/vip/crest-lion.png`,
+    iconCheck: `${BASE}/vip/icon-check.png`,
+    cardFrame: `${BASE}/ui/frame-crown.png`,
+  },
+  terms: {
+    title: `${BASE}/ui/title-terms.png`,
+  },
+  frames: {
+    crown: `${BASE}/ui/frame-crown.png`,
+    scroll: `${BASE}/ui/frame-scroll.png`,
+  },
 };
 
 // Shared palette (from Figma inspection of the 154:* frames). Blue-tinted mirror
@@ -108,13 +127,14 @@ export const LV918_COLORS = {
   sand: '#e0b4cc',
   tokenYellow: '#ffe16d',
   dark: '#2a0a1f',
-  // "Ink" tones for text that sits on the light-pink ornate panel interiors.
-  // The cream/gold/sand tones above are tuned for DARK surfaces (dialogs, boot
-  // screen, headers) and wash out on pink — use these for on-panel rows so the
-  // text stays legible while keeping the rose/berry theme feel.
-  inkStrong: '#5c1a3a', // primary row text (names, prizes, terms)
-  ink: '#6d1f42',       // emphasis (winner / record name)
-  inkMuted: '#9a5878',  // dates and secondary meta
-  inkSoft: '#8a2f57',   // empty-state placeholders
-  inkGold: '#9a6410',   // gold accent that still needs to read on pink
+  // "Ink" tones for text on light-pink panel interiors. Near-black so they
+  // stay clearly legible against the bright pink background.
+  inkStrong: '#1a0008', // primary row text (names, prizes, terms)
+  ink: '#220010',       // emphasis (winner / record name)
+  inkMuted: '#3d0a20',  // dates and secondary meta
+  inkSoft: '#30081a',   // empty-state placeholders
+  inkGold: '#5a3a02',   // gold accent that still needs to read on pink
+  pinkHot: '#f34f89',
+  purple: '#984291',
+  progressTrack: '#51340c',
 };

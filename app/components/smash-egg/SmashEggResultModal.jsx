@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { SMASH_EGG_ASSETS } from "./smashEggAssets";
+import ThemedActionButton from "../themes/shared/ThemedActionButton";
 
 function RewardImage({ image, name }) {
   if (image) {
@@ -126,33 +127,48 @@ export default function SmashEggResultModal({ isOpen, onClose, onReturn, prize }
               <PrizeCard prize={prize} />
 
               {/* Actions */}
-              <div className="flex w-full flex-col gap-3">
-                {/* Return to website (Claim) */}
+              <div className="flex w-full flex-col gap-3 items-center">
                 {onReturn && (
-                  <button
+                  <ThemedActionButton
+                    textSize={16}
                     onClick={onReturn}
-                    className="w-full py-4 rounded-xl border-b-4 border-[#3a3000] text-[#3a3000] text-base leading-4 cursor-pointer"
-                    style={{
-                      fontFamily: "var(--font-acme), 'Acme', sans-serif",
-                      background: "linear-gradient(to bottom, #ffd700, #544600)",
-                      boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
-                    }}
+                    fallback={
+                      <button
+                        onClick={onReturn}
+                        className="w-full py-4 rounded-xl border-b-4 border-[#3a3000] text-[#3a3000] text-base leading-4 cursor-pointer"
+                        style={{
+                          fontFamily: "var(--font-acme), 'Acme', sans-serif",
+                          background: "linear-gradient(to bottom, #ffd700, #544600)",
+                          boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
+                        }}
+                      >
+                        Return to website (Claim)
+                      </button>
+                    }
                   >
                     Return to website (Claim)
-                  </button>
+                  </ThemedActionButton>
                 )}
 
-                {/* Close button */}
-                <button
+                <ThemedActionButton
+                  variant="dark"
+                  textSize={16}
                   onClick={onClose}
-                  className="w-full py-4 rounded-xl border border-[#fff6df]/30 text-[#fff6df] text-base leading-4 cursor-pointer"
-                  style={{
-                    fontFamily: "var(--font-acme), 'Acme', sans-serif",
-                    background: "rgba(255,246,223,0.06)",
-                  }}
+                  fallback={
+                    <button
+                      onClick={onClose}
+                      className="w-full py-4 rounded-xl border border-[#fff6df]/30 text-[#fff6df] text-base leading-4 cursor-pointer"
+                      style={{
+                        fontFamily: "var(--font-acme), 'Acme', sans-serif",
+                        background: "rgba(255,246,223,0.06)",
+                      }}
+                    >
+                      Close
+                    </button>
+                  }
                 >
                   Close
-                </button>
+                </ThemedActionButton>
               </div>
             </div>
           </motion.div>

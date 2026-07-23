@@ -15,7 +15,6 @@ export default function Lv918Button({
   className = '',
   textSize = 20,
 }) {
-  const isGold = variant === 'gold';
   return (
     <button
       onClick={onClick}
@@ -23,7 +22,7 @@ export default function Lv918Button({
       className={`relative flex items-center justify-center h-[65px] w-full max-w-[308px] cursor-pointer select-none transition-transform active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
     >
       <img
-        src={isGold ? LV918_ASSETS.ui.btnGold : LV918_ASSETS.egg.btnWide}
+        src={variant === 'dark' ? LV918_ASSETS.egg.btnWide : LV918_ASSETS.spin.btnPlay}
         alt=""
         className="absolute inset-0 w-full h-full object-fill pointer-events-none"
       />
@@ -31,7 +30,7 @@ export default function Lv918Button({
         className="relative z-10 leading-none"
         style={{
           fontFamily: 'var(--font-berkshire-swash), cursive',
-          color: isGold ? LV918_COLORS.dark : LV918_COLORS.goldBright,
+          color: LV918_COLORS.goldBright,
           fontSize: `${textSize}px`,
         }}
       >

@@ -15,6 +15,7 @@ import {
 import { useUser } from "../contexts/UserContext";
 import { useTheme } from "../contexts/ThemeContext";
 import ThemedPageShell from "../components/themes/shared/ThemedPageShell";
+import ThemedActionButton from "../components/themes/shared/ThemedActionButton";
 import { HOME_ASSETS } from "../components/home/homeAssets";
 import {
   claimMissionReward,
@@ -169,17 +170,27 @@ function MissionTermsDialog({ loading, termsText, error, onClose }) {
           </ol>
         )}
 
-        <button
-          type="button"
-          onClick={onClose}
-          className="mt-5 w-full rounded-[10px] py-3 text-[15px] font-bold uppercase text-black"
-          style={{
-            backgroundImage: "linear-gradient(90deg, #ffe77a 0%, #e9af41 100%)",
-            fontFamily: SERIF,
-          }}
-        >
-          Close
-        </button>
+        <div className="mt-5 flex w-full justify-center">
+          <ThemedActionButton
+            textSize={15}
+            onClick={onClose}
+            fallback={
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-full rounded-[10px] py-3 text-[15px] font-bold uppercase text-black"
+                style={{
+                  backgroundImage: "linear-gradient(90deg, #ffe77a 0%, #e9af41 100%)",
+                  fontFamily: SERIF,
+                }}
+              >
+                Close
+              </button>
+            }
+          >
+            Close
+          </ThemedActionButton>
+        </div>
       </div>
     </div>
   );
@@ -487,15 +498,23 @@ export default function MissionsPage() {
         {/* ── History button ───────────────────────────────────────── */}
         <div className="flex justify-center pt-4">
           <div className="w-full max-w-[254px]">
-            <GoldButton onClick={loadHistory}>
-              <img
-                src={HISTORY_ICON}
-                alt=""
-                aria-hidden="true"
-                style={{ width: 15, height: 15 }}
-              />
+            <ThemedActionButton
+              textSize={14}
+              onClick={loadHistory}
+              fallback={
+                <GoldButton onClick={loadHistory}>
+                  <img
+                    src={HISTORY_ICON}
+                    alt=""
+                    aria-hidden="true"
+                    style={{ width: 15, height: 15 }}
+                  />
+                  Mission Progress History
+                </GoldButton>
+              }
+            >
               Mission Progress History
-            </GoldButton>
+            </ThemedActionButton>
           </div>
         </div>
         {history && (

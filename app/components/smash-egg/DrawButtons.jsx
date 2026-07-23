@@ -6,6 +6,7 @@ import { ACEBET_COLORS } from "../themes/acebet77/assets";
 import { UBET_COLORS } from "../themes/ubetclub/assets";
 import { EP369_COLORS } from "../themes/ep369/assets";
 import { KGAME99_COLORS } from "../themes/kgame99/assets";
+import { LV918_COLORS } from "../themes/lv918/assets";
 
 const DRAW_OPTIONS = [
   { draws: 10, featured: false },
@@ -23,7 +24,7 @@ function formatTokenAmount(value) {
 }
 
 function DrawButton({ draws, tokens, featured, onClick, disabled }) {
-  const { isAcebet77, isUbetclub, isEp369, isKgame99 } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918 } = useTheme();
 
   let bgGradient, borderColor, textColor, tokenTextColor;
   if (isAcebet77) {
@@ -54,6 +55,13 @@ function DrawButton({ draws, tokens, featured, onClick, disabled }) {
     borderColor = featured ? "#3a2600" : KGAME99_COLORS.gold;
     textColor = featured ? "#061527" : KGAME99_COLORS.goldBright;
     tokenTextColor = featured ? "rgba(6,21,39,0.75)" : "rgba(245,196,81,0.85)";
+  } else if (isLv918) {
+    bgGradient = featured
+      ? "linear-gradient(to bottom, #f7c752, #8a5514)"
+      : "linear-gradient(to bottom, #4a0f30, #2a0518)";
+    borderColor = featured ? "#3a2600" : LV918_COLORS.gold;
+    textColor = featured ? "#2a0a1f" : LV918_COLORS.goldBright;
+    tokenTextColor = featured ? "rgba(42,10,31,0.75)" : "rgba(247,199,82,0.85)";
   } else {
     bgGradient = featured
       ? "linear-gradient(to bottom, #ffd700, #544600)"

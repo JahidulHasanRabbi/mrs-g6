@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { SMASH_EGG_ASSETS } from "./smashEggAssets";
+import ThemedActionButton from "../themes/shared/ThemedActionButton";
 
 function formatDate(value) {
   if (!value) return "";
@@ -137,14 +138,24 @@ export default function SmashEggHistoryDialog({
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={onClose}
-        className="w-full rounded-lg border border-[#f2cb7a] px-5 py-3 text-[14px] font-semibold text-[#141828]"
-        style={{ backgroundImage: "linear-gradient(98deg, #dc9d16 1%, #f2cb7a 98%)" }}
-      >
-        Close
-      </button>
+      <div className="flex w-full justify-center">
+        <ThemedActionButton
+          textSize={14}
+          onClick={onClose}
+          fallback={
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full rounded-lg border border-[#f2cb7a] px-5 py-3 text-[14px] font-semibold text-[#141828]"
+              style={{ backgroundImage: "linear-gradient(98deg, #dc9d16 1%, #f2cb7a 98%)" }}
+            >
+              Close
+            </button>
+          }
+        >
+          Close
+        </ThemedActionButton>
+      </div>
 
       <style jsx>{`
         .smash-history-scroll {

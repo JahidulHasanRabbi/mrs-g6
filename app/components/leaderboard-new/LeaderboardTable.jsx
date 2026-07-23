@@ -90,7 +90,7 @@ export default function LeaderboardTable({
       transition={{ delay: 0.4 }}
       className="w-full rounded-lg overflow-hidden p-px"
       style={{
-        backgroundColor: "rgba(14,14,14,0.75)",
+        backgroundColor: "var(--lb-card-overlay)",
         border: `1px solid ${config.tableBorder}`,
         boxShadow:
           "0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)",

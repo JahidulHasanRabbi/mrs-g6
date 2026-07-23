@@ -31,7 +31,7 @@ export default function CountdownTimer({ endDate, color = "#ff8c00" }) {
     <div
       className="w-full rounded-lg p-4 sm:p-6 flex flex-col gap-3 sm:gap-4 items-center"
       style={{
-        backgroundColor: "rgba(28,27,27,0.5)",
+        backgroundColor: "var(--lb-card-overlay)",
         border: `1px solid ${color}`,
         boxShadow: `0 3px 6px 0 ${color}4D`,
       }}

@@ -210,7 +210,7 @@ export function Tabs({ tabs, activeIndex, onChange }) {
 export function GreenButton({ children, onClick, variant = "primary", size = "lg" }) {
   const isPrimary = variant === "primary";
   const padding = size === "sm" ? "py-2 text-[12px]" : "py-4 text-[16px]";
-  return (
+  const defaultButton = (
     <button
       type="button"
       onClick={onClick}
@@ -225,6 +225,18 @@ export function GreenButton({ children, onClick, variant = "primary", size = "lg
     >
       {children}
     </button>
+  );
+
+  return (
+    <div className="flex w-full justify-center">
+      <ThemedActionButton
+        textSize={size === "sm" ? 14 : 18}
+        onClick={onClick}
+        fallback={defaultButton}
+      >
+        {children}
+      </ThemedActionButton>
+    </div>
   );
 }
 

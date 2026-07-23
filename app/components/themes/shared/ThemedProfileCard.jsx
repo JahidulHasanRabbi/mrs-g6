@@ -25,6 +25,7 @@ export default function ThemedProfileCard({
   nextTierIcon,
   profilePicture,
   onVipDetails,
+  avatarSize = 56,
 }) {
   const pct = Math.max(0, Math.min(100, Number(progress) || 0));
   const initial = (name?.[0] ?? "?").toUpperCase();
@@ -55,8 +56,10 @@ export default function ThemedProfileCard({
         {/* Identity row: avatar + name/VIP/token */}
         <div className="flex items-start gap-2.5">
           <div
-            className="relative h-[56px] w-[56px] shrink-0 overflow-hidden rounded-full"
+            className="relative shrink-0 overflow-hidden rounded-full"
             style={{
+              width: avatarSize,
+              height: avatarSize,
               boxShadow: `0 0 0 2.5px ${colors.avatarRing}, 0 0 0 4px rgba(0,0,0,0.25), 0 0 14px ${colors.avatarRing}55`,
             }}
           >
