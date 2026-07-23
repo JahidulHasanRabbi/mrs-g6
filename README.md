@@ -73,4 +73,6 @@ http://localhost:3000/auth?id=12345&o=kinggroup44.com&page=/terms-and-conditions
 npm run dev    # Development mode
 npm run build  # Build for production
 npm start      # Production mode
-```
+
+
+updated
