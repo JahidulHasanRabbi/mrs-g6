@@ -364,13 +364,13 @@ export default function MissionsPage() {
             <div className="flex flex-col">
               <h2
                 className="font-bold leading-[28.8px]"
-                style={{ fontFamily: SERIF, color: "var(--lb-heading)", fontSize: 24 }}
+                style={{ fontFamily: SERIF, color: "var(--lb-heading)", fontSize: 24, textShadow: "var(--lb-heading-shadow, none)" }}
               >
                 Missions
               </h2>
               <p
                 className="leading-[24px]"
-                style={{ fontFamily: SERIF, color: "var(--lb-heading-muted)", fontSize: 16 }}
+                style={{ fontFamily: SERIF, color: "var(--lb-heading-muted)", fontSize: 16, textShadow: "var(--lb-heading-shadow, none)" }}
               >
                 Complete tasks for huge rewards
               </p>
@@ -436,11 +436,9 @@ export default function MissionsPage() {
                     className={`relative z-10 whitespace-nowrap leading-[24px] ${isActive ? "font-bold" : ""}`}
                     style={{
                       fontFamily: SERIF,
-                      // Scale with viewport so the longest label ("Challenge")
-                      // stays inside the ornate active frame on narrow phones;
-                      // caps at the 16px design size on the 475 layout.
                       fontSize: "clamp(11px, 3.4vw, 16px)",
-                      color: isActive ? "var(--lb-tab-active)" : MISSION_COLORS.muted,
+                      color: isActive ? "var(--lb-tab-active)" : "var(--lb-tab-inactive, #BBCBBB)",
+                      textShadow: isActive ? "none" : "var(--lb-heading-shadow, none)",
                     }}
                   >
                     {tab.label}
@@ -486,7 +484,7 @@ export default function MissionsPage() {
               ) : (
                 <p
                   className="py-10 text-center leading-[24px]"
-                  style={{ fontFamily: SERIF, color: "var(--lb-heading-muted)", fontSize: 16 }}
+                  style={{ fontFamily: SERIF, color: "var(--lb-heading-muted)", fontSize: 16, textShadow: "var(--lb-heading-shadow, none)" }}
                 >
                   No missions available yet - check back soon.
                 </p>

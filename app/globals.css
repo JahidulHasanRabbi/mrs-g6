@@ -82,9 +82,11 @@
   --lb-card-overlay: rgba(58, 10, 30, 0.92);
   --lb-panel-light: rgba(74, 15, 48, 0.72);
   --lb-mission-card-fill: rgba(74, 15, 48, 0.88);
-  /* Dark ink for text on the bright pink; deep rose tab container. */
-  --lb-heading: #2a0616;
-  --lb-heading-muted: #4a1230;
+  /* White ink with text-shadow so it pops on the bright pink backdrop. */
+  --lb-heading: #ffffff;
+  --lb-heading-muted: rgba(255, 255, 255, 0.85);
+  --lb-heading-shadow: 0 1px 4px rgba(0, 0, 0, 0.7), 0 0 12px rgba(80, 10, 40, 0.5);
+  --lb-tab-inactive: rgba(255, 255, 255, 0.75);
   --lb-tab-active: #2a0a1f;
   --lb-tabs-fill: rgba(74, 15, 48, 0.92);
 }
