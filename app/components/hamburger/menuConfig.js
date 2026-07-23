@@ -20,10 +20,11 @@ export const MENU_CONFIG = {
       label: "Leaderboard",
       link: "/leaderboard",
       children: [
-        { icon: "/assets/images/leaderboard-icon.png", label: "WorldCup Leaderboard", link: "/leaderboard" },
-        { icon: "/assets/leaderboard/wallet-icon.svg", label: "Top 20 Deposit", link: "/leaderboard/top-20?tab=deposit" },
-        { icon: "/assets/leaderboard/withdrawal-icon.svg", label: "Top 20 Withdraw", link: "/leaderboard/top-20?tab=withdrawal" },
-        { icon: "/assets/leaderboard/referrer-icon.svg", label: "Top 20 Referral", link: "/leaderboard/top-20?tab=referrer" },
+        // World Cup entry is preserved for possible future reuse.
+        // { icon: "/assets/images/leaderboard-icon.png", label: "WorldCup Leaderboard", link: "/leaderboard" },
+        { icon: "/assets/leaderboard/wallet-icon.svg", label: "Top 20 Deposit", link: "/leaderboard" },
+        { icon: "/assets/leaderboard/withdrawal-icon.svg", label: "Top 20 Withdraw", link: "/leaderboard?tab=withdrawal" },
+        { icon: "/assets/leaderboard/referrer-icon.svg", label: "Top 20 Referral", link: "/leaderboard?tab=referrer" },
       ],
     },
     { icon: "/assets/penalty-kick/icons/flag-gold.svg", label: "Missions", link: "/missions" },

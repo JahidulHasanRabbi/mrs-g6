@@ -612,8 +612,12 @@ export default function PenaltyKickPage() {
                 onKickAgain={() => {
                   play("tap");
                   if (kickErrorNeedsCountry) {
+                    // Open the in-page NationSelect overlay rather than routing
+                    // to /leaderboard — that route now serves the Top 20 boards
+                    // and no longer carries the country picker.
                     setDialog(null);
-                    router.push("/leaderboard");
+                    needsCountryRef.current = true;
+                    setNeedsCountry(true);
                   } else {
                     handleKickAgain();
                   }
