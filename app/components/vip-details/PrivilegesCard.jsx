@@ -102,12 +102,21 @@ export default function PrivilegesCard({ level = "Bronze", tierData = null, tier
                   className="object-contain"
                 />
               </div>
+              {/* kgame99's card frame has a LIGHT sky-and-cloud interior, so
+                  the default warm-gold stat label + dark drop-shadow reads as
+                  a smudge. Switch to deep sapphire navy with a fine white glow
+                  — reads like engraved ink on a heraldic scroll and echoes the
+                  frame's sapphire gems. Other themes keep the gold treatment. */}
               <div
-                className="text-[#fcd064] font-bold font-['Times_New_Roman'] leading-tight text-[15px] max-[400px]:text-[13px]"
-                style={{ textShadow: "0 1px 3px rgba(0,0,0,0.7), 0 0 8px rgba(0,0,0,0.4)" }}
+                className={`font-bold font-['Times_New_Roman'] leading-tight text-[15px] max-[400px]:text-[13px] ${isKgame99 ? 'text-[#0a1a2f]' : 'text-[#fcd064]'}`}
+                style={
+                  isKgame99
+                    ? { textShadow: '0 1px 1px rgba(255,255,255,0.85), 0 0 6px rgba(255,255,255,0.5)' }
+                    : { textShadow: '0 1px 3px rgba(0,0,0,0.7), 0 0 8px rgba(0,0,0,0.4)' }
+                }
               >
                 <p>{stat.label}:</p>
-                <p>{stat.value}</p>
+                <p className={isKgame99 ? 'text-[#0a4e9e]' : ''}>{stat.value}</p>
               </div>
             </div>
           ))}

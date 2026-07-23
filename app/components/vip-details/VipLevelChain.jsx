@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { VIP_DETAILS_ASSETS } from "./vipDetailsAssets";
 import GemIcon from "./GemIcon";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const DEFAULT_VIP_LEVELS = [
   { name: "Bronze",   badge: VIP_DETAILS_ASSETS.badges.bronze,   left:  40, leftSm:  55 },
@@ -81,6 +82,10 @@ export default function VipLevelChain({ selectedLevel, onLevelSelect, vipTiers =
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const viewportRef = useRef(null);
   const [viewportWidth, setViewportWidth] = useState(475);
+  // On kgame99 the chain sits directly on a bright celestial-blue sky, where
+  // warm gold names dissolve. Switch the tier labels to deep sapphire navy
+  // with a soft white glow so they read like engraved ink on the sky.
+  const { isKgame99 } = useTheme();
 
   useEffect(() => {
     const update = () => {
@@ -199,12 +204,15 @@ export default function VipLevelChain({ selectedLevel, onLevelSelect, vipTiers =
                 />
               </motion.div>
               <p
-                className={`text-center text-[#e9af41] font-bold font-['Times_New_Roman'] mt-2 transition-all leading-tight uppercase ${isSelected ? "scale-110" : ""}`}
+                className={`text-center font-bold font-['Times_New_Roman'] mt-2 transition-all leading-tight uppercase ${isSelected ? "scale-110" : ""}`}
                 style={{
                   fontSize: "clamp(8px, 2.4vw, 12px)",
                   maxWidth: "clamp(52px, 16vw, 80px)",
                   wordBreak: "break-word",
-                  textShadow: "0 1px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.5)",
+                  color: isKgame99 ? "#0a1a2f" : "#e9af41",
+                  textShadow: isKgame99
+                    ? "0 1px 1px rgba(255,255,255,0.9), 0 0 6px rgba(255,255,255,0.6)"
+                    : "0 1px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.5)",
                 }}
               >
                 {level.name}

@@ -16,10 +16,17 @@ import { mapProfileDataToForm, mapFormDataToProfileUpdate } from "@/app/api/resp
 import { tokenStorage } from "@/app/api/tokenStorage";
 import ThemedActionButton from "../themes/shared/ThemedActionButton";
 import { useUser } from "@/app/contexts/UserContext";
+import { useTheme } from "@/app/contexts/ThemeContext";
 
 export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
   const router = useRouter();
   const { updateProfilePicture, selectedFrameId, updateSelectedFrame } = useUser();
+  // Loading text sits directly on the page backdrop. On kgame99's bright
+  // celestial-blue sky, warm gold washes out — swap to dark navy w/ shadow.
+  const { isKgame99 } = useTheme();
+  const loadingTextStyle = isKgame99
+    ? { color: "#0a1a2f", textShadow: "0 1px 2px rgba(255,255,255,0.55)" }
+    : { color: "#e9af41" };
   const [formData, setFormData] = useState(
     FORM_FIELDS.reduce((acc, field) => ({ ...acc, [field.id]: "" }), {})
   );
@@ -208,7 +215,7 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
-        <div className="text-[#e9af41] text-lg">Loading profile...</div>
+        <div className="text-lg" style={loadingTextStyle}>Loading profile...</div>
       </motion.div>
     );
   }

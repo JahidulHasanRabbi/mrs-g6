@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import HistorySection from "../../profile/HistorySection";
 import ThemedProfileCard from "../shared/ThemedProfileCard";
 import ThemedEditProfileList from "../shared/ThemedEditProfileList";
-import { KGAME99_ASSETS, KGAME99_COLORS } from "./assets";
+import { KGAME99_ASSETS } from "./assets";
 import { useUser } from "../../../contexts/UserContext";
 
 // Celestial crystal-kingdom card palette. Unlike the other skins this frame has
@@ -79,14 +79,17 @@ export default function Kgame99ProfilePage() {
           <HistorySection />
         </div>
 
+        {/* Scroll frame's interior is saturated royal blue, so text needs
+            warm/light color for contrast — pale sky-blue (#dbecff) got lost.
+            Warm cream reads clearly and matches the gold heading + chevron. */}
         <ThemedEditProfileList
           frame={KGAME99_ASSETS.frames.scroll}
           pad={{ x: "17%", top: "18%", bottom: "21%" }}
           colors={{
-            heading: "#ffac22",
-            rowText: KGAME99_COLORS.lightBlue,
-            chevron: "#ffac22",
-            divider: "rgba(219,236,255,0.25)",
+            heading: "#ffd76a",
+            rowText: "#fff6df",
+            chevron: "#ffd76a",
+            divider: "rgba(255,246,223,0.28)",
           }}
           onItem={goPersonalData}
         />
