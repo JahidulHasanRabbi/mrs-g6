@@ -34,10 +34,10 @@ const BOSS_STRIKE_MS = 310;
 const fmt = (n) => Number(n).toLocaleString("en-GB");
 
 // Realistic 3D die (client feedback #3) — a CSS cube with white bevelled
-// faces and recessed black pips, shown at a slight isometric tilt so its
-// depth reads even at rest. While ROLLING the fast face cycling keeps
-// retargeting the cube's rotation (a chaotic tumble), then it springs onto
-// the real roll's face with a settling wobble.
+// faces and recessed black pips. A fixed camera (the middle `view` div) looks
+// down at the cube so three faces read and the ROLLED VALUE lands face-up on
+// the TOP face, like a real thrown die. Rolling is ONE continuous decelerating
+// tumble (not a per-frame face swap) that settles onto the result.
 const PIP_LAYOUTS = {
   1: [[50, 50]],
   2: [[30, 30], [70, 70]],
@@ -47,7 +47,7 @@ const PIP_LAYOUTS = {
   6: [[31, 27], [69, 27], [31, 50], [69, 50], [31, 73], [69, 73]],
 };
 
-// Cube face planes (opposite faces sum to 7, like a real die).
+// Physical cube: 1 front(+Z), 6 back, 3 right(+X), 4 left, 2 top, 5 bottom.
 const DIE_FACES = [
   { value: 1, transform: "rotateY(0deg)" },
   { value: 6, transform: "rotateY(180deg)" },
@@ -57,44 +57,56 @@ const DIE_FACES = [
   { value: 5, transform: "rotateX(-90deg)" },
 ];
 
-// Cube rotation that brings each value's face to the front.
-const DIE_ORIENT = {
-  1: { x: 0, y: 0 },
-  2: { x: -90, y: 0 },
-  3: { x: 0, y: -90 },
-  4: { x: 0, y: 90 },
-  5: { x: 90, y: 0 },
-  6: { x: 0, y: 180 },
+// Camera tilt (static) and, under it, the cube rotation that lifts each value's
+// face to the visible TOP. Verified per-face by rendering all six under this
+// exact view — do not tweak the view without re-deriving the map.
+const DIE_VIEW = "rotateX(-28deg) rotateY(-32deg)";
+const DIE_TOP = {
+  1: { rx: 90, ry: 0, rz: 0 },
+  2: { rx: 0, ry: 0, rz: 0 },
+  3: { rx: 0, ry: 0, rz: 90 },
+  4: { rx: 0, ry: 0, rz: -90 },
+  5: { rx: 180, ry: 0, rz: 0 },
+  6: { rx: -90, ry: 0, rz: 0 },
 };
 
 function Die3D({ value, rolling, size = 80 }) {
   const half = size / 2;
+  // The die "value" prop tracks the fast face-cycle while rolling; freeze the
+  // orientation target to the last SETTLED value so mid-roll cycling doesn't
+  // fight the tumble. The settled value is read only once the roll lands.
+  const [settled, setSettled] = useState(value);
+  useEffect(() => {
+    if (!rolling) setSettled(value);
+  }, [rolling, value]);
+
   // Whole extra revolutions accumulate once per roll so the cube always
-  // tumbles forward instead of taking the shortest path back to the face.
+  // tumbles forward through several turns before settling (never snaps back).
   const turnsRef = useRef(0);
   const wasRolling = useRef(false);
-  if (rolling && !wasRolling.current) turnsRef.current += 1;
+  if (rolling && !wasRolling.current) turnsRef.current += 3;
   wasRolling.current = rolling;
-  const orient = DIE_ORIENT[value] || DIE_ORIENT[1];
+  const rest = DIE_TOP[settled] || DIE_TOP[1];
   const spin = turnsRef.current * 360;
 
+  // Rolling: pure forward tumble on X (+ matching Y sweep), value-agnostic.
+  // Settle: land the last quarter/half-turn onto the value's top orientation.
+  const animate = rolling
+    ? { rotateX: spin, rotateY: spin, rotateZ: rest.rz }
+    : { rotateX: rest.rx + spin, rotateY: spin, rotateZ: rest.rz };
+  const transition = rolling
+    ? { duration: 1.1, ease: [0.15, 0.55, 0.35, 1] }
+    : { type: "spring", stiffness: 90, damping: 13, mass: 0.8 };
+
   return (
-    <div role="img" aria-label={`Die showing ${value}`} style={{ width: size, height: size, perspective: size * 4.5 }}>
-      {/* Static isometric tilt: keeps the top + right faces visible so the
-          cube never flattens into a square. */}
-      <div
-        className="h-full w-full"
-        style={{ transform: "rotateX(-22deg) rotateY(-28deg)", transformStyle: "preserve-3d" }}
-      >
+    <div role="img" aria-label={`Die showing ${value}`} style={{ width: size, height: size, perspective: size * 5 }}>
+      {/* Fixed camera — the cube tumbles within it. */}
+      <div className="h-full w-full" style={{ transform: DIE_VIEW, transformStyle: "preserve-3d" }}>
         <motion.div
           className="relative h-full w-full"
           style={{ transformStyle: "preserve-3d" }}
-          animate={{ rotateX: orient.x + spin, rotateY: orient.y + spin }}
-          transition={
-            rolling
-              ? { duration: 0.4, ease: "linear" }
-              : { type: "spring", stiffness: 160, damping: 15 }
-          }
+          animate={animate}
+          transition={transition}
         >
           {DIE_FACES.map((face) => (
             <div
