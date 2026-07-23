@@ -79,6 +79,7 @@ function RewardForm() {
     position: "",
     itemType: 1,
     creditAmount: "",
+    tokenAmount: "",
     imageFile: null,
   });
   const [imagePreview, setImagePreview] = useState(null);
@@ -96,6 +97,7 @@ function RewardForm() {
           position: String(r.position ?? ""),
           itemType: normalizeItemType(r.item_type),
           creditAmount: normalizeAmount(r.credit_amount),
+          tokenAmount: r.token_amount != null ? String(r.token_amount) : "",
           imageFile: null,
         });
         setImagePreview(r.image || null);
@@ -139,6 +141,15 @@ function RewardForm() {
       }
       if (Number(form.itemType) === 1) {
         payload.credit_amount = normalizeAmount(form.creditAmount) || normalizeAmount(form.name);
+      }
+      if (Number(form.itemType) === 3) {
+        const tokenAmount = parseInteger(form.tokenAmount);
+        if (tokenAmount === null) {
+          setError("Token amount is required for Token rewards.");
+          setSaving(false);
+          return;
+        }
+        payload.token_amount = tokenAmount;
       }
       if (form.imageFile) {
         payload.image = form.imageFile;
@@ -220,6 +231,19 @@ function RewardForm() {
               step="0.01"
               value={form.creditAmount}
               onChange={set("creditAmount")}
+              className={INPUT_BASE}
+            />
+          </div>
+        )}
+        {Number(form.itemType) === 3 && (
+          <div>
+            <label className="mb-2 block text-[14px] font-semibold text-white">Token Amount</label>
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={form.tokenAmount}
+              onChange={set("tokenAmount")}
               className={INPUT_BASE}
             />
           </div>

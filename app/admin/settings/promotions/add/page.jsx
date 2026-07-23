@@ -7,12 +7,15 @@ import { GRAD_GOLD } from "../../../../components/admin/retention/constants";
 import {
   createPromotion,
   getAvailablePromotions,
+  getDepositRewardItems,
   getLuckySpinItems,
   getPenaltyKickItems,
   getPromotionsByStation,
   getRedemptionItems,
+  getReferrerRewardItems,
   getSmashEggItems,
   getStationList,
+  getWithdrawalRewardItems,
 } from "../../../../api/adminApi";
 
 // Manage Promotions (Settings → Promotions → Add/Edit).
@@ -36,6 +39,9 @@ const ITEM_CATALOGS = [
   { key: "redemption", labels: ["redemption item", "redemption"], typeValues: ["5"], load: () => getRedemptionItems() },
   { key: "penalty_kick", labels: ["penalty kick bonus", "penalty kick"], typeValues: ["6"], load: () => getPenaltyKickItems({ page_size: 1000 }) },
   { key: "smash_egg", labels: ["smash egg bonus", "smash egg"], typeValues: [], load: () => getSmashEggItems() },
+  { key: "deposit_leaderboard", labels: ["deposit leaderboard bonus", "deposit leaderboard"], typeValues: [], load: () => getDepositRewardItems({ page_size: 1000 }) },
+  { key: "referral_leaderboard", labels: ["referral leaderboard bonus", "referral leaderboard"], typeValues: [], load: () => getReferrerRewardItems({ page_size: 1000 }) },
+  { key: "withdraw_leaderboard", labels: ["withdraw leaderboard bonus", "withdraw leaderboard"], typeValues: [], load: () => getWithdrawalRewardItems({ page_size: 1000 }) },
 ];
 
 // The API always mirrors the Manual Bonus promotion into the "VIP Type" group
@@ -97,6 +103,9 @@ function typeFromGroup(groupType, promotionTypes) {
     penaltykick: "Penalty Kick Bonus",
     "smash egg": "Smash Egg Bonus",
     smashegg: "Smash Egg Bonus",
+    "deposit leaderboard": "Deposit Leaderboard Bonus",
+    "referral leaderboard": "Referral Leaderboard Bonus",
+    "withdraw leaderboard": "Withdraw Leaderboard Bonus",
     "manual code": "Manual Bonus",
     manualcode: "Manual Bonus",
   };

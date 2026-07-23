@@ -68,6 +68,11 @@ function formatAmount(amount) {
 
 function formatPrize(reward) {
   if (!reward) return "";
+  // Token rewards (item_type 3) carry token_amount instead of credit_amount.
+  const tokens = reward.token_amount;
+  if (tokens != null && tokens !== "" && Number(tokens) > 0) {
+    return `${formatAmount(tokens)} Tokens`;
+  }
   const credit = reward.credit_amount ?? reward.reward_amount ?? reward.prize_amount;
   if (credit != null && credit !== "") return `RM ${formatAmount(credit)}`;
   return reward.reward_name || reward.prize || reward.prize_name || "";

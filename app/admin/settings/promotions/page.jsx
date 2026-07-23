@@ -5,11 +5,14 @@ import Link from "next/link";
 import { GRAD_DARK, GRAD_GOLD } from "../../../components/admin/retention/constants";
 import Pagination from "../../../components/admin/retention/Pagination";
 import {
+  getDepositRewardItems,
   getLuckySpinItems,
   getPenaltyKickItems,
   getPromotionsByStation,
   getRedemptionItems,
+  getReferrerRewardItems,
   getStationList,
+  getWithdrawalRewardItems,
 } from "../../../api/adminApi";
 
 // Promotions (Settings → Promotions). Promotions are configured per-station,
@@ -120,6 +123,9 @@ export default function PromotionsPage() {
       getLuckySpinItems(),
       getRedemptionItems(),
       getPenaltyKickItems({ page_size: 1000 }),
+      getDepositRewardItems({ page_size: 1000 }),
+      getReferrerRewardItems({ page_size: 1000 }),
+      getWithdrawalRewardItems({ page_size: 1000 }),
     ]).then((results) => {
       if (cancelled) return;
       setItemNameByUuid(buildItemNameLookup(
