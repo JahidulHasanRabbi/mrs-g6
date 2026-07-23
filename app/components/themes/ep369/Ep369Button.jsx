@@ -23,7 +23,7 @@ export default function Ep369Button({
       className={`relative flex items-center justify-center h-[60px] w-full max-w-[308px] overflow-hidden cursor-pointer select-none transition-transform active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
     >
       <img
-        src={isGold ? EP369_ASSETS.ui.btnGold : EP369_ASSETS.ui.btnGreen}
+        src={isGold ? EP369_ASSETS.spin.btnPlay : EP369_ASSETS.ui.btnGreen}
         alt=""
         className="absolute inset-0 h-full w-full object-cover pointer-events-none"
       />
@@ -31,7 +31,7 @@ export default function Ep369Button({
         className="relative z-10 leading-none"
         style={{
           fontFamily: 'var(--font-berkshire-swash), cursive',
-          color: isGold ? EP369_COLORS.dark : EP369_COLORS.goldBright,
+          color: EP369_COLORS.goldBright,
           fontSize: `${textSize}px`,
         }}
       >

@@ -23,7 +23,7 @@ export default function AcebetButton({
       className={`relative flex items-center justify-center h-[65px] w-full max-w-[308px] cursor-pointer select-none transition-transform active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
     >
       <img
-        src={isGold ? ACEBET_ASSETS.ui.btnGold : ACEBET_ASSETS.egg.btnWide}
+        src={isGold ? ACEBET_ASSETS.spin.btnPlay : ACEBET_ASSETS.egg.btnWide}
         alt=""
         className="absolute inset-0 w-full h-full object-fill pointer-events-none"
       />
@@ -31,7 +31,7 @@ export default function AcebetButton({
         className="relative z-10 leading-none"
         style={{
           fontFamily: 'var(--font-berkshire-swash), cursive',
-          color: isGold ? ACEBET_COLORS.dark : ACEBET_COLORS.goldBright,
+          color: ACEBET_COLORS.goldBright,
           fontSize: `${textSize}px`,
         }}
       >

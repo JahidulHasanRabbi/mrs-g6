@@ -23,7 +23,7 @@ export default function KgameButton({
       className={`relative flex items-center justify-center h-[65px] w-full max-w-[308px] cursor-pointer select-none transition-transform active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
     >
       <img
-        src={isGold ? KGAME99_ASSETS.ui.btnGold : KGAME99_ASSETS.egg.btnWide}
+        src={isGold ? KGAME99_ASSETS.spin.btnPlay : KGAME99_ASSETS.egg.btnWide}
         alt=""
         className="absolute inset-0 w-full h-full object-fill pointer-events-none"
       />
@@ -31,7 +31,7 @@ export default function KgameButton({
         className="relative z-10 leading-none"
         style={{
           fontFamily: 'var(--font-berkshire-swash), cursive',
-          color: isGold ? KGAME99_COLORS.dark : KGAME99_COLORS.goldBright,
+          color: KGAME99_COLORS.goldBright,
           fontSize: `${textSize}px`,
         }}
       >

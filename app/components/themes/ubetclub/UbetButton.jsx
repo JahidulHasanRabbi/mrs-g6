@@ -24,7 +24,7 @@ export default function UbetButton({
       className={`relative flex items-center justify-center h-[60px] w-full max-w-[308px] overflow-hidden cursor-pointer select-none transition-transform active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
     >
       <img
-        src={isGold ? UBET_ASSETS.ui.btnGold : UBET_ASSETS.ui.btnRed}
+        src={isGold ? UBET_ASSETS.spin.btnPlay : UBET_ASSETS.ui.btnRed}
         alt=""
         className="absolute inset-0 h-full w-full object-cover pointer-events-none"
       />
@@ -32,7 +32,7 @@ export default function UbetButton({
         className="relative z-10 leading-none"
         style={{
           fontFamily: 'var(--font-berkshire-swash), cursive',
-          color: isGold ? UBET_COLORS.dark : UBET_COLORS.goldBright,
+          color: UBET_COLORS.goldBright,
           fontSize: `${textSize}px`,
         }}
       >
