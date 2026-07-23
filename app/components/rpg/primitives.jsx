@@ -132,92 +132,129 @@ export function SlotChip({
   );
 }
 
-// Deterministic rising energy sparks (fixed so SSR + client render match —
-// no Math.random in render). Positions/timings hand-tuned to read as flames
-// licking upward around the hero.
-const AURA_SPARKS = [
-  { left: 30, size: 7, delay: 0.0, dur: 1.9 },
-  { left: 44, size: 5, delay: 0.6, dur: 2.3 },
-  { left: 56, size: 8, delay: 0.3, dur: 2.0 },
-  { left: 67, size: 5, delay: 1.1, dur: 2.5 },
-  { left: 37, size: 6, delay: 1.4, dur: 2.2 },
-  { left: 62, size: 6, delay: 0.9, dur: 2.6 },
-  { left: 50, size: 9, delay: 1.7, dur: 2.1 },
+// Radiating lightning bolts for the aura, drawn in a 120×160 viewBox that
+// scales to the hero. Split into two sets that flash out of phase so the aura
+// crackles like live electricity. Each bolt is a jagged path pointing outward
+// from the body's centre.
+const AURA_BOLTS_A = [
+  "M60,64 L53,46 L62,42 L50,18",
+  "M74,72 L98,62 L88,76 L114,64",
+  "M50,94 L28,106 L40,100 L16,120",
+];
+const AURA_BOLTS_B = [
+  "M70,62 L90,42 L79,47 L100,22",
+  "M46,82 L22,74 L34,83 L8,78",
+  "M60,98 L67,124 L56,117 L66,144",
 ];
 
-// Hero art wrapped in a "Super Saiyan" energy aura (client request). The aura
-// is ALWAYS on — a golden flame that flickers and sheds rising sparks around
-// the body — and flares brighter/taller as gear is equipped. Equipping still
-// lands as an event: the pose remounts with a scale pop + a ring burst.
+// Deterministic energy motes that blink around the body (no Math.random in
+// render, so SSR and client agree).
+const AURA_MOTES = [
+  { left: 26, top: 34, size: 5, delay: 0.0, dur: 1.3 },
+  { left: 74, top: 30, size: 4, delay: 0.5, dur: 1.1 },
+  { left: 32, top: 62, size: 6, delay: 0.9, dur: 1.5 },
+  { left: 70, top: 58, size: 5, delay: 0.3, dur: 1.2 },
+  { left: 50, top: 20, size: 4, delay: 1.1, dur: 1.4 },
+  { left: 60, top: 74, size: 6, delay: 0.7, dur: 1.0 },
+];
+
+function AuraBolts({ paths }) {
+  return (
+    <svg
+      viewBox="0 0 120 160"
+      preserveAspectRatio="none"
+      className="h-full w-full"
+      fill="none"
+      style={{ filter: "drop-shadow(0 0 5px rgba(168,85,247,0.9))" }}
+    >
+      {paths.map((d, i) => (
+        <g key={i} strokeLinecap="round" strokeLinejoin="round">
+          {/* soft violet body */}
+          <path d={d} stroke="#a855f7" strokeWidth="4.5" strokeOpacity="0.55" />
+          {/* hot white-violet core */}
+          <path d={d} stroke="#f3e8ff" strokeWidth="1.6" />
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+// Hero art wrapped in a crackling violet energy aura (client request — modelled
+// on the "full set" avatar's electric purple lightning). The aura is ALWAYS on
+// and flares brighter with equipped gear: a violet body glow + hot core, two
+// out-of-phase lightning-bolt layers, blinking energy motes, and a ground glow.
+// Equipping still lands as an event: the pose remounts with a scale pop + burst.
 export function HeroShowcase({ pose, equippedCount = 0, heightClass = "h-[min(345px,42vh)]", className = "" }) {
   const t = Math.max(0, Math.min(4, equippedCount)) / 4;
-  // Strong base aura even with nothing equipped; brighter/taller with gear.
+  // Strong base aura even with nothing equipped; brighter/bigger with gear.
   const intensity = 0.6 + t * 0.4;
   const fullSet = equippedCount >= 4;
   return (
     <div className={`relative flex ${heightClass} items-end justify-center overflow-visible ${className}`}>
-      {/* Outer energy flame — tall teardrop, gold core fading through amber to
-          the game's violet at the fringe. Flickers in opacity + scale. */}
+      {/* Outer violet energy field — tall, envelops the body, magenta at the
+          fringe. Flickers in opacity + scale. */}
       <motion.div
-        className="pointer-events-none absolute left-1/2 bottom-[-6%] h-[124%] w-[84%] -translate-x-1/2"
+        className="pointer-events-none absolute left-1/2 bottom-[-6%] h-[124%] w-[88%] -translate-x-1/2"
         style={{
-          background: `radial-gradient(46% 60% at 50% 56%, rgba(255,247,214,${(0.34 * intensity).toFixed(3)}) 0%, rgba(255,201,77,${(0.44 * intensity).toFixed(3)}) 28%, rgba(255,138,80,${(0.26 * intensity).toFixed(3)}) 50%, rgba(160,110,255,${(0.16 * intensity).toFixed(3)}) 70%, rgba(124,77,255,0) 87%)`,
-          filter: "blur(12px)",
+          background: `radial-gradient(48% 60% at 50% 54%, rgba(233,213,255,${(0.30 * intensity).toFixed(3)}) 0%, rgba(168,85,247,${(0.44 * intensity).toFixed(3)}) 30%, rgba(124,77,255,${(0.28 * intensity).toFixed(3)}) 54%, rgba(217,70,239,${(0.16 * intensity).toFixed(3)}) 70%, rgba(124,77,255,0) 88%)`,
+          filter: "blur(13px)",
           transformOrigin: "50% 100%",
         }}
         animate={{
-          opacity: [0.8, 1, 0.86, 1, 0.82],
-          scaleY: [1, 1.08, 0.97, 1.06, 1],
-          scaleX: [1, 0.96, 1.03, 0.97, 1],
+          opacity: [0.82, 1, 0.88, 1, 0.84],
+          scaleY: [1, 1.07, 0.98, 1.05, 1],
+          scaleX: [1, 0.97, 1.02, 0.98, 1],
         }}
         transition={{ duration: fullSet ? 1.4 : 2.0, repeat: Infinity, ease: "easeInOut" }}
       />
-      {/* Flame crown — a narrow plume rising above the head that stretches and
-          flickers, giving the aura its upward Super-Saiyan point. */}
+      {/* Bright inner core — hot white-violet centre, faster flicker. */}
       <motion.div
-        className="pointer-events-none absolute left-1/2 top-[-14%] h-[52%] w-[30%] -translate-x-1/2"
+        className="pointer-events-none absolute left-1/2 bottom-0 h-[96%] w-[50%] -translate-x-1/2"
         style={{
-          background: `radial-gradient(40% 60% at 50% 78%, rgba(255,247,214,${(0.42 * intensity).toFixed(3)}) 0%, rgba(255,201,77,${(0.34 * intensity).toFixed(3)}) 42%, rgba(255,138,80,0) 82%)`,
-          filter: "blur(9px)",
+          background: `radial-gradient(42% 54% at 50% 56%, rgba(245,238,255,${(0.55 * intensity).toFixed(3)}) 0%, rgba(192,132,252,${(0.42 * intensity).toFixed(3)}) 40%, rgba(124,77,255,0) 76%)`,
+          filter: "blur(10px)",
           transformOrigin: "50% 100%",
         }}
-        animate={{ opacity: [0.55, 1, 0.7, 0.95, 0.6], scaleY: [0.9, 1.35, 1.05, 1.28, 0.95], scaleX: [1, 0.85, 1.05, 0.9, 1] }}
-        transition={{ duration: fullSet ? 1.1 : 1.6, repeat: Infinity, ease: "easeInOut" }}
-      />
-      {/* Bright inner core — narrower, whiter, faster flicker for the hot centre. */}
-      <motion.div
-        className="pointer-events-none absolute left-1/2 bottom-0 h-[92%] w-[46%] -translate-x-1/2"
-        style={{
-          background: `radial-gradient(42% 54% at 50% 60%, rgba(255,255,240,${(0.5 * intensity).toFixed(3)}) 0%, rgba(255,214,110,${(0.4 * intensity).toFixed(3)}) 38%, rgba(255,170,60,0) 74%)`,
-          filter: "blur(9px)",
-          transformOrigin: "50% 100%",
-        }}
-        animate={{ opacity: [0.75, 1, 0.85, 1, 0.78], scaleY: [1, 1.12, 0.98, 1.09, 1] }}
+        animate={{ opacity: [0.78, 1, 0.86, 1, 0.8], scaleY: [1, 1.1, 0.98, 1.07, 1] }}
         transition={{ duration: fullSet ? 0.9 : 1.3, repeat: Infinity, ease: "easeInOut" }}
       />
-      {/* Rising flame sparks / embers licking upward around the body. */}
-      {AURA_SPARKS.map((s, i) => (
+      {/* Two lightning-bolt layers flashing out of phase → crackling energy. */}
+      <motion.div
+        className="pointer-events-none absolute left-1/2 top-[2%] h-[100%] w-[104%] -translate-x-1/2"
+        animate={{ opacity: [0.15, 0.9, 0.25, 1, 0.3].map((o) => o * (0.5 + t * 0.5)) }}
+        transition={{ duration: fullSet ? 0.42 : 0.6, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <AuraBolts paths={AURA_BOLTS_A} />
+      </motion.div>
+      <motion.div
+        className="pointer-events-none absolute left-1/2 top-[2%] h-[100%] w-[104%] -translate-x-1/2"
+        animate={{ opacity: [0.9, 0.2, 1, 0.25, 0.7].map((o) => o * (0.5 + t * 0.5)) }}
+        transition={{ duration: fullSet ? 0.5 : 0.72, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <AuraBolts paths={AURA_BOLTS_B} />
+      </motion.div>
+      {/* Blinking energy motes drifting around the body. */}
+      {AURA_MOTES.map((m, i) => (
         <motion.span
           key={i}
           className="pointer-events-none absolute rounded-full"
           style={{
-            left: `${s.left}%`,
-            bottom: "10%",
-            width: s.size,
-            height: s.size * 2.3,
-            background: "linear-gradient(to top, rgba(255,201,77,0.95) 0%, rgba(255,247,214,0.25) 100%)",
-            filter: "blur(2px)",
+            left: `${m.left}%`,
+            top: `${m.top}%`,
+            width: m.size,
+            height: m.size,
+            background: "radial-gradient(circle, #f3e8ff 0%, #a855f7 60%, rgba(124,77,255,0) 100%)",
+            filter: "blur(0.5px)",
           }}
-          initial={{ y: 0, opacity: 0, scaleY: 0.6 }}
-          animate={{ y: [-4, -(70 + t * 40)], opacity: [0, 0.95, 0], scaleY: [0.6, 1.25, 0.5] }}
-          transition={{ duration: s.dur, delay: s.delay, repeat: Infinity, ease: "easeOut" }}
+          animate={{ opacity: [0, 0.95, 0], scale: [0.6, 1.15, 0.5], y: [2, -8, -14] }}
+          transition={{ duration: m.dur, delay: m.delay, repeat: Infinity, ease: "easeInOut" }}
         />
       ))}
       {/* Ground glow under the hero's feet. */}
       <div
-        className="pointer-events-none absolute bottom-0 left-1/2 h-[8%] w-[64%] -translate-x-1/2 rounded-[50%]"
+        className="pointer-events-none absolute bottom-0 left-1/2 h-[8%] w-[66%] -translate-x-1/2 rounded-[50%]"
         style={{
-          background: `radial-gradient(ellipse, rgba(255,201,77,${(0.4 * intensity).toFixed(3)}) 0%, rgba(124,77,255,0) 72%)`,
+          background: `radial-gradient(ellipse, rgba(168,85,247,${(0.45 * intensity).toFixed(3)}) 0%, rgba(124,77,255,0) 72%)`,
           filter: "blur(4px)",
         }}
       />
@@ -227,7 +264,7 @@ export function HeroShowcase({ pose, equippedCount = 0, heightClass = "h-[min(34
         alt="Your hero"
         className="relative h-full w-auto"
         style={{
-          filter: `drop-shadow(0 0 ${Math.round(10 + t * 18)}px rgba(255,201,77,${(0.5 + t * 0.35).toFixed(3)}))`,
+          filter: `drop-shadow(0 0 ${Math.round(9 + t * 16)}px rgba(168,85,247,${(0.5 + t * 0.35).toFixed(3)})) drop-shadow(0 0 4px rgba(243,232,255,0.5))`,
         }}
         initial={{ opacity: 0.35, scale: 0.92 }}
         animate={{ opacity: 1, scale: 1, y: [0, -8, 0] }}
@@ -241,7 +278,7 @@ export function HeroShowcase({ pose, equippedCount = 0, heightClass = "h-[min(34
       <motion.div
         key={`burst-${pose}`}
         className="pointer-events-none absolute bottom-[30%] left-1/2 size-[120px] rounded-full border-2"
-        style={{ borderColor: "rgba(255,214,120,0.9)", x: "-50%" }}
+        style={{ borderColor: "rgba(199,168,255,0.9)", x: "-50%" }}
         initial={{ opacity: 0.9, scale: 0.4 }}
         animate={{ opacity: 0, scale: 2.1 }}
         transition={{ duration: 0.55, ease: "easeOut" }}
