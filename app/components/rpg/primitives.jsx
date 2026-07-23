@@ -132,6 +132,70 @@ export function SlotChip({
   );
 }
 
+// Hero art with an equip-scaled power aura (client feedback: equipping must
+// produce an OBVIOUS visual change). Each equipped piece deepens the violet
+// aura + glow around the hero; a full 4-piece set adds a slow breathing pulse.
+// The pose image remounts on gear change with a scale pop and an expanding
+// ring burst, so an equip lands as an event rather than a quiet image swap.
+export function HeroShowcase({ pose, equippedCount = 0, heightClass = "h-[min(345px,42vh)]", className = "" }) {
+  const t = Math.max(0, Math.min(4, equippedCount)) / 4;
+  const fullSet = equippedCount >= 4;
+  return (
+    <div className={`relative flex ${heightClass} items-end justify-center ${className}`}>
+      {/* Power aura behind the hero — intensity scales with gear count */}
+      {equippedCount > 0 && (
+        <motion.div
+          className="pointer-events-none absolute inset-x-[6%] bottom-[2%] top-[4%] rounded-[50%]"
+          style={{
+            background: `radial-gradient(ellipse 52% 58% at 50% 60%, rgba(167,139,250,${(0.16 + t * 0.3).toFixed(3)}) 0%, rgba(124,77,255,${(0.1 + t * 0.24).toFixed(3)}) 40%, rgba(124,77,255,0) 72%)`,
+            filter: "blur(8px)",
+          }}
+          animate={fullSet ? { opacity: [0.75, 1, 0.75], scale: [1, 1.07, 1] } : { opacity: 1, scale: 1 }}
+          transition={fullSet ? { duration: 2.2, repeat: Infinity, ease: "easeInOut" } : { duration: 0.35 }}
+        />
+      )}
+      {/* Ground glow under the hero's feet */}
+      {equippedCount > 0 && (
+        <div
+          className="pointer-events-none absolute bottom-0 h-[7%] w-[62%] rounded-[50%]"
+          style={{
+            background: `radial-gradient(ellipse, rgba(124,77,255,${(0.25 + t * 0.35).toFixed(3)}) 0%, rgba(124,77,255,0) 70%)`,
+            filter: "blur(3px)",
+          }}
+        />
+      )}
+      <motion.img
+        key={pose}
+        src={pose}
+        alt="Your hero"
+        className="relative h-full w-auto"
+        style={{
+          filter:
+            equippedCount > 0
+              ? `drop-shadow(0 0 ${Math.round(6 + t * 16)}px rgba(167,139,250,${(0.35 + t * 0.4).toFixed(3)}))`
+              : "none",
+        }}
+        initial={{ opacity: 0.35, scale: 0.92 }}
+        animate={{ opacity: 1, scale: 1, y: [0, -8, 0] }}
+        transition={{
+          opacity: { duration: 0.25 },
+          scale: { type: "spring", stiffness: 320, damping: 18 },
+          y: { duration: 3.6, repeat: Infinity, ease: "easeInOut" },
+        }}
+      />
+      {/* One-shot ring burst on each pose change (keyed remount replays it) */}
+      <motion.div
+        key={`burst-${pose}`}
+        className="pointer-events-none absolute bottom-[30%] left-1/2 size-[120px] rounded-full border-2"
+        style={{ borderColor: "rgba(199,168,255,0.85)", x: "-50%" }}
+        initial={{ opacity: 0.9, scale: 0.4 }}
+        animate={{ opacity: 0, scale: 2.1 }}
+        transition={{ duration: 0.55, ease: "easeOut" }}
+      />
+    </div>
+  );
+}
+
 // Gold gradient CTA (START JOURNEY / CHALLENGE / OPEN BOX / …).
 export function GoldCta({ children, onClick, disabled, className = "", glow = true }) {
   return (

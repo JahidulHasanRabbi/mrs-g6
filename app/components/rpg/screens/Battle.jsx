@@ -33,7 +33,11 @@ const BOSS_STRIKE_MS = 310;
 
 const fmt = (n) => Number(n).toLocaleString("en-GB");
 
-// SVG die with the design's dark-navy face and cyan pips.
+// Realistic 3D die (client feedback #3) — a CSS cube with white bevelled
+// faces and recessed black pips, shown at a slight isometric tilt so its
+// depth reads even at rest. While ROLLING the fast face cycling keeps
+// retargeting the cube's rotation (a chaotic tumble), then it springs onto
+// the real roll's face with a settling wobble.
 const PIP_LAYOUTS = {
   1: [[50, 50]],
   2: [[30, 30], [70, 70]],
@@ -43,14 +47,86 @@ const PIP_LAYOUTS = {
   6: [[31, 27], [69, 27], [31, 50], [69, 50], [31, 73], [69, 73]],
 };
 
-function DieFace({ value, size = 96 }) {
+// Cube face planes (opposite faces sum to 7, like a real die).
+const DIE_FACES = [
+  { value: 1, transform: "rotateY(0deg)" },
+  { value: 6, transform: "rotateY(180deg)" },
+  { value: 3, transform: "rotateY(90deg)" },
+  { value: 4, transform: "rotateY(-90deg)" },
+  { value: 2, transform: "rotateX(90deg)" },
+  { value: 5, transform: "rotateX(-90deg)" },
+];
+
+// Cube rotation that brings each value's face to the front.
+const DIE_ORIENT = {
+  1: { x: 0, y: 0 },
+  2: { x: -90, y: 0 },
+  3: { x: 0, y: -90 },
+  4: { x: 0, y: 90 },
+  5: { x: 90, y: 0 },
+  6: { x: 0, y: 180 },
+};
+
+function Die3D({ value, rolling, size = 80 }) {
+  const half = size / 2;
+  // Whole extra revolutions accumulate once per roll so the cube always
+  // tumbles forward instead of taking the shortest path back to the face.
+  const turnsRef = useRef(0);
+  const wasRolling = useRef(false);
+  if (rolling && !wasRolling.current) turnsRef.current += 1;
+  wasRolling.current = rolling;
+  const orient = DIE_ORIENT[value] || DIE_ORIENT[1];
+  const spin = turnsRef.current * 360;
+
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" aria-label={`Die showing ${value}`}>
-      <rect x="4" y="4" width="92" height="92" rx="22" fill="#141833" stroke="#2fe6c8" strokeWidth="2.5" />
-      {(PIP_LAYOUTS[value] || PIP_LAYOUTS[1]).map(([cx, cy], i) => (
-        <circle key={i} cx={cx} cy={cy} r="7.5" fill="#40e5d1" />
-      ))}
-    </svg>
+    <div role="img" aria-label={`Die showing ${value}`} style={{ width: size, height: size, perspective: size * 4.5 }}>
+      {/* Static isometric tilt: keeps the top + right faces visible so the
+          cube never flattens into a square. */}
+      <div
+        className="h-full w-full"
+        style={{ transform: "rotateX(-22deg) rotateY(-28deg)", transformStyle: "preserve-3d" }}
+      >
+        <motion.div
+          className="relative h-full w-full"
+          style={{ transformStyle: "preserve-3d" }}
+          animate={{ rotateX: orient.x + spin, rotateY: orient.y + spin }}
+          transition={
+            rolling
+              ? { duration: 0.4, ease: "linear" }
+              : { type: "spring", stiffness: 160, damping: 15 }
+          }
+        >
+          {DIE_FACES.map((face) => (
+            <div
+              key={face.value}
+              className="absolute inset-0 rounded-[16%]"
+              style={{
+                transform: `${face.transform} translateZ(${half}px)`,
+                background: "linear-gradient(145deg, #ffffff 0%, #edeef4 52%, #c9cedd 100%)",
+                boxShadow: "inset 0 0 7px rgba(60,70,100,0.28), inset 0 -3px 6px rgba(60,70,100,0.22)",
+                backfaceVisibility: "hidden",
+              }}
+            >
+              {(PIP_LAYOUTS[face.value] || []).map(([cx, cy], i) => (
+                <span
+                  key={i}
+                  className="absolute rounded-full"
+                  style={{
+                    width: "17%",
+                    height: "17%",
+                    left: `${cx}%`,
+                    top: `${cy}%`,
+                    transform: "translate(-50%, -50%)",
+                    background: "radial-gradient(circle at 35% 30%, #3c4150 0%, #15171f 55%, #04050a 100%)",
+                    boxShadow: "inset 0 2px 3px rgba(0,0,0,0.6), 0 1px 1px rgba(255,255,255,0.55)",
+                  }}
+                />
+              ))}
+            </div>
+          ))}
+        </motion.div>
+      </div>
+    </div>
   );
 }
 
@@ -245,10 +321,12 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
             )}
           </AnimatePresence>
 
-          {/* Boss art + impact + floating damage */}
+          {/* Boss art + impact + floating damage. The boss + hero flex ratios
+              (and the hidden HUD strip) size the combatants as the screen's
+              main focus — client feedback #2. */}
           <div className="relative flex min-h-0 w-full flex-[5] items-end justify-center">
             <div
-              className="pointer-events-none absolute bottom-[6px] h-[24px] w-[150px] rounded-[50%]"
+              className="pointer-events-none absolute bottom-[6px] h-[24px] w-[170px] rounded-[50%]"
               style={{ background: "radial-gradient(ellipse, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 70%)" }}
             />
             {/* Frame-ready boss: plays real frames when registered in
@@ -307,9 +385,9 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
           {/* Player — grounded on the arena's magic circle, wearing the
               equipped gear. Fires a ki blast on each landed hit (small standing
               recoil), recoils when the boss strikes back. */}
-          <div className="relative flex min-h-0 w-full flex-[2] items-end justify-center">
+          <div className="relative flex min-h-0 w-full flex-[2.4] items-end justify-center">
             <div
-              className="pointer-events-none absolute bottom-[2px] h-[12px] w-[74px] rounded-[50%]"
+              className="pointer-events-none absolute bottom-[2px] h-[12px] w-[84px] rounded-[50%]"
               style={{ background: "radial-gradient(ellipse, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 70%)" }}
             />
             <motion.img
@@ -365,7 +443,7 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
               YOUR POWER
             </span>
             <span
-              className="text-center text-[30px] font-bold"
+              className="text-center text-[26px] font-bold"
               style={{ color: RPG_COLORS.gold, fontFamily: RPG_FONTS.number, textShadow: "0 0 18px rgba(255,201,77,0.5)" }}
             >
               {fmt(profile?.power ?? 0)}
@@ -380,17 +458,19 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
             onClick={startRoll}
             disabled={phase !== PHASES.IDLE}
             className="mt-[6px]"
-            style={{ filter: "drop-shadow(0 0 16px rgba(47,230,200,0.45))" }}
+            // Real dice are shaken, not spun flat — the 2D jiggle stays on the
+            // button while the cube itself tumbles in 3D inside.
+            style={{ filter: "drop-shadow(0 10px 12px rgba(0,0,0,0.5)) drop-shadow(0 0 16px rgba(124,77,255,0.45))" }}
             animate={
               phase === PHASES.ROLLING
-                ? { rotate: [0, -18, 14, -10, 16, -6, 0], x: [0, -6, 5, -4, 3, 0], y: [0, -10, 4, -8, 2, 0] }
-                : { rotate: 0, x: 0, y: 0 }
+                ? { x: [0, -6, 5, -4, 3, 0], y: [0, -10, 4, -8, 2, 0] }
+                : { x: 0, y: 0 }
             }
             transition={phase === PHASES.ROLLING ? { duration: 0.95, ease: "easeInOut" } : { duration: 0.2 }}
             whileTap={phase === PHASES.IDLE ? { scale: 0.92 } : undefined}
             aria-label="Roll the dice"
           >
-            <DieFace value={shownRoll} size={80} />
+            <Die3D value={shownRoll} rolling={phase === PHASES.ROLLING} size={76} />
           </motion.button>
           <span className="mt-[6px] text-[13px] font-bold tracking-[4px]" style={{ color: RPG_COLORS.cyanSoft, fontFamily: RPG_FONTS.display }}>
             {phase === PHASES.ROLLING ? "ROLLING..." : `ROLL DICE${roundIndex > 0 && phase === PHASES.IDLE ? ` · TOTAL ${rounds[roundIndex - 1]?.cumulative ?? 0}/${threshold}` : ""}`}
@@ -399,7 +479,7 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
             Dice number = number of attacks · beat {threshold} to win
           </span>
 
-          <div className="mt-[10px] w-full max-w-[340px]">
+          <div className="mt-[8px] w-full max-w-[340px]">
             <GoldCta onClick={startRoll} disabled={phase !== PHASES.IDLE}>
               {phase === PHASES.IDLE ? "⚔ ATTACK" : phase === PHASES.BOSS_ATTACK ? "BOSS ATTACKS..." : "FIGHTING..."}
             </GoldCta>

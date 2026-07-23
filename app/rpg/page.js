@@ -196,12 +196,15 @@ function RpgPageInner() {
               : undefined
         }
         fit={view === RPG_VIEWS.BATTLE}
+        // Client feedback: the battle screen hides the Level/EXP/Token/BP strip
+        // so the boss and hero are the focus (and get its vertical space).
+        hideHud={view === RPG_VIEWS.BATTLE}
       >
         {view === RPG_VIEWS.HOME && (
           <RpgHome profile={profile} equipment={equipment} onNavigate={navigate} />
         )}
         {view === RPG_VIEWS.ITEMS && (
-          <HeroItem equipment={equipment} onEquipmentUpdate={handleEquipmentUpdate} />
+          <HeroItem profile={profile} equipment={equipment} onEquipmentUpdate={handleEquipmentUpdate} />
         )}
         {view === RPG_VIEWS.LEVEL && (
           <AvatarLevel profile={profile} onProfileUpdate={handleProfileUpdate} />

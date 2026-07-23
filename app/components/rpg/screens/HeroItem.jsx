@@ -13,12 +13,12 @@
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { RPG_COLORS, RPG_FONTS, EQUIP_SLOTS, DISCARD_COST } from "../constants";
-import { RPG_IMAGES } from "../rpgAssets";
+import { RPG_IMAGES, heroPoseFor } from "../rpgAssets";
 import * as rpgApi from "../rpgApi";
-import { SlotChip } from "../primitives";
+import { SlotChip, HeroShowcase } from "../primitives";
 import NoticeModal from "../NoticeModal";
 
-export default function HeroItem({ equipment, onEquipmentUpdate }) {
+export default function HeroItem({ profile, equipment, onEquipmentUpdate }) {
   const [manageMode, setManageMode] = useState(false);
   const [selected, setSelected] = useState([]);
   const [confirmIds, setConfirmIds] = useState(null); // items pending discard confirm
@@ -38,6 +38,12 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
   const slots = equipment?.slots || {};
   // Discard price comes from the live game settings (/avatar/settings/).
   const discardCost = equipment?.profile?.discardCost ?? DISCARD_COST;
+  // Live hero preview (client feedback: equipping must visibly change the
+  // avatar). Pose + aura react instantly to every equip/unequip below.
+  const gender = profile?.gender || "male";
+  const heroPose = heroPoseFor(gender, equipment);
+  const equippedCount = EQUIP_SLOTS.filter((slot) => slots[slot]).length;
+  const power = equipment?.profile?.power ?? profile?.power ?? 0;
   // Grid keeps at least 3 rows of cells like the design's empty state.
   const cellCount = Math.max(12, Math.ceil(backpack.length / 4) * 4);
 
@@ -131,11 +137,48 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
         HERO ITEM
       </h2>
 
+      {/* Hero preview — wears the equipped gear live, aura scales with the
+          number of equipped pieces, POWER pops on every change. */}
+      <HeroShowcase
+        pose={heroPose}
+        equippedCount={equippedCount}
+        heightClass="h-[min(210px,26vh)]"
+        className="mt-[6px] w-full"
+      />
+      <div className="flex items-center justify-center gap-[10px] pt-[8px]">
+        <span
+          className="text-[11px] font-semibold tracking-[3px]"
+          style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}
+        >
+          POWER
+        </span>
+        <motion.span
+          key={power}
+          initial={{ scale: 1.35, textShadow: "0 0 28px rgba(255,201,77,0.95)" }}
+          animate={{ scale: 1, textShadow: "0 0 14px rgba(255,201,77,0.45)" }}
+          transition={{ type: "spring", stiffness: 300, damping: 16 }}
+          className="text-[26px] font-bold leading-[28px]"
+          style={{ color: RPG_COLORS.gold, fontFamily: RPG_FONTS.number }}
+        >
+          {Number(power).toLocaleString("en-GB")}
+        </motion.span>
+        <span
+          className="rounded-full border px-[9px] py-[3px] text-[9px] font-bold tracking-[1px]"
+          style={{
+            borderColor: equippedCount ? "rgba(47,230,200,0.6)" : RPG_COLORS.violetBorderStrong,
+            color: equippedCount ? RPG_COLORS.cyanSoft : RPG_COLORS.slotEmpty,
+            fontFamily: RPG_FONTS.display,
+          }}
+        >
+          {equippedCount}/{EQUIP_SLOTS.length} EQUIPPED
+        </span>
+      </div>
+
       {/* Equipped slots — drop a backpack item here to equip; drag a chip down
           to the backpack to unequip. */}
       <div
         ref={slotsRef}
-        className="mt-[14px] flex w-full items-stretch justify-center gap-[10px] rounded-[16px] p-[6px] transition-colors"
+        className="mt-[10px] flex w-full items-stretch justify-center gap-[10px] rounded-[16px] p-[6px] transition-colors"
         style={{
           background: dropTarget === "slots" ? "rgba(47,230,200,0.10)" : "transparent",
           outline: dropTarget === "slots" ? "2px dashed rgba(47,230,200,0.7)" : "2px dashed transparent",

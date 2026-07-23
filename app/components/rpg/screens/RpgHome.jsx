@@ -4,15 +4,17 @@
 // and the four equipment slot chips. Tapping POWER (or the chips) deep-links
 // into the Avatar Level / Hero Item screens.
 
-import { motion } from "framer-motion";
 import { RPG_COLORS, RPG_FONTS, RPG_GRADIENTS, RPG_VIEWS, EQUIP_SLOTS } from "../constants";
 import { heroPoseFor } from "../rpgAssets";
-import { SlotChip } from "../primitives";
+import { SlotChip, HeroShowcase } from "../primitives";
 
 export default function RpgHome({ profile, equipment, onNavigate }) {
   const gender = profile?.gender || "male";
   // Hero visually wears whatever's equipped (falls back to the base pose).
   const heroPose = heroPoseFor(gender, equipment);
+  const equippedCount = equipment
+    ? EQUIP_SLOTS.filter((slot) => equipment.slots?.[slot]).length
+    : profile?.equippedCount ?? 0;
   return (
     <div className="flex w-full flex-1 flex-col items-center px-[18px]">
       <button
@@ -59,17 +61,11 @@ export default function RpgHome({ profile, equipment, onNavigate }) {
         ) : null}
       </button>
 
-      <motion.img
-        key={heroPose}
-        src={heroPose}
-        alt="Your hero"
-        className="mt-[4px] h-[min(345px,42vh)] w-auto"
-        initial={{ opacity: 0.4 }}
-        animate={{ opacity: 1, y: [0, -8, 0] }}
-        transition={{
-          opacity: { duration: 0.25 },
-          y: { duration: 3.6, repeat: Infinity, ease: "easeInOut" },
-        }}
+      <HeroShowcase
+        pose={heroPose}
+        equippedCount={equippedCount}
+        heightClass="h-[min(345px,42vh)]"
+        className="mt-[4px] w-full"
       />
 
       <div className="mt-[14px] flex w-full items-stretch justify-center gap-[10px]">
