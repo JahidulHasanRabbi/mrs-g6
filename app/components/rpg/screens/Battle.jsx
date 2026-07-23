@@ -57,20 +57,20 @@ const DIE_FACES = [
   { value: 5, transform: "rotateX(-90deg)" },
 ];
 
-// Camera tilt (static) and, under it, the cube rotation that lifts each value's
-// face to the visible TOP. Verified per-face by rendering all six under this
-// exact view — do not tweak the view without re-deriving the map.
-const DIE_VIEW = "rotateX(-28deg) rotateY(-32deg)";
-const DIE_TOP = {
-  1: { rx: 90, ry: 0, rz: 0 },
-  2: { rx: 0, ry: 0, rz: 0 },
-  3: { rx: 0, ry: 0, rz: 90 },
-  4: { rx: 0, ry: 0, rz: -90 },
-  5: { rx: 180, ry: 0, rz: 0 },
-  6: { rx: -90, ry: 0, rz: 0 },
+// Camera tilt (static) and, under it, the cube rotation that turns each value's
+// face to squarely FACE THE CAMERA so its number is easy to read, with a gentle
+// tilt for depth. Verified per-face under this exact view.
+const DIE_VIEW = "rotateX(-15deg) rotateY(20deg)";
+const DIE_FRONT = {
+  1: { rx: 0, ry: 0 },
+  2: { rx: -90, ry: 0 },
+  3: { rx: 0, ry: -90 },
+  4: { rx: 0, ry: 90 },
+  5: { rx: 90, ry: 0 },
+  6: { rx: 0, ry: 180 },
 };
 
-function Die3D({ value, rolling, size = 80 }) {
+function Die3D({ value, rolling, size = 84 }) {
   const half = size / 2;
   // The die "value" prop tracks the fast face-cycle while rolling; freeze the
   // orientation target to the last SETTLED value so mid-roll cycling doesn't
@@ -86,14 +86,14 @@ function Die3D({ value, rolling, size = 80 }) {
   const wasRolling = useRef(false);
   if (rolling && !wasRolling.current) turnsRef.current += 3;
   wasRolling.current = rolling;
-  const rest = DIE_TOP[settled] || DIE_TOP[1];
+  const rest = DIE_FRONT[settled] || DIE_FRONT[1];
   const spin = turnsRef.current * 360;
 
-  // Rolling: pure forward tumble on X (+ matching Y sweep), value-agnostic.
-  // Settle: land the last quarter/half-turn onto the value's top orientation.
+  // Rolling: pure forward tumble on both axes, value-agnostic. Settle: land the
+  // final part-turn onto the value's camera-facing orientation.
   const animate = rolling
-    ? { rotateX: spin, rotateY: spin, rotateZ: rest.rz }
-    : { rotateX: rest.rx + spin, rotateY: spin, rotateZ: rest.rz };
+    ? { rotateX: spin, rotateY: spin }
+    : { rotateX: rest.rx + spin, rotateY: rest.ry + spin };
   const transition = rolling
     ? { duration: 1.1, ease: [0.15, 0.55, 0.35, 1] }
     : { type: "spring", stiffness: 90, damping: 13, mass: 0.8 };
@@ -482,7 +482,7 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
             whileTap={phase === PHASES.IDLE ? { scale: 0.92 } : undefined}
             aria-label="Roll the dice"
           >
-            <Die3D value={shownRoll} rolling={phase === PHASES.ROLLING} size={76} />
+            <Die3D value={shownRoll} rolling={phase === PHASES.ROLLING} size={84} />
           </motion.button>
           <span className="mt-[6px] text-[13px] font-bold tracking-[4px]" style={{ color: RPG_COLORS.cyanSoft, fontFamily: RPG_FONTS.display }}>
             {phase === PHASES.ROLLING ? "ROLLING..." : `ROLL DICE${roundIndex > 0 && phase === PHASES.IDLE ? ` · TOTAL ${rounds[roundIndex - 1]?.cumulative ?? 0}/${threshold}` : ""}`}
