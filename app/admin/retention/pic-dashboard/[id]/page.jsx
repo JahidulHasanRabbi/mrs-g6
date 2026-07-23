@@ -151,6 +151,10 @@ function toDateInput(date) {
   return `${year}-${month}-${day}`;
 }
 
+function previousDay(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1);
+}
+
 function buildMemberDateParams(period, fromDate, toDate) {
   if (fromDate && toDate) {
     return { from_date: fromDate, to_date: toDate };
@@ -158,7 +162,8 @@ function buildMemberDateParams(period, fromDate, toDate) {
 
   const today = new Date();
   if (period === "Daily") {
-    const value = toDateInput(today);
+    // Daily reports on the *previous* day — today's figures are still settling.
+    const value = toDateInput(previousDay(today));
     return { from_date: value, to_date: value };
   }
   // Monthly / Yearly span the *entire* current month or year per product spec
