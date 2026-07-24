@@ -14,6 +14,16 @@ export const RPG_IMAGES = {
       back: "/assets/rpg/hero/female-back.webp",
     },
   },
+  fullArmorHero: {
+    male: {
+      front: "/assets/rpg/hero/male/full-armor.webp",
+      battle: "/assets/rpg/hero/male-battle/full-armor.webp",
+    },
+    female: {
+      front: "/assets/rpg/hero/female/full-armor.webp",
+      battle: "/assets/rpg/hero/female-battle/full-armor.webp",
+    },
+  },
   // Back-facing punch sequence played on each landed hit during a boss battle
   // (Figma attack frames, background-keyed). Frame order is punch → guard →
   // recover so the extended punch lands with the impact FX. Both genders now
@@ -153,6 +163,7 @@ export function heroPoseFor(gender, equipment) {
   const g = gender === "female" ? "female" : "male";
   const avail = HERO_POSE_MASKS[g];
   const want = equipMask(equipment);
+  if (want === 15) return RPG_IMAGES.fullArmorHero[g].front;
   // Exact pose for the equipped set, when it exists.
   let best = 0;
   if (avail.includes(want)) {
@@ -175,6 +186,7 @@ export function heroBattlePoseFor(gender, equipment) {
   const avail = HERO_BATTLE_MASKS[g];
   if (!avail || !avail.length) return heroPoseFor(gender, equipment);
   const want = equipMask(equipment);
+  if (want === 15) return RPG_IMAGES.fullArmorHero[g].battle;
   const best = avail.includes(want) ? want : closestSubsetMask(avail, want);
   return `/assets/rpg/hero/${g}-battle/${String(best).padStart(2, "0")}.webp`;
 }

@@ -343,11 +343,13 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
             />
             {/* Frame-ready boss: plays real frames when registered in
                 BOSS_FRAMES, else animates the base sprite per state. */}
-            <BossSprite
-              boss={boss}
-              state={victorious ? "defeat" : bossFrame}
-              seq={hitSeq + bossAttackSeq}
-            />
+            <div className="h-[108%] w-full origin-bottom">
+              <BossSprite
+                boss={boss}
+                state={victorious ? "defeat" : bossFrame}
+                seq={hitSeq + bossAttackSeq}
+              />
+            </div>
             {/* Impact burst where the shot lands on the boss */}
             <AnimatePresence>
               {striking && (
@@ -397,16 +399,16 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
           {/* Player — grounded on the arena's magic circle, wearing the
               equipped gear. Fires a ki blast on each landed hit (small standing
               recoil), recoils when the boss strikes back. */}
-          <div className="relative flex min-h-0 w-full flex-[2.4] items-end justify-center">
+          <div className="relative flex min-h-0 w-full flex-[2.4] items-end justify-center pb-[28px]">
             <div
-              className="pointer-events-none absolute bottom-[2px] h-[12px] w-[84px] rounded-[50%]"
+              className="pointer-events-none absolute bottom-[30px] h-[12px] w-[84px] rounded-[50%]"
               style={{ background: "radial-gradient(ellipse, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 70%)" }}
             />
             <motion.img
               src={striking && strikeSrc ? strikeSrc : heroPose}
               alt="Your hero"
-              className="relative h-full max-h-full w-auto object-contain"
-              style={{ transformOrigin: "bottom center" }}
+              className="relative w-auto object-contain"
+              style={{ transformOrigin: "bottom center", height: "clamp(150px, 24dvh, 190px)" }}
               animate={
                 striking
                   ? strikeSrc
@@ -415,8 +417,8 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
                   : heroHit
                     ? { x: [0, 13, -15, 7, 0], y: [0, 5, 0], scale: [1, 0.93, 1] }
                     : phase === PHASES.BOSS_ATTACK
-                    ? { x: [0, -8, 8, -5, 0], scale: 1, y: 0 }
-                    : { y: [0, -3, 0], scale: 1, x: 0 }
+                      ? { x: [0, -8, 8, -5, 0], scale: 1, y: 0 }
+                      : { y: [0, -3, 0], scale: 1, x: 0 }
               }
               transition={
                 striking
@@ -426,8 +428,8 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
                   : heroHit
                     ? { duration: 0.22, ease: "easeOut" }
                     : phase === PHASES.BOSS_ATTACK
-                    ? { duration: 0.5 }
-                    : { duration: 2.6, repeat: Infinity, ease: "easeInOut" }
+                      ? { duration: 0.5 }
+                      : { duration: 2.6, repeat: Infinity, ease: "easeInOut" }
               }
             />
             <AnimatePresence>
@@ -450,26 +452,11 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
 
         {/* Footer — fixed height, always on screen */}
         <div className="flex w-full shrink-0 flex-col items-center">
-          <div className="mt-[4px] grid w-full max-w-[340px] grid-cols-3 items-center">
-            <span className="text-[11px] font-semibold tracking-[3px]" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
-              YOUR POWER
-            </span>
-            <span
-              className="text-center text-[26px] font-bold"
-              style={{ color: RPG_COLORS.gold, fontFamily: RPG_FONTS.number, textShadow: "0 0 18px rgba(255,201,77,0.5)" }}
-            >
-              {fmt(profile?.power ?? 0)}
-            </span>
-            <span className="text-right text-[9px] leading-[13px]" style={{ color: RPG_COLORS.slotEmpty, fontFamily: RPG_FONTS.display }}>
-              Boss strikes once after your attacks
-            </span>
-          </div>
-
           <motion.button
             type="button"
             onClick={startRoll}
             disabled={phase !== PHASES.IDLE}
-            className="mt-[6px]"
+            className="-mt-[12px] mb-[8px] self-center"
             // Real dice are shaken, not spun flat — the 2D jiggle stays on the
             // button while the cube itself tumbles in 3D inside.
             style={{ filter: "drop-shadow(0 10px 12px rgba(0,0,0,0.5)) drop-shadow(0 0 16px rgba(124,77,255,0.45))" }}
@@ -482,16 +469,19 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
             whileTap={phase === PHASES.IDLE ? { scale: 0.92 } : undefined}
             aria-label="Roll the dice"
           >
-            <Die3D value={shownRoll} rolling={phase === PHASES.ROLLING} size={84} />
+            <Die3D value={shownRoll} rolling={phase === PHASES.ROLLING} size={60} />
           </motion.button>
-          <span className="mt-[6px] text-[13px] font-bold tracking-[4px]" style={{ color: RPG_COLORS.cyanSoft, fontFamily: RPG_FONTS.display }}>
-            {phase === PHASES.ROLLING ? "ROLLING..." : `ROLL DICE${roundIndex > 0 && phase === PHASES.IDLE ? ` · TOTAL ${rounds[roundIndex - 1]?.cumulative ?? 0}/${threshold}` : ""}`}
+          <span className="hidden text-[13px] font-bold tracking-[4px]" style={{ color: RPG_COLORS.cyanSoft, fontFamily: RPG_FONTS.display }}>
+            {/* {phase === PHASES.ROLLING ? "ROLLING..." : `ROLL DICE${roundIndex > 0 && phase === PHASES.IDLE ? ` · TOTAL ${rounds[roundIndex - 1]?.cumulative ?? 0}/${threshold}` : ""}`} */}
           </span>
-          <span className="mt-[3px] text-[10px]" style={{ color: RPG_COLORS.slotEmpty, fontFamily: RPG_FONTS.display }}>
+          <span
+            className="rounded-full  py-[8px] text-[10px] font-semibold "
+            style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display,  }}
+          >
             Dice number = number of attacks · beat {threshold} to win
           </span>
 
-          <div className="mt-[8px] w-full max-w-[340px]">
+          <div className="mt-[9px] w-full max-w-[340px]">
             <GoldCta onClick={startRoll} disabled={phase !== PHASES.IDLE}>
               {phase === PHASES.IDLE ? "⚔ ATTACK" : phase === PHASES.BOSS_ATTACK ? "BOSS ATTACKS..." : "FIGHTING..."}
             </GoldCta>

@@ -95,6 +95,106 @@ const rethrow = (fallback) => (err) => {
 // still valid — so we just always ask.
 const getSettings = getAvatarSettings;
 
+// TEMP DEV CHECK: enables a full-equipment dummy profile with
+// /rpg?dummyRpg=fullArmor. Remove this block after visual QA is done.
+const DUMMY_RPG_KEY = "mrs_rpg_dummy_api";
+const DUMMY_RPG_GENDER_KEY = "mrs_rpg_dummy_gender";
+
+function dummyRpgMode() {
+  if (typeof window === "undefined") return false;
+  const params = new URLSearchParams(window.location.search);
+  const requestedMode = params.get("dummyRpg");
+  const requestedGender = params.get("gender");
+
+  if (requestedGender === "male" || requestedGender === "female") {
+    window.sessionStorage.setItem(DUMMY_RPG_GENDER_KEY, requestedGender);
+  }
+
+  if (requestedMode === "off") {
+    window.sessionStorage.removeItem(DUMMY_RPG_KEY);
+    window.sessionStorage.removeItem(DUMMY_RPG_GENDER_KEY);
+    return false;
+  }
+
+  if (requestedMode === "fullArmor" || requestedMode === "1") {
+    window.sessionStorage.setItem(DUMMY_RPG_KEY, "fullArmor");
+    return true;
+  }
+
+  return window.sessionStorage.getItem(DUMMY_RPG_KEY) === "fullArmor";
+}
+
+function dummyGender() {
+  if (typeof window === "undefined") return "female";
+  const params = new URLSearchParams(window.location.search);
+  const requestedGender = params.get("gender");
+  if (requestedGender === "male" || requestedGender === "female") return requestedGender;
+  return window.sessionStorage.getItem(DUMMY_RPG_GENDER_KEY) || "female";
+}
+
+function dummyProfile() {
+  return {
+    hasHero: true,
+    gender: dummyGender(),
+    level: 11,
+    maxLevel: 100,
+    bp: 2400,
+    tokens: 99000,
+    bpToNext: 1100,
+    expPct: 100,
+    equippedCount: 4,
+    power: 5500,
+    levelPower: 1500,
+    equipPower: 4000,
+    powerPerLevel: 500,
+    bpPerLevelMultiplier: 100,
+    equipmentSlotCount: 4,
+    backpackCapacity: 100,
+    discardCost: 10,
+    extraAttemptCost: 10,
+    canLevelUp: true,
+    gameOpen: true,
+  };
+}
+
+function dummyEquipment() {
+  const profile = dummyProfile();
+  const slots = {
+    weapon: { id: "dummy-weapon", slot: "weapon", name: "Void Cleaver", power: 1000, equipped: true },
+    helmet: { id: "dummy-helmet", slot: "helmet", name: "Warden Visor", power: 1000, equipped: true },
+    armor: { id: "dummy-armor", slot: "armor", name: "Nebula Aegis", power: 1000, equipped: true },
+    boots: { id: "dummy-boots", slot: "boots", name: "Astral Walkers", power: 1000, equipped: true },
+  };
+  return {
+    slots,
+    backpack: [
+      { id: "dummy-backpack-weapon", slot: "weapon", name: "Starfall Blade", power: 1000, equipped: false },
+      { id: "dummy-backpack-helmet", slot: "helmet", name: "Sentinel Helm", power: 1000, equipped: false },
+    ],
+    capacity: profile.backpackCapacity,
+    profile,
+  };
+}
+
+function dummyBosses() {
+  return {
+    bosses: BOSSES.map((boss) => ({
+      ...boss,
+      uuid: `dummy-${boss.id}`,
+      locked: false,
+      deficit: 0,
+      totalDefeats: boss.id === "nebula" ? 7 : 1,
+    })),
+    freeAttemptAvailable: true,
+    freeAttemptsRemaining: 1,
+    extraAttemptCost: 10,
+    unopenedBoxes: 0,
+    tokens: 99000,
+    power: 5500,
+    gameOpen: true,
+  };
+}
+
 // Members' token balance lives on the member record, not the avatar profile.
 async function fetchTokens() {
   const uuid = typeof window !== "undefined" ? tokenStorage.getMemberUuid() : null;
@@ -208,6 +308,7 @@ function bossView(server, battlePower) {
 // ---------------------------------------------------------------------------
 
 export async function getRpgProfile() {
+  if (dummyRpgMode()) return dummyProfile();
   try {
     return await loadProfileView({ withGameStatus: true });
   } catch (err) {
@@ -216,6 +317,12 @@ export async function getRpgProfile() {
 }
 
 export async function createHero(gender) {
+  if (dummyRpgMode()) {
+    if (typeof window !== "undefined" && (gender === "male" || gender === "female")) {
+      window.sessionStorage.setItem(DUMMY_RPG_GENDER_KEY, gender);
+    }
+    return dummyProfile();
+  }
   const code = GENDER_CODE_BY_KEY[gender];
   if (!code) throw gameError(null, "Choose male or female.");
   try {
@@ -227,6 +334,7 @@ export async function createHero(gender) {
 }
 
 export async function levelUp() {
+  if (dummyRpgMode()) return dummyProfile();
   try {
     await avatarLevelUp();
   } catch (err) {
@@ -252,6 +360,7 @@ async function loadEquipmentView() {
 }
 
 export async function getEquipment() {
+  if (dummyRpgMode()) return dummyEquipment();
   try {
     return await loadEquipmentView();
   } catch (err) {
@@ -260,6 +369,7 @@ export async function getEquipment() {
 }
 
 export async function equipItem(itemId) {
+  if (dummyRpgMode()) return dummyEquipment();
   try {
     await equipAvatarEquipment(itemId);
   } catch (err) {
@@ -269,6 +379,7 @@ export async function equipItem(itemId) {
 }
 
 export async function unequipItem(slot) {
+  if (dummyRpgMode()) return dummyEquipment();
   // The API unequips by member-equipment uuid, so resolve the slot first.
   let rows;
   try {
@@ -292,6 +403,7 @@ export async function unequipItem(slot) {
 // Items discarded before the failure stay discarded — the error carries how
 // far it got so the screen can say so.
 export async function discardItems(itemIds) {
+  if (dummyRpgMode()) return dummyEquipment();
   const ids = Array.isArray(itemIds) ? itemIds : [itemIds];
   let done = 0;
   for (const id of ids) {
@@ -314,6 +426,7 @@ export async function discardItems(itemIds) {
 // ---------------------------------------------------------------------------
 
 export async function getBosses() {
+  if (dummyRpgMode()) return dummyBosses();
   let status;
   try {
     status = await getAvatarChallengeStatus();
@@ -338,6 +451,21 @@ export async function getBosses() {
 // refresh can lose the show but never the outcome (the box stays claimable
 // via my-boxes).
 export async function startBattle(bossId) {
+  if (dummyRpgMode()) {
+    const profile = dummyProfile();
+    const boss = (dummyBosses().bosses || []).find((b) => b.id === bossId) || dummyBosses().bosses[3];
+    return {
+      boss,
+      rounds: [{ roll: 6, cumulative: 6 }],
+      threshold: boss.diceThreshold ?? 6,
+      boxId: "dummy-box",
+      paidWithTokens: false,
+      tokenCost: 0,
+      tokens: profile.tokens,
+      power: profile.power,
+      profile,
+    };
+  }
   // bossId is the planet art key ("starlight"...) the screens use; the attack
   // endpoint needs the boss uuid, so read the current status to resolve it.
   let status;
@@ -387,6 +515,10 @@ async function unopenedBoxes() {
 }
 
 export async function getPendingBox(boxId) {
+  if (dummyRpgMode()) {
+    const boss = BOSSES.find((b) => b.id === "nebula") || BOSSES[0];
+    return { id: boxId || "dummy-box", bossId: boss.id, boss, created: new Date().toISOString() };
+  }
   try {
     const boxes = await unopenedBoxes();
     return boxes.find((b) => b.id === boxId) || null;
@@ -397,6 +529,10 @@ export async function getPendingBox(boxId) {
 
 // Newest unopened box — lets the box screen recover after a reload.
 export async function getLatestPendingBox() {
+  if (dummyRpgMode()) {
+    const boss = BOSSES.find((b) => b.id === "nebula") || BOSSES[0];
+    return { id: "dummy-box", bossId: boss.id, boss, created: new Date().toISOString() };
+  }
   try {
     const boxes = await unopenedBoxes();
     return boxes[0] || null;
@@ -412,6 +548,13 @@ const REWARD_TYPE_KEYS = { 1: "tokens", 2: "bp", 3: "credit", 4: "equipment", 5:
 // table. Items at probability 0 are listed by the spec but never drawn, so
 // they're filtered out of the player-facing list.
 export async function getMysteryBoxRewards() {
+  if (dummyRpgMode()) {
+    return [
+      { id: "dummy-token", type: "tokens", label: "Token x10", image: null, probability: 18 },
+      { id: "dummy-bp", type: "bp", label: "Battle Points 1,000", image: null, probability: 8 },
+      { id: "dummy-equipment", type: "equipment", label: "Rare Equipment x1", image: null, probability: 6 },
+    ];
+  }
   try {
     const data = await getAvatarMysteryBoxCatalog({ page_size: 100 });
     const rows = data.results ?? data ?? [];
@@ -431,6 +574,17 @@ export async function getMysteryBoxRewards() {
 }
 
 export async function openMysteryBox(boxId) {
+  if (dummyRpgMode()) {
+    return {
+      reward: {
+        type: "equipment",
+        label: "Nebula Aegis",
+        amount: 0,
+        item: { name: "Nebula Aegis", slot: "armor" },
+      },
+      profile: dummyProfile(),
+    };
+  }
   let result;
   try {
     result = await openAvatarMysteryBox(boxId);
@@ -498,6 +652,26 @@ function missionView(m) {
 }
 
 export async function getRpgMissions() {
+  if (dummyRpgMode()) {
+    return {
+      missions: [
+        {
+          id: "dummy-mission-full-set",
+          tab: "daily",
+          title: "Full Equipment Set",
+          description: "Dummy mission for full armor visual QA.",
+          reward: { tokens: 10, bp: 100 },
+          target: 1,
+          progress: 1,
+          metric: "bp",
+          go: RPG_VIEWS.ITEMS,
+          joined: true,
+          claimed: false,
+          claimable: true,
+        },
+      ],
+    };
+  }
   try {
     const rows = await getMyAvatarMissions();
     return { missions: (rows || []).map(missionView) };
@@ -507,6 +681,12 @@ export async function getRpgMissions() {
 }
 
 export async function claimRpgMission(missionId) {
+  if (dummyRpgMode()) {
+    return {
+      reward: { tokens: 10, bp: 100 },
+      profile: dummyProfile(),
+    };
+  }
   let claim;
   try {
     claim = await claimAvatarMission(missionId);
