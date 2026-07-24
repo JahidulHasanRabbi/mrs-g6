@@ -37,16 +37,21 @@ export default function LeaderboardView({
         />
       </div>
 
-      {/* Title */}
-      <div className="flex flex-col items-center gap-2 w-full pt-2">
+      {/* Title. Same lesson as the update notes below: text colored to read
+          against the backdrop still fights a busy photographic image (castle
+          spires, cloud banks, sky gradient) — some patch of it always wins.
+          Card it like the countdown/notes/table instead; --lb-card-overlay is
+          opaque dark on every theme, so a single light text color works
+          everywhere and the per-theme --lb-heading tokens are no longer
+          needed here. */}
+      <div
+        className="flex flex-col items-center gap-2 w-full mt-2 rounded-lg px-6 py-4"
+        style={{ backgroundColor: "var(--lb-card-overlay)" }}
+      >
         <div className="text-center w-full">
           <p
-            className="text-3xl sm:text-4xl font-extrabold leading-10 sm:leading-[48px]"
-            style={{
-              fontFamily: "var(--font-inter)",
-              color: "var(--lb-heading)",
-              textShadow: "0 1px 4px rgba(0,0,0,0.6), 0 0 12px rgba(0,0,0,0.3)",
-            }}
+            className="text-3xl sm:text-4xl font-extrabold leading-10 sm:leading-[48px] text-[#e5e2e1]"
+            style={{ fontFamily: "var(--font-inter)" }}
           >
             TOP 20
           </p>
@@ -55,7 +60,6 @@ export default function LeaderboardView({
             style={{
               color: config.color,
               fontFamily: "var(--font-inter)",
-              textShadow: "0 1px 4px rgba(0,0,0,0.6), 0 0 12px rgba(0,0,0,0.3)",
             }}
           >
             {config.title}
@@ -65,12 +69,8 @@ export default function LeaderboardView({
         {/* Period label */}
         {periodLabel && (
           <p
-            className="text-base text-center"
-            style={{
-              fontFamily: "var(--font-inter)",
-              color: "var(--lb-heading-muted)",
-              textShadow: "0 1px 3px rgba(0,0,0,0.5)",
-            }}
+            className="text-base text-center text-[#e5e2e1]"
+            style={{ fontFamily: "var(--font-inter)" }}
           >
             {periodLabel}
           </p>
@@ -88,18 +88,21 @@ export default function LeaderboardView({
             </div>
           )}
 
-          {/* Update notes */}
+          {/* Update notes. Recoloring bare text per-theme wasn't enough —
+              this sits over photographic art (castle floor / cosmic scene)
+              whose brightness varies by region, so no single text color reads
+              reliably everywhere. Give it the same opaque card treatment as
+              the countdown/table/podium instead of relying on color alone. */}
           {updateNotes.length > 0 && (
-            <div className="flex flex-col gap-1 items-center pt-6 w-full">
+            <div
+              className="flex flex-col gap-1.5 items-center w-full mt-6 rounded-lg px-4 py-3"
+              style={{ backgroundColor: "var(--lb-card-overlay)" }}
+            >
               {updateNotes.map((note, i) => (
                 <p
                   key={i}
-                  className="text-sm text-center"
-                  style={{
-                    color: config.colorLight,
-                    fontFamily: "var(--font-inter)",
-                    textShadow: "0 1px 3px rgba(0,0,0,0.5)",
-                  }}
+                  className="text-sm text-center text-[#e5e2e1]"
+                  style={{ fontFamily: "var(--font-inter)" }}
                 >
                   {note}
                 </p>

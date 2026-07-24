@@ -355,14 +355,17 @@ export default function Kgame99SpinPage() {
         {/* Rewards panel (ornate frame). The frame's scroll rails + centre gems
             reach ~15% in on the sides, ~19% top and ~18% bottom, and the corner
             castles bleed into the interior — so the list gets a rounded scrim
-            inset within the rails. That both contains the rows (no more icons
-            hanging over the left rail) and keeps text legible over the busy
-            cloud interior. */}
+            inset within the rails. Unlike the wide list-panel.png frame (pale
+            sky + white cloud interior, where dark ink reads fine), this square
+            panel-ornate.png interior is a solid saturated royal blue — dark
+            text disappeared into it. Each row gets its own dark-navy glass
+            pill (matching the dialog treatment elsewhere in this file) so
+            cream text stays legible regardless of the board underneath. */}
         <div className="relative aspect-square w-full max-w-95">
           <img src={KGAME99_ASSETS.spin.panel} alt="" draggable={false} className="absolute inset-0 h-full w-full select-none object-contain" />
           <div className="absolute inset-x-[14.5%] top-[19.5%] bottom-[18%]">
             <div className="h-full w-full overflow-hidden rounded-2xl ring-1 ring-inset ring-[rgba(242,203,122,0.30)]">
-              <div className="h-full overflow-y-auto px-2.5 py-1 scrollbar-kgame99">
+              <div className="flex h-full flex-col gap-1.5 overflow-y-auto px-2.5 py-1.5 scrollbar-kgame99">
                 {spinItems.length === 0 ? (
                   <p className="mt-6 text-center text-[13px]" style={{ color: '#42597a', fontFamily: 'var(--font-rubik), sans-serif' }}>
                     {itemsLoading ? 'Loading rewards…' : 'No rewards available.'}
@@ -371,9 +374,9 @@ export default function Kgame99SpinPage() {
                   spinItems.map((item, i) => (
                     <div
                       key={item.uuid || i}
-                      className="flex items-center gap-2.5 border-b border-[rgba(242,203,122,0.16)] py-2 last:border-b-0"
+                      className="flex shrink-0 items-center gap-2.5 rounded-lg bg-[rgba(8,20,44,0.55)] px-2 py-1.5 ring-1 ring-inset ring-[rgba(242,203,122,0.16)]"
                     >
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-[7px] bg-[rgba(255,255,255,0.06)] ring-1 ring-[rgba(242,203,122,0.22)]">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-[7px] bg-[rgba(255,255,255,0.1)] ring-1 ring-[rgba(242,203,122,0.22)]">
                         {item.image ? (
                           <img src={item.image} alt="" className="h-full w-full object-contain p-0.5" />
                         ) : (
@@ -383,7 +386,7 @@ export default function Kgame99SpinPage() {
                       <span
                         className="min-w-0 flex-1 truncate text-[13px]"
                         title={item.reward_name}
-                        style={{ color: KGAME99_COLORS.dark, fontFamily: 'var(--font-rubik), sans-serif' }}
+                        style={{ color: KGAME99_COLORS.cream, fontFamily: 'var(--font-rubik), sans-serif' }}
                       >
                         {item.reward_name}
                       </span>
