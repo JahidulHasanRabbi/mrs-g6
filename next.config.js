@@ -7,6 +7,15 @@ const nextConfig = {
         destination: '/vip',
         permanent: true,
       },
+      {
+        // The Top 20 leaderboard moved from /leaderboard/top-20 to /leaderboard
+        // (the old World Cup board was retired). The ?tab= query string
+        // (withdrawal/referrer) is preserved automatically by Next's redirect,
+        // so an old /leaderboard/top-20?tab=withdrawal link lands on the right tab.
+        source: '/leaderboard/top-20',
+        destination: '/leaderboard',
+        permanent: true,
+      },
     ];
   },
   async headers() {
