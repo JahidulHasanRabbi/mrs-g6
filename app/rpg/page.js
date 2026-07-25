@@ -234,7 +234,7 @@ function RpgPageInner() {
       {/* game_status 2 — reads still work, every action is refused by the API.
           Same overlay treatment as the penalty-kick closed state. */}
       {!profile.gameOpen && (
-        <div className="fixed inset-x-0 bottom-[100px] top-[68px] z-30 grid place-items-center bg-black/70 px-6 backdrop-blur-md">
+        <div className="fixed inset-0 z-30 grid place-items-center bg-black/70 px-6 backdrop-blur-md">
           <div className="w-full max-w-[360px] rounded-[16px] border border-white/15 bg-[#071906]/95 px-6 py-7 text-center shadow-[0_16px_50px_rgba(0,0,0,0.45)]">
             <p className="text-[20px] font-bold" style={{ color: RPG_COLORS.gold, fontFamily: RPG_FONTS.display }}>
               RPG is currently closed
