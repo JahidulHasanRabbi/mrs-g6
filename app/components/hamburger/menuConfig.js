@@ -11,6 +11,7 @@ export const MENU_CONFIG = {
     items: [
       { icon: "/assets/images/kasih-spin-icon.png", label: "Lucky Spin", link: "/spin" },
       { icon: "/assets/penalty-kick/icons/soccer-gold.svg", label: "Penalty Kick", link: "/penalty-kick" },
+      { icon: "/assets/rpg/ui/logo-gem.svg", label: "RPG", link: "/rpg" },
       { icon: "/assets/smash-egg/egg-icon.svg", label: "Smash Egg", link: "/smash-egg" },
     ],
   },

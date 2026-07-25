@@ -1,0 +1,8 @@
+[     206ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[     271ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[     320ms] [ERROR] Error fetching spin items: {message: Not authenticated, status: 401, data: null} @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[     320ms] [ERROR] Error fetching spin items: {message: Not authenticated, status: 401, data: null} @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[    5881ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[    5894ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[    5955ms] [ERROR] Error fetching spin items: {message: Not authenticated, status: 401, data: null} @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[    5956ms] [ERROR] Error fetching spin items: {message: Not authenticated, status: 401, data: null} @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127

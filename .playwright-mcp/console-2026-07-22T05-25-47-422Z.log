@@ -1,0 +1,43 @@
+[      84ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[      99ms] [LOG] [HMR] connected @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[  259936ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[  260159ms] [ERROR] ./app/components/rpg/primitives.jsx:124:7
+Parsing ecmascript source code failed
+  122 |         {equipped ? powerTag : "EMPTY"}
+  123 |       </span>
+> 124 |     </button>
+      |       ^^^^^^
+  125 |   );
+  126 | }
+  127 |
+
+Expected corresponding JSX closing tag for <motion.button>
+
+Import traces:
+  Client Component Browser:
+    ./app/components/rpg/primitives.jsx [Client Component Browser]
+    ./app/components/rpg/InfoModal.jsx [Client Component Browser]
+    ./app/rpg/page.js [Client Component Browser]
+    ./app/rpg/page.js [Server Component]
+
+  Client Component SSR:
+    ./app/components/rpg/primitives.jsx [Client Component SSR]
+    ./app/components/rpg/InfoModal.jsx [Client Component SSR]
+    ./app/rpg/page.js [Client Component SSR]
+    ./app/rpg/page.js [Server Component] @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_f3530cac._.js:3127
+[  289126ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[  289409ms] [LOG] [Fast Refresh] done in 325ms @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[  326443ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[  326690ms] [LOG] [Fast Refresh] done in 337ms @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[  335863ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[  336091ms] [LOG] [Fast Refresh] done in 299ms @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[  345792ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[  346050ms] [LOG] [Fast Refresh] done in 336ms @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[  360250ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[  360513ms] [LOG] [Fast Refresh] done in 338ms @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[  368410ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[  368572ms] [LOG] [Fast Refresh] done in 243ms @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[  379289ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[  379495ms] [LOG] [Fast Refresh] done in 281ms @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[  392318ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297
+[  392515ms] [LOG] [Fast Refresh] done in 271ms @ http://localhost:3001/_next/static/chunks/node_modules_next_dist_f3530cac._.js:2297

@@ -44,7 +44,7 @@ NEXT_PUBLIC_TWITTER_URL=https://twitter.com/
 http://localhost:3000/auth?id=12345&o=kinggroup44.com
 
 # Login and go to profile page
-http://localhost:3000/auth?id=12345&o=kinggroup44.com&page=/profile
+updatedhttp://localhost:3000/auth?id=12345&o=kinggroup44.com&page=/profile
 
 # Login and go to spin page
 http://localhost:3000/auth?id=12345&o=kinggroup44.com&page=/spin
@@ -66,10 +66,13 @@ http://localhost:3000/auth?id=12345&o=kinggroup44.com&page=/terms-and-conditions
 
 ---
 
+
 # Run
 
 ```bash
 npm run dev    # Development mode
 npm run build  # Build for production
 npm start      # Production mode
-```
+
+
+updated

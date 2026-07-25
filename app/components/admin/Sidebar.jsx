@@ -46,6 +46,11 @@ function pathnameToActiveItem(pathname) {
   if (pathname.startsWith("/admin/lucky-spin")) return "lucky-spin";
   if (pathname.startsWith("/admin/smash-egg")) return "smash-egg";
   if (pathname.startsWith("/admin/mission-game")) return "mission-game";
+  if (pathname.startsWith("/admin/rpg/equipment")) return "rpg-equipment";
+  if (pathname.startsWith("/admin/rpg/bosses")) return "rpg-bosses";
+  if (pathname.startsWith("/admin/rpg/missions")) return "rpg-missions";
+  if (pathname.startsWith("/admin/rpg/mystery-box")) return "rpg-mystery-box";
+  if (pathname.startsWith("/admin/rpg")) return "rpg-settings";
   if (pathname.startsWith("/admin/leaderboards/deposit")) return "lb-deposit";
   if (pathname.startsWith("/admin/leaderboards/referrer")) return "lb-referrer";
   if (pathname.startsWith("/admin/leaderboards/withdrawal")) return "lb-withdrawal";
@@ -156,6 +161,51 @@ const PromotionIcon = ({ className }) => (
   </svg>
 );
 
+// --- RPG submenu icons — one glyph per page so the children are scannable ---
+
+const RpgGearIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
+  </svg>
+);
+
+const SwordIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14.5 17.5 3 6V3h3l11.5 11.5" />
+    <path d="M13 19l6-6" />
+    <path d="M16 16l4 4" />
+    <path d="M19 21l2-2" />
+  </svg>
+);
+
+const SkullIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2a8 8 0 0 0-8 8c0 2.9 1.56 5.43 3.89 6.82L8 21h8l.11-4.18A7.99 7.99 0 0 0 20 10a8 8 0 0 0-8-8Z" />
+    <circle cx="9" cy="11" r="1.4" fill="currentColor" stroke="none" />
+    <circle cx="15" cy="11" r="1.4" fill="currentColor" stroke="none" />
+    <path d="M12 14v2" />
+  </svg>
+);
+
+const TargetIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="9" />
+    <circle cx="12" cy="12" r="5" />
+    <circle cx="12" cy="12" r="1" />
+  </svg>
+);
+
+const GiftIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="8" width="18" height="4" rx="1" />
+    <path d="M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8" />
+    <line x1="12" y1="8" x2="12" y2="21" />
+    <path d="M12 8c-2.5 0-4.5-1-4.5-3a2 2 0 0 1 4-.5c.2.8.5 2 .5 3.5Z" />
+    <path d="M12 8c2.5 0 4.5-1 4.5-3a2 2 0 0 0-4-.5c-.2.8-.5 2-.5 3.5Z" />
+  </svg>
+);
+
 const MENU_ITEMS = [
   {
     id: "home",
@@ -200,6 +250,21 @@ const MENU_ITEMS = [
     iconMask: "/assets/admin/sidebar/icons/gravity-ui-target.svg",
     href: "/admin/mission-game",
     disabled: false,
+  },
+  {
+    id: "rpg",
+    label: "RPG Game",
+    iconMask: "/assets/rpg/ui/logo-gem.svg",
+    href: "/admin/rpg",
+    hasSubmenu: true,
+    disabled: false,
+    children: [
+      { id: "rpg-settings", label: "Game Settings", href: "/admin/rpg", iconNode: RpgGearIcon },
+      { id: "rpg-equipment", label: "Equipment Items", href: "/admin/rpg/equipment", iconNode: SwordIcon },
+      { id: "rpg-bosses", label: "Bosses", href: "/admin/rpg/bosses", iconNode: SkullIcon },
+      { id: "rpg-missions", label: "Avatar Missions", href: "/admin/rpg/missions", iconNode: TargetIcon },
+      { id: "rpg-mystery-box", label: "Mystery Box Items", href: "/admin/rpg/mystery-box", iconNode: GiftIcon },
+    ],
   },
   {
     id: "redemption-mall",
@@ -562,10 +627,17 @@ const CoinIcon = () => (
   </svg>
 );
 
+// Fallback icon per parent (legacy behavior) — used when a child doesn't
+// declare its own `iconNode`.
 const CHILD_ICONS = {
   reports: BarChartIcon,
   vip: CoinIcon,
 };
+
+// Per-child icon: a child's own iconNode wins, then the parent fallback.
+function childIconFor(parentId, child) {
+  return child?.iconNode || CHILD_ICONS[parentId] || BarChartIcon;
+}
 
 const ExpandableMenuItem = ({ item, activeItem, forceOpen = false }) => {
   const { collapsed } = useSidebar();
@@ -622,7 +694,6 @@ const ExpandableMenuItem = ({ item, activeItem, forceOpen = false }) => {
         </div>
       </div>
     );
-    const ChildIcon = CHILD_ICONS[item.id] || BarChartIcon;
     return (
       <div
         ref={wrapperRef}
@@ -674,7 +745,7 @@ const ExpandableMenuItem = ({ item, activeItem, forceOpen = false }) => {
                         }`}
                       >
                         <span className={isActive ? "text-[#f2cb7a]" : "text-[#fbeed2]"}>
-                          <ChildIcon />
+                          {(() => { const Icon = childIconFor(item.id, child); return <Icon />; })()}
                         </span>
                         <span className="sidebar-inter text-[13px] leading-[20px] tracking-[-1px]">
                           {child.label}
@@ -763,7 +834,7 @@ const ExpandableMenuItem = ({ item, activeItem, forceOpen = false }) => {
                       }`}
                     >
                       <span className={isActive ? "text-[#f2cb7a]" : "text-[#fbeed2]"}>
-                        {(() => { const Icon = CHILD_ICONS[item.id] || BarChartIcon; return <Icon />; })()}
+                        {(() => { const Icon = childIconFor(item.id, child); return <Icon />; })()}
                       </span>
                       <span
                         className={`sidebar-inter text-[13px] leading-[20px] tracking-[-1px] ${

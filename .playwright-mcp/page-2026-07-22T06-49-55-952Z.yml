@@ -1,0 +1,40 @@
+- generic [active] [ref=f2e1]:
+  - generic [ref=f2e3]:
+    - generic [ref=f2e5]:
+      - img "Lucky Spin" [ref=f2e6]
+      - generic [ref=f2e7]: Loading…
+    - contentinfo:
+      - navigation "Kgame99 navigation" [ref=f2e9]:
+        - link "LEADERBOARD" [ref=f2e10] [cursor=pointer]:
+          - /url: /leaderboard
+          - generic [ref=f2e11]:
+            - img "LEADERBOARD" [ref=f2e13]
+            - paragraph [ref=f2e14]: LEADERBOARD
+        - button "HOT" [ref=f2e15] [cursor=pointer]:
+          - generic [ref=f2e16]:
+            - img "HOT" [ref=f2e18]
+            - paragraph [ref=f2e19]: HOT
+        - link "HOME" [ref=f2e20] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f2e21]:
+            - img "HOME" [ref=f2e23]
+            - paragraph [ref=f2e24]: HOME
+        - link "PROFILE" [ref=f2e25] [cursor=pointer]:
+          - /url: /profile
+          - generic [ref=f2e26]:
+            - img "PROFILE" [ref=f2e28]
+            - paragraph [ref=f2e29]: PROFILE
+        - button "LIVECHAT" [ref=f2e30] [cursor=pointer]:
+          - generic [ref=f2e31]:
+            - img "LIVECHAT" [ref=f2e33]
+            - paragraph [ref=f2e34]: LIVECHAT
+  - generic [ref=f2e39] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=f2e40]
+    - generic [ref=f2e44]:
+      - button "Open issues overlay" [ref=f2e45]:
+        - generic [ref=f2e46]:
+          - generic [ref=f2e47]: "0"
+          - generic [ref=f2e48]: "1"
+        - generic [ref=f2e49]: Issue
+      - button "Collapse issues badge" [ref=f2e50]
+  - alert [ref=f2e53]

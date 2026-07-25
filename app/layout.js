@@ -1,4 +1,4 @@
-import { Inter, Geist, Geist_Mono, Montserrat, DM_Sans, JetBrains_Mono, Sora, Acme, Rubik } from "next/font/google";
+import { Inter, Geist, Geist_Mono, Montserrat, DM_Sans, JetBrains_Mono, Sora, Chakra_Petch, Rajdhani, Acme, Rubik } from "next/font/google";
 import "./globals.css";
 
 /**
@@ -58,6 +58,19 @@ const sora = Sora({
   weight: ["400", "700", "800"],
 });
 
+// RPG mini-game fonts (see app/components/rpg/constants.js RPG_FONTS)
+const chakraPetch = Chakra_Petch({
+  variable: "--font-chakra-petch",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const rajdhani = Rajdhani({
+  variable: "--font-rajdhani",
+  subsets: ["latin"],
+  weight: ["600", "700"],
+});
+
 const acme = Acme({
   variable: "--font-acme",
   subsets: ["latin"],
@@ -90,7 +103,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${montserrat.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${sora.variable} ${acme.variable} ${rubik.variable} antialiased bg-black`}
+        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${montserrat.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${sora.variable} ${chakraPetch.variable} ${rajdhani.variable} ${acme.variable} ${rubik.variable} antialiased bg-black`}
         style={{ fontFamily: '"Times New Roman", serif' }}
       >
         <ToastProvider>

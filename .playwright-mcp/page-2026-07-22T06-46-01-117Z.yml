@@ -1,0 +1,40 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e5]:
+      - img "Lucky Spin" [ref=e6]
+      - generic [ref=e7]: Loading…
+    - contentinfo:
+      - navigation "Kgame99 navigation" [ref=e9]:
+        - link "LEADERBOARD" [ref=e10] [cursor=pointer]:
+          - /url: /leaderboard
+          - generic [ref=e11]:
+            - img "LEADERBOARD" [ref=e13]
+            - paragraph [ref=e14]: LEADERBOARD
+        - button "HOT" [ref=e15] [cursor=pointer]:
+          - generic [ref=e16]:
+            - img "HOT" [ref=e18]
+            - paragraph [ref=e19]: HOT
+        - link "HOME" [ref=e20] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e21]:
+            - img "HOME" [ref=e23]
+            - paragraph [ref=e24]: HOME
+        - link "PROFILE" [ref=e25] [cursor=pointer]:
+          - /url: /profile
+          - generic [ref=e26]:
+            - img "PROFILE" [ref=e28]
+            - paragraph [ref=e29]: PROFILE
+        - button "LIVECHAT" [ref=e30] [cursor=pointer]:
+          - generic [ref=e31]:
+            - img "LIVECHAT" [ref=e33]
+            - paragraph [ref=e34]: LIVECHAT
+  - generic [ref=e39] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e40]
+    - generic [ref=e44]:
+      - button "Open issues overlay" [ref=e45]:
+        - generic [ref=e46]:
+          - generic [ref=e47]: "0"
+          - generic [ref=e48]: "1"
+        - generic [ref=e49]: Issue
+      - button "Collapse issues badge" [ref=e50]
+  - alert [ref=e53]

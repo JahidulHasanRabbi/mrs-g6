@@ -1171,3 +1171,85 @@ export async function updateWithdrawalDummyPlayer(uuid, data) {
 export async function archiveWithdrawalDummyPlayer(uuid) {
   return await apiRequest(ENDPOINTS.LEADERBOARD.WITHDRAW_FAKE_DATA_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
 }
+
+// ============================================================================
+// AVATAR RPG (Phase 3) — back office
+// ============================================================================
+
+// GET /avatar/settings/ — single shared settings row (game status, costs, terms)
+export async function getAvatarSettings() {
+  return await apiRequest(ENDPOINTS.AVATAR.SETTINGS, { method: 'GET' }, true, 'admin');
+}
+
+// POST /avatar/settings/ — partial update, returns the full settings row
+export async function updateAvatarSettings(data) {
+  return await apiRequest(ENDPOINTS.AVATAR.SETTINGS, { method: 'POST', body: data }, true, 'admin');
+}
+
+// Equipment items — fixed catalog of 4 (one per slot). No create/archive.
+export async function getAvatarEquipmentItems(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.AVATAR.EQUIPMENT_ITEMS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+export async function getAvatarEquipmentItem(uuid) {
+  return await apiRequest(ENDPOINTS.AVATAR.EQUIPMENT_ITEM(uuid), { method: 'GET' }, true, 'admin');
+}
+export async function updateAvatarEquipmentItem(uuid, data) {
+  // PATCH: only name / power_bonus are editable; slot_type is immutable
+  return await apiRequest(ENDPOINTS.AVATAR.EQUIPMENT_ITEM(uuid), { method: 'PATCH', body: data }, true, 'admin');
+}
+
+// Bosses — fixed catalog of 4 (one per planet). No create/archive.
+export async function getAvatarBosses(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.AVATAR.BOSSES}${qs}`, { method: 'GET' }, true, 'admin');
+}
+export async function getAvatarBoss(uuid) {
+  return await apiRequest(ENDPOINTS.AVATAR.BOSS(uuid), { method: 'GET' }, true, 'admin');
+}
+export async function updateAvatarBoss(uuid, data) {
+  // PATCH: power_required / hp / dice_threshold / equipment_reward_slot / is_active; planet is immutable
+  return await apiRequest(ENDPOINTS.AVATAR.BOSS(uuid), { method: 'PATCH', body: data }, true, 'admin');
+}
+
+// Avatar missions — full CRUD + archive
+export async function getAvatarMissions(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.AVATAR.MISSIONS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+export async function getAvatarMission(uuid) {
+  return await apiRequest(ENDPOINTS.AVATAR.MISSION(uuid), { method: 'GET' }, true, 'admin');
+}
+export async function createAvatarMission(data) {
+  return await apiRequest(ENDPOINTS.AVATAR.MISSIONS, { method: 'POST', body: data }, true, 'admin');
+}
+export async function updateAvatarMission(uuid, data) {
+  return await apiRequest(ENDPOINTS.AVATAR.MISSION(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+export async function archiveAvatarMission(uuid) {
+  return await apiRequest(ENDPOINTS.AVATAR.MISSION_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
+// Mystery box items — full CRUD + archive. `image` may be a File (auto formdata).
+export async function getMysteryBoxItems(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.AVATAR.MYSTERY_BOX_ITEMS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+export async function getMysteryBoxItem(uuid) {
+  return await apiRequest(ENDPOINTS.AVATAR.MYSTERY_BOX_ITEM(uuid), { method: 'GET' }, true, 'admin');
+}
+export async function createMysteryBoxItem(data) {
+  return await apiRequest(ENDPOINTS.AVATAR.MYSTERY_BOX_ITEMS, { method: 'POST', body: data }, true, 'admin');
+}
+export async function updateMysteryBoxItem(uuid, data) {
+  return await apiRequest(ENDPOINTS.AVATAR.MYSTERY_BOX_ITEM(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+export async function archiveMysteryBoxItem(uuid) {
+  return await apiRequest(ENDPOINTS.AVATAR.MYSTERY_BOX_ITEM_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
+// GET /avatar/mystery-box-items/probability-total/ — { total, is_valid }
+// Active item probabilities should sum to exactly 1.
+export async function getMysteryBoxProbabilityTotal() {
+  return await apiRequest(ENDPOINTS.AVATAR.MYSTERY_BOX_PROBABILITY_TOTAL, { method: 'GET' }, true, 'admin');
+}
