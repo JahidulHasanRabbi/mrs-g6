@@ -93,8 +93,10 @@ const SpinItem = memo(function SpinItem({
   isSpinning,
   isLowEnd,
   isMidEnd,
-  // Themed skins place tiles by absolute % over a square frame instead of the
-  // default 3x3 CSS grid; `pos` (when set) carries {x,y,size} in % of frame.
+  // Themed skins place tiles by absolute % over the frame instead of the
+  // default 3x3 CSS grid; `pos` (when set) carries {x, y, size, sizeY} where
+  // x/size are % of the frame's width and y/sizeY % of its height. size and
+  // sizeY differ whenever the frame isn't square, so the tile stays square.
   pos = null,
 }) {
   const winnerScale = isLowEnd ? 1.14 : isMidEnd ? 1.18 : 1.2;
@@ -113,12 +115,13 @@ const SpinItem = memo(function SpinItem({
   // Position by the tile's top-left corner (centre minus half-size) rather than
   // a translate(-50%): framer-motion drives this element's `transform` for the
   // scale/rotate animations and would clobber any translate we set here.
+  const posSizeY = pos ? (pos.sizeY ?? pos.size) : 0;
   const wrapStyle = pos
     ? {
         left: `${pos.x - pos.size / 2}%`,
-        top: `${pos.y - pos.size / 2}%`,
+        top: `${pos.y - posSizeY / 2}%`,
         width: `${pos.size}%`,
-        height: `${pos.size}%`,
+        height: `${posSizeY}%`,
       }
     : undefined;
   return (
@@ -226,13 +229,18 @@ const GRID_WIN_ANGLE = [315, 0, 45, 270, 90, 225, 180, 135];
 const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
 // Themed skins (acebet77/ubetclub/ep369) reuse this exact engine and only swap
-// the artwork. Their frames are square with an evenly-spaced 3x3 interior, so
-// the eight tiles are positioned by absolute % rather than the default's fixed
-// pixel FluidFrame grid. `framePad` is the inset (% of frame) from edge to the
-// grid area, `tile`/`center` are element sizes as % of the frame. `framePadY`
-// is optional and defaults to `framePad` — set it when a frame's interior is
-// taller than it is wide (n1gang) so the rows use the extra height.
-const DEFAULT_THEMED_GEOMETRY = { framePad: 14, tile: 21, center: 24 };
+// the artwork. The eight tiles are positioned by absolute % over the frame
+// rather than the default's fixed pixel FluidFrame grid. `framePad` is the
+// horizontal inset (% of frame width) from edge to the grid area, `framePadY`
+// the vertical one (% of frame height, defaults to `framePad`). `tile` and
+// `center` are element sizes as % of the frame WIDTH — they're converted to a
+// height % via `aspect` so tiles stay square on non-square frames.
+//
+// `aspect` is the frame art's width/height. Most themes ship a square wheel
+// frame and leave it at 1; n1gang's plate is portrait (638x856), and giving it
+// its true ratio is what lets the art fill the full 444px column instead of
+// being letterboxed inside a square box at ~half scale.
+const DEFAULT_THEMED_GEOMETRY = { framePad: 14, tile: 21, center: 24, aspect: 1 };
 
 function themedSlotCenters({ framePad, framePadY }) {
   const padY = framePadY ?? framePad;
@@ -580,20 +588,23 @@ export default memo(function LuckySpinGrid({
     </motion.div>
   );
 
-  // Themed skins: same engine, square frame, tiles positioned by absolute %.
+  // Themed skins: same engine, tiles positioned by absolute % over the frame.
   if (themed) {
     const geo = { ...DEFAULT_THEMED_GEOMETRY, ...themed };
     const centers = themedSlotCenters(geo);
+    // Tile sizes are authored against the frame's width; a portrait frame needs
+    // a proportionally larger height % to come out square.
+    const tileHeight = geo.tile * geo.aspect;
     return (
       <motion.div
         // 444px = the full content column of the 475px member shell minus the
         // themed pages' px-4 gutters, so the wheel renders as large as the
         // ornate frame art allows on every custom theme.
-        className="relative mx-auto w-full max-w-[444px] aspect-square"
+        className="relative mx-auto w-full max-w-[444px]"
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        style={{ willChange: "transform, opacity" }}
+        style={{ willChange: "transform, opacity", aspectRatio: geo.aspect }}
       >
         <Image
           alt="Spin Grid Background"
@@ -612,7 +623,7 @@ export default memo(function LuckySpinGrid({
             isSpinning={spinning}
             isLowEnd={isLowEnd}
             isMidEnd={isMidEnd}
-            pos={{ ...centers[index], size: geo.tile }}
+            pos={{ ...centers[index], size: geo.tile, sizeY: tileHeight }}
             {...item}
           />
         ))}

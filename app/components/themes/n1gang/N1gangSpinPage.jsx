@@ -18,10 +18,11 @@ import { mapSpinResults, mapLuckySpinItems } from '../../../api/responseMappers'
 import { tokenStorage } from '../../../api/tokenStorage';
 import { useUser } from '../../../contexts/UserContext';
 
-// The thunder-arena plate's interior is narrower than the other themes' wheel
-// frames (x 25–75%, y 24–80% of the square), so the grid is inset further and
-// the rows use the extra vertical room via framePadY.
-const N1GANG_GEOMETRY = { framePad: 25, framePadY: 22, tile: 18, center: 18 };
+// spin/grid-frame.png is 638x856 and its dark interior runs x 17.1–82.6%,
+// y 22.3–77.7%. Rendering it at that ratio (rather than letterboxed in a square
+// box, which is what shrank the wheel to half the size of the other themes)
+// puts the tiles at 25% of the 444px column — the same ~111px as acebet77/ep369.
+const N1GANG_GEOMETRY = { framePad: 17, framePadY: 22.3, tile: 25, center: 26, aspect: 638 / 856 };
 // Insets into the panel plate. top was 20% to clear a crest baked into the old
 // panel art; the plate has no header, so content can start higher and the extra
 // bottom room stops the last row being clipped by the frame edge.

@@ -66,12 +66,14 @@ export const N1GANG_ASSETS = {
     panel: `${BASE}/vip/card-frame.png`,
     // The spin page reads these, NOT the flat keys above — keep both in sync.
     grid: {
-      // The wheel background must be SQUARE: LuckySpinGrid renders the themed
-      // wheel in an aspect-square box and lays the 3x3 tiles out across it, so
-      // the 4:3 spin/wheel-frame.png letterboxed inside that box and the tiles
-      // spilled off its top and bottom edges. dialog-frame-tall.png is the same
-      // thunder-arena plate at 1:1 with a square interior.
-      background: `${BASE}/ui/dialog-frame-tall.png`,
+      // Derived from ui/dialog-frame-tall.png: that file pillarboxes the
+      // thunder-arena plate inside a 1:1 canvas, so more than a fifth of its
+      // width is empty alpha and the plate rendered at roughly half the scale
+      // of every other theme's wheel. grid-frame.png is the same art trimmed to
+      // its side margins and padded at the bottom so the dark interior sits
+      // dead-centre; LuckySpinGrid renders it at its true 638x856 ratio (see
+      // N1GANG_GEOMETRY.aspect) and it fills the full content column.
+      background: `${BASE}/spin/grid-frame.png`,
       itemEmptyGold: `${BASE}/spin/slot-gold.png`,
       itemEmptyGreen: `${BASE}/spin/slot-mystery.png`,
       centerButton: `${BASE}/spin/spin-now.png`,
