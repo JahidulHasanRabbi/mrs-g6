@@ -176,6 +176,57 @@ function dummyEquipment() {
   };
 }
 
+// Dummy mode is a pure front-end sandbox with no server to write to, so the
+// equip / unequip / discard calls mutate this in-memory copy of the seed. They
+// used to each return a fresh `dummyEquipment()`, which made Hero Item look
+// broken — drag-to-equip and tap-to-equip fired correctly but the grid
+// re-rendered from identical data, so nothing ever moved.
+let dummyEquipmentState = null;
+
+function dummyStore() {
+  if (!dummyEquipmentState) dummyEquipmentState = dummyEquipment();
+  return dummyEquipmentState;
+}
+
+// A fresh object each time, so React sees a new reference and re-renders.
+function dummySnapshot() {
+  const store = dummyStore();
+  return {
+    slots: { ...store.slots },
+    backpack: [...store.backpack],
+    capacity: store.capacity,
+    profile: store.profile,
+  };
+}
+
+function dummyEquip(itemId) {
+  const store = dummyStore();
+  const i = store.backpack.findIndex((it) => it.id === itemId);
+  if (i === -1) return dummySnapshot();
+  const [item] = store.backpack.splice(i, 1);
+  // Equipping into an occupied slot swaps the old piece back into the bag.
+  const displaced = store.slots[item.slot];
+  if (displaced) store.backpack.push({ ...displaced, equipped: false });
+  store.slots[item.slot] = { ...item, equipped: true };
+  return dummySnapshot();
+}
+
+function dummyUnequip(slot) {
+  const store = dummyStore();
+  const item = store.slots[slot];
+  if (!item) return dummySnapshot();
+  store.slots[slot] = null;
+  store.backpack.push({ ...item, equipped: false });
+  return dummySnapshot();
+}
+
+function dummyDiscard(itemIds) {
+  const store = dummyStore();
+  const drop = new Set(Array.isArray(itemIds) ? itemIds : [itemIds]);
+  store.backpack = store.backpack.filter((it) => !drop.has(it.id));
+  return dummySnapshot();
+}
+
 function dummyBosses() {
   return {
     bosses: BOSSES.map((boss) => ({
@@ -360,7 +411,7 @@ async function loadEquipmentView() {
 }
 
 export async function getEquipment() {
-  if (dummyRpgMode()) return dummyEquipment();
+  if (dummyRpgMode()) return dummySnapshot();
   try {
     return await loadEquipmentView();
   } catch (err) {
@@ -369,7 +420,7 @@ export async function getEquipment() {
 }
 
 export async function equipItem(itemId) {
-  if (dummyRpgMode()) return dummyEquipment();
+  if (dummyRpgMode()) return dummyEquip(itemId);
   try {
     await equipAvatarEquipment(itemId);
   } catch (err) {
@@ -379,7 +430,7 @@ export async function equipItem(itemId) {
 }
 
 export async function unequipItem(slot) {
-  if (dummyRpgMode()) return dummyEquipment();
+  if (dummyRpgMode()) return dummyUnequip(slot);
   // The API unequips by member-equipment uuid, so resolve the slot first.
   let rows;
   try {
@@ -403,7 +454,7 @@ export async function unequipItem(slot) {
 // Items discarded before the failure stay discarded — the error carries how
 // far it got so the screen can say so.
 export async function discardItems(itemIds) {
-  if (dummyRpgMode()) return dummyEquipment();
+  if (dummyRpgMode()) return dummyDiscard(itemIds);
   const ids = Array.isArray(itemIds) ? itemIds : [itemIds];
   let done = 0;
   for (const id of ids) {
@@ -454,10 +505,21 @@ export async function startBattle(bossId) {
   if (dummyRpgMode()) {
     const profile = dummyProfile();
     const boss = (dummyBosses().bosses || []).find((b) => b.id === bossId) || dummyBosses().bosses[3];
+    const threshold = boss.diceThreshold ?? 6;
+    // Enough rolls to actually cross the threshold. The old script was a single
+    // roll of 6, which cannot beat a threshold of 6 OR 12 — so every sandbox
+    // battle ended one press in with the run unwinnable and no rounds left.
+    const rounds = [];
+    let cumulative = 0;
+    while (cumulative <= threshold) {
+      const roll = 3 + ((rounds.length * 2) % 4); // 3,5,3,5… deterministic
+      cumulative += roll;
+      rounds.push({ roll, cumulative });
+    }
     return {
       boss,
-      rounds: [{ roll: 6, cumulative: 6 }],
-      threshold: boss.diceThreshold ?? 6,
+      rounds,
+      threshold,
       boxId: "dummy-box",
       paidWithTokens: false,
       tokenCost: 0,

@@ -40,6 +40,17 @@ export const RPG_IMAGES = {
       "/assets/rpg/hero/female-moveset/strike-3.webp",
     ],
   },
+  // Full-armor sword moveset for the boss battle (back-facing, 8 frames):
+  //   01 stance · 02 crouch wind-up · 03 overhead raise · 04 thrust ·
+  //   05 tip burst · 06 arc slash · 07 recover · 08 stance
+  // 01/08 duplicate the standing battle pose, so the swing plays 02..07 and
+  // hands the sprite straight back to heroBattlePoseFor(). Every frame is a
+  // 500²-ish square framed so the figure's feet land at ~96% height — same
+  // on-screen scale as the full-armor battle pose at an identical img height.
+  heroFullArmorStrike: {
+    male: Array.from({ length: 8 }, (_, i) => `/assets/rpg/hero/male-battle-attack/0${i + 1}.webp`),
+    female: Array.from({ length: 8 }, (_, i) => `/assets/rpg/hero/female-battle-attack/0${i + 1}.webp`),
+  },
   chest: "/assets/rpg/chest/chest-closed.webp",
   chestOpen: "/assets/rpg/chest/chest-open.webp",
   ui: {
@@ -189,6 +200,36 @@ export function heroBattlePoseFor(gender, equipment) {
   if (want === 15) return RPG_IMAGES.fullArmorHero[g].battle;
   const best = avail.includes(want) ? want : closestSubsetMask(avail, want);
   return `/assets/rpg/hero/${g}-battle/${String(best).padStart(2, "0")}.webp`;
+}
+
+// ---------------------------------------------------------------------------
+// Battle attack movesets
+//
+// What the hero plays on each landed hit, chosen by the equipped gear:
+//   sword — full loadout (all four slots): the 6-frame sword swing
+//   punch — bare hero: the 3-frame back-facing punch
+//   none  — partial gear has no attack art, so the caller just recoils
+//
+// `impactFrame` is the frame whose art carries the blow (the sword's tip
+// burst), so the boss's reaction can be timed to it instead of to frame 0.
+// `gapMs` is the spacing between consecutive hits — long enough for the whole
+// sequence to read before the next one starts.
+// ---------------------------------------------------------------------------
+
+const MOVESET_TIMING = {
+  sword: { frameMs: 66, impactFrame: 3, gapMs: 430 },
+  punch: { frameMs: 55, impactFrame: 0, gapMs: 260 },
+  none: { frameMs: 0, impactFrame: 0, gapMs: 260 },
+};
+
+export function heroMovesetFor(gender, equipment) {
+  const g = gender === "female" ? "female" : "male";
+  const mask = equipMask(equipment);
+  // The swing itself is frames 02..07; 01/08 are the standing pose already
+  // rendered between hits.
+  if (mask === 15) return { kind: "sword", frames: RPG_IMAGES.heroFullArmorStrike[g].slice(1, 7), ...MOVESET_TIMING.sword };
+  if (mask === 0) return { kind: "punch", frames: RPG_IMAGES.heroStrike[g], ...MOVESET_TIMING.punch };
+  return { kind: "none", frames: [], ...MOVESET_TIMING.none };
 }
 
 // ---------------------------------------------------------------------------
