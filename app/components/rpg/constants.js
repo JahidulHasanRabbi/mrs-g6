@@ -82,6 +82,11 @@ export const DISCARD_COST = 10; // tokens per item
 // the design, so no raster asset). Each boss now has its own character art +
 // arena backdrop (see rpgAssets: bossArt / arena), so `artFilter` is "none"
 // everywhere — it's kept only as a per-boss tint hook for future art.
+//
+// `beamOrigin` marks where the boss's attack fires FROM, as a fraction of its
+// sprite box (0,0 = top-left). Set it for a boss that channels through a
+// weapon so the beam leaves the weapon instead of the chest; leave it off and
+// BossSprite/Battle fall back to the body-centre blast.
 export const BOSSES = [
   {
     id: "starlight",
@@ -138,6 +143,10 @@ export const BOSSES = [
       "radial-gradient(circle at 40% 35%, #e6d7ff 0%, #c3a1ff 25%, #a78bfa 45%, #8b5cf6 62%, #6d3fd4 76%, #4c2699 88%, #32175f 100%)",
     planetGlow: "0 0 22px rgba(124,77,255,0.4)",
     artFilter: "none",
+    // The Warden's staff sigil — the glowing rune on the halberd head, at
+    // (100, 217) of the 778×802 sprite. Its attack channels through the staff.
+    beamOrigin: { x: 0.129, y: 0.271 },
+    beamColor: { core: "#ffffff", mid: "#c9a3ff", edge: "rgba(124,77,255,0)" },
   },
 ];
 

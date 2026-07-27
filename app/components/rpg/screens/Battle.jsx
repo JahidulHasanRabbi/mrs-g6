@@ -13,7 +13,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { RPG_COLORS, RPG_FONTS } from "../constants";
-import { RPG_IMAGES, heroBattlePoseFor, equipMask } from "../rpgAssets";
+import { RPG_IMAGES, heroBattlePoseFor, heroMovesetFor } from "../rpgAssets";
 import { GoldCta } from "../primitives";
 import BossSprite from "../BossSprite";
 
@@ -26,10 +26,12 @@ const PHASES = {
 };
 
 const ROLL_MS = 950;
-const HIT_GAP_MS = 260;
-const BOSS_ATTACK_MS = 750;
+// The boss's strike window (WINDUP → STRIKE) is how long its blast is on
+// screen. A channelled beam needs longer to read than the old body-centre
+// flash did, so the window is ~250ms and the whole attack lands a bit later.
+const BOSS_ATTACK_MS = 900;
 const BOSS_WINDUP_MS = 220;
-const BOSS_STRIKE_MS = 310;
+const BOSS_STRIKE_MS = 470;
 
 const fmt = (n) => Number(n).toLocaleString("en-GB");
 
@@ -148,8 +150,9 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
   const [shownRoll, setShownRoll] = useState(1);
   const [hpFraction, setHpFraction] = useState(1);
   const [hits, setHits] = useState([]); // floating damage numbers
-  const [striking, setStriking] = useState(false); // hero ki-blast recoil pulse
-  const [strikeIdx, setStrikeIdx] = useState(0); // frame index into the unarmed punch sequence
+  const [striking, setStriking] = useState(false); // hero is mid-swing
+  const [strikeIdx, setStrikeIdx] = useState(0); // frame index into the moveset
+  const [landing, setLanding] = useState(false); // the blow is connecting (boss-side FX)
   const [hitSeq, setHitSeq] = useState(0); // increments per landed hit (keys impact FX)
   // Code-driven in-between poses derived from the existing Colossus sprite.
   const [bossFrame, setBossFrame] = useState("idle");
@@ -160,6 +163,12 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
   const boss = script?.boss;
   const rounds = script?.rounds || [];
   const threshold = script?.threshold || 6;
+  const gender = profile?.gender || "male";
+  // What the hero swings on each landed hit: the full-armor sword sequence, the
+  // bare-handed punch, or nothing (partial gear has no attack art, so the
+  // sprite just recoils). Frame count and pacing drive the whole round's timing.
+  const moveset = useMemo(() => heroMovesetFor(gender, equipment), [gender, equipment]);
+  const swingMs = Math.max(220, moveset.frames.length * moveset.frameMs);
 
   // One timer registry so unmount cleans every chained timeout.
   const later = (fn, ms) => {
@@ -202,28 +211,33 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
       const targetFraction = hpAfter(round.cumulative);
       for (let h = 0; h < round.roll; h += 1) {
         later(() => {
-          const t = (h + 1) / round.roll;
-          setHpFraction(prevFraction + (targetFraction - prevFraction) * t);
-          setHits((prev) => [...prev.slice(-4), { id: `${roundIndex}-${h}`, dmg: hitDamages[roundIndex][h] }]);
-          // Attack: fire an energy shot at the boss. The unarmed hero plays a
-          // back-facing punch sequence (frames step ~55ms); a geared hero just
-          // recoils (no per-item attack frames). Energy shot fires either way.
+          // Swing first, then land the blow on the moveset's impact frame — so
+          // the sword's burst frame is what reaches the boss, not frame one.
           setStriking(true);
           setStrikeIdx(0);
-          setHitSeq((n) => n + 1);
-          setBossFrame("hit");
-          later(() => setStrikeIdx(1), 55);
-          later(() => setStrikeIdx(2), 110);
-          later(() => setStrikeIdx(3), 165);
-          later(() => setStriking(false), 220);
-          later(() => setBossFrame("hurt"), 70);
-          later(() => setBossFrame("recover"), 150);
-          later(() => setBossFrame("idle"), 240);
-        }, (h + 1) * HIT_GAP_MS);
+          for (let f = 1; f < moveset.frames.length; f += 1) {
+            later(() => setStrikeIdx(f), f * moveset.frameMs);
+          }
+          later(() => setStriking(false), swingMs);
+
+          later(() => {
+            const t = (h + 1) / round.roll;
+            setHpFraction(prevFraction + (targetFraction - prevFraction) * t);
+            setHits((prev) => [...prev.slice(-4), { id: `${roundIndex}-${h}`, dmg: hitDamages[roundIndex][h] }]);
+            setLanding(true);
+            setHitSeq((n) => n + 1);
+            setBossFrame("hit");
+            later(() => setLanding(false), 240);
+            later(() => setBossFrame("hurt"), 70);
+            later(() => setBossFrame("recover"), 150);
+            later(() => setBossFrame("idle"), 240);
+          }, moveset.impactFrame * moveset.frameMs);
+        }, (h + 1) * moveset.gapMs);
       }
 
       later(() => {
         setStriking(false);
+        setLanding(false);
         if (round.cumulative > threshold) {
           setPhase(PHASES.VICTORY);
         } else {
@@ -244,26 +258,37 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
             setPhase(PHASES.IDLE);
           }, BOSS_ATTACK_MS);
         }
-      }, round.roll * HIT_GAP_MS + 350);
+      }, round.roll * moveset.gapMs + swingMs + 130);
     }, ROLL_MS);
   };
 
   if (!boss) return null;
 
   const victorious = phase === PHASES.VICTORY;
+  // The script is spent. Reaching IDLE with no rounds left means the rolls ran
+  // out before the threshold fell — the run is over and there is nothing more to
+  // press. Deriving it (rather than adding a phase) also covers a script that
+  // arrives with no rounds at all. Without this the screen sat in IDLE behind a
+  // live-looking ATTACK button that startRoll() silently refused, and only a
+  // reload escaped.
+  const outOfRolls = roundIndex >= rounds.length;
+  const defeated = !victorious && phase === PHASES.IDLE && outOfRolls;
   const hpNow = Math.round(boss.hp * hpFraction);
-  const gender = profile?.gender || "male";
-  // The battle hero is BACK-facing (looking at the boss). With gear equipped it
-  // shows the equipped back pose and just recoils on attack (no per-item attack
-  // frames). Unarmed, it plays the back-facing punch sequence (2271/2272). The
-  // energy shot fires either way.
+  // The battle hero is BACK-facing (looking at the boss). Between hits it shows
+  // the equipped back pose; on a hit it plays its moveset's frames (full-armor
+  // sword swing / bare-handed punch) or, with only partial gear and so no attack
+  // art, just recoils. The energy shot fires either way.
   const heroPose = heroBattlePoseFor(gender, equipment);
-  const unarmed = equipMask(equipment) === 0;
-  const strikeFrames = RPG_IMAGES.heroStrike[gender];
   const strikeSrc =
-    unarmed && Array.isArray(strikeFrames) && strikeFrames.length
-      ? strikeFrames[Math.min(strikeIdx, strikeFrames.length - 1)]
+    striking && moveset.frames.length
+      ? moveset.frames[Math.min(strikeIdx, moveset.frames.length - 1)]
       : null;
+  // The sword frames carry the whole action themselves, so the body only needs a
+  // light forward push; the 3-frame punch leans on a bigger lunge to read.
+  const strikeMotion =
+    moveset.kind === "sword"
+      ? { animate: { scale: 1.05, y: -8 }, transition: { duration: 0.18, ease: "easeOut" } }
+      : { animate: { scale: 1.16, y: -20 }, transition: { duration: 0.12, ease: "easeOut" } };
 
   return (
     // The arena backdrop is full-bleed at the ScreenShell level (passed via
@@ -302,10 +327,10 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
         {/* Combat — flexible middle that shrinks so the controls always fit
             on one screen. Boss + player scale to the space they're given. */}
         <div className="relative flex w-full min-h-0 flex-1 flex-col items-center justify-end pt-[8px]">
-          {/* Energy shot travelling from the hero's fist up to the boss on
-              each hit — visually links the punch to the boss. */}
+          {/* Energy shot travelling from the hero's weapon up to the boss as
+              each blow lands — visually links the swing to the boss. */}
           <AnimatePresence>
-            {striking && (
+            {landing && (
               <motion.div
                 key={`proj-${hitSeq}`}
                 className="pointer-events-none absolute left-1/2 z-20 size-[26px] -translate-x-1/2 rounded-full"
@@ -318,9 +343,11 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
             )}
           </AnimatePresence>
 
-          {/* Colossus attack: wind-up → fire punch → hero impact. */}
+          {/* Boss attack: wind-up → blast → hero impact. Bosses that channel
+              through a weapon (boss.beamOrigin) draw their own beam from it
+              inside BossSprite, so this body-centre blast stays off for them. */}
           <AnimatePresence>
-            {bossFrame === "strike" && (
+            {bossFrame === "strike" && !boss.beamOrigin && (
               <motion.div
                 key={`boss-fire-${bossAttackSeq}`}
                 className="pointer-events-none absolute left-1/2 z-20 h-[34px] w-[34px] -translate-x-1/2 rounded-full"
@@ -352,7 +379,7 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
             </div>
             {/* Impact burst where the shot lands on the boss */}
             <AnimatePresence>
-              {striking && (
+              {landing && (
                 <motion.div
                   key={`impact-${hitSeq}`}
                   className="pointer-events-none absolute left-1/2 top-[44%] z-20 -translate-x-1/2 -translate-y-1/2"
@@ -405,14 +432,14 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
               style={{ background: "radial-gradient(ellipse, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 70%)" }}
             />
             <motion.img
-              src={striking && strikeSrc ? strikeSrc : heroPose}
+              src={strikeSrc || heroPose}
               alt="Your hero"
               className="relative w-auto object-contain"
               style={{ transformOrigin: "bottom center", height: "clamp(150px, 24dvh, 190px)" }}
               animate={
                 striking
                   ? strikeSrc
-                    ? { scale: 1.16, y: -20 }
+                    ? strikeMotion.animate
                     : { scale: [1, 1.05, 1.02], y: [0, -3, -6] }
                   : heroHit
                     ? { x: [0, 13, -15, 7, 0], y: [0, 5, 0], scale: [1, 0.93, 1] }
@@ -423,7 +450,7 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
               transition={
                 striking
                   ? strikeSrc
-                    ? { duration: 0.12, ease: "easeOut" }
+                    ? strikeMotion.transition
                     : { duration: 0.2, ease: "easeOut" }
                   : heroHit
                     ? { duration: 0.22, ease: "easeOut" }
@@ -482,8 +509,17 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
           </span>
 
           <div className="mt-[9px] w-full max-w-[340px]">
-            <GoldCta onClick={startRoll} disabled={phase !== PHASES.IDLE}>
-              {phase === PHASES.IDLE ? "⚔ ATTACK" : phase === PHASES.BOSS_ATTACK ? "BOSS ATTACKS..." : "FIGHTING..."}
+            {/* `outOfRolls` has to gate this too: startRoll() refuses a spent
+                script, so without it the button stays gold and pressable while
+                doing nothing. */}
+            <GoldCta onClick={startRoll} disabled={phase !== PHASES.IDLE || outOfRolls}>
+              {outOfRolls && phase === PHASES.IDLE
+                ? "NO ROLLS LEFT"
+                : phase === PHASES.IDLE
+                  ? "⚔ ATTACK"
+                  : phase === PHASES.BOSS_ATTACK
+                    ? "BOSS ATTACKS..."
+                    : "FIGHTING..."}
             </GoldCta>
           </div>
         </div>
@@ -530,6 +566,36 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
             >
               OPEN LATER
             </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Out-of-rolls overlay — the run ended without the threshold falling, so
+          the battle needs an explicit ending and a way back out. */}
+      <AnimatePresence>
+        {defeated && (
+          <motion.div
+            className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-[18px] px-[32px]"
+            style={{ background: "rgba(3,5,16,0.78)", backdropFilter: "blur(3px)" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.p
+              className="text-[34px] font-bold tracking-[6px]"
+              style={{ color: RPG_COLORS.red, fontFamily: RPG_FONTS.display, textShadow: "0 0 40px rgba(255,107,107,0.7)" }}
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 260, damping: 16, delay: 0.15 }}
+            >
+              OUT OF ROLLS
+            </motion.p>
+            <p className="text-center text-[13px] leading-[1.6]" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
+              {boss.name} survived with {fmt(hpNow)} HP left — you needed more than {threshold} to win.
+            </p>
+            <div className="w-full max-w-[300px]">
+              <GoldCta onClick={onExit}>BACK TO CHALLENGE</GoldCta>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
