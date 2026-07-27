@@ -558,14 +558,6 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
             <div className="w-full max-w-[300px]">
               <GoldCta onClick={onClaimBox}>CLAIM MYSTERY BOX</GoldCta>
             </div>
-            <button
-              type="button"
-              onClick={onExit}
-              className="text-[11px] tracking-[2px] underline-offset-2"
-              style={{ color: RPG_COLORS.slotEmpty, fontFamily: RPG_FONTS.display }}
-            >
-              OPEN LATER
-            </button>
           </motion.div>
         )}
       </AnimatePresence>
