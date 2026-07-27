@@ -9,6 +9,7 @@ import { UBET_ASSETS } from "../themes/ubetclub/assets";
 import { EP369_ASSETS } from "../themes/ep369/assets";
 import { KGAME99_ASSETS } from "../themes/kgame99/assets";
 import { LV918_ASSETS } from "../themes/lv918/assets";
+import { N1GANG_ASSETS } from "../themes/n1gang/assets";
 
 export default function FeedbackModal({ isOpen, onClose }) {
   const [rating, setRating] = useState(0);
@@ -17,7 +18,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(null);
-  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918 } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang } = useTheme();
 
   let skin;
   if (isAcebet77) {
@@ -64,6 +65,15 @@ export default function FeedbackModal({ isOpen, onClose }) {
       starOn: "#f7c752",
       submitImage: LV918_ASSETS.spin.btnPlay,
       submitText: "#f7c752",
+    };
+  } else if (isN1gang) {
+    skin = {
+      modalBg: "linear-gradient(180deg, #17130c 0%, #050505 100%)",
+      borderColor: "#e9af41",
+      starOff: "#3a2f1a",
+      starOn: "#f2ba33",
+      submitImage: N1GANG_ASSETS.spin.btnPlay,
+      submitText: "#f2cb7a",
     };
   } else {
     skin = {
@@ -285,7 +295,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
                         background: skin.submitBg,
                         color: skin.submitText,
                         fontFamily: '"Times New Roman", serif',
-                        textShadow: (isAcebet77 || isEp369) ? "none" : "0 1px 2px rgba(0,0,0,0.35)",
+                        textShadow: (isAcebet77 || isEp369 || isN1gang) ? "none" : "0 1px 2px rgba(0,0,0,0.35)",
                       }}
                     >
                       {isSubmitting ? "Sending…" : "Submit"}
@@ -332,7 +342,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
                       background: skin.submitBg,
                       color: skin.submitText,
                       fontFamily: '"Times New Roman", serif',
-                      textShadow: isAcebet77 ? "none" : "0 1px 2px rgba(0,0,0,0.35)",
+                      textShadow: (isAcebet77 || isN1gang) ? "none" : "0 1px 2px rgba(0,0,0,0.35)",
                     }}
                   >
                     Close

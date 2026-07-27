@@ -122,13 +122,13 @@ const CollapsibleTermItem = ({ number, title, description, index, appearance }) 
 export default function FancyTermsConditions() {
   const [terms, setTerms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { themeId, isAcebet77, isUbetclub, isEp369, isKgame99 } = useTheme();
+  const { themeId, isAcebet77, isUbetclub, isEp369, isKgame99, isN1gang } = useTheme();
   const appearance = getMemberThemeStyles(themeId).terms;
   // Themes that wrap this component inside their own ornate crown frame don't
   // want the extra corner brackets + ambient glow drawing a second container
   // inside the frame. terms.card is already set transparent for them; drop
   // the decorative chrome too so only the accordion items show.
-  const isWrappedByThemeFrame = isAcebet77 || isUbetclub || isEp369 || isKgame99;
+  const isWrappedByThemeFrame = isAcebet77 || isUbetclub || isEp369 || isKgame99 || isN1gang;
 
   useEffect(() => {
     async function fetchTerms() {

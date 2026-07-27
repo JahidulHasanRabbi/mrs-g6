@@ -7,6 +7,7 @@ import UbetButton from "../ubetclub/UbetButton";
 import Ep369Button from "../ep369/Ep369Button";
 import KgameButton from "../kgame99/KgameButton";
 import Lv918Button from "../lv918/Lv918Button";
+import N1gangButton from "../n1gang/N1gangButton";
 
 /**
  * Renders the ACTIVE theme's ornate button (the shared "gold" variant — solid
@@ -27,6 +28,7 @@ const THEME_BUTTONS = {
   [THEME_IDS.EP369]: Ep369Button,
   [THEME_IDS.KGAME99]: KgameButton,
   [THEME_IDS.LV918]: Lv918Button,
+  [THEME_IDS.N1GANG]: N1gangButton,
 };
 
 export default function ThemedActionButton({

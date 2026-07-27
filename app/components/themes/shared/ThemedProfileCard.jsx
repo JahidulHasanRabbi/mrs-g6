@@ -76,7 +76,9 @@ export default function ThemedProfileCard({
           </div>
 
           <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between">
+            {/* gap-3 matters: the name truncates to fill the row, so without a
+                minimum gap it butts straight up against the VIP pill. */}
+            <div className="flex items-center justify-between gap-3">
               <p
                 className="min-w-0 truncate text-[17px] font-bold leading-tight"
                 style={{ color: colors.name, fontFamily: acme, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}

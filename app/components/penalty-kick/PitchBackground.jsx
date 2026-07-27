@@ -9,7 +9,7 @@ import { IMAGES } from "./assets";
 import { usePkColors } from "./usePkColors";
 
 export default function PitchBackground({ variant = "close", children }) {
-  const { isAcebet77, isKgame99, isLv918, isThemed, theme } = usePkColors();
+  const { isAcebet77, isKgame99, isLv918, isN1gang, isThemed, theme } = usePkColors();
   // close variant uses a CSS background to render a zoomed-in crop of the
   // photo (≈ 200 % of container width), bottom-anchored so the grass-heavy
   // lower half of the photo fills the visible area. The native photo only
@@ -28,7 +28,7 @@ export default function PitchBackground({ variant = "close", children }) {
     // no seam anywhere in the pitch) and paints the crowd/floodlights as a
     // separate top layer that fades into the grass, so the rendered goal
     // line sits cleanly on unbroken grass.
-    if (isAcebet77 || isKgame99 || isLv918) {
+    if (isAcebet77 || isKgame99 || isLv918 || isN1gang) {
       return (
         <div className="absolute inset-0 overflow-hidden" style={{ backgroundColor: "#0b0903" }}>
           {isClose ? (

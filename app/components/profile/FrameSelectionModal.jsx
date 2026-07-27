@@ -14,7 +14,7 @@ export default function FrameSelectionModal({
   profilePicture,
 }) {
   const { availableFrames, isLoadingFrames } = useUser();
-  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918 } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang } = useTheme();
 
   let modalBg, subtitleColor, tierColor, checkBg, checkStroke;
   if (isAcebet77) {
@@ -47,6 +47,12 @@ export default function FrameSelectionModal({
     tierColor = "#e0b4cc";
     checkBg = "#e8b53a";
     checkStroke = "#2a0a1f";
+  } else if (isN1gang) {
+    modalBg = "linear-gradient(to bottom, #0a0805 0%, #17130c 100%)";
+    subtitleColor = "#d0c6ab";
+    tierColor = "#d0c6ab";
+    checkBg = "#e9af41";
+    checkStroke = "#171006";
   } else {
     modalBg = "linear-gradient(to bottom, #0a1a0a 0%, #102810 100%)";
     subtitleColor = "#a8c08a";

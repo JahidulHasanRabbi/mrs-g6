@@ -90,13 +90,20 @@
   --lb-tab-active: #2a0a1f;
   --lb-tabs-fill: rgba(74, 15, 48, 0.92);
 }
+:root[data-theme="n1gang"] {
+  --lb-accent: #e9af41;
+  --lb-accent-rgb: 233, 175, 65;
+  --lb-on-accent: #241704;
+  --lb-rank: #ffe16d;
+}
 /* Amber-gold prize gradients shared by every custom theme (the gold shades are
  * close enough not to warrant per-theme tuning). */
 :root[data-theme="acebet77"],
 :root[data-theme="ubetclub"],
 :root[data-theme="ep369"],
 :root[data-theme="kgame99"],
-:root[data-theme="lv918"] {
+:root[data-theme="lv918"],
+:root[data-theme="n1gang"] {
   --lb-prize-grad: linear-gradient(135deg, #3a2a0f 0%, #5b3a1a 45%, #8a6320 75%, #b8862f 100%);
   --lb-prize-grad-btn: linear-gradient(135deg, #3a2a0f 0%, #5b3a1a 100%);
   --lb-card-border: rgba(var(--lb-accent-rgb), 0.4);
@@ -369,6 +376,27 @@
 .scrollbar-lv918 {
   scrollbar-width: thin;
   scrollbar-color: #924066 rgba(40, 12, 28, 0.5);
+}
+
+/* N1gang scrollbar — gold thumb on dark track */
+.scrollbar-n1gang::-webkit-scrollbar {
+  width: 5px;
+}
+.scrollbar-n1gang::-webkit-scrollbar-track {
+  background: rgba(10, 10, 28, 0.5);
+  border-radius: 999px;
+}
+.scrollbar-n1gang::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #f2c36b 0%, #e9af41 100%);
+  border-radius: 999px;
+  border: 1px solid rgba(233, 175, 65, 0.3);
+}
+.scrollbar-n1gang::-webkit-scrollbar-thumb:hover {
+  background: #ffe16d;
+}
+.scrollbar-n1gang {
+  scrollbar-width: thin;
+  scrollbar-color: #e9af41 rgba(10, 10, 28, 0.5);
 }
 
 /* Spinner animation for loading states */

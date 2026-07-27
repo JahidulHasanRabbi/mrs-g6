@@ -8,9 +8,10 @@ import { UBET_ASSETS, UBET_COLORS } from "../themes/ubetclub/assets";
 import { EP369_ASSETS, EP369_COLORS } from "../themes/ep369/assets";
 import { KGAME99_ASSETS, KGAME99_COLORS } from "../themes/kgame99/assets";
 import { LV918_ASSETS, LV918_COLORS } from "../themes/lv918/assets";
+import { N1GANG_ASSETS, N1GANG_COLORS } from "../themes/n1gang/assets";
 
 export default function SubmitButton({ onClick, label = "Saved Change", disabled = false }) {
-  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918 } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang } = useTheme();
 
   const themedSkin = isAcebet77
     ? { src: ACEBET_ASSETS.spin.btnPlay, color: ACEBET_COLORS.goldBright }
@@ -22,7 +23,9 @@ export default function SubmitButton({ onClick, label = "Saved Change", disabled
           ? { src: KGAME99_ASSETS.spin.btnPlay, color: KGAME99_COLORS.goldBright }
           : isLv918
             ? { src: LV918_ASSETS.spin.btnPlay, color: LV918_COLORS.goldBright }
-            : null;
+            : isN1gang
+              ? { src: N1GANG_ASSETS.spin.btnPlay, color: N1GANG_COLORS.goldBright }
+              : null;
 
   if (themedSkin) {
     return (

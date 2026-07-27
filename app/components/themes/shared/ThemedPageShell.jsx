@@ -12,6 +12,8 @@ import { UBET_ASSETS } from "../ubetclub/assets";
 import { EP369_ASSETS } from "../ep369/assets";
 import { KGAME99_ASSETS } from "../kgame99/assets";
 import { LV918_ASSETS } from "../lv918/assets";
+import N1gangShell from "../n1gang/N1gangShell";
+import { N1GANG_ASSETS } from "../n1gang/assets";
 
 /**
  * Themed chrome for member pages whose content isn't skinned yet (profile,
@@ -33,6 +35,7 @@ const SHELLS = {
   [THEME_IDS.EP369]: { Shell: Ep369Shell, bg: EP369_ASSETS.spin.bg },
   [THEME_IDS.KGAME99]: { Shell: KgameShell, bg: KGAME99_ASSETS.spin.bg },
   [THEME_IDS.LV918]: { Shell: Lv918Shell, bg: LV918_ASSETS.spin.bg },
+  [THEME_IDS.N1GANG]: { Shell: N1gangShell, bg: N1GANG_ASSETS.spin.bg },
 };
 
 export default function ThemedPageShell({ children, ...shellProps }) {

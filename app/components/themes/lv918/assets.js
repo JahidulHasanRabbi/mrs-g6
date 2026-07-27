@@ -134,6 +134,11 @@ export const LV918_COLORS = {
   inkMuted: '#3d0a20',  // dates and secondary meta
   inkSoft: '#30081a',   // empty-state placeholders
   inkGold: '#5a3a02',   // gold accent that still needs to read on pink
+  // Deep-rose heading tones — the "royal pink" counterpart to the other
+  // themes' gold headings, dark enough to clear contrast on the pink interiors
+  // where a gold/cream heading disappears.
+  inkTitle: '#6b0a32',  // panel/modal headings (matches the profile card rose)
+  inkLabel: '#8d2a55',  // column headers, pagination, secondary labels
   pinkHot: '#f34f89',
   purple: '#984291',
   progressTrack: '#51340c',

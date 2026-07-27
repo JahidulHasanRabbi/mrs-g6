@@ -15,6 +15,8 @@ import { UBET_ASSETS, UBET_COLORS } from "../components/themes/ubetclub/assets";
 import { EP369_ASSETS, EP369_COLORS } from "../components/themes/ep369/assets";
 import { KGAME99_ASSETS, KGAME99_COLORS } from "../components/themes/kgame99/assets";
 import { LV918_ASSETS, LV918_COLORS } from "../components/themes/lv918/assets";
+import N1gangShell from "../components/themes/n1gang/N1gangShell";
+import { N1GANG_ASSETS, N1GANG_COLORS } from "../components/themes/n1gang/assets";
 
 function ThemedTermsContent({ accent, muted }) {
   return (
@@ -51,7 +53,7 @@ function ThemedTermsContent({ accent, muted }) {
 }
 
 export default function TermsAndConditionsPage() {
-  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918 } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang } = useTheme();
 
   // Same content structure as ThemedTermsContent (heading + FancyTermsConditions),
   // but the heading text is swapped for the acebet77 "Terms & Condition" plaque
@@ -165,6 +167,27 @@ export default function TermsAndConditionsPage() {
           </div>
         </div>
       </Lv918Shell>
+    );
+  }
+
+  if (isN1gang) {
+    return (
+      <N1gangShell bg={N1GANG_ASSETS.spin.bg}>
+        <div className="flex min-h-screen flex-col items-center px-4 pb-8">
+          <motion.img
+            src={N1GANG_ASSETS.terms.title}
+            alt="Terms & Conditions"
+            draggable={false}
+            className="mt-5 mb-4 h-auto w-[340px] max-w-[92%] select-none object-contain"
+            initial={{ opacity: 0, y: -18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 18 }}
+          />
+          <div className="w-full max-w-[500px]">
+            <FancyTermsConditions />
+          </div>
+        </div>
+      </N1gangShell>
     );
   }
 

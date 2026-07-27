@@ -11,6 +11,7 @@ import { UBET_ASSETS, UBET_COLORS } from "../themes/ubetclub/assets";
 import { EP369_ASSETS, EP369_COLORS } from "../themes/ep369/assets";
 import { KGAME99_ASSETS, KGAME99_COLORS } from "../themes/kgame99/assets";
 import { LV918_ASSETS, LV918_COLORS } from "../themes/lv918/assets";
+import { N1GANG_ASSETS, N1GANG_COLORS } from "../themes/n1gang/assets";
 
 const PAGE_SIZE = 6;
 
@@ -116,7 +117,7 @@ function HistoryButton({ title, onClick, delay = 0, bannerSrc, textColor, object
   );
 }
 
-function HistoryPagination({ currentPage, totalPages, onPageChange }) {
+function HistoryPagination({ currentPage, totalPages, onPageChange, color, activeColor }) {
   const getPageNumbers = () => {
     const pages = [];
     if (totalPages <= 7) {
@@ -146,7 +147,10 @@ function HistoryPagination({ currentPage, totalPages, onPageChange }) {
   const pageItems = getPageNumbers();
 
   return (
-    <div className="relative flex items-center justify-center gap-5 font-['Times_New_Roman'] text-[16px] text-[#efc868]">
+    <div
+      className="relative flex items-center justify-center gap-5 font-['Times_New_Roman'] text-[16px]"
+      style={{ color }}
+    >
       <button
         type="button"
         onClick={() => onPageChange(Math.max(1, currentPage - 1))}
@@ -173,9 +177,10 @@ function HistoryPagination({ currentPage, totalPages, onPageChange }) {
             onClick={() => onPageChange(item)}
             className={
               currentPage === item
-                ? "font-bold text-[#efc868]"
+                ? "font-bold"
                 : "opacity-80 transition-opacity hover:opacity-100"
             }
+            style={currentPage === item ? { color: activeColor } : undefined}
           >
             {item}
           </button>
@@ -197,14 +202,14 @@ function HistoryPagination({ currentPage, totalPages, onPageChange }) {
 
 function HistoryModal({ type, onClose }) {
   const config = HISTORY_CONFIG[type];
-  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918 } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang } = useTheme();
   const [currentPage, setCurrentPage] = useState(1);
   const [modalScale, setModalScale] = useState(1);
   const [rows, setRows] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const themed = isAcebet77 || isUbetclub || isEp369 || isKgame99 || isLv918;
+  const themed = isAcebet77 || isUbetclub || isEp369 || isKgame99 || isLv918 || isN1gang;
   const frameSrc = isAcebet77
     ? ACEBET_ASSETS.frames.scroll
     : isUbetclub
@@ -215,7 +220,9 @@ function HistoryModal({ type, onClose }) {
           ? KGAME99_ASSETS.frames.scroll
           : isLv918
             ? LV918_ASSETS.frames.scroll
-            : "/assets/profile/history-frame.png";
+            : isN1gang
+              ? N1GANG_ASSETS.frames.scroll
+              : "/assets/profile/history-frame.png";
   const closeSrc = isAcebet77
     ? ACEBET_ASSETS.spin.btnPlay
     : isUbetclub
@@ -226,7 +233,9 @@ function HistoryModal({ type, onClose }) {
           ? KGAME99_ASSETS.spin.btnPlay
           : isLv918
             ? LV918_ASSETS.spin.btnPlay
-            : "/assets/profile/close-icon.png";
+            : isN1gang
+              ? N1GANG_ASSETS.spin.btnPlay
+              : "/assets/profile/close-icon.png";
   const closeTextColor = isAcebet77
     ? ACEBET_COLORS.goldBright
     : isUbetclub
@@ -237,7 +246,67 @@ function HistoryModal({ type, onClose }) {
           ? KGAME99_COLORS.goldBright
           : isLv918
             ? LV918_COLORS.goldBright
-            : "#6c5212";
+            : isN1gang
+              ? N1GANG_COLORS.goldBright
+              : "#6c5212";
+
+  // Every other theme's scroll frame is dark inside, so the shared gold/cream
+  // text reads fine on it. Lv918's frame interior is bright pink — the gold
+  // title, column headers, pagination and cream rows all wash out against it.
+  // Swap in the deep-rose ink tones the rest of the lv918 panels already use.
+  const textSkin = isLv918
+    ? {
+        title: LV918_COLORS.inkTitle,
+        titleShadow: "drop-shadow-[0_1px_1px_rgba(255,255,255,0.6)]",
+        header: LV918_COLORS.inkLabel,
+        headerRule: "rgba(107, 10, 50, 0.35)",
+        row: LV918_COLORS.inkStrong,
+        muted: LV918_COLORS.inkMuted,
+        page: LV918_COLORS.inkLabel,
+        pageActive: LV918_COLORS.inkTitle,
+      }
+    : {
+        title: "#f1cf75",
+        titleShadow: "drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]",
+        header: "#efc868",
+        headerRule: "rgba(239, 200, 104, 0.25)",
+        row: "#f8f0db",
+        muted: "rgba(248, 240, 219, 0.5)",
+        page: "#efc868",
+        pageActive: "#efc868",
+      };
+
+  // Lv918's scroll frame is a square (1254²) stretched into the 376×498 modal,
+  // which drops its crown-and-bow ornaments much further into the box than the
+  // other frames: the top one ends at ~26.6% (≈132px) and the bottom one starts
+  // at ~74.7% (≈372px). The shared offsets put the title and the column headers
+  // on top of the gold scrollwork, so lv918 gets its own safe-area geometry.
+  // N1gang uses the rolled-scroll frame (656x820). Measuring its dark interior
+  // plate stretched into the 376x498 modal gives a safe area of x 82..293 and
+  // y 123..363 — the rolled top eats the first 123px and the side lightning
+  // bolts intrude to x=82. The shared themed offsets (titleTop 78px, left 58px,
+  // width 246px) put the title on the top bolt and pushed the DATE column under
+  // the left bolt, clipping it.
+  const layout = isLv918
+    ? { titleTop: "134px", left: "66px", width: "240px", contentTop: "166px", rowsMaxHeight: "145px" }
+    // 211px is all the frame allows, and the shared "58px 40px 1fr 1fr" grid
+    // leaves the two flexible columns ~44px each — too narrow for the DETAILS
+    // and REWARD headers, which are nowrap and so clip. Tighten the fixed
+    // columns and the gap, and drop the header a point, to fit the plate.
+    : isN1gang
+      ? {
+          titleTop: "126px", left: "82px", width: "211px", contentTop: "160px", rowsMaxHeight: "150px",
+          gridTemplateColumns: config.title === "Reward History" ? "50px 34px 1fr 1fr" : "50px 1fr 1fr 44px",
+          gapX: "6px",
+          headerFontSize: "9px",
+        }
+      : {
+          titleTop: themed ? "78px" : "42px",
+          left: isUbetclub ? "62px" : (isAcebet77 || isEp369 || isKgame99) ? "58px" : config.contentOffset,
+          width: isUbetclub ? "236px" : (isAcebet77 || isEp369 || isKgame99) ? "246px" : config.contentWidth,
+          contentTop: config.contentTop,
+          rowsMaxHeight: "195px",
+        };
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
@@ -342,8 +411,8 @@ function HistoryModal({ type, onClose }) {
 
           <h3
             id="history-modal-title"
-            className="absolute left-1/2 -translate-x-1/2 font-['Times_New_Roman'] text-[20px] font-bold text-[#f1cf75] drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]"
-            style={{ top: themed ? "78px" : "42px" }}
+            className={`absolute left-1/2 -translate-x-1/2 font-['Times_New_Roman'] text-[20px] font-bold ${textSkin.titleShadow}`}
+            style={{ top: layout.titleTop, color: textSkin.title }}
           >
             {config.title}
           </h3>
@@ -358,17 +427,23 @@ function HistoryModal({ type, onClose }) {
           <div
             className="absolute overflow-hidden"
             style={{
-              left: isUbetclub ? "62px" : (isAcebet77 || isEp369 || isKgame99 || isLv918) ? "58px" : config.contentOffset,
-              top: config.contentTop,
+              left: layout.left,
+              top: layout.contentTop,
               // Pull the box in from the frame's gold side rails so the
               // right-aligned Amount column clears the ornament instead of
               // riding it (was clipped against the rail on small devices).
-              width: isUbetclub ? "236px" : (isAcebet77 || isEp369 || isKgame99 || isLv918) ? "246px" : config.contentWidth,
+              width: layout.width,
             }}
           >
             <div
-              className="grid items-end gap-x-[8px] border-b border-[#efc868]/25 pb-[6px] mb-[8px] font-['Times_New_Roman'] text-[10px] font-bold uppercase tracking-[0.04em] text-[#efc868]"
-              style={{ gridTemplateColumns: config.gridTemplateColumns }}
+              className="grid items-end border-b pb-[6px] mb-[8px] font-['Times_New_Roman'] font-bold uppercase tracking-[0.04em]"
+              style={{
+                gridTemplateColumns: layout.gridTemplateColumns || config.gridTemplateColumns,
+                columnGap: layout.gapX || "8px",
+                fontSize: layout.headerFontSize || "10px",
+                color: textSkin.header,
+                borderBottomColor: textSkin.headerRule,
+              }}
             >
               {config.columns.map((column) => (
                 <div
@@ -386,23 +461,33 @@ function HistoryModal({ type, onClose }) {
                 its text. The cap matches the space between the header (bottom
                 of contentTop + ~30px header row) and the pagination row. */}
             <div
-              className={`flex flex-col gap-[10px] overflow-y-auto pr-1 ${isEp369 ? 'scrollbar-ep369' : isAcebet77 ? 'scrollbar-acebet77' : isUbetclub ? 'scrollbar-ubet' : 'scrollbar-gold'}`}
-              style={{ maxHeight: "195px" }}
+              className={`flex flex-col gap-[10px] overflow-y-auto pr-1 ${isEp369 ? 'scrollbar-ep369' : isAcebet77 ? 'scrollbar-acebet77' : isN1gang ? 'scrollbar-n1gang' : isUbetclub ? 'scrollbar-ubet' : isLv918 ? 'scrollbar-lv918' : 'scrollbar-gold'}`}
+              style={{ maxHeight: layout.rowsMaxHeight }}
             >
               {loading ? (
-                <div className="text-center font-['Times_New_Roman'] text-[12px] text-[#f8f0db]/50 pt-10">
+                <div
+                  className="text-center font-['Times_New_Roman'] text-[12px] pt-10"
+                  style={{ color: textSkin.muted }}
+                >
                   Loading...
                 </div>
               ) : rows.length === 0 ? (
-                <div className="text-center font-['Times_New_Roman'] text-[12px] text-[#f8f0db]/50 pt-10">
+                <div
+                  className="text-center font-['Times_New_Roman'] text-[12px] pt-10"
+                  style={{ color: textSkin.muted }}
+                >
                   No records found.
                 </div>
               ) : (
                 rows.map((row, rowIndex) => (
                   <div
                     key={`${config.title}-${row.id || rowIndex}`}
-                    className="grid items-center gap-x-[8px] font-['Times_New_Roman'] text-[10.5px] leading-[1.2] text-[#f8f0db]"
-                    style={{ gridTemplateColumns: config.gridTemplateColumns }}
+                    className="grid items-center font-['Times_New_Roman'] text-[10.5px] leading-[1.2]"
+                    style={{
+                      gridTemplateColumns: layout.gridTemplateColumns || config.gridTemplateColumns,
+                      columnGap: layout.gapX || "8px",
+                      color: textSkin.row,
+                    }}
                   >
                     {config.columns.map((column) => {
                       let cellValue = row[column.key];
@@ -436,6 +521,8 @@ function HistoryModal({ type, onClose }) {
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={handlePageChange}
+              color={textSkin.page}
+              activeColor={textSkin.pageActive}
             />
           </div>
 
@@ -468,7 +555,7 @@ function HistoryModal({ type, onClose }) {
 
 export default function HistorySection() {
   const [activeHistory, setActiveHistory] = useState(null);
-  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918 } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang } = useTheme();
 
   let buttonSkin;
   if (isAcebet77) {
@@ -481,6 +568,8 @@ export default function HistorySection() {
     buttonSkin = { bannerSrc: KGAME99_ASSETS.spin.btnPlay, textColor: KGAME99_COLORS.goldBright, objectFit: "object-fill" };
   } else if (isLv918) {
     buttonSkin = { bannerSrc: LV918_ASSETS.spin.btnPlay, textColor: LV918_COLORS.goldBright, objectFit: "object-fill" };
+  } else if (isN1gang) {
+    buttonSkin = { bannerSrc: N1GANG_ASSETS.spin.btnPlay, textColor: N1GANG_COLORS.goldBright, objectFit: "object-fill" };
   } else {
     buttonSkin = { bannerSrc: "/assets/profile/history-title-banner.png", textColor: "#60803c", objectFit: "object-cover" };
   }

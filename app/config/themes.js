@@ -20,6 +20,7 @@ export const THEME_IDS = {
   EP369: 'ep369',
   KGAME99: 'kgame99',
   LV918: 'lv918',
+  N1GANG: 'n1gang',
 };
 
 // Substring rules matched against the hostname of the stored origin URL.
@@ -30,6 +31,7 @@ const ORIGIN_THEME_RULES = [
   { match: 'ep369', themeId: THEME_IDS.EP369 },
   { match: 'kgame99', themeId: THEME_IDS.KGAME99 },
   { match: 'lv918', themeId: THEME_IDS.LV918 },
+  { match: 'n1gang', themeId: THEME_IDS.N1GANG },
 ];
 
 /**

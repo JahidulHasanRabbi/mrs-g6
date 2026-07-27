@@ -8,10 +8,11 @@ import { UBET_COLORS } from "../themes/ubetclub/assets";
 import { EP369_COLORS } from "../themes/ep369/assets";
 import { KGAME99_COLORS } from "../themes/kgame99/assets";
 import { LV918_COLORS } from "../themes/lv918/assets";
+import { N1GANG_COLORS } from "../themes/n1gang/assets";
 
 export default function ProgressBar({ progress = 0 }) {
   const progressPercentage = Math.min(100, Math.max(0, progress));
-  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918 } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang } = useTheme();
 
   let trackClass = "relative h-3 bg-gray-200 rounded-full overflow-hidden";
   let textColor = FORM_COLORS.textButton;
@@ -30,6 +31,9 @@ export default function ProgressBar({ progress = 0 }) {
   } else if (isLv918) {
     trackClass = "relative h-3 rounded-full overflow-hidden border border-[#f34f89] bg-[#51340c]";
     textColor = LV918_COLORS.gold;
+  } else if (isN1gang) {
+    trackClass = "relative h-3 rounded-full overflow-hidden border border-[#5c3f0f] bg-[#1a1105]";
+    textColor = N1GANG_COLORS.gold;
   }
 
   return (

@@ -15,7 +15,9 @@ const LV918_CARD_COLORS = {
   level: "#6b0a32",
   getText: "rgba(58,10,30,0.85)",
   getEmph: "#6b0a32",
-  barBase: LV918_COLORS.progressTrack,
+  // A gold-brown track (the shared progressTrack) reads as a black bar on this
+  // card's light-pink interior — use a translucent rose well instead.
+  barBase: "rgba(107,10,50,0.20)",
   barFill: "linear-gradient(90deg, #c22060 0%, #e05888 100%)",
   barGlow: "rgba(194,32,96,0.7)",
   barBorder: "#8a1848",
@@ -55,9 +57,15 @@ export default function Lv918ProfilePage() {
           transition={{ type: "spring", stiffness: 200, damping: 18 }}
         />
 
+        {/* lv918's crown frame is a wide 1672×941 plate squeezed into a nearly
+            square card, which stretches its ornaments: the top crown-and-heart
+            hangs down to ~34% of the rendered height and the bottom crown
+            starts at ~78%. The shared 24/20% pad let the name + VIP pill row
+            sit under the hanging heart — these deeper pads size the card so the
+            whole block lands in the clear pink interior. */}
         <ThemedProfileCard
           frame={LV918_ASSETS.frames.crown}
-          pad={{ x: "20%", top: "24%", bottom: "20%" }}
+          pad={{ x: "20%", top: "39%", bottom: "26%" }}
           colors={LV918_CARD_COLORS}
           coinIcon={LV918_ASSETS.ui.iconCoins}
           name={name}
@@ -77,10 +85,16 @@ export default function Lv918ProfilePage() {
           <HistorySection />
         </div>
 
+        {/* lv918's scroll frame is square (1254²) and stretches to the list's
+            height, so its crown-and-bow ornaments land at fixed fractions of
+            that height: the top one ends at ~26.6%, the bottom one starts at
+            ~74.7%. The shared 18/21% pad (a fraction of WIDTH) left the last
+            rows sitting on the bottom bow — these deeper pads size the panel so
+            the six rows land inside the clear pink interior. */}
         <ThemedEditProfileList
           frame={LV918_ASSETS.frames.scroll}
-          pad={{ x: "17%", top: "18%", bottom: "21%" }}
-          headingMt={32}
+          pad={{ x: "19%", top: "35%", bottom: "35%" }}
+          headingMt={6}
           colors={{
             heading: "#6b0a32",
             rowText: "#6b0a32",

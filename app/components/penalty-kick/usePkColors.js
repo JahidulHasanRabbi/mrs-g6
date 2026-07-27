@@ -8,6 +8,7 @@ import { UBET_ASSETS, UBET_COLORS } from "../themes/ubetclub/assets";
 import { EP369_ASSETS, EP369_COLORS } from "../themes/ep369/assets";
 import { KGAME99_ASSETS, KGAME99_COLORS } from "../themes/kgame99/assets";
 import { LV918_ASSETS, LV918_COLORS } from "../themes/lv918/assets";
+import { N1GANG_ASSETS, N1GANG_COLORS } from "../themes/n1gang/assets";
 import AcebetOrnateCard from "../themes/acebet77/AcebetOrnateCard";
 import AcebetButton from "../themes/acebet77/AcebetButton";
 import UbetOrnateCard from "../themes/ubetclub/UbetOrnateCard";
@@ -18,6 +19,8 @@ import KgameOrnateCard from "../themes/kgame99/KgameOrnateCard";
 import KgameButton from "../themes/kgame99/KgameButton";
 import Lv918OrnateCard from "../themes/lv918/Lv918OrnateCard";
 import Lv918Button from "../themes/lv918/Lv918Button";
+import N1gangOrnateCard from "../themes/n1gang/N1gangOrnateCard";
+import N1gangButton from "../themes/n1gang/N1gangButton";
 
 // Glow strings were hardcoded green rgba() literals across the phase
 // components; they live here now so a theme can recolor them in one place.
@@ -166,6 +169,21 @@ const THEME_PACKS = {
       missRed: "#ff5a5a",
     },
   },
+  [THEME_IDS.N1GANG]: {
+    pkColors: GOLD_PK_COLORS,
+    accent: "242,186,51",
+    OrnateCard: N1gangOrnateCard,
+    Button: N1gangButton,
+    assets: N1GANG_ASSETS,
+    iconBall: N1GANG_ASSETS.pk.iconBall,
+    palette: {
+      cream: N1GANG_COLORS.cream,
+      sand: N1GANG_COLORS.sand,
+      accent: N1GANG_COLORS.tokenYellow,
+      gold: N1GANG_COLORS.goldBright,
+      missRed: "#ff5a5a",
+    },
+  },
 };
 
 /**
@@ -176,7 +194,7 @@ const THEME_PACKS = {
  * display palette and asset map so each PK component needs a single branch.
  */
 export function usePkColors() {
-  const { themeId, isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isThemed } = useTheme();
+  const { themeId, isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang, isThemed } = useTheme();
   const pack = THEME_PACKS[themeId] || null;
   const base = pack ? pack.accent : "84,233,138";
   return {
@@ -186,6 +204,7 @@ export function usePkColors() {
     isEp369,
     isKgame99,
     isLv918,
+    isN1gang,
     isThemed,
     themeId,
     theme: pack

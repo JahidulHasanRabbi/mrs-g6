@@ -20,6 +20,7 @@ import UbetclubSpinPage from "../components/themes/ubetclub/UbetclubSpinPage";
 import Ep369SpinPage from "../components/themes/ep369/Ep369SpinPage";
 import Kgame99SpinPage from "../components/themes/kgame99/Kgame99SpinPage";
 import Lv918SpinPage from "../components/themes/lv918/Lv918SpinPage";
+import N1gangSpinPage from "../components/themes/n1gang/N1gangSpinPage";
 
 function DefaultSpinPage() {
   const [imageError, setImageError] = useState(false);
@@ -334,11 +335,12 @@ function DefaultSpinPage() {
 }
 
 export default function SpinPage() {
-  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918 } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang } = useTheme();
   if (isAcebet77) return <Acebet77SpinPage />;
   if (isUbetclub) return <UbetclubSpinPage />;
   if (isEp369) return <Ep369SpinPage />;
   if (isKgame99) return <Kgame99SpinPage />;
   if (isLv918) return <Lv918SpinPage />;
+  if (isN1gang) return <N1gangSpinPage />;
   return <DefaultSpinPage />;
 }

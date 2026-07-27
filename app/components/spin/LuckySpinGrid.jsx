@@ -229,22 +229,28 @@ const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 // the artwork. Their frames are square with an evenly-spaced 3x3 interior, so
 // the eight tiles are positioned by absolute % rather than the default's fixed
 // pixel FluidFrame grid. `framePad` is the inset (% of frame) from edge to the
-// grid area, `tile`/`center` are element sizes as % of the frame.
+// grid area, `tile`/`center` are element sizes as % of the frame. `framePadY`
+// is optional and defaults to `framePad` — set it when a frame's interior is
+// taller than it is wide (n1gang) so the rows use the extra height.
 const DEFAULT_THEMED_GEOMETRY = { framePad: 14, tile: 21, center: 24 };
 
-function themedSlotCenters({ framePad }) {
+function themedSlotCenters({ framePad, framePadY }) {
+  const padY = framePadY ?? framePad;
   const span = 100 - 2 * framePad;
+  const spanY = 100 - 2 * padY;
   const lo = framePad + span / 6;
   const mid = 50;
   const hi = framePad + (span * 5) / 6;
+  const loY = padY + spanY / 6;
+  const hiY = padY + (spanY * 5) / 6;
   // Grid index layout (matches the default's GRID_AREA / GRID_WIN_ANGLE):
   //   [0][1][2]
   //   [3][ ][4]
   //   [5][6][7]
   return [
-    { x: lo, y: lo }, { x: mid, y: lo }, { x: hi, y: lo },
+    { x: lo, y: loY }, { x: mid, y: loY }, { x: hi, y: loY },
     { x: lo, y: mid }, { x: hi, y: mid },
-    { x: lo, y: hi }, { x: mid, y: hi }, { x: hi, y: hi },
+    { x: lo, y: hiY }, { x: mid, y: hiY }, { x: hi, y: hiY },
   ];
 }
 
