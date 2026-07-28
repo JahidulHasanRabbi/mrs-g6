@@ -1,6 +1,7 @@
 "use client";
 
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import ProfileFrame from '../../profile/ProfileFrame';
 import { PROFILE_ASSETS } from '../../profile/profileAssets';
 import { useUser } from '../../../contexts/UserContext';
@@ -21,6 +22,12 @@ function formatBalance(value) {
   return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function formatBattlePoints(value) {
+  const amount = Number(String(value ?? 0).replace(/,/g, ''));
+  if (!Number.isFinite(amount)) return '0';
+  return amount.toLocaleString('en-US', { maximumFractionDigits: 0 });
+}
+
 export default function ThemeHeader({
   hamburgerIcon,
   infoIcon,
@@ -35,7 +42,10 @@ export default function ThemeHeader({
   infoFit = 'object-contain',
   profileMode = false,
 }) {
-  const { profilePicture, selectedFrameId } = useUser();
+  const pathname = usePathname();
+  const { userData, profilePicture, selectedFrameId } = useUser();
+  const battlePoints = userData?.battlePoints;
+  const showBattlePoints = pathname !== '/';
 
   return (
     <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[475px] h-[64px] z-40 flex items-center justify-between px-4">
@@ -87,6 +97,24 @@ export default function ThemeHeader({
 
       {/* Right: optional balance pill (right alignment) + profile/info button */}
       <div className="relative flex items-center gap-2">
+        {showBattlePoints && (
+          <div
+            className="flex h-[36px] min-w-[70px] max-w-[92px] items-center justify-center gap-1 rounded-full border border-[rgba(255,225,109,0.3)] bg-[rgba(57,53,40,0.85)] px-2 backdrop-blur-[6px]"
+            aria-label={`${formatBattlePoints(battlePoints)} Battle Points`}
+          >
+            <img
+              src="/assets/rpg/icons/bp-gem.svg"
+              alt=""
+              className="h-[18px] w-[18px] shrink-0 object-contain"
+            />
+            <span
+              className="min-w-0 truncate text-[13px] font-semibold"
+              style={{ fontFamily: 'var(--font-rubik), sans-serif', color: '#ffe16d' }}
+            >
+              {formatBattlePoints(battlePoints)}
+            </span>
+          </div>
+        )}
         {balance !== null && balanceAlign === 'right' && (
           <div className="flex items-center gap-2 h-[36px] px-3 rounded-full border border-[rgba(255,225,109,0.3)] bg-[rgba(57,53,40,0.85)] backdrop-blur-[6px]">
             {coinIcon && <img src={coinIcon} alt="" className="w-[16px] h-[16px]" />}
