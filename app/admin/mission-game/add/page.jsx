@@ -13,6 +13,10 @@ import {
 const GOLD_BG = "linear-gradient(96deg, #dc9d16 1%, #f2cb7a 98%)";
 const INPUT_BASE =
   "w-full rounded-[8px] border border-[#f2cb7a] bg-transparent px-4 py-2.5 text-[14px] text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#e9af41]/40";
+const REWARD_TYPE_OPTIONS = [
+  { value: 1, label: "Token" },
+  { value: 2, label: "Battle Point (BP)" },
+];
 
 const EMPTY_FORM = {
   missionName: "",
@@ -25,7 +29,8 @@ const EMPTY_FORM = {
   startDate: "",
   endDate: "",
   accumulateTarget: 1,
-  rewardTokenQuantity: 0,
+  rewardType: 1,
+  rewardQuantity: 0,
   limitControl: "",
 };
 
@@ -102,6 +107,8 @@ function dateOnly(value) {
 }
 
 function toForm(api) {
+  const battlePointQuantity = Number(api.reward_battle_point_quantity ?? 0);
+  const rewardType = battlePointQuantity > 0 ? 2 : 1;
   return {
     missionName: api.mission_name ?? "",
     category: api.category ?? 1,
@@ -113,12 +120,18 @@ function toForm(api) {
     startDate: dateOnly(api.start_date),
     endDate: dateOnly(api.end_date),
     accumulateTarget: api.accumulate_target ?? 1,
-    rewardTokenQuantity: api.reward_token_quantity ?? 0,
+    rewardType,
+    rewardQuantity:
+      rewardType === 2
+        ? battlePointQuantity
+        : Number(api.reward_token_quantity ?? 0),
     limitControl: api.limit_control ?? "",
   };
 }
 
 function toPayload(form) {
+  const rewardQuantity = Math.max(0, Number(form.rewardQuantity) || 0);
+  const isBattlePointReward = Number(form.rewardType) === 2;
   const payload = {
     mission_name: form.missionName.trim(),
     category: Number(form.category),
@@ -128,7 +141,8 @@ function toPayload(form) {
     condition_action: Number(form.conditionAction),
     is_time_based: !!form.timeBased,
     accumulate_target: Math.max(1, Number(form.accumulateTarget) || 1),
-    reward_token_quantity: Math.max(0, Number(form.rewardTokenQuantity) || 0),
+    reward_token_quantity: isBattlePointReward ? 0 : rewardQuantity,
+    reward_battle_point_quantity: isBattlePointReward ? rewardQuantity : 0,
     limit_control: form.limitControl === "" ? null : Math.max(1, Number(form.limitControl) || 1),
   };
   if (form.timeBased) {
@@ -253,8 +267,12 @@ function AddMissionForm() {
             <SectionTitle>Reward</SectionTitle>
             <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-3">
               <div>
-                <label className="mb-2 block text-[14px] font-semibold text-white">Token Quantity</label>
-                <input type="number" min="0" value={form.rewardTokenQuantity} onChange={(e) => set("rewardTokenQuantity")(e.target.value)} className={INPUT_BASE} />
+                <label className="mb-2 block text-[14px] font-semibold text-white">Reward Type</label>
+                <Select value={form.rewardType} onChange={set("rewardType")} options={REWARD_TYPE_OPTIONS} />
+              </div>
+              <div>
+                <label className="mb-2 block text-[14px] font-semibold text-white">Reward Quantity</label>
+                <input type="number" min="0" value={form.rewardQuantity} onChange={(e) => set("rewardQuantity")(e.target.value)} className={INPUT_BASE} />
               </div>
               <div>
                 <label className="mb-2 block text-[14px] font-semibold text-white">Limit Control</label>

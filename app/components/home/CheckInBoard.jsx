@@ -160,12 +160,19 @@ export default function CheckInBoard() {
         const daySettings = checkinSettings.rewards.find(r => r.day === day);
         if (!daySettings) return ""; // Default empty
 
-        // Use display_text if available and not empty, otherwise return empty
-        if (daySettings.display_text && daySettings.display_text.trim()) {
-          return daySettings.display_text;
-        }
+        const rangeText = (minimum, maximum, suffix) => {
+          const min = Number(minimum ?? 0);
+          const max = Number(maximum ?? min);
+          if (min <= 0 && max <= 0) return "";
+          return min === max ? `${min} ${suffix}` : `${min}-${max} ${suffix}`;
+        };
 
-        return "";
+        const tokenReward = rangeText(daySettings.reward_minimum, daySettings.reward_maximum, "tokens");
+        const bpReward = rangeText(daySettings.battle_point_minimum, daySettings.battle_point_maximum, "BP");
+        const customText = daySettings.display_text?.trim() || "";
+        const parts = [customText || tokenReward];
+        if (bpReward && !/\bBP\b|battle point/i.test(customText)) parts.push(bpReward);
+        return parts.filter(Boolean).join(" + ");
       };
 
       return [
@@ -218,9 +225,21 @@ export default function CheckInBoard() {
       // Mark day as checked
       setCheckedDays((prev) => [...prev, day.day]);
 
-      // Display success message with earned tokens from API response
+      // Display every currency credited by the check-in response.
       const tokensObtained = response.tokens_obtained;
-      const displayReward = tokensObtained != null ? `${tokensObtained} token${tokensObtained !== 1 ? 's' : ''}` : "your reward";
+      const battlePointsObtained =
+        response.battle_point_amount ??
+        response.battle_points_obtained ??
+        response.battle_point_obtained;
+      const rewardParts = [];
+      if (tokensObtained != null && Number(tokensObtained) > 0) {
+        rewardParts.push(`${tokensObtained} token${Number(tokensObtained) !== 1 ? 's' : ''}`);
+      }
+      if (battlePointsObtained != null && Number(battlePointsObtained) > 0) {
+        rewardParts.push(`${Number(battlePointsObtained).toLocaleString("en-US")} BP`);
+      }
+      const displayReward = rewardParts.join(" + ") || "your reward";
+      setCheckedRewards((prev) => ({ ...prev, [day.day]: displayReward }));
       setSuccessMessage(`Congratulations! You've checked in for today and earned ${displayReward}!`);
       setShowSuccessModal(true);
 

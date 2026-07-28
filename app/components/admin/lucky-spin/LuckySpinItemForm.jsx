@@ -23,6 +23,11 @@ const luckySpinFieldConfig = {
       field: 'token_amount',
       showWhen: [3], // Token
       required: true
+    },
+    {
+      field: 'battle_point_amount',
+      showWhen: [5], // Battle Point
+      required: true
     }
   ],
   unlimited: [
@@ -65,7 +70,8 @@ export default function LuckySpinItemForm({
         unlimited: initialData.unlimited || false,
         min_withdraw: initialData.min_withdraw || "",
         max_withdraw: initialData.max_withdraw || "",
-        token_amount: initialData.token_amount || ""
+        token_amount: initialData.token_amount || "",
+        battle_point_amount: initialData.battle_point_amount || ""
       };
       
       setFieldValues(initialValues);
@@ -86,7 +92,8 @@ export default function LuckySpinItemForm({
         unlimited: false,
         min_withdraw: "",
         max_withdraw: "",
-        token_amount: ""
+        token_amount: "",
+        battle_point_amount: ""
       });
       setImagePreview(null);
       setImageFile(null);
@@ -122,6 +129,10 @@ export default function LuckySpinItemForm({
     // Include token_amount for Token type
     if (visibleFields.token_amount) {
       submitData.token_amount = parseInt(fieldValues.token_amount, 10);
+    }
+
+    if (visibleFields.battle_point_amount) {
+      submitData.battle_point_amount = parseInt(fieldValues.battle_point_amount, 10);
     }
     
     // Include image file if uploaded
@@ -284,6 +295,24 @@ export default function LuckySpinItemForm({
                   className="bg-white/10 border-[0.5px] border-white/8 h-[36px] rounded-[4px] w-[304px] px-3 text-white placeholder-white/50 focus:outline-none focus:border-[#f2c36b]"
                   placeholder="Enter token amount"
                   min="0"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+            )}
+
+            {visibleFields.battle_point_amount && (
+              <div className="flex items-center gap-[18px]">
+                <label className="text-[18px] text-white w-[136px]">
+                  BP Amount:
+                </label>
+                <input
+                  type="number"
+                  value={fieldValues.battle_point_amount || ""}
+                  onChange={(e) => handleInputChange("battle_point_amount", e.target.value)}
+                  className="bg-white/10 border-[0.5px] border-white/8 h-[36px] rounded-[4px] w-[304px] px-3 text-white placeholder-white/50 focus:outline-none focus:border-[#f2c36b]"
+                  placeholder="Enter battle points"
+                  min="1"
                   required
                   disabled={isLoading}
                 />

@@ -46,6 +46,7 @@ function itemTypeToApi(value) {
   if (normalized === "FREE CREDIT") return 1;
   if (normalized === "TOKEN") return 2;
   if (normalized === "PRIZE") return 3;
+  if (normalized === "BATTLE POINT") return 4;
   return value;
 }
 
@@ -83,6 +84,10 @@ function buildItemPayload(data, includeImage = true) {
 
   if (data.itemType === "Token") {
     payload.token_amount = Number(data.tokens) || 0;
+  }
+
+  if (data.itemType === "Battle Point") {
+    payload.battle_point_amount = Number(data.battlePoints) || 0;
   }
 
   if (includeImage && data.image instanceof File) {

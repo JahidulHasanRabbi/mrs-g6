@@ -50,6 +50,7 @@ const ITEM_TYPE_LABELS = {
   2: "TOKEN",
   3: "PRIZE",
   4: "WORLD CUP SCORE",
+  5: "BATTLE POINT",
 };
 
 function itemTypeLabel(value) {
@@ -114,6 +115,7 @@ function mapKickResponse(response, resolved) {
         image: response?.image,
         amount: response?.amount,
         credit_amount: response?.amount,
+        battle_point_amount: response?.battle_point_amount ?? (itemTypeLabel(response?.item_type) === "BATTLE POINT" ? response?.amount : null),
       }
     : null;
 
@@ -406,11 +408,13 @@ export default function PenaltyKickPage() {
     const memberUuid = tokenStorage.getMemberUuid();
     if (!memberUuid) return;
     try {
-      await redeemAllKickRewards(memberUuid);
+      const result = await redeemAllKickRewards(memberUuid);
       await loadHistoryPage(1);
       refreshUserData?.().catch(() => {});
+      return result;
     } catch (err) {
       console.error("redeem all failed", err);
+      throw err;
     }
   }, [loadHistoryPage, play, refreshUserData]);
 

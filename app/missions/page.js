@@ -70,12 +70,17 @@ function missionStatus(row) {
 }
 
 function mapMission(row) {
+  const rewardParts = [];
+  const tokens = Number(row.reward_token_quantity ?? 0);
+  const battlePoints = Number(row.reward_battle_point_quantity ?? 0);
+  if (tokens > 0) rewardParts.push(`${tokens.toLocaleString("en-US")} Tokens`);
+  if (battlePoints > 0) rewardParts.push(`${battlePoints.toLocaleString("en-US")} BP`);
   return {
     id: row.uuid,
     tab: MISSION_TAB_BY_CATEGORY[row.category] ?? "daily",
     icon: iconForAction(row.condition_action),
     title: row.mission_name,
-    reward: row.reward_token_quantity ?? 0,
+    reward: rewardParts.join(" + ") || "No reward",
     badge: MISSION_TAB_BY_CATEGORY[row.category] ?? "",
     progress: {
       current: row.current_value ?? 0,
@@ -503,7 +508,14 @@ export default function MissionsPage() {
                       {item.mission_name}
                     </span>
                     <span className="shrink-0 text-[14px]" style={{ fontFamily: SERIF, color: MISSION_COLORS.gold }}>
-                      {Number(item.token_amount ?? 0).toLocaleString("en-US")} Tokens
+                      {[
+                        Number(item.token_amount ?? 0) > 0
+                          ? `${Number(item.token_amount).toLocaleString("en-US")} Tokens`
+                          : null,
+                        Number(item.battle_point_amount ?? 0) > 0
+                          ? `${Number(item.battle_point_amount).toLocaleString("en-US")} BP`
+                          : null,
+                      ].filter(Boolean).join(" + ") || "No reward"}
                     </span>
                   </div>
                 ))}

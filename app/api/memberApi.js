@@ -205,6 +205,13 @@ export async function getAvailableRedemptionItems() {
   }, true, 'member');
 }
 
+// GET /redemption/game-status/
+export async function getRedemptionGameStatus() {
+  return await apiRequest(ENDPOINTS.MEMBER.REDEMPTION_GAME_STATUS, {
+    method: 'GET'
+  }, true, 'member');
+}
+
 // POST /redemption/{uuid}/redeem/
 export async function redeemItem(itemUuid, memberUuid) {
   return await apiRequest(ENDPOINTS.MEMBER.REDEEM_ITEM(itemUuid), {

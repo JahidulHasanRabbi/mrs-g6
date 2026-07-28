@@ -17,6 +17,7 @@ const SKELETON_COLUMNS = [
   { label: "Lifetime Deposit", type: "number" },
   { label: "Monthly Deposit",  type: "number" },
   { label: "Check in Token",   type: "number" },
+  { label: "Check in BP",      type: "number" },
   { label: "Upgrade Bonus",    type: "number" },
   { label: "Birthday Bonus",   type: "number" },
   { label: "Mart Tier",        type: "badge" },
@@ -44,6 +45,7 @@ const TABLE_COLUMNS = [
   { key: "lifetime_deposit_required", label: "Lifetime Deposit", minW: "min-w-[140px]" },
   { key: "monthly_deposit",           label: "Monthly Deposit",  minW: "min-w-[160px]" },
   { key: "check_in_token",            label: "Check in Token",   minW: "min-w-[140px]" },
+  { key: "check_in_battle_point",     label: "Check in BP",      minW: "min-w-[130px]" },
   { key: "upgrade_bonus",             label: "Upgrade Bonus",    minW: "min-w-[160px]", hasFreeToken: true },
   { key: "birthday_bonus",            label: "Birthday Bonus",   minW: "min-w-[160px]", hasFreeToken: true },
   { key: "mart_tier",                 label: "Mart Tier",        minW: "min-w-[160px]" },
@@ -106,6 +108,7 @@ function TierFormModal({ tier, onClose, onSave, martTiers }) {
     upgrade_bonus: tier?.upgrade_bonus ?? "",
     birthday_bonus: tier?.birthday_bonus ?? "",
     check_in_token: tier?.check_in_token ?? "",
+    check_in_battle_point: tier?.check_in_battle_point ?? "",
     level_order: tier?.level_order ?? "",
     mart_tier_uuid: "",
   });
@@ -146,6 +149,7 @@ function TierFormModal({ tier, onClose, onSave, martTiers }) {
         upgrade_bonus: form.upgrade_bonus,
         birthday_bonus: form.birthday_bonus,
         check_in_token: form.check_in_token,
+        check_in_battle_point: form.check_in_battle_point,
         level_order: form.level_order,
       };
 
@@ -190,6 +194,7 @@ function TierFormModal({ tier, onClose, onSave, martTiers }) {
     { key: "lifetime_deposit_required", label: "Lifetime Deposit:",            type: "number" },
     { key: "monthly_deposit",           label: "Monthly Deposit:",             type: "number" },
     { key: "check_in_token",            label: "Check in Token:",              type: "number",  integer: true },
+    { key: "check_in_battle_point",     label: "Check in BP:",                 type: "number",  integer: true },
     { key: "upgrade_bonus",             label: "Upgrade Bonus (Free Token):",  type: "number",  integer: true },
     { key: "birthday_bonus",            label: "Birthday Bonus (Free Token):", type: "number",  integer: true },
     { key: "level_order",               label: "Level Order:",                 type: "number",  integer: true },
@@ -437,7 +442,7 @@ function MrsVipContent() {
             </div>
 
             <div className="overflow-x-auto scrollbar-admin rounded-lg">
-              <table className="w-full min-w-[1400px]">
+              <table className="w-full min-w-[1530px]">
                 <thead>
                   <tr className="bg-black">
                     {TABLE_COLUMNS.map((col) => (
@@ -499,6 +504,10 @@ function MrsVipContent() {
                         {/* Check in Token */}
                         <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                           {formatNum(row.check_in_token)}
+                        </td>
+                        {/* Check in BP */}
+                        <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
+                          {formatNum(row.check_in_battle_point)}
                         </td>
                         {/* Upgrade Bonus */}
                         <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">

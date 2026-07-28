@@ -16,6 +16,11 @@ const GOLD_BG = "linear-gradient(101deg, #dc9d16 1%, #f2cb7a 98%)";
 const PAGE_SIZE = 7;
 
 function normalizeMission(m) {
+  const rewardParts = [];
+  const tokens = Number(m.reward_token_quantity ?? 0);
+  const battlePoints = Number(m.reward_battle_point_quantity ?? 0);
+  if (tokens > 0) rewardParts.push(`${tokens.toLocaleString("en-US")} Tokens`);
+  if (battlePoints > 0) rewardParts.push(`${battlePoints.toLocaleString("en-US")} BP`);
   return {
     id: m.uuid,
     uuid: m.uuid,
@@ -25,7 +30,7 @@ function normalizeMission(m) {
     missionType: MISSION_TYPE_LABELS[m.mission_type] ?? m.mission_type,
     resetType: MISSION_RESET_TYPE_LABELS[m.reset_type] ?? m.reset_type,
     condition: MISSION_ACTION_LABELS[m.condition_action] ?? m.condition_action,
-    reward: `${Number(m.reward_token_quantity ?? 0).toLocaleString("en-US")} Tokens`,
+    reward: rewardParts.join(" + ") || "No reward",
     limitControl: m.limit_control == null ? "Unlimited" : m.limit_control,
     target: m.accumulate_target,
     _raw: m,

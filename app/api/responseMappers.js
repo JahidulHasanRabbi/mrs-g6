@@ -78,6 +78,7 @@ export function mapLuckySpinItems(apiResponse) {
     min_withdraw: item.min_withdraw,
     max_withdraw: item.max_withdraw,
     token_amount: item.token_amount,
+    battle_point_amount: item.battle_point_amount,
     quantity: item.quantity,
     unlimited: item.unlimited
   }));
@@ -96,6 +97,7 @@ function normalizeItemTypeLabel(value) {
   if (normalized === "FREE CREDIT" || normalized === "FREE_CREDIT" || normalized === "1") return "Free credit";
   if (normalized === "TOKEN" || normalized === "2") return "Token";
   if (normalized === "PRIZE" || normalized === "ITEM" || normalized === "3") return "Prize";
+  if (normalized === "BATTLE POINT" || normalized === "BATTLE_POINT" || normalized === "4") return "Battle Point";
   return String(value);
 }
 
@@ -112,6 +114,8 @@ export function mapSmashEggItems(apiResponse) {
     maxWithdraw: item.max_withdraw ?? "",
     tokens: item.token_amount ?? "",
     token_amount: item.token_amount,
+    battlePoints: item.battle_point_amount ?? "",
+    battle_point_amount: item.battle_point_amount,
     unlimited: Boolean(item.unlimited),
     image: item.image || null,
     position: item.position ?? null,
@@ -213,6 +217,8 @@ export function mapSpinResults(apiResponse) {
     uuid: result.uuid,
     reward_name: result.reward_name,
     image: result.image,
-    credit_amount: result.credit_amount || null
+    credit_amount: result.credit_amount || null,
+    item_type: result.item_type,
+    battle_point_amount: result.battle_point_amount
   }));
 }

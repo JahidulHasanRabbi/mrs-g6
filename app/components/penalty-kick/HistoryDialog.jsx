@@ -18,6 +18,8 @@ const ITEM_TYPE_DISPLAY = {
   "PRIZE": "Prize",
   "4": "Score",
   "WORLD CUP SCORE": "Score",
+  "5": "BP",
+  "BATTLE POINT": "BP",
 };
 
 function formatAmount(value) {
@@ -30,7 +32,11 @@ function HistoryRow({ row }) {
   const amount = Number(row.amount ?? 0);
   const hasAmount = Number.isFinite(amount) && amount > 0;
   const typeLabel = ITEM_TYPE_DISPLAY[String(row.sub || "").toUpperCase()] || row.sub || "—";
-  const amountText = hasAmount ? `+${formatAmount(amount)}` : typeLabel;
+  const amountText = hasAmount
+    ? typeLabel === "BP"
+      ? `+${amount.toLocaleString("en-US")} BP`
+      : `+${formatAmount(amount)}`
+    : typeLabel;
 
   return (
     <div

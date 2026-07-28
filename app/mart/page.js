@@ -7,7 +7,13 @@ import MartCategoryPills from "../components/mart/MartCategoryPills";
 import MartGrid from "../components/mart/MartGrid";
 import RedeemModal from "../components/mart/RedeemModal";
 import { LoadingState } from "../components/ui/LoadingState";
-import { getAvailableRedemptionItems, redeemItem, getVipTiers, getPublicRedemptionTiers } from "../api/memberApi";
+import {
+  getAvailableRedemptionItems,
+  getRedemptionGameStatus,
+  redeemItem,
+  getVipTiers,
+  getPublicRedemptionTiers,
+} from "../api/memberApi";
 import { mapRedemptionItems } from "../api/responseMappers";
 import { tokenStorage } from "../api/tokenStorage";
 import { useUser } from "../contexts/UserContext";
@@ -38,6 +44,7 @@ export default function MartPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [redeemResult, setRedeemResult] = useState(null);
+  const [gameStatus, setGameStatus] = useState(null);
   const { refreshUserData, userData } = useUser();
   const unlockedTierOrder = resolveUnlockedTierOrder(userData?.currentLevel);
   const [userMartTierLevel, setUserMartTierLevel] = useState(null);
@@ -47,8 +54,26 @@ export default function MartPage() {
   useEffect(() => {
     fetchUserMartTierLevel();
     fetchMartTiers();
-    fetchRedemptionItems();
+    fetchRedemptionStatus();
   }, [userData?.currentLevel]);
+
+  const fetchRedemptionStatus = async () => {
+    try {
+      const status = await getRedemptionGameStatus();
+      const nextStatus = Number(status?.game_status ?? 1);
+      setGameStatus(nextStatus);
+      if (nextStatus === 1) {
+        await fetchRedemptionItems();
+      } else {
+        setMartItems([]);
+        setIsLoading(false);
+      }
+    } catch (err) {
+      console.error("Error fetching redemption status:", err);
+      setGameStatus(1);
+      await fetchRedemptionItems();
+    }
+  };
 
   const fetchUserMartTierLevel = async () => {
     try {
@@ -191,6 +216,14 @@ export default function MartPage() {
     setSelectedItem(item);
     setRedeemResult(null);
 
+    if (gameStatus === 2) {
+      setRedeemResult({
+        success: false,
+        message: "Redemption is currently closed.",
+      });
+      return;
+    }
+
     // Check if this specific item is locked
     const itemLocked = isItemLocked(item);
     
@@ -297,14 +330,18 @@ export default function MartPage() {
         redeemResult={redeemResult}
       />
 
-      {/* Coming Soon Overlay - Covers entire page content */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-40 flex items-center justify-center">
-        <div className="text-center px-8">
-          <h1 className="text-white text-[48px] md:text-[72px] font-bold font-['Times_New_Roman'] animate-pulse">
-            COMING SOON
-          </h1>
+      {gameStatus === 2 && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="text-center px-8">
+            <h1 className="text-white text-[42px] font-bold font-['Times_New_Roman']">
+              MART IS CURRENTLY CLOSED
+            </h1>
+            <p className="mt-3 text-[18px] text-white/70 font-['Times_New_Roman']">
+              Please check back again later.
+            </p>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -31,6 +31,7 @@ export const ENDPOINTS = {
     HUNDRED_SMASH: (uuid) => `/member/${uuid}/hundred-smash/`,
     ALL_REDEMPTION_ITEMS: '/redemption/redemption-items/',
     AVAILABLE_REDEMPTION_ITEMS: '/redemption/redemption-items/available-items/',
+    REDEMPTION_GAME_STATUS: '/redemption/game-status/',
     REDEEM_ITEM: (uuid) => `/redemption/redemption-items/${uuid}/redeem/`
   },
   FRONT_VIEW: {
@@ -132,6 +133,7 @@ export const ENDPOINTS = {
     MEMBER_LIST_SINGLE: (uuid) => `/member/member-list/${uuid}/`,
     MEMBER_DEPOSIT: (uuid) => `/member/${uuid}/member-deposit/`,
     REDEMPTION_ITEMS: '/redemption/redemption-items/',
+    REDEMPTION_SETTINGS: '/redemption/settings/',
     REDEMPTION_ITEM: (uuid) => `/redemption/redemption-items/${uuid}/`,
     ARCHIVE_REDEMPTION_ITEM: (uuid) => `/redemption/redemption-items/${uuid}/archive/`,
     CHECKIN_SETTINGS: '/settings/checkin-settings/',

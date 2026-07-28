@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
 import RedemptionMallTable from "../../components/admin/redemption-mall/RedemptionMallTable";
 import RedemptionItemDialog from "../../components/admin/redemption-mall/RedemptionItemDialog";
+import RedemptionStatusModal from "../../components/admin/redemption-mall/RedemptionStatusModal";
 import { LoadingState } from "../../components/ui/LoadingState";
 import Skeleton from "../../components/admin/ui/Skeleton";
 import * as adminApi from "../../api/adminApi";
@@ -39,6 +40,14 @@ const BARE_SKELETON = (
     bare
   />
 );
+function StatusIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 11l3 3L22 4" />
+      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+    </svg>
+  );
+}
 
 export default function RedemptionMallPage() {
   return (
@@ -52,6 +61,9 @@ function RedemptionMallContent() {
   const [items, setItems] = useState([]);
   const [martTiers, setMartTiers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [gameStatus, setGameStatus] = useState(1);
+  const [isSavingStatus, setIsSavingStatus] = useState(false);
+  const [statusOpen, setStatusOpen] = useState(false);
   const [dialog, setDialog] = useState({ open: false, mode: "create", item: null });
 
   useEffect(() => {
@@ -71,6 +83,13 @@ function RedemptionMallContent() {
       } catch (err) {
         console.warn('Mart tiers not available:', err);
         setMartTiers([]);
+      }
+
+      try {
+        const settings = await adminApi.getRedemptionSettings();
+        setGameStatus(Number(settings?.game_status ?? 1));
+      } catch (err) {
+        console.warn("Redemption settings not available:", err);
       }
     } catch (err) {
       console.error('Failed to load redemption items:', err);
@@ -125,17 +144,41 @@ function RedemptionMallContent() {
     }
   };
 
+  const handleStatusSave = async (isOpen) => {
+    const nextStatus = isOpen ? 1 : 2;
+    setIsSavingStatus(true);
+    try {
+      const settings = await adminApi.updateRedemptionSettings({ game_status: nextStatus });
+      setGameStatus(Number(settings?.game_status ?? nextStatus));
+      setStatusOpen(false);
+    } catch (err) {
+      console.error("Failed to update redemption status:", err);
+      alert("Failed to update Mart status. Please try again.");
+    } finally {
+      setIsSavingStatus(false);
+    }
+  };
+
   return (
     <main className="min-h-screen px-6 pt-6 pb-10 xl:admin-content-pl xl:pr-10 xl:pt-10">
       {/* Page header */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between gap-4">
         <h1 className="text-4xl font-bold leading-[1.05] text-white">
           Redemption Management
         </h1>
-        <button className="flex h-[26px] w-[26px] items-center justify-center text-[#e9af41]" aria-label="Notifications">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2a7 7 0 0 0-7 7v3.586l-1.707 1.707A1 1 0 0 0 4 16h16a1 1 0 0 0 .707-1.707L19 12.586V9a7 7 0 0 0-7-7zm0 20a3 3 0 0 0 3-3H9a3 3 0 0 0 3 3z" />
-          </svg>
+        <button
+          type="button"
+          onClick={() => setStatusOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold text-[#fbeed2] transition-colors hover:bg-white/5"
+          title={`Member Mart is ${gameStatus === 1 ? "open" : "closed"}`}
+        >
+          <StatusIcon />
+          Game Status
+          <span
+            className={`ml-1 h-2 w-2 rounded-full ${
+              gameStatus === 1 ? "bg-[#54e98a]" : "bg-[#ff7676]"
+            }`}
+          />
         </button>
       </div>
 
@@ -150,6 +193,14 @@ function RedemptionMallContent() {
         martTiers={martTiers}
         onClose={close}
         onSubmit={handleSubmit}
+      />
+
+      <RedemptionStatusModal
+        open={statusOpen}
+        initialOpen={gameStatus === 1}
+        saving={isSavingStatus}
+        onClose={() => setStatusOpen(false)}
+        onSave={handleStatusSave}
       />
     </main>
   );

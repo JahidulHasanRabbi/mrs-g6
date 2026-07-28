@@ -364,6 +364,19 @@ export async function archiveRedemptionItem(uuid) {
   }, true, 'admin');
 }
 
+export async function getRedemptionSettings() {
+  return await apiRequest(ENDPOINTS.ADMIN.REDEMPTION_SETTINGS, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function updateRedemptionSettings(settingsData) {
+  return await apiRequest(ENDPOINTS.ADMIN.REDEMPTION_SETTINGS, {
+    method: 'POST',
+    body: settingsData
+  }, true, 'admin');
+}
+
 export async function getCheckinSettings() {
   return await apiRequest(ENDPOINTS.ADMIN.CHECKIN_SETTINGS, {
     method: 'GET'

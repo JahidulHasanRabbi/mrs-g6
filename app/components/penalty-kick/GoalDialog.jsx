@@ -7,13 +7,21 @@ import { COLORS, ICONS } from "./constants";
 
 export default function GoalDialog({ reward, onKickAgain, onRedeemAll, onReturn }) {
   const itemType = String(reward?.item_type || "").toUpperCase();
-  const amount = reward?.credit_amount ?? reward?.amount ?? reward?.token_amount ?? reward?.score_amount;
+  const amount = reward?.battle_point_amount ?? reward?.credit_amount ?? reward?.amount ?? reward?.token_amount ?? reward?.score_amount;
+  const rewardName =
+    itemType === "BATTLE POINT" &&
+    reward?.reward_name &&
+    !/\bBP\b|battle point/i.test(reward.reward_name)
+      ? `${reward.reward_name} (BP)`
+      : reward?.reward_name;
   const rewardText = reward?.reward_name
     ? amount
-      ? `${reward.reward_name} (${amount})`
-      : reward.reward_name
+      ? `${rewardName} (${amount})`
+      : rewardName
     : amount
-      ? `${amount} ${itemType === "TOKEN" ? "Token" : "Reward"}${Number(amount) === 1 ? "" : "s"}`
+      ? itemType === "BATTLE POINT"
+        ? `${Number(amount).toLocaleString("en-US")} BP`
+        : `${amount} ${itemType === "TOKEN" ? "Token" : "Reward"}${Number(amount) === 1 ? "" : "s"}`
       : "a reward";
   return (
     <GlassCard>

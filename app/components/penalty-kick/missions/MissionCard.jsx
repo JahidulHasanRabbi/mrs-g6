@@ -76,7 +76,7 @@ export default function MissionCard({ mission, onClaim, onJoin, actionLoading })
                 fontSize: 16,
               }}
             >
-              Reward: {reward} Tokens
+              Reward: {reward}
             </p>
             {description?.trim() && (
               <p

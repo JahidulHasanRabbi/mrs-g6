@@ -34,7 +34,8 @@ export const API_OPTIONS = {
     1: "Free Credit",
     2: "Item",
     3: "Token",
-    4: "Other"
+    4: "Other",
+    5: "Battle Point"
   }
 };
 

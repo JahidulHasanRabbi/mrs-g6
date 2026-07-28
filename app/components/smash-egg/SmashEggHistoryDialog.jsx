@@ -21,7 +21,8 @@ function formatAmount(value) {
 
 function HistoryRow({ row, index }) {
   const amount = formatAmount(row.amount);
-  const itemType = row.item_type || "";
+  const itemType = String(row.item_type || "");
+  const isBattlePoint = itemType.toUpperCase() === "BATTLE POINT" || itemType === "4";
 
   return (
     <motion.div
@@ -54,7 +55,7 @@ function HistoryRow({ row, index }) {
           className="text-[13px] font-bold text-[#ffe16d]"
           style={{ fontFamily: "var(--font-rubik), 'Rubik', sans-serif" }}
         >
-          {amount ? `RM ${amount}` : itemType}
+          {amount ? (isBattlePoint ? `${Number(row.amount).toLocaleString("en-US")} BP` : `RM ${amount}`) : itemType}
         </p>
       </div>
     </motion.div>

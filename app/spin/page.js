@@ -15,6 +15,16 @@ import { mapSpinResults, mapLuckySpinItems } from "../api/responseMappers";
 import { tokenStorage } from "../api/tokenStorage";
 import { useUser } from "../contexts/UserContext";
 
+function formatSpinReward(result) {
+  const name = result?.reward_name || "Reward";
+  const type = String(result?.item_type || "").toUpperCase();
+  const amount = Number(result?.battle_point_amount ?? 0);
+  if ((type === "BATTLE POINT" || type === "5") && amount > 0 && !/\bBP\b|battle point/i.test(name)) {
+    return `${name} (${amount.toLocaleString("en-US")} BP)`;
+  }
+  return name;
+}
+
 export default function SpinPage() {
   const [imageError, setImageError] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -78,7 +88,7 @@ export default function SpinPage() {
         // to display.
         const newWinnings = results.map(r => ({
           date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-          reward: r.reward_name,
+          reward: formatSpinReward(r),
         }));
         setUserWinnings(prev => [...newWinnings, ...prev]);
       }
@@ -89,7 +99,8 @@ export default function SpinPage() {
       if (results.length > 0) {
         const rewardCounts = {};
         results.forEach(r => {
-          rewardCounts[r.reward_name] = (rewardCounts[r.reward_name] || 0) + 1;
+          const rewardName = formatSpinReward(r);
+          rewardCounts[rewardName] = (rewardCounts[rewardName] || 0) + 1;
         });
         const rewardsList = Object.entries(rewardCounts)
           .map(([name, count]) => `${count > 1 ? count + 'x ' : ''}${name}`)
@@ -131,7 +142,10 @@ export default function SpinPage() {
       
       // Call API first before starting spin animation
       const response = await spinFunction(memberUuid);
-      const results = mapSpinResults(response);
+      const results = mapSpinResults(response).map((result) => {
+        const configured = spinItems.find((item) => item.uuid === result.uuid);
+        return configured ? { ...result, ...configured } : result;
+      });
       spinResultsRef.current = results;
       
       // Only start spinning if API call succeeds
@@ -170,7 +184,7 @@ export default function SpinPage() {
       
       return false; // Return false to prevent spin animation
     }
-  }, [memberUuid, isSpinning, refreshUserData]);
+  }, [memberUuid, isSpinning, refreshUserData, spinItems]);
 
   const handleCenterButtonClick = useCallback(async () => {
     const result = await handleSpinAction(oneSpin, "one spin");

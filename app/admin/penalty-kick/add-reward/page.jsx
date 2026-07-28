@@ -15,6 +15,7 @@ const ITEM_TYPES = [
   { value: "2", label: "Token" },
   { value: "3", label: "Prize" },
   { value: "4", label: "World Cup Score" },
+  { value: "5", label: "Battle Point" },
 ];
 
 const TYPE_LABEL_TO_VALUE = {
@@ -22,6 +23,7 @@ const TYPE_LABEL_TO_VALUE = {
   TOKEN: "2",
   PRIZE: "3",
   "WORLD CUP SCORE": "4",
+  "BATTLE POINT": "5",
 };
 
 function parseNumber(value) {
@@ -97,6 +99,7 @@ function RewardForm() {
     maxWithdraw: "",
     tokenAmount: "",
     scoreAmount: "",
+    battlePointAmount: "",
     unlimited: false,
   });
   const [imageFile, setImageFile] = useState(null);
@@ -120,6 +123,7 @@ function RewardForm() {
           maxWithdraw: item.max_withdraw ?? "",
           tokenAmount: item.token_amount ?? "",
           scoreAmount: item.score_amount ?? "",
+          battlePointAmount: item.battle_point_amount ?? "",
           unlimited: Boolean(item.unlimited),
         });
         setImagePreview(item.image || null);
@@ -161,6 +165,7 @@ function RewardForm() {
     }
     if (form.itemType === "2") payload.token_amount = parseNumber(form.tokenAmount);
     if (form.itemType === "4") payload.score_amount = parseNumber(form.scoreAmount);
+    if (form.itemType === "5") payload.battle_point_amount = parseNumber(form.battlePointAmount);
     if (imageFile) payload.image = imageFile;
     return payload;
   };
@@ -266,6 +271,12 @@ function RewardForm() {
           <div>
             <label className="mb-2 block text-[14px] font-semibold text-white">Score Amount</label>
             <input type="number" min="1" value={form.scoreAmount} onChange={handleChange("scoreAmount")} className={INPUT_BASE} />
+          </div>
+        )}
+        {form.itemType === "5" && (
+          <div>
+            <label className="mb-2 block text-[14px] font-semibold text-white">BP Amount</label>
+            <input type="number" min="1" value={form.battlePointAmount} onChange={handleChange("battlePointAmount")} className={INPUT_BASE} />
           </div>
         )}
         <div>

@@ -25,6 +25,7 @@ function PrizeCard({ prize }) {
   if (!prize) return null;
 
   const items = Array.isArray(prize.items) ? prize.items : [];
+  const prizeType = String(prize.itemType || "").toUpperCase();
 
   if (items.length > 0) {
     return (
@@ -62,7 +63,7 @@ function PrizeCard({ prize }) {
           className="text-[9px] text-[#ffb77d] uppercase leading-[13.5px]"
           style={{ fontFamily: "var(--font-acme), 'Acme', sans-serif" }}
         >
-          FREE CREDIT
+          {prizeType === "BATTLE POINT" ? "BATTLE POINT" : "FREE CREDIT"}
         </p>
         <p
           className="max-w-full break-words text-center text-[10px] text-[#d0c6ab] leading-[15px]"

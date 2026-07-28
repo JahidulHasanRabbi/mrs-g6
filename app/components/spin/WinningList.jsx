@@ -70,10 +70,16 @@ const WinningList = memo(function WinningList() {
           const formattedData = data.map(item => {
             const dt = new Date(item.datetime_obtained || Date.now());
             const dateStr = dt.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const isBattlePoint = String(item.item_type || "").toUpperCase() === "BATTLE POINT" || String(item.item_type) === "5";
+            const battlePoints = Number(item.battle_point_amount ?? 0);
+            const prizeName =
+              isBattlePoint && battlePoints > 0 && !/\bBP\b|battle point/i.test(item.prize_name || "")
+                ? `${item.prize_name || "Reward"} (${battlePoints.toLocaleString("en-US")} BP)`
+                : item.prize_name;
             return {
               date: dateStr,
               phone: maskUsername(item.display_name),
-              amount: item.prize_name
+              amount: prizeName
             };
           });
           setWinnings(formattedData);

@@ -14,7 +14,7 @@ const LABEL = "text-[18px] font-medium leading-[27px] text-[#f6dda6]";
 const FIELD =
   "w-full rounded-[8px] border border-[#fbeed2] bg-transparent px-4 py-3 text-[12px] leading-[18px] text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#e9af41]/40";
 
-const ITEM_TYPES = ["Free credit", "Token", "Prize"];
+const ITEM_TYPES = ["Free credit", "Token", "Prize", "Battle Point"];
 
 function ChevronIcon() {
   return (
@@ -89,6 +89,7 @@ const EMPTY = {
   minWithdraw: "",
   maxWithdraw: "",
   tokens: "",
+  battlePoints: "",
   prize: "",
   position: "",
   unlimited: false,
@@ -110,6 +111,7 @@ export default function RewardForm({ mode = "add", initial = null, onBack, onSav
         minWithdraw: String(initial.minWithdraw ?? ""),
         maxWithdraw: String(initial.maxWithdraw ?? ""),
         tokens: String(initial.tokens ?? ""),
+        battlePoints: String(initial.battlePoints ?? ""),
         position: initial.position == null ? "" : String(initial.position),
         unlimited: Boolean(initial.unlimited),
       });
@@ -142,6 +144,7 @@ export default function RewardForm({ mode = "add", initial = null, onBack, onSav
       minWithdraw: form.minWithdraw,
       maxWithdraw: form.maxWithdraw,
       tokens: form.tokens,
+      battlePoints: form.battlePoints,
       position: form.position,
       unlimited: form.unlimited,
       image: imageFile,
@@ -151,6 +154,7 @@ export default function RewardForm({ mode = "add", initial = null, onBack, onSav
   const isCredit = form.itemType === "Free credit";
   const isToken = form.itemType === "Token";
   const isPrize = form.itemType === "Prize";
+  const isBattlePoint = form.itemType === "Battle Point";
 
   return (
     <div className="flex w-full flex-col items-end gap-6 rounded-[16px] bg-[#05060a] p-10 drop-shadow-[0px_0px_1.5px_#dea220]">
@@ -233,6 +237,17 @@ export default function RewardForm({ mode = "add", initial = null, onBack, onSav
       {/* Row 4 — Position. Orders the member-site prize list; must be unique
           across non-archived items or the API rejects the save. */}
       <div className="flex w-full items-start gap-10">
+        <Field label="Battle Points" dimmed={!isBattlePoint}>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={form.battlePoints}
+            onChange={set("battlePoints")}
+            disabled={!isBattlePoint}
+            placeholder="0"
+            className={FIELD}
+          />
+        </Field>
         <Field label="Position">
           <input
             type="text"
@@ -243,7 +258,6 @@ export default function RewardForm({ mode = "add", initial = null, onBack, onSav
             className={FIELD}
           />
         </Field>
-        <div className="flex-1" />
         <div className="flex-1" />
       </div>
 

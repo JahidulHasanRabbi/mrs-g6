@@ -39,7 +39,10 @@ function buildRewardBoard(items) {
     .filter((item) => item.itemType !== "Free credit")
     .map((item, index) => ({
       rank: index + 1,
-      name: item.name,
+      name:
+        item.itemType === "Battle Point" && !/\bBP\b|battle point/i.test(item.name)
+          ? `${item.name}${Number(item.battlePoints) > 0 ? ` (${Number(item.battlePoints).toLocaleString("en-US")} BP)` : " BP"}`
+          : item.name,
       image: item.itemType === "Prize" ? item.image : null,
       itemType: item.itemType,
     }));
@@ -72,11 +75,17 @@ function mapWinningHistory(items) {
     const date = item.datetime_obtained
       ? new Date(item.datetime_obtained).toISOString().slice(0, 10)
       : "";
+    const isBattlePoint = String(item.item_type || "").toUpperCase() === "BATTLE POINT" || String(item.item_type) === "4";
+    const battlePoints = Number(item.battle_point_amount ?? 0);
+    const prizeName =
+      isBattlePoint && battlePoints > 0 && !/\bBP\b|battle point/i.test(item.prize_name || "")
+        ? `${item.prize_name || "Reward"} (${battlePoints.toLocaleString("en-US")} BP)`
+        : item.prize_name;
 
     return {
       date,
       name: maskName(item.display_name),
-      prize: item.prize_name,
+      prize: prizeName,
     };
   });
 }
@@ -94,6 +103,7 @@ function normalizeSmashResults(response) {
 function inferResultType(result, rewardLookup) {
   const matched = rewardLookup.get(result.uuid);
   if (matched?.itemType) return matched.itemType;
+  if (/battle point|\bBP\b/i.test(String(result.reward_name || ""))) return "Battle Point";
   if (/^RM\s?\d/i.test(String(result.reward_name || ""))) return "Free credit";
   if (/token/i.test(String(result.reward_name || ""))) return "Token";
   return "Prize";
@@ -112,9 +122,14 @@ function formatPrizeSummary(results, rewards) {
 
   const rewardLookup = new Map(rewards.map((item) => [item.uuid, item]));
   const grouped = results.reduce((acc, item) => {
-    const name = item.reward_name || "Reward";
     const itemType = inferResultType(item, rewardLookup);
     const matched = rewardLookup.get(item.uuid);
+    const bpAmount = Number(item.battle_point_amount ?? matched?.battlePoints ?? 0);
+    const rawName = item.reward_name || "Reward";
+    const name =
+      itemType === "Battle Point" && Number.isFinite(bpAmount) && bpAmount > 0 && !/\bBP\b|battle point/i.test(rawName)
+        ? `${rawName} (${bpAmount.toLocaleString("en-US")} BP)`
+        : rawName;
     const key = `${item.uuid || name}-${name}`;
     if (!acc[key]) {
       acc[key] = {

@@ -156,6 +156,9 @@ const RewardsList = memo(function RewardsList() {
   const creditRewards = items.filter(item =>
     item.item_type === 'FREE CREDIT' || item.item_type === 1
   );
+  const battlePointRewards = items.filter(item =>
+    item.item_type === 'BATTLE POINT' || item.item_type === 5
+  );
 
   if (isLoading) {
     return (
@@ -219,6 +222,20 @@ const RewardsList = memo(function RewardsList() {
                 <RewardItem
                   key={reward.uuid}
                   index={itemRewards.length + index}
+                  icon={reward.image}
+                  title={displayName}
+                />
+              );
+            })}
+            {battlePointRewards.map((reward, index) => {
+              const amount = Number(reward.battle_point_amount ?? 0);
+              const displayName = /\bBP\b|battle point/i.test(reward.reward_name)
+                ? reward.reward_name
+                : `${reward.reward_name}${amount > 0 ? ` (${amount.toLocaleString("en-US")} BP)` : " BP"}`;
+              return (
+                <RewardItem
+                  key={reward.uuid}
+                  index={itemRewards.length + tokenRewards.length + index}
                   icon={reward.image}
                   title={displayName}
                 />

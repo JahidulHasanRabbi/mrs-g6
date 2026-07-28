@@ -9,8 +9,8 @@ import * as adminApi from "../../api/adminApi";
 
 const SKELETON_COLUMNS = [
   { label: "Day",            type: "text" },
-  { label: "Minimum Reward", type: "number" },
-  { label: "Maximum Reward", type: "number" },
+  { label: "Token Reward",   type: "number" },
+  { label: "BP Reward",      type: "number" },
   { label: "Display Text",   type: "text" },
   { label: "Actions",        type: "actions", count: 1 },
 ];
@@ -91,6 +91,8 @@ function CheckinSettingsContent() {
       day,
       reward_minimum: 100,
       reward_maximum: 100,
+      battle_point_minimum: 0,
+      battle_point_maximum: 0,
       display_text: ''
     };
   };
@@ -132,8 +134,8 @@ function CheckinSettingsContent() {
                 <thead>
                   <tr className="border-b border-white/10">
                     <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Day</th>
-                    <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Minimum Reward</th>
-                    <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Maximum Reward</th>
+                    <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Token Reward</th>
+                    <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">BP Reward</th>
                     <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Display Text</th>
                     <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Actions</th>
                   </tr>
@@ -161,10 +163,10 @@ function CheckinSettingsContent() {
                           </div>
                         </td>
                         <td className="px-5 py-3 text-sm text-white">
-                          {dayReward.reward_minimum} tokens
+                          {dayReward.reward_minimum}–{dayReward.reward_maximum} tokens
                         </td>
                         <td className="px-5 py-3 text-sm text-white">
-                          {dayReward.reward_maximum} tokens
+                          {dayReward.battle_point_minimum ?? 0}–{dayReward.battle_point_maximum ?? 0} BP
                         </td>
                         <td className="px-5 py-3 text-sm text-white">
                           {dayReward.display_text || <span className="text-gray-500">Auto</span>}
@@ -193,8 +195,10 @@ function CheckinSettingsContent() {
 function DayFormModal({ day, onSubmit, onClose, isSaving }) {
   const [formData, setFormData] = useState({
     day: day.day,
-    reward_minimum: day.reward_minimum || 100,
-    reward_maximum: day.reward_maximum || 100,
+    reward_minimum: day.reward_minimum ?? 100,
+    reward_maximum: day.reward_maximum ?? 100,
+    battle_point_minimum: day.battle_point_minimum ?? 0,
+    battle_point_maximum: day.battle_point_maximum ?? 0,
     display_text: day.display_text || ''
   });
   const [error, setError] = useState(null);
@@ -212,13 +216,23 @@ function DayFormModal({ day, onSubmit, onClose, isSaving }) {
     setError(null);
 
     // Validation
-    if (formData.reward_minimum < 0 || formData.reward_maximum < 0) {
+    if (
+      formData.reward_minimum < 0 ||
+      formData.reward_maximum < 0 ||
+      formData.battle_point_minimum < 0 ||
+      formData.battle_point_maximum < 0
+    ) {
       setError({ message: 'Reward values must be positive' });
       return;
     }
 
     if (formData.reward_minimum > formData.reward_maximum) {
       setError({ message: 'Minimum reward cannot be greater than maximum reward' });
+      return;
+    }
+
+    if (formData.battle_point_minimum > formData.battle_point_maximum) {
+      setError({ message: 'Minimum BP cannot be greater than maximum BP' });
       return;
     }
 
@@ -256,7 +270,7 @@ function DayFormModal({ day, onSubmit, onClose, isSaving }) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-1">
-                Minimum Reward *
+                Minimum Tokens *
               </label>
               <input
                 type="number"
@@ -272,12 +286,46 @@ function DayFormModal({ day, onSubmit, onClose, isSaving }) {
 
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-1">
-                Maximum Reward *
+                Maximum Tokens *
               </label>
               <input
                 type="number"
                 name="reward_maximum"
                 value={formData.reward_maximum}
+                onChange={handleChange}
+                required
+                min="0"
+                step="1"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400/30"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-1">
+                Minimum BP *
+              </label>
+              <input
+                type="number"
+                name="battle_point_minimum"
+                value={formData.battle_point_minimum}
+                onChange={handleChange}
+                required
+                min="0"
+                step="1"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400/30"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-1">
+                Maximum BP *
+              </label>
+              <input
+                type="number"
+                name="battle_point_maximum"
+                value={formData.battle_point_maximum}
                 onChange={handleChange}
                 required
                 min="0"
@@ -312,7 +360,9 @@ function DayFormModal({ day, onSubmit, onClose, isSaving }) {
                   ? `+${formData.reward_minimum}`
                   : `+${formData.reward_minimum}-${formData.reward_maximum}`
               )}{' '}
-              tokens for Day {formData.day}
+              tokens and {formData.battle_point_minimum === formData.battle_point_maximum
+                ? formData.battle_point_minimum
+                : `${formData.battle_point_minimum}-${formData.battle_point_maximum}`} BP for Day {formData.day}
             </p>
           </div>
 
