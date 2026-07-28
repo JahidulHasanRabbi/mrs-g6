@@ -17,6 +17,7 @@ import {
 import { mapRedemptionItems } from "../api/responseMappers";
 import { tokenStorage } from "../api/tokenStorage";
 import { useUser } from "../contexts/UserContext";
+import { useTheme } from "../contexts/ThemeContext";
 
 const TIER_NAME_TO_ORDER = {
   starter: 1,
@@ -46,6 +47,7 @@ export default function MartPage() {
   const [redeemResult, setRedeemResult] = useState(null);
   const [gameStatus, setGameStatus] = useState(null);
   const { refreshUserData, userData } = useUser();
+  const { isThemed, isKgame99, isLv918 } = useTheme();
   const unlockedTierOrder = resolveUnlockedTierOrder(userData?.currentLevel);
   const [userMartTierLevel, setUserMartTierLevel] = useState(null);
   const [martTiers, setMartTiers] = useState([]);
@@ -331,13 +333,32 @@ export default function MartPage() {
       />
 
       {gameStatus === 2 && (
-        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="text-center px-8">
-            <h1 className="text-white text-[42px] font-bold font-['Times_New_Roman']">
-              MART IS CURRENTLY CLOSED
-            </h1>
-            <p className="mt-3 text-[18px] text-white/70 font-['Times_New_Roman']">
-              Please check back again later.
+        <div
+          className={`fixed inset-x-0 z-30 grid place-items-center bg-black/70 px-6 backdrop-blur-md ${
+            isThemed ? "top-[64px] bottom-[120px]" : "top-[68px] bottom-[100px]"
+          }`}
+        >
+          <div
+            className="w-full max-w-[360px] rounded-xl border border-[rgba(255,246,223,0.16)] px-6 py-7 text-center shadow-[0_16px_50px_rgba(0,0,0,0.45)]"
+            style={{
+              backgroundColor: isThemed
+                ? isKgame99 || isLv918
+                  ? "rgba(20,31,54,0.95)"
+                  : "rgba(35,31,20,0.95)"
+                : "rgba(7,25,6,0.95)",
+            }}
+          >
+            <p
+              className="text-[20px] text-[#ffd700]"
+              style={{ fontFamily: "var(--font-acme), 'Acme', sans-serif" }}
+            >
+              Mart is currently closed
+            </p>
+            <p
+              className="mt-3 text-[12px] leading-5 text-[#d0c6ab]"
+              style={{ fontFamily: "var(--font-rubik), 'Rubik', sans-serif" }}
+            >
+              Please check back later.
             </p>
           </div>
         </div>
