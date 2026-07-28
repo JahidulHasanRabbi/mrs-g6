@@ -1,6 +1,7 @@
 "use client";
 
-import { COLORS, ICONS } from "./constants";
+import { ICONS } from "./constants";
+import { usePkColors } from "./usePkColors";
 
 export default function GreenCta({
   children,
@@ -9,6 +10,7 @@ export default function GreenCta({
   showPlayIcon = true,
   className = "",
 }) {
+  const { colors: COLORS, isThemed } = usePkColors();
   return (
     <button
       type="button"
@@ -18,8 +20,10 @@ export default function GreenCta({
       style={{
         backgroundColor: COLORS.primary,
         color: COLORS.primaryDeep,
-        boxShadow: `0 4px 0 ${COLORS.primaryShadow}, 0 0 24px rgba(84,233,138,0.3)`,
-        fontFamily: "'Lexend', sans-serif",
+        boxShadow: `0 4px 0 ${COLORS.primaryShadow}, 0 0 24px ${COLORS.glow35}`,
+        fontFamily: isThemed
+          ? "var(--font-berkshire-swash), cursive"
+          : "'Lexend', sans-serif",
       }}
     >
       {showPlayIcon && (
@@ -44,6 +48,7 @@ export default function GreenCta({
 }
 
 export function OutlinePillCta({ children, onClick, disabled = false, className = "" }) {
+  const { colors: COLORS } = usePkColors();
   return (
     <button
       type="button"

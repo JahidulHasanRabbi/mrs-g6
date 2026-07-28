@@ -155,7 +155,7 @@ const VideoGallery = memo(function VideoGallery() {
                 className="w-16 h-16 rounded-full flex items-center justify-center"
                 style={{
                   background:
-                    "linear-gradient(135deg, #ffd700 0%, #e9af41 100%)",
+                    "linear-gradient(135deg, var(--lb-accent, #ffd700) 0%, var(--lb-accent, #e9af41) 100%)",
                   boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.5)",
                 }}
               >

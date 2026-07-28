@@ -30,7 +30,7 @@ export default function LeaderboardSkeleton({ config }) {
             key={rank}
             className="flex w-full flex-col items-center gap-2 rounded-lg p-6"
             style={{
-              backgroundColor: "rgba(32,31,31,0.75)",
+              backgroundColor: "var(--lb-card-overlay)",
               border: `1px solid ${config.rowBorder}`,
             }}
           >
@@ -45,7 +45,7 @@ export default function LeaderboardSkeleton({ config }) {
       <div
         className="w-full overflow-hidden rounded-lg p-px"
         style={{
-          backgroundColor: "rgba(14,14,14,0.75)",
+          backgroundColor: "var(--lb-card-overlay)",
           border: `1px solid ${config.tableBorder}`,
         }}
       >

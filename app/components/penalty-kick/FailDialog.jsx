@@ -3,7 +3,7 @@
 import GlassCard from "./GlassCard";
 import GreenCta, { OutlinePillCta } from "./GreenCta";
 import RedeemAllButton from "./RedeemAllButton";
-import { COLORS } from "./constants";
+import { usePkColors } from "./usePkColors";
 
 // reason: "save" (keeper saved it), "miss" (ball went wide), or "error".
 export default function FailDialog({
@@ -15,10 +15,48 @@ export default function FailDialog({
   message,
   kickAgainLabel = "Kick Again?",
 }) {
+  const { colors: COLORS, soft, theme } = usePkColors();
   const isMiss = reason === "miss";
   const isError = reason === "error";
   const heading = title || (isMiss ? "Off-target!" : isError ? "Kick failed" : "Game over");
   const body = message || (isMiss ? "Ball went wide - easy on the power next time." : "The keeper read your shot.");
+
+  // Themed skins: ornate frame holds the heading + message; buttons render
+  // below the frame so they never overflow the fixed art (matches Goal dialog).
+  if (theme) {
+    const { OrnateCard, Button, palette } = theme;
+    return (
+      <div className="flex w-full max-w-[360px] flex-col items-center gap-3">
+        <OrnateCard>
+          <p
+            className="text-[22px] uppercase tracking-[1.5px]"
+            style={{ fontFamily: "var(--font-acme), sans-serif", color: palette.cream }}
+          >
+            {heading}
+          </p>
+          <p
+            className="mt-3 px-4 text-[13px] leading-5"
+            style={{ color: palette.sand, fontFamily: "var(--font-rubik), sans-serif" }}
+          >
+            {body}
+          </p>
+        </OrnateCard>
+        <Button onClick={onKickAgain}>{kickAgainLabel}</Button>
+        {onRedeemAll && !isError && (
+          <Button variant="gold" onClick={onRedeemAll}>
+            Redeem All
+          </Button>
+        )}
+        <button
+          onClick={onReturn}
+          className="mt-1 text-[12px] underline"
+          style={{ color: palette.sand, fontFamily: "var(--font-rubik), sans-serif" }}
+        >
+          Return to website
+        </button>
+      </div>
+    );
+  }
 
   return (
     <GlassCard>
@@ -27,7 +65,7 @@ export default function FailDialog({
         style={{
           color: COLORS.primary,
           fontFamily: "'Lexend', sans-serif",
-          textShadow: "0 0 12px rgba(84,233,138,0.5)",
+          textShadow: `0 0 12px ${soft(0.5)}`,
         }}
       >
         {heading}

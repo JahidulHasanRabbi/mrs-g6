@@ -1,6 +1,7 @@
 "use client";
 
 import GoldButton from "./GoldButton";
+import ThemedActionButton from "../../themes/shared/ThemedActionButton";
 import { MISSION_COLORS } from "./data";
 
 const ICONS = {
@@ -146,7 +147,7 @@ export default function MissionCard({ mission, onClaim, onJoin, actionLoading })
                   ? `linear-gradient(90deg, ${MISSION_COLORS.goldDeep}, #F2C36B)`
                   : MISSION_COLORS.gold,
                 boxShadow: completed
-                  ? "0 0 15px rgba(84,233,138,0.3)"
+                  ? "0 0 15px rgba(var(--lb-accent-rgb), 0.3)"
                   : "0 0 15px rgba(255,221,116,0.3)",
               }}
             />
@@ -155,15 +156,41 @@ export default function MissionCard({ mission, onClaim, onJoin, actionLoading })
       </div>
 
       {/* Action: manual join is optional because backend may auto-join on the first qualifying action. */}
-      <GoldButton
-        disabled={actionLoading || claimed || (joined && !completed)}
-        onClick={() => {
+      {(() => {
+        const btnDisabled = actionLoading || claimed || (joined && !completed);
+        const btnLabel = actionLoading
+          ? "Loading..."
+          : claimed
+            ? "Claimed"
+            : !joined
+              ? "Join"
+              : completed
+                ? "Claim"
+                : "In Progress";
+        const btnClick = () => {
           if (!joined) onJoin?.(mission.id);
           else if (completed) onClaim?.(mission.id);
-        }}
-      >
-        {actionLoading ? "Loading..." : claimed ? "Claimed" : !joined ? "Join" : completed ? "Claim" : "In Progress"}
-      </GoldButton>
+        };
+        // On a themed portal this renders the theme's ornate gold button; on
+        // the default theme it falls back to the missions GoldButton. Centered
+        // so the theme plaque's fixed max width doesn't strand it to the left.
+        return (
+          <div className="flex w-full justify-center">
+            <ThemedActionButton
+              textSize={16}
+              disabled={btnDisabled}
+              onClick={btnClick}
+              fallback={
+                <GoldButton disabled={btnDisabled} onClick={btnClick}>
+                  {btnLabel}
+                </GoldButton>
+              }
+            >
+              {btnLabel}
+            </ThemedActionButton>
+          </div>
+        );
+      })()}
     </div>
   );
 }

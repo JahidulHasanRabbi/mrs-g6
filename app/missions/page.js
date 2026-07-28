@@ -13,6 +13,9 @@ import {
   MISSION_COLORS,
 } from "../components/penalty-kick/missions/data";
 import { useUser } from "../contexts/UserContext";
+import { useTheme } from "../contexts/ThemeContext";
+import ThemedPageShell from "../components/themes/shared/ThemedPageShell";
+import ThemedActionButton from "../components/themes/shared/ThemedActionButton";
 import { HOME_ASSETS } from "../components/home/homeAssets";
 import {
   claimMissionReward,
@@ -172,17 +175,27 @@ function MissionTermsDialog({ loading, termsText, error, onClose }) {
           </ol>
         )}
 
-        <button
-          type="button"
-          onClick={onClose}
-          className="mt-5 w-full rounded-[10px] py-3 text-[15px] font-bold uppercase text-black"
-          style={{
-            backgroundImage: "linear-gradient(90deg, #ffe77a 0%, #e9af41 100%)",
-            fontFamily: SERIF,
-          }}
-        >
-          Close
-        </button>
+        <div className="mt-5 flex w-full justify-center">
+          <ThemedActionButton
+            textSize={15}
+            onClick={onClose}
+            fallback={
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-full rounded-[10px] py-3 text-[15px] font-bold uppercase text-black"
+                style={{
+                  backgroundImage: "linear-gradient(90deg, #ffe77a 0%, #e9af41 100%)",
+                  fontFamily: SERIF,
+                }}
+              >
+                Close
+              </button>
+            }
+          >
+            Close
+          </ThemedActionButton>
+        </div>
       </div>
     </div>
   );
@@ -190,6 +203,10 @@ function MissionTermsDialog({ loading, termsText, error, onClose }) {
 
 export default function MissionsPage() {
   const { userData, refreshUserData } = useUser();
+  // On a theme, the whole page is wrapped in the themed shell (themed header +
+  // lucky-spin background + themed bottom nav), so its own header/bg/footer are
+  // suppressed below.
+  const { isThemed } = useTheme();
   const [activeTab, setActiveTab] = useState("daily");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   // Sign of the last tab move (+1 → moved right, -1 → moved left) so the
@@ -316,27 +333,33 @@ export default function MissionsPage() {
     }
   };
 
-  return (
+  const page = (
     <div
       className="relative flex min-h-[100dvh] w-full flex-col"
-      style={{
-        // Deep-green base + the shared VIP floral pattern, matching the Figma
-        // backdrop. Same asset the rest of the member portal uses, fixed so it
-        // stays put while the mission list scrolls.
-        backgroundColor: MISSION_COLORS.bg,
-        backgroundImage: `url(${HOME_ASSETS.backgroundPattern})`,
-        backgroundSize: "cover",
-        backgroundPosition: "top center",
-        backgroundRepeat: "no-repeat",
-        backgroundAttachment: "fixed",
-      }}
+      style={
+        isThemed
+          ? undefined
+          : {
+              // Deep-green base + the shared VIP floral pattern, matching the
+              // Figma backdrop. Same asset the rest of the member portal uses,
+              // fixed so it stays put while the mission list scrolls.
+              backgroundColor: MISSION_COLORS.bg,
+              backgroundImage: `url(${HOME_ASSETS.backgroundPattern})`,
+              backgroundSize: "cover",
+              backgroundPosition: "top center",
+              backgroundRepeat: "no-repeat",
+              backgroundAttachment: "fixed",
+            }
+      }
     >
       {/* Top HUD bar (gold "Missions" + info / menu chips) from the Figma
           "Missions Hub" frame. The hamburger opens the shared member nav. */}
-      <MissionsHeader
-        onInfoClick={openTerms}
-        onMenuClick={() => setIsMenuOpen(true)}
-      />
+      {!isThemed && (
+        <MissionsHeader
+          onInfoClick={openTerms}
+          onMenuClick={() => setIsMenuOpen(true)}
+        />
+      )}
 
       {/* pb clears the fixed 100px FooterNav. */}
       <div className="flex flex-col gap-6 px-5 pb-32 pt-2">
@@ -346,13 +369,13 @@ export default function MissionsPage() {
             <div className="flex flex-col">
               <h2
                 className="font-bold leading-[28.8px]"
-                style={{ fontFamily: SERIF, color: MISSION_COLORS.title, fontSize: 24 }}
+                style={{ fontFamily: SERIF, color: "var(--lb-heading)", fontSize: 24, textShadow: "var(--lb-heading-shadow, none)" }}
               >
                 Missions
               </h2>
               <p
                 className="leading-[24px]"
-                style={{ fontFamily: SERIF, color: MISSION_COLORS.muted, fontSize: 16 }}
+                style={{ fontFamily: SERIF, color: "var(--lb-heading-muted)", fontSize: 16, textShadow: "var(--lb-heading-shadow, none)" }}
               >
                 Complete tasks for huge rewards
               </p>
@@ -418,11 +441,9 @@ export default function MissionsPage() {
                     className={`relative z-10 whitespace-nowrap leading-[24px] ${isActive ? "font-bold" : ""}`}
                     style={{
                       fontFamily: SERIF,
-                      // Scale with viewport so the longest label ("Challenge")
-                      // stays inside the ornate active frame on narrow phones;
-                      // caps at the 16px design size on the 475 layout.
                       fontSize: "clamp(11px, 3.4vw, 16px)",
-                      color: isActive ? MISSION_COLORS.goldText : MISSION_COLORS.muted,
+                      color: isActive ? "var(--lb-tab-active)" : "var(--lb-tab-inactive, #BBCBBB)",
+                      textShadow: isActive ? "none" : "var(--lb-heading-shadow, none)",
                     }}
                   >
                     {tab.label}
@@ -468,7 +489,7 @@ export default function MissionsPage() {
               ) : (
                 <p
                   className="py-10 text-center leading-[24px]"
-                  style={{ fontFamily: SERIF, color: MISSION_COLORS.muted, fontSize: 16 }}
+                  style={{ fontFamily: SERIF, color: "var(--lb-heading-muted)", fontSize: 16, textShadow: "var(--lb-heading-shadow, none)" }}
                 >
                   No missions available yet - check back soon.
                 </p>
@@ -480,15 +501,23 @@ export default function MissionsPage() {
         {/* ── History button ───────────────────────────────────────── */}
         <div className="flex justify-center pt-4">
           <div className="w-full max-w-[254px]">
-            <GoldButton onClick={loadHistory}>
-              <img
-                src={HISTORY_ICON}
-                alt=""
-                aria-hidden="true"
-                style={{ width: 15, height: 15 }}
-              />
+            <ThemedActionButton
+              textSize={14}
+              onClick={loadHistory}
+              fallback={
+                <GoldButton onClick={loadHistory}>
+                  <img
+                    src={HISTORY_ICON}
+                    alt=""
+                    aria-hidden="true"
+                    style={{ width: 15, height: 15 }}
+                  />
+                  Mission Progress History
+                </GoldButton>
+              }
+            >
               Mission Progress History
-            </GoldButton>
+            </ThemedActionButton>
           </div>
         </div>
         {history && (
@@ -525,9 +554,11 @@ export default function MissionsPage() {
         )}
       </div>
 
-      <FooterNav />
+      {!isThemed && <FooterNav />}
 
-      <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+      {!isThemed && (
+        <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+      )}
 
       {termsOpen && (
         <MissionTermsDialog
@@ -561,4 +592,14 @@ export default function MissionsPage() {
       )}
     </div>
   );
+
+  // The info chip lives in the themed header; wire it to the same terms dialog.
+  if (isThemed) {
+    return (
+      <ThemedPageShell onInfoClick={openTerms} balance={userData?.balance}>
+        {page}
+      </ThemedPageShell>
+    );
+  }
+  return page;
 }

@@ -3,6 +3,9 @@
 import { Suspense, useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
+import { useUser } from "../contexts/UserContext";
+import { useTheme } from "../contexts/ThemeContext";
+import ThemedPageShell from "../components/themes/shared/ThemedPageShell";
 import { FooterNav } from "../components/footer";
 import { HamburgerMenu } from "../components/hamburger";
 import LeaderboardTabs from "../components/leaderboard-new/LeaderboardTabs";
@@ -164,6 +167,8 @@ function Top20LeaderboardPageInner() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { userData } = useUser();
+  const { isThemed } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [data, setData] = useState(EMPTY_BOARD);
@@ -264,60 +269,66 @@ function Top20LeaderboardPageInner() {
 
   const config = LEADERBOARD_CONFIG[activeTab];
 
-  return (
+  const page = (
     <div
       className="relative flex min-h-[100dvh] w-full flex-col overflow-hidden"
-      style={{
-        background:
-          "radial-gradient(ellipse at center, rgba(0,130,43,1) 0%, rgba(4,78,28,1) 25%, rgba(5,51,21,1) 50%, rgba(7,25,13,1) 100%)",
-      }}
+      style={
+        isThemed
+          ? undefined
+          : {
+              background:
+                "radial-gradient(ellipse at center, rgba(0,130,43,1) 0%, rgba(4,78,28,1) 25%, rgba(5,51,21,1) 50%, rgba(7,25,13,1) 100%)",
+            }
+      }
     >
-      <div className="fixed top-0 left-1/2 z-50 flex h-[72px] w-full max-w-[475px] -translate-x-1/2 items-center justify-between border-b-2 border-[#e9af41]/60 bg-[#0a1a0a]/95 px-4 shadow-[0_4px_12px_rgba(0,0,0,0.5)] backdrop-blur-sm">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setIsMenuOpen(true)}
-            className="flex cursor-pointer flex-col items-center gap-0"
-            aria-label="Open menu"
-          >
-            <img
-              src="/assets/images/hamburger-icon.png"
-              alt="Menu"
-              className="h-9 w-9 object-contain"
-            />
-            <p
-              className="-mt-1 text-[14px] font-bold"
+      {!isThemed && (
+        <div className="fixed top-0 left-1/2 z-50 flex h-[72px] w-full max-w-[475px] -translate-x-1/2 items-center justify-between border-b-2 border-[#e9af41]/60 bg-[#0a1a0a]/95 px-4 shadow-[0_4px_12px_rgba(0,0,0,0.5)] backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsMenuOpen(true)}
+              className="flex cursor-pointer flex-col items-center gap-0"
+              aria-label="Open menu"
+            >
+              <img
+                src="/assets/images/hamburger-icon.png"
+                alt="Menu"
+                className="h-9 w-9 object-contain"
+              />
+              <p
+                className="-mt-1 text-[14px] font-bold"
+                style={{
+                  fontFamily: '\"Times New Roman\", serif',
+                  color: "#e9af41",
+                }}
+              >
+                Menu
+              </p>
+            </button>
+
+            <h1
+              className="text-2xl font-semibold uppercase tracking-[-1.2px]"
               style={{
-                fontFamily: '\"Times New Roman\", serif',
-                color: "#e9af41",
+                color: config.color,
+                fontFamily: "var(--font-inter)",
+                transition: "color 0.3s ease",
               }}
             >
-              Menu
-            </p>
-          </button>
-
-          <h1
-            className="text-2xl font-semibold uppercase tracking-[-1.2px]"
-            style={{
-              color: config.color,
-              fontFamily: "var(--font-inter)",
-              transition: "color 0.3s ease",
-            }}
+              Leaderboards
+            </h1>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsInfoOpen(true)}
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 border-[#e9af41] text-[18px] font-bold italic text-[#e9af41]"
+            style={{ fontFamily: "var(--font-inter)" }}
+            aria-label="Leaderboard terms and conditions"
           >
-            Leaderboards
-          </h1>
+            i
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsInfoOpen(true)}
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 border-[#e9af41] text-[18px] font-bold italic text-[#e9af41]"
-          style={{ fontFamily: "var(--font-inter)" }}
-          aria-label="Leaderboard terms and conditions"
-        >
-          i
-        </button>
-      </div>
+      )}
 
-      <div className="flex-1 pb-[140px] pt-[84px]">
+      <div className={`flex-1 pb-[140px] ${isThemed ? "pt-2" : "pt-[84px]"}`}>
         <div className="flex w-full flex-col items-center gap-6">
           <div className="w-full px-4">
             <LeaderboardTabs
@@ -350,8 +361,10 @@ function Top20LeaderboardPageInner() {
           onClose={() => setIsInfoOpen(false)}
         />
       )}
-      <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
-      <FooterNav />
+      {!isThemed && (
+        <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+      )}
+      {!isThemed && <FooterNav />}
 
       {isMaintenance && (
         <div className="fixed inset-x-0 top-[68px] bottom-[100px] z-30 grid place-items-center bg-black/70 px-6 backdrop-blur-md">
@@ -376,6 +389,19 @@ function Top20LeaderboardPageInner() {
       )}
     </div>
   );
+
+  // The info chip lives in the themed header; wire it to the same info modal.
+  if (isThemed) {
+    return (
+      <ThemedPageShell
+        onInfoClick={() => setIsInfoOpen(true)}
+        balance={userData?.balance}
+      >
+        {page}
+      </ThemedPageShell>
+    );
+  }
+  return page;
 }
 
 export default function Top20LeaderboardPage() {

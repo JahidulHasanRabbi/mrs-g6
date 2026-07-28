@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
 import ProfileFrame from "./ProfileFrame";
 import { useUser } from "../../contexts/UserContext";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export default function FrameSelectionModal({
   isOpen,
@@ -13,6 +14,52 @@ export default function FrameSelectionModal({
   profilePicture,
 }) {
   const { availableFrames, isLoadingFrames } = useUser();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang } = useTheme();
+
+  let modalBg, subtitleColor, tierColor, checkBg, checkStroke;
+  if (isAcebet77) {
+    modalBg = "linear-gradient(to bottom, #0a0805 0%, #17130c 100%)";
+    subtitleColor = "#d0c6ab";
+    tierColor = "#d0c6ab";
+    checkBg = "#e9af41";
+    checkStroke = "#171006";
+  } else if (isUbetclub) {
+    modalBg = "linear-gradient(to bottom, #18080a 0%, #3d0d10 100%)";
+    subtitleColor = "#d8c9a0";
+    tierColor = "#d8c9a0";
+    checkBg = "#f2c36b";
+    checkStroke = "#280506";
+  } else if (isEp369) {
+    modalBg = "linear-gradient(to bottom, #001002 0%, #0d3d1c 100%)";
+    subtitleColor = "#bcd0a8";
+    tierColor = "#bcd0a8";
+    checkBg = "#e9af41";
+    checkStroke = "#04140a";
+  } else if (isKgame99) {
+    modalBg = "linear-gradient(to bottom, #061527 0%, #0f2a4a 100%)";
+    subtitleColor = "#a7c3e2";
+    tierColor = "#a7c3e2";
+    checkBg = "#e2b24a";
+    checkStroke = "#0a1a2f";
+  } else if (isLv918) {
+    modalBg = "linear-gradient(to bottom, #2a0a1f 0%, #4a0f30 100%)";
+    subtitleColor = "#e0b4cc";
+    tierColor = "#e0b4cc";
+    checkBg = "#e8b53a";
+    checkStroke = "#2a0a1f";
+  } else if (isN1gang) {
+    modalBg = "linear-gradient(to bottom, #0a0805 0%, #17130c 100%)";
+    subtitleColor = "#d0c6ab";
+    tierColor = "#d0c6ab";
+    checkBg = "#e9af41";
+    checkStroke = "#171006";
+  } else {
+    modalBg = "linear-gradient(to bottom, #0a1a0a 0%, #102810 100%)";
+    subtitleColor = "#a8c08a";
+    tierColor = "#a8c08a";
+    checkBg = "#3a8a2a";
+    checkStroke = "#fff";
+  }
 
   useEffect(() => {
     if (!isOpen) return;
@@ -40,9 +87,7 @@ export default function FrameSelectionModal({
             aria-modal="true"
             aria-label="Choose profile frame"
             className="relative w-full max-w-[440px] rounded-2xl border-2 border-[#e9af41] shadow-[0_8px_30px_rgba(0,0,0,0.6)]"
-            style={{
-              background: "linear-gradient(to bottom, #0a1a0a 0%, #102810 100%)",
-            }}
+            style={{ background: modalBg }}
             initial={{ scale: 0.9, y: 20, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.95, y: 10, opacity: 0 }}
@@ -63,7 +108,7 @@ export default function FrameSelectionModal({
               </button>
             </div>
 
-            <p className="px-5 pt-1 text-[#a8c08a] text-[11px] font-['Times_New_Roman']">
+            <p className="px-5 pt-1 text-[11px] font-['Times_New_Roman']" style={{ color: subtitleColor }}>
               Pick a frame to display around your photo. More frames will unlock
               with tournaments, events &amp; festivals.
             </p>
@@ -104,16 +149,19 @@ export default function FrameSelectionModal({
                         {frame.name}
                       </span>
                       {frame.vip_tier && (
-                        <span className="text-[9px] text-[#a8c08a] font-['Times_New_Roman'] text-center">
+                        <span className="text-[9px] font-['Times_New_Roman'] text-center" style={{ color: tierColor }}>
                           {frame.vip_tier}
                         </span>
                       )}
                       {isActive && (
-                        <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#3a8a2a]">
+                        <span
+                          className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full"
+                          style={{ backgroundColor: checkBg }}
+                        >
                           <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
                             <path
                               d="M2.5 6.2 L4.9 8.6 L9.5 3.6"
-                              stroke="#fff"
+                              stroke={checkStroke}
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"

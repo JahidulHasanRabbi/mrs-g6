@@ -7,6 +7,7 @@ import { HOME_ASSETS } from "./homeAssets";
 import { getMemberInfo, checkIn, getCheckinSettings } from "@/app/api/memberApi";
 import { tokenStorage } from "@/app/api/tokenStorage";
 import SuccessModal from "@/app/components/ui/SuccessModal";
+import ThemedActionButton from "@/app/components/themes/shared/ThemedActionButton";
 import { useUser } from "@/app/contexts/UserContext";
 
 const POPUP_BG_IMG = "/assets/home/popup-deposit-bg.png";
@@ -646,25 +647,34 @@ export default function CheckInBoard() {
                   ⚠️ Completed checked in for 7 days will get extra “N1 token” 1 to 10 randomly!
                 </p>
 
-                <button
-                  type="button"
-                  className="mt-4 w-full rounded-[99px] px-6 py-[6px] shadow-[1px_4px_11px_0px_rgba(0,0,0,0.1)]"
-                  style={{
-                    backgroundColor: "#E9AF41",
-                    boxShadow:
-                      "inset -5px -5px 15px rgba(0,0,0,0.4), 1px 4px 11px rgba(0,0,0,0.1)",
-                  }}
-                >
-                  <span
-                    className="text-[16px] font-bold leading-[1.5]"
-                    style={{
-                      fontFamily: '"Times New Roman", serif',
-                      color: "#60803C",
-                    }}
+                <div className="mt-4 flex w-full justify-center">
+                  <ThemedActionButton
+                    textSize={16}
+                    fallback={
+                      <button
+                        type="button"
+                        className="w-full rounded-[99px] px-6 py-[6px] shadow-[1px_4px_11px_0px_rgba(0,0,0,0.1)]"
+                        style={{
+                          backgroundColor: "#E9AF41",
+                          boxShadow:
+                            "inset -5px -5px 15px rgba(0,0,0,0.4), 1px 4px 11px rgba(0,0,0,0.1)",
+                        }}
+                      >
+                        <span
+                          className="text-[16px] font-bold leading-[1.5]"
+                          style={{
+                            fontFamily: '"Times New Roman", serif',
+                            color: "#60803C",
+                          }}
+                        >
+                          Claim Your N1 Token
+                        </span>
+                      </button>
+                    }
                   >
                     Claim Your N1 Token
-                  </span>
-                </button>
+                  </ThemedActionButton>
+                </div>
               </div>
             </div>
           ) : (
@@ -728,25 +738,34 @@ export default function CheckInBoard() {
                   {selectedDay?.label}{selectedDay?.reward ? ` · ${selectedDay.reward}` : ""}
                 </p>
 
-                <button
-                  type="button"
-                  className="relative w-full rounded-[99px] px-6 py-[6px] shadow-[1px_4px_11px_0px_rgba(0,0,0,0.1)]"
-                  style={{
-                    backgroundColor: "#E9AF41",
-                    boxShadow:
-                      "inset -5px -5px 15px rgba(0,0,0,0.4), 1px 4px 11px rgba(0,0,0,0.1)",
-                  }}
-                >
-                  <span
-                    className="text-[16px] font-bold leading-[1.2]"
-                    style={{
-                      fontFamily: '"Times New Roman", serif',
-                      color: "#60803C",
-                    }}
+                <div className="flex w-full justify-center">
+                  <ThemedActionButton
+                    textSize={16}
+                    fallback={
+                      <button
+                        type="button"
+                        className="relative w-full rounded-[99px] px-6 py-[6px] shadow-[1px_4px_11px_0px_rgba(0,0,0,0.1)]"
+                        style={{
+                          backgroundColor: "#E9AF41",
+                          boxShadow:
+                            "inset -5px -5px 15px rgba(0,0,0,0.4), 1px 4px 11px rgba(0,0,0,0.1)",
+                        }}
+                      >
+                        <span
+                          className="text-[16px] font-bold leading-[1.2]"
+                          style={{
+                            fontFamily: '"Times New Roman", serif',
+                            color: "#60803C",
+                          }}
+                        >
+                          Deposit Now
+                        </span>
+                      </button>
+                    }
                   >
                     Deposit Now
-                  </span>
-                </button>
+                  </ThemedActionButton>
+                </div>
               </div>
             </div>
           )}

@@ -1,6 +1,115 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------------
+ * Leaderboard accent tokens (theme-aware)
+ * The WorldCup + Top-20 leaderboards were built with a fixed World-Cup green
+ * accent. These variables let the same components re-tint to the active
+ * portal theme's gold without per-theme component forks: LB_COLORS
+ * (app/components/leaderboard/constants.js) reads them, and the ThemeContext
+ * stamps <html data-theme="..."> so the override cascade below applies.
+ * Default theme keeps the original green; each custom theme swaps in its gold.
+ * --lb-accent-rgb is a bare "r, g, b" triple so rgba(var(--lb-accent-rgb), a)
+ * can build every translucent variant (soft fills, borders, glows).
+ * ------------------------------------------------------------------------- */
+:root {
+  --lb-accent: #54E98A;
+  --lb-accent-rgb: 84, 233, 138;
+  --lb-on-accent: #003919;
+  --lb-rank: #51FF90;
+  /* Prize placeholder / thumbnail gradients. Green-tinted on the default
+   * WorldCup look; the shared themed block below swaps in an amber-gold. */
+  --lb-prize-grad: linear-gradient(135deg, #1a3a25 0%, #2a4d2a 35%, #3d2a1a 65%, #5b3a1a 100%);
+  --lb-prize-grad-btn: linear-gradient(135deg, #1a3a25 0%, #2a4d2a 100%);
+  /* List-card edge. Neutral white on the default theme; the shared themed
+   * block gives cards a gold edge so they read as part of the theme. */
+  --lb-card-border: rgba(255, 255, 255, 0.1);
+  /* Card / panel FILLS. The default World-Cup + dark themes sit on dark
+   * backdrops, so translucent fills read fine. Bright themes (kgame99's
+   * celestial blue) override these to opaque navy below, otherwise the
+   * near-transparent surfaces vanish and their light text washes out. */
+  --lb-card-overlay: rgba(18, 20, 20, 0.7);
+  --lb-panel-light: rgba(255, 255, 255, 0.05);
+  --lb-mission-card-fill: rgba(255, 255, 255, 0.05);
+  /* Text that sits DIRECTLY on the page backdrop (section titles, subtitles)
+   * and the active-tab label on the gold tab frame. Light on the dark default
+   * themes; bright themes (kgame99) override to dark ink so it reads on the
+   * bright sky. NOTE: these are backdrop-only — card/dialog text keeps the
+   * light MISSION_COLORS/LB_COLORS tokens since those cards are dark. */
+  --lb-heading: #E2E2E2;
+  --lb-heading-muted: #BBCBBB;
+  --lb-tab-active: #60803C;
+  --lb-tabs-fill: rgba(26, 28, 28, 0.6);
+}
+:root[data-theme="acebet77"] {
+  --lb-accent: #e9af41;
+  --lb-accent-rgb: 233, 175, 65;
+  --lb-on-accent: #241704;
+  --lb-rank: #ffe16d;
+}
+:root[data-theme="ubetclub"] {
+  --lb-accent: #e9af41;
+  --lb-accent-rgb: 233, 175, 65;
+  --lb-on-accent: #2a0a0a;
+  --lb-rank: #ffe16d;
+}
+:root[data-theme="ep369"] {
+  --lb-accent: #e9af41;
+  --lb-accent-rgb: 233, 175, 65;
+  --lb-on-accent: #04140a;
+  --lb-rank: #ffe16d;
+}
+:root[data-theme="kgame99"] {
+  --lb-accent: #e2b24a;
+  --lb-accent-rgb: 226, 178, 74;
+  --lb-on-accent: #0a1a2f;
+  --lb-rank: #ffe16d;
+  /* Opaque navy panels (kgame99 sits on a bright celestial-blue backdrop). */
+  --lb-card-overlay: rgba(8, 22, 42, 0.9);
+  --lb-panel-light: rgba(14, 34, 62, 0.72);
+  --lb-mission-card-fill: rgba(14, 34, 62, 0.82);
+  /* Dark ink for text on the bright sky; navy tab container so labels read. */
+  --lb-heading: #08213f;
+  --lb-heading-muted: #1f4368;
+  --lb-tab-active: #0a1a2f;
+  --lb-tabs-fill: rgba(14, 34, 62, 0.9);
+}
+:root[data-theme="lv918"] {
+  --lb-accent: #e8b53a;
+  --lb-accent-rgb: 232, 181, 58;
+  --lb-on-accent: #2a0a1f;
+  --lb-rank: #ffe16d;
+  /* Opaque dark-rose panels (lv918 sits on a bright pink backdrop). */
+  --lb-card-overlay: rgba(58, 10, 30, 0.92);
+  --lb-panel-light: rgba(74, 15, 48, 0.72);
+  --lb-mission-card-fill: rgba(74, 15, 48, 0.88);
+  /* White ink with text-shadow so it pops on the bright pink backdrop. */
+  --lb-heading: #ffffff;
+  --lb-heading-muted: rgba(255, 255, 255, 0.85);
+  --lb-heading-shadow: 0 1px 4px rgba(0, 0, 0, 0.7), 0 0 12px rgba(80, 10, 40, 0.5);
+  --lb-tab-inactive: rgba(255, 255, 255, 0.75);
+  --lb-tab-active: #2a0a1f;
+  --lb-tabs-fill: rgba(74, 15, 48, 0.92);
+}
+:root[data-theme="n1gang"] {
+  --lb-accent: #e9af41;
+  --lb-accent-rgb: 233, 175, 65;
+  --lb-on-accent: #241704;
+  --lb-rank: #ffe16d;
+}
+/* Amber-gold prize gradients shared by every custom theme (the gold shades are
+ * close enough not to warrant per-theme tuning). */
+:root[data-theme="acebet77"],
+:root[data-theme="ubetclub"],
+:root[data-theme="ep369"],
+:root[data-theme="kgame99"],
+:root[data-theme="lv918"],
+:root[data-theme="n1gang"] {
+  --lb-prize-grad: linear-gradient(135deg, #3a2a0f 0%, #5b3a1a 45%, #8a6320 75%, #b8862f 100%);
+  --lb-prize-grad-btn: linear-gradient(135deg, #3a2a0f 0%, #5b3a1a 100%);
+  --lb-card-border: rgba(var(--lb-accent-rgb), 0.4);
+}
+
+/* ---------------------------------------------------------------------------
  * Admin typography scale (Retention CRM design system)
  * Headings: DM Sans Bold.  Body: Montserrat (B-1 Medium, B-2..B-6 Regular).
  * All letter-spacing 0.  Class names match the Figma tokens (h-1..h-8, b-1..b-6).
@@ -162,6 +271,132 @@
 .scrollbar-smash-egg {
   scrollbar-width: thin;
   scrollbar-color: #7f5638 rgba(26, 10, 0, 0.6);
+}
+
+/* Ubetclub scrollbar — red/gold track for the Lucky Spin rewards panel */
+.scrollbar-ubet::-webkit-scrollbar {
+  width: 5px;
+}
+.scrollbar-ubet::-webkit-scrollbar-track {
+  background: rgba(24, 8, 10, 0.5);
+  border-radius: 999px;
+}
+.scrollbar-ubet::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #f2c36b 0%, #dd8f1f 100%);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 225, 109, 0.25);
+}
+.scrollbar-ubet::-webkit-scrollbar-thumb:hover {
+  background: #ffe16d;
+}
+.scrollbar-ubet {
+  scrollbar-width: thin;
+  scrollbar-color: #dd8f1f rgba(24, 8, 10, 0.5);
+}
+
+/* EP369 scrollbar — gold thumb on dark emerald track */
+.scrollbar-ep369::-webkit-scrollbar {
+  width: 5px;
+}
+.scrollbar-ep369::-webkit-scrollbar-track {
+  background: rgba(9, 48, 23, 0.5);
+  border-radius: 999px;
+}
+.scrollbar-ep369::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #f2c36b 0%, #e9af41 100%);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 225, 109, 0.25);
+}
+.scrollbar-ep369::-webkit-scrollbar-thumb:hover {
+  background: #ffe16d;
+}
+.scrollbar-ep369 {
+  scrollbar-width: thin;
+  scrollbar-color: #e9af41 rgba(9, 48, 23, 0.5);
+}
+
+/* Acebet77 scrollbar — gold thumb on dark track */
+.scrollbar-acebet77::-webkit-scrollbar {
+  width: 5px;
+}
+.scrollbar-acebet77::-webkit-scrollbar-track {
+  background: rgba(10, 10, 28, 0.5);
+  border-radius: 999px;
+}
+.scrollbar-acebet77::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #f2c36b 0%, #e9af41 100%);
+  border-radius: 999px;
+  border: 1px solid rgba(233, 175, 65, 0.3);
+}
+.scrollbar-acebet77::-webkit-scrollbar-thumb:hover {
+  background: #ffe16d;
+}
+.scrollbar-acebet77 {
+  scrollbar-width: thin;
+  scrollbar-color: #e9af41 rgba(10, 10, 28, 0.5);
+}
+
+/* Kgame99 scrollbar — warm gold thumb on dark track */
+.scrollbar-kgame99::-webkit-scrollbar {
+  width: 5px;
+}
+.scrollbar-kgame99::-webkit-scrollbar-track {
+  background: rgba(20, 12, 4, 0.5);
+  border-radius: 999px;
+}
+.scrollbar-kgame99::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #f2cb7a 0%, #c9a050 100%);
+  border-radius: 999px;
+  border: 1px solid rgba(242, 203, 122, 0.3);
+}
+.scrollbar-kgame99::-webkit-scrollbar-thumb:hover {
+  background: #ffe16d;
+}
+.scrollbar-kgame99 {
+  scrollbar-width: thin;
+  scrollbar-color: #c9a050 rgba(20, 12, 4, 0.5);
+}
+
+/* LV918 scrollbar — rose/mauve thumb on dark plum track */
+.scrollbar-lv918::-webkit-scrollbar {
+  width: 5px;
+}
+.scrollbar-lv918::-webkit-scrollbar-track {
+  background: rgba(40, 12, 28, 0.5);
+  border-radius: 999px;
+}
+.scrollbar-lv918::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #c06888 0%, #924066 100%);
+  border-radius: 999px;
+  border: 1px solid rgba(192, 104, 136, 0.3);
+}
+.scrollbar-lv918::-webkit-scrollbar-thumb:hover {
+  background: #d88aaa;
+}
+.scrollbar-lv918 {
+  scrollbar-width: thin;
+  scrollbar-color: #924066 rgba(40, 12, 28, 0.5);
+}
+
+/* N1gang scrollbar — gold thumb on dark track */
+.scrollbar-n1gang::-webkit-scrollbar {
+  width: 5px;
+}
+.scrollbar-n1gang::-webkit-scrollbar-track {
+  background: rgba(10, 10, 28, 0.5);
+  border-radius: 999px;
+}
+.scrollbar-n1gang::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #f2c36b 0%, #e9af41 100%);
+  border-radius: 999px;
+  border: 1px solid rgba(233, 175, 65, 0.3);
+}
+.scrollbar-n1gang::-webkit-scrollbar-thumb:hover {
+  background: #ffe16d;
+}
+.scrollbar-n1gang {
+  scrollbar-width: thin;
+  scrollbar-color: #e9af41 rgba(10, 10, 28, 0.5);
 }
 
 /* Spinner animation for loading states */

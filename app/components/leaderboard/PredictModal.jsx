@@ -179,7 +179,7 @@ export default function PredictModal({ fixture, onClose, onPredicted }) {
                 <div className="flex items-center justify-center gap-3 py-2">
                   <span
                     className="grid place-items-center rounded-full"
-                    style={{ boxShadow: "0 0 16px 2px rgba(84,233,138,0.6)" }}
+                    style={{ boxShadow: "0 0 16px 2px rgba(var(--lb-accent-rgb), 0.6)" }}
                   >
                     {Number(selected.id) === 0 ? (
                       <DrawBadge size={36} />

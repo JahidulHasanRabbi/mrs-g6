@@ -2,8 +2,20 @@
 
 import { motion } from "framer-motion";
 import { COLORS } from "./constants";
+import { usePkColors } from "./usePkColors";
 
 export default function GlassCard({ children, className = "", style }) {
+  const { theme } = usePkColors();
+
+  // Themed dialogs (info / terms / history / goal) wrap the same content in the
+  // active skin's crowned ornate frame. Each theme's OrnateCard keeps the
+  // heading clear of the crown as content grows (acebet77 via a 3-slice, ubet
+  // via a padded stretch frame), fixing headings/links spilling out of the box.
+  if (theme) {
+    const { OrnateCard } = theme;
+    return <OrnateCard className={className}>{children}</OrnateCard>;
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.92, y: 10 }}

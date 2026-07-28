@@ -12,7 +12,7 @@ function Arrow({ dir, onClick }) {
       onClick={onClick}
       aria-label={dir === "left" ? "Previous banner" : "Next banner"}
       className="grid h-9 w-9 shrink-0 place-items-center rounded-full transition-opacity hover:opacity-80"
-      style={{ background: "rgba(84,233,138,0.15)", color: LB_COLORS.primary }}
+      style={{ background: "rgba(var(--lb-accent-rgb), 0.15)", color: LB_COLORS.primary }}
     >
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
         {dir === "left" ? <path d="M15 6l-6 6 6 6" /> : <path d="M9 6l6 6-6 6" />}

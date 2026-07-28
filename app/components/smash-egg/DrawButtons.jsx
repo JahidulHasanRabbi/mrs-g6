@@ -1,6 +1,13 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useTheme } from "../../contexts/ThemeContext";
+import { ACEBET_COLORS } from "../themes/acebet77/assets";
+import { UBET_COLORS } from "../themes/ubetclub/assets";
+import { EP369_COLORS } from "../themes/ep369/assets";
+import { KGAME99_COLORS } from "../themes/kgame99/assets";
+import { LV918_COLORS } from "../themes/lv918/assets";
+import { N1GANG_COLORS } from "../themes/n1gang/assets";
 
 const DRAW_OPTIONS = [
   { draws: 10, featured: false },
@@ -18,12 +25,59 @@ function formatTokenAmount(value) {
 }
 
 function DrawButton({ draws, tokens, featured, onClick, disabled }) {
-  const bgGradient = featured
-    ? "linear-gradient(to bottom, #ffd700, #544600)"
-    : "linear-gradient(to bottom, #ffb77d, #6e3900)";
-  const borderColor = featured ? "#3a3000" : "#4d2600";
-  const textColor = featured ? "#3a3000" : "#4d2600";
-  const tokenTextColor = featured ? "rgba(58,48,0,0.8)" : "rgba(77,38,0,0.8)";
+  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang } = useTheme();
+
+  let bgGradient, borderColor, textColor, tokenTextColor;
+  if (isAcebet77) {
+    bgGradient = featured
+      ? "linear-gradient(to bottom, #ffd76b, #8a5514)"
+      : "linear-gradient(to bottom, #17130c, #050505)";
+    borderColor = featured ? "#3a2600" : ACEBET_COLORS.gold;
+    textColor = featured ? "#171006" : ACEBET_COLORS.goldBright;
+    tokenTextColor = featured ? "rgba(23,16,6,0.75)" : "rgba(242,186,51,0.85)";
+  } else if (isUbetclub) {
+    bgGradient = featured
+      ? "linear-gradient(to bottom, #f2c36b, #8a5514)"
+      : "linear-gradient(to bottom, #4a0e11, #180708)";
+    borderColor = featured ? "#3a1a0a" : UBET_COLORS.gold;
+    textColor = featured ? "#280506" : UBET_COLORS.goldBright;
+    tokenTextColor = featured ? "rgba(40,5,6,0.75)" : "rgba(242,195,107,0.85)";
+  } else if (isEp369) {
+    bgGradient = featured
+      ? "linear-gradient(to bottom, #f2c36b, #8a5514)"
+      : "linear-gradient(to bottom, #0d3d1c, #001002)";
+    borderColor = featured ? "#2a5a14" : EP369_COLORS.gold;
+    textColor = featured ? "#04140a" : EP369_COLORS.goldBright;
+    tokenTextColor = featured ? "rgba(4,20,10,0.75)" : "rgba(242,195,107,0.85)";
+  } else if (isKgame99) {
+    bgGradient = featured
+      ? "linear-gradient(to bottom, #f5c451, #8a5514)"
+      : "linear-gradient(to bottom, #0f2a4a, #061527)";
+    borderColor = featured ? "#3a2600" : KGAME99_COLORS.gold;
+    textColor = featured ? "#061527" : KGAME99_COLORS.goldBright;
+    tokenTextColor = featured ? "rgba(6,21,39,0.75)" : "rgba(245,196,81,0.85)";
+  } else if (isLv918) {
+    bgGradient = featured
+      ? "linear-gradient(to bottom, #f7c752, #8a5514)"
+      : "linear-gradient(to bottom, #4a0f30, #2a0518)";
+    borderColor = featured ? "#3a2600" : LV918_COLORS.gold;
+    textColor = featured ? "#2a0a1f" : LV918_COLORS.goldBright;
+    tokenTextColor = featured ? "rgba(42,10,31,0.75)" : "rgba(247,199,82,0.85)";
+  } else if (isN1gang) {
+    bgGradient = featured
+      ? "linear-gradient(to bottom, #ffd76b, #8a5514)"
+      : "linear-gradient(to bottom, #17130c, #050505)";
+    borderColor = featured ? "#3a2600" : N1GANG_COLORS.gold;
+    textColor = featured ? "#171006" : N1GANG_COLORS.goldBright;
+    tokenTextColor = featured ? "rgba(23,16,6,0.75)" : "rgba(242,186,51,0.85)";
+  } else {
+    bgGradient = featured
+      ? "linear-gradient(to bottom, #ffd700, #544600)"
+      : "linear-gradient(to bottom, #ffb77d, #6e3900)";
+    borderColor = featured ? "#3a3000" : "#4d2600";
+    textColor = featured ? "#3a3000" : "#4d2600";
+    tokenTextColor = featured ? "rgba(58,48,0,0.8)" : "rgba(77,38,0,0.8)";
+  }
   const shadow = featured
     ? "0 25px 50px -12px rgba(0,0,0,0.25)"
     : "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)";

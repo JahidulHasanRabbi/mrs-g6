@@ -97,7 +97,7 @@ function FixtureCard({ fixture, onPredict, prediction }) {
       {predictedTeam?.name && (
         <div
           className="flex w-full items-center justify-between gap-3 rounded-[8px] px-3 py-2"
-          style={{ background: "rgba(84,233,138,0.08)", border: `1px solid ${LB_COLORS.borderGreen30}` }}
+          style={{ background: "rgba(var(--lb-accent-rgb), 0.08)", border: `1px solid ${LB_COLORS.borderGreen30}` }}
         >
           <span className="text-[11px] uppercase" style={{ color: LB_COLORS.textMuted, fontFamily: "'Lexend',sans-serif" }}>
             My Prediction
@@ -263,7 +263,7 @@ export default function PredictionsList({ predictions: propPredictions, onViewPr
               : myRows.map((p) => {
                 const resultStyle =
                   p.result === "win"
-                    ? { bg: "rgba(84,233,138,0.15)", color: LB_COLORS.primary, label: "Win" }
+                    ? { bg: "rgba(var(--lb-accent-rgb), 0.15)", color: LB_COLORS.primary, label: "Win" }
                     : p.result === "loss"
                     ? { bg: "rgba(255,59,48,0.15)", color: LB_COLORS.red, label: "Loss" }
                     : p.result === "draw"

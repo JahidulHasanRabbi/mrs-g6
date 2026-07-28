@@ -3,9 +3,11 @@
 import { motion } from "framer-motion";
 import GreenCta from "./GreenCta";
 import HeroDisc from "./HeroDisc";
-import { COLORS } from "./constants";
+import { usePkColors } from "./usePkColors";
 
 export default function LaunchPhase({ onStart }) {
+  const { colors: COLORS, theme } = usePkColors();
+  const Button = theme?.Button;
   return (
     <div className="flex w-full flex-col items-center justify-center px-6 py-10">
       <motion.div
@@ -26,14 +28,18 @@ export default function LaunchPhase({ onStart }) {
           fontSize: "clamp(28px, 8.4vw, 40px)",
           color: COLORS.primary,
           fontFamily: "'Lexend', sans-serif",
-          textShadow:
-            "0 0 14px rgba(84,233,138,0.55), 0 0 28px rgba(84,233,138,0.35)",
+          textShadow: `0 0 14px ${COLORS.glow55}, 0 0 28px ${COLORS.glow35}`,
         }}
       >
         Kick Off!!
       </motion.h2>
 
-      <GreenCta onClick={onStart}>Start</GreenCta>
+      {/* Themed skins use their ornate button image; default keeps the CTA. */}
+      {Button ? (
+        <Button onClick={onStart}>Start</Button>
+      ) : (
+        <GreenCta onClick={onStart}>Start</GreenCta>
+      )}
     </div>
   );
 }

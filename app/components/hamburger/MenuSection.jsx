@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import { useState, memo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ANIMATION_CONFIG } from "./menuConfig";
+import MenuIcon from "./MenuIcon";
 
 /**
  * MenuSection Component
@@ -15,7 +15,7 @@ import { ANIMATION_CONFIG } from "./menuConfig";
  * @param {React.ReactNode} props.children - Section content
  * @param {boolean} [props.defaultOpen] - Initial open state
  */
-function MenuSection({ title, icon, children, defaultOpen = true, variants }) {
+function MenuSection({ title, icon, children, defaultOpen = true, variants, appearance }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   const toggleSection = useCallback((e) => {
@@ -33,31 +33,33 @@ function MenuSection({ title, icon, children, defaultOpen = true, variants }) {
       <motion.button
         type="button"
         onClick={toggleSection}
-        className="flex items-center justify-between w-full px-2 py-[6px] rounded-[5px] bg-[#c08f32] shadow-[0px_4px_4px_0px_rgba(0,0,0,0.15)] cursor-pointer"
+        className="flex items-center justify-between w-full px-2 py-[6px] rounded-[5px] border shadow-[0px_4px_4px_0px_rgba(0,0,0,0.15)] cursor-pointer"
         aria-expanded={isOpen}
         aria-controls={`section-content-${title}`}
         id={`section-${title}`}
         whileHover={{
-          backgroundColor: "#d4a03d",
+          background: appearance.sectionHover,
           scale: 1.02,
-          boxShadow: "0px 6px 8px 0px rgba(0,0,0,0.2)",
+          boxShadow: `0px 6px 14px 0px ${appearance.glow}`,
           transition: { duration: 0.2 },
         }}
         whileTap={{ scale: 0.98 }}
-        style={{ willChange: "transform, background-color, box-shadow" }}
+        style={{
+          background: appearance.section,
+          borderColor: appearance.sectionBorder,
+          willChange: "transform, background, box-shadow",
+        }}
       >
         <div className="flex items-center gap-2 min-w-0">
-          <Image
-            src={icon}
-            alt=""
-            width={30}
-            height={30}
-            aria-hidden="true"
-            className="object-contain"
-          />
+          <div
+            className="flex h-[30px] w-[30px] shrink-0 items-center justify-center"
+            style={{ color: appearance.sectionIcon }}
+          >
+            <MenuIcon src={icon} size={26} />
+          </div>
           <span
-            className="font-bold text-[12px] text-white leading-[1.5] tracking-[-0.132px] whitespace-nowrap"
-            style={{ fontFamily: '"Times New Roman", serif' }}
+            className="font-bold text-[12px] leading-[1.5] tracking-[-0.132px] whitespace-nowrap"
+            style={{ fontFamily: '"Times New Roman", serif', color: appearance.sectionText }}
           >
             {title}
           </span>
@@ -68,12 +70,11 @@ function MenuSection({ title, icon, children, defaultOpen = true, variants }) {
           transition={{ duration: 0.3 }}
           className="w-[15px] h-[15px]"
           aria-hidden="true"
+          style={{ color: appearance.sectionText }}
         >
-          <img
-            src="/assets/images/expand-arrow.png"
-            alt=""
-            className="w-full h-full object-contain"
-          />
+          <svg viewBox="0 0 16 16" className="h-full w-full" fill="none">
+            <path d="m3 6 5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </motion.div>
       </motion.button>
 

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { SPIN_ASSETS } from "./spinAssets";
 import { getPublicTermsAndConditions } from "@/app/api/memberApi";
+import { useTheme } from "@/app/contexts/ThemeContext";
 
 const TermItem = ({ text, index }) => (
   <motion.div 
@@ -82,15 +83,15 @@ export default function TermsConditions() {
       className="relative w-full max-w-[450px] mx-auto rounded-[6px] p-5"
       style={{
         background: "rgba(255, 255, 255, 0.3)",
-        boxShadow: "0px 0px 10px 0px rgba(233, 175, 65, 0.3)"
+        boxShadow: "0px 0px 10px 0px rgba(var(--lb-accent-rgb, 233, 175, 65), 0.3)"
       }}
       initial={{ opacity: 0, scale: 0.8, y: 30 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
     >
-      <motion.div 
-        className="bg-[#e9af41] rounded-[6px] px-4 py-2 inline-block mb-5"
-        style={{ boxShadow: "1px 4px 11px 0px rgba(0, 0, 0, 0.1)" }}
+      <motion.div
+        className="rounded-[6px] px-4 py-2 inline-block mb-5"
+        style={{ backgroundColor: "var(--lb-accent, #e9af41)", boxShadow: "1px 4px 11px 0px rgba(0, 0, 0, 0.1)" }}
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6, delay: 0.3 }}

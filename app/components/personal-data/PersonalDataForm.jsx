@@ -14,11 +14,19 @@ import { FORM_FIELDS, PERSONAL_DATA_ASSETS } from "./constants";
 import { getProfile, updateProfile } from "@/app/api/memberApi";
 import { mapProfileDataToForm, mapFormDataToProfileUpdate } from "@/app/api/responseMappers";
 import { tokenStorage } from "@/app/api/tokenStorage";
+import ThemedActionButton from "../themes/shared/ThemedActionButton";
 import { useUser } from "@/app/contexts/UserContext";
+import { useTheme } from "@/app/contexts/ThemeContext";
 
 export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
   const router = useRouter();
   const { updateProfilePicture, selectedFrameId, updateSelectedFrame } = useUser();
+  // Loading text sits directly on the page backdrop. On kgame99's bright
+  // celestial-blue sky, warm gold washes out — swap to dark navy w/ shadow.
+  const { isKgame99 } = useTheme();
+  const loadingTextStyle = isKgame99
+    ? { color: "#0a1a2f", textShadow: "0 1px 2px rgba(255,255,255,0.55)" }
+    : { color: "#e9af41" };
   const [formData, setFormData] = useState(
     FORM_FIELDS.reduce((acc, field) => ({ ...acc, [field.id]: "" }), {})
   );
@@ -207,7 +215,7 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
-        <div className="text-[#e9af41] text-lg">Loading profile...</div>
+        <div className="text-lg" style={loadingTextStyle}>Loading profile...</div>
       </motion.div>
     );
   }
@@ -222,12 +230,22 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
         transition={{ duration: 0.3 }}
       >
         <div className="text-red-500 text-center">{error}</div>
-        <button
-          onClick={() => window.location.reload()}
-          className="px-6 py-2 bg-[#e9af41] text-black rounded-lg hover:opacity-80 transition-opacity"
-        >
-          Retry
-        </button>
+        <div className="flex justify-center">
+          <ThemedActionButton
+            textSize={16}
+            onClick={() => window.location.reload()}
+            fallback={
+              <button
+                onClick={() => window.location.reload()}
+                className="px-6 py-2 bg-[#e9af41] text-black rounded-lg hover:opacity-80 transition-opacity"
+              >
+                Retry
+              </button>
+            }
+          >
+            Retry
+          </ThemedActionButton>
+        </div>
       </motion.div>
     );
   }
@@ -247,18 +265,28 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
         frameId={selectedFrameId}
       />
 
-      <button
-        type="button"
-        onClick={() => setIsFrameModalOpen(true)}
-        className="flex items-center gap-2 px-5 py-2 -mt-1 rounded-full border border-[#e9af41] bg-[#0a1a0a]/80 text-[#e9af41] text-[13px] font-bold font-['Times_New_Roman'] shadow-[0_2px_8px_rgba(0,0,0,0.4)] hover:bg-[#e9af41]/10 transition-colors"
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="2" />
-          <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
-        </svg>
-        Change Frame
-        <span className="text-[#a8c08a] text-[11px] font-normal">· {currentFrame?.name}</span>
-      </button>
+      <div className="flex justify-center -mt-1">
+        <ThemedActionButton
+          textSize={13}
+          onClick={() => setIsFrameModalOpen(true)}
+          fallback={
+            <button
+              type="button"
+              onClick={() => setIsFrameModalOpen(true)}
+              className="flex items-center gap-2 px-5 py-2 rounded-full border border-[#e9af41] bg-black/70 text-[#e9af41] text-[13px] font-bold font-['Times_New_Roman'] shadow-[0_2px_8px_rgba(0,0,0,0.4)] hover:bg-[#e9af41]/10 transition-colors"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
+              </svg>
+              Change Frame
+              <span className="text-[#d0c6ab] text-[11px] font-normal">· {currentFrame?.name}</span>
+            </button>
+          }
+        >
+          Change Frame
+        </ThemedActionButton>
+      </div>
 
       <div className="flex flex-col gap-[14px] w-full">
         {FORM_FIELDS.map((field) => (

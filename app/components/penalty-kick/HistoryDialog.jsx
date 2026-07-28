@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import GlassCard from "./GlassCard";
 import GreenCta from "./GreenCta";
-import { COLORS, ICONS } from "./constants";
+import { ICONS } from "./constants";
+import { usePkColors } from "./usePkColors";
 import { getMemberRewardHistory } from "../../api/memberApi";
 import { tokenStorage } from "../../api/tokenStorage";
 
@@ -29,6 +30,7 @@ function formatAmount(value) {
 }
 
 function HistoryRow({ row }) {
+  const { colors: COLORS, soft } = usePkColors();
   const amount = Number(row.amount ?? 0);
   const hasAmount = Number.isFinite(amount) && amount > 0;
   const typeLabel = ITEM_TYPE_DISPLAY[String(row.sub || "").toUpperCase()] || row.sub || "—";
@@ -46,8 +48,8 @@ function HistoryRow({ row }) {
       <div
         className="grid h-10 w-10 shrink-0 place-items-center rounded-[10px]"
         style={{
-          background: "linear-gradient(145deg, rgba(84,233,138,0.28), rgba(84,233,138,0.08))",
-          border: "1px solid rgba(84,233,138,0.16)",
+          background: `linear-gradient(145deg, ${soft(0.28)}, ${soft(0.08)})`,
+          border: `1px solid ${soft(0.16)}`,
         }}
       >
         <span
@@ -131,6 +133,7 @@ export default function HistoryDialog({
   onClose,
   onRedeemAll,
 }) {
+  const { colors: COLORS, soft, theme } = usePkColors();
   const [activeTab, setActiveTab] = useState("game");
   const [prizeRows, setPrizeRows] = useState([]);
   const [prizePage, setPrizePage] = useState(1);
@@ -170,16 +173,79 @@ export default function HistoryDialog({
   const activeTotalPages = activeTab === "game" ? totalPages : prizeTotalPages;
   const handlePageChange = activeTab === "game" ? onPageChange : loadPrizePage;
 
+  // Themed skins (Figma 61:1300 / 77:2977): a single "GAME HISTORY" list inside
+  // the ornate frame with the Redeem All button below it — no tabs/pagination.
+  if (theme) {
+    const { OrnateCard, Button, palette, iconBall } = theme;
+    return (
+      <div className="flex w-full max-w-[360px] flex-col items-center gap-3">
+        <OrnateCard>
+          <p
+            className="text-[15px] uppercase tracking-[1px]"
+            style={{ fontFamily: "var(--font-acme), sans-serif", color: palette.cream }}
+          >
+            Game History
+          </p>
+          <div className="mt-3 flex max-h-[200px] w-full flex-col gap-2 overflow-y-auto pr-1 text-left">
+            {rows.length === 0 ? (
+              <p
+                className="py-6 text-center text-[12px]"
+                style={{ color: palette.sand, fontFamily: "var(--font-rubik), sans-serif" }}
+              >
+                No game history yet.
+              </p>
+            ) : (
+              rows.map((r) => {
+                const amt = Number(r.amount ?? 0);
+                const hasAmt = Number.isFinite(amt) && amt > 0;
+                const isMiss = /miss/i.test(r.label || "");
+                return (
+                  <div
+                    key={r.id}
+                    className="flex items-center gap-3 rounded-[8px] px-1 py-1.5"
+                    style={{ opacity: r.claimed ? 0.45 : 1 }}
+                  >
+                    <div
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-full"
+                      style={{ background: "radial-gradient(circle, rgba(242,186,51,0.28), rgba(242,186,51,0.06))", border: "1px solid rgba(242,186,51,0.25)" }}
+                    >
+                      <img src={iconBall} alt="" className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[14px] font-semibold" style={{ color: palette.cream, fontFamily: "var(--font-rubik), sans-serif" }}>
+                        {r.label}
+                      </p>
+                      <p className="truncate text-[10px]" style={{ color: palette.sand, fontFamily: "var(--font-rubik), sans-serif" }}>
+                        {r.claimed ? "Redeemed" : r.sub}
+                      </p>
+                    </div>
+                    <p
+                      className="shrink-0 text-[14px] font-bold"
+                      style={{ color: isMiss ? palette.missRed : palette.gold, fontFamily: "var(--font-acme), sans-serif" }}
+                    >
+                      {isMiss ? "-" : hasAmt ? "+" : ""}{hasAmt ? amt.toFixed(2) : ""}
+                    </p>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </OrnateCard>
+        <Button onClick={onRedeemAll} disabled={!hasRedeemableRows}>Redeem All</Button>
+      </div>
+    );
+  }
+
   return (
     <GlassCard
       className="max-w-[390px] p-5"
-      style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.38), 0 0 34px rgba(84,233,138,0.08)" }}
+      style={{ boxShadow: `0 20px 60px rgba(0,0,0,0.38), 0 0 34px ${soft(0.08)}` }}
     >
       <div
         className="mb-3 flex items-center justify-between rounded-[10px] px-4 py-3"
         style={{
-          background: "linear-gradient(90deg, rgba(84,233,138,0.16), rgba(84,233,138,0.06))",
-          border: "1px solid rgba(84,233,138,0.10)",
+          background: `linear-gradient(90deg, ${soft(0.16)}, ${soft(0.06)})`,
+          border: `1px solid ${soft(0.1)}`,
         }}
       >
         <h3
@@ -208,8 +274,8 @@ export default function HistoryDialog({
             onClick={() => setActiveTab(tab)}
             className="flex-1 rounded-[8px] py-2 text-[11px] font-semibold uppercase tracking-[0.5px] transition-colors"
             style={{
-              background: activeTab === tab ? "rgba(84,233,138,0.12)" : "rgba(255,255,255,0.04)",
-              border: `1px solid ${activeTab === tab ? "rgba(84,233,138,0.35)" : "rgba(255,255,255,0.08)"}`,
+              background: activeTab === tab ? soft(0.12) : "rgba(255,255,255,0.04)",
+              border: `1px solid ${activeTab === tab ? soft(0.35) : "rgba(255,255,255,0.08)"}`,
               color: activeTab === tab ? COLORS.primary : "rgba(255,255,255,0.45)",
               fontFamily: "'Lexend', sans-serif",
             }}

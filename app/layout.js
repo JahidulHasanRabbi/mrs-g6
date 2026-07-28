@@ -1,4 +1,4 @@
-import { Inter, Geist, Geist_Mono, Montserrat, DM_Sans, JetBrains_Mono, Sora, Chakra_Petch, Rajdhani, Acme, Rubik } from "next/font/google";
+import { Inter, Geist, Geist_Mono, Montserrat, DM_Sans, JetBrains_Mono, Sora, Chakra_Petch, Rajdhani, Acme, Rubik, Berkshire_Swash, Lexend } from "next/font/google";
 import "./globals.css";
 
 /**
@@ -83,6 +83,19 @@ const rubik = Rubik({
   weight: ["400", "500"],
 });
 
+// Acebet77 theme fonts (see app/config/themes.js)
+const berkshireSwash = Berkshire_Swash({
+  variable: "--font-berkshire-swash",
+  subsets: ["latin"],
+  weight: ["400"],
+});
+
+const lexend = Lexend({
+  variable: "--font-lexend",
+  subsets: ["latin"],
+  weight: ["400", "700"],
+});
+
 export const metadata = {
   title: "VIP Access | Claim Your Elite Benefits & Rewards",
   description: "Access your exclusive member dashboard. Log in now to claim your daily benefits, unlock rewards, and compete in our latest mini-games!",
@@ -101,11 +114,18 @@ export default function RootLayout({
   children,
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${montserrat.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${sora.variable} ${chakraPetch.variable} ${rajdhani.variable} ${acme.variable} ${rubik.variable} antialiased bg-black`}
+        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${montserrat.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${sora.variable} ${chakraPetch.variable} ${rajdhani.variable} ${acme.variable} ${rubik.variable} ${berkshireSwash.variable} ${lexend.variable} antialiased bg-black`}
         style={{ fontFamily: '"Times New Roman", serif' }}
       >
+        {/* Pre-hydration theme stamp: mirrors app/config/themes.js so a
+            returning themed member never sees a default-theme flash. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var o=(localStorage.getItem('mrs_redirect_o')||'').toLowerCase();var t='default';if(o.indexOf('acebet77')>-1)t='acebet77';else if(o.indexOf('ubetclub')>-1)t='ubetclub';else if(o.indexOf('ep369')>-1)t='ep369';else if(o.indexOf('kgame99')>-1)t='kgame99';else if(o.indexOf('lv918')>-1)t='lv918';else if(o.indexOf('n1gang')>-1)t='n1gang';document.documentElement.setAttribute('data-theme',t);}catch(e){}`,
+          }}
+        />
         <ToastProvider>
           <LayoutShell>{children}</LayoutShell>
         </ToastProvider>

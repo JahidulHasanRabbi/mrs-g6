@@ -4,9 +4,12 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import GreenCta from "./GreenCta";
 import HeroDisc from "./HeroDisc";
-import { COLORS, DURATIONS } from "./constants";
+import { DURATIONS } from "./constants";
+import { usePkColors } from "./usePkColors";
 
 export default function LoadingPhase({ onComplete }) {
+  const { colors: COLORS, theme } = usePkColors();
+  const Button = theme?.Button;
   const [progress, setProgress] = useState(0);
   const onCompleteRef = useRef(onComplete);
   useEffect(() => { onCompleteRef.current = onComplete; });
@@ -41,7 +44,7 @@ export default function LoadingPhase({ onComplete }) {
           style={{
             color: COLORS.primary,
             fontFamily: "'Lexend', sans-serif",
-            textShadow: "0 0 8px rgba(84,233,138,0.4)",
+            textShadow: `0 0 8px ${COLORS.glow40}`,
           }}
         >
           Initializing Arena
@@ -51,7 +54,7 @@ export default function LoadingPhase({ onComplete }) {
           style={{
             color: COLORS.primary,
             fontFamily: "'Anybody', 'Lexend', sans-serif",
-            textShadow: "0 0 8px rgba(84,233,138,0.4)",
+            textShadow: `0 0 8px ${COLORS.glow40}`,
           }}
         >
           {progress}%
@@ -79,7 +82,12 @@ export default function LoadingPhase({ onComplete }) {
         Connecting to Global Leaderboards...
       </p>
 
-      <GreenCta disabled>Start</GreenCta>
+      {/* Themed skins use their ornate button image; default keeps the CTA. */}
+      {Button ? (
+        <Button disabled>Start</Button>
+      ) : (
+        <GreenCta disabled>Start</GreenCta>
+      )}
     </div>
   );
 }

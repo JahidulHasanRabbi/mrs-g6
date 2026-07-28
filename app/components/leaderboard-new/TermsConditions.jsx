@@ -8,7 +8,7 @@ export default function TermsConditions({ terms = [], color = "#ff8c00" }) {
       className="w-full min-h-[180px] rounded-2xl px-6 py-8 flex flex-col gap-8"
       style={{
         backdropFilter: "blur(6px)",
-        backgroundColor: "rgba(35,31,20,0.7)",
+        backgroundColor: "var(--lb-card-overlay)",
         border: "1px solid rgba(255,246,223,0.15)",
       }}
     >

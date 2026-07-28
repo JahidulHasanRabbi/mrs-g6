@@ -4,10 +4,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useCallback } from "react";
 import { submitFeedback as submitFeedbackApi } from "@/app/api/memberApi";
 import { tokenStorage } from "@/app/api/tokenStorage";
+import { useTheme } from "../../contexts/ThemeContext";
+import { UBET_ASSETS } from "../themes/ubetclub/assets";
+import { EP369_ASSETS } from "../themes/ep369/assets";
+import { KGAME99_ASSETS } from "../themes/kgame99/assets";
+import { LV918_ASSETS } from "../themes/lv918/assets";
+import { N1GANG_ASSETS } from "../themes/n1gang/assets";
 
-/**
- * FeedbackModal — collects a star rating + free-text message from the player.
- */
 export default function FeedbackModal({ isOpen, onClose }) {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -15,6 +18,73 @@ export default function FeedbackModal({ isOpen, onClose }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(null);
+  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang } = useTheme();
+
+  let skin;
+  if (isAcebet77) {
+    skin = {
+      modalBg: "linear-gradient(180deg, #17130c 0%, #050505 100%)",
+      borderColor: "#e9af41",
+      starOff: "#3a2f1a",
+      starOn: "#f2ba33",
+      submitBg: "linear-gradient(180deg, #f2cb7a 0%, #b57718 100%)",
+      submitText: "#171006",
+    };
+  } else if (isUbetclub) {
+    skin = {
+      modalBg: "linear-gradient(180deg, #4a0e11 0%, #180708 100%)",
+      borderColor: "#f2c36b",
+      starOff: "#5a2d20",
+      starOn: "#f2c36b",
+      submitImage: UBET_ASSETS.spin.btnPlay,
+      submitText: "#f2c36b",
+    };
+  } else if (isEp369) {
+    skin = {
+      modalBg: "linear-gradient(180deg, #0d3d1c 0%, #001002 100%)",
+      borderColor: "#e9af41",
+      starOff: "#1a3a22",
+      starOn: "#f2c36b",
+      submitImage: EP369_ASSETS.spin.btnPlay,
+      submitText: "#f2c36b",
+    };
+  } else if (isKgame99) {
+    skin = {
+      modalBg: "linear-gradient(180deg, #0f2a4a 0%, #061527 100%)",
+      borderColor: "#e2b24a",
+      starOff: "#1a2a4a",
+      starOn: "#f5c451",
+      submitImage: KGAME99_ASSETS.spin.btnPlay,
+      submitText: "#f5c451",
+    };
+  } else if (isLv918) {
+    skin = {
+      modalBg: "linear-gradient(180deg, #4a0f30 0%, #2a0518 100%)",
+      borderColor: "#e8b53a",
+      starOff: "#4a1a30",
+      starOn: "#f7c752",
+      submitImage: LV918_ASSETS.spin.btnPlay,
+      submitText: "#f7c752",
+    };
+  } else if (isN1gang) {
+    skin = {
+      modalBg: "linear-gradient(180deg, #17130c 0%, #050505 100%)",
+      borderColor: "#e9af41",
+      starOff: "#3a2f1a",
+      starOn: "#f2ba33",
+      submitImage: N1GANG_ASSETS.spin.btnPlay,
+      submitText: "#f2cb7a",
+    };
+  } else {
+    skin = {
+      modalBg: "linear-gradient(180deg, #1a3a22 0%, #07190d 100%)",
+      borderColor: "#c08f32",
+      starOff: "#3d4a3a",
+      starOn: "#fde685",
+      submitBg: "linear-gradient(180deg, #7da348 0%, #4d7530 100%)",
+      submitText: "#ffffff",
+    };
+  }
 
   const reset = useCallback(() => {
     setRating(0);
@@ -101,8 +171,8 @@ export default function FeedbackModal({ isOpen, onClose }) {
             transition={{ type: "spring", stiffness: 280, damping: 26 }}
             onClick={(event) => event.stopPropagation()}
             style={{
-              background: "linear-gradient(180deg, #1a3a22 0%, #07190d 100%)",
-              border: "2px solid #c08f32",
+              background: skin.modalBg,
+              border: `2px solid ${skin.borderColor}`,
               boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
             }}
           >
@@ -143,7 +213,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
                         className="text-3xl leading-none transition-transform hover:scale-110"
                         aria-label={`Rate ${n} star${n > 1 ? "s" : ""}`}
                       >
-                        <span style={{ color: (hoverRating || rating) >= n ? "#fde685" : "#3d4a3a" }}>★</span>
+                        <span style={{ color: (hoverRating || rating) >= n ? skin.starOn : skin.starOff }}>★</span>
                       </button>
                     ))}
                   </div>
@@ -164,8 +234,15 @@ export default function FeedbackModal({ isOpen, onClose }) {
                     rows={4}
                     maxLength={500}
                     placeholder="Tell us what's on your mind..."
-                    className="w-full resize-none rounded-lg border border-[#c08f32]/40 bg-black/30 px-3 py-2 text-[13px] text-white placeholder-white/30 focus:border-[#fde685] focus:outline-none"
-                    style={{ fontFamily: '"Times New Roman", serif' }}
+                    className="w-full resize-none rounded-lg bg-black/30 px-3 py-2 text-[13px] text-white placeholder-white/30 focus:outline-none"
+                    style={{
+                      fontFamily: '"Times New Roman", serif',
+                      borderWidth: 1,
+                      borderStyle: "solid",
+                      borderColor: `${skin.borderColor}66`,
+                    }}
+                    onFocus={(e) => (e.target.style.borderColor = skin.starOn)}
+                    onBlur={(e) => (e.target.style.borderColor = `${skin.borderColor}66`)}
                   />
                   <div className="mt-1 text-right text-[10px] text-white/40">{message.length}/500</div>
                 </div>
@@ -181,23 +258,49 @@ export default function FeedbackModal({ isOpen, onClose }) {
                     type="button"
                     onClick={handleClose}
                     disabled={isSubmitting}
-                    className="flex-1 rounded-full border border-[#c08f32]/60 px-3 py-2 text-[12px] font-bold text-[#fde685] hover:bg-white/5 disabled:opacity-40"
-                    style={{ fontFamily: '"Times New Roman", serif' }}
+                    className="flex-1 rounded-full px-3 py-2 text-[12px] font-bold hover:bg-white/5 disabled:opacity-40"
+                    style={{
+                      fontFamily: '"Times New Roman", serif',
+                      color: skin.starOn,
+                      borderWidth: 1,
+                      borderStyle: "solid",
+                      borderColor: `${skin.borderColor}99`,
+                    }}
                   >
                     Cancel
                   </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="flex-1 rounded-full px-3 py-2 text-[12px] font-bold text-white shadow-md disabled:opacity-50"
-                    style={{
-                      background: "linear-gradient(180deg, #7da348 0%, #4d7530 100%)",
-                      fontFamily: '"Times New Roman", serif',
-                      textShadow: "0 1px 2px rgba(0,0,0,0.35)",
-                    }}
-                  >
-                    {isSubmitting ? "Sending…" : "Submit"}
-                  </button>
+                  {skin.submitImage ? (
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="relative flex-1 h-[38px] overflow-hidden text-[12px] font-bold disabled:opacity-50"
+                      style={{ fontFamily: '"Times New Roman", serif' }}
+                    >
+                      <img
+                        src={skin.submitImage}
+                        alt=""
+                        draggable={false}
+                        className="pointer-events-none absolute inset-0 h-full w-full select-none object-fill"
+                      />
+                      <span className="relative z-10" style={{ color: skin.submitText }}>
+                        {isSubmitting ? "Sending…" : "Submit"}
+                      </span>
+                    </button>
+                  ) : (
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="flex-1 rounded-full px-3 py-2 text-[12px] font-bold shadow-md disabled:opacity-50"
+                      style={{
+                        background: skin.submitBg,
+                        color: skin.submitText,
+                        fontFamily: '"Times New Roman", serif',
+                        textShadow: (isAcebet77 || isEp369 || isN1gang) ? "none" : "0 1px 2px rgba(0,0,0,0.35)",
+                      }}
+                    >
+                      {isSubmitting ? "Sending…" : "Submit"}
+                    </button>
+                  )}
                 </div>
               </form>
             ) : (
@@ -215,17 +318,36 @@ export default function FeedbackModal({ isOpen, onClose }) {
                 >
                   We appreciate your input and will use it to improve the experience.
                 </p>
-                <button
-                  onClick={handleClose}
-                  className="mt-2 rounded-full px-6 py-2 text-[12px] font-bold text-white shadow-md"
-                  style={{
-                    background: "linear-gradient(180deg, #7da348 0%, #4d7530 100%)",
-                    fontFamily: '"Times New Roman", serif',
-                    textShadow: "0 1px 2px rgba(0,0,0,0.35)",
-                  }}
-                >
-                  Close
-                </button>
+                {skin.submitImage ? (
+                  <button
+                    onClick={handleClose}
+                    className="relative mt-2 h-[38px] w-[140px] overflow-hidden text-[12px] font-bold"
+                    style={{ fontFamily: '"Times New Roman", serif' }}
+                  >
+                    <img
+                      src={skin.submitImage}
+                      alt=""
+                      draggable={false}
+                      className="pointer-events-none absolute inset-0 h-full w-full select-none object-fill"
+                    />
+                    <span className="relative z-10" style={{ color: skin.submitText }}>
+                      Close
+                    </span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleClose}
+                    className="mt-2 rounded-full px-6 py-2 text-[12px] font-bold shadow-md"
+                    style={{
+                      background: skin.submitBg,
+                      color: skin.submitText,
+                      fontFamily: '"Times New Roman", serif',
+                      textShadow: (isAcebet77 || isN1gang) ? "none" : "0 1px 2px rgba(0,0,0,0.35)",
+                    }}
+                  >
+                    Close
+                  </button>
+                )}
               </div>
             )}
           </motion.div>

@@ -46,6 +46,5 @@ CLAUDE.md
 
 # graphify knowledge graph outputs
 /graphify-out/
-
 # playwright mcp debug artifacts (console logs + page snapshots)
 .playwright-mcp/

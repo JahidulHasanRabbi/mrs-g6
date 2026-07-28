@@ -45,6 +45,7 @@ function Header({
               width={36}
               height={36}
               className="object-contain"
+              style={{ width: 36, height: 36 }}
               priority
             />
             <p

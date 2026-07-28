@@ -3,11 +3,26 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { VIP_DETAILS_ASSETS } from "./vipDetailsAssets";
+import { useTheme } from "../../contexts/ThemeContext";
+import { ACEBET_ASSETS } from "../themes/acebet77/assets";
+import { UBET_ASSETS } from "../themes/ubetclub/assets";
+import { EP369_ASSETS } from "../themes/ep369/assets";
+import { KGAME99_ASSETS } from "../themes/kgame99/assets";
+import { LV918_ASSETS } from "../themes/lv918/assets";
+import { N1GANG_ASSETS } from "../themes/n1gang/assets";
 
 export default function PrivilegesCard({ level = "Bronze", tierData = null, tierIndex = 0, isActive = true }) {
+  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang } = useTheme();
   const bgOrder = ['bronze', 'silver', 'gold', 'platinum', 'diamond'];
 
-  let currentBg = VIP_DETAILS_ASSETS.privilegesBg[level.toLowerCase()];
+  let currentBg;
+  if (isAcebet77) currentBg = ACEBET_ASSETS.vip.cardFrame;
+  else if (isUbetclub) currentBg = UBET_ASSETS.vip.cardFrame;
+  else if (isEp369) currentBg = EP369_ASSETS.vip.cardFrame;
+  else if (isKgame99) currentBg = KGAME99_ASSETS.vip.cardFrame;
+  else if (isLv918) currentBg = LV918_ASSETS.vip.cardFrame;
+  else if (isN1gang) currentBg = N1GANG_ASSETS.vip.cardFrame;
+  else currentBg = VIP_DETAILS_ASSETS.privilegesBg[level.toLowerCase()];
 
   if (!currentBg) {
     const lowerName = level.toLowerCase();
@@ -41,7 +56,10 @@ export default function PrivilegesCard({ level = "Bronze", tierData = null, tier
           alt={`${level} Privileges Background`}
           src={currentBg}
           fill
-          className="object-cover"
+          // Themed shared frames stretch to fill the card exactly (like their
+          // other frame usages). Default themes keep object-cover so their
+          // per-tier photographic backgrounds don't distort.
+          className={isAcebet77 || isUbetclub || isEp369 || isKgame99 || isLv918 || isN1gang ? "object-fill" : "object-cover"}
           priority={isActive}
           sizes="344px"
         />
@@ -49,9 +67,17 @@ export default function PrivilegesCard({ level = "Bronze", tierData = null, tier
 
       {/* Content */}
       <div className="absolute inset-0 flex flex-col items-center pt-[10px] px-[40px] pb-4 max-[400px]:pt-[6px] max-[400px]:px-[32px]">
-        {/* Centered Rank Badge — overlaps the card's top frame */}
+        {/* Centered Rank Badge — overlaps the card's top frame. lv918's crown
+            frame carries a tall rose-and-heart ornament along the bottom edge
+            (it starts at ~78% of the card height), so its badge is a size down:
+            that lifts the stats block into the clear pink interior instead of
+            letting the last row ride the ornament. */}
         <motion.div
-          className="relative w-[150px] h-[150px] max-[400px]:w-[126px] max-[400px]:h-[126px] -mt-[18px] mb-1 max-[400px]:-mt-[14px]"
+          className={`relative -mt-[18px] mb-1 max-[400px]:-mt-[14px] ${
+            isLv918
+              ? "w-[132px] h-[132px] max-[400px]:w-[112px] max-[400px]:h-[112px]"
+              : "w-[150px] h-[150px] max-[400px]:w-[126px] max-[400px]:h-[126px]"
+          }`}
           initial={{ scale: 0.85, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.35, ease: "easeOut" }}
@@ -74,8 +100,14 @@ export default function PrivilegesCard({ level = "Bronze", tierData = null, tier
           )}
         </motion.div>
 
-        {/* Stats list */}
-        <div className="w-full flex flex-col gap-2 max-[400px]:gap-1.5 pl-2 max-[400px]:pl-0">
+        {/* Stats list. On lv918 the frame's interior narrows near the bottom
+            corners (rose clusters), so the block is centred as a unit rather
+            than pinned to the left edge where it would ride the roses. */}
+        <div
+          className={`flex flex-col gap-2 max-[400px]:gap-1.5 ${
+            isLv918 ? "mx-auto w-fit" : "w-full pl-2 max-[400px]:pl-0"
+          }`}
+        >
           {stats.map((stat, index) => (
             <div key={stat.label} className="flex items-start gap-2">
               <div className="relative w-[26px] h-[26px] max-[400px]:w-[22px] max-[400px]:h-[22px] shrink-0 -mt-0.5">
@@ -86,9 +118,22 @@ export default function PrivilegesCard({ level = "Bronze", tierData = null, tier
                   className="object-contain"
                 />
               </div>
-              <div className="text-[#fcd064] font-bold font-['Times_New_Roman'] leading-tight text-[15px] max-[400px]:text-[13px]">
+              {/* kgame99's card frame has a LIGHT sky-and-cloud interior and
+                  lv918's a light rose one, so the default warm-gold stat label
+                  + dark drop-shadow reads as a smudge. Switch to deep ink
+                  (sapphire navy / royal rose) with a fine white glow — reads
+                  like engraving on the panel and echoes the frame's gems.
+                  Other themes keep the gold treatment. */}
+              <div
+                className={`font-bold font-['Times_New_Roman'] leading-tight text-[15px] max-[400px]:text-[13px] ${isKgame99 ? 'text-[#0a1a2f]' : isLv918 ? 'text-[#6b0a32]' : 'text-[#fcd064]'}`}
+                style={
+                  isKgame99 || isLv918
+                    ? { textShadow: '0 1px 1px rgba(255,255,255,0.85), 0 0 6px rgba(255,255,255,0.5)' }
+                    : { textShadow: '0 1px 3px rgba(0,0,0,0.7), 0 0 8px rgba(0,0,0,0.4)' }
+                }
+              >
                 <p>{stat.label}:</p>
-                <p>{stat.value}</p>
+                <p className={isKgame99 ? 'text-[#0a4e9e]' : isLv918 ? 'text-[#2a0a1f]' : ''}>{stat.value}</p>
               </div>
             </div>
           ))}

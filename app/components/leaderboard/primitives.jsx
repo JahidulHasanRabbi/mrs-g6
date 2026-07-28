@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { LB_COLORS } from "./constants";
+import ThemedActionButton from "../themes/shared/ThemedActionButton";
 
 export const flagUrl = (iso) =>
   `/assets/leaderboard/flags/${iso.toLowerCase()}.svg`;
@@ -86,7 +87,7 @@ export function GlowCard({ children, className = "", style }) {
       style={{
         background: LB_COLORS.cardOverlay,
         border: `1px solid ${LB_COLORS.borderGreen30}`,
-        boxShadow: "0 0 20px 0 rgba(84,233,138,0.2)",
+        boxShadow: "0 0 20px 0 rgba(var(--lb-accent-rgb), 0.2)",
         ...style,
       }}
     >
@@ -192,8 +193,8 @@ export function Tabs({ tabs, activeIndex, onChange }) {
             onClick={() => onChange(i)}
             className="flex-1 rounded-[8px] py-2 text-[12px]"
             style={{
-              background: active ? "#2ECC71" : "transparent",
-              color: active ? "#005027" : LB_COLORS.textMuted,
+              background: active ? LB_COLORS.primary : "transparent",
+              color: active ? LB_COLORS.primaryDeep : LB_COLORS.textMuted,
               fontFamily: "'Lexend',sans-serif",
               lineHeight: "24px",
             }}
@@ -209,15 +210,15 @@ export function Tabs({ tabs, activeIndex, onChange }) {
 export function GreenButton({ children, onClick, variant = "primary", size = "lg" }) {
   const isPrimary = variant === "primary";
   const padding = size === "sm" ? "py-2 text-[12px]" : "py-4 text-[16px]";
-  return (
+  const defaultButton = (
     <button
       type="button"
       onClick={onClick}
       className={`w-full rounded-[8px] uppercase ${padding}`}
       style={{
-        background: isPrimary ? "#54E98A" : "transparent",
-        border: isPrimary ? "none" : "1px solid #54E98A",
-        color: isPrimary ? "#003919" : "#54E98A",
+        background: isPrimary ? LB_COLORS.primary : "transparent",
+        border: isPrimary ? "none" : `1px solid ${LB_COLORS.primary}`,
+        color: isPrimary ? LB_COLORS.primaryDeep : LB_COLORS.primary,
         fontFamily: "'Lexend',sans-serif",
         boxShadow: isPrimary ? "0 4px 0 rgba(0,0,0,0.3)" : "none",
       }}
@@ -225,18 +226,30 @@ export function GreenButton({ children, onClick, variant = "primary", size = "lg
       {children}
     </button>
   );
+
+  return (
+    <div className="flex w-full justify-center">
+      <ThemedActionButton
+        textSize={size === "sm" ? 14 : 18}
+        onClick={onClick}
+        fallback={defaultButton}
+      >
+        {children}
+      </ThemedActionButton>
+    </div>
+  );
 }
 
 export function HeroButton({ children, onClick, disabled }) {
-  return (
+  const defaultButton = (
     <button
       type="button"
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
       className="w-full rounded-[12px] py-4 uppercase"
       style={{
-        background: "#54E98A",
-        color: "#003919",
+        background: LB_COLORS.primary,
+        color: LB_COLORS.primaryDeep,
         boxShadow: disabled ? "none" : "0 4px 0 rgba(0,0,0,0.3)",
         fontFamily: "'Anybody','Lexend',sans-serif",
         fontWeight: 700,
@@ -248,5 +261,21 @@ export function HeroButton({ children, onClick, disabled }) {
     >
       {children}
     </button>
+  );
+
+  // Themed portals get the theme's ornate gold plaque; default theme keeps the
+  // flat hero button above. Centered so the fixed-width plaque doesn't look
+  // stranded in the full-width card.
+  return (
+    <div className="flex w-full justify-center">
+      <ThemedActionButton
+        textSize={20}
+        disabled={disabled}
+        onClick={onClick}
+        fallback={defaultButton}
+      >
+        {children}
+      </ThemedActionButton>
+    </div>
   );
 }
