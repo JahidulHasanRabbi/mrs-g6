@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect } from 'react';
-import { getMemberInfo, getProfile, getPublicFrames, getVipTiers } from '../api/memberApi';
+import { getAvatarProfile, getMemberInfo, getProfile, getPublicFrames, getVipTiers } from '../api/memberApi';
 import { tokenStorage } from '../api/tokenStorage';
 import { onAuthChanged } from '../api/authEvents';
 import {
@@ -21,6 +21,7 @@ export function UserProvider({ children }) {
   const [userData, setUserData] = useState({
     name: "Jhon Doe",
     balance: "0.00",
+    battlePoints: "0",
     currentLevel: "Gold",
     nextLevel: "Platinum",
     progress: 61.6,
@@ -135,6 +136,7 @@ export function UserProvider({ children }) {
         setUserData({
           name: "Jhon Doe",
           balance: "0.00",
+          battlePoints: "0",
           currentLevel: "Gold",
           nextLevel: "Platinum",
           progress: 61.6,
@@ -163,6 +165,22 @@ export function UserProvider({ children }) {
           balance: formattedBalance,
           currentLevel: memberInfo.tier || prev.currentLevel,
         }));
+
+        // BP belongs to the member's avatar profile, not the token wallet.
+        // Keep it optional so members who have not started the RPG journey can
+        // still load the rest of their account normally.
+        try {
+          const avatarProfile = await getAvatarProfile();
+          const battlePoints = Number(avatarProfile?.current_battle_points ?? 0);
+          setUserData(prev => ({
+            ...prev,
+            battlePoints: Number.isFinite(battlePoints)
+              ? battlePoints.toLocaleString('en-US')
+              : "0",
+          }));
+        } catch (avatarError) {
+          console.error('UserContext: Error loading BP balance:', avatarError);
+        }
 
         // Only show frames belonging to the user's exact VIP tier
         const tierFrames = getFramesForExactTier(memberInfo.tier, allVipTiers);
@@ -215,6 +233,19 @@ export function UserProvider({ children }) {
         balance: formattedBalance,
         currentLevel: memberInfo.tier || prev.currentLevel,
       }));
+
+      try {
+        const avatarProfile = await getAvatarProfile();
+        const battlePoints = Number(avatarProfile?.current_battle_points ?? 0);
+        setUserData(prev => ({
+          ...prev,
+          battlePoints: Number.isFinite(battlePoints)
+            ? battlePoints.toLocaleString('en-US')
+            : "0",
+        }));
+      } catch (avatarError) {
+        console.error('UserContext: Error refreshing BP balance:', avatarError);
+      }
     } catch (error) {
       console.error('Error refreshing user data:', error);
     }

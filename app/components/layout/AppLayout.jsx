@@ -81,6 +81,7 @@ export default function AppLayout({ children }) {
           onMenuClick={() => setIsMenuOpen(true)}
           showAnimation={!hasAnimated}
           balance={isSpinPage ? userData.balance : null}
+          battlePoints={isSpinPage ? userData.battlePoints : null}
           profilePhoto={profilePicture}
         />
       )}

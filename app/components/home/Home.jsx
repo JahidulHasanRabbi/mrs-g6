@@ -27,7 +27,12 @@ const Home = memo(function Home() {
         backgroundRepeat: "no-repeat",
       }}
     >
-      <Header onMenuClick={handleMenuOpen} profilePhoto={profilePicture} balance={userData.balance} />
+      <Header
+        onMenuClick={handleMenuOpen}
+        profilePhoto={profilePicture}
+        balance={userData.balance}
+        battlePoints={userData.battlePoints}
+      />
 
       <HamburgerMenu isOpen={isMenuOpen} onClose={handleMenuClose} />
 

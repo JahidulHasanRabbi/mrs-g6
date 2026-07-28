@@ -12,7 +12,13 @@ import { useUser } from "../../contexts/UserContext";
  * Top navigation bar with hamburger menu and logo
  * Matches Figma design exactly
  */
-function Header({ onMenuClick, showAnimation = false, balance = null, profilePhoto = null }) {
+function Header({
+  onMenuClick,
+  showAnimation = false,
+  balance = null,
+  battlePoints = null,
+  profilePhoto = null,
+}) {
   const router = useRouter();
   const { selectedFrameId } = useUser();
   
@@ -65,31 +71,59 @@ function Header({ onMenuClick, showAnimation = false, balance = null, profilePho
         >
           {balance !== null && (
             <motion.div
-              className="absolute right-[58px] top-[8px] w-[140px] h-[48px]"
+              className="absolute right-[58px] top-[8px] flex h-[48px] items-center gap-1"
               initial={showAnimation ? { opacity: 0, scale: 0.8 } : { opacity: 1, scale: 1 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={showAnimation ? { duration: 0.6, delay: 0.2, ease: "easeOut" } : { duration: 0 }}
             >
-              <Image
-                alt="Balance Frame"
-                src="/assets/mart/coin-balance.png"
-                fill
-                className="object-contain"
-                sizes="146px"
-              />
-              <div className="absolute inset-0 flex items-center justify-center gap-2 px-3">
-                <div className="relative w-[30px] h-[34px] shrink-0">
+              {battlePoints !== null && (
+                <div className="relative h-[48px] w-[96px] shrink-0 min-[390px]:w-[110px]">
                   <Image
-                    alt="Coin"
-                    src="/assets/mart/coin-icon.png"
+                    alt=""
+                    src="/assets/mart/coin-balance.png"
                     fill
                     className="object-contain"
-                    sizes="30px"
+                    sizes="(min-width: 390px) 110px, 96px"
                   />
+                  <div className="absolute inset-0 z-10 flex items-center justify-center gap-1 px-2">
+                    <div className="relative size-[26px] shrink-0">
+                      <Image
+                        alt="Battle Points"
+                        src="/assets/rpg/icons/bp-gem.svg"
+                        fill
+                        className="object-contain"
+                        sizes="26px"
+                      />
+                    </div>
+                    <p className="min-w-0 truncate font-['Times_New_Roman'] text-[13px] font-bold text-[#f9d063]">
+                      {battlePoints === "" || battlePoints == null ? "0" : battlePoints}
+                    </p>
+                  </div>
                 </div>
-                <p className="truncate text-[#f9d063] text-[14px] font-bold font-['Times_New_Roman']">
-                  {balance}
-                </p>
+              )}
+
+              <div className="relative h-[48px] w-[116px] shrink-0 min-[390px]:w-[140px]">
+                <Image
+                  alt=""
+                  src="/assets/mart/coin-balance.png"
+                  fill
+                  className="object-contain"
+                  sizes="(min-width: 390px) 140px, 116px"
+                />
+                <div className="absolute inset-0 z-10 flex items-center justify-center gap-2 px-3">
+                  <div className="relative h-[34px] w-[30px] shrink-0">
+                    <Image
+                      alt="Tokens"
+                      src="/assets/mart/coin-icon.png"
+                      fill
+                      className="object-contain"
+                      sizes="30px"
+                    />
+                  </div>
+                  <p className="min-w-0 truncate font-['Times_New_Roman'] text-[14px] font-bold text-[#f9d063]">
+                    {balance}
+                  </p>
+                </div>
               </div>
             </motion.div>
           )}

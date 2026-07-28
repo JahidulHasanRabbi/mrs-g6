@@ -34,7 +34,7 @@ function RpgPageInner() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { authReady, memberUuid } = useUser();
+  const { authReady, memberUuid, updateUserData } = useUser();
 
   const viewParam = searchParams.get("view") || RPG_VIEWS.HOME;
   const view = VALID_VIEWS.has(viewParam) ? viewParam : RPG_VIEWS.HOME;
@@ -47,6 +47,20 @@ function RpgPageInner() {
   const [createError, setCreateError] = useState(null);
   const [loadError, setLoadError] = useState(null);
   const loadedRef = useRef(false);
+
+  // Keep the global header BP balance aligned with the RPG's authoritative
+  // profile after initial load, mission claims, boxes, battles, and level-ups.
+  useEffect(() => {
+    if (profile?.bp == null) return;
+    const battlePoints = Number(profile.bp);
+    updateUserData({
+      battlePoints: Number.isFinite(battlePoints)
+        ? battlePoints.toLocaleString("en-US")
+        : "0",
+    });
+    // profile.bp is the only value that should trigger this synchronization.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile?.bp]);
 
   const navigate = useCallback(
     (nextView, extra, opts) => {
