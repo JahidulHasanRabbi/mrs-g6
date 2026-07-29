@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { checkIn, getCheckinSettings, getMemberInfo } from "../../../api/memberApi";
 import { useUser } from "../../../contexts/UserContext";
-import { CHECKIN_DAYS, fitStyle } from "./checkinMartSkin";
+import { CHECKIN_DAYS, fitStyle, layoutTransform } from "./checkinMartSkin";
 import ThemedDialog from "./ThemedDialog";
 import ThemedActionButton from "./ThemedActionButton";
 
@@ -66,6 +66,8 @@ export default function ThemedCheckInBoard({ skin }) {
       cancelled = true;
     };
   }, [authReady, memberUuid, applyStreak]);
+
+  const layout = useMemo(() => layoutTransform(skin.panel), [skin.panel]);
 
   const days = useMemo(() => {
     const rewardFor = (day) => {
@@ -174,18 +176,11 @@ export default function ThemedCheckInBoard({ skin }) {
               const isChecked = checkedDays.includes(d.day);
               const icon = d.isSpecial ? null : skin.icons[d.icon];
 
-              // Grow the tile from its anchored edge so the extra size is taken
-              // out of the panel's middle, not out of the frame's rails.
-              const baseW = d.isSpecial ? d.w : skin.cardW;
-              const baseH = d.isSpecial ? d.h : skin.cardH;
-              const w = baseW * skin.cardScale;
-              const h = baseH * skin.cardScale;
-              const cy =
-                d.anchor === "bottom"
-                  ? d.cy + baseH / 2 - h / 2
-                  : d.anchor === "top"
-                    ? d.cy - baseH / 2 + h / 2
-                    : d.cy;
+              // Map the comp's slot into this frame's inner panel.
+              const w = (d.isSpecial ? d.w : skin.cardW) * layout.scale;
+              const h = (d.isSpecial ? d.h : skin.cardH) * layout.scale;
+              const cx = layout.x(d.cx);
+              const cy = layout.y(d.cy);
 
               return (
                 <motion.button
@@ -196,7 +191,7 @@ export default function ThemedCheckInBoard({ skin }) {
                   aria-label={`Check in ${d.label}`}
                   className={`@container absolute ${isChecked ? "opacity-60 grayscale" : ""}`}
                   style={{
-                    left: `${d.cx}%`,
+                    left: `${cx}%`,
                     top: `${cy}%`,
                     width: `${w}%`,
                     height: `${h}%`,

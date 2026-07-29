@@ -28,23 +28,55 @@ const pctY = (y) => ((y + 88 / 2) / 319) * 100;
  * the frame's top crown / bottom scroll rail.
  */
 export const CHECKIN_DAYS = [
-  { day: 1, label: 'DAY 1', cx: pctX(39), cy: pctY(50), icon: 'bolt', anchor: 'top' },
-  { day: 2, label: 'DAY 2', cx: pctX(112), cy: pctY(50), icon: 'bolt', anchor: 'top' },
-  { day: 3, label: 'DAY 3', cx: pctX(183), cy: pctY(50), icon: 'coin', anchor: 'top' },
-  { day: 4, label: 'DAY 4', cx: pctX(254), cy: pctY(50), icon: 'bolt', anchor: 'top' },
-  { day: 5, label: 'DAY 5', cx: pctX(39), cy: pctY(161), icon: 'cards', anchor: 'bottom' },
-  { day: 6, label: 'DAY 6', cx: pctX(112), cy: pctY(160), icon: 'bolt', anchor: 'bottom' },
+  { day: 1, label: 'DAY 1', cx: pctX(39), cy: pctY(50), icon: 'bolt' },
+  { day: 2, label: 'DAY 2', cx: pctX(112), cy: pctY(50), icon: 'bolt' },
+  { day: 3, label: 'DAY 3', cx: pctX(183), cy: pctY(50), icon: 'coin' },
+  { day: 4, label: 'DAY 4', cx: pctX(254), cy: pctY(50), icon: 'bolt' },
+  { day: 5, label: 'DAY 5', cx: pctX(39), cy: pctY(161), icon: 'cards' },
+  { day: 6, label: 'DAY 6', cx: pctX(112), cy: pctY(160), icon: 'bolt' },
   {
     day: 7,
     label: 'DAY 7',
     isSpecial: true,
-    anchor: 'bottom',
     cx: ((180 + 148 / 2) / 362) * 100,
     cy: ((152 + 98 / 2) / 319) * 100,
     w: (148 / 362) * 100,
     h: (98 / 319) * 100,
   },
 ];
+
+/**
+ * Bounding box the seven day slots + their DAY labels occupy in the comps, as %
+ * of the 362x319 board box. The labels sit below the bottom row, which is why
+ * `b` reaches past the tiles themselves.
+ */
+export const COMP_BOUNDS = { l: 10.8, r: 90.6, t: 15.7, b: 82.5 };
+
+/**
+ * Fits the comp's day layout inside the active frame's inner panel.
+ *
+ * The comps position all seven slots against the full board box, but each
+ * theme's frame art has a different border thickness — so those fixed
+ * percentages spill over the panel edge and onto the corner ornaments on most
+ * skins (worst on lv918: ~6% past the right edge, ~5% past the bottom).
+ *
+ * Scaling is uniform and the block is centred, so the comp's internal
+ * arrangement is preserved exactly — only its overall size and offset change.
+ */
+export function layoutTransform(panel) {
+  const C = COMP_BOUNDS;
+  const s = Math.min(
+    (panel.r - panel.l) / (C.r - C.l),
+    (panel.b - panel.t) / (C.b - C.t)
+  );
+  const ox = panel.l + ((panel.r - panel.l) - (C.r - C.l) * s) / 2;
+  const oy = panel.t + ((panel.b - panel.t) - (C.b - C.t) * s) / 2;
+  return {
+    scale: s,
+    x: (v) => ox + (v - C.l) * s,
+    y: (v) => oy + (v - C.t) * s,
+  };
+}
 
 /**
  * Per-icon geometry, as % of a day card. The three reward glyphs have different
@@ -108,11 +140,12 @@ export function buildCheckinSkin(ASSETS, COLORS, overrides = {}) {
     // (430px) enlarges the frame, tiles and labels together — rather than
     // growing tiles alone, which has no room once the labels are placed.
     boardMaxWidth: 430,
-    // Multiplier on the day tiles only. Left at 1 because the panel has no
-    // spare vertical room: the tiles grow from their anchored edge (see
-    // CHECKIN_DAYS) and anything above ~1.05 closes the gap the DAY labels
-    // sit in. Prefer boardMaxWidth to make the board bigger.
-    cardScale: 1,
+    // Inner flat area of THIS theme's frame art, as % of the board box, inset a
+    // little so tiles don't kiss the border or the corner ornaments. The day
+    // layout is fitted into this (see layoutTransform), which is what keeps the
+    // tiles inside the frame on every skin. Defaults to the comps' own bounds,
+    // i.e. no correction.
+    panel: { ...COMP_BOUNDS },
     cardW: CARD_W,
     cardH: CARD_H,
     icons: {

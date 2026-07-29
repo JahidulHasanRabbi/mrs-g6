@@ -12,6 +12,10 @@ import { LV918_ASSETS, LV918_COLORS } from "./assets";
  * shared board.
  */
 const SKIN = buildCheckinSkin(LV918_ASSETS, LV918_COLORS, {
+  // Inner flat area of this theme's frame art (% of the board box). The day
+  // layout is fitted into it so no tile or DAY label lands on the border or a
+  // corner ornament.
+  panel: { l: 13, r: 87, t: 15, b: 79 },
   // Image overscale/offset per slot, taken from this theme's comp. The
   // exported PNGs carry different amounts of transparent padding, so without
   // this the tiles render smaller than their slot with wide gaps.
