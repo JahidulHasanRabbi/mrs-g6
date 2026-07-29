@@ -25,6 +25,7 @@ const MRS_PAGES = [
   { slug: "/leaderboard?tab=withdrawal",        label: "Top 20 Withdraw" },
   { slug: "/leaderboard?tab=referrer",          label: "Top 20 Referral" },
   { slug: "/missions",                          label: "Missions" },
+  { slug: "/daily-checkin",                     label: "Daily Check-in" },
   { slug: "/terms-and-conditions",              label: "Terms & Conditions" },
   { slug: "/vip",                               label: "VIP" },
 ];
