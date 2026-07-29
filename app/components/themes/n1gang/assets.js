@@ -139,6 +139,22 @@ export const N1GANG_ASSETS = {
     // Decorative only — never use as a text container.
     ornamentThrone: `${BASE}/ui/ornament-throne.png`,
   },
+  // Daily Check-in page (Figma 463:1384). Board geometry, day positions and the
+  // reward glyphs are shared across all six skins via
+  // app/components/themes/shared/checkinMartSkin.js — only the art differs here.
+  checkin: {
+    title: `${BASE}/checkin/title-checkin.png`,
+    boardFrame: `${BASE}/checkin/board-frame.png`,
+    dayCard: `${BASE}/checkin/day-card.png`,
+    chest: `${BASE}/checkin/chest-day7.png`,
+  },
+  // Mart page (Figma 468:2680). itemFrame is the ornate card each product sits
+  // in; btnRedeem is the plaque at its foot.
+  mart: {
+    title: `${BASE}/mart/title-mart.png`,
+    itemFrame: `${BASE}/mart/item-frame.png`,
+    btnRedeem: `${BASE}/mart/btn-redeem.png`,
+  },
 };
 
 export const N1GANG_COLORS = {

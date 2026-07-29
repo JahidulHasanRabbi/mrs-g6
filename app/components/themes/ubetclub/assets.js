@@ -95,6 +95,22 @@ export const UBET_ASSETS = {
     crown: `${BASE}/ui/frame-crown.png`,
     scroll: `${BASE}/ui/frame-scroll.png`,
   },
+  // Daily Check-in page (Figma 462:403). Board geometry, day positions and the
+  // reward glyphs are shared across all six skins via
+  // app/components/themes/shared/checkinMartSkin.js — only the art differs here.
+  checkin: {
+    title: `${BASE}/checkin/title-checkin.png`,
+    boardFrame: `${BASE}/checkin/board-frame.png`,
+    dayCard: `${BASE}/checkin/day-card.png`,
+    chest: `${BASE}/checkin/chest-day7.png`,
+  },
+  // Mart page (Figma 468:2192). itemFrame is the ornate card each product sits
+  // in; btnRedeem is the plaque at its foot.
+  mart: {
+    title: `${BASE}/mart/title-mart.png`,
+    itemFrame: `${BASE}/mart/item-frame.png`,
+    btnRedeem: `${BASE}/mart/btn-redeem.png`,
+  },
 };
 
 // Shared palette (from Figma inspection of the 77:* frames).

@@ -112,6 +112,24 @@ export const ACEBET_ASSETS = {
   terms: {
     title: `${BASE}/ui/title-terms.png`,      // "Terms & Condition" plaque
   },
+  // Daily Check-in page (Figma 460:23). The board frame is the ornate scroll
+  // holding the 7 day slots; day-1..6 share one card frame and day 7 is the
+  // wide treasure chest. The reward glyphs (bolt for days 1/2/4/6, coin for 3,
+  // cards for 5) are identical in every theme's comp, so they come from
+  // /assets/themes/shared/checkin/ via buildCheckinSkin.
+  checkin: {
+    title: `${BASE}/checkin/title-checkin.png`,
+    boardFrame: `${BASE}/checkin/board-frame.png`,
+    dayCard: `${BASE}/checkin/day-card.png`,
+    chest: `${BASE}/checkin/chest-day7.png`,
+  },
+  // Mart page (Figma 468:1790). itemFrame is the ornate card the product sits
+  // in; btnRedeem is the dark plaque at its foot.
+  mart: {
+    title: `${BASE}/mart/title-mart.png`,
+    itemFrame: `${BASE}/mart/item-frame.png`,
+    btnRedeem: `${BASE}/mart/btn-redeem.png`,
+  },
   // Two ornate frames reused across profile/terms/vip/token-history:
   // - frameCrown: rectangular frame topped with a crown + jewel dividers on
   //   the sides. Used for the terms body, the profile VIP-card, and the VIP
@@ -128,6 +146,8 @@ export const ACEBET_ASSETS = {
 export const ACEBET_COLORS = {
   gold: '#e9af41',
   goldBright: '#f2ba33',
+  // Dark end of the mart product plinth's gold gradient (Figma 468:2000).
+  goldDeep: '#8c6c1e',
   cream: '#fff6df',
   creamMuted: '#eae2cf',
   sand: '#d0c6ab',

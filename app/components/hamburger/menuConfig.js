@@ -48,6 +48,7 @@ export const MENU_CONFIG = {
     },
     { icon: "/assets/menu-icons/missions.svg", label: "Missions", link: "/missions" },
     { icon: "/assets/menu-icons/vip.svg", label: "VIP Membership", link: "/vip" },
+    { icon: "/assets/menu-icons/daily-checkin.svg", label: "Daily Check-in", link: "/daily-checkin" },
     { icon: "/assets/menu-icons/mart.svg", label: "Mart", link: "/mart" },
   ],
   stayConnected: {
