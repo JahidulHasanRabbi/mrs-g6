@@ -51,10 +51,10 @@ export const ADMIN_NAVIGATION = [
     id: 'penalty-kick'
   },
   {
-    label: 'RPG Game',
-    path: '/admin/rpg',
+    label: 'Avatar',
+    path: '/admin/avatar',
     enabled: true,
-    id: 'rpg'
+    id: 'avatar'
   },
   {
     label: 'Points Redemption Mall',

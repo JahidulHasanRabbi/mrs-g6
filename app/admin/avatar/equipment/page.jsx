@@ -1,6 +1,6 @@
 "use client";
 
-// /admin/rpg/equipment — Equipment items catalog.
+// /admin/avatar/equipment — Equipment items catalog.
 // Fixed set of 4 items (one per slot, seeded by the backend). There is no
 // create or archive endpoint: admins can only rename and re-balance
 // (PATCH name / power_bonus). slot_type is immutable.

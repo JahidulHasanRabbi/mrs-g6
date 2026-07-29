@@ -8,6 +8,16 @@ const nextConfig = {
         permanent: true,
       },
       {
+        source: '/rpg',
+        destination: '/avatar',
+        permanent: true,
+      },
+      {
+        source: '/admin/rpg/:path*',
+        destination: '/admin/avatar/:path*',
+        permanent: true,
+      },
+      {
         // The Top 20 leaderboard moved from /leaderboard/top-20 to /leaderboard
         // (the old World Cup board was retired). The ?tab= query string
         // (withdrawal/referrer) is preserved automatically by Next's redirect,

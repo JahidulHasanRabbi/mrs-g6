@@ -1,6 +1,6 @@
 "use client";
 
-// Fixed 64px top bar shared by every RPG screen. Layout matches the other
+// Fixed 64px top bar shared by every Avatar screen. Layout matches the other
 // MRS games (see penalty-kick TopHud): hamburger menu on the LEFT next to the
 // wordmark, info on the RIGHT — so the "way back to the station" is always in
 // the same corner across games. Dark-green/gold chrome as elsewhere.
@@ -28,7 +28,7 @@ export default function RpgTopBar({ onInfoClick, onMenuClick }) {
             className="text-[24px] uppercase leading-none tracking-[-1.2px]"
             style={{ color: RPG_COLORS.cyan, fontFamily: RPG_FONTS.logo }}
           >
-            RPG
+            AVATAR
           </span>
         </div>
       </div>

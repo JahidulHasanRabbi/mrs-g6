@@ -96,7 +96,7 @@ const rethrow = (fallback) => (err) => {
 const getSettings = getAvatarSettings;
 
 // TEMP DEV CHECK: enables a full-equipment dummy profile with
-// /rpg?dummyRpg=fullArmor. Remove this block after visual QA is done.
+// /avatar?dummyRpg=fullArmor. Remove this block after visual QA is done.
 const DUMMY_RPG_KEY = "mrs_rpg_dummy_api";
 const DUMMY_RPG_GENDER_KEY = "mrs_rpg_dummy_gender";
 

@@ -20,7 +20,7 @@ const MRS_PAGES = [
   { slug: "/spin",                              label: "Lucky Spin" },
   { slug: "/smash-egg",                         label: "Smash Egg" },
   { slug: "/penalty-kick",                      label: "Penalty Kick" },
-  { slug: "/rpg",                               label: "RPG" },
+  { slug: "/avatar",                            label: "Avatar" },
   { slug: "/leaderboard",                       label: "Top 20 Deposit" },
   { slug: "/leaderboard?tab=withdrawal",        label: "Top 20 Withdraw" },
   { slug: "/leaderboard?tab=referrer",          label: "Top 20 Referral" },

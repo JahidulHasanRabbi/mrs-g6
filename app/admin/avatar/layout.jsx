@@ -1,11 +1,11 @@
 "use client";
 
-// Shared shell for the Avatar RPG back-office pages — same header + route
+// Shared shell for the Avatar back-office pages — same header + route
 // guard treatment as app/admin/smash-egg/layout.jsx.
 
 import { AdminRouteGuard } from "../../components/guards/AdminRouteGuard";
 
-export default function RpgAdminLayout({ children }) {
+export default function AvatarAdminLayout({ children }) {
   return (
     <AdminRouteGuard>
       <main className="xl:admin-content-pl min-h-screen px-6 py-6 xl:pr-12">
@@ -20,7 +20,7 @@ export default function RpgAdminLayout({ children }) {
                   backgroundImage: "linear-gradient(101deg, #dc9d16 1%, #f2cb7a 98%)",
                 }}
               >
-                RPG Game
+                Avatar
               </h1>
             </div>
           </div>

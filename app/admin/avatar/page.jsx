@@ -1,6 +1,6 @@
 "use client";
 
-// /admin/rpg — Avatar RPG game settings hub.
+// /admin/avatar — Avatar game settings hub.
 //
 // Penalty-kick pattern: the header row holds outline ActionButtons that open
 // small focused ModalShell dialogs, each POSTing only its slice of
@@ -149,7 +149,7 @@ function GameStatusModal({ open, settings, onClose, onSaved }) {
       <div className="rounded-[8px] border border-white/10 bg-white/[0.03] px-4 py-3">
         <Toggle checked={openStatus} onChange={setOpenStatus} label="Game Open" />
         <p className="mt-2 text-[12px] text-white/40">
-          Closing the game also closes Challenge and Avatar Missions for members, and turns off the RPG feature flag.
+          Closing the game also closes Challenge and Avatar Missions for members, and turns off the Avatar feature flag.
         </p>
       </div>
     </ModalShell>
@@ -182,7 +182,7 @@ function DescriptionModal({ open, settings, onClose, onSaved }) {
 
   return (
     <ModalShell title="Description" open={open} onClose={onClose} onSave={handleSave} saving={saving}>
-      <Field label="Game Description" hint="Shown to members inside the RPG game info.">
+      <Field label="Game Description" hint="Shown to members inside the Avatar game info.">
         <textarea
           rows={5}
           value={description}
@@ -206,7 +206,7 @@ function Stat({ label, value }) {
   );
 }
 
-export default function RpgSettingsPage() {
+export default function AvatarSettingsPage() {
   const toast = useToast();
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);

@@ -1,6 +1,6 @@
 "use client";
 
-// /admin/rpg/mystery-box — Mystery box items (full CRUD + archive).
+// /admin/avatar/mystery-box — Mystery box items (full CRUD + archive).
 // The probability banner mirrors GET /avatar/mystery-box-items/probability-total/:
 // all active item probabilities should sum to exactly 1; items at 0 are shown
 // to members but never drawn.
@@ -166,7 +166,7 @@ export default function MysteryBoxItemsPage() {
         <ActionButton
           icon={<MaskIcon src={ICONS.gift} />}
           variant="filled"
-          onClick={() => router.push("/admin/rpg/mystery-box/add")}
+          onClick={() => router.push("/admin/avatar/mystery-box/add")}
         >
           Add Item
         </ActionButton>
@@ -214,7 +214,7 @@ export default function MysteryBoxItemsPage() {
                   </td>
                   <td className="px-6 py-4">
                     <RowActions
-                      onEdit={() => router.push(`/admin/rpg/mystery-box/add?uuid=${item.uuid}`)}
+                      onEdit={() => router.push(`/admin/avatar/mystery-box/add?uuid=${item.uuid}`)}
                       onArchive={() => setArchiveTarget(item)}
                     />
                   </td>

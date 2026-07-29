@@ -46,11 +46,11 @@ function pathnameToActiveItem(pathname) {
   if (pathname.startsWith("/admin/lucky-spin")) return "lucky-spin";
   if (pathname.startsWith("/admin/smash-egg")) return "smash-egg";
   if (pathname.startsWith("/admin/mission-game")) return "mission-game";
-  if (pathname.startsWith("/admin/rpg/equipment")) return "rpg-equipment";
-  if (pathname.startsWith("/admin/rpg/bosses")) return "rpg-bosses";
-  if (pathname.startsWith("/admin/rpg/missions")) return "rpg-missions";
-  if (pathname.startsWith("/admin/rpg/mystery-box")) return "rpg-mystery-box";
-  if (pathname.startsWith("/admin/rpg")) return "rpg-settings";
+  if (pathname.startsWith("/admin/avatar/equipment")) return "avatar-equipment";
+  if (pathname.startsWith("/admin/avatar/bosses")) return "avatar-bosses";
+  if (pathname.startsWith("/admin/avatar/missions")) return "avatar-missions";
+  if (pathname.startsWith("/admin/avatar/mystery-box")) return "avatar-mystery-box";
+  if (pathname.startsWith("/admin/avatar")) return "avatar-settings";
   if (pathname.startsWith("/admin/leaderboards/deposit")) return "lb-deposit";
   if (pathname.startsWith("/admin/leaderboards/referrer")) return "lb-referrer";
   if (pathname.startsWith("/admin/leaderboards/withdrawal")) return "lb-withdrawal";
@@ -161,9 +161,9 @@ const PromotionIcon = ({ className }) => (
   </svg>
 );
 
-// --- RPG submenu icons — one glyph per page so the children are scannable ---
+// --- Avatar submenu icons — one glyph per page so the children are scannable ---
 
-const RpgGearIcon = () => (
+const AvatarGearIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="3" />
     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
@@ -252,18 +252,18 @@ const MENU_ITEMS = [
     disabled: false,
   },
   {
-    id: "rpg",
-    label: "RPG Game",
+    id: "avatar",
+    label: "Avatar",
     iconMask: "/assets/rpg/ui/logo-gem.svg",
-    href: "/admin/rpg",
+    href: "/admin/avatar",
     hasSubmenu: true,
     disabled: false,
     children: [
-      { id: "rpg-settings", label: "Game Settings", href: "/admin/rpg", iconNode: RpgGearIcon },
-      { id: "rpg-equipment", label: "Equipment Items", href: "/admin/rpg/equipment", iconNode: SwordIcon },
-      { id: "rpg-bosses", label: "Bosses", href: "/admin/rpg/bosses", iconNode: SkullIcon },
-      { id: "rpg-missions", label: "Avatar Missions", href: "/admin/rpg/missions", iconNode: TargetIcon },
-      { id: "rpg-mystery-box", label: "Mystery Box Items", href: "/admin/rpg/mystery-box", iconNode: GiftIcon },
+      { id: "avatar-settings", label: "Game Settings", href: "/admin/avatar", iconNode: AvatarGearIcon },
+      { id: "avatar-equipment", label: "Equipment Items", href: "/admin/avatar/equipment", iconNode: SwordIcon },
+      { id: "avatar-bosses", label: "Bosses", href: "/admin/avatar/bosses", iconNode: SkullIcon },
+      { id: "avatar-missions", label: "Avatar Missions", href: "/admin/avatar/missions", iconNode: TargetIcon },
+      { id: "avatar-mystery-box", label: "Mystery Box Items", href: "/admin/avatar/mystery-box", iconNode: GiftIcon },
     ],
   },
   {

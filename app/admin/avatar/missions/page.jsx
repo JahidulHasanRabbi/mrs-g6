@@ -1,9 +1,9 @@
 "use client";
 
-// /admin/rpg/missions — Avatar missions list (full CRUD + archive).
+// /admin/avatar/missions — Avatar missions list (full CRUD + archive).
 // Creating a mission enrols all journey-started members in the background,
 // so creation lives on its own page (penalty-kick add-reward pattern):
-// /admin/rpg/missions/add, with ?uuid= for edit.
+// /admin/avatar/missions/add, with ?uuid= for edit.
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -123,7 +123,7 @@ export default function AvatarMissionsPage() {
         <ActionButton
           icon={<MaskIcon src={ICONS.level} />}
           variant="filled"
-          onClick={() => router.push("/admin/rpg/missions/add")}
+          onClick={() => router.push("/admin/avatar/missions/add")}
         >
           Add Mission
         </ActionButton>
@@ -149,7 +149,7 @@ export default function AvatarMissionsPage() {
                   <td className="px-6 py-5 text-[12px] text-white">{m.end_date || "-"}</td>
                   <td className="px-6 py-5">
                     <RowActions
-                      onEdit={() => router.push(`/admin/rpg/missions/add?uuid=${m.uuid}`)}
+                      onEdit={() => router.push(`/admin/avatar/missions/add?uuid=${m.uuid}`)}
                       onArchive={() => setArchiveTarget(m)}
                     />
                   </td>

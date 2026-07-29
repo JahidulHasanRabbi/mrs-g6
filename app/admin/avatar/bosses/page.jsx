@@ -1,6 +1,6 @@
 "use client";
 
-// /admin/rpg/bosses — Boss catalog.
+// /admin/avatar/bosses — Boss catalog.
 // Fixed set of 4 bosses (one per planet, seeded by the backend). No create or
 // archive endpoint: admins re-balance stats and toggle is_active (inactive
 // bosses are hidden from members). planet is immutable.

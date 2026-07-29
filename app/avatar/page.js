@@ -1,6 +1,6 @@
 "use client";
 
-// /rpg — Phase 3 planet RPG mini-game.
+// /avatar — Phase 3 Avatar mini-game.
 //
 // Navigation follows the leaderboard pattern: the ?view= query param is the
 // single source of truth for which screen renders, so browser back/forward
@@ -251,7 +251,7 @@ function RpgPageInner() {
         <div className="fixed inset-0 z-30 grid place-items-center bg-black/70 px-6 backdrop-blur-md">
           <div className="w-full max-w-[360px] rounded-[16px] border border-white/15 bg-[#071906]/95 px-6 py-7 text-center shadow-[0_16px_50px_rgba(0,0,0,0.45)]">
             <p className="text-[20px] font-bold" style={{ color: RPG_COLORS.gold, fontFamily: RPG_FONTS.display }}>
-              RPG is currently closed
+              Avatar is currently closed
             </p>
             <p className="mt-3 text-[12px] leading-5" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
               Please check back later.

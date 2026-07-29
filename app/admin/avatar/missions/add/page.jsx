@@ -1,6 +1,6 @@
 "use client";
 
-// /admin/rpg/missions/add — create / edit an avatar mission.
+// /admin/avatar/missions/add — create / edit an avatar mission.
 // Edit mode is ?uuid=<mission uuid>: the form hydrates from
 // GET /avatar/avatar-missions/{uuid}/ and saves with PUT (full update).
 // Feedback follows the penalty-kick add-reward conventions: toast.warning for
@@ -122,7 +122,7 @@ function AvatarMissionForm() {
         await createAvatarMission(payload);
         toast.success("Mission created");
       }
-      router.push("/admin/rpg/missions");
+      router.push("/admin/avatar/missions");
     } catch (err) {
       toast.error(editingUuid ? "Failed to update mission" : "Failed to create mission", {
         description: apiErrorMessage(err, "Please try again."),
@@ -226,7 +226,7 @@ function AvatarMissionForm() {
       )}
 
       <div className="mt-8 flex items-center justify-end gap-3">
-        <ActionButton onClick={() => router.push("/admin/rpg/missions")} disabled={saving}>
+        <ActionButton onClick={() => router.push("/admin/avatar/missions")} disabled={saving}>
           Back
         </ActionButton>
         <ActionButton variant="filled" onClick={handleSave} disabled={saving || loading}>

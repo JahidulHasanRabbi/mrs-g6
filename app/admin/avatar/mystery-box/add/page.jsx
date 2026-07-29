@@ -1,6 +1,6 @@
 "use client";
 
-// /admin/rpg/mystery-box/add — create / edit a mystery box item.
+// /admin/avatar/mystery-box/add — create / edit a mystery box item.
 // Edit mode is ?uuid=<item uuid>: hydrates from GET /avatar/mystery-box-items/{uuid}/
 // and saves with PUT. Reward fields are conditional on reward_type:
 //   1 Token        → token_amount required
@@ -221,7 +221,7 @@ function MysteryBoxItemForm() {
         await createMysteryBoxItem(payload);
         toast.success("Mystery box item created");
       }
-      router.push("/admin/rpg/mystery-box");
+      router.push("/admin/avatar/mystery-box");
     } catch (err) {
       toast.error(editingUuid ? "Failed to update item" : "Failed to create item", {
         description: apiErrorMessage(err, "Please try again."),
@@ -425,7 +425,7 @@ function MysteryBoxItemForm() {
       )}
 
       <div className="mt-8 flex items-center justify-end gap-3">
-        <ActionButton onClick={() => router.push("/admin/rpg/mystery-box")} disabled={saving}>
+        <ActionButton onClick={() => router.push("/admin/avatar/mystery-box")} disabled={saving}>
           Back
         </ActionButton>
         <ActionButton variant="filled" onClick={handleSave} disabled={saving || loading}>
