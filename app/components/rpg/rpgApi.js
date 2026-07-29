@@ -607,28 +607,18 @@ export async function getLatestPendingBox() {
 const REWARD_TYPE_KEYS = { 1: "tokens", 2: "bp", 3: "credit", 4: "equipment", 5: "levelup", 6: "gold" };
 
 // The "possible rewards" panel — the live admin catalog, not a hardcoded
-// table. Items at probability 0 are listed by the spec but never drawn, so
-// they're filtered out of the player-facing list.
+// table. Show every item returned by the API, including zero-probability items.
 export async function getMysteryBoxRewards() {
-  if (dummyRpgMode()) {
-    return [
-      { id: "dummy-token", type: "tokens", label: "Token x10", image: null, probability: 18 },
-      { id: "dummy-bp", type: "bp", label: "Battle Points 1,000", image: null, probability: 8 },
-      { id: "dummy-equipment", type: "equipment", label: "Rare Equipment x1", image: null, probability: 6 },
-    ];
-  }
   try {
     const data = await getAvatarMysteryBoxCatalog({ page_size: 100 });
     const rows = data.results ?? data ?? [];
-    return rows
-      .filter((r) => Number(r.probability) > 0)
-      .map((r) => ({
-        id: r.uuid,
-        type: REWARD_TYPE_KEYS[r.reward_type] || "tokens",
-        label: r.reward_name,
-        image: r.image || null,
-        probability: Number(r.probability) || 0,
-      }));
+    return rows.map((r) => ({
+      id: r.uuid,
+      type: REWARD_TYPE_KEYS[r.reward_type] || "tokens",
+      label: r.reward_name,
+      image: r.image || null,
+      probability: Number(r.probability) || 0,
+    }));
   } catch {
     // A missing catalog must never block opening a box.
     return [];

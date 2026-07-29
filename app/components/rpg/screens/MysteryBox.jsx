@@ -79,7 +79,7 @@ export default function MysteryBox({ boxId, onProfileUpdate, onNavigate }) {
     if (box === null && stage === STAGES.CLOSED) onNavigate(RPG_VIEWS.CHALLENGE, undefined, { replace: true });
   }, [box, stage, onNavigate]);
 
-  // Possible rewards = the live admin catalog (probability > 0).
+  // Possible rewards = every item returned by the live admin catalog.
   useEffect(() => {
     let cancelled = false;
     rpgApi.getMysteryBoxRewards().then((rows) => {

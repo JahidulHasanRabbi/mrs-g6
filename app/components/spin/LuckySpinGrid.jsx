@@ -388,7 +388,7 @@ export default memo(function LuckySpinGrid({
     // Internal lock is the source of truth — the parent's `isSpinning` prop
     // can lag a render behind, which previously let a second spin start
     // while the first spin's rAF loop was still actually running.
-    if (spinning || activeSpinIdRef.current !== 0) return;
+    if (activeSpinIdRef.current !== 0) return;
 
     // The winning tile is decided solely by the server result's uuid, which
     // always maps to one of the items already rendered on the wheel (the same
@@ -485,7 +485,7 @@ export default memo(function LuckySpinGrid({
     };
 
     rafRef.current = requestAnimationFrame(tick);
-  }, [spinning, stopSpin, centerRotate, centerRotateSpring, isLowEnd, isMidEnd, gridItems, onSpinComplete]);
+  }, [stopSpin, centerRotate, centerRotateSpring, isLowEnd, isMidEnd, gridItems, onSpinComplete]);
 
   const startSpin = useCallback(async () => {
     if (spinning) return;
