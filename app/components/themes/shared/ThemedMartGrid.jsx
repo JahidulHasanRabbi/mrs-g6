@@ -1,175 +1,436 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   getAvailableRedemptionItems,
   getPublicRedemptionTiers,
+  getRedemptionGameStatus,
   getVipTiers,
   redeemItem,
 } from "../../../api/memberApi";
 import { mapRedemptionItems } from "../../../api/responseMappers";
 import { tokenStorage } from "../../../api/tokenStorage";
 import { useUser } from "../../../contexts/UserContext";
+import { LoadingState } from "../../ui/LoadingState";
+import { MART_ASSETS } from "../../mart/martAssets";
 import { MART_CARD } from "./checkinMartSkin";
 import ThemedDialog from "./ThemedDialog";
 import ThemedActionButton from "./ThemedActionButton";
 
-const formatCoins = (value) => {
-  const n = Number(String(value ?? "").replace(/,/g, ""));
-  return Number.isFinite(n) ? n.toLocaleString("en-GB") : String(value ?? "");
+/**
+ * Themed Mart — a 1:1 functional copy of the default app/mart/page.js.
+ *
+ * Every piece of behaviour is mirrored from that page deliberately: the same
+ * fetches (game status, VIP tier -> mart_tier, public redemption tiers, available
+ * items), the same category-pill filtering, the same 3-way sort toggle, the same
+ * tier-lock rules and copy ("Token", "Upgrade to X to unlock"), and the same
+ * closed-for-maintenance overlay. ONLY the artwork is swapped per theme.
+ *
+ * The comps (Figma "Mart") omit the category pills and sort control, but dropping
+ * them would change behaviour — `filteredItems` is empty until a category is
+ * selected — so they are kept and skinned instead.
+ *
+ * The logic is duplicated here rather than extracted so the default page stays
+ * untouched; this mirrors how Acebet77VipPage duplicates the default VIP page.
+ */
+
+// Mirrors TIER_NAME_TO_ORDER in app/mart/page.js — kept in sync by hand so the
+// default page needs no edits.
+const TIER_NAME_TO_ORDER = {
+  starter: 1,
+  bronze: 1,
+  silver: 1,
+  premium: 2,
+  gold: 2,
+  exclusive: 3,
+  platinum: 3,
+  vip: 4,
+  diamond: 4,
 };
 
-/**
- * Skin-driven Mart (Figma "Mart", MRS Theme Engine file).
- *
- * Same data pipeline as the default app/mart/page.js — redemption items from
- * `getAvailableRedemptionItems()`, tier gating from the member's VIP tier
- * `mart_tier` vs `getPublicRedemptionTiers()` levels, and `redeemItem()` on
- * confirm. Only the art changes per theme; the card geometry lives in
- * ./checkinMartSkin.js (MART_CARD) and is shared by all six skins.
- *
- * NOTE: the comps show a single two-column grid with no category pills and no
- * sort control, so every unlocked-or-locked item is listed together here rather
- * than filtered to one tier at a time (the default page's pills gate the list to
- * a single tier and render nothing until one is picked).
- */
-export default function ThemedMartGrid({ skin }) {
-  const [items, setItems] = useState([]);
-  const [martTiers, setMartTiers] = useState([]);
-  const [userMartTier, setUserMartTier] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selected, setSelected] = useState(null);
-  const [isRedeeming, setIsRedeeming] = useState(false);
-  const [result, setResult] = useState(null);
-  const { refreshUserData, userData } = useUser();
+function resolveUnlockedTierOrder(currentLevel) {
+  if (!currentLevel) return 1;
+  const key = String(currentLevel).trim().toLowerCase();
+  return TIER_NAME_TO_ORDER[key] || 1;
+}
 
-  const fetchItems = useCallback(async () => {
-    const response = await getAvailableRedemptionItems();
-    setItems(mapRedemptionItems(response));
-  }, []);
+const asAmount = (v) => (typeof v === "number" ? v.toLocaleString() : v);
+
+/** Themed pill/sort plaque — the theme's button art with a centred label. */
+function PlaquePill({ skin, label, locked, selected, onClick, ariaLabel, ariaPressed, delay }) {
+  return (
+    <motion.button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel || label}
+      aria-pressed={ariaPressed}
+      className="relative block h-[51px] w-[186px]"
+      initial={{ opacity: 0, scale: 0.85 }}
+      animate={{
+        opacity: locked && !selected ? 0.85 : 1,
+        scale: selected ? 1.04 : 1,
+      }}
+      transition={{ duration: 0.35, delay, ease: "easeOut" }}
+      whileHover={{ scale: 1.06 }}
+      whileTap={{ scale: 0.96 }}
+    >
+      <img
+        alt=""
+        src={skin.redeemButton}
+        className="h-full w-full object-fill"
+        style={{
+          filter: selected ? "drop-shadow(0 0 6px rgba(233,175,65,0.85))" : "none",
+        }}
+      />
+      <span className="absolute inset-0 flex items-center justify-center gap-1.5 px-3">
+        {locked && (
+          <img alt="" src={MART_ASSETS.lockIcon} className="h-[14px] w-[14px] flex-shrink-0" />
+        )}
+        <span
+          className="whitespace-nowrap text-[14px] font-bold leading-none"
+          style={{ fontFamily: skin.font, color: skin.c.redeem }}
+        >
+          {label}
+        </span>
+      </span>
+    </motion.button>
+  );
+}
+
+/**
+ * Themed item card. Card art + geometry come from the comps (MART_CARD); the
+ * content is exactly what the default <MartItem> renders.
+ */
+function ThemedMartItem({ skin, item, index, locked, requiredTierLabel, onRedeem }) {
+  const amount = item.discountPrice || item.coins;
+  const hasStrikethrough =
+    item.originalPrice && item.originalPrice != (item.discountPrice || item.coins);
+
+  return (
+    <motion.div
+      className="@container relative w-full"
+      style={{ aspectRatio: MART_CARD.aspect }}
+      initial={{ opacity: 0, scale: 0.4, y: -60 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ type: "spring", stiffness: 260, damping: 20, delay: index * 0.08 + 0.4 }}
+    >
+      <img alt="" src={skin.itemFrame} className="pointer-events-none absolute inset-0 h-full w-full object-fill" />
+
+      {/* Gold plinth + product shot */}
+      <div
+        className="absolute overflow-hidden"
+        style={{
+          left: `${MART_CARD.panel.left}%`,
+          top: `${MART_CARD.panel.top}%`,
+          width: `${MART_CARD.panel.w}%`,
+          height: `${MART_CARD.panel.h}%`,
+          borderRadius: `${MART_CARD.panel.radiusCqi}cqi`,
+          backgroundImage: skin.panelGradient,
+        }}
+      >
+        {item.image && (
+          <div
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+            style={{ width: `${MART_CARD.image.w}%`, height: `${MART_CARD.image.h}%` }}
+          >
+            {/* Backend-hosted product shot — plain <img>, as the default
+                <MartItem> does (next/image remotePatterns don't cover it). */}
+            <img
+              alt={item.title || ""}
+              src={item.image}
+              className="h-full w-full object-contain"
+              style={locked ? { filter: "grayscale(0.85) brightness(0.55) blur(6px)" } : undefined}
+            />
+          </div>
+        )}
+        {locked && (
+          <img
+            alt="Locked"
+            src={MART_ASSETS.lockIcon}
+            className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
+            style={{ width: "34%", height: "48%", filter: "drop-shadow(0 0 4px rgba(0,0,0,0.8))" }}
+          />
+        )}
+      </div>
+
+      <p
+        className="absolute left-1/2 w-[86%] -translate-x-1/2 -translate-y-1/2 truncate text-center"
+        style={{
+          top: `${MART_CARD.name.top}%`,
+          fontFamily: skin.font,
+          fontSize: `${MART_CARD.name.sizeCqi}cqi`,
+          color: skin.c.name,
+        }}
+      >
+        {item.title}
+      </p>
+
+      {/* Price block / upgrade notice — same content as the default card. */}
+      <div
+        className="absolute left-1/2 flex w-[90%] -translate-x-1/2 -translate-y-1/2 flex-col items-center leading-tight"
+        style={{ top: `${MART_CARD.coins.top}%`, fontFamily: skin.font }}
+      >
+        {locked ? (
+          <p
+            className="truncate text-center"
+            style={{ fontSize: `${MART_CARD.coins.sizeCqi}cqi`, color: skin.c.lockedText }}
+          >
+            Upgrade to {requiredTierLabel || "next tier"} to unlock
+          </p>
+        ) : (
+          <>
+            {hasStrikethrough && (
+              <p
+                className="truncate line-through decoration-1"
+                style={{
+                  fontSize: `${MART_CARD.coins.sizeCqi * 0.9}cqi`,
+                  color: skin.c.lockedText,
+                }}
+              >
+                {asAmount(item.originalPrice)} Token
+              </p>
+            )}
+            <p
+              className="truncate"
+              style={{ fontSize: `${MART_CARD.coins.sizeCqi}cqi`, color: skin.c.coins }}
+            >
+              {asAmount(amount)} Token
+            </p>
+          </>
+        )}
+      </div>
+
+      <button
+        type="button"
+        onClick={onRedeem}
+        className="absolute transition-transform active:scale-95"
+        style={{
+          left: `${MART_CARD.redeem.left}%`,
+          top: `${MART_CARD.redeem.top}%`,
+          width: `${MART_CARD.redeem.w}%`,
+          height: `${MART_CARD.redeem.h}%`,
+        }}
+        aria-label={locked ? `${item.title} (locked)` : `Redeem ${item.title}`}
+      >
+        <img alt="" src={skin.redeemButton} className="absolute inset-0 h-full w-full object-fill" />
+        <span
+          className="absolute inset-0 flex items-center justify-center whitespace-nowrap"
+          style={{
+            fontFamily: skin.font,
+            fontSize: `${MART_CARD.redeem.sizeCqi}cqi`,
+            color: skin.c.redeem,
+          }}
+        >
+          Redeem
+        </span>
+      </button>
+    </motion.div>
+  );
+}
+
+export default function ThemedMartGrid({ skin }) {
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [sortMode, setSortMode] = useState("default");
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [martItems, setMartItems] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRedeeming, setIsRedeeming] = useState(false);
+  const [redeemResult, setRedeemResult] = useState(null);
+  const [gameStatus, setGameStatus] = useState(null);
+  const [userMartTierLevel, setUserMartTierLevel] = useState(null);
+  const [martTiers, setMartTiers] = useState([]);
+  const { refreshUserData, userData } = useUser();
+  const unlockedTierOrder = resolveUnlockedTierOrder(userData?.currentLevel);
 
   useEffect(() => {
-    let cancelled = false;
+    fetchUserMartTierLevel();
+    fetchMartTiers();
+    fetchRedemptionStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userData?.currentLevel]);
 
-    (async () => {
-      setIsLoading(true);
-      const [tiersResult, vipResult] = await Promise.allSettled([
-        getPublicRedemptionTiers(),
-        getVipTiers(),
-      ]);
-
-      if (!cancelled && tiersResult.status === "fulfilled") {
-        setMartTiers([...tiersResult.value].sort((a, b) => a.level - b.level));
-      } else if (tiersResult.status === "rejected") {
-        console.error("Error fetching mart tiers:", tiersResult.reason);
+  const fetchRedemptionStatus = async () => {
+    try {
+      const status = await getRedemptionGameStatus();
+      const nextStatus = Number(status?.game_status ?? 1);
+      setGameStatus(nextStatus);
+      if (nextStatus === 1) {
+        await fetchRedemptionItems();
+      } else {
+        setMartItems([]);
+        setIsLoading(false);
       }
+    } catch (err) {
+      console.error("Error fetching redemption status:", err);
+      setGameStatus(1);
+      await fetchRedemptionItems();
+    }
+  };
 
-      if (!cancelled && vipResult.status === "fulfilled") {
-        const tier = vipResult.value.find(
-          (t) => t.name?.toLowerCase() === userData?.currentLevel?.toLowerCase()
-        );
-        setUserMartTier(tier?.mart_tier || null);
-      } else if (vipResult.status === "rejected") {
-        console.error("Error fetching user mart tier:", vipResult.reason);
+  const fetchUserMartTierLevel = async () => {
+    try {
+      const vipTiers = await getVipTiers();
+      const userTier = vipTiers.find(
+        (tier) => tier.name.toLowerCase() === userData?.currentLevel?.toLowerCase()
+      );
+      setUserMartTierLevel(userTier && userTier.mart_tier ? userTier.mart_tier : null);
+    } catch (err) {
+      console.error("Error fetching user mart tier level:", err);
+      setUserMartTierLevel(null);
+    }
+  };
+
+  const fetchMartTiers = async () => {
+    try {
+      const tiers = await getPublicRedemptionTiers();
+      const sortedTiers = tiers.sort((a, b) => a.level - b.level);
+      setMartTiers(sortedTiers);
+      if (sortedTiers.length > 0 && !selectedCategory) {
+        setSelectedCategory(sortedTiers[0].name.toLowerCase());
       }
+    } catch (err) {
+      console.error("Error fetching mart tiers:", err);
+      setMartTiers([]);
+    }
+  };
 
-      try {
-        await fetchItems();
-      } catch (err) {
-        console.error("Error fetching redemption items:", err);
-        if (!cancelled) setItems([]);
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    })();
+  const fetchRedemptionItems = async () => {
+    setIsLoading(true);
+    try {
+      const response = await getAvailableRedemptionItems();
+      setMartItems(mapRedemptionItems(response));
+    } catch (err) {
+      console.error("Error fetching redemption items:", err);
+      setMartItems([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    return () => {
-      cancelled = true;
-    };
-  }, [userData?.currentLevel, fetchItems]);
+  const getMartTierLevel = (tierName) => {
+    if (!tierName || !martTiers.length) return 999;
+    const tier = martTiers.find((t) => t.name.toLowerCase() === tierName.toLowerCase());
+    return tier ? tier.level : 999;
+  };
 
-  const tierLevel = useCallback(
-    (name) => {
-      if (!name || !martTiers.length) return 999;
-      return martTiers.find((t) => t.name?.toLowerCase() === name.toLowerCase())?.level ?? 999;
-    },
+  const isItemLocked = (item) => {
+    if (!item.mart_tier) return false;
+    if (!userMartTierLevel) return true;
+    return getMartTierLevel(item.mart_tier) > getMartTierLevel(userMartTierLevel);
+  };
+
+  const getRequiredTierName = (item) => item.mart_tier || "Premium";
+
+  const parseCoins = (value) => {
+    if (!value) return 0;
+    const n = Number(String(value).replace(/,/g, ""));
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const filteredItems = useMemo(() => {
+    if (!selectedCategory) return [];
+    return martItems.filter(
+      (item) => (item.mart_tier || "").toLowerCase() === selectedCategory.toLowerCase()
+    );
+  }, [martItems, selectedCategory]);
+
+  const sortedItems = useMemo(() => {
+    if (sortMode === "default") return filteredItems;
+    const itemsCopy = [...filteredItems];
+    itemsCopy.sort((a, b) => {
+      const aPrice = parseCoins(a.discountPrice || a.coins);
+      const bPrice = parseCoins(b.discountPrice || b.coins);
+      if (sortMode === "price-asc") return aPrice - bPrice;
+      if (sortMode === "price-desc") return bPrice - aPrice;
+      return 0;
+    });
+    return itemsCopy;
+  }, [filteredItems, sortMode]);
+
+  const dynamicCategories = useMemo(
+    () =>
+      martTiers.map((tier) => ({
+        key: tier.name.toLowerCase(),
+        label: tier.name,
+        fullLabel: `${tier.name} Rewards`,
+        tierOrder: tier.level,
+        tierName: tier.name,
+      })),
     [martTiers]
   );
 
-  // An item is locked when the tier it requires outranks the member's own.
-  const isItemLocked = useCallback(
-    (item) => {
-      if (!item.mart_tier) return false;
-      if (!userMartTier) return true;
-      return tierLevel(item.mart_tier) > tierLevel(userMartTier);
-    },
-    [userMartTier, tierLevel]
-  );
+  const selectedCategoryFullLabel =
+    dynamicCategories.find((c) => c.key === selectedCategory)?.fullLabel || "Rewards";
 
-  const visibleItems = useMemo(() => items, [items]);
+  const sortButtonLabel =
+    sortMode === "price-asc"
+      ? "Sort: Low to High"
+      : sortMode === "price-desc"
+        ? "Sort: High to Low"
+        : "Sort by Default";
 
-  // Tapping a card opens the confirm step; locked items short-circuit straight
-  // to the upgrade notice without hitting the API.
-  const openItem = useCallback(
-    (item) => {
-      setSelected(item);
-      if (isItemLocked(item)) {
-        setResult({
-          success: false,
-          message: `Upgrade to ${item.mart_tier || "a higher"} tier to unlock this item.`,
-        });
-        return;
-      }
-      setResult(null);
-    },
-    [isItemLocked]
-  );
+  const handleRedeem = async (item) => {
+    setSelectedItem(item);
+    setRedeemResult(null);
 
-  const confirmRedeem = useCallback(
-    async (item) => {
-      if (!item || isItemLocked(item)) return;
+    if (gameStatus === 2) {
+      setRedeemResult({ success: false, message: "Redemption is currently closed." });
+      return;
+    }
 
+    if (isItemLocked(item)) {
+      setRedeemResult({
+        success: false,
+        message: `Upgrade to ${getRequiredTierName(item)} tier to unlock this item.`,
+      });
+      setIsRedeeming(false);
+      return;
+    }
+
+    setIsRedeeming(true);
+    try {
       const memberUuid = tokenStorage.getMemberUuid();
       if (!memberUuid) {
-        setResult({ success: false, message: "Please log in to redeem items." });
+        setRedeemResult({ success: false, message: "Please log in to redeem items" });
+        setIsRedeeming(false);
         return;
       }
+      const response = await redeemItem(item.uuid, memberUuid);
+      setRedeemResult({
+        success: true,
+        message:
+          response.details || "Congratulations! You've successfully redeemed this item!",
+      });
+      await Promise.all([refreshUserData(), fetchRedemptionItems()]);
+    } catch (err) {
+      setRedeemResult({
+        success: false,
+        message:
+          err.data?.details || err.message || "Failed to redeem item. Please try again.",
+      });
+    } finally {
+      setIsRedeeming(false);
+    }
+  };
 
-      setIsRedeeming(true);
-      try {
-        const response = await redeemItem(item.uuid, memberUuid);
-        setResult({
-          success: true,
-          message:
-            response.details ||
-            "Congratulations! You've successfully redeemed this item!",
-        });
-        await Promise.all([refreshUserData(), fetchItems()]);
-      } catch (err) {
-        setResult({
-          success: false,
-          message:
-            err.data?.details || err.message || "Failed to redeem item. Please try again.",
-        });
-      } finally {
-        setIsRedeeming(false);
-      }
-    },
-    [isItemLocked, refreshUserData, fetchItems]
-  );
+  const handleCloseModal = () => {
+    setSelectedItem(null);
+    setRedeemResult(null);
+  };
 
-  const closeDialog = () => {
-    setSelected(null);
-    setResult(null);
+  const handleSort = () => {
+    setSortMode((prev) => {
+      if (prev === "default") return "price-asc";
+      if (prev === "price-asc") return "price-desc";
+      return "default";
+    });
   };
 
   return (
-    <section className="relative w-full px-4">
-      {/* -mx-4 cancels the section padding so the full-bleed plaque reaches
-          both screen edges, as the comps do. */}
-      <div className="-mx-4 flex justify-center">
+    <div className="relative min-h-screen">
+      {/* Title plaque — full-bleed, so it cancels the section padding. */}
+      <div className="flex justify-center px-0">
         <motion.img
           src={skin.title}
           alt="Mart"
@@ -182,142 +443,74 @@ export default function ThemedMartGrid({ skin }) {
         />
       </div>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-16">
-          <div
-            className="h-10 w-10 animate-spin rounded-full border-2 border-transparent"
-            style={{ borderTopColor: skin.c.redeem, borderRightColor: skin.c.redeem }}
+      {/* Category pills — same behaviour as the default <MartCategoryPills>. */}
+      <motion.div
+        className="mx-auto mt-4 grid w-fit grid-cols-2 justify-items-center gap-x-3 gap-y-3"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
+      >
+        {dynamicCategories.map((cat, i) => (
+          <PlaquePill
+            key={cat.key}
+            skin={skin}
+            label={cat.label}
+            ariaLabel={cat.fullLabel}
+            locked={cat.tierOrder > unlockedTierOrder}
+            selected={selectedCategory === cat.key}
+            ariaPressed={selectedCategory === cat.key}
+            onClick={() => setSelectedCategory(cat.key)}
+            delay={0.25 + i * 0.06}
           />
-        </div>
-      ) : visibleItems.length === 0 ? (
-        <p
-          className="py-16 text-center text-[16px] font-bold"
-          style={{ fontFamily: skin.font, color: skin.c.name }}
-        >
-          No rewards available right now.
-        </p>
-      ) : (
-        // Row gap absorbs the redeem plaque's designed overhang past the card
-        // frame's bottom edge (see MART_CARD.redeem).
-        <div className="mx-auto grid w-full max-w-[358px] grid-cols-2 gap-x-4 gap-y-8 pt-2">
-          {visibleItems.map((item, i) => {
-            const locked = isItemLocked(item);
-            return (
-              <motion.div
-                key={item.uuid}
-                className="@container relative w-full"
-                style={{ aspectRatio: MART_CARD.aspect }}
-                initial={{ opacity: 0, y: 34, scale: 0.94 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 170,
-                  damping: 18,
-                  delay: 0.12 + i * 0.07,
-                }}
+        ))}
+      </motion.div>
+
+      <div className="mt-4 flex justify-end px-8">
+        <PlaquePill skin={skin} label={sortButtonLabel} onClick={handleSort} delay={0.4} />
+      </div>
+
+      <LoadingState isLoading={isLoading}>
+        {sortedItems.length === 0 ? (
+          <div className="mb-12 mt-12 flex flex-col items-center justify-center px-8">
+            <div className="text-center">
+              <p
+                className="mb-2 text-[20px] font-bold"
+                style={{ fontFamily: skin.font, color: skin.c.name }}
               >
-                <Image
-                  src={skin.itemFrame}
-                  alt=""
-                  fill
-                  className="pointer-events-none object-fill"
-                  sizes="(max-width: 400px) 50vw, 180px"
+                No {selectedCategoryFullLabel} Available
+              </p>
+              <p
+                className="text-[16px] opacity-70"
+                style={{ fontFamily: skin.font, color: skin.c.name }}
+              >
+                There are currently no items in this category.
+              </p>
+            </div>
+          </div>
+        ) : (
+          // Row gap absorbs the redeem plaque's designed overhang past the
+          // card frame's bottom edge (see MART_CARD.redeem).
+          <div className="mx-auto mt-8 grid w-full max-w-[358px] grid-cols-2 gap-x-4 gap-y-8 px-4">
+            {sortedItems.map((item, i) => {
+              const locked = isItemLocked(item);
+              return (
+                <ThemedMartItem
+                  key={item.uuid || i}
+                  skin={skin}
+                  item={item}
+                  index={i}
+                  locked={locked}
+                  requiredTierLabel={getRequiredTierName(item)}
+                  onRedeem={() => handleRedeem(item)}
                 />
+              );
+            })}
+          </div>
+        )}
+      </LoadingState>
 
-                {/* Gold plinth + product shot */}
-                <div
-                  className="absolute overflow-hidden"
-                  style={{
-                    left: `${MART_CARD.panel.left}%`,
-                    top: `${MART_CARD.panel.top}%`,
-                    width: `${MART_CARD.panel.w}%`,
-                    height: `${MART_CARD.panel.h}%`,
-                    borderRadius: `${MART_CARD.panel.radiusCqi}cqi`,
-                    backgroundImage: skin.panelGradient,
-                  }}
-                >
-                  {item.image && (
-                    <div
-                      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-                      style={{
-                        width: `${MART_CARD.image.w}%`,
-                        height: `${MART_CARD.image.h}%`,
-                      }}
-                    >
-                      {/* Product shots come from the backend on an arbitrary
-                          host, so they use a plain <img> like the default
-                          <MartItem> rather than next/image (whose
-                          remotePatterns don't cover it). */}
-                      <img
-                        src={item.image}
-                        alt={item.title || ""}
-                        className={`h-full w-full object-contain ${locked ? "opacity-60 grayscale" : ""}`}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <p
-                  className="absolute left-1/2 w-[86%] -translate-x-1/2 -translate-y-1/2 truncate text-center"
-                  style={{
-                    top: `${MART_CARD.name.top}%`,
-                    fontFamily: skin.font,
-                    fontSize: `${MART_CARD.name.sizeCqi}cqi`,
-                    color: locked ? skin.c.locked : skin.c.name,
-                  }}
-                >
-                  {item.title}
-                </p>
-
-                <p
-                  className="absolute left-1/2 w-[86%] -translate-x-1/2 -translate-y-1/2 truncate text-center"
-                  style={{
-                    top: `${MART_CARD.coins.top}%`,
-                    fontFamily: skin.font,
-                    fontSize: `${MART_CARD.coins.sizeCqi}cqi`,
-                    color: locked ? skin.c.locked : skin.c.coins,
-                  }}
-                >
-                  {formatCoins(item.discountPrice ?? item.coins)} Pagcor Coins
-                </p>
-
-                <button
-                  type="button"
-                  onClick={() => openItem(item)}
-                  className="absolute transition-transform active:scale-95"
-                  style={{
-                    left: `${MART_CARD.redeem.left}%`,
-                    top: `${MART_CARD.redeem.top}%`,
-                    width: `${MART_CARD.redeem.w}%`,
-                    height: `${MART_CARD.redeem.h}%`,
-                  }}
-                  aria-label={locked ? `${item.title} locked` : `Redeem ${item.title}`}
-                >
-                  <Image
-                    src={skin.redeemButton}
-                    alt=""
-                    fill
-                    className="object-fill"
-                    sizes="180px"
-                  />
-                  <span
-                    className="absolute inset-0 flex items-center justify-center whitespace-nowrap"
-                    style={{
-                      fontFamily: skin.font,
-                      fontSize: `${MART_CARD.redeem.sizeCqi}cqi`,
-                      color: locked ? skin.c.locked : skin.c.redeem,
-                    }}
-                  >
-                    {locked ? "Locked" : "Redeem"}
-                  </span>
-                </button>
-              </motion.div>
-            );
-          })}
-        </div>
-      )}
-
-      <ThemedDialog open={!!selected} onClose={closeDialog}>
+      {/* Redeem dialog — same states as the default <RedeemModal>. */}
+      <ThemedDialog open={!!selectedItem} onClose={handleCloseModal}>
         {isRedeeming ? (
           <p
             className="text-center text-[16px] font-bold"
@@ -325,44 +518,42 @@ export default function ThemedMartGrid({ skin }) {
           >
             Redeeming…
           </p>
-        ) : result ? (
+        ) : (
           <>
             <p
               className="text-center text-[16px] font-bold leading-[1.45]"
               style={{
                 fontFamily: skin.font,
-                color: result.success ? skin.c.redeem : skin.c.locked,
+                color: redeemResult?.success === false ? skin.c.lockedText : skin.c.redeem,
               }}
             >
-              {result.message}
+              {redeemResult?.message || selectedItem?.title}
             </p>
-            <ThemedActionButton textSize={16} onClick={closeDialog}>
+            <ThemedActionButton textSize={16} onClick={handleCloseModal}>
               Close
             </ThemedActionButton>
           </>
-        ) : (
-          <>
-            <p
-              className="text-center text-[16px] font-bold leading-[1.45]"
-              style={{ fontFamily: skin.font, color: skin.c.name }}
-            >
-              Redeem {selected?.title} for{" "}
-              {formatCoins(selected?.discountPrice ?? selected?.coins)} Pagcor Coins?
-            </p>
-            <div className="flex w-full flex-col items-center gap-2">
-              <ThemedActionButton
-                textSize={16}
-                onClick={() => confirmRedeem(selected)}
-              >
-                Confirm
-              </ThemedActionButton>
-              <ThemedActionButton textSize={14} variant="dark" onClick={closeDialog}>
-                Cancel
-              </ThemedActionButton>
-            </div>
-          </>
         )}
       </ThemedDialog>
-    </section>
+
+      {gameStatus === 2 && (
+        <div className="fixed inset-x-0 bottom-[120px] top-[64px] z-30 grid place-items-center bg-black/70 px-6 backdrop-blur-md">
+          <div
+            className="w-full max-w-[360px] rounded-xl border border-[rgba(255,246,223,0.16)] px-6 py-7 text-center shadow-[0_16px_50px_rgba(0,0,0,0.45)]"
+            style={{ backgroundColor: skin.closedPanelBg }}
+          >
+            <p className="text-[20px]" style={{ fontFamily: skin.font, color: skin.c.redeem }}>
+              Mart is currently closed
+            </p>
+            <p
+              className="mt-3 text-[12px] leading-5"
+              style={{ fontFamily: skin.font, color: skin.c.locked }}
+            >
+              Please check back later.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

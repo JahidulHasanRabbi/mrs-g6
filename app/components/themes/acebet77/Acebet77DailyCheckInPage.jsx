@@ -7,7 +7,7 @@ import { ACEBET_ASSETS, ACEBET_COLORS } from "./assets";
 /**
  * Acebet77 Daily Check-in (Figma 460:23).
  *
- * The page chrome (throne backdrop, ThemeHeader, ornate bottom nav) comes from
+ * The page chrome (themed backdrop, ThemeHeader, ornate bottom nav) comes from
  * <ThemedPageShell> in AppLayout, so this only supplies the theme's art to the
  * shared board.
  */

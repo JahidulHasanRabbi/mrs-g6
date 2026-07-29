@@ -21,17 +21,24 @@ const CARD_H = (88 / 319) * 100;   // 27.59%
 const pctX = (x) => ((x + 66 / 2) / 362) * 100;
 const pctY = (y) => ((y + 88 / 2) / 319) * 100;
 
+/**
+ * `anchor` decides which edge stays put when `cardScale` grows a tile: the top
+ * row grows downward and the bottom row upward, so enlarging the tiles eats the
+ * dead space in the middle of the panel instead of pushing the day labels into
+ * the frame's top crown / bottom scroll rail.
+ */
 export const CHECKIN_DAYS = [
-  { day: 1, label: 'DAY 1', cx: pctX(39), cy: pctY(50), icon: 'bolt' },
-  { day: 2, label: 'DAY 2', cx: pctX(112), cy: pctY(50), icon: 'bolt' },
-  { day: 3, label: 'DAY 3', cx: pctX(183), cy: pctY(50), icon: 'coin' },
-  { day: 4, label: 'DAY 4', cx: pctX(254), cy: pctY(50), icon: 'bolt' },
-  { day: 5, label: 'DAY 5', cx: pctX(39), cy: pctY(161), icon: 'cards' },
-  { day: 6, label: 'DAY 6', cx: pctX(112), cy: pctY(160), icon: 'bolt' },
+  { day: 1, label: 'DAY 1', cx: pctX(39), cy: pctY(50), icon: 'bolt', anchor: 'top' },
+  { day: 2, label: 'DAY 2', cx: pctX(112), cy: pctY(50), icon: 'bolt', anchor: 'top' },
+  { day: 3, label: 'DAY 3', cx: pctX(183), cy: pctY(50), icon: 'coin', anchor: 'top' },
+  { day: 4, label: 'DAY 4', cx: pctX(254), cy: pctY(50), icon: 'bolt', anchor: 'top' },
+  { day: 5, label: 'DAY 5', cx: pctX(39), cy: pctY(161), icon: 'cards', anchor: 'bottom' },
+  { day: 6, label: 'DAY 6', cx: pctX(112), cy: pctY(160), icon: 'bolt', anchor: 'bottom' },
   {
     day: 7,
     label: 'DAY 7',
     isSpecial: true,
+    anchor: 'bottom',
     cx: ((180 + 148 / 2) / 362) * 100,
     cy: ((152 + 98 / 2) / 319) * 100,
     w: (148 / 362) * 100,
@@ -73,7 +80,22 @@ export function buildCheckinSkin(ASSETS, COLORS, overrides = {}) {
     titleWidthPct: 100,
     boardFrame: ASSETS.checkin.boardFrame,
     chest: ASSETS.checkin.chest,
+    // The comps place every board in a 362x319 node, but only acebet77's frame
+    // art is actually that shape (1351x1164). ubetclub / ep369 / kgame99 / lv918
+    // ship SQUARE frames and n1gang a 1.25 one, so a single hardcoded ratio
+    // stretched them and shrank their inner panel. Each theme now declares the
+    // aspect of its own art so nothing is squashed.
     boardAspect: '362 / 319',
+    // The comps draw the board 362px wide on a 402px frame (~90%). The member
+    // portal is clamped to 475px, so scaling the board to the same ~90% share
+    // (430px) enlarges the frame, tiles and labels together — rather than
+    // growing tiles alone, which has no room once the labels are placed.
+    boardMaxWidth: 430,
+    // Multiplier on the day tiles only. Left at 1 because the panel has no
+    // spare vertical room: the tiles grow from their anchored edge (see
+    // CHECKIN_DAYS) and anything above ~1.05 closes the gap the DAY labels
+    // sit in. Prefer boardMaxWidth to make the board bigger.
+    cardScale: 1,
     cardW: CARD_W,
     cardH: CARD_H,
     icons: {
@@ -92,6 +114,9 @@ export function buildCheckinSkin(ASSETS, COLORS, overrides = {}) {
       // Day 7's label sits outside the board's inner panel, so a theme can
       // colour it separately; otherwise it follows `label`.
       labelSpecial: c.label || '#f2ba33',
+      // Day 7's reward text sits inside a brightly-lit chest mouth on every
+      // skin, where gold-on-gold is unreadable — so it goes dark.
+      rewardSpecial: '#1c1400',
       ...c,
     },
     font: '"Times New Roman", serif',
@@ -144,11 +169,18 @@ export function buildMartSkin(ASSETS, COLORS, overrides = {}) {
       'linear-gradient(90deg, #8c6c1e 0%, #f2ba33 52%, #8c6c1e 100%)',
     // As with the check-in board, the comps use these golds across all six
     // skins rather than each theme's palette.
+    // Background of the "Mart is currently closed" panel. Matches the value the
+    // default page already used for themed members (app/mart/page.js) — the two
+    // blue-ish skins get the navy tint, everyone else the warm dark one.
+    closedPanelBg: 'rgba(35,31,20,0.95)',
     c: {
       name: '#e9af41',
       coins: '#e9af41',
       redeem: '#f2ba33',
       locked: COLORS.sand || COLORS.creamMuted || '#d0c6ab',
+      // The default card uses this red for the strikethrough original price and
+      // the "Upgrade to X to unlock" notice.
+      lockedText: '#e94141',
       ...c,
     },
     font: 'var(--font-berkshire-swash), "Times New Roman", serif',

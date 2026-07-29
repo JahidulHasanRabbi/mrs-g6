@@ -11,10 +11,10 @@ import { LV918_ASSETS, LV918_COLORS } from "./assets";
  * <ThemedPageShell> in AppLayout, so this only supplies the theme's art to the
  * shared board.
  */
-// lv918 is the only skin whose board interior is a bright pink panel, so the
-// comp (463:1130) drops the gold text for dark ink on days 1-6 and keeps gold
-// only for the DAY 7 label, which sits outside that panel.
 const SKIN = buildCheckinSkin(LV918_ASSETS, LV918_COLORS, {
+  // lv918's board interior is a bright pink panel, so the comp drops the gold
+  // text for dark ink on days 1-6, keeping gold only for the DAY 7 label
+  // (which sits outside that panel).
   c: { label: '#634600', reward: '#1c1400', labelSpecial: '#f2ba33' },
 });
 

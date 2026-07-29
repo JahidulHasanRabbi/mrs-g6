@@ -152,7 +152,7 @@ export default function ThemedCheckInBoard({ skin }) {
 
       <motion.div
         className="relative mx-auto mt-1 w-full"
-        style={{ maxWidth: 362 }}
+        style={{ maxWidth: skin.boardMaxWidth }}
         initial={{ opacity: 0, y: 40, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ type: "spring", stiffness: 120, damping: 18, delay: 0.1 }}
@@ -172,6 +172,19 @@ export default function ThemedCheckInBoard({ skin }) {
               const isChecked = checkedDays.includes(d.day);
               const icon = d.isSpecial ? null : skin.icons[d.icon];
 
+              // Grow the tile from its anchored edge so the extra size is taken
+              // out of the panel's middle, not out of the frame's rails.
+              const baseW = d.isSpecial ? d.w : skin.cardW;
+              const baseH = d.isSpecial ? d.h : skin.cardH;
+              const w = baseW * skin.cardScale;
+              const h = baseH * skin.cardScale;
+              const cy =
+                d.anchor === "bottom"
+                  ? d.cy + baseH / 2 - h / 2
+                  : d.anchor === "top"
+                    ? d.cy - baseH / 2 + h / 2
+                    : d.cy;
+
               return (
                 <motion.button
                   key={d.day}
@@ -182,9 +195,9 @@ export default function ThemedCheckInBoard({ skin }) {
                   className={`@container absolute ${isChecked ? "opacity-60 grayscale" : ""}`}
                   style={{
                     left: `${d.cx}%`,
-                    top: `${d.cy}%`,
-                    width: `${d.isSpecial ? d.w : skin.cardW}%`,
-                    height: `${d.isSpecial ? d.h : skin.cardH}%`,
+                    top: `${cy}%`,
+                    width: `${w}%`,
+                    height: `${h}%`,
                     background: "transparent",
                     outline: "none",
                     cursor: isChecked ? "default" : "pointer",
@@ -229,24 +242,23 @@ export default function ThemedCheckInBoard({ skin }) {
                       </div>
                     )}
 
-                    {/* Reward text sits inside the card. Day 7's chest carries
-                        no text in the comps (the art reads as the reward), so
-                        only days 1-6 label their amount. */}
-                    {!d.isSpecial && (
-                      <div
-                        className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-center"
-                        style={{
-                          top: "69.3%",
-                          fontFamily: skin.font,
-                          fontWeight: 700,
-                          color: skin.c.reward,
-                          fontSize: "clamp(9px, 24cqi, 16px)",
-                          lineHeight: "normal",
-                        }}
-                      >
-                        {d.reward}
-                      </div>
-                    )}
+                    {/* Reward text (the API's display_text). Rendered for all
+                        seven days, matching the default <CheckInBoard>. */}
+                    <div
+                      className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-center"
+                      style={{
+                        top: d.isSpecial ? "56%" : "69.3%",
+                        fontFamily: skin.font,
+                        fontWeight: 700,
+                        color: d.isSpecial ? skin.c.rewardSpecial : skin.c.reward,
+                        fontSize: d.isSpecial
+                          ? "clamp(9px, 10cqi, 15px)"
+                          : "clamp(9px, 24cqi, 16px)",
+                        lineHeight: "normal",
+                      }}
+                    >
+                      {d.reward}
+                    </div>
 
                   </div>
 
