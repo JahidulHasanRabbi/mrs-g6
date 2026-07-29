@@ -166,10 +166,12 @@ function ThemedMartItem({ skin, item, index, locked, requiredTierLabel, onRedeem
         {item.title}
       </p>
 
-      {/* Price block / upgrade notice — same content as the default card. */}
+      {/* Price block / upgrade notice — same content as the default card.
+          Anchored to its bottom so a second line (the strikethrough original)
+          stacks upward instead of running into the redeem plaque. */}
       <div
-        className="absolute left-1/2 flex w-[90%] -translate-x-1/2 -translate-y-1/2 flex-col items-center leading-tight"
-        style={{ top: `${MART_CARD.coins.top}%`, fontFamily: skin.font }}
+        className="absolute left-1/2 flex w-[90%] -translate-x-1/2 flex-col items-center leading-none"
+        style={{ bottom: `${MART_CARD.coins.bottom}%`, fontFamily: skin.font }}
       >
         {locked ? (
           <p
@@ -490,7 +492,10 @@ export default function ThemedMartGrid({ skin }) {
         ) : (
           // Row gap absorbs the redeem plaque's designed overhang past the
           // card frame's bottom edge (see MART_CARD.redeem).
-          <div className="mx-auto mt-8 grid w-full max-w-[358px] grid-cols-2 gap-x-4 gap-y-8 px-4">
+          <div
+            className="mx-auto mt-8 grid w-full grid-cols-2 gap-x-4 gap-y-8"
+            style={{ maxWidth: skin.gridMaxWidth }}
+          >
             {sortedItems.map((item, i) => {
               const locked = isItemLocked(item);
               return (

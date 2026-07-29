@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { checkIn, getCheckinSettings, getMemberInfo } from "../../../api/memberApi";
 import { useUser } from "../../../contexts/UserContext";
-import { CHECKIN_DAYS } from "./checkinMartSkin";
+import { CHECKIN_DAYS, fitStyle } from "./checkinMartSkin";
 import ThemedDialog from "./ThemedDialog";
 import ThemedActionButton from "./ThemedActionButton";
 
@@ -158,14 +158,16 @@ export default function ThemedCheckInBoard({ skin }) {
         transition={{ type: "spring", stiffness: 120, damping: 18, delay: 0.1 }}
       >
         <div className="relative w-full" style={{ aspectRatio: skin.boardAspect }}>
-          <Image
-            src={skin.boardFrame}
-            alt=""
-            fill
-            priority
-            className="object-fill"
-            sizes="(max-width: 400px) 100vw, 362px"
-          />
+          {/* Frame art is overscaled into its slot and clipped, as the comps do,
+              so its baked-in transparent margin doesn't shrink the panel. */}
+          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+            <img
+              src={skin.boardFrame}
+              alt=""
+              className="absolute max-w-none object-fill"
+              style={fitStyle(skin.fit.board)}
+            />
+          </div>
 
           <div className="absolute inset-0">
             {days.map((d) => {
@@ -214,13 +216,14 @@ export default function ThemedCheckInBoard({ skin }) {
                   whileTap={isChecked ? undefined : { scale: 0.94 }}
                 >
                   <div className="relative h-full w-full">
-                    <Image
-                      src={d.isSpecial ? skin.chest : skin.dayCard}
-                      alt=""
-                      fill
-                      className="object-contain"
-                      sizes="160px"
-                    />
+                    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                      <img
+                        src={d.isSpecial ? skin.chest : skin.dayCard}
+                        alt=""
+                        className="absolute max-w-none object-fill"
+                        style={fitStyle(d.isSpecial ? skin.fit.chest : skin.fit.dayCard)}
+                      />
+                    </div>
 
                     {/* Reward glyph — each icon keeps its own designed box. */}
                     {icon && (

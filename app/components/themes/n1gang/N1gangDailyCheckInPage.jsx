@@ -12,6 +12,14 @@ import { N1GANG_ASSETS, N1GANG_COLORS } from "./assets";
  * shared board.
  */
 const SKIN = buildCheckinSkin(N1GANG_ASSETS, N1GANG_COLORS, {
+  // Image overscale/offset per slot, taken from this theme's comp. The
+  // exported PNGs carry different amounts of transparent padding, so without
+  // this the tiles render smaller than their slot with wide gaps.
+  fit: {
+    board: { w: 100, h: 100, left: 0, top: 0 },
+    dayCard: { w: 131.11, h: 100, left: -15.49, top: 0 },
+    chest: { w: 108.86, h: 120.19, left: -4.18, top: -5.75 },
+  },
   // n1gang's check-in title is a narrow 206px crest rather than the full-bleed
   // 408px plaque the other five skins use (Figma 463:1387).
   titleWidthPct: 52,

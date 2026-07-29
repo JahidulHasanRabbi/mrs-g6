@@ -68,10 +68,27 @@ const SHARED_ICONS = {
   cards: '/assets/themes/shared/checkin/icon-cards.png',
 };
 
+/**
+ * Per-asset image transform inside its own slot, as % of that slot.
+ *
+ * The exported PNGs carry differing amounts of baked-in transparent padding, so
+ * the comps scale and nudge each one to make the visible art fill its box (e.g.
+ * lv918's day card is drawn at 134% width). Reproducing that is what stops the
+ * tiles reading as too small with wide gaps between them. Defaults are a plain
+ * 1:1 fill; every theme overrides these with the values from its own comp.
+ */
+const NO_FIT = { w: 100, h: 100, left: 0, top: 0 };
+export const fitStyle = (f = NO_FIT) => ({
+  width: `${f.w}%`,
+  height: `${f.h}%`,
+  left: `${f.left}%`,
+  top: `${f.top}%`,
+});
+
 export function buildCheckinSkin(ASSETS, COLORS, overrides = {}) {
-  // `c` is pulled out of `rest` so a partial colour override merges with the
+  // `c` and `fit` are pulled out of `rest` so a partial override merges with the
   // defaults below instead of replacing the whole map.
-  const { icons = {}, c = {}, ...rest } = overrides;
+  const { icons = {}, c = {}, fit = {}, ...rest } = overrides;
   return {
     title: ASSETS.checkin.title,
     // Title plaque width as a % of the screen. Five skins use a 408px-wide
@@ -104,6 +121,13 @@ export function buildCheckinSkin(ASSETS, COLORS, overrides = {}) {
       cards: { src: ASSETS.checkin.iconCards || SHARED_ICONS.cards, ...ICON_BOX.cards, ...icons.cards },
     },
     dayCard: ASSETS.checkin.dayCard,
+    // Overscale/offset per asset so the visible art fills its slot despite the
+    // PNGs' baked-in transparent padding (see NO_FIT above).
+    fit: {
+      board: { ...NO_FIT, ...fit.board },
+      dayCard: { ...NO_FIT, ...fit.dayCard },
+      chest: { ...NO_FIT, ...fit.chest },
+    },
     // The comps specify these golds on most skins rather than each theme's own
     // palette, so they are design constants here. lv918 overrides them: its
     // board interior is bright pink, so day labels/rewards go dark and only the
@@ -142,8 +166,13 @@ export const MART_CARD = {
     radiusCqi: (27 / 163) * 100,
   },
   image: { w: (40 / 117) * 100, h: (51 / 68) * 100 },
-  name: { top: (109 / 162) * 100, sizeCqi: (8 / 163) * 100 },
-  coins: { top: (127 / 162) * 100, sizeCqi: (6 / 163) * 100 },
+  // Name is nudged up from the comp's y=109 to make room below it: the comps
+  // only ever show ONE price line, but the real card can show two (a
+  // strikethrough original plus the promo price), which collided at y=127.
+  name: { top: (102 / 162) * 100, sizeCqi: (8 / 163) * 100 },
+  // The price block is anchored just above the redeem plaque and grows upward,
+  // so one or two lines both sit correctly without overlapping anything.
+  coins: { bottom: 100 - (130 / 162) * 100, sizeCqi: (6 / 163) * 100 },
   redeem: {
     left: (10 / 163) * 100,
     top: (132 / 162) * 100,
@@ -160,6 +189,11 @@ export function buildMartSkin(ASSETS, COLORS, overrides = {}) {
     title: ASSETS.mart.title,
     // Every skin's Mart plaque is the full-bleed 408px art.
     titleWidthPct: 100,
+    // The comps put two 163px cards + a 16px gap on a 402px frame (~85% of the
+    // screen). The portal is clamped to 475px, so the grid takes the same ~85%
+    // share instead of the 358px it was capped at, which left the cards small
+    // with wide dead margins — the same problem the check-in board had.
+    gridMaxWidth: 404,
     itemFrame: ASSETS.mart.itemFrame,
     redeemButton: ASSETS.mart.btnRedeem,
     // Gold plinth behind each product shot (Figma linear-gradient 90deg).

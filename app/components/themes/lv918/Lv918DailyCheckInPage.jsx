@@ -12,6 +12,14 @@ import { LV918_ASSETS, LV918_COLORS } from "./assets";
  * shared board.
  */
 const SKIN = buildCheckinSkin(LV918_ASSETS, LV918_COLORS, {
+  // Image overscale/offset per slot, taken from this theme's comp. The
+  // exported PNGs carry different amounts of transparent padding, so without
+  // this the tiles render smaller than their slot with wide gaps.
+  fit: {
+    board: { w: 100, h: 100, left: 0, top: -0.16 },
+    dayCard: { w: 134.03, h: 106.59, left: -16.75, top: 0 },
+    chest: { w: 114.63, h: 120.75, left: -7.09, top: -6.6 },
+  },
   // lv918's board interior is a bright pink panel, so the comp drops the gold
   // text for dark ink on days 1-6, keeping gold only for the DAY 7 label
   // (which sits outside that panel).
