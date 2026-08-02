@@ -9,6 +9,7 @@ import {
   getAvailablePromotions,
   getDepositRewardItems,
   getLuckySpinItems,
+  getMysteryBoxItems,
   getPenaltyKickItems,
   getPromotionsByStation,
   getRedemptionItems,
@@ -31,7 +32,8 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 // Types that represent a single station-wide setting rather than a catalog of
 // named entries - only one of these should exist per station. Everything else
 // (Manual Bonus, Lucky Spin Item, Redemption Item, Penalty Kick Bonus, Smash
-// Egg Bonus) is backed by a catalog/free-form name, so a station can have many.
+// Egg Bonus, Avatar) is backed by a catalog/free-form name, so a station can
+// have many.
 const SINGLE_INSTANCE_LABELS = new Set(["monthly vip", "upgrade vip", "birthday bonus"]);
 
 const ITEM_CATALOGS = [
@@ -42,6 +44,7 @@ const ITEM_CATALOGS = [
   { key: "deposit_leaderboard", labels: ["deposit leaderboard bonus", "deposit leaderboard"], typeValues: [], load: () => getDepositRewardItems({ page_size: 1000 }) },
   { key: "referral_leaderboard", labels: ["referral leaderboard bonus", "referral leaderboard"], typeValues: [], load: () => getReferrerRewardItems({ page_size: 1000 }) },
   { key: "withdraw_leaderboard", labels: ["withdraw leaderboard bonus", "withdraw leaderboard"], typeValues: [], load: () => getWithdrawalRewardItems({ page_size: 1000 }) },
+  { key: "avatar", labels: ["avatar"], typeValues: ["12"], load: () => getMysteryBoxItems({ page_size: 1000 }) },
 ];
 
 // The API always mirrors the Manual Bonus promotion into the "VIP Type" group
@@ -81,6 +84,11 @@ function manualBonusTypeValue(promotionTypes) {
   return typeByLabel(promotionTypes, "Manual Bonus");
 }
 
+function avatarTypeValue(promotionTypes) {
+  return typeByLabel(promotionTypes, "Avatar") ||
+    (promotionTypes.some((type) => String(type.value) === "12") ? "12" : "");
+}
+
 function isSingleInstanceType(promotionTypes, typeValue) {
   const found = promotionTypes.find((t) => String(t.value) === String(typeValue));
   return found ? SINGLE_INSTANCE_LABELS.has(normalizeLabel(found.label)) : false;
@@ -108,6 +116,7 @@ function typeFromGroup(groupType, promotionTypes) {
     "withdraw leaderboard": "Withdraw Leaderboard Bonus",
     "manual code": "Manual Bonus",
     manualcode: "Manual Bonus",
+    avatar: "Avatar",
   };
   return typeByLabel(promotionTypes, aliases[normalizeLabel(groupType)] || "");
 }
@@ -220,7 +229,13 @@ export default function AddPromotionPage() {
   }, [stationId, promotionTypes]);
 
   const updatePromotion = (index, key) => (value) => {
-    setPromotions((prev) => prev.map((p, i) => (i === index ? { ...p, [key]: value } : p)));
+    setPromotions((prev) => prev.map((p, i) => {
+      if (i !== index) return p;
+      if (key === "promotion_type") {
+        return { ...p, promotion_type: value, item_uuid: "", item_name: "" };
+      }
+      return { ...p, [key]: value };
+    }));
   };
 
   const addPromotionRow = () => {
@@ -231,6 +246,7 @@ export default function AddPromotionPage() {
     setPromotions((prev) => prev.filter((_, i) => i !== index));
 
   const manualBonusType = manualBonusTypeValue(promotionTypes);
+  const avatarType = avatarTypeValue(promotionTypes);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -253,6 +269,10 @@ export default function AddPromotionPage() {
       }
       if (manualBonusType && String(p.promotion_type) === manualBonusType && p.item_name.trim() === "") {
         alert("Cannot save: please enter an item name for every Manual Bonus entry.");
+        return;
+      }
+      if (avatarType && String(p.promotion_type) === avatarType && !p.item_uuid) {
+        alert("Cannot save: please select a Mystery Box item for every Avatar entry.");
         return;
       }
     }
@@ -357,6 +377,7 @@ export default function AddPromotionPage() {
                 itemsLoading={itemsLoading}
                 hasItemCatalog={Boolean(catalogForType(promotionTypes, promo.promotion_type)) || Boolean(promo.item_uuid)}
                 isManualBonus={Boolean(manualBonusType) && String(promo.promotion_type) === manualBonusType}
+                requiresItem={Boolean(avatarType) && String(promo.promotion_type) === avatarType}
                 onChange={updatePromotion}
                 onRemove={promotions.length > 1 ? () => removePromotionRow(index) : null}
               />
@@ -467,7 +488,7 @@ function SelectField({ label, value, onChange, options, placeholder, allowEmpty 
   );
 }
 
-function PromotionEntry({ index, promo, typeOptions, typesError, itemOptions, itemsError, itemsLoading, hasItemCatalog, isManualBonus, onChange, onRemove }) {
+function PromotionEntry({ index, promo, typeOptions, typesError, itemOptions, itemsError, itemsLoading, hasItemCatalog, isManualBonus, requiresItem, onChange, onRemove }) {
   return (
     <div className="flex w-full flex-col gap-4 rounded-[12px] border border-[#fbeed2]/20 p-4">
       <div className="flex items-center justify-between">
@@ -513,12 +534,12 @@ function PromotionEntry({ index, promo, typeOptions, typesError, itemOptions, it
           />
         ) : hasItemCatalog ? (
           <SelectField
-            label="Item (optional)"
+            label={requiresItem ? "Mystery Box Item" : "Item (optional)"}
             value={promo.item_uuid}
             onChange={onChange(index, "item_uuid")}
             options={itemOptions}
             allowEmpty
-            emptyLabel="No item"
+            emptyLabel={requiresItem ? "Select item" : "No item"}
             placeholder={
               itemsLoading
                 ? "Loading..."

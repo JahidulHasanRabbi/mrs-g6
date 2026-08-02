@@ -7,6 +7,7 @@ import Pagination from "../../../components/admin/retention/Pagination";
 import {
   getDepositRewardItems,
   getLuckySpinItems,
+  getMysteryBoxItems,
   getPenaltyKickItems,
   getPromotionsByStation,
   getRedemptionItems,
@@ -121,6 +122,7 @@ export default function PromotionsPage() {
     let cancelled = false;
     Promise.allSettled([
       getLuckySpinItems(),
+      getMysteryBoxItems({ page_size: 1000 }),
       getRedemptionItems(),
       getPenaltyKickItems({ page_size: 1000 }),
       getDepositRewardItems({ page_size: 1000 }),
