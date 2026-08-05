@@ -1,5 +1,7 @@
 "use client";
 
+import ArchiveButton from "./ArchiveButton";
+
 const HEADER_BG = "linear-gradient(180deg, #141828 0%, #333333 99.75%)";
 
 function fmt(n) {
@@ -8,10 +10,11 @@ function fmt(n) {
   return Number.isFinite(num) ? num.toLocaleString("en-US") : String(n);
 }
 
-export default function RankingTable({ rows = [], type = "deposit" }) {
+export default function RankingTable({ rows = [], type = "deposit", onArchive }) {
   const isReferral = type === "referral";
   const amountLabel = isReferral ? "Referral Deposit" : type === "withdrawal" ? "Total Withdraw" : "Total Deposit";
   const countLabel = isReferral ? "New Member" : "Count";
+  const hasActions = typeof onArchive === "function";
 
   return (
     <div className="overflow-hidden rounded-[12px] border border-white/5">
@@ -24,12 +27,13 @@ export default function RankingTable({ rows = [], type = "deposit" }) {
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Full Name</th>
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">{amountLabel}</th>
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">{countLabel}</th>
+              {hasActions && <th className="px-5 py-4 text-right text-[13px] font-semibold text-[#fbeed2]">Action</th>}
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-5 py-10 text-center text-[13px] text-white/50">
+                <td colSpan={hasActions ? 6 : 5} className="px-5 py-10 text-center text-[13px] text-white/50">
                   No ranking data yet.
                 </td>
               </tr>
@@ -44,6 +48,11 @@ export default function RankingTable({ rows = [], type = "deposit" }) {
                   <td className="px-5 py-5 text-[12px] text-white">{row.fullName}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{fmt(row.amount)}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{fmt(row.count)}</td>
+                  {hasActions && (
+                    <td className="px-5 py-5">
+                      <ArchiveButton onClick={() => onArchive(row)} />
+                    </td>
+                  )}
                 </tr>
               ))
             )}

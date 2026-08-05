@@ -7,7 +7,7 @@ import SettingsSection from "../../../components/admin/world-cup/SettingsSection
 import InformationTable from "../../../components/admin/leaderboards/deposit/InformationTable";
 import DepositRewardTable from "../../../components/admin/leaderboards/deposit/DepositRewardTable";
 import WithdrawalPlayerTable from "../../../components/admin/leaderboards/withdrawal/WithdrawalPlayerTable";
-import RankingTable from "../../../components/admin/leaderboards/RankingTable";
+import LeaderboardRankingManager from "../../../components/admin/leaderboards/LeaderboardRankingManager";
 import ConfirmArchive from "../../../components/admin/world-cup/ConfirmArchive";
 import {
   getWithdrawalBanners,
@@ -88,7 +88,6 @@ export default function WithdrawalSettingsPage() {
   const [bannerPage, setBannerPage] = useState(1);
   const [rewardPage, setRewardPage] = useState(1);
   const [playerPage, setPlayerPage] = useState(1);
-  const [rankingPage, setRankingPage] = useState(1);
 
   const [archiveTarget, setArchiveTarget] = useState(null);
 
@@ -121,10 +120,6 @@ export default function WithdrawalSettingsPage() {
   const pagedPlayers = useMemo(
     () => players.slice((playerPage - 1) * PAGE_SIZE, playerPage * PAGE_SIZE),
     [players, playerPage],
-  );
-  const pagedRankings = useMemo(
-    () => rankings.slice((rankingPage - 1) * PAGE_SIZE, rankingPage * PAGE_SIZE),
-    [rankings, rankingPage],
   );
 
   const confirmArchive = async () => {
@@ -182,10 +177,7 @@ export default function WithdrawalSettingsPage() {
         <PaginatedFooter total={players.length} page={playerPage} setPage={setPlayerPage} />
       </SettingsSection>
 
-      <SettingsSection title="Ranking Table">
-        <RankingTable rows={pagedRankings} type="withdrawal" />
-        <PaginatedFooter total={rankings.length} page={rankingPage} setPage={setRankingPage} />
-      </SettingsSection>
+      <LeaderboardRankingManager rows={rankings} type="withdrawal" />
 
       <ConfirmArchive
         open={!!archiveTarget}

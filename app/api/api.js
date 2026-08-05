@@ -258,6 +258,8 @@ export const ENDPOINTS = {
 
     GENERATE_RANKING: '/leaderboard/generate-ranking/',
     REAL_RANKING: '/leaderboard/real-ranking/',
+    EXCLUSIONS: '/leaderboard/exclusions/',
+    EXCLUSION_ARCHIVE: (uuid) => `/leaderboard/exclusions/${uuid}/archive/`,
 
     PUBLIC_INFO: '/leaderboard/public/info/',
     PUBLIC_STATUS: '/leaderboard/public/status/',

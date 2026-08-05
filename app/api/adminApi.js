@@ -1056,6 +1056,22 @@ export async function getLeaderboardRealRanking(type) {
   return await apiRequest(`${ENDPOINTS.LEADERBOARD.REAL_RANKING}${qs}`, { method: 'GET' }, true, 'admin');
 }
 
+export async function getLeaderboardExclusions(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.EXCLUSIONS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+export async function createLeaderboardExclusions(memberIds) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.EXCLUSIONS, {
+    method: 'POST',
+    body: { member_ids: memberIds },
+  }, true, 'admin');
+}
+
+export async function archiveLeaderboardExclusion(uuid) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.EXCLUSION_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
 // ---------------------------------------------------------------------------
 // Deposit Leaderboard
 // ---------------------------------------------------------------------------
