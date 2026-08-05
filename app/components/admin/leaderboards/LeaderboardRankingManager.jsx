@@ -134,14 +134,14 @@ export default function LeaderboardRankingManager({ rows = [], type = "deposit" 
   };
 
   const addExclusions = async () => {
-    const parts = memberIds.split(/[\s,]+/).filter(Boolean);
-    const parsed = parts.map(Number);
+    const parts = memberIds.split(/\r?\n/).map((value) => value.trim()).filter(Boolean);
+    const parsed = parts.map((value) => Number(value.replace(/[\s,]/g, "")));
     if (parts.length === 0) {
       setAddError("Enter at least one member ID.");
       return;
     }
     if (parsed.some((id) => !Number.isInteger(id) || id < 1)) {
-      setAddError("Member IDs must be positive whole numbers.");
+      setAddError("Enter one valid positive member ID per line.");
       return;
     }
 

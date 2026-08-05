@@ -44,7 +44,7 @@ export default function RankingTable({ rows = [], type = "deposit", onArchive })
                   className="border-b border-white/5 align-middle last:border-b-0 hover:bg-white/[0.02]"
                 >
                   <td className="px-5 py-5 text-[12px] text-white">#{fmt(row.rank)}</td>
-                  <td className="px-5 py-5 text-[12px] text-white">{fmt(row.memberId)}</td>
+                  <td className="px-5 py-5 text-[12px] text-white">{row.memberId}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{row.fullName}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{fmt(row.amount)}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{fmt(row.count)}</td>

@@ -39,7 +39,7 @@ export default function AddExclusionsModal({ open, value, onChange, onSubmit, on
           Add Excluded Members
         </h2>
         <p className="mb-4 text-[13px] leading-5 text-white/65">
-          Enter one or more MRS member IDs, separated by commas, spaces, or new lines.
+          Enter one MRS member ID per line. Formatted IDs such as 23,233 are accepted.
         </p>
         <label htmlFor="leaderboard-member-ids" className="mb-2 block text-[13px] font-semibold text-white">
           Member IDs
@@ -51,7 +51,7 @@ export default function AddExclusionsModal({ open, value, onChange, onSubmit, on
           value={value}
           disabled={busy}
           onChange={(event) => onChange?.(event.target.value)}
-          placeholder="73914, 3023, 82918"
+          placeholder={"23,233\n82,918"}
           className="w-full resize-y rounded-[8px] border border-white/20 bg-[#101810] px-4 py-3 text-[13px] text-white outline-none transition-colors placeholder:text-white/30 focus:border-[#f2cb7a] disabled:opacity-50"
         />
         {error && <p className="mt-2 text-[12px] text-[#fb6b6b]">{error}</p>}
