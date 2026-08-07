@@ -17,6 +17,7 @@ import "./globals.css";
  */
 
 import LayoutShell from "./LayoutShell";
+import Contentsquare from "./components/analytics/Contentsquare";
 import { ToastProvider } from "./components/admin/ui/Toast";
 
 const inter = Inter({
@@ -126,6 +127,7 @@ export default function RootLayout({
             __html: `try{var o=(localStorage.getItem('mrs_redirect_o')||'').toLowerCase();var t='default';if(o.indexOf('acebet77')>-1)t='acebet77';else if(o.indexOf('ubetclub')>-1)t='ubetclub';else if(o.indexOf('ep369')>-1)t='ep369';else if(o.indexOf('kgame99')>-1)t='kgame99';else if(o.indexOf('lv918')>-1)t='lv918';else if(o.indexOf('n1gang')>-1)t='n1gang';document.documentElement.setAttribute('data-theme',t);}catch(e){}`,
           }}
         />
+        <Contentsquare />
         <ToastProvider>
           <LayoutShell>{children}</LayoutShell>
         </ToastProvider>
