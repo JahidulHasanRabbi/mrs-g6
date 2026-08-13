@@ -1,4 +1,20 @@
-import { NATIONAL_DAY_CHROME_ENABLED } from "../../config/phase4";
+"use client";
+
+import { useEffect, useState } from "react";
+import { isNationalDayChromeActive } from "../../config/phase4";
+
+/**
+ * The decoration expires with the event, and the bottom nav is prerendered, so
+ * the date check has to run in the browser: answering at build time would bake
+ * in "still running" and disagree with the client on the day it flips. Both
+ * overlays are absolutely positioned decoration, so revealing them a tick after
+ * hydration costs no layout shift.
+ */
+function useNationalDayChrome() {
+  const [active, setActive] = useState(false);
+  useEffect(() => setActive(isNationalDayChromeActive()), []);
+  return active;
+}
 
 // Jalur Gemilang palette. Kept literal (not themed) — the client asked for the
 // national colours to read as themselves on top of every station skin.
@@ -237,7 +253,7 @@ const MENU_CHROME = (
 );
 
 export function NationalDayMenuOverlay() {
-  return NATIONAL_DAY_CHROME_ENABLED ? MENU_CHROME : null;
+  return useNationalDayChrome() ? MENU_CHROME : null;
 }
 
 /* ------------------------------------------------------- bottom-nav ribbon --
@@ -303,5 +319,5 @@ const NAV_CHROME = (
 );
 
 export function NationalDayBottomNavOverlay() {
-  return NATIONAL_DAY_CHROME_ENABLED ? NAV_CHROME : null;
+  return useNationalDayChrome() ? NAV_CHROME : null;
 }

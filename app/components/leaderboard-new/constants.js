@@ -106,6 +106,9 @@ export const LEADERBOARD_CONFIG = {
     tableValueHeader: 'TOTAL TURNOVER',
     myRankMetricLabel: 'Total Turnover',
     myRankMetricKind: 'currency',
+    // Client-supplied copy for the no-activity state (13/08). The other three
+    // boards have no approved wording yet, so they render without a hint.
+    myRankEmptyHint: 'Complete a valid bet to enter the ranking.',
     color: '#e9af41',
     colorLight: '#f9d774',
     colorMuted: '#ddc1ae',

@@ -20,6 +20,7 @@ import {
   TURNOVER_PREVIEW_BOARD,
   TURNOVER_EVENT_COUNTDOWN,
   PREVIEW_MY_RANK,
+  PREVIEW_MY_RANK_STATES,
 } from "../components/leaderboard-new/turnoverPreview";
 import { PHASE4_PREVIEW_ENABLED, TURNOVER_MAINTENANCE } from "../config/phase4";
 import {
@@ -186,6 +187,11 @@ function Top20LeaderboardPageInner() {
       : LEADERBOARD_TYPES.DEPOSIT;
   const isTurnoverPreview =
     PHASE4_PREVIEW_ENABLED && activeTab === LEADERBOARD_TYPES.TURNOVER;
+  // Review affordance for the mock My Rank states (?myrank=top|unranked).
+  // Inert unless the preview flag is on, and gone with the mock data.
+  const myRankOverride = PHASE4_PREVIEW_ENABLED
+    ? PREVIEW_MY_RANK_STATES[searchParams.get("myrank")] ?? null
+    : null;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [data, setData] = useState(EMPTY_BOARD);
@@ -377,7 +383,7 @@ function Top20LeaderboardPageInner() {
               updateNotes={data.notes}
               terms={data.terms}
               loading={loading}
-              myRank={data.myRank}
+              myRank={myRankOverride ?? data.myRank}
               countdownLabel={isTurnoverPreview ? TURNOVER_EVENT_COUNTDOWN.label : undefined}
             />
           </AnimatePresence>

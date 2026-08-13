@@ -16,6 +16,9 @@ const TURNOVER_VALUES = [
   593760, 561330, 529840, 498120, 466950, 435670, 404280, 373510, 342760, 312480,
 ];
 
+// Ranks are pre-sorted here purely as fixture data. Real ordering — including
+// the client's tie rule, where equal totals are settled by whoever reached the
+// amount first and then by system record order — is the backend's to apply.
 const entries = TURNOVER_VALUES.map((value, index) => ({
   rank: index + 1,
   user: `M********${String(index + 1).padStart(2, "0")}`,
@@ -31,6 +34,16 @@ const eventNotStarted = Date.now() < PHASE4_EVENT.startsAt;
 export const TURNOVER_EVENT_COUNTDOWN = Object.freeze({
   endDate: eventNotStarted ? PHASE4_EVENT.startsAt : PHASE4_EVENT.endsAt,
   label: eventNotStarted ? "EVENT STARTS IN" : "EVENT ENDS IN",
+});
+
+/**
+ * The three My Rank states the client specified on 13/08, so each can be
+ * reviewed without editing code: append ?myrank=top or ?myrank=unranked to the
+ * leaderboard URL while the preview flag is on. Default is the mid-table case.
+ */
+export const PREVIEW_MY_RANK_STATES = Object.freeze({
+  top: { rank: 1, value: 982450, progressPercent: 100, isMock: true },
+  unranked: { rank: 0, value: 0, progressPercent: 0, isMock: true },
 });
 
 export const TURNOVER_PREVIEW_BOARD = Object.freeze({

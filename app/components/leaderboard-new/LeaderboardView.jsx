@@ -152,6 +152,7 @@ export default function LeaderboardView({
             metricLabel={config.myRankMetricLabel}
             metricKind={config.myRankMetricKind}
             gapUnit={config.myRankGapUnit}
+            emptyHint={config.myRankEmptyHint}
           />
 
           {/* Countdown timer (deposit campaign / turnover event window) */}
