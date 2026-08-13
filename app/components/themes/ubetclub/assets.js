@@ -3,6 +3,8 @@
  * node group 77:*). Red Chinese-New-Year / God-of-Wealth skin.
  * All files live under public/assets/themes/ubetclub/.
  */
+import { PHASE4_ASSETS } from '../../../config/phase4';
+
 const BASE = '/assets/themes/ubetclub';
 
 export const UBET_ASSETS = {
@@ -16,7 +18,8 @@ export const UBET_ASSETS = {
     btnRed: `${BASE}/ui/btn-red.png`,   // red plaque, gold text
     btnGold: `${BASE}/ui/btn-gold.png`, // gold plaque, dark text
     iconParty: `${BASE}/ui/icon-party.svg`,
-    iconCoin: `${BASE}/ui/icon-coin.svg`,
+    // Phase 4: the token art is shared across every station.
+    iconCoin: PHASE4_ASSETS.token,
   },
   nav: {
     bar: `${BASE}/nav/nav-bar.svg`,

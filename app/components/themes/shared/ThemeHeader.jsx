@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import ProfileFrame from '../../profile/ProfileFrame';
 import { PROFILE_ASSETS } from '../../profile/profileAssets';
 import { useUser } from '../../../contexts/UserContext';
+import { PHASE4_ASSETS } from '../../../config/phase4';
 
 /**
  * Shared themed top app bar for the member game pages (acebet77 / ubetclub /
@@ -31,7 +32,7 @@ function formatBattlePoints(value) {
 export default function ThemeHeader({
   hamburgerIcon,
   infoIcon,
-  coinIcon,
+  coinIcon = PHASE4_ASSETS.token,
   onMenuClick,
   onInfoClick,
   balance = null,
@@ -88,7 +89,7 @@ export default function ThemeHeader({
       {/* Centre: optional balance pill (default alignment) */}
       {balance !== null && balanceAlign === 'center' && (
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 h-[38px] px-4 rounded-full border border-[rgba(255,225,109,0.3)] bg-[rgba(57,53,40,0.85)] backdrop-blur-[6px]">
-          {coinIcon && <img src={coinIcon} alt="" className="w-[16px] h-[16px]" />}
+          <img src={coinIcon} alt="" className="w-[18px] h-[18px] object-contain" />
           <span className="text-[15px] font-semibold" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: '#ffe16d' }}>
             {formatBalance(balance)}
           </span>
@@ -103,7 +104,7 @@ export default function ThemeHeader({
             aria-label={`${formatBattlePoints(battlePoints)} Battle Points`}
           >
             <img
-              src="/assets/rpg/icons/bp-gem.svg"
+              src={PHASE4_ASSETS.battlePoint}
               alt=""
               className="h-[18px] w-[18px] shrink-0 object-contain"
             />
@@ -117,7 +118,7 @@ export default function ThemeHeader({
         )}
         {balance !== null && balanceAlign === 'right' && (
           <div className="flex items-center gap-2 h-[36px] px-3 rounded-full border border-[rgba(255,225,109,0.3)] bg-[rgba(57,53,40,0.85)] backdrop-blur-[6px]">
-            {coinIcon && <img src={coinIcon} alt="" className="w-[16px] h-[16px]" />}
+            <img src={coinIcon} alt="" className="w-[18px] h-[18px] object-contain" />
             <span className="text-[14px] font-semibold" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: '#ffe16d' }}>
               {formatBalance(balance)}
             </span>

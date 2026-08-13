@@ -11,6 +11,7 @@ import KgameSectionHeading from "../themes/kgame99/KgameSectionHeading";
 import { KGAME99_COLORS } from "../themes/kgame99/assets";
 import Lv918SectionHeading from "../themes/lv918/Lv918SectionHeading";
 import { LV918_COLORS } from "../themes/lv918/assets";
+import MyRankPanel from "./MyRankPanel";
 
 export default function LeaderboardView({
   config,
@@ -22,6 +23,8 @@ export default function LeaderboardView({
   updateNotes = [],
   terms = [],
   loading = false,
+  myRank = null,
+  countdownLabel = undefined,
 }) {
   const { isKgame99, isLv918 } = useTheme();
 
@@ -112,14 +115,53 @@ export default function LeaderboardView({
         </div>
       )}
 
+      {config.eventBadge && (
+        <span
+          className="-mt-3 rounded-full px-3 py-1 text-[10px] font-extrabold tracking-[1.4px] text-[#07190d]"
+          style={{ backgroundColor: config.color }}
+        >
+          {config.eventBadge}
+        </span>
+      )}
+
       {loading ? (
         <LeaderboardSkeleton config={config} />
       ) : (
         <>
-          {/* Countdown timer (deposit only) */}
+          {config.previewNotice && (
+            <div
+              // Opaque card fill (same token as the podium/table cards) — a
+              // translucent tint let the station artwork through and the copy
+              // became unreadable on the busier themes.
+              className="w-full rounded-lg border px-4 py-3 text-center text-xs font-semibold"
+              style={{
+                borderColor: config.color,
+                backgroundColor: "var(--lb-card-overlay)",
+                boxShadow: `0 3px 6px 0 ${config.color}4D`,
+                color: config.colorLight,
+              }}
+              role="status"
+            >
+              {config.previewNotice}
+            </div>
+          )}
+
+          <MyRankPanel
+            data={myRank}
+            color={config.color}
+            metricLabel={config.myRankMetricLabel}
+            metricKind={config.myRankMetricKind}
+            gapUnit={config.myRankGapUnit}
+          />
+
+          {/* Countdown timer (deposit campaign / turnover event window) */}
           {config.showCountdown && campaignEndDate && (
             <div className="w-full pt-6">
-              <CountdownTimer endDate={campaignEndDate} color={config.color} />
+              <CountdownTimer
+                endDate={campaignEndDate}
+                color={config.color}
+                label={countdownLabel}
+              />
             </div>
           )}
 

@@ -1,3 +1,5 @@
+import { PHASE4_ASSETS } from "../../config/phase4";
+
 export const SPIN_ASSETS = {
   background: "/assets/lucky-spin/lucky-spin-grid/spin-bg.png",
   itemGold: "/assets/lucky-spin/lucky-spin-grid/spin-item-gold.png",
@@ -17,6 +19,7 @@ export const SPIN_ASSETS = {
   coin2: "/assets/lucky-spin/rewards/coin-2.png",
   rewardsListBackground: "/assets/lucky-spin/rewards/rewards-list-bg.png",
   winningListBackground: "/assets/lucky-spin/winning-list/background.png",
-  coinIcon: "/assets/lucky-spin/winning-list/coin-icon.png",
+  coinIcon: PHASE4_ASSETS.token,
+  battlePointIcon: PHASE4_ASSETS.battlePoint,
   bulletIcon: "/assets/lucky-spin/winning-list/bullet-icon.png",
 };

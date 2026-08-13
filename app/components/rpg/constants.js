@@ -23,8 +23,6 @@ export const RPG_COLORS = {
   navInactive: "#3fae86",
   gold: "#ffc94d",
   goldDeep: "#ff8a50",
-  coinBorder: "#b8770f",
-  coinText: "#7a4b00",
   darkText: "#0a0618",
   red: "#ff6b6b",
 };
@@ -35,7 +33,6 @@ export const RPG_GRADIENTS = {
   exp: "linear-gradient(90deg, #2fe6c8 0%, #7c4dff 100%)",
   maleToggle:
     "linear-gradient(134deg, rgba(47,230,200,0.25) 0%, rgba(124,77,255,0.25) 100%)",
-  coin: "radial-gradient(circle at 35% 30%, #ffe29a 0%, #fac45f 35%, #f8b541 52%, #f5a623 70%)",
 };
 
 export const RPG_FONTS = {

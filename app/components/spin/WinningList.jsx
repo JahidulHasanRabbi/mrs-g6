@@ -19,7 +19,7 @@ const maskUsername = (name) => {
   return name.substring(0, prefixLen) + "*".repeat(maskedLen) + name.substring(name.length - suffixLen);
 };
 
-const WinningRow = memo(function WinningRow({ date, phone, amount, index }) {
+const WinningRow = memo(function WinningRow({ date, phone, amount, icon, index }) {
   return (
   <motion.div
       className="flex items-center justify-between px-4 sm:px-6 py-2.5 h-[45px] overflow-x-auto overflow-y-hidden winning-row-scroll"
@@ -47,7 +47,7 @@ const WinningRow = memo(function WinningRow({ date, phone, amount, index }) {
       <div className="relative w-[18px] h-[18px] flex-shrink-0">
         <Image
           alt="Coin"
-          src={SPIN_ASSETS.coinIcon}
+          src={icon}
           fill
           className="object-contain"
           sizes="18px"
@@ -79,7 +79,8 @@ const WinningList = memo(function WinningList() {
             return {
               date: dateStr,
               phone: maskUsername(item.display_name),
-              amount: prizeName
+              amount: prizeName,
+              icon: isBattlePoint ? SPIN_ASSETS.battlePointIcon : SPIN_ASSETS.coinIcon,
             };
           });
           setWinnings(formattedData);

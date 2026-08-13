@@ -1,3 +1,5 @@
+import { PHASE4_ASSETS } from "../../config/phase4";
+
 // Asset map + best-effort preloader for the RPG mini-game (pattern cloned
 // from app/components/penalty-kick/assets.js). All art lives under
 // public/assets/rpg/ as pre-optimized webp/svg — rendered with plain <img>.
@@ -59,7 +61,8 @@ export const RPG_IMAGES = {
     logoGem: "/assets/rpg/ui/logo-gem.svg",
   },
   icons: {
-    bpGem: "/assets/rpg/icons/bp-gem.svg",
+    token: PHASE4_ASSETS.token,
+    bpGem: PHASE4_ASSETS.battlePoint,
     navHome: "/assets/rpg/icons/nav-home.svg",
     navHeroItem: "/assets/rpg/icons/nav-hero-item.svg",
     navChallenge: "/assets/rpg/icons/nav-challenge.svg",

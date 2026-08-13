@@ -4,6 +4,8 @@
 // re-export these as node renders: a Figma node export flattens the art onto
 // the canvas matte, which bakes a grey background into every cutout.
 
+import { PHASE4_ASSETS } from '../../../config/phase4';
+
 const BASE = '/assets/themes/n1gang';
 
 export const N1GANG_ASSETS = {
@@ -17,7 +19,8 @@ export const N1GANG_ASSETS = {
     frameBottom: `${BASE}/ui/frame-bottom.png`,
     btnGold: `${BASE}/ui/btn-gold.png`,
     iconGift: `${BASE}/ui/icon-gift.svg`,
-    iconCoins: `${BASE}/ui/icon-coins.svg`,
+    // Phase 4: the token art is shared across every station.
+    iconCoins: PHASE4_ASSETS.token,
     iconParty: `${BASE}/ui/icon-party.svg`,
     jackpotPanel: `${BASE}/ui/jackpot-panel.png`,
     // Empty gold ribbon — the banner behind a jackpot / prize amount.

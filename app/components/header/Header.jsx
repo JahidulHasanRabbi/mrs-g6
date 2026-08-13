@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { PROFILE_ASSETS } from "../profile/profileAssets";
 import ProfileFrame from "../profile/ProfileFrame";
 import { useUser } from "../../contexts/UserContext";
+import { PHASE4_ASSETS } from "../../config/phase4";
 
 /**
  * Header Component
@@ -90,7 +91,7 @@ function Header({
                     <div className="relative size-[26px] shrink-0">
                       <Image
                         alt="Battle Points"
-                        src="/assets/rpg/icons/bp-gem.svg"
+                        src={PHASE4_ASSETS.battlePoint}
                         fill
                         className="object-contain"
                         sizes="26px"
@@ -115,7 +116,7 @@ function Header({
                   <div className="relative h-[34px] w-[30px] shrink-0">
                     <Image
                       alt="Tokens"
-                      src="/assets/mart/coin-icon.png"
+                      src={PHASE4_ASSETS.token}
                       fill
                       className="object-contain"
                       sizes="30px"

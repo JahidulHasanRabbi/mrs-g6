@@ -7,7 +7,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { RPG_COLORS, RPG_FONTS, RPG_GRADIENTS, RPG_VIEWS } from "../constants";
+import { RPG_COLORS, RPG_FONTS, RPG_VIEWS } from "../constants";
 import { RPG_IMAGES } from "../rpgAssets";
 import * as rpgApi from "../rpgApi";
 import { GoldCta } from "../primitives";
@@ -22,12 +22,7 @@ function RewardIcon({ type, size = 22, image }) {
     return <img src={image} alt="" className="object-contain" style={{ width: size, height: size }} />;
   }
   if (type === "tokens") {
-    return (
-      <span
-        className="inline-block rounded-full border"
-        style={{ width: size, height: size, background: RPG_GRADIENTS.coin, borderColor: RPG_COLORS.coinBorder }}
-      />
-    );
+    return <img src={RPG_IMAGES.icons.token} alt="" style={{ width: size, height: size }} />;
   }
   if (type === "bp" || type === "levelup") {
     return <img src={RPG_IMAGES.icons.bpGem} alt="" style={{ width: size, height: size }} />;

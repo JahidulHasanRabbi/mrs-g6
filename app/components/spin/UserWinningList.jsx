@@ -5,7 +5,14 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { SPIN_ASSETS } from "./spinAssets";
 
+// Battle-point wins are labelled "BP"/"battle point"; everything else is a
+// token win. Same rule WinningList applies when it builds its rows.
+const BATTLE_POINT_REWARD = /\bBP\b|battle point/i;
+
 const WinningRow = memo(function WinningRow({ date, reward, index }) {
+  const icon = BATTLE_POINT_REWARD.test(String(reward || ""))
+    ? SPIN_ASSETS.battlePointIcon
+    : SPIN_ASSETS.coinIcon;
   return (
   <motion.div
     className="flex items-center justify-between px-4 sm:px-6 py-2.5 min-h-[45px]"
@@ -32,7 +39,7 @@ const WinningRow = memo(function WinningRow({ date, reward, index }) {
       <div className="relative w-[18px] h-[18px] flex-shrink-0">
         <Image
           alt="Coin"
-          src={SPIN_ASSETS.coinIcon}
+          src={icon}
           fill
           className="object-contain"
           sizes="18px"

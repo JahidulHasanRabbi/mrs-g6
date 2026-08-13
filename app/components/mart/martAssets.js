@@ -1,9 +1,12 @@
+import { PHASE4_ASSETS } from "../../config/phase4";
+
 export const MART_ASSETS = {
   background: "/assets/mart/mart-background.png",
   menuIcon: "/assets/mart/profile-icon.png",
   profileIcon: "/assets/mart/menu-icon.png",
   coinBalance: "/assets/mart/coin-balance.png",
-  coinIcon: "/assets/mart/coin-icon.png",
+  // Phase 4: the token art is shared across every station.
+  coinIcon: PHASE4_ASSETS.token,
   titleBanner: "/assets/mart/mart-banner.png",
   sortButton: "/assets/mart/sort-button.png",
   itemCard: "/assets/mart/item-card.png",

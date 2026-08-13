@@ -12,7 +12,7 @@ function parseTimeLeft(endDate) {
   };
 }
 
-export default function CountdownTimer({ endDate, color = "#ff8c00" }) {
+export default function CountdownTimer({ endDate, color = "#ff8c00", label = "CAMPAIGN ENDS IN" }) {
   const [time, setTime] = useState(() => parseTimeLeft(endDate));
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export default function CountdownTimer({ endDate, color = "#ff8c00" }) {
         className="text-xs font-bold tracking-[1.2px] text-center"
         style={{ color, fontFamily: "var(--font-inter)" }}
       >
-        CAMPAIGN ENDS IN
+        {label}
       </p>
       <div className="flex items-start gap-2 sm:gap-4 justify-center">
         {units.map((u, i) => (
