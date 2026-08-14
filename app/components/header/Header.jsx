@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { PROFILE_ASSETS } from "../profile/profileAssets";
 import ProfileFrame from "../profile/ProfileFrame";
 import { useUser } from "../../contexts/UserContext";
-import { PHASE4_ASSETS } from "../../config/phase4";
+import HeaderBalances from "./HeaderBalances";
 
 /**
  * Header Component
@@ -65,83 +65,37 @@ function Header({
 
 
 
-        {/* Logo */}
-        <motion.div
-          className="absolute right-4 top-1/2 -translate-y-1/2 w-[60px] h-[60px]"
-          whileHover={{ scale: 1.05, rotate: 5 }}
-          transition={{ type: "spring", stiffness: 400, damping: 10 }}
+        {/* Right-side account controls */}
+        <div
+          className="absolute right-4 top-1/2 flex -translate-y-1/2 items-center"
         >
           {balance !== null && (
             <motion.div
-              className="absolute right-[58px] top-[8px] flex h-[48px] items-center gap-1"
               initial={showAnimation ? { opacity: 0, scale: 0.8 } : { opacity: 1, scale: 1 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={showAnimation ? { duration: 0.6, delay: 0.2, ease: "easeOut" } : { duration: 0 }}
             >
-              {battlePoints !== null && (
-                <div className="relative h-[48px] w-[96px] shrink-0 min-[390px]:w-[110px]">
-                  <Image
-                    alt=""
-                    src="/assets/mart/coin-balance.png"
-                    fill
-                    className="object-contain"
-                    sizes="(min-width: 390px) 110px, 96px"
-                  />
-                  <div className="absolute inset-0 z-10 flex items-center justify-center gap-1 px-2">
-                    <div className="relative size-[26px] shrink-0">
-                      <Image
-                        alt="Battle Points"
-                        src={PHASE4_ASSETS.battlePoint}
-                        fill
-                        className="object-contain"
-                        sizes="26px"
-                      />
-                    </div>
-                    <p className="min-w-0 truncate font-['Times_New_Roman'] text-[13px] font-bold text-[#f9d063]">
-                      {battlePoints === "" || battlePoints == null ? "0" : battlePoints}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <div className="relative h-[48px] w-[116px] shrink-0 min-[390px]:w-[140px]">
-                <Image
-                  alt=""
-                  src="/assets/mart/coin-balance.png"
-                  fill
-                  className="object-contain"
-                  sizes="(min-width: 390px) 140px, 116px"
+              <HeaderBalances battlePoints={battlePoints} balance={balance} />
+            </motion.div>
+          )}
+          {balance === null && (
+            <motion.div
+              className="relative h-[60px] w-[60px]"
+              whileHover={{ scale: 1.05, rotate: 5 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
+              <div className="absolute -top-[2px] right-0">
+                <ProfileFrame
+                  src={profilePhoto || PROFILE_ASSETS.profileAvatar}
+                  frameId={selectedFrameId}
+                  size={64}
+                  alt="Profile"
+                  onClick={() => router.push('/profile')}
                 />
-                <div className="absolute inset-0 z-10 flex items-center justify-center gap-2 px-3">
-                  <div className="relative h-[34px] w-[30px] shrink-0">
-                    <Image
-                      alt="Tokens"
-                      src={PHASE4_ASSETS.token}
-                      fill
-                      className="object-contain"
-                      sizes="30px"
-                    />
-                  </div>
-                  <p className="min-w-0 truncate font-['Times_New_Roman'] text-[14px] font-bold text-[#f9d063]">
-                    {balance}
-                  </p>
-                </div>
               </div>
             </motion.div>
           )}
-          {/* Profile Photo Button (with VIP frame) */}
-          <div className="relative w-[100px] h-auto right-[5px] top-[5px] ">
-            <div className="absolute right-[28%] top-[-4px]">
-              <ProfileFrame
-                src={profilePhoto || PROFILE_ASSETS.profileAvatar}
-                frameId={selectedFrameId}
-                size={64}
-                alt="Profile"
-                onClick={() => router.push('/profile')}
-              />
-            </div>
-          </div>
-        </motion.div>
+        </div>
       </div>
     </motion.header>
   );
