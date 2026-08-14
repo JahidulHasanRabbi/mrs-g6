@@ -24,6 +24,8 @@ export default function LeaderboardView({
   terms = [],
   loading = false,
   myRank = null,
+  memberName = "Member",
+  profilePicture = "",
   countdownLabel = undefined,
 }) {
   const { isKgame99, isLv918 } = useTheme();
@@ -153,6 +155,8 @@ export default function LeaderboardView({
             metricKind={config.myRankMetricKind}
             gapUnit={config.myRankGapUnit}
             emptyHint={config.myRankEmptyHint}
+            memberName={memberName}
+            profilePicture={profilePicture}
           />
 
           {/* Countdown timer (deposit campaign / turnover event window) */}

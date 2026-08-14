@@ -178,7 +178,7 @@ function Top20LeaderboardPageInner() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { userData } = useUser();
+  const { userData, profilePicture } = useUser();
   const { isThemed } = useTheme();
   const tabParam = searchParams.get("tab");
   const activeTab =
@@ -384,6 +384,8 @@ function Top20LeaderboardPageInner() {
               terms={data.terms}
               loading={loading}
               myRank={myRankOverride ?? data.myRank}
+              memberName={userData.name}
+              profilePicture={profilePicture}
               countdownLabel={isTurnoverPreview ? TURNOVER_EVENT_COUNTDOWN.label : undefined}
             />
           </AnimatePresence>
