@@ -40,6 +40,7 @@ export default function ModalShell({
   saving = false,
   closeLabel = "Close",
   saveLabel = "Save",
+  showSave = true,
   closeIcon = "close",
   width = "max-w-[640px]",
   children,
@@ -96,16 +97,18 @@ export default function ModalShell({
             {closeIcon === "back" ? <BackIcon /> : <CloseIcon />}
             {closeLabel}
           </button>
-          <button
-            type="button"
-            onClick={onSave}
-            disabled={saving}
-            className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold tracking-[-0.5px] text-[#141828] transition-opacity hover:opacity-90 disabled:opacity-50"
-            style={{ backgroundImage: GOLD_BG }}
-          >
-            <CheckIcon />
-            {saving ? "Saving..." : saveLabel}
-          </button>
+          {showSave && (
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={saving}
+              className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold tracking-[-0.5px] text-[#141828] transition-opacity hover:opacity-90 disabled:opacity-50"
+              style={{ backgroundImage: GOLD_BG }}
+            >
+              <CheckIcon />
+              {saving ? "Saving..." : saveLabel}
+            </button>
+          )}
         </div>
       </div>
     </div>,

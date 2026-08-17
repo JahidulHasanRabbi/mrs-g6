@@ -51,6 +51,12 @@ export const ADMIN_NAVIGATION = [
     id: 'penalty-kick'
   },
   {
+    label: 'Redeem Links',
+    path: '/admin/redeem-links',
+    enabled: true,
+    id: 'redeem-links'
+  },
+  {
     label: 'Avatar',
     path: '/admin/avatar',
     enabled: true,

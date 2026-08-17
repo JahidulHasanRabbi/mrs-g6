@@ -364,6 +364,47 @@ export async function archiveRedemptionItem(uuid) {
   }, true, 'admin');
 }
 
+// Redeem Links Management
+export async function getRedeemLinks(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.REDEEM_LINKS}${qs}`, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function getRedeemLink(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.REDEEM_LINK(uuid), {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function createRedeemLink(data) {
+  return await apiRequest(ENDPOINTS.ADMIN.REDEEM_LINKS, {
+    method: 'POST',
+    body: data
+  }, true, 'admin');
+}
+
+export async function updateRedeemLink(uuid, data) {
+  return await apiRequest(ENDPOINTS.ADMIN.REDEEM_LINK(uuid), {
+    method: 'PUT',
+    body: data
+  }, true, 'admin');
+}
+
+export async function archiveRedeemLink(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.REDEEM_LINK_ARCHIVE(uuid), {
+    method: 'PATCH'
+  }, true, 'admin');
+}
+
+export async function getRedeemLinkHistory(uuid, params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.REDEEM_LINK_HISTORY(uuid)}${qs}`, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
 export async function getRedemptionSettings() {
   return await apiRequest(ENDPOINTS.ADMIN.REDEMPTION_SETTINGS, {
     method: 'GET'
