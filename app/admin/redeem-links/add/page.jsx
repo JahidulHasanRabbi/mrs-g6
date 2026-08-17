@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "../../../components/admin/ui/Toast";
 import {
@@ -8,6 +8,7 @@ import {
   REWARD_TYPE_OPTIONS,
   buildRedeemLinkPayload,
   describeRedeemLinkError,
+  formatRedeemLinkDateTime,
   mapRedeemLinkToForm,
   validateRedeemLinkForm,
 } from "../../../components/admin/redeem-links/redeemLinkUtils.mjs";
@@ -50,6 +51,64 @@ function Field({ label, error, children }) {
 
 function inputClass(error) {
   return `${INPUT_BASE} ${error ? "border-red-400 focus:ring-red-400/30" : "border-[#f2cb7a] focus:ring-[#e9af41]/40"}`;
+}
+
+function CalendarIcon() {
+  return (
+    <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#e9af41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+      <line x1="8" y1="3" x2="8" y2="7" />
+      <line x1="16" y1="3" x2="16" y2="7" />
+    </svg>
+  );
+}
+
+// `datetime-local` renders its value in the browser's own locale (mm/dd/yyyy
+// with am/pm for US admins), and its inner fields paint their own color, so
+// text-transparent does not hide them. Instead the native input is laid over
+// the box at opacity-0 — it still owns the value, keyboard editing and picker,
+// while the visible text is ours and always dd/mm/yyyy hh:mm. Same pattern as
+// the member alert date filter.
+function DateTimeInput({ value, onChange, error, min }) {
+  const inputRef = useRef(null);
+
+  // Clicking anywhere in the box opens the calendar, not just the icon.
+  // showPicker() is Chromium/Firefox/Safari 16+; where it is missing (or throws
+  // because the click was not user-activated) focus is still a usable fallback.
+  const openPicker = () => {
+    const input = inputRef.current;
+    if (!input) return;
+    input.focus();
+    try {
+      input.showPicker?.();
+    } catch {
+      /* not supported here — the focused field is still editable */
+    }
+  };
+
+  const border = error ? "border-red-400" : "border-[#f2cb7a]";
+
+  return (
+    <div
+      className={`relative flex w-full cursor-pointer items-center rounded-[8px] border px-4 py-2.5 ${border} focus-within:ring-2 focus-within:ring-[#e9af41]/40`}
+      onClick={openPicker}
+    >
+      <span className={`pointer-events-none text-[14px] tabular-nums ${value ? "text-white" : "text-white/40"}`}>
+        {value ? formatRedeemLinkDateTime(value) : "dd/mm/yyyy hh:mm"}
+      </span>
+      <input
+        ref={inputRef}
+        type="datetime-local"
+        value={value}
+        min={min}
+        onChange={onChange}
+        aria-label="Date and time"
+        className="absolute inset-0 h-full w-full cursor-pointer opacity-0 [color-scheme:dark]"
+      />
+      <CalendarIcon />
+    </div>
+  );
 }
 
 function RedeemLinkForm() {
@@ -162,11 +221,11 @@ function RedeemLinkForm() {
         </Field>
 
         <Field label="Start Date" error={errors.startDate}>
-          <input type="date" value={form.startDate} onChange={set("startDate")} className={`${inputClass(errors.startDate)} [color-scheme:dark]`} />
+          <DateTimeInput value={form.startDate} onChange={set("startDate")} error={errors.startDate} />
         </Field>
 
         <Field label="End Date" error={errors.endDate}>
-          <input type="date" min={form.startDate || undefined} value={form.endDate} onChange={set("endDate")} className={`${inputClass(errors.endDate)} [color-scheme:dark]`} />
+          <DateTimeInput value={form.endDate} onChange={set("endDate")} error={errors.endDate} min={form.startDate || undefined} />
         </Field>
       </div>
 

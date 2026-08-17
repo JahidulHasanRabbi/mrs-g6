@@ -140,6 +140,7 @@ export const ENDPOINTS = {
     REDEEM_LINK: (uuid) => `/redemption/redeem-links/${uuid}/`,
     REDEEM_LINK_ARCHIVE: (uuid) => `/redemption/redeem-links/${uuid}/archive/`,
     REDEEM_LINK_HISTORY: (uuid) => `/redemption/redeem-links/${uuid}/history/`,
+    REDEEM_LINK_KPI: '/redemption/dashboard/kpi/',
     CHECKIN_SETTINGS: '/settings/checkin-settings/',
     BANNERS: '/settings/banners/',
     BANNER: (uuid) => `/settings/banners/${uuid}/`,

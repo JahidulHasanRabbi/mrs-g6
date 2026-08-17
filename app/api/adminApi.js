@@ -405,6 +405,17 @@ export async function getRedeemLinkHistory(uuid, params = {}) {
   }, true, 'admin');
 }
 
+// GET /redemption/dashboard/kpi/ - redeem link KPI totals.
+// from_date/to_date are all-or-nothing: sending only one returns 400
+// ("use YYYY-MM-DD for both"), so an incomplete range falls back to all-time.
+export async function getRedeemLinkKpi({ from_date, to_date } = {}) {
+  const params = from_date && to_date ? { from_date, to_date } : {};
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.REDEEM_LINK_KPI}${qs}`, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
 export async function getRedemptionSettings() {
   return await apiRequest(ENDPOINTS.ADMIN.REDEMPTION_SETTINGS, {
     method: 'GET'

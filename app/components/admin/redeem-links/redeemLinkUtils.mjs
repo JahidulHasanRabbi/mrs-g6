@@ -21,6 +21,28 @@ const optionValueByLabel = (options, value, fallback) => {
   return option?.value ?? fallback;
 };
 
+// start_date/end_date are full ISO 8601 datetimes (the API returns them with a
+// +08:00 offset). `datetime-local` inputs take "YYYY-MM-DDTHH:mm" with no zone,
+// so hydrate by converting the instant into the browser's local wall clock —
+// the same clock the table renders, so what you edit matches what you saw.
+export function toDateTimeLocalInput(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+// Inverse of the above: a zone-less local wall clock back to a full ISO instant.
+// new Date("YYYY-MM-DDTHH:mm") is parsed as local time, so toISOString() carries
+// the browser's offset — an admin in UTC+8 typing 08:00 sends 00:00Z.
+export function fromDateTimeLocalInput(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString();
+}
+
 export function mapRedeemLinkToForm(item = {}) {
   return {
     name: item.name || "",
@@ -29,8 +51,8 @@ export function mapRedeemLinkToForm(item = {}) {
     rewardType: optionValueByLabel(REWARD_TYPE_OPTIONS, item.reward_type, "1"),
     amount: item.amount == null ? "" : String(item.amount),
     quantity: item.quantity == null ? "" : String(item.quantity),
-    startDate: item.start_date || "",
-    endDate: item.end_date || "",
+    startDate: toDateTimeLocalInput(item.start_date),
+    endDate: toDateTimeLocalInput(item.end_date),
   };
 }
 
@@ -68,6 +90,7 @@ export function validateRedeemLinkForm(form = {}) {
   }
   if (!form.startDate) errors.startDate = "Start date is required.";
   if (!form.endDate) errors.endDate = "End date is required.";
+  // Both are fixed-width "YYYY-MM-DDTHH:mm", so string order is chronological.
   if (form.startDate && form.endDate && form.endDate < form.startDate) {
     errors.endDate = "End date cannot be earlier than start date.";
   }
@@ -82,8 +105,8 @@ export function buildRedeemLinkPayload(form) {
     reward_type: Number(form.rewardType),
     amount: Number(form.amount),
     quantity: Number(form.quantity),
-    start_date: form.startDate,
-    end_date: form.endDate,
+    start_date: fromDateTimeLocalInput(form.startDate),
+    end_date: fromDateTimeLocalInput(form.endDate),
   };
 }
 
@@ -107,6 +130,57 @@ export function getRedeemLinkStatus(reason) {
   if (reason === "Redeem link quota is full") return { label: "Quota Full", tone: "danger" };
   if (reason === "Redeem link is no longer available") return { label: "Archived", tone: "neutral" };
   return { label: reason, tone: "neutral" };
+}
+
+// Render an API timestamp as "dd/mm/yyyy hh:mm".
+// The API returns ISO strings with a +08:00 offset; those are rendered in the
+// viewer's local zone, matching how the rest of the admin surface reads dates.
+// Deliberately not toLocaleString() — that flips to mm/dd/yyyy for US locales,
+// which is ambiguous against dd/mm for any day <= 12.
+export function formatRedeemLinkDateTime(value) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${day}/${month}/${date.getFullYear()} ${hours}:${minutes}`;
+}
+
+function formatKpiDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+// Translate the Daily/Monthly/Yearly toggle into the explicit from/to range the
+// KPI endpoint expects — it has no period `type` param of its own.
+// Semantics mirror the retention PIC dashboard: Daily reports on *yesterday*
+// (today's figures are still settling), Monthly is the current calendar month,
+// Yearly is the current calendar year.
+//
+// An explicit picker range always wins. The endpoint rejects a half-filled
+// range with 400, so a lone `from` or `to` is ignored rather than passed on.
+export function buildKpiDateRange(period, fromDate, toDate, now = new Date()) {
+  if (fromDate && toDate) return { from_date: fromDate, to_date: toDate };
+
+  if (period === "Monthly") {
+    return {
+      from_date: formatKpiDate(new Date(now.getFullYear(), now.getMonth(), 1)),
+      to_date: formatKpiDate(new Date(now.getFullYear(), now.getMonth() + 1, 0)),
+    };
+  }
+  if (period === "Yearly") {
+    return {
+      from_date: formatKpiDate(new Date(now.getFullYear(), 0, 1)),
+      to_date: formatKpiDate(new Date(now.getFullYear(), 11, 31)),
+    };
+  }
+
+  const yesterday = formatKpiDate(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
+  return { from_date: yesterday, to_date: yesterday };
 }
 
 export function buildRedeemShareUrl(origin, stationUrl, uuid) {

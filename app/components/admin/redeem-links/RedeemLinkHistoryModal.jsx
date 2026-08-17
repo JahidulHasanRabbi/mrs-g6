@@ -2,6 +2,7 @@
 
 import { Pagination } from "../members/DataTable";
 import ModalShell from "../penalty-kick/ModalShell";
+import { formatRedeemLinkDateTime } from "./redeemLinkUtils.mjs";
 
 const PAGE_SIZE = 10;
 
@@ -12,12 +13,6 @@ function SummaryItem({ label, value }) {
       <p className="mt-1 text-[13px] font-medium text-white">{value ?? "-"}</p>
     </div>
   );
-}
-
-function formatDateTime(value) {
-  if (!value) return "-";
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
 }
 
 export { PAGE_SIZE as REDEEM_LINK_HISTORY_PAGE_SIZE };
@@ -51,7 +46,7 @@ export default function RedeemLinkHistoryModal({
             <SummaryItem label="Campaign" value={link.name} />
             <SummaryItem label="Station" value={link.station} />
             <SummaryItem label="Reward" value={`${link.reward_type || "-"} x ${Number(link.amount ?? 0).toLocaleString("en-US")}`} />
-            <SummaryItem label="Date Range" value={`${link.start_date || "-"} - ${link.end_date || "-"}`} />
+            <SummaryItem label="Date Range" value={`${formatRedeemLinkDateTime(link.start_date)} - ${formatRedeemLinkDateTime(link.end_date)}`} />
             <SummaryItem label="Quantity" value={Number(link.quantity ?? 0).toLocaleString("en-US")} />
             <SummaryItem label="Redeemed" value={Number(link.redeemed_count ?? 0).toLocaleString("en-US")} />
             <SummaryItem label="Remaining" value={Number(link.remaining ?? 0).toLocaleString("en-US")} />
@@ -81,7 +76,7 @@ export default function RedeemLinkHistoryModal({
                       <td className="px-4 py-4 text-[12px] text-white">{row.member_uuid || "-"}</td>
                       <td className="px-4 py-4 text-[12px] text-white">{row.full_name || "-"}</td>
                       <td className="px-4 py-4 text-[12px] text-white">{row.phone_number || "-"}</td>
-                      <td className="px-4 py-4 text-[12px] text-white">{formatDateTime(row.created)}</td>
+                      <td className="whitespace-nowrap px-4 py-4 text-[12px] tabular-nums text-white">{formatRedeemLinkDateTime(row.created)}</td>
                     </tr>
                   ))}
                 </tbody>
