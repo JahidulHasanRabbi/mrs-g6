@@ -24,8 +24,21 @@ const ThemeContext = createContext({
   isThemed: false,
 });
 
+// A shared redeem link (/?o=<station_url>&reward=<uuid>) carries the station
+// URL in `o` — the same value /auth persists — so the theme can be resolved
+// from the link itself, with no session required. The URL wins when present;
+// storage is the fallback for normal in-portal navigation.
+function originFromUrl() {
+  if (typeof window === 'undefined') return null;
+  try {
+    return new URL(window.location.href).searchParams.get('o');
+  } catch {
+    return null;
+  }
+}
+
 function currentThemeId() {
-  return resolveThemeIdFromOrigin(tokenStorage.getRedirectO());
+  return resolveThemeIdFromOrigin(originFromUrl() || tokenStorage.getRedirectO());
 }
 
 export function ThemeProvider({ children }) {

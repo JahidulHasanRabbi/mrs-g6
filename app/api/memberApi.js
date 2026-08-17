@@ -220,6 +220,26 @@ export async function redeemItem(itemUuid, memberUuid) {
   }, true, 'member');
 }
 
+// GET /redemption/redeem-link/{uuid}/info/
+// Public — deliberately unauthenticated so a logged-out visitor arriving on a
+// shared link still sees what the campaign is offering before being sent to
+// the station to log in.
+export async function getRedeemLinkInfo(linkUuid) {
+  return await apiRequest(ENDPOINTS.MEMBER.REDEEM_LINK_INFO(linkUuid), {
+    method: 'GET'
+  }, false);
+}
+
+// POST /redemption/{member_uuid}/redeem-link/{uuid}/redeem/
+// Requires the member's own token. No request body — the member is identified
+// by the UUID in the path. Failures come back as 400 with a `details` string
+// (already redeemed, expired, quota full, ...), not as a 404.
+export async function redeemLink(linkUuid, memberUuid) {
+  return await apiRequest(ENDPOINTS.MEMBER.REDEEM_LINK_CLAIM(memberUuid, linkUuid), {
+    method: 'POST'
+  }, true, 'member');
+}
+
 // GET /redemption/redemption-tier/ (using member token)
 export async function getPublicRedemptionTiers() {
   const response = await apiRequest(ENDPOINTS.ADMIN.REDEMPTION_TIERS, {

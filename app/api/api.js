@@ -32,7 +32,11 @@ export const ENDPOINTS = {
     ALL_REDEMPTION_ITEMS: '/redemption/redemption-items/',
     AVAILABLE_REDEMPTION_ITEMS: '/redemption/redemption-items/available-items/',
     REDEMPTION_GAME_STATUS: '/redemption/game-status/',
-    REDEEM_ITEM: (uuid) => `/redemption/redemption-items/${uuid}/redeem/`
+    REDEEM_ITEM: (uuid) => `/redemption/redemption-items/${uuid}/redeem/`,
+    // Redeem links (shared campaign URLs). INFO is public — no auth — so a
+    // logged-out visitor can still be shown what the link is offering.
+    REDEEM_LINK_INFO: (uuid) => `/redemption/redeem-link/${uuid}/info/`,
+    REDEEM_LINK_CLAIM: (memberUuid, uuid) => `/redemption/${memberUuid}/redeem-link/${uuid}/redeem/`
   },
   FRONT_VIEW: {
     WINNING_LIST: '/front-view/winning-list/',
