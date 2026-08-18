@@ -52,21 +52,47 @@ test("rejects non-http schemes and unusable values", () => {
   assert.equal(safeStationUrl(null), "");
 });
 
-test("surfaces the API's own failure reason to the member", () => {
-  assert.equal(
-    describeRedeemFailure({ data: { details: "You have already redeemed this link" } }),
-    "You have already redeemed this link",
-  );
-  assert.equal(
-    describeRedeemFailure({ data: { details: { amount: ["Quota is full."] } } }),
-    "Quota is full.",
-  );
-  assert.equal(describeRedeemFailure({ data: { detail: "Not found" } }), "Not found");
+// Every documented 400 reason is restated for a member. "Quota is full" in
+// particular must read as "run out", not as an admin quota setting.
+test("restates each API failure reason in member-facing language", () => {
+  const cases = [
+    ["You have already redeemed this link", "You have already claimed this reward."],
+    ["Redeem link quota is full", "This reward has run out. All of them have been claimed."],
+    ["Redeem link is no longer available", "This reward is no longer available."],
+    ["Redeem link has not started yet", "This reward isn't available yet. Please check back later."],
+    ["Redeem link has expired", "This reward has ended."],
+    ["Redeem Link: abc-123 does not exist", "This reward link is not valid."],
+  ];
+  for (const [raw, expected] of cases) {
+    assert.equal(describeRedeemFailure({ data: { details: raw } }), expected, raw);
+  }
 });
 
-test("falls back to member-appropriate wording when the API says nothing useful", () => {
+// These name internal configuration, so the raw text must never reach a member.
+test("hides FREE CREDIT setup problems behind a support message", () => {
   assert.equal(
-    describeRedeemFailure({}),
+    describeRedeemFailure({ data: { details: "Member is not linked to a station" } }),
+    "We couldn't verify your account for this reward. Please contact support.",
+  );
+  assert.equal(
+    describeRedeemFailure({ data: { details: "No promotion code configured for this station" } }),
+    "This reward isn't ready yet. Please try again later or contact support.",
+  );
+});
+
+test("reads the reason out of a field-keyed details object too", () => {
+  assert.equal(
+    describeRedeemFailure({ data: { details: { amount: ["Redeem link quota is full"] } } }),
+    "This reward has run out. All of them have been claimed.",
+  );
+});
+
+// An unrecognised backend string is admin-authored text of unknown wording, so
+// it is replaced rather than shown raw.
+test("falls back to the generic message for unknown or missing reasons", () => {
+  assert.equal(describeRedeemFailure({}), "Could not redeem this reward. Please try again.");
+  assert.equal(
+    describeRedeemFailure({ data: { detail: "IntegrityError at /redemption/" } }),
     "Could not redeem this reward. Please try again.",
   );
 });

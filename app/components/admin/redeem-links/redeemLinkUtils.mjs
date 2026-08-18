@@ -13,6 +13,16 @@ export const REWARD_TYPE_OPTIONS = [
   { value: "3", label: "FREE CREDIT" },
 ];
 
+// How often the campaign's quota resets. The API marks recurrence as required
+// but silently defaults an omitted value to ONE TIME, so leaving it out of the
+// payload quietly made every campaign one-time.
+export const RECURRENCE_OPTIONS = [
+  { value: "1", label: "ONE TIME" },
+  { value: "2", label: "DAILY" },
+  { value: "3", label: "WEEKLY" },
+  { value: "4", label: "MONTHLY" },
+];
+
 const optionValueByLabel = (options, value, fallback) => {
   const normalized = String(value ?? "").trim().toUpperCase();
   const option = options.find(
@@ -53,6 +63,8 @@ export function mapRedeemLinkToForm(item = {}) {
     quantity: item.quantity == null ? "" : String(item.quantity),
     startDate: toDateTimeLocalInput(item.start_date),
     endDate: toDateTimeLocalInput(item.end_date),
+    recurrence: optionValueByLabel(RECURRENCE_OPTIONS, item.recurrence, "1"),
+    redeemPerRecurrence: Boolean(item.redeem_per_recurrence),
   };
 }
 
@@ -82,6 +94,9 @@ export function validateRedeemLinkForm(form = {}) {
   if (!REWARD_TYPE_OPTIONS.some((item) => item.value === String(form.rewardType))) {
     errors.rewardType = "Select a valid reward type.";
   }
+  if (!RECURRENCE_OPTIONS.some((item) => item.value === String(form.recurrence))) {
+    errors.recurrence = "Select a valid recurrence.";
+  }
   if (!isPositiveInteger(form.amount)) {
     errors.amount = "Amount must be a whole number of at least 1.";
   }
@@ -107,6 +122,8 @@ export function buildRedeemLinkPayload(form) {
     quantity: Number(form.quantity),
     start_date: fromDateTimeLocalInput(form.startDate),
     end_date: fromDateTimeLocalInput(form.endDate),
+    recurrence: Number(form.recurrence),
+    redeem_per_recurrence: Boolean(form.redeemPerRecurrence),
   };
 }
 

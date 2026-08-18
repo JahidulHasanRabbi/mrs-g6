@@ -77,7 +77,7 @@ export default function RedeemLinksTable({ links = [], copiedUuid, onCopy, onHis
             <tr className="text-left" style={{ backgroundImage: "linear-gradient(180deg, #141828 0%, #333333 99.75%)" }}>
               {[
                 "Name", "Station", "Reward", "Amount", "Quantity", "Redeemed", "Remaining",
-                "Start Date", "End Date", "Status", "Share Link", "Action",
+                "Recurrence", "Start Date", "End Date", "Status", "Share Link", "Action",
               ].map((label) => {
                 const pinned = label === "Action" ? STICKY_ACTION : label === "Share Link" ? STICKY_SHARE : "";
                 return (
@@ -96,7 +96,7 @@ export default function RedeemLinksTable({ links = [], copiedUuid, onCopy, onHis
           <tbody>
             {links.length === 0 ? (
               <tr>
-                <td colSpan={12} className="px-6 py-12 text-center text-[13px] text-white/50">
+                <td colSpan={13} className="px-6 py-12 text-center text-[13px] text-white/50">
                   No redeem links yet. Click &quot;Add Redeem Link&quot; to create the first campaign.
                 </td>
               </tr>
@@ -112,6 +112,16 @@ export default function RedeemLinksTable({ links = [], copiedUuid, onCopy, onHis
                   <td className="px-4 py-5 text-[12px] text-white">{number(link.quantity)}</td>
                   <td className="px-4 py-5 text-[12px] text-white">{number(link.redeemed_count)}</td>
                   <td className="px-4 py-5 text-[12px] text-white">{number(link.remaining)}</td>
+                  <td className="whitespace-nowrap px-4 py-5 text-[12px] text-white">
+                    {link.recurrence || "-"}
+                    {/* Only repeating campaigns can carry the repeat flag, and
+                        it changes what the quota means, so surface it here. */}
+                    {link.redeem_per_recurrence ? (
+                      <span className="ml-1.5 rounded-[4px] border border-[#f2cb7a]/40 px-1.5 py-0.5 text-[10px] text-[#eaad2c]" title="Members can redeem again each period">
+                        repeat
+                      </span>
+                    ) : null}
+                  </td>
                   <td className="whitespace-nowrap px-4 py-5 text-[12px] tabular-nums text-white">{formatRedeemLinkDateTime(link.start_date)}</td>
                   <td className="whitespace-nowrap px-4 py-5 text-[12px] tabular-nums text-white">{formatRedeemLinkDateTime(link.end_date)}</td>
                   <td className="px-4 py-5"><StatusBadge tone={status.tone}>{status.label}</StatusBadge></td>

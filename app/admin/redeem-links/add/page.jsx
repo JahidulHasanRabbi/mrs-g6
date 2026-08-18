@@ -6,6 +6,7 @@ import { useToast } from "../../../components/admin/ui/Toast";
 import {
   STATION_OPTIONS,
   REWARD_TYPE_OPTIONS,
+  RECURRENCE_OPTIONS,
   buildRedeemLinkPayload,
   describeRedeemLinkError,
   formatRedeemLinkDateTime,
@@ -25,6 +26,8 @@ const INITIAL_FORM = {
   quantity: "",
   startDate: "",
   endDate: "",
+  recurrence: "1",
+  redeemPerRecurrence: false,
 };
 
 function BackIcon() {
@@ -138,9 +141,18 @@ function RedeemLinkForm() {
 
   const set = (key) => (event) => {
     const value = event.target.value;
-    setForm((current) => ({ ...current, [key]: value }));
+    setForm((current) => ({
+      ...current,
+      [key]: value,
+      // A ONE TIME campaign never resets, so the repeat flag cannot apply —
+      // clear it rather than silently sending true for a campaign that has
+      // no periods.
+      ...(key === "recurrence" && value === "1" ? { redeemPerRecurrence: false } : null),
+    }));
     setErrors((current) => ({ ...current, [key]: undefined }));
   };
+
+  const isOneTime = String(form.recurrence) === "1";
 
   const handleSave = async () => {
     if (saving) return;
@@ -217,7 +229,16 @@ function RedeemLinkForm() {
         </Field>
 
         <Field label="Quantity" error={errors.quantity}>
-          <input type="number" min="1" step="1" value={form.quantity} onChange={set("quantity")} className={inputClass(errors.quantity)} placeholder="Maximum members" />
+          <input type="number" min="1" step="1" value={form.quantity} onChange={set("quantity")} className={inputClass(errors.quantity)} placeholder={isOneTime ? "Maximum members" : "Maximum members per period"} />
+        </Field>
+
+        <Field label="Recurrence" error={errors.recurrence}>
+          <div className="relative">
+            <select value={form.recurrence} onChange={set("recurrence")} className={`${inputClass(errors.recurrence)} appearance-none pr-10`}>
+              {RECURRENCE_OPTIONS.map((option) => <option key={option.value} value={option.value} style={{ background: "#041502", color: "white" }}>{option.label}</option>)}
+            </select>
+            <Chevron />
+          </div>
         </Field>
 
         <Field label="Start Date" error={errors.startDate}>
@@ -228,6 +249,28 @@ function RedeemLinkForm() {
           <DateTimeInput value={form.endDate} onChange={set("endDate")} error={errors.endDate} min={form.startDate || undefined} />
         </Field>
       </div>
+
+      {/* Only meaningful once the quota resets — on a ONE TIME campaign there
+          is no reset, so the flag would have no effect. */}
+      <label className={`mt-5 flex w-fit items-start gap-3 ${isOneTime ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}>
+        <input
+          type="checkbox"
+          checked={!isOneTime && Boolean(form.redeemPerRecurrence)}
+          disabled={isOneTime}
+          onChange={(event) => {
+            setForm((current) => ({ ...current, redeemPerRecurrence: event.target.checked }));
+          }}
+          className="mt-0.5 h-4 w-4 shrink-0 accent-[#e9af41]"
+        />
+        <span>
+          <span className="block text-[14px] font-semibold text-white">Allow repeat redemption each period</span>
+          <span className="mt-0.5 block text-[12px] leading-[18px] text-white/60">
+            {isOneTime
+              ? "Available for daily, weekly, and monthly campaigns."
+              : "Members can claim again every time the period resets, instead of only once for the whole campaign."}
+          </span>
+        </span>
+      </label>
 
       <div className="mt-8 flex items-center justify-end gap-3">
         <button type="button" onClick={() => router.push("/admin/redeem-links")} disabled={saving} className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold text-[#fbeed2] transition-colors hover:bg-white/5 disabled:opacity-50">
