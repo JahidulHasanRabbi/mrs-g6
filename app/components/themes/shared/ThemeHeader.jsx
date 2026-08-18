@@ -41,11 +41,15 @@ export default function ThemeHeader({
   hamburgerFit = 'object-contain',
   infoFit = 'object-contain',
   profileMode = false,
+  showBattlePoints = null,
 }) {
   const pathname = usePathname();
   const { userData, profilePicture, selectedFrameId } = useUser();
   const battlePoints = userData?.battlePoints;
-  const showBattlePoints = pathname !== '/';
+  // Default rule: hide the pill on the themed home page, which has its own
+  // layout for it. An explicit prop overrides that — the redeem screen also
+  // lives at "/" (it is app/page.js with ?reward=) but does want the pill.
+  const showBp = showBattlePoints ?? pathname !== '/';
 
   return (
     <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[475px] h-[64px] z-40 flex items-center justify-between px-4">
@@ -97,7 +101,7 @@ export default function ThemeHeader({
 
       {/* Right: optional balance pill (right alignment) + profile/info button */}
       <div className="relative flex items-center gap-2">
-        {showBattlePoints && (
+        {showBp && (
           <div
             className="flex h-[36px] min-w-[70px] max-w-[92px] items-center justify-center gap-1 rounded-full border border-[rgba(255,225,109,0.3)] bg-[rgba(57,53,40,0.85)] px-2 backdrop-blur-[6px]"
             aria-label={`${formatBattlePoints(battlePoints)} Battle Points`}

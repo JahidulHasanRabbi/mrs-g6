@@ -10,6 +10,7 @@ import {
   getMysteryBoxItems,
   getPenaltyKickItems,
   getPromotionsByStation,
+  getRedeemLinks,
   getRedemptionItems,
   getReferrerRewardItems,
   getStationList,
@@ -128,6 +129,7 @@ export default function PromotionsPage() {
       getDepositRewardItems({ page_size: 1000 }),
       getReferrerRewardItems({ page_size: 1000 }),
       getWithdrawalRewardItems({ page_size: 1000 }),
+      getRedeemLinks({ page_size: 1000 }),
     ]).then((results) => {
       if (cancelled) return;
       setItemNameByUuid(buildItemNameLookup(

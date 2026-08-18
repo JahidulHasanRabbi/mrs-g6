@@ -26,8 +26,12 @@ const ThemeContext = createContext({
 
 // A shared redeem link (/?o=<station_url>&reward=<uuid>) carries the station
 // URL in `o` — the same value /auth persists — so the theme can be resolved
-// from the link itself, with no session required. The URL wins when present;
-// storage is the fallback for normal in-portal navigation.
+// from the link itself, with no session required.
+//
+// A logged-in member's own origin wins over the link's. Someone whose session
+// belongs to N1GANG must keep the N1GANG skin when they open a link shared
+// from KGAME99 — the claim link never switches an existing session's theme.
+// The link's `o` is only the fallback, for a visitor who has no session yet.
 function originFromUrl() {
   if (typeof window === 'undefined') return null;
   try {
@@ -38,7 +42,7 @@ function originFromUrl() {
 }
 
 function currentThemeId() {
-  return resolveThemeIdFromOrigin(originFromUrl() || tokenStorage.getRedirectO());
+  return resolveThemeIdFromOrigin(tokenStorage.getRedirectO() || originFromUrl());
 }
 
 export function ThemeProvider({ children }) {

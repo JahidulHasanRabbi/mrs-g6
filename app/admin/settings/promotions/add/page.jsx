@@ -12,6 +12,7 @@ import {
   getMysteryBoxItems,
   getPenaltyKickItems,
   getPromotionsByStation,
+  getRedeemLinks,
   getRedemptionItems,
   getReferrerRewardItems,
   getSmashEggItems,
@@ -45,6 +46,20 @@ const ITEM_CATALOGS = [
   { key: "referral_leaderboard", labels: ["referral leaderboard bonus", "referral leaderboard"], typeValues: [], load: () => getReferrerRewardItems({ page_size: 1000 }) },
   { key: "withdraw_leaderboard", labels: ["withdraw leaderboard bonus", "withdraw leaderboard"], typeValues: [], load: () => getWithdrawalRewardItems({ page_size: 1000 }) },
   { key: "avatar", labels: ["avatar"], typeValues: ["12"], load: () => getMysteryBoxItems({ page_size: 1000 }) },
+  {
+    key: "redeem_link",
+    labels: ["redeem link"],
+    typeValues: ["13"],
+    load: () => getRedeemLinks({ page_size: 1000 }),
+    // Redeem link names are free-form and routinely duplicated, so the
+    // reward is part of the label — otherwise two rows read identically and
+    // the admin cannot tell which link they are coding.
+    labelFor: (item) => {
+      const name = item?.name || item?.uuid || "";
+      const reward = [item?.reward_type, item?.amount].filter(Boolean).join(" ");
+      return reward ? `${name} — ${reward}` : name;
+    },
+  },
 ];
 
 // The API always mirrors the Manual Bonus promotion into the "VIP Type" group
@@ -87,6 +102,12 @@ function manualBonusTypeValue(promotionTypes) {
 function avatarTypeValue(promotionTypes) {
   return typeByLabel(promotionTypes, "Avatar") ||
     (promotionTypes.some((type) => String(type.value) === "12") ? "12" : "");
+}
+
+// Redeem Link (13) also requires an item_uuid — the RedeemLink itself.
+function redeemLinkTypeValue(promotionTypes) {
+  return typeByLabel(promotionTypes, "Redeem Link") ||
+    (promotionTypes.some((type) => String(type.value) === "13") ? "13" : "");
 }
 
 function isSingleInstanceType(promotionTypes, typeValue) {
@@ -247,6 +268,7 @@ export default function AddPromotionPage() {
 
   const manualBonusType = manualBonusTypeValue(promotionTypes);
   const avatarType = avatarTypeValue(promotionTypes);
+  const redeemLinkType = redeemLinkTypeValue(promotionTypes);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -273,6 +295,10 @@ export default function AddPromotionPage() {
       }
       if (avatarType && String(p.promotion_type) === avatarType && !p.item_uuid) {
         alert("Cannot save: please select a Mystery Box item for every Avatar entry.");
+        return;
+      }
+      if (redeemLinkType && String(p.promotion_type) === redeemLinkType && !p.item_uuid) {
+        alert("Cannot save: please select a redeem link for every Redeem Link entry.");
         return;
       }
     }
@@ -323,7 +349,7 @@ export default function AddPromotionPage() {
     const items = catalog ? itemsByCatalog[catalog.key] || [] : [];
     const options = items.map((i) => ({
       value: i.uuid,
-      label: i.name || i.reward_name || i.title || i.uuid,
+      label: catalog?.labelFor ? catalog.labelFor(i) : (i.name || i.reward_name || i.title || i.uuid),
     }));
     if (promo?.item_uuid && !options.some((option) => option.value === promo.item_uuid)) {
       options.push({ value: promo.item_uuid, label: promo.item_name || promo.item_uuid });
@@ -377,7 +403,15 @@ export default function AddPromotionPage() {
                 itemsLoading={itemsLoading}
                 hasItemCatalog={Boolean(catalogForType(promotionTypes, promo.promotion_type)) || Boolean(promo.item_uuid)}
                 isManualBonus={Boolean(manualBonusType) && String(promo.promotion_type) === manualBonusType}
-                requiresItem={Boolean(avatarType) && String(promo.promotion_type) === avatarType}
+                requiresItem={
+                  (Boolean(avatarType) && String(promo.promotion_type) === avatarType)
+                  || (Boolean(redeemLinkType) && String(promo.promotion_type) === redeemLinkType)
+                }
+                itemFieldLabel={
+                  Boolean(redeemLinkType) && String(promo.promotion_type) === redeemLinkType
+                    ? "Redeem Link"
+                    : "Mystery Box Item"
+                }
                 onChange={updatePromotion}
                 onRemove={promotions.length > 1 ? () => removePromotionRow(index) : null}
               />
@@ -488,7 +522,7 @@ function SelectField({ label, value, onChange, options, placeholder, allowEmpty 
   );
 }
 
-function PromotionEntry({ index, promo, typeOptions, typesError, itemOptions, itemsError, itemsLoading, hasItemCatalog, isManualBonus, requiresItem, onChange, onRemove }) {
+function PromotionEntry({ index, promo, typeOptions, typesError, itemOptions, itemsError, itemsLoading, hasItemCatalog, isManualBonus, requiresItem, itemFieldLabel = "Mystery Box Item", onChange, onRemove }) {
   return (
     <div className="flex w-full flex-col gap-4 rounded-[12px] border border-[#fbeed2]/20 p-4">
       <div className="flex items-center justify-between">
@@ -534,7 +568,7 @@ function PromotionEntry({ index, promo, typeOptions, typesError, itemOptions, it
           />
         ) : hasItemCatalog ? (
           <SelectField
-            label={requiresItem ? "Mystery Box Item" : "Item (optional)"}
+            label={requiresItem ? itemFieldLabel : "Item (optional)"}
             value={promo.item_uuid}
             onChange={onChange(index, "item_uuid")}
             options={itemOptions}

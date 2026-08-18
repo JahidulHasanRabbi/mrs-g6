@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import ThemedPageShell from "../themes/shared/ThemedPageShell";
 import ThemedActionButton from "../themes/shared/ThemedActionButton";
 import { getRedeemLinkInfo, redeemLink } from "../../api/memberApi";
 import { tokenStorage } from "../../api/tokenStorage";
+import { useUser } from "../../contexts/UserContext";
 import {
   describeRedeemFailure,
   describeReward,
@@ -24,7 +24,7 @@ import {
  *   logged in  -> "Redeem and get X" -> POST -> success/error -> back to /
  */
 export default function RedeemLinkScreen({ linkUuid, origin }) {
-  const router = useRouter();
+  const { userData, refreshUserData } = useUser();
   const [info, setInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -70,13 +70,31 @@ export default function RedeemLinkScreen({ linkUuid, origin }) {
   // string is the fallback, and both are validated before we navigate.
   const stationUrl = safeStationUrl(info?.station_url || origin);
 
+  // "Continue" leaves /?o=…&reward=… for the portal home. It has to be a real
+  // navigation, not router.push("/"): this screen and the home page are both
+  // app/page.js, told apart only by the query string, so a push is a same-route
+  // soft nav that swaps the URL without remounting and leaves the card on
+  // screen. A full load also picks up the balance just claimed.
+  const goHome = useCallback(() => {
+    // A member with a stored origin goes to a bare "/" — appending the link's
+    // `o` would put another station's key in their URL and fight the rule that
+    // their own session decides the theme. Only a visitor with no stored
+    // origin needs the link's `o` carried over to keep the skin.
+    const storedOrigin = tokenStorage.getRedirectO();
+    if (storedOrigin || !origin) {
+      window.location.href = "/";
+      return;
+    }
+    window.location.href = `/?o=${encodeURIComponent(origin)}`;
+  }, [origin]);
+
   const goToStation = useCallback(() => {
     if (stationUrl) {
       window.location.href = stationUrl;
     } else {
-      router.push("/");
+      goHome();
     }
-  }, [router, stationUrl]);
+  }, [goHome, stationUrl]);
 
   const handleRedeem = async () => {
     if (claiming || !memberUuid || !linkUuid) return;
@@ -88,17 +106,28 @@ export default function RedeemLinkScreen({ linkUuid, origin }) {
       setResult({ ok: false, message: describeRedeemFailure(error) });
     } finally {
       setClaiming(false);
+      // Re-read both balances on every attempt, not only the successful one.
+      // The pills show tokens (member record) and BP (avatar profile); a
+      // failure is exactly when the member wants the real current numbers
+      // rather than whatever was cached when the screen opened.
+      refreshUserData();
     }
   };
 
   const isLoggedIn = Boolean(memberUuid);
 
   return (
-    <ThemedPageShell title="Redeem Reward" showNav={false}>
+    <ThemedPageShell
+      title="Redeem Reward"
+      balance={isLoggedIn ? userData?.balance : null}
+      showBattlePoints={isLoggedIn}
+    >
       {/* Every theme background is a lit stage/platform in the lower half of
           the scene, so the card is pushed down to sit on it rather than
-          floating over the arch at the top. */}
-      <div className="flex min-h-[calc(100vh-184px)] flex-col items-center justify-end px-5 pb-[8vh]">
+          floating over the arch at the top. dvh rather than vh: on mobile the
+          collapsing browser chrome makes 100vh taller than the visible area,
+          which pushed the button under the bottom nav. */}
+      <div className="flex min-h-[calc(100dvh-184px)] flex-col items-center justify-end px-5 pb-[4vh]">
         <Card>
           {loading || !authChecked ? (
             <Message text="Loading your reward..." />
@@ -107,15 +136,15 @@ export default function RedeemLinkScreen({ linkUuid, origin }) {
               <Message text={loadError} tone="error" />
               <Actions>
                 <ThemedActionButton
-                  onClick={() => router.push("/")}
-                  fallback={<DefaultButton onClick={() => router.push("/")}>Continue</DefaultButton>}
+                  onClick={goHome}
+                  fallback={<DefaultButton onClick={goHome}>Continue</DefaultButton>}
                 >
                   Continue
                 </ThemedActionButton>
               </Actions>
             </>
           ) : result ? (
-            <ResultView result={result} onContinue={() => router.push("/")} />
+            <ResultView result={result} onContinue={goHome} />
           ) : (
             <OfferView
               info={info}

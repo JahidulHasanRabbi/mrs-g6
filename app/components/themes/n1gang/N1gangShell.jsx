@@ -19,6 +19,7 @@ export default function N1gangShell({
   title = null,
   titleIcon = null,
   profileMode = false,
+  showBattlePoints = null,
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -45,6 +46,7 @@ export default function N1gangShell({
           title={title}
           titleIcon={titleIcon}
           profileMode={profileMode}
+          showBattlePoints={showBattlePoints}
         />
       )}
 

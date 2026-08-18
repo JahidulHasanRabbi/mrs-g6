@@ -26,6 +26,7 @@ export default function UbetclubShell({
   title = null,
   titleIcon = null,
   profileMode = false,
+  showBattlePoints = null,
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -51,6 +52,7 @@ export default function UbetclubShell({
           title={title}
           titleIcon={titleIcon}
           profileMode={profileMode}
+          showBattlePoints={showBattlePoints}
         />
       )}
 

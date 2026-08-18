@@ -23,6 +23,7 @@ export default function Ep369Shell({
   title = null,
   titleIcon = null,
   profileMode = false,
+  showBattlePoints = null,
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -47,6 +48,7 @@ export default function Ep369Shell({
           title={title}
           titleIcon={titleIcon}
           profileMode={profileMode}
+          showBattlePoints={showBattlePoints}
         />
       )}
 

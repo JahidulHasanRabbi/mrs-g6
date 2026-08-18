@@ -26,6 +26,7 @@ export default function KgameShell({
   title = null,
   titleIcon = null,
   profileMode = false,
+  showBattlePoints = null,
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -53,6 +54,7 @@ export default function KgameShell({
           title={title}
           titleIcon={titleIcon}
           profileMode={profileMode}
+          showBattlePoints={showBattlePoints}
         />
       )}
 
