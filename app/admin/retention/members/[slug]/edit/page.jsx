@@ -400,8 +400,7 @@ function emptyForm() {
     homeAddress: "",
     marital: "",
     job: "",
-    // Multi-tag fields hold an array of { kind, label } objects.
-    hobby: [],
+    hobby: "",
 
     totalSales: "",
     totalWithdrawal: "",
@@ -515,7 +514,7 @@ function apiToForm(data, vipTiers = [], walletVipTiers = [], stationList = []) {
     homeAddress: c.home_address || b.home_address || "",
     marital: c.marital_status || b.marital_status || "",
     job: c.job || b.job || "",
-    hobby: tagListFor("hobby", enumValueToLabel("hobby", c.hobby || b.hobby)),
+    hobby: c.hobby || b.hobby || "",
 
     totalSales: f.total_sales ?? "",
     totalWithdrawal: f.total_withdrawal ?? "",
@@ -580,7 +579,7 @@ function formToApi(form, vipTiers = [], originalData = null) {
       home_address: form.homeAddress || undefined,
       marital_status: labelToInt("marital", form.marital),
       job: form.job || undefined,
-      hobby: labelToInt("hobby", form.hobby?.[0]?.label),
+      hobby: form.hobby || undefined,
       payment_method: paymentMethod,
     },
     game_info: {
@@ -1664,7 +1663,7 @@ function BasicInfoStep({ memberUuid, displayPhoneNumber, form, setField, vipTier
           <TextInput value={form.job} onChange={(v) => setField("job", v)} />
         </FieldWrapper>
         <FieldWrapper label="Hobby">
-          <MultiTagSelectField value={form.hobby} onChange={(v) => setField("hobby", v.slice(-1))} {...TAG_OPTIONS.hobby} />
+          <TextInput value={form.hobby} onChange={(v) => setField("hobby", v)} />
         </FieldWrapper>
       </div>
     </>
