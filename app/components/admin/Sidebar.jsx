@@ -67,6 +67,7 @@ function pathnameToActiveItem(pathname) {
   if (pathname.startsWith("/admin/reports/usage")) return "usage-report";
   if (pathname.startsWith("/admin/retention/member-alert")) return "retention-member-alert";
   if (pathname.startsWith("/admin/retention/members")) return "retention-member-list";
+  if (pathname.startsWith("/admin/retention/error-transactions")) return "retention-error-transactions";
   if (pathname.startsWith("/admin/retention/settings")) return "retention-settings";
   if (pathname.startsWith("/admin/retention/pic-dashboard")) return "retention-pic-dashboard";
   if (pathname.startsWith("/admin/retention")) return "retention-pic-dashboard";
@@ -113,6 +114,14 @@ const PersonIcon = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
     <circle cx="12" cy="7" r="4" />
+  </svg>
+);
+
+const ErrorTransactionIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+    <line x1="12" y1="9" x2="12" y2="13" />
+    <line x1="12" y1="17" x2="12.01" y2="17" />
   </svg>
 );
 
@@ -318,6 +327,13 @@ const RETENTION_MENU = [
     label: "Member List",
     iconMask: "/assets/admin/sidebar/icons/retention-member-list.svg",
     href: "/admin/retention/members",
+    disabled: false,
+  },
+  {
+    id: "retention-error-transactions",
+    label: "Error Transactions",
+    iconNode: ErrorTransactionIcon,
+    href: "/admin/retention/error-transactions",
     disabled: false,
   },
   {

@@ -305,6 +305,32 @@ export async function setCrmAssignmentTarget(data) {
   }, true, 'admin');
 }
 
+// ─────────────────────── Error Transaction Management ───────────────────────
+
+// GET /crm-members/error-transactions/
+export async function getErrorTransactions(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.CRM.ERROR_TRANSACTIONS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+// PATCH /crm-members/error-transactions/clear-error/
+// body: { source_type, uuid }
+export async function clearErrorTransaction(data) {
+  return await apiRequest(ENDPOINTS.CRM.ERROR_TRANSACTION_CLEAR, {
+    method: 'PATCH',
+    body: data
+  }, true, 'admin');
+}
+
+// DELETE /crm-members/error-transactions/delete-transaction/
+// body: { source_type, uuid }
+export async function deleteErrorTransaction(data) {
+  return await apiRequest(ENDPOINTS.CRM.ERROR_TRANSACTION_DELETE, {
+    method: 'DELETE',
+    body: data
+  }, true, 'admin');
+}
+
 // ───────────────────────────── Enums ─────────────────────────────
 // `type` query param across retention-summary, dashboard-details
 export const CRM_PERIOD_TYPE = {

@@ -297,6 +297,10 @@ export const ENDPOINTS = {
     // Retention Alert System
     PRIORITY_SUMMARY: '/crm-members/priority-summary/',
     REFRESH_MEMBERS: '/crm-members/refresh-members/',
+    // Error Transaction Management
+    ERROR_TRANSACTIONS: '/crm-members/error-transactions/',
+    ERROR_TRANSACTION_CLEAR: '/crm-members/error-transactions/clear-error/',
+    ERROR_TRANSACTION_DELETE: '/crm-members/error-transactions/delete-transaction/',
     // Retention Profile
     RETENTION_SUMMARY: (adminUuid) => `/crm-members/retention-summary/${adminUuid}/`,
     // Old path returned 404 on staging:
