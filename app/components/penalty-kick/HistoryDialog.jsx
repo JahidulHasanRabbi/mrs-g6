@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import GlassCard from "./GlassCard";
 import GreenCta from "./GreenCta";
+import { ThemedRedeemAllButton, formatRedeemedSummary } from "./RedeemAllButton";
 import { ICONS } from "./constants";
 import { usePkColors } from "./usePkColors";
 import { getMemberRewardHistory } from "../../api/memberApi";
@@ -140,6 +141,21 @@ export default function HistoryDialog({
   const [prizeTotal, setPrizeTotal] = useState(0);
   const [prizeLoading, setPrizeLoading] = useState(false);
   const [prizeFailed, setPrizeFailed] = useState(false);
+  const [redeeming, setRedeeming] = useState(false);
+  const [redeemedSummary, setRedeemedSummary] = useState("");
+
+  const handleRedeemAllClick = async () => {
+    if (redeeming) return;
+    setRedeeming(true);
+    try {
+      const result = await onRedeemAll?.();
+      setRedeemedSummary(formatRedeemedSummary(result));
+    } catch {
+      // onRedeemAll already logs; button just returns to idle so the admin can retry.
+    } finally {
+      setRedeeming(false);
+    }
+  };
 
   const loadPrizePage = useCallback(async (page) => {
     const memberUuid = tokenStorage.getMemberUuid();
@@ -231,7 +247,19 @@ export default function HistoryDialog({
             )}
           </div>
         </OrnateCard>
-        <Button onClick={onRedeemAll} disabled={!hasRedeemableRows}>Redeem All</Button>
+        {redeemedSummary && (
+          <p
+            className="max-h-[60px] max-w-[280px] overflow-y-auto text-center text-[12px] leading-[1.3] [scrollbar-width:thin]"
+            style={{ color: palette.cream, fontFamily: "var(--font-rubik), sans-serif" }}
+          >
+            Redeemed: {redeemedSummary}
+          </p>
+        )}
+        {hasRedeemableRows ? (
+          <ThemedRedeemAllButton onRedeemAll={onRedeemAll} onSummary={setRedeemedSummary} Button={Button} />
+        ) : (
+          <Button disabled>Redeem All</Button>
+        )}
       </div>
     );
   }
@@ -338,10 +366,19 @@ export default function HistoryDialog({
         </div>
       )}
 
+      {activeTab === "game" && redeemedSummary && (
+        <p
+          className="mb-3 max-h-[60px] overflow-y-auto text-center text-[12px] leading-[1.3] [scrollbar-width:thin]"
+          style={{ color: COLORS.textMuted, fontFamily: "'Lexend', sans-serif" }}
+        >
+          Redeemed: {redeemedSummary}
+        </p>
+      )}
+
       {activeTab === "game" && (
         hasRedeemableRows ? (
-          <GreenCta onClick={onRedeemAll} showPlayIcon={false} className="py-3.5 text-[15px]">
-            Redeem All
+          <GreenCta onClick={handleRedeemAllClick} disabled={redeeming} showPlayIcon={false} className="py-3.5 text-[15px]">
+            {redeeming ? "Redeeming…" : "Redeem All"}
           </GreenCta>
         ) : (
           <button

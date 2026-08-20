@@ -1,13 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import GlassCard from "./GlassCard";
 import GreenCta, { OutlinePillCta } from "./GreenCta";
-import RedeemAllButton from "./RedeemAllButton";
+import RedeemAllButton, { ThemedRedeemAllButton } from "./RedeemAllButton";
 import { ICONS } from "./constants";
 import { usePkColors } from "./usePkColors";
 
 export default function GoalDialog({ reward, onKickAgain, onRedeemAll, onReturn }) {
   const { colors: COLORS, soft, theme } = usePkColors();
+  // Once Redeem All succeeds, swap the single-kick reward text for the
+  // cumulative RM/Tokens/BP/Score/prize breakdown — shown inside the card's
+  // existing scrollable text area, never inside the button itself.
+  const [redeemedSummary, setRedeemedSummary] = useState("");
   const itemType = String(reward?.item_type || "").toUpperCase();
   const amount = reward?.battle_point_amount ?? reward?.credit_amount ?? reward?.amount ?? reward?.token_amount ?? reward?.score_amount;
   const rewardName =
@@ -72,14 +77,24 @@ export default function GoalDialog({ reward, onKickAgain, onRedeemAll, onReturn 
               >
                 {rewardText}
               </p>
+              {redeemedSummary && (
+                <p
+                  className="max-h-[72px] max-w-[248px] overflow-y-auto text-center leading-[1.3] [scrollbar-width:thin]"
+                  style={{
+                    fontSize: "13px",
+                    fontFamily: "var(--font-rubik), sans-serif",
+                    color: "#fff",
+                  }}
+                >
+                  Redeemed: {redeemedSummary}
+                </p>
+              )}
             </div>
           </div>
         </OrnateCard>
         <Button onClick={onKickAgain}>Kick Again?</Button>
         {onRedeemAll && (
-          <Button variant="gold" onClick={onRedeemAll}>
-            Redeem All
-          </Button>
+          <ThemedRedeemAllButton onRedeemAll={onRedeemAll} onSummary={setRedeemedSummary} Button={Button} />
         )}
         <button
           onClick={onReturn}
@@ -135,15 +150,24 @@ export default function GoalDialog({ reward, onKickAgain, onRedeemAll, onReturn 
       </div>
 
       <p
-        className="mb-5 text-[16px]"
+        className="mb-2 text-[16px]"
         style={{ color: COLORS.textPrimary, fontFamily: "'Lexend', sans-serif" }}
       >
         You won <span style={{ color: COLORS.primary, fontWeight: 700 }}>{rewardText}</span>
       </p>
 
+      {redeemedSummary && (
+        <p
+          className="mb-3 max-h-[72px] overflow-y-auto text-[13px] leading-[1.3] [scrollbar-width:thin]"
+          style={{ color: COLORS.textMuted, fontFamily: "'Lexend', sans-serif" }}
+        >
+          Redeemed: {redeemedSummary}
+        </p>
+      )}
+
       <div className="flex flex-col gap-3">
         <GreenCta onClick={onKickAgain}>Kick Again?</GreenCta>
-        {onRedeemAll && <RedeemAllButton onRedeemAll={onRedeemAll} />}
+        {onRedeemAll && <RedeemAllButton onRedeemAll={onRedeemAll} onSummary={setRedeemedSummary} />}
         <OutlinePillCta onClick={onReturn}>Return to website</OutlinePillCta>
       </div>
     </GlassCard>
