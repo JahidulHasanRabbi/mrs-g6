@@ -1,12 +1,13 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { getCrmMembers, getCrmUsers, getCrmVipTiers } from "../../../api/crmApi";
 import { getWalletVipTiers } from "../../../api/adminApi";
 import { Pagination } from "../../../components/admin/members/DataTable";
 import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
+import PeriodToggle from "../../../components/admin/retention/PeriodToggle";
 import LoadingOverlay from "../../../components/admin/ui/LoadingOverlay";
 import { uniqueWalletVipTierNames } from "../../../components/admin/retention/walletVipFilterOptions";
 import { usePhoneVisibility } from "../../../components/admin/retention/phoneVisibility";
@@ -91,6 +92,43 @@ function followedUpDate(row) {
 
 const TABLE_MIN_WIDTH = COLUMNS.reduce((sum, c) => sum + c.minW, 0);
 
+function toDateInput(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function previousDay(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1);
+}
+
+// Same Daily/Monthly/Yearly/Select Date resolution as the PIC Profile page
+// (buildMemberDateParams in pic-dashboard/[id]/page.jsx) — kept in sync so
+// both pages interpret each period identically.
+function buildDateRange(period, fromDate, toDate) {
+  if (fromDate && toDate) return { from: fromDate, to: toDate };
+
+  const today = new Date();
+  if (period === "Daily") {
+    const value = toDateInput(previousDay(today));
+    return { from: value, to: value };
+  }
+  if (period === "Monthly") {
+    return {
+      from: toDateInput(new Date(today.getFullYear(), today.getMonth(), 1)),
+      to: toDateInput(new Date(today.getFullYear(), today.getMonth() + 1, 0)),
+    };
+  }
+  if (period === "Yearly") {
+    return {
+      from: toDateInput(new Date(today.getFullYear(), 0, 1)),
+      to: toDateInput(new Date(today.getFullYear(), 11, 31)),
+    };
+  }
+  return {};
+}
+
 function formatCurrency(value) {
   if (value === null || value === undefined || value === "") return "RM 0.00";
   const num = parseFloat(value);
@@ -133,7 +171,22 @@ function RetentionMembersContent() {
   const [salesSort, setSalesSort] = useState("");
   const [winSort, setWinSort] = useState("");
   const [query, setQuery] = useState("");
-  const [date, setDate] = useState("");
+
+  // Daily/Monthly/Yearly/Select Date — same pattern as PeriodToggle on the
+  // PIC Profile page. Select Date writes from/to to the URL; picking a
+  // predefined period clears any active range.
+  const [period, setPeriod] = useState("Daily");
+  const fromDate = searchParams.get("from") || "";
+  const toDate = searchParams.get("to") || "";
+  const handlePeriodChange = (newPeriod) => {
+    setPeriod(newPeriod);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("from");
+    params.delete("to");
+    params.delete("page");
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
 
   const setPage = (next) => {
     const value = typeof next === "function" ? next(page) : next;
@@ -161,7 +214,6 @@ function RetentionMembersContent() {
   const handleSalesSort = (v) => { setSalesSort(v); resetToPage1(); };
   const handleWinSort = (v) => { setWinSort(v); resetToPage1(); };
   const handleQuery = (v) => { setQuery(v); resetToPage1(); };
-  const handleDate = (v) => { setDate(v); resetToPage1(); };
 
   const [pics, setPics] = useState([]);
   const [walletTiers, setWalletTiers] = useState([]);
@@ -208,17 +260,20 @@ function RetentionMembersContent() {
           : undefined;
         const sales = salesSort ? (salesSort === "High to Low" ? "High" : "Low") : undefined;
         const win_lose = winSort ? (winSort === "High to Low" ? "High" : "Low") : undefined;
-        // Backend only supports a single analysed day (end_datetime - 1 day),
-        // so a picked date is sent as a full UTC day range: 00:00:00 through
-        // the next day's 00:00:00.
-        let start_datetime;
-        let end_datetime;
-        if (date) {
-          start_datetime = `${date}T00:00:00Z`;
-          const next = new Date(`${date}T00:00:00Z`);
-          next.setUTCDate(next.getUTCDate() + 1);
-          end_datetime = next.toISOString().slice(0, 19) + "Z";
-        }
+        // Backend (`start_datetime`/`end_datetime` on /crm-members/members/)
+        // only resolves one analysed day server-side (end_datetime - 1 day)
+        // regardless of range width, so Monthly/Yearly currently behave like
+        // Daily until the backend adds real range support. The UI still
+        // matches the mockup's four modes; only the server-side scope differs.
+        const { from, to } = buildDateRange(period, fromDate, toDate);
+        const start_datetime = from ? `${from}T00:00:00Z` : undefined;
+        const end_datetime = to
+          ? (() => {
+              const next = new Date(`${to}T00:00:00Z`);
+              next.setUTCDate(next.getUTCDate() + 1);
+              return next.toISOString().slice(0, 19) + "Z";
+            })()
+          : undefined;
         const res = await getCrmMembers({
           page,
           page_size: PAGE_SIZE,
@@ -250,7 +305,7 @@ function RetentionMembersContent() {
     return () => {
       cancelled = true;
     };
-  }, [page, priority, walletLevel, vip, pic, brand, salesSort, winSort, pics, debouncedQuery, date]);
+  }, [page, priority, walletLevel, vip, pic, brand, salesSort, winSort, pics, debouncedQuery, period, fromDate, toDate]);
 
   // Client-side fallback sort for the visible page; backend filters/sorts
   // across the full result set.
@@ -286,7 +341,7 @@ function RetentionMembersContent() {
 
   return (
     <section className="relative flex w-full flex-col rounded-[16px] bg-[#041502] shadow-[0_-4px_12px_-2px_#dea220]">
-      <header className="flex flex-col gap-4 p-6 w-full 2xl:flex-row 2xl:items-start 2xl:justify-between">
+      <header className="flex flex-wrap items-center justify-between gap-4 p-6 w-full">
         <h1
           className="text-white font-bold shrink-0"
           style={{
@@ -298,18 +353,18 @@ function RetentionMembersContent() {
         >
           Member List
         </h1>
-        <div className="flex flex-wrap items-center gap-3 2xl:justify-end">
-          <FilterDropdown label="Priority" value={priority} onChange={handlePriority} options={PRIORITY_OPTIONS} />
-          <FilterDropdown label="Wallet Level" value={walletLevel} onChange={handleWalletLevel} options={walletTiers} />
-          <FilterDropdown label="MRS Level" value={vip} onChange={handleVip} options={vipTiers.map((t) => t.name)} />
-          <FilterDropdown label="Sales" value={salesSort} onChange={handleSalesSort} options={SALES_SORT_OPTIONS} />
-          <FilterDropdown label="Win/Lose" value={winSort} onChange={handleWinSort} options={WINLOSS_SORT_OPTIONS} />
-          <FilterDropdown label="Brand" value={brand} onChange={handleBrand} options={BRAND_OPTIONS} />
-          <FilterDropdown label="All PIC" value={pic} onChange={handlePic} options={pics.map((u) => u.full_name || u.username).filter(Boolean)} />
-          <DayPicker value={date} onChange={handleDate} />
-          <SearchInput value={query} onChange={handleQuery} />
-        </div>
+        <PeriodToggle period={period} onPeriodChange={handlePeriodChange} fromDate={fromDate} toDate={toDate} />
       </header>
+      <div className="flex flex-wrap items-center gap-3 px-6 pb-6">
+        <FilterDropdown label="Priority" value={priority} onChange={handlePriority} options={PRIORITY_OPTIONS} />
+        <FilterDropdown label="Wallet Level" value={walletLevel} onChange={handleWalletLevel} options={walletTiers} />
+        <FilterDropdown label="MRS Level" value={vip} onChange={handleVip} options={vipTiers.map((t) => t.name)} />
+        <FilterDropdown label="Sales" value={salesSort} onChange={handleSalesSort} options={SALES_SORT_OPTIONS} />
+        <FilterDropdown label="Win/Lose" value={winSort} onChange={handleWinSort} options={WINLOSS_SORT_OPTIONS} />
+        <FilterDropdown label="Brand" value={brand} onChange={handleBrand} options={BRAND_OPTIONS} />
+        <FilterDropdown label="All PIC" value={pic} onChange={handlePic} options={pics.map((u) => u.full_name || u.username).filter(Boolean)} />
+        <SearchInput value={query} onChange={handleQuery} />
+      </div>
 
       <div className="overflow-x-auto overflow-y-hidden scrollbar-admin">
         <div style={{ minWidth: TABLE_MIN_WIDTH }}>
@@ -422,62 +477,6 @@ function SearchInput({ value, onChange }) {
       className="w-[180px] bg-[#141828] border border-[#f2cb7a] rounded-[8px] px-3 py-2 text-[10px] italic text-[#f6dda6] placeholder:text-[#f6dda6] placeholder:capitalize focus:outline-none focus:ring-1 focus:ring-[#eaad2c]"
       style={{ fontFamily: "Inter, sans-serif", lineHeight: "15px" }}
     />
-  );
-}
-
-// Single-day date filter — same pattern as the Member Alert page's DayPicker.
-// Backend (`start_datetime`/`end_datetime` on /crm-members/members/) only
-// resolves to one analysed day server-side, so this stays single-day rather
-// than a range picker.
-function DayPicker({ value, onChange }) {
-  const inputRef = useRef(null);
-
-  const openPicker = () => {
-    const el = inputRef.current;
-    if (!el) return;
-    if (typeof el.showPicker === "function") el.showPicker();
-    else el.focus();
-  };
-
-  const formatted = value
-    ? new Date(`${value}T00:00:00`).toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-    : "";
-
-  return (
-    <div
-      className="relative flex items-center gap-2 rounded-[8px] border border-[#f2cb7a] px-3 py-2 cursor-pointer"
-      style={{ backgroundImage: GRAD_DARK }}
-      onClick={openPicker}
-    >
-      <span className="pointer-events-none whitespace-nowrap text-[12px] font-medium text-[#f6dda6]">
-        {formatted || "Select Date"}
-      </span>
-      <input
-        ref={inputRef}
-        type="date"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        aria-label="Filter by day"
-        className="absolute inset-0 h-full w-full cursor-pointer opacity-0 [color-scheme:dark]"
-      />
-      {value ? (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onChange("");
-          }}
-          aria-label="Clear date"
-          className="relative z-10 text-[12px] leading-none text-[#f6dda6]/70 hover:text-[#f6dda6]"
-        >
-          ✕
-        </button>
-      ) : null}
-    </div>
   );
 }
 
