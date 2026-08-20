@@ -9,6 +9,7 @@ import { Pagination } from "../../../components/admin/members/DataTable";
 import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
 import LoadingOverlay from "../../../components/admin/ui/LoadingOverlay";
 import { uniqueWalletVipTierNames } from "../../../components/admin/retention/walletVipFilterOptions";
+import { usePhoneVisibility } from "../../../components/admin/retention/phoneVisibility";
 
 const A = "/assets/admin/pic-dashboard";
 
@@ -117,6 +118,7 @@ function RetentionMembersContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { displayPhoneNumber } = usePhoneVisibility();
 
   // Page lives in the URL — drilling into a member and returning (browser
   // back / clicking the member's name) lands on the same page. Filter
@@ -304,7 +306,13 @@ function RetentionMembersContent() {
                 No members found.
               </div>
             ) : (
-              sortedRows.map((row, idx) => <TableRow key={`${row.uuid || row.username || "member"}-${idx}`} row={row} />)
+              sortedRows.map((row, idx) => (
+                <TableRow
+                  key={`${row.uuid || row.username || "member"}-${idx}`}
+                  row={row}
+                  displayPhoneNumber={displayPhoneNumber}
+                />
+              ))
             )}
           </div>
         </div>
@@ -419,7 +427,7 @@ function TableHeader() {
   );
 }
 
-function TableRow({ row }) {
+function TableRow({ row, displayPhoneNumber }) {
   const href = `/admin/retention/members/${row.uuid}`;
   const name = row.full_name || row.username || "—";
   const alerted = Boolean(row.alert);
@@ -446,7 +454,7 @@ function TableRow({ row }) {
         </div>
       </Cell>
       <DataCell value={row.brand} minW={COLUMNS[1].minW} />
-      <DataCell value={row.phone_number} minW={COLUMNS[2].minW} />
+      <DataCell value={displayPhoneNumber(row)} minW={COLUMNS[2].minW} />
       <DataCell value={row.vip_level} minW={COLUMNS[3].minW} />
       <DataCell value={formatCurrency(row.daily_sales)} minW={COLUMNS[4].minW} />
       <DataCell value={formatCurrency(row.daily_win_loss)} minW={COLUMNS[5].minW} />

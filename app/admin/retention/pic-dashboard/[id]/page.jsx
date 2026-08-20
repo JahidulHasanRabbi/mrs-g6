@@ -22,6 +22,7 @@ import {
 } from "../../../../api/crmApi";
 import { getWalletVipTiers } from "../../../../api/adminApi";
 import { uniqueWalletVipTierOptions } from "../../../../components/admin/retention/walletVipFilterOptions";
+import { usePhoneVisibility } from "../../../../components/admin/retention/phoneVisibility";
 
 // PIC detail view — shows per-PIC breakdown of members + a member list.
 
@@ -48,6 +49,10 @@ const KPIS = [
   {
     id: "sales-tickets",
     label: "Total Sales Ticket",
+  },
+  {
+    id: "repeat-rate",
+    label: "Repeat Rate",
   },
 ];
 
@@ -89,6 +94,14 @@ function formatCurrency(value) {
   return `RM ${num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+function formatPercent(value) {
+  if (value === null || value === undefined || value === "") return "0%";
+  if (typeof value === "string" && value.trim().endsWith("%")) return value.trim();
+  const num = parseFloat(value);
+  if (Number.isNaN(num)) return String(value);
+  return `${num.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}%`;
+}
+
 function formatDate(value) {
   if (!value) return "—";
   const date = new Date(value);
@@ -109,6 +122,7 @@ function buildKpis(summary) {
   const sales = rowsByStation(summary?.total_sales, "amount");
   const winlose = rowsByStation(summary?.total_win_lose, "amount");
   const salesTickets = rowsByStation(summary?.total_sales_tickets, "amount");
+  const repeatRate = rowsByStation(summary?.repeat_rate, "rate");
 
   return [
     {
@@ -140,6 +154,12 @@ function buildKpis(summary) {
       label: "Total Sales Ticket",
       total: formatNumber(summary?.total_sales_tickets_total ?? summary?.total_sales_tickets__total),
       values: VIP_LEVELS.map((level) => formatNumber(salesTickets[level])),
+    },
+    {
+      id: "repeat-rate",
+      label: "Repeat Rate",
+      total: formatPercent(summary?.repeat_rate__total),
+      values: VIP_LEVELS.map((level) => formatPercent(repeatRate[level])),
     },
   ];
 }
@@ -308,7 +328,7 @@ function PicProfileHeader({ name, image, period, onPeriodChange, fromDate, toDat
 function KpiGrid({ summary, loading }) {
   const items = buildKpis(summary);
   return (
-    <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5">
+    <div className="grid w-full gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
       {items.map((k) => (
         loading ? <DetailKpiCardSkeleton key={k.id} /> : <DetailKpiCard key={k.id} kpi={k} />
       ))}
@@ -392,6 +412,7 @@ function MemberListSection({ adminUuid, period, fromDate, toDate }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { displayPhoneNumber } = usePhoneVisibility();
 
   const walletLevel = searchParams.get("wallet") ?? "all";
   const level = searchParams.get("level") ?? "all";
@@ -544,7 +565,11 @@ function MemberListSection({ adminUuid, period, fromDate, toDate }) {
                 </div>
               ) : (
                 rows.map((m, idx) => (
-                  <MemberTableRow key={`${m.uuid || m.username || "member"}-${idx}`} member={m} />
+                  <MemberTableRow
+                    key={`${m.uuid || m.username || "member"}-${idx}`}
+                    member={m}
+                    displayPhoneNumber={displayPhoneNumber}
+                  />
                 ))
               )}
             </div>
@@ -609,7 +634,7 @@ function HeaderCell({ label, widthClass = "flex-1 min-w-0", align = "start" }) {
   );
 }
 
-function MemberTableRow({ member }) {
+function MemberTableRow({ member, displayPhoneNumber }) {
   const href = member.uuid ? `/admin/retention/members/${member.uuid}` : "#";
   return (
     <div className="flex w-full items-center -mb-px border-b border-white/5">
@@ -620,7 +645,7 @@ function MemberTableRow({ member }) {
         </span>
       </div>
       <DataCell value={formatBrand(member)} />
-      <DataCell value={member.phone_number || "—"} />
+      <DataCell value={displayPhoneNumber(member)} />
       <div className="flex flex-1 min-w-0 items-center self-stretch">
         <div className="flex h-full flex-1 flex-col justify-center p-6">
           <span

@@ -18,6 +18,11 @@ const PAGE_WIDTH_MAX = 1112;
 const COL_WIDTH = 317.33;
 const ROLE_PAGE_SIZE = 100;
 
+const VIEW_MEMBER_PHONE_PERMISSION = {
+  key: ADMIN_PERMISSIONS.VIEW_PHONE_NUMBERS,
+  label: "View Member Phone Number",
+};
+
 export default function RoleSettingPage({ params }) {
   const { id } = use(params);
   const isNew = id === "new";
@@ -313,9 +318,37 @@ function groupPermissionAreas(areas) {
           mrsGroups.push(group);
         }
       }
+    } else if (normalized === "crm") {
+      // Phone visibility is a Retention System permission even though the
+      // backend catalog groups it under CRM > Members.
+      for (const group of area.groups) {
+        const phonePermissions = group.permissions.filter(
+          (permission) => permission.key === ADMIN_PERMISSIONS.VIEW_PHONE_NUMBERS,
+        );
+        const otherPermissions = group.permissions.filter(
+          (permission) => permission.key !== ADMIN_PERMISSIONS.VIEW_PHONE_NUMBERS,
+        );
+
+        if (phonePermissions.length > 0) {
+          retentionGroups.push({ name: "Members", permissions: phonePermissions });
+        }
+        if (otherPermissions.length > 0) {
+          mrsGroups.push({ ...group, permissions: otherPermissions });
+        }
+      }
     } else {
       mrsGroups.push(...area.groups);
     }
+  }
+
+  // Keep the frontend panel usable while an older backend permission catalog
+  // is still deployed. The role payload already uses the backend key, so the
+  // row automatically becomes data-backed once the catalog is synchronized.
+  const hasPhonePermission = retentionGroups.some((group) =>
+    group.permissions.some((permission) => permission.key === VIEW_MEMBER_PHONE_PERMISSION.key),
+  );
+  if (!hasPhonePermission) {
+    retentionGroups.push({ name: "Members", permissions: [VIEW_MEMBER_PHONE_PERMISSION] });
   }
 
   return [

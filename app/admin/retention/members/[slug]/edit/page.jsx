@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { GRAD_GOLD } from "../../../../../components/admin/retention/constants";
 import { getCrmMemberSingle, getCrmVipTiers, updateCrmMember } from "../../../../../api/crmApi";
 import { getStationList, getWalletVipTiers } from "../../../../../api/adminApi";
+import { usePhoneVisibility } from "../../../../../components/admin/retention/phoneVisibility";
 
 // Member edit form — Figma 87:7291. 3-step wizard:
 //   01 Basic Info   (Profile Data + Basic Info shown in the Figma)
@@ -602,6 +603,7 @@ export default function MemberEditPage() {
   const router = useRouter();
   const params = useParams();
   const memberUuid = typeof params?.slug === "string" ? params.slug : Array.isArray(params?.slug) ? params.slug[0] : "";
+  const { displayPhoneNumber } = usePhoneVisibility();
 
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(emptyForm());
@@ -692,6 +694,8 @@ export default function MemberEditPage() {
         <Stepper step={step} onPrev={goPrev} onNext={goNext} onStepClick={goToStep} />
         {step === 0 && (
           <BasicInfoStep
+            memberUuid={memberUuid}
+            displayPhoneNumber={displayPhoneNumber}
             form={form}
             setField={setField}
             vipTiers={vipTiers}
@@ -1582,7 +1586,7 @@ function UserImage({ value, onChange }) {
   );
 }
 
-function BasicInfoStep({ form, setField, vipTiers = [], walletVipTiers = [], stationList = [] }) {
+function BasicInfoStep({ memberUuid, displayPhoneNumber, form, setField, vipTiers = [], walletVipTiers = [], stationList = [] }) {
   const vipOptionsFromApi = vipTiers.length
     ? vipTiers
         .map((tier) => tier.name || tier.tier_name || tier.vip_tier || tier.level || tier.title)
@@ -1632,7 +1636,7 @@ function BasicInfoStep({ form, setField, vipTiers = [], walletVipTiers = [], sta
           <ReadOnlyValue value={form.fullName} />
         </FieldWrapper>
         <FieldWrapper label="Phone">
-          <ReadOnlyValue value={form.phone} />
+          <ReadOnlyValue value={displayPhoneNumber({ uuid: memberUuid, phone_number: form.phone })} />
         </FieldWrapper>
         <FieldWrapper label="Gender">
           <SelectInput value={form.gender} onChange={(v) => setField("gender", v)} options={SELECT_OPTIONS.gender} />

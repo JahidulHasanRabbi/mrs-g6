@@ -19,6 +19,7 @@ import { FollowUpCreateModal } from "../../../components/admin/retention/FollowU
 import Pagination from "../../../components/admin/retention/Pagination";
 import LoadingOverlay from "../../../components/admin/ui/LoadingOverlay";
 import { uniqueWalletVipTierNames } from "../../../components/admin/retention/walletVipFilterOptions";
+import { usePhoneVisibility } from "../../../components/admin/retention/phoneVisibility";
 
 // Member Alert page — Figma 69:340. "Overview" KPI strip + Member Follow Up
 // list. The list is the same shape as /admin/retention/members but with a
@@ -250,6 +251,7 @@ function KpiIcon({ name }) {
 }
 
 function FollowUpList({ date, onDateChange }) {
+  const { displayPhoneNumber } = usePhoneVisibility();
   const [walletLevel, setWalletLevel] = useState("");
   const [brand, setBrand] = useState("");
   const [priority, setPriority] = useState("");
@@ -442,6 +444,7 @@ function FollowUpList({ date, onDateChange }) {
                 <TableRow
                   key={`${row.uuid || row.username || "member"}-${idx}`}
                   row={row}
+                  displayPhoneNumber={displayPhoneNumber}
                   pics={pics}
                   onChanged={() => setReloadKey((k) => k + 1)}
                 />
@@ -707,7 +710,7 @@ function TableHeader() {
   );
 }
 
-function TableRow({ row, pics, onChanged }) {
+function TableRow({ row, pics, onChanged, displayPhoneNumber }) {
   // Route by the member's real UUID — the [slug] page accepts it transparently.
   const href = `/admin/retention/members/${row.uuid}`;
   return (
@@ -721,7 +724,7 @@ function TableRow({ row, pics, onChanged }) {
         </Link>
       </Cell>
       <DataCell value={row.brand} minW={COLUMNS[1].minW} />
-      <DataCell value={row.phone_number} minW={COLUMNS[2].minW} nowrap />
+      <DataCell value={displayPhoneNumber(row)} minW={COLUMNS[2].minW} nowrap />
       <DataCell value={row.ns_level || row.vip_level} minW={COLUMNS[3].minW} />
       <DataCell value={formatCurrency(row.total_sales ?? row.daily_sales)} minW={COLUMNS[4].minW} />
       <DataCell value={formatCurrency(row.total_win_lose ?? row.total_winlose ?? row.daily_win_loss)} minW={COLUMNS[5].minW} />

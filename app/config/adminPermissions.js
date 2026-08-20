@@ -25,6 +25,7 @@ export const ADMIN_PERMISSIONS = {
   CREATE_LUCKY_SPIN_PRIZES: "create_lucky_spin_prizes",
   EDIT_LUCKY_SPIN_PRIZES: "edit_lucky_spin_prizes",
   ARCHIVE_LUCKY_SPIN_PRIZES: "archive_lucky_spin_prizes",
+  VIEW_PHONE_NUMBERS: "view_phone_numbers",
 };
 
 export const MENU_PERMISSION_BY_ID = {

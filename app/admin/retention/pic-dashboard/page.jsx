@@ -439,7 +439,7 @@ function PerformanceSummary({ periodParams }) {
         </h2>
       </header>
       <div className="w-full overflow-x-auto">
-        <div className="flex min-w-[1300px] w-full flex-col">
+        <div className="flex min-w-[1500px] w-full flex-col">
           <TableHeader />
           <div className="flex w-full flex-col">
             {loading ? (
@@ -474,6 +474,7 @@ function TableHeader() {
     <div className="flex w-full items-start justify-between" style={{ backgroundImage: GRAD_DARK }}>
       <HeaderCell label="PIC" widthClass="w-[269px]" />
       <HeaderCell label="Total Members" />
+      <HeaderCell label="Repeat Rate" />
       <HeaderCell label="Total Sales" />
       <HeaderCell label="Total Win/Lose" />
       <HeaderCell label={`Monthly Target (${CURRENT_MONTH})`} />
@@ -528,6 +529,7 @@ function TableRow({ row }) {
         </div>
       </div>
       <DataCell value={formatNumber(row.total_members)} />
+      <DataCell value={formatPercent(row.repeat_rate)} />
       <DataCell value={formatRmCurrency(row.total_sales)} />
       <DataCell value={formatRmCurrency(row.total_win_lose)} />
       <DataCell value={formatRmCurrency(target)} />
@@ -570,7 +572,7 @@ function PicFallbackIcon() {
 function SkeletonRow() {
   return (
     <div className="flex w-full items-center border-b border-white/5">
-      {Array.from({ length: 7 }).map((_, i) => (
+      {Array.from({ length: 8 }).map((_, i) => (
         <div key={i} className={`flex ${i === 0 ? "w-[269px] shrink-0" : "flex-1 min-w-0"} items-center p-6`}>
           <div className="h-3 w-3/4 rounded bg-white/10 animate-pulse" />
         </div>

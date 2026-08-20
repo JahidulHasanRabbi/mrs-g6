@@ -11,6 +11,7 @@ import {
 } from "../../../../components/admin/retention/FollowUpComponents";
 import { assignCrmMemberToPic, getCrmFollowUps, getCrmMemberSingle, getCrmUsers, patchCrmMember, patchCrmMemberAlert, patchCrmMemberFollowUp, refreshCrmMember, sendCrmMemberBonus, updateCrmMemberData } from "../../../../api/crmApi";
 import { getVipTierList, getWalletVipTiers, getStationList, getPromotionsByStation } from "../../../../api/adminApi";
+import { usePhoneVisibility } from "../../../../components/admin/retention/phoneVisibility";
 
 const TAG_STYLES = {
   vip:    { bg: "#d9acff", color: "#8800fb" },
@@ -272,6 +273,7 @@ function memberStations(memberData, stationList) {
 export default function MemberProfilePage() {
   const params = useParams();
   const memberUuid = typeof params?.slug === "string" ? params.slug : Array.isArray(params?.slug) ? params.slug[0] : "";
+  const { displayPhoneNumber } = usePhoneVisibility();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -375,7 +377,10 @@ export default function MemberProfilePage() {
 
   const basicInfo = {
     Username: show(customer?.username || basic?.username),
-    Phone: show(customer?.phone_number || basic?.phone_number),
+    Phone: displayPhoneNumber({
+      uuid: memberUuid,
+      phone_number: customer?.phone_number || basic?.phone_number,
+    }),
     Gender: show(customer?.gender || basic?.gender),
     "Date of Birth": formatDateOnly(customer?.date_of_birth || basic?.date_of_birth),
     Age: show(customer?.age ?? basic?.age),
