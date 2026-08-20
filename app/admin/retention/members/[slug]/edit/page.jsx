@@ -6,6 +6,7 @@ import { GRAD_GOLD } from "../../../../../components/admin/retention/constants";
 import { getCrmMemberSingle, getCrmVipTiers, updateCrmMember } from "../../../../../api/crmApi";
 import { getStationList, getWalletVipTiers } from "../../../../../api/adminApi";
 import { usePhoneVisibility } from "../../../../../components/admin/retention/phoneVisibility";
+import { useToast } from "../../../../../components/admin/ui/Toast";
 
 // Member edit form — Figma 87:7291. 3-step wizard:
 //   01 Basic Info   (Profile Data + Basic Info shown in the Figma)
@@ -584,7 +585,7 @@ function formToApi(form, vipTiers = [], originalData = null) {
     },
     game_info: {
       game_preference: form.gamePreference || undefined,
-      provider_Preference: labelsToInts("providerPref", form.providerPref),
+      provider_preference: labelsToInts("providerPref", form.providerPref),
       play_type_pattern: playTimePattern,
       average_bet_size: Number(form.avgBetMax || form.avgBetMin) || undefined,
       player_type: labelToInt("playerSegment", form.playerSegment),
@@ -604,6 +605,7 @@ export default function MemberEditPage() {
   const params = useParams();
   const memberUuid = typeof params?.slug === "string" ? params.slug : Array.isArray(params?.slug) ? params.slug[0] : "";
   const { displayPhoneNumber } = usePhoneVisibility();
+  const toast = useToast();
 
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(emptyForm());
@@ -676,9 +678,11 @@ export default function MemberEditPage() {
     setSaving(true);
     try {
       await updateCrmMember(memberUuid, formToApi({ ...form, vipUuid }, vipTiers, originalMember));
+      toast.success("Member information saved");
       router.push(`/admin/retention/members/${memberUuid}`);
     } catch (err) {
       console.error("[member-edit] save failed", err);
+      toast.error("Failed to save member information");
       setSaving(false);
     }
   };
