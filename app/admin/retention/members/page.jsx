@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { getCrmMembers, getCrmUsers, getCrmVipTiers } from "../../../api/crmApi";
@@ -133,6 +133,7 @@ function RetentionMembersContent() {
   const [salesSort, setSalesSort] = useState("");
   const [winSort, setWinSort] = useState("");
   const [query, setQuery] = useState("");
+  const [date, setDate] = useState("");
 
   const setPage = (next) => {
     const value = typeof next === "function" ? next(page) : next;
@@ -160,6 +161,7 @@ function RetentionMembersContent() {
   const handleSalesSort = (v) => { setSalesSort(v); resetToPage1(); };
   const handleWinSort = (v) => { setWinSort(v); resetToPage1(); };
   const handleQuery = (v) => { setQuery(v); resetToPage1(); };
+  const handleDate = (v) => { setDate(v); resetToPage1(); };
 
   const [pics, setPics] = useState([]);
   const [walletTiers, setWalletTiers] = useState([]);
@@ -206,6 +208,17 @@ function RetentionMembersContent() {
           : undefined;
         const sales = salesSort ? (salesSort === "High to Low" ? "High" : "Low") : undefined;
         const win_lose = winSort ? (winSort === "High to Low" ? "High" : "Low") : undefined;
+        // Backend only supports a single analysed day (end_datetime - 1 day),
+        // so a picked date is sent as a full UTC day range: 00:00:00 through
+        // the next day's 00:00:00.
+        let start_datetime;
+        let end_datetime;
+        if (date) {
+          start_datetime = `${date}T00:00:00Z`;
+          const next = new Date(`${date}T00:00:00Z`);
+          next.setUTCDate(next.getUTCDate() + 1);
+          end_datetime = next.toISOString().slice(0, 19) + "Z";
+        }
         const res = await getCrmMembers({
           page,
           page_size: PAGE_SIZE,
@@ -215,6 +228,8 @@ function RetentionMembersContent() {
           retention: retentionUser?.id ?? retentionUser?.uuid ?? undefined,
           brand: brand || undefined,
           search: debouncedQuery || undefined,
+          start_datetime,
+          end_datetime,
           sales,
           win_lose,
         });
@@ -235,7 +250,7 @@ function RetentionMembersContent() {
     return () => {
       cancelled = true;
     };
-  }, [page, priority, walletLevel, vip, pic, brand, salesSort, winSort, pics, debouncedQuery]);
+  }, [page, priority, walletLevel, vip, pic, brand, salesSort, winSort, pics, debouncedQuery, date]);
 
   // Client-side fallback sort for the visible page; backend filters/sorts
   // across the full result set.
@@ -291,6 +306,7 @@ function RetentionMembersContent() {
           <FilterDropdown label="Win/Lose" value={winSort} onChange={handleWinSort} options={WINLOSS_SORT_OPTIONS} />
           <FilterDropdown label="Brand" value={brand} onChange={handleBrand} options={BRAND_OPTIONS} />
           <FilterDropdown label="All PIC" value={pic} onChange={handlePic} options={pics.map((u) => u.full_name || u.username).filter(Boolean)} />
+          <DayPicker value={date} onChange={handleDate} />
           <SearchInput value={query} onChange={handleQuery} />
         </div>
       </header>
@@ -406,6 +422,62 @@ function SearchInput({ value, onChange }) {
       className="w-[180px] bg-[#141828] border border-[#f2cb7a] rounded-[8px] px-3 py-2 text-[10px] italic text-[#f6dda6] placeholder:text-[#f6dda6] placeholder:capitalize focus:outline-none focus:ring-1 focus:ring-[#eaad2c]"
       style={{ fontFamily: "Inter, sans-serif", lineHeight: "15px" }}
     />
+  );
+}
+
+// Single-day date filter — same pattern as the Member Alert page's DayPicker.
+// Backend (`start_datetime`/`end_datetime` on /crm-members/members/) only
+// resolves to one analysed day server-side, so this stays single-day rather
+// than a range picker.
+function DayPicker({ value, onChange }) {
+  const inputRef = useRef(null);
+
+  const openPicker = () => {
+    const el = inputRef.current;
+    if (!el) return;
+    if (typeof el.showPicker === "function") el.showPicker();
+    else el.focus();
+  };
+
+  const formatted = value
+    ? new Date(`${value}T00:00:00`).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+    : "";
+
+  return (
+    <div
+      className="relative flex items-center gap-2 rounded-[8px] border border-[#f2cb7a] px-3 py-2 cursor-pointer"
+      style={{ backgroundImage: GRAD_DARK }}
+      onClick={openPicker}
+    >
+      <span className="pointer-events-none whitespace-nowrap text-[12px] font-medium text-[#f6dda6]">
+        {formatted || "Select Date"}
+      </span>
+      <input
+        ref={inputRef}
+        type="date"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label="Filter by day"
+        className="absolute inset-0 h-full w-full cursor-pointer opacity-0 [color-scheme:dark]"
+      />
+      {value ? (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onChange("");
+          }}
+          aria-label="Clear date"
+          className="relative z-10 text-[12px] leading-none text-[#f6dda6]/70 hover:text-[#f6dda6]"
+        >
+          ✕
+        </button>
+      ) : null}
+    </div>
   );
 }
 

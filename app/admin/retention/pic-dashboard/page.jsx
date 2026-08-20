@@ -474,9 +474,9 @@ function TableHeader() {
     <div className="flex w-full items-start justify-between" style={{ backgroundImage: GRAD_DARK }}>
       <HeaderCell label="PIC" widthClass="w-[269px]" />
       <HeaderCell label="Total Members" />
-      <HeaderCell label="Repeat Rate" />
       <HeaderCell label="Total Sales" />
       <HeaderCell label="Total Win/Lose" />
+      <HeaderCell label="Repeat Rate" />
       <HeaderCell label={`Monthly Target (${CURRENT_MONTH})`} />
       <HeaderCell label={`Achievement (${CURRENT_MONTH})`} align="center" />
       <HeaderCell label="Action" align="end" />
@@ -529,9 +529,9 @@ function TableRow({ row }) {
         </div>
       </div>
       <DataCell value={formatNumber(row.total_members)} />
-      <DataCell value={formatPercent(row.repeat_rate)} />
       <DataCell value={formatRmCurrency(row.total_sales)} />
       <DataCell value={formatRmCurrency(row.total_win_lose)} />
+      <DataCell value={formatPercent(row.repeat_rate)} />
       <DataCell value={formatRmCurrency(target)} />
       <div className="flex flex-1 min-w-0 items-center self-stretch">
         <div className="flex h-full flex-1 flex-col items-center justify-center gap-2 p-6">
