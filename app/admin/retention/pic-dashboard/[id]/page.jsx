@@ -264,6 +264,9 @@ function PicDetailContent() {
   }, [loadSummary]);
 
   useEffect(() => {
+    // Reset immediately on slug change so a stale PIC's name/photo from the
+    // previous profile never lingers while the new profile is still loading.
+    setPicProfile(null);
     if (!slug) return;
     let cancelled = false;
     getCrmUserSingle(slug)
@@ -313,8 +316,13 @@ function PicProfileHeader({ name, image, period, onPeriodChange, fromDate, toDat
         <div className="flex flex-col gap-1">
           <span className="b-4 text-white leading-[18px]">PIC PROFILE</span>
           <h1
-            className="h-4 bg-clip-text text-transparent whitespace-nowrap"
-            style={{ backgroundImage: GRAD_GOLD }}
+            className="bg-clip-text text-transparent font-bold whitespace-nowrap"
+            style={{
+              backgroundImage: GRAD_GOLD,
+              fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif",
+              fontSize: "20px",
+              lineHeight: "24px",
+            }}
           >
             {name}
           </h1>
