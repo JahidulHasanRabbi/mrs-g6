@@ -122,6 +122,18 @@ export async function patchCrmMember(memberUuid, data) {
   return updateCrmMember(memberUuid, data);
 }
 
+// POST /crm-members/give-tokens/
+// body: { member_uuid, token_amount }
+export async function giveTokens(data) {
+  return await apiRequest(ENDPOINTS.CRM.GIVE_TOKENS, { method: 'POST', body: data }, true, 'admin');
+}
+
+// POST /crm-members/give-battle-points/
+// body: { member_uuid, battle_point_amount }
+export async function giveBattlePoints(data) {
+  return await apiRequest(ENDPOINTS.CRM.GIVE_BATTLE_POINTS, { method: 'POST', body: data }, true, 'admin');
+}
+
 // ──────────────────────── Retention Alert ────────────────────────
 
 // GET /crm-members/priority-summary/

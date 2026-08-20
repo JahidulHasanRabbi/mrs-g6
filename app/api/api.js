@@ -308,6 +308,8 @@ export const ENDPOINTS = {
     MEMBER_FOLLOW_UP: (memberUuid) => `/crm-members/members/${memberUuid}/follow-up/`,
     MEMBER_ALERT: (memberUuid) => `/crm-members/members/${memberUuid}/alert/`,
     MEMBER_SEND_BONUS: (memberUuid) => `/crm-members/members/${memberUuid}/send-bonus/`,
+    GIVE_TOKENS: '/crm-members/give-tokens/',
+    GIVE_BATTLE_POINTS: '/crm-members/give-battle-points/',
     // Dashboard
     DASHBOARD_SUMMARY: '/crm-admins/dashboard-summary/',
     DASHBOARD_BREAKDOWN: '/crm-admins/dashboard-breakdown/',
