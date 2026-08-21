@@ -3,18 +3,12 @@
  * Strips null/undefined/empty values automatically.
  */
 
+import { TOKEN_CATEGORY_LABELS } from "./tokenReport.mjs";
+
 // ── Category Enums ──────────────────────────────────────────
-export const TOKEN_CATEGORIES = {
-  1: "Check-In",
-  2: "LuckySpin",
-  3: "VIP-Monthly",
-  4: "Mart-Redeem",
-  5: "Top Up",
-  6: "Welcome",
-  7: "VIP-Upgrade",
-  8: "VIP-Birthday",
-  9: "Finish-Profile",
-};
+// Token reason codes live in tokenReport.mjs (codes 1-18) so the report and
+// the member token-history screen label the same code the same way.
+export const TOKEN_CATEGORIES = TOKEN_CATEGORY_LABELS;
 
 export const REWARD_CATEGORIES = {
   1: "Prize",

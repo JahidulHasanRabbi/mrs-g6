@@ -10,7 +10,7 @@ export const GOLD_BG =
  * Reusable gold-gradient dropdown filter.
  * Renders a toggle button and a dropdown panel with "All" + supplied options.
  */
-export function FilterDropdown({ label, options, value, onChange, align = "left" }) {
+export function FilterDropdown({ label, options, value, onChange, align = "left", disabled = false }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -26,8 +26,9 @@ export function FilterDropdown({ label, options, value, onChange, align = "left"
     <div className="relative" ref={ref}>
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1 h-9 rounded px-3 py-2 shrink-0 transition-opacity hover:opacity-90"
+        onClick={() => { if (!disabled) setOpen((v) => !v); }}
+        disabled={disabled}
+        className="flex items-center gap-1 h-9 rounded px-3 py-2 shrink-0 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
         style={{ background: GOLD_BG }}
       >
         <span className=" text-[14px] text-black whitespace-nowrap">
@@ -48,7 +49,7 @@ export function FilterDropdown({ label, options, value, onChange, align = "left"
         </svg>
       </button>
 
-      {open && (
+      {open && !disabled && (
         <div className={`absolute top-full mt-1 z-50 min-w-[180px] max-h-[280px] overflow-y-auto rounded-lg border border-[rgba(255,255,132,0.3)] bg-[#0f2618] shadow-xl ${align === "right" ? "right-0" : "left-0"}`}>
           <button
             key="all-option"
@@ -129,18 +130,20 @@ export function DateFilter({ label, fromDate, toDate, onFromChange, onToChange, 
 /**
  * Gold-gradient text search input with clear button.
  */
-export function TextSearchInput({ placeholder, value, onChange }) {
+export function TextSearchInput({ placeholder, value, onChange, disabled = false, title }) {
   return (
-    <div className="relative">
+    <div className="relative" title={title}>
       <input
         type="text"
         placeholder={placeholder}
+        title={title}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-9 w-[140px] sm:w-[160px] rounded px-3 py-2 text-[14px] text-black italic placeholder:text-black/50 outline-none"
+        disabled={disabled}
+        className="h-9 w-[140px] sm:w-[160px] rounded px-3 py-2 text-[14px] text-black italic placeholder:text-black/50 outline-none disabled:cursor-not-allowed disabled:opacity-60"
         style={{ background: GOLD_BG }}
       />
-      {value && (
+      {value && !disabled && (
         <button
           type="button"
           onClick={() => onChange("")}

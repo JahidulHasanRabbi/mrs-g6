@@ -4,22 +4,31 @@ import { useEffect, useMemo, useState, useCallback, Suspense } from "react";
 import { AdminRouteGuard } from "../../../components/guards/AdminRouteGuard";
 import { FilterDropdown, DateFilter, TextSearchInput } from "../../../components/admin/members/FilterControls";
 import { Pagination } from "../../../components/admin/members/DataTable";
-import { getTokenReport } from "../../../api/adminApi";
-import { getCategoryOptions } from "../../../api/queryParams";
+import { getStationList, getTokenReport } from "../../../api/adminApi";
+import {
+  buildTokenReportParams,
+  compareTokenReportRows,
+  getTokenReportCategoryOptions,
+  getTokenReportCurrencyValue,
+  tokenReportRowKey,
+  TOKEN_REPORT_CURRENCIES,
+} from "../../../api/tokenReport.mjs";
 
 const PAGE_SIZE = 8;
 
-// Column widths are tuned so the total (≈1040px) fits inside the admin
+// Column widths are tuned so the total (1220px) fits inside the admin
 // content area on a 1440px viewport with the expanded sidebar. Below that
 // the wrapper still allows horizontal scroll, but most desktops won't see
-// it. Long cell values are truncated with title fallbacks (see <td>s).
+// it. Long cell values are truncated with title fallbacks (see <td>s);
+// Category wraps instead, since its longest label is Worldcup-Top-Player.
 const TABLE_COLUMNS = [
   { key: "phone_number",  label: "Phone Number",  className: "w-[140px]" },
   { key: "username",      label: "Username",      className: "w-[140px]" },
   { key: "station",       label: "Station",       className: "w-[130px]" },
+  { key: "currency",      label: "Currency",      className: "w-[140px]" },
   { key: "created",       label: "Date/Time",     className: "w-[170px]" },
-  { key: "category",      label: "Category",      className: "w-[110px]" },
-  { key: "token_details", label: "Token Details", className: "w-[200px]" },
+  { key: "category",      label: "Category",      className: "w-[180px]" },
+  { key: "token_details", label: "Token Details", className: "w-[170px]" },
   { key: "amount",        label: "Amount +/-",    className: "w-[150px] text-right" },
 ];
 
@@ -75,28 +84,33 @@ function formatAmount(amount) {
   return `${amount > 0 ? "+" : "-"}${formattedNumber}`;
 }
 
-function compareRows(a, b, sortConfig) {
-  const { key, direction } = sortConfig;
-  const multiplier = direction === "asc" ? 1 : -1;
+// Battle point rows are tagged so the two ledgers stay tellable apart at a
+// glance now that the endpoint returns both by default.
+const CURRENCY_TONE = {
+  "BATTLE POINT": "border-[rgba(150,190,255,0.35)] bg-[rgba(90,140,255,0.12)] text-[#bcd4ff]",
+  TOKEN: "border-[rgba(233,175,65,0.35)] bg-[rgba(233,175,65,0.12)] text-[#f0cd8a]",
+};
 
-  if (key === "amount") {
-    return (a.amount - b.amount) * multiplier;
-  }
-
-  if (key === "dateTime") {
-    return (new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()) * multiplier;
-  }
-
-  return a[key].localeCompare(b[key]) * multiplier;
+function CurrencyBadge({ value }) {
+  if (!value) return <span className="text-[13px] text-[#e8e8e8]">—</span>;
+  const tone = CURRENCY_TONE[String(value).toUpperCase()] || "border-white/15 bg-white/5 text-[#e8e8e8]";
+  return (
+    <span className={`inline-flex items-center rounded-full border px-2.5 py-[3px] text-[11px] font-semibold uppercase tracking-[0.04em] ${tone}`}>
+      {value}
+    </span>
+  );
 }
 
 function TokenReportContent() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [currencyFilter, setCurrencyFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [detailFilter, setDetailFilter] = useState("");
   const [usernameQuery, setUsernameQuery] = useState("");
   const [phoneQuery, setPhoneQuery] = useState("");
+  const [stationFilter, setStationFilter] = useState("");
+  const [stations, setStations] = useState([]);
 
   const [sortConfig, setSortConfig] = useState({ key: "created", direction: "desc" });
   const [currentPage, setCurrentPage] = useState(1);
@@ -104,20 +118,47 @@ function TokenReportContent() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    let cancelled = false;
+    getStationList()
+      .then((data) => {
+        if (cancelled) return;
+        setStations(Array.isArray(data) ? data : data?.results || []);
+      })
+      .catch((err) => console.error(err));
+    return () => { cancelled = true; };
+  }, []);
+
+  const stationName = (station) => station?.station_name || station?.name || "";
+  const stationOptions = stations.map(stationName).filter(Boolean);
+  const selectedStationName = stationFilter
+    ? stationName(stations.find((station) => station.uuid === stationFilter))
+    : "";
+
+  const currencyValue = getTokenReportCurrencyValue(currencyFilter);
+  const categoryOptions = getTokenReportCategoryOptions(currencyValue).map((option) => option.label);
+
+  const handleCurrencyChange = (value) => {
+    setCurrencyFilter(value);
+    setCategoryFilter("");
+    if (value === "Battle Point") setDetailFilter("");
+  };
+
   const fetchReport = useCallback(async (page) => {
     setLoading(true);
     try {
-      const catValue = getCategoryOptions("token").find(o => o.label === categoryFilter)?.value;
-      const params = {
+      const params = buildTokenReportParams({
         page,
-        page_size: PAGE_SIZE,
-        start_date: dateFrom || undefined,
-        end_date: dateTo || undefined,
-        category: catValue || undefined,
-        token_details: detailFilter || undefined,
-        username: usernameQuery || undefined,
-        phone_number: phoneQuery || undefined,
-      };
+        pageSize: PAGE_SIZE,
+        currency: currencyFilter,
+        category: categoryFilter,
+        startDate: dateFrom,
+        endDate: dateTo,
+        detail: detailFilter,
+        username: usernameQuery,
+        phone: phoneQuery,
+        stationUuid: stationFilter,
+      });
       const res = await getTokenReport(params);
       setRows(res.results || []);
       setTotalCount(res.count || 0);
@@ -127,7 +168,7 @@ function TokenReportContent() {
     } finally {
       setLoading(false);
     }
-  }, [dateFrom, dateTo, categoryFilter, detailFilter, usernameQuery, phoneQuery]);
+  }, [dateFrom, dateTo, currencyFilter, categoryFilter, detailFilter, usernameQuery, phoneQuery, stationFilter]);
 
   useEffect(() => {
     // Only fetch if both dates are filled or both are empty
@@ -141,7 +182,7 @@ function TokenReportContent() {
   }, [fetchReport]);
 
   const sortedRows = useMemo(() => {
-    return [...rows].sort((a, b) => compareRows(a, b, sortConfig));
+    return [...rows].sort((a, b) => compareTokenReportRows(a, b, sortConfig));
   }, [rows, sortConfig]);
 
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
@@ -163,10 +204,10 @@ function TokenReportContent() {
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <h1 className="text-4xl font-bold leading-[1.05] text-white">
-              Token Report
+              Token and Battle Point Report
             </h1>
             <p className="mt-2 text-[14px] text-white/55">
-              Frontend-only report layout based on the approved Phase 1 enhancement spec.
+              Combined token and battle point ledger report.
             </p>
           </div>
 
@@ -182,7 +223,7 @@ function TokenReportContent() {
           <div className="border-b border-white/5 px-4 pt-4 pb-3">
             <div className="flex flex-wrap items-center gap-3">
               <h2 className="mr-auto whitespace-nowrap text-[15px] font-bold text-[#f4efe0] sm:text-[16px] lg:text-[17px]">
-                The Token Reports Are Given
+                The Token &amp; Battle Point Reports Are Given
               </h2>
 
               <span className="whitespace-nowrap text-[13px] text-[#d6d6d6]">
@@ -190,15 +231,44 @@ function TokenReportContent() {
               </span>
 
               <DateFilter label="Date/Time" fromDate={dateFrom} toDate={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
-              <FilterDropdown label="Category" options={getCategoryOptions("token").map(o => o.label)} value={categoryFilter} onChange={setCategoryFilter} />
-              <TextSearchInput placeholder="Token Details" value={detailFilter} onChange={setDetailFilter} />
+              <FilterDropdown label="Currency" options={TOKEN_REPORT_CURRENCIES} value={currencyFilter} onChange={handleCurrencyChange} />
+              <FilterDropdown
+                label="Station"
+                options={stationOptions}
+                value={selectedStationName}
+                onChange={(name) => {
+                  const station = stations.find((item) => stationName(item) === name);
+                  setStationFilter(station?.uuid || "");
+                }}
+              />
+              <FilterDropdown
+                label={currencyValue ? "Category" : "Category (select currency)"}
+                options={categoryOptions}
+                value={categoryFilter}
+                onChange={setCategoryFilter}
+                disabled={!currencyValue}
+              />
+              {currencyValue !== 2 && (
+                <TextSearchInput
+                  placeholder="Token Details"
+                  title="Searches token rows only — battle point rows have no token details."
+                  value={detailFilter}
+                  onChange={setDetailFilter}
+                />
+              )}
               <TextSearchInput placeholder="Enter Username" value={usernameQuery} onChange={setUsernameQuery} />
               <TextSearchInput placeholder="Enter Phone" value={phoneQuery} onChange={setPhoneQuery} />
             </div>
+
+            {detailFilter && currencyValue !== 1 && (
+              <p className="mt-2 text-[12px] text-white/50">
+                Token Details only exists on token rows — filtering by it hides every battle point row.
+              </p>
+            )}
           </div>
 
           <div className="overflow-x-auto overflow-y-hidden scrollbar-admin">
-            <table className="min-w-[1040px] w-full table-fixed border-separate border-spacing-0">
+            <table className="min-w-[1230px] w-full table-fixed border-separate border-spacing-0">
               <thead>
                 <tr className="bg-black">
                   {TABLE_COLUMNS.map((column) => {
@@ -230,11 +300,11 @@ function TokenReportContent() {
                     </td>
                   </tr>
                 ) : sortedRows.length > 0 ? (
-                  sortedRows.map((row) => {
+                  sortedRows.map((row, index) => {
                     const amountTone = row.amount >= 0 ? "text-[#f0f0f0]" : "text-[#ffb0a0]";
 
                     return (
-                      <tr key={row.id} className="border-b border-[rgba(255,255,255,0.08)] transition-colors hover:bg-white/[0.03]">
+                      <tr key={tokenReportRowKey(row, index)} className="border-b border-[rgba(255,255,255,0.08)] transition-colors hover:bg-white/[0.03]">
                         <td className="px-4 py-[14px] first:pl-5 text-[13px] text-[#f1f1f1] truncate" title={row.phone_number || ""}>
                           {row.phone_number || "—"}
                         </td>
@@ -244,10 +314,13 @@ function TokenReportContent() {
                         <td className="px-4 py-[14px] text-[13px] text-[#e8e8e8] truncate" title={row.station || ""}>
                           {row.station || "—"}
                         </td>
+                        <td className="px-4 py-[14px] text-[13px] truncate" title={row.currency || ""}>
+                          <CurrencyBadge value={row.currency} />
+                        </td>
                         <td className="px-4 py-[14px] text-[13px] text-[#e8e8e8] whitespace-nowrap">
                           {formatDateTime(row.created)}
                         </td>
-                        <td className="px-4 py-[14px] text-[13px] text-[#ece9dc] truncate" title={row.category || ""}>
+                        <td className="px-4 py-[14px] text-[13px] text-[#ece9dc] break-words" title={row.category || ""}>
                           {row.category || "—"}
                         </td>
                         <td className="px-4 py-[14px] text-[13px] text-[#dadada] truncate" title={row.token_details || ""}>

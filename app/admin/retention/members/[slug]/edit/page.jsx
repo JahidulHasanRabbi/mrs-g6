@@ -7,6 +7,13 @@ import { getCrmMemberSingle, getCrmVipTiers, updateCrmMember } from "../../../..
 import { getStationList, getWalletVipTiers } from "../../../../../api/adminApi";
 import { usePhoneVisibility } from "../../../../../components/admin/retention/phoneVisibility";
 import { useToast } from "../../../../../components/admin/ui/Toast";
+import {
+  PROVIDER_PREFERENCE_SUGGESTIONS,
+  providerPreferenceFromList,
+  providerPreferenceList,
+  providerPreferencePayload,
+  providerPreferenceToInput,
+} from "./providerPreference.mjs";
 
 // Member edit form — Figma 87:7291. 3-step wizard:
 //   01 Basic Info   (Profile Data + Basic Info shown in the Figma)
@@ -48,7 +55,6 @@ const TAG_OPTIONS = {
   depositFreq:         { kind: "weekly", options: ["Daily", "Weekly", "Bi-Weekly", "Monthly", "Quarterly"] },
   status:              { kind: "active", options: ["Active", "Inactive", "Dormant", "Suspended"] },
   hobby:               { kind: "hobby",  options: HOBBY_OPTIONS },
-  providerPref:        { kind: "hobby",  options: ["Pragmatic", "Microgaming", "NetEnt", "Playtech", "PG Soft", "Evolution"] },
   depositTrigger:      { kind: "hobby",  options: ["Bonus", "Promotion", "FOMO", "Habit", "Tournament"] },
   churnRiskReason:     { kind: "hobby",  options: ["Any", "Lost Interest", "Better Offer", "Personal Reason", "Service Issue"] },
   reactivationTrigger: { kind: "hobby",  options: ["Any", "Bonus", "Tournament", "VIP Upgrade", "Personal Outreach"] },
@@ -95,7 +101,6 @@ const ENUM_INDEX = {
   depositFreq: TAG_OPTIONS.depositFreq.options,
   status: TAG_OPTIONS.status.options,
   hobby: TAG_OPTIONS.hobby.options,
-  providerPref: TAG_OPTIONS.providerPref.options,
   depositTrigger: TAG_OPTIONS.depositTrigger.options,
   churnRiskReason: TAG_OPTIONS.churnRiskReason.options,
   reactivationTrigger: TAG_OPTIONS.reactivationTrigger.options,
@@ -414,7 +419,7 @@ function emptyForm() {
     paymentMethod: "",
 
     gamePreference: "",
-    providerPref: [],
+    providerPref: "",
     playTimePattern: "",
     avgBetMin: "",
     avgBetMax: "",
@@ -528,7 +533,7 @@ function apiToForm(data, vipTiers = [], walletVipTiers = [], stationList = []) {
     paymentMethod: f.payment_method || "",
 
     gamePreference: g.game_preference || "",
-    providerPref: tagListFor("hobby", g.provider_preference),
+    providerPref: providerPreferenceToInput(g.provider_preference),
     playTimePattern: g.play_time_pattern || "",
     avgBetMin: betSize.min,
     avgBetMax: betSize.max,
@@ -584,7 +589,7 @@ function formToApi(form, vipTiers = [], originalData = null) {
     },
     game_info: {
       game_preference: form.gamePreference || undefined,
-      provider_preference: labelsToInts("providerPref", form.providerPref),
+      ...providerPreferencePayload(form.providerPref),
       play_type_pattern: playTimePattern,
       average_bet_size: Number(form.avgBetMax || form.avgBetMin) || undefined,
       player_type: labelToInt("playerSegment", form.playerSegment),
@@ -1519,6 +1524,171 @@ function FreeTagInput({ value = [], onChange, maxTags }) {
   );
 }
 
+// Provider Preference is a free-form list on the API side ("Multiple Input",
+// choices still TBD), so the field pairs a suggestion dropdown with manual
+// entry: pick a known provider, or type any name and press Enter / comma.
+// Kept as a comma-joined string in form state so the payload helpers stay put.
+function ProviderPreferenceField({ value, onChange, suggestions = PROVIDER_PREFERENCE_SUGGESTIONS }) {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState("");
+  const wrapperRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  const selected = providerPreferenceList(value);
+  const emit = (list) => onChange(providerPreferenceFromList(list));
+  const same = (a, b) => a.toLowerCase() === b.toLowerCase();
+  const isSelected = (name) => selected.some((item) => same(item, name));
+
+  const toggle = (name) => {
+    if (isSelected(name)) {
+      emit(selected.filter((item) => !same(item, name)));
+    } else {
+      emit([...selected, name]);
+    }
+  };
+
+  const remove = (name) => emit(selected.filter((item) => item !== name));
+
+  // A draft can hold several comma-separated names, so merge them in one go
+  // rather than re-deriving `selected` between adds.
+  const commitDraft = () => {
+    const merged = [...selected];
+    draft
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .forEach((item) => {
+        if (!merged.some((existing) => same(existing, item))) merged.push(item);
+      });
+    setDraft("");
+    if (merged.length !== selected.length) emit(merged);
+  };
+
+  const query = draft.trim().toLowerCase();
+  const visibleSuggestions = suggestions.filter((option) => option.toLowerCase().includes(query));
+  const canAddDraft = Boolean(query) && !suggestions.some((option) => same(option, draft.trim())) && !isSelected(draft.trim());
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <div
+        onClick={() => setOpen(true)}
+        className="flex min-h-[44px] flex-wrap items-center gap-2 rounded-[8px] border border-[#fbeed2] px-3 py-2 transition focus-within:border-[#f2cb7a]"
+      >
+        {selected.map((provider) => (
+          <span
+            key={provider}
+            className="inline-flex h-[24px] items-center gap-1 rounded-[12px] bg-[#f6dda6] px-3 text-[12px] font-semibold leading-[18px] text-[#6f4600]"
+          >
+            {provider}
+            <button
+              type="button"
+              aria-label={`Remove ${provider}`}
+              onClick={(e) => { e.stopPropagation(); remove(provider); }}
+              className="flex h-3 w-3 items-center justify-center"
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </span>
+        ))}
+        <input
+          value={draft}
+          onFocus={() => setOpen(true)}
+          onChange={(e) => {
+            const next = e.target.value;
+            setDraft(next);
+            setOpen(true);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === ",") {
+              e.preventDefault();
+              commitDraft();
+            } else if (e.key === "Backspace" && !draft && selected.length) {
+              emit(selected.slice(0, -1));
+            } else if (e.key === "Escape") {
+              setOpen(false);
+            }
+          }}
+          onBlur={() => { if (draft.trim()) commitDraft(); }}
+          placeholder={selected.length ? "" : "Select or type..."}
+          className="min-w-[100px] flex-1 bg-transparent text-[12px] font-medium leading-[18px] text-white outline-none placeholder:text-white/40"
+        />
+        <button
+          type="button"
+          aria-label="Toggle provider list"
+          onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+          className="flex h-4 w-4 items-center justify-center"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#fbeed2"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ transform: open ? "rotate(180deg)" : undefined, transition: "transform 0.15s" }}
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+      </div>
+      {open && (visibleSuggestions.length > 0 || canAddDraft) && (
+        <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-[220px] overflow-y-auto rounded-[8px] border border-[#f2cb7a] bg-[#05060a] shadow-lg">
+          {canAddDraft && (
+            <button
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={commitDraft}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] font-medium leading-[18px] text-[#f6dda6] hover:bg-white/5"
+            >
+              Add &quot;{draft.trim()}&quot;
+            </button>
+          )}
+          {visibleSuggestions.map((option) => {
+            const checked = isSelected(option);
+            return (
+              <button
+                key={option}
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => { toggle(option); setDraft(""); }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-[12px] font-medium leading-[18px] text-[#f6dda6] hover:bg-white/5"
+              >
+                <span
+                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[3px] border ${
+                    checked ? "border-[#eaad2c] bg-[#eaad2c]" : "border-white/40"
+                  }`}
+                >
+                  {checked && (
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#141828" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </span>
+                <span>{option}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function BrandTagsFields({ value = [], onChange, stationList = [], walletVipTiers = [] }) {
   const stationOptions = (stationList || [])
     .filter((station) => station?.uuid)
@@ -1735,7 +1905,7 @@ function GameInfoStep({ form, setField }) {
           <TextInput value={form.gamePreference} onChange={(v) => setField("gamePreference", v)} />
         </FieldWrapper>
         <FieldWrapper label="Provider Preference">
-          <MultiTagSelectField value={form.providerPref} onChange={(v) => setField("providerPref", v)} {...TAG_OPTIONS.providerPref} />
+          <ProviderPreferenceField value={form.providerPref} onChange={(v) => setField("providerPref", v)} />
         </FieldWrapper>
         <FieldWrapper label="Play Time Pattern">
           <SelectInput value={form.playTimePattern} onChange={(v) => setField("playTimePattern", v)} options={SELECT_OPTIONS.playTimePattern} />
