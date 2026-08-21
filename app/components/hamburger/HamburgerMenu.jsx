@@ -1,16 +1,19 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { memo, useMemo, useState, useEffect, useCallback } from "react";
+import { lazy, memo, Suspense, useMemo, useState, useEffect, useCallback } from "react";
 import { useHamburgerMenu } from "./useHamburgerMenu";
 import { MENU_CONFIG, ANIMATION_CONFIG } from "./menuConfig";
 import MenuSection from "./MenuSection";
 import MenuItem from "./MenuItem";
-import FeedbackModal from "../ui/FeedbackModal";
 import { getPublicBanners } from "@/app/api/memberApi";
 import { useTheme } from "@/app/contexts/ThemeContext";
 import { getMemberThemeStyles } from "@/app/config/memberThemeStyles";
 import { NationalDayMenuOverlay } from "../phase4/NationalDayChrome";
+
+// The feedback modal carries every skin's asset map, and nothing shows it until
+// the member taps Feedback — so keep all of it out of the initial bundle.
+const FeedbackModal = lazy(() => import("../ui/FeedbackModal"));
 
 /**
  * HamburgerMenu Component
@@ -32,6 +35,9 @@ function HamburgerMenu({ isOpen, onClose, side = "left" }) {
   useHamburgerMenu(isOpen, onClose);
 
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  // Latched on first open so the lazy modal stays mounted afterwards and its
+  // exit animation still plays on close.
+  const [feedbackMounted, setFeedbackMounted] = useState(false);
   const { themeId } = useTheme();
   const menuStyle = getMemberThemeStyles(themeId).menu;
 
@@ -39,6 +45,7 @@ function HamburgerMenu({ isOpen, onClose, side = "left" }) {
     if (actionType === "feedback") {
       // Open the feedback modal AND close the menu drawer; the modal lives
       // outside the drawer so it stays mounted after the drawer animates out.
+      setFeedbackMounted(true);
       setFeedbackOpen(true);
       onClose();
     } else if (actionType === "livechat") {
@@ -240,7 +247,11 @@ function HamburgerMenu({ isOpen, onClose, side = "left" }) {
     </AnimatePresence>
 
     {/* Lives outside AnimatePresence so it survives the drawer closing. */}
-    <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+    {feedbackMounted && (
+      <Suspense fallback={null}>
+        <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+      </Suspense>
+    )}
     </>
   );
 }

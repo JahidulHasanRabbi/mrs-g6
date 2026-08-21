@@ -1,13 +1,9 @@
 "use client";
 
+import { Suspense } from "react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { THEME_IDS } from "../../../config/themes";
-import AcebetButton from "../acebet77/AcebetButton";
-import UbetButton from "../ubetclub/UbetButton";
-import Ep369Button from "../ep369/Ep369Button";
-import KgameButton from "../kgame99/KgameButton";
-import Lv918Button from "../lv918/Lv918Button";
-import N1gangButton from "../n1gang/N1gangButton";
+import { lazySkins } from "../skinRoute";
 
 /**
  * Renders the ACTIVE theme's ornate button (the shared "gold" variant — solid
@@ -22,14 +18,17 @@ import N1gangButton from "../n1gang/N1gangButton";
  *   { children, onClick, variant, disabled, className, textSize }
  * so onClick / disabled / className / textSize pass straight through.
  */
-const THEME_BUTTONS = {
-  [THEME_IDS.ACEBET77]: AcebetButton,
-  [THEME_IDS.UBETCLUB]: UbetButton,
-  [THEME_IDS.EP369]: Ep369Button,
-  [THEME_IDS.KGAME99]: KgameButton,
-  [THEME_IDS.LV918]: Lv918Button,
-  [THEME_IDS.N1GANG]: N1gangButton,
-};
+// One chunk per skin, warmed at module scope — see lazySkins. This component
+// reaches the home page via <CheckInBoard>, so bundling all six buttons here
+// dragged every skin's asset map onto the first screen a member sees.
+const THEME_BUTTONS = lazySkins({
+  [THEME_IDS.ACEBET77]: () => import("../acebet77/AcebetButton"),
+  [THEME_IDS.UBETCLUB]: () => import("../ubetclub/UbetButton"),
+  [THEME_IDS.EP369]: () => import("../ep369/Ep369Button"),
+  [THEME_IDS.KGAME99]: () => import("../kgame99/KgameButton"),
+  [THEME_IDS.LV918]: () => import("../lv918/Lv918Button"),
+  [THEME_IDS.N1GANG]: () => import("../n1gang/N1gangButton"),
+});
 
 export default function ThemedActionButton({
   children,
@@ -43,8 +42,10 @@ export default function ThemedActionButton({
   if (!Btn) return fallback;
 
   return (
-    <Btn variant="gold" textSize={textSize} {...props}>
-      {children}
-    </Btn>
+    <Suspense fallback={fallback}>
+      <Btn variant="gold" textSize={textSize} {...props}>
+        {children}
+      </Btn>
+    </Suspense>
   );
 }

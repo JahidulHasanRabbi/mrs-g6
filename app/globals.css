@@ -39,26 +39,41 @@
   --lb-heading-muted: #BBCBBB;
   --lb-tab-active: #60803C;
   --lb-tabs-fill: rgba(26, 28, 28, 0.6);
+  /* Base backdrop per skin. Painted before hydration so a themed member never
+   * sees black behind a shell that hasn't mounted yet. */
+  --skin-bg: #000000;
+}
+
+body {
+  background-color: var(--skin-bg);
+}
+
+.skin-backdrop {
+  background-color: var(--skin-bg);
 }
 :root[data-theme="acebet77"] {
+  --skin-bg: #050505;
   --lb-accent: #e9af41;
   --lb-accent-rgb: 233, 175, 65;
   --lb-on-accent: #241704;
   --lb-rank: #ffe16d;
 }
 :root[data-theme="ubetclub"] {
+  --skin-bg: #1a0505;
   --lb-accent: #e9af41;
   --lb-accent-rgb: 233, 175, 65;
   --lb-on-accent: #2a0a0a;
   --lb-rank: #ffe16d;
 }
 :root[data-theme="ep369"] {
+  --skin-bg: #04140a;
   --lb-accent: #e9af41;
   --lb-accent-rgb: 233, 175, 65;
   --lb-on-accent: #04140a;
   --lb-rank: #ffe16d;
 }
 :root[data-theme="kgame99"] {
+  --skin-bg: #0a1a2f;
   --lb-accent: #e2b24a;
   --lb-accent-rgb: 226, 178, 74;
   --lb-on-accent: #0a1a2f;
@@ -74,6 +89,7 @@
   --lb-tabs-fill: rgba(14, 34, 62, 0.9);
 }
 :root[data-theme="lv918"] {
+  --skin-bg: #2a0a1f;
   --lb-accent: #e8b53a;
   --lb-accent-rgb: 232, 181, 58;
   --lb-on-accent: #2a0a1f;
@@ -91,6 +107,7 @@
   --lb-tabs-fill: rgba(74, 15, 48, 0.92);
 }
 :root[data-theme="n1gang"] {
+  --skin-bg: #0a0a0a;
   --lb-accent: #e9af41;
   --lb-accent-rgb: 233, 175, 65;
   --lb-on-accent: #241704;

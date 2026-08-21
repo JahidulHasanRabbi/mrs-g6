@@ -6,26 +6,28 @@ import HistorySection from "../components/profile/HistorySection";
 import EditProfileSection from "../components/profile/EditProfileSection";
 import { useUser } from "../contexts/UserContext";
 import { useTheme } from "../contexts/ThemeContext";
-import Acebet77ProfilePage from "../components/themes/acebet77/Acebet77ProfilePage";
-import UbetclubProfilePage from "../components/themes/ubetclub/UbetclubProfilePage";
-import Ep369ProfilePage from "../components/themes/ep369/Ep369ProfilePage";
-import Kgame99ProfilePage from "../components/themes/kgame99/Kgame99ProfilePage";
-import Lv918ProfilePage from "../components/themes/lv918/Lv918ProfilePage";
-import N1gangProfilePage from "../components/themes/n1gang/N1gangProfilePage";
+import { THEME_IDS } from "../config/themes";
+import { lazySkins, skinFor } from "../components/themes/skinRoute";
+
+// One chunk per skin, warmed at module scope — see lazySkins.
+const SKINS = lazySkins({
+  [THEME_IDS.ACEBET77]: () => import("../components/themes/acebet77/Acebet77ProfilePage"),
+  [THEME_IDS.UBETCLUB]: () => import("../components/themes/ubetclub/UbetclubProfilePage"),
+  [THEME_IDS.EP369]: () => import("../components/themes/ep369/Ep369ProfilePage"),
+  [THEME_IDS.KGAME99]: () => import("../components/themes/kgame99/Kgame99ProfilePage"),
+  [THEME_IDS.LV918]: () => import("../components/themes/lv918/Lv918ProfilePage"),
+  [THEME_IDS.N1GANG]: () => import("../components/themes/n1gang/N1gangProfilePage"),
+});
 
 const hasValue = (v) => v != null && String(v).trim() !== "";
 
 export default function ProfilePage() {
   const router = useRouter();
   const { userData, profilePicture, profileData } = useUser();
-  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang } = useTheme();
+  const { themeId } = useTheme();
 
-  if (isAcebet77) return <Acebet77ProfilePage />;
-  if (isUbetclub) return <UbetclubProfilePage />;
-  if (isEp369) return <Ep369ProfilePage />;
-  if (isKgame99) return <Kgame99ProfilePage />;
-  if (isLv918) return <Lv918ProfilePage />;
-  if (isN1gang) return <N1gangProfilePage />;
+  const skin = skinFor(SKINS, themeId);
+  if (skin) return skin;
 
   const completion = {
     displayPhoto: hasValue(profilePicture),

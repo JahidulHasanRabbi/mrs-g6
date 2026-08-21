@@ -15,12 +15,18 @@ import { mapSpinResults, mapLuckySpinItems } from "../api/responseMappers";
 import { tokenStorage } from "../api/tokenStorage";
 import { useUser } from "../contexts/UserContext";
 import { useTheme } from "../contexts/ThemeContext";
-import Acebet77SpinPage from "../components/themes/acebet77/Acebet77SpinPage";
-import UbetclubSpinPage from "../components/themes/ubetclub/UbetclubSpinPage";
-import Ep369SpinPage from "../components/themes/ep369/Ep369SpinPage";
-import Kgame99SpinPage from "../components/themes/kgame99/Kgame99SpinPage";
-import Lv918SpinPage from "../components/themes/lv918/Lv918SpinPage";
-import N1gangSpinPage from "../components/themes/n1gang/N1gangSpinPage";
+import { THEME_IDS } from "../config/themes";
+import { lazySkins, skinFor } from "../components/themes/skinRoute";
+
+// One chunk per skin, warmed at module scope — see lazySkins.
+const SKINS = lazySkins({
+  [THEME_IDS.ACEBET77]: () => import("../components/themes/acebet77/Acebet77SpinPage"),
+  [THEME_IDS.UBETCLUB]: () => import("../components/themes/ubetclub/UbetclubSpinPage"),
+  [THEME_IDS.EP369]: () => import("../components/themes/ep369/Ep369SpinPage"),
+  [THEME_IDS.KGAME99]: () => import("../components/themes/kgame99/Kgame99SpinPage"),
+  [THEME_IDS.LV918]: () => import("../components/themes/lv918/Lv918SpinPage"),
+  [THEME_IDS.N1GANG]: () => import("../components/themes/n1gang/N1gangSpinPage"),
+});
 
 function formatSpinReward(result) {
   const name = result?.reward_name || "Reward";
@@ -349,12 +355,9 @@ function DefaultSpinPage() {
 }
 
 export default function SpinPage() {
-  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang } = useTheme();
-  if (isAcebet77) return <Acebet77SpinPage />;
-  if (isUbetclub) return <UbetclubSpinPage />;
-  if (isEp369) return <Ep369SpinPage />;
-  if (isKgame99) return <Kgame99SpinPage />;
-  if (isLv918) return <Lv918SpinPage />;
-  if (isN1gang) return <N1gangSpinPage />;
+  const { themeId } = useTheme();
+
+  const skin = skinFor(SKINS, themeId);
+  if (skin) return skin;
   return <DefaultSpinPage />;
 }

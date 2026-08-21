@@ -18,12 +18,18 @@ import { mapRedemptionItems } from "../api/responseMappers";
 import { tokenStorage } from "../api/tokenStorage";
 import { useUser } from "../contexts/UserContext";
 import { useTheme } from "../contexts/ThemeContext";
-import Acebet77MartPage from "../components/themes/acebet77/Acebet77MartPage";
-import UbetclubMartPage from "../components/themes/ubetclub/UbetclubMartPage";
-import Ep369MartPage from "../components/themes/ep369/Ep369MartPage";
-import Kgame99MartPage from "../components/themes/kgame99/Kgame99MartPage";
-import Lv918MartPage from "../components/themes/lv918/Lv918MartPage";
-import N1gangMartPage from "../components/themes/n1gang/N1gangMartPage";
+import { THEME_IDS } from "../config/themes";
+import { lazySkins, skinFor } from "../components/themes/skinRoute";
+
+// One chunk per skin, warmed at module scope — see lazySkins.
+const SKINS = lazySkins({
+  [THEME_IDS.ACEBET77]: () => import("../components/themes/acebet77/Acebet77MartPage"),
+  [THEME_IDS.UBETCLUB]: () => import("../components/themes/ubetclub/UbetclubMartPage"),
+  [THEME_IDS.EP369]: () => import("../components/themes/ep369/Ep369MartPage"),
+  [THEME_IDS.KGAME99]: () => import("../components/themes/kgame99/Kgame99MartPage"),
+  [THEME_IDS.LV918]: () => import("../components/themes/lv918/Lv918MartPage"),
+  [THEME_IDS.N1GANG]: () => import("../components/themes/n1gang/N1gangMartPage"),
+});
 
 const TIER_NAME_TO_ORDER = {
   starter: 1,
@@ -49,14 +55,10 @@ function resolveUnlockedTierOrder(currentLevel) {
  * page below, unchanged.
  */
 export default function MartPage() {
-  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang } = useTheme();
+  const { themeId } = useTheme();
 
-  if (isAcebet77) return <Acebet77MartPage />;
-  if (isUbetclub) return <UbetclubMartPage />;
-  if (isEp369) return <Ep369MartPage />;
-  if (isKgame99) return <Kgame99MartPage />;
-  if (isLv918) return <Lv918MartPage />;
-  if (isN1gang) return <N1gangMartPage />;
+  const skin = skinFor(SKINS, themeId);
+  if (skin) return skin;
 
   return <DefaultMartPage />;
 }

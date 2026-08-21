@@ -1,19 +1,9 @@
 "use client";
 
+import { Suspense } from "react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { THEME_IDS } from "../../../config/themes";
-import AcebetShell from "../acebet77/AcebetShell";
-import UbetclubShell from "../ubetclub/UbetclubShell";
-import Ep369Shell from "../ep369/Ep369Shell";
-import KgameShell from "../kgame99/KgameShell";
-import Lv918Shell from "../lv918/Lv918Shell";
-import { ACEBET_ASSETS } from "../acebet77/assets";
-import { UBET_ASSETS } from "../ubetclub/assets";
-import { EP369_ASSETS } from "../ep369/assets";
-import { KGAME99_ASSETS } from "../kgame99/assets";
-import { LV918_ASSETS } from "../lv918/assets";
-import N1gangShell from "../n1gang/N1gangShell";
-import { N1GANG_ASSETS } from "../n1gang/assets";
+import { lazySkins } from "../skinRoute";
 
 /**
  * Themed chrome for member pages whose content isn't skinned yet (profile,
@@ -24,31 +14,34 @@ import { N1GANG_ASSETS } from "../n1gang/assets";
  * On the default theme it returns children untouched, so callers keep their own
  * default MRS chrome (AppLayout's header/footer, or the page's own).
  *
- * All five shells share an identical prop signature (bg, onInfoClick, balance,
+ * All six shells share an identical prop signature (bg, onInfoClick, balance,
  * title, showNav, showHeader, contentPadding, bgOverlay), so any of those props
  * pass straight through. The background is each theme's lucky-spin scene, matching
  * the terms-and-conditions page.
+ *
+ * This component sits in the root layout, so it is the one place where bundling
+ * all six shells cost every member on every page — hence the lazy split. Each
+ * chunk carries its own assets map alongside the shell.
  */
-const SHELLS = {
-  [THEME_IDS.ACEBET77]: { Shell: AcebetShell, bg: ACEBET_ASSETS.spin.bg },
-  [THEME_IDS.UBETCLUB]: { Shell: UbetclubShell, bg: UBET_ASSETS.spin.bg },
-  [THEME_IDS.EP369]: { Shell: Ep369Shell, bg: EP369_ASSETS.spin.bg },
-  [THEME_IDS.KGAME99]: { Shell: KgameShell, bg: KGAME99_ASSETS.spin.bg },
-  [THEME_IDS.LV918]: { Shell: Lv918Shell, bg: LV918_ASSETS.spin.bg },
-  [THEME_IDS.N1GANG]: { Shell: N1gangShell, bg: N1GANG_ASSETS.spin.bg },
-};
+const SHELLS = lazySkins({
+  [THEME_IDS.ACEBET77]: () => import("./shells/AcebetShellEntry"),
+  [THEME_IDS.UBETCLUB]: () => import("./shells/UbetclubShellEntry"),
+  [THEME_IDS.EP369]: () => import("./shells/Ep369ShellEntry"),
+  [THEME_IDS.KGAME99]: () => import("./shells/KgameShellEntry"),
+  [THEME_IDS.LV918]: () => import("./shells/Lv918ShellEntry"),
+  [THEME_IDS.N1GANG]: () => import("./shells/N1gangShellEntry"),
+});
 
 export default function ThemedPageShell({ children, ...shellProps }) {
   const { themeId } = useTheme();
-  const entry = SHELLS[themeId];
+  const Shell = SHELLS[themeId];
 
   // Default theme: no themed chrome — caller renders its own.
-  if (!entry) return children;
+  if (!Shell) return children;
 
-  const { Shell, bg } = entry;
   return (
-    <Shell bg={bg} {...shellProps}>
-      {children}
-    </Shell>
+    <Suspense fallback={<div className="min-h-screen w-full skin-backdrop" />}>
+      <Shell {...shellProps}>{children}</Shell>
+    </Suspense>
   );
 }

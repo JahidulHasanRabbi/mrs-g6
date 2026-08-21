@@ -8,22 +8,24 @@ import ErrorDisplay from "../components/ui/ErrorDisplay";
 import { getVipTiers } from "../api/memberApi";
 import { mapVipTiers } from "../api/responseMappers";
 import { useTheme } from "../contexts/ThemeContext";
-import Acebet77VipPage from "../components/themes/acebet77/Acebet77VipPage";
-import UbetclubVipPage from "../components/themes/ubetclub/UbetclubVipPage";
-import Ep369VipPage from "../components/themes/ep369/Ep369VipPage";
-import Kgame99VipPage from "../components/themes/kgame99/Kgame99VipPage";
-import Lv918VipPage from "../components/themes/lv918/Lv918VipPage";
-import N1gangVipPage from "../components/themes/n1gang/N1gangVipPage";
+import { THEME_IDS } from "../config/themes";
+import { lazySkins, skinFor } from "../components/themes/skinRoute";
+
+// One chunk per skin, warmed at module scope — see lazySkins.
+const SKINS = lazySkins({
+  [THEME_IDS.ACEBET77]: () => import("../components/themes/acebet77/Acebet77VipPage"),
+  [THEME_IDS.UBETCLUB]: () => import("../components/themes/ubetclub/UbetclubVipPage"),
+  [THEME_IDS.EP369]: () => import("../components/themes/ep369/Ep369VipPage"),
+  [THEME_IDS.KGAME99]: () => import("../components/themes/kgame99/Kgame99VipPage"),
+  [THEME_IDS.LV918]: () => import("../components/themes/lv918/Lv918VipPage"),
+  [THEME_IDS.N1GANG]: () => import("../components/themes/n1gang/N1gangVipPage"),
+});
 
 export default function VipDetailsPage() {
-  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang } = useTheme();
+  const { themeId } = useTheme();
 
-  if (isAcebet77) return <Acebet77VipPage />;
-  if (isUbetclub) return <UbetclubVipPage />;
-  if (isEp369) return <Ep369VipPage />;
-  if (isKgame99) return <Kgame99VipPage />;
-  if (isLv918) return <Lv918VipPage />;
-  if (isN1gang) return <N1gangVipPage />;
+  const skin = skinFor(SKINS, themeId);
+  if (skin) return skin;
 
   return <DefaultVipDetailsPage />;
 }

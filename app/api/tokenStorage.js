@@ -221,6 +221,9 @@ export const tokenStorage = {
   setRedirectO: (o) => {
     if (typeof window !== 'undefined' && o) {
       localStorage.setItem(STORAGE_KEYS.REDIRECT_O, o);
+      // The origin decides the theme, so subscribers must hear about it here
+      // rather than waiting for the token write that follows the auth request.
+      dispatchAuthChanged();
     }
   },
 

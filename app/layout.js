@@ -120,11 +120,12 @@ export default function RootLayout({
         className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${montserrat.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${sora.variable} ${chakraPetch.variable} ${rajdhani.variable} ${acme.variable} ${rubik.variable} ${berkshireSwash.variable} ${lexend.variable} antialiased bg-black`}
         style={{ fontFamily: '"Times New Roman", serif' }}
       >
-        {/* Pre-hydration theme stamp: mirrors app/config/themes.js so a
-            returning themed member never sees a default-theme flash. */}
+        {/* Pre-hydration theme stamp: mirrors app/config/themes.js — the `o`
+            query param first (a first-time member has nothing stored yet),
+            then the persisted copy. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var o=(localStorage.getItem('mrs_redirect_o')||'').toLowerCase();var t='default';if(o.indexOf('acebet77')>-1)t='acebet77';else if(o.indexOf('ubetclub')>-1)t='ubetclub';else if(o.indexOf('ep369')>-1)t='ep369';else if(o.indexOf('kgame99')>-1)t='kgame99';else if(o.indexOf('lv918')>-1)t='lv918';else if(o.indexOf('n1gang')>-1)t='n1gang';document.documentElement.setAttribute('data-theme',t);}catch(e){}`,
+            __html: `try{var q='';try{q=new URLSearchParams(location.search).get('o')||''}catch(e){}var o=(q||localStorage.getItem('mrs_redirect_o')||'').toLowerCase();var t='default';if(o.indexOf('acebet77')>-1)t='acebet77';else if(o.indexOf('ubetclub')>-1)t='ubetclub';else if(o.indexOf('ep369')>-1)t='ep369';else if(o.indexOf('kgame99')>-1)t='kgame99';else if(o.indexOf('lv918')>-1)t='lv918';else if(o.indexOf('n1gang')>-1)t='n1gang';document.documentElement.setAttribute('data-theme',t);}catch(e){}`,
           }}
         />
         <Contentsquare />

@@ -8,10 +8,12 @@
  * without any code change.
  *
  * NOTE: app/layout.js contains a tiny inline pre-hydration script that mirrors
- * the substring matching below to set <html data-theme="..."> before React
- * mounts (prevents a default-theme flash). Keep the two in sync when adding
- * a theme.
+ * the `o`-then-storage lookup and the substring matching below to set
+ * <html data-theme="..."> before React mounts. Keep the two in sync when
+ * adding a theme.
  */
+
+import { tokenStorage } from '../api/tokenStorage';
 
 export const THEME_IDS = {
   DEFAULT: 'default',
@@ -35,6 +37,20 @@ const ORIGIN_THEME_RULES = [
 ];
 
 /**
+ * Read the `o` origin out of a query string ("?id=1&o=https%3A%2F%2Facebet77.me%2F").
+ * Members land on /auth with the brand already in the URL, so this is the
+ * earliest point the skin can be known — no storage read, no network call.
+ */
+export function originFromSearch(search) {
+  if (!search) return null;
+  try {
+    return new URLSearchParams(search).get('o');
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Resolve a theme id from the origin URL saved at /auth time.
  * Accepts a full URL ("https://acebet77.me"), a bare domain ("acebet77.me"),
  * or null/undefined (returns the default theme).
@@ -52,4 +68,16 @@ export function resolveThemeIdFromOrigin(originUrl) {
 
   const rule = ORIGIN_THEME_RULES.find((r) => hostname.includes(r.match));
   return rule ? rule.themeId : THEME_IDS.DEFAULT;
+}
+
+/**
+ * The member's active skin. Safe to call at module scope on the client — it
+ * reads only location and localStorage — which is what lets a route start
+ * downloading its own skin chunk before React's first render.
+ */
+export function readActiveThemeId() {
+  if (typeof window === 'undefined') return THEME_IDS.DEFAULT;
+  return resolveThemeIdFromOrigin(
+    originFromSearch(window.location.search) || tokenStorage.getRedirectO()
+  );
 }
