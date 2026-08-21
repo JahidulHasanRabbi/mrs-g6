@@ -1,6 +1,5 @@
 "use client";
 
-import { Suspense } from "react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { THEME_IDS } from "../../../config/themes";
 import { lazySkins } from "../skinRoute";
@@ -39,9 +38,7 @@ export default function ThemedPageShell({ children, ...shellProps }) {
   // Default theme: no themed chrome — caller renders its own.
   if (!Shell) return children;
 
-  return (
-    <Suspense fallback={<div className="min-h-screen w-full skin-backdrop" />}>
-      <Shell {...shellProps}>{children}</Shell>
-    </Suspense>
-  );
+  // No local boundary — see skinFor: suspend up to LayoutShell so the current
+  // screen stays put while the shell chunk loads.
+  return <Shell {...shellProps}>{children}</Shell>;
 }

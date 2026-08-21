@@ -50,6 +50,13 @@ export default function AppLayout({ children }) {
     return <>{children}</>;
   }
 
+  // /auth is a full-screen spinner that redirects on its own. Wrapping it in
+  // themed chrome only makes the shell chunk load a screen early, blanking the
+  // page while it arrives.
+  if (pathname === "/auth") {
+    return <>{children}</>;
+  }
+
   // Themed Spin and Terms pages draw their own station shell.
   // — skip the default header/footer chrome like the self-contained game
   // pages below.

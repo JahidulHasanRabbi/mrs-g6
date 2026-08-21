@@ -1,6 +1,6 @@
 "use client";
 
-import { lazy, Suspense } from "react";
+import { lazy } from "react";
 import { readActiveThemeId } from "../../config/themes";
 
 /**
@@ -23,16 +23,14 @@ export function lazySkins(loaders) {
 
 /**
  * The element for this member's skin, or null on the default portal — so a page
- * keeps its `if (skin) return skin;` early return. The Suspense fallback is a
- * bare backdrop in the theme's own base colour (--skin-bg in globals.css), so
- * any warm-up gap reads as the page still painting, never as another brand.
+ * keeps its `if (skin) return skin;` early return.
+ *
+ * Deliberately no Suspense here: a boundary created inside the incoming page is
+ * brand new, so React shows its fallback immediately and the member gets a
+ * blank screen. Suspending up to the persistent boundary in LayoutShell instead
+ * lets React hold the current screen until the chunk lands.
  */
 export function skinFor(skins, themeId) {
   const Skin = skins[themeId];
-  if (!Skin) return null;
-  return (
-    <Suspense fallback={<div className="min-h-screen w-full skin-backdrop" />}>
-      <Skin />
-    </Suspense>
-  );
+  return Skin ? <Skin /> : null;
 }
