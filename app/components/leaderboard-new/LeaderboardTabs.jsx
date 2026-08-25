@@ -1,28 +1,20 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { LEADERBOARD_TYPES, LEADERBOARD_CONFIG } from "./constants";
-
-const TABS = [
-  { key: LEADERBOARD_TYPES.DEPOSIT, label: "Deposit" },
-  { key: LEADERBOARD_TYPES.REFERRER, label: "Referrer" },
-  { key: LEADERBOARD_TYPES.WITHDRAWAL, label: "Withdrawal" },
-];
+import { LEADERBOARD_CONFIG, ENABLED_LEADERBOARD_TYPES } from "./constants";
 
 export default function LeaderboardTabs({ activeTab, onTabChange }) {
-  const activeConfig = LEADERBOARD_CONFIG[activeTab];
-
   return (
     <div className="flex w-full rounded-full overflow-hidden border border-[#333] bg-[rgba(20,20,20,0.8)]">
-      {TABS.map((tab) => {
-        const isActive = tab.key === activeTab;
-        const config = LEADERBOARD_CONFIG[tab.key];
+      {ENABLED_LEADERBOARD_TYPES.map((type) => {
+        const isActive = type === activeTab;
+        const config = LEADERBOARD_CONFIG[type];
 
         return (
           <button
-            key={tab.key}
-            onClick={() => onTabChange(tab.key)}
-            className="flex-1 relative py-2.5 px-3 text-sm font-semibold transition-colors duration-200"
+            key={type}
+            onClick={() => onTabChange(type)}
+            className="relative min-w-0 flex-1 px-1 py-2.5 text-[11px] font-semibold transition-colors duration-200 min-[390px]:px-3 min-[390px]:text-sm"
             style={{
               fontFamily: "var(--font-inter)",
               color: isActive ? "#fff" : "#999",
@@ -36,7 +28,7 @@ export default function LeaderboardTabs({ activeTab, onTabChange }) {
                 transition={{ type: "spring", stiffness: 500, damping: 35 }}
               />
             )}
-            <span className="relative z-10">{tab.label}</span>
+            <span className="relative z-10">{config.label}</span>
           </button>
         );
       })}

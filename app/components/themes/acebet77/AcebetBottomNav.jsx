@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { memo } from 'react';
 import { tokenStorage } from '@/app/api/tokenStorage';
 import { ACEBET_ASSETS, ACEBET_COLORS } from './assets';
+import { NationalDayBottomNavOverlay } from '../../phase4/NationalDayChrome';
 
 // Sized for the 475px member column (Figma frame is 402 wide); min() keeps
 // items from crowding on narrower phones — same trick as the default FooterNav.
@@ -110,8 +111,9 @@ function AcebetBottomNav() {
         alt=""
         className="absolute left-[-1%] right-[-1%] top-[-8%] bottom-0 w-[102%] h-[108%] max-w-none"
       />
+      <NationalDayBottomNavOverlay />
       <nav
-        className="relative flex items-end justify-between px-[16px] h-full pb-[8px] pointer-events-auto"
+        className="relative z-10 flex items-end justify-between px-[16px] h-full pb-[8px] pointer-events-auto"
         role="navigation"
         aria-label="Acebet77 navigation"
       >

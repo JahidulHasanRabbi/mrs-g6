@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { memo } from 'react';
 import { FOOTER_CONFIG, FOOTER_THEME } from './footerConfig';
+import { NationalDayBottomNavOverlay } from '../phase4/NationalDayChrome';
 
 /**
  * FooterNavItem Component
@@ -197,9 +198,11 @@ function FooterNav({ showAnimation = false }) {
         />
       </svg>
 
+      <NationalDayBottomNavOverlay />
+
       {/* Navigation Items */}
       <nav
-        className="relative flex items-center justify-between px-4 h-full"
+        className="relative z-10 flex items-center justify-between px-4 h-full"
         role="navigation"
         aria-label="Footer navigation"
       >

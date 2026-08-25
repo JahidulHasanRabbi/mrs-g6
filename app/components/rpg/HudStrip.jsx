@@ -3,7 +3,7 @@
 // HUD strip under the top bar (Figma 2026:3042): level badge + EXP bar +
 // token / BP counters. Pure presentation — all values arrive via `profile`.
 
-import { RPG_COLORS, RPG_FONTS, RPG_GRADIENTS } from "./constants";
+import { RPG_COLORS, RPG_FONTS } from "./constants";
 import { RPG_IMAGES } from "./rpgAssets";
 import { ProgressBar } from "./primitives";
 
@@ -47,14 +47,7 @@ export default function HudStrip({ profile }) {
 
       {/* Tokens */}
       <div className="flex shrink-0 items-center gap-[6px]">
-        <div
-          className="flex size-[26px] items-center justify-center rounded-full border"
-          style={{ background: RPG_GRADIENTS.coin, borderColor: RPG_COLORS.coinBorder }}
-        >
-          <span className="text-[11px] font-bold" style={{ color: RPG_COLORS.coinText, fontFamily: RPG_FONTS.display }}>
-            T
-          </span>
-        </div>
+        <img src={RPG_IMAGES.icons.token} alt="" className="size-[26px] object-contain" />
         <div className="flex flex-col">
           <span className="text-[8px] tracking-[1px]" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
             TOKEN

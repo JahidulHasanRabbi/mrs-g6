@@ -1,13 +1,9 @@
 "use client";
 
+import { Suspense } from "react";
 import { useTheme } from "../../../contexts/ThemeContext";
 import { THEME_IDS } from "../../../config/themes";
-import AcebetDialog from "../acebet77/AcebetDialog";
-import UbetDialog from "../ubetclub/UbetDialog";
-import Ep369Dialog from "../ep369/Ep369Dialog";
-import KgameDialog from "../kgame99/KgameDialog";
-import Lv918Dialog from "../lv918/Lv918Dialog";
-import N1gangDialog from "../n1gang/N1gangDialog";
+import { lazySkins } from "../skinRoute";
 
 /**
  * Resolves the active theme's modal, mirroring how <ThemedActionButton> resolves
@@ -18,19 +14,24 @@ import N1gangDialog from "../n1gang/N1gangDialog";
  *
  * On the default theme there is no themed dialog — `fallback` renders instead.
  */
-const DIALOGS = {
-  [THEME_IDS.ACEBET77]: AcebetDialog,
-  [THEME_IDS.UBETCLUB]: UbetDialog,
-  [THEME_IDS.EP369]: Ep369Dialog,
-  [THEME_IDS.KGAME99]: KgameDialog,
-  [THEME_IDS.LV918]: Lv918Dialog,
-  [THEME_IDS.N1GANG]: N1gangDialog,
-};
+// One chunk per skin, warmed at module scope — see lazySkins.
+const DIALOGS = lazySkins({
+  [THEME_IDS.ACEBET77]: () => import("../acebet77/AcebetDialog"),
+  [THEME_IDS.UBETCLUB]: () => import("../ubetclub/UbetDialog"),
+  [THEME_IDS.EP369]: () => import("../ep369/Ep369Dialog"),
+  [THEME_IDS.KGAME99]: () => import("../kgame99/KgameDialog"),
+  [THEME_IDS.LV918]: () => import("../lv918/Lv918Dialog"),
+  [THEME_IDS.N1GANG]: () => import("../n1gang/N1gangDialog"),
+});
 
 export default function ThemedDialog({ children, fallback = null, ...props }) {
   const { themeId } = useTheme();
   const Dialog = DIALOGS[themeId];
 
   if (!Dialog) return fallback;
-  return <Dialog {...props}>{children}</Dialog>;
+  return (
+    <Suspense fallback={fallback}>
+      <Dialog {...props}>{children}</Dialog>
+    </Suspense>
+  );
 }

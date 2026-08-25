@@ -13,7 +13,16 @@ import LeaderboardView from "../components/leaderboard-new/LeaderboardView";
 import {
   LEADERBOARD_TYPES,
   LEADERBOARD_CONFIG,
+  ENABLED_LEADERBOARD_TYPES,
 } from "../components/leaderboard-new/constants";
+import { formatAmount } from "../components/leaderboard-new/format";
+import {
+  TURNOVER_PREVIEW_BOARD,
+  TURNOVER_EVENT_COUNTDOWN,
+  PREVIEW_MY_RANK,
+  PREVIEW_MY_RANK_STATES,
+} from "../components/leaderboard-new/turnoverPreview";
+import { PHASE4_PREVIEW_ENABLED, TURNOVER_MAINTENANCE } from "../config/phase4";
 import {
   getPublicDepositRanking,
   getPublicWithdrawRanking,
@@ -49,7 +58,15 @@ const BOARD_META = {
   },
 };
 
-const EMPTY_BOARD = { top3: [], table: [], endDate: null, notes: [], terms: [], infoTerms: [] };
+const EMPTY_BOARD = {
+  top3: [],
+  table: [],
+  endDate: null,
+  notes: [],
+  terms: [],
+  infoTerms: [],
+  myRank: null,
+};
 
 function asList(response) {
   if (Array.isArray(response)) return response;
@@ -61,12 +78,6 @@ function splitLines(text) {
     .split(/\r?\n+/)
     .map((s) => s.trim())
     .filter(Boolean);
-}
-
-function formatAmount(amount) {
-  if (amount == null) return "";
-  const num = Number(String(amount).replace(/,/g, ""));
-  return Number.isFinite(num) ? num.toLocaleString("en-US") : String(amount);
 }
 
 function formatPrize(reward) {
@@ -167,15 +178,31 @@ function Top20LeaderboardPageInner() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { userData } = useUser();
+  const { userData, profilePicture } = useUser();
   const { isThemed } = useTheme();
+  const tabParam = searchParams.get("tab");
+  const activeTab =
+    tabParam && ENABLED_LEADERBOARD_TYPES.includes(tabParam)
+      ? tabParam
+      : LEADERBOARD_TYPES.DEPOSIT;
+  const isTurnoverPreview =
+    PHASE4_PREVIEW_ENABLED && activeTab === LEADERBOARD_TYPES.TURNOVER;
+  // Review affordance for the mock My Rank states (?myrank=top|unranked).
+  // Inert unless the preview flag is on, and gone with the mock data.
+  const myRankOverride = PHASE4_PREVIEW_ENABLED
+    ? PREVIEW_MY_RANK_STATES[searchParams.get("myrank")] ?? null
+    : null;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [data, setData] = useState(EMPTY_BOARD);
   const [loading, setLoading] = useState(true);
   // null = not checked yet, so the maintenance overlay never flashes on load.
   const [maintenance, setMaintenance] = useState(null);
-  const isMaintenance = maintenance === true;
+  // Requirement 6: Turnover answers to its own switch, so putting the shared
+  // leaderboard into maintenance must not take the event board down with it.
+  const isMaintenance = isTurnoverPreview
+    ? TURNOVER_MAINTENANCE
+    : maintenance === true;
   // Cache each tab's loaded board so switching back doesn't refetch.
   const boardCache = useRef({});
 
@@ -183,10 +210,14 @@ function Top20LeaderboardPageInner() {
   // three boards (Deposit/Withdraw/Referral) at once — there's no per-type
   // switch, so this one check gates the whole page.
   useEffect(() => {
+    // A direct Turnover-preview visit never calls the shared status endpoint;
+    // once it has answered, leaving that tab must not refetch it.
+    if (isTurnoverPreview || maintenance !== null) return undefined;
     getPublicLeaderboardStatus()
       .then((s) => setMaintenance(s?.is_open === false))
       .catch(() => setMaintenance(false));
-  }, []);
+    return undefined;
+  }, [isTurnoverPreview, maintenance]);
 
   useEffect(() => {
     if (!isMaintenance || typeof document === "undefined") return undefined;
@@ -201,12 +232,6 @@ function Top20LeaderboardPageInner() {
     };
   }, [isMaintenance]);
 
-  const tabParam = searchParams.get("tab");
-  const activeTab =
-    tabParam && Object.values(LEADERBOARD_TYPES).includes(tabParam)
-      ? tabParam
-      : LEADERBOARD_TYPES.DEPOSIT;
-
   const handleTabChange = useCallback(
     (tab) => {
       const params = new URLSearchParams();
@@ -218,6 +243,11 @@ function Top20LeaderboardPageInner() {
   );
 
   useEffect(() => {
+    if (isTurnoverPreview) {
+      setData(TURNOVER_PREVIEW_BOARD);
+      setLoading(false);
+      return undefined;
+    }
     if (maintenance !== false) return undefined;
     let cancelled = false;
     // Already loaded this tab - show cached data, skip the API calls.
@@ -257,6 +287,10 @@ function Top20LeaderboardPageInner() {
         notes,
         infoTerms,
         terms: splitLines(mainTerms?.terms_and_conditions),
+        // My Rank has no endpoint yet. While the preview flag is on the panel
+        // is filled with mock values (tagged PREVIEW in the UI); with the flag
+        // off it stays null and the section doesn't render.
+        myRank: PHASE4_PREVIEW_ENABLED ? PREVIEW_MY_RANK[activeTab] ?? null : null,
       };
       boardCache.current[activeTab] = board;
       setData(board);
@@ -265,7 +299,7 @@ function Top20LeaderboardPageInner() {
     return () => {
       cancelled = true;
     };
-  }, [activeTab, maintenance]);
+  }, [activeTab, isTurnoverPreview, maintenance]);
 
   const config = LEADERBOARD_CONFIG[activeTab];
 
@@ -345,10 +379,14 @@ function Top20LeaderboardPageInner() {
               tableEntries={data.table}
               currentUserRank={null}
               campaignEndDate={data.endDate}
-              periodLabel=""
+              periodLabel={config.eventPeriod || data.periodLabel || ""}
               updateNotes={data.notes}
               terms={data.terms}
               loading={loading}
+              myRank={myRankOverride ?? data.myRank}
+              memberName={userData.name}
+              profilePicture={profilePicture}
+              countdownLabel={isTurnoverPreview ? TURNOVER_EVENT_COUNTDOWN.label : undefined}
             />
           </AnimatePresence>
         </div>

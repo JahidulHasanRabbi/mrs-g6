@@ -8,6 +8,8 @@
  * Key shape mirrors acebet77's map exactly so the mirrored components resolve
  * the same keys — only the art + palette differ.
  */
+import { PHASE4_ASSETS } from '../../../config/phase4';
+
 const BASE = '/assets/themes/lv918';
 
 export const LV918_ASSETS = {
@@ -20,7 +22,8 @@ export const LV918_ASSETS = {
     dialogFrameTall: `${BASE}/ui/dialog-frame-tall.png`,
     btnGold: `${BASE}/ui/btn-gold.png`,
     iconGift: `${BASE}/ui/icon-gift.svg`,
-    iconCoins: `${BASE}/ui/icon-coins.svg`,
+    // Phase 4: the token art is shared across every station.
+    iconCoins: PHASE4_ASSETS.token,
     iconParty: `${BASE}/ui/icon-party.svg`,
     jackpotPanel: `${BASE}/ui/jackpot-panel.png`,
   },

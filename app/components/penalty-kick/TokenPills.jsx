@@ -1,7 +1,8 @@
 "use client";
 
-import { COLORS, ICONS } from "./constants";
+import { COLORS } from "./constants";
 import { usePkColors } from "./usePkColors";
+import { PHASE4_ASSETS } from "../../config/phase4";
 
 function formatTokenAmount(value) {
   const amount = typeof value === "number" ? value : Number(String(value ?? "").replace(/,/g, ""));
@@ -54,21 +55,7 @@ function PillIcon({ iconSrc, iconBg }) {
           "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)",
       }}
     >
-      <span
-        aria-hidden="true"
-        className="block h-[14px] w-[14px] bg-current"
-        style={{
-          color: "#fff",
-          WebkitMaskImage: `url(${iconSrc})`,
-          WebkitMaskRepeat: "no-repeat",
-          WebkitMaskPosition: "center",
-          WebkitMaskSize: "contain",
-          maskImage: `url(${iconSrc})`,
-          maskRepeat: "no-repeat",
-          maskPosition: "center",
-          maskSize: "contain",
-        }}
-      />
+      <img aria-hidden="true" src={iconSrc} alt="" className="h-6 w-6 object-contain" />
     </div>
   );
 }
@@ -92,7 +79,7 @@ export default function TokenPills({ tokens = 0, perShot = 0 }) {
           border: "1px solid rgba(255,255,255,0.2)",
         }}
       >
-        <PillIcon iconSrc={ICONS.coin} iconBg={COLORS.goldIcon} />
+        <PillIcon iconSrc={PHASE4_ASSETS.token} iconBg={COLORS.goldIcon} />
         <PillBody
           label="Tokens"
           value={formatTokenAmount(tokens)}
@@ -118,7 +105,7 @@ export default function TokenPills({ tokens = 0, perShot = 0 }) {
           labelColor={colors.textMuted}
           align="right"
         />
-        <PillIcon iconSrc={ICONS.flag} iconBg={colors.primary} />
+        <PillIcon iconSrc={PHASE4_ASSETS.token} iconBg={colors.primary} />
       </div>
     </div>
   );

@@ -14,6 +14,7 @@ import {
 } from "../components/penalty-kick/missions/data";
 import { useUser } from "../contexts/UserContext";
 import { useTheme } from "../contexts/ThemeContext";
+import { PHASE4_ASSETS } from "../config/phase4";
 import ThemedPageShell from "../components/themes/shared/ThemedPageShell";
 import ThemedActionButton from "../components/themes/shared/ThemedActionButton";
 import { HOME_ASSETS } from "../components/home/homeAssets";
@@ -30,7 +31,7 @@ import {
   MISSION_TAB_BY_CATEGORY,
 } from "../config/missionOptions";
 
-const TOKEN_ICON = "/assets/penalty-kick/missions/token-icon.svg";
+const TOKEN_ICON = PHASE4_ASSETS.token;
 const HISTORY_ICON = "/assets/penalty-kick/missions/icon-history.svg";
 const TAB_FRAME = "/assets/penalty-kick/missions/tab-active.png";
 
@@ -394,7 +395,7 @@ export default function MissionsPage() {
                 src={TOKEN_ICON}
                 alt=""
                 aria-hidden="true"
-                style={{ width: 18.33, height: 13.33 }}
+                style={{ width: 18.33, height: 13.33, objectFit: "contain" }}
               />
               <span
                 className="leading-[24px]"

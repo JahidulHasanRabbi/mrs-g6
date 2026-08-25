@@ -3,6 +3,8 @@
  * node group 101:*). Enchanted emerald-forest skin.
  * All files live under public/assets/themes/ep369/.
  */
+import { PHASE4_ASSETS } from '../../../config/phase4';
+
 const BASE = '/assets/themes/ep369';
 
 export const EP369_ASSETS = {
@@ -15,7 +17,8 @@ export const EP369_ASSETS = {
     btnGreen: `${BASE}/ui/btn-green.png`, // green plaque, gold text
     btnGold: `${BASE}/ui/btn-gold.png`,   // gold plaque, dark text
     iconParty: `${BASE}/ui/icon-party.svg`,
-    iconCoin: `${BASE}/ui/icon-coin.svg`,
+    // Phase 4: the token art is shared across every station.
+    iconCoin: PHASE4_ASSETS.token,
   },
   nav: {
     bar: `${BASE}/nav/nav-bar.svg`,

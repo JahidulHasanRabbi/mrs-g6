@@ -15,6 +15,8 @@ import MenuIcon from "./MenuIcon";
  * @param {string} props.label - Menu item label
  * @param {string} [props.link] - Navigation link
  * @param {string} [props.action] - Action type (e.g. 'logout')
+ * @param {string} [props.badge] - Optional compact status badge
+ * @param {string} [props.subtitle] - Optional secondary line
  * @param {() => void} [props.onClose] - Close callback
  * @param {boolean} [props.disabled] - Whether item is disabled
  */
@@ -23,6 +25,8 @@ function MenuItem({
   label,
   link,
   action,
+  badge,
+  subtitle,
   onClose,
   onAction,
   disabled = false,
@@ -90,11 +94,23 @@ function MenuItem({
       >
         <MenuIcon src={icon} size={iconSize} />
       </motion.div>
-      <span
-        className={`${textSize} font-['Times_New_Roman'] leading-[1.5] tracking-[-0.11px]`}
-        style={{ fontFamily: '"Times New Roman", serif', color: appearance.itemText }}
-      >
-        {label}
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-1.5">
+          <span
+            className={`${textSize} truncate font-['Times_New_Roman'] leading-[1.5] tracking-[-0.11px]`}
+            style={{ fontFamily: '"Times New Roman", serif', color: appearance.itemText }}
+          >
+            {label}
+          </span>
+          {badge && (
+            <span className="rounded-full bg-[#e9af41] px-1.5 py-0.5 text-[7px] font-bold leading-none tracking-[0.5px] text-[#07190d]">
+              {badge}
+            </span>
+          )}
+        </span>
+        {subtitle && (
+          <span className="block text-[9px] leading-3 text-white/60">{subtitle}</span>
+        )}
       </span>
     </motion.div>
   );

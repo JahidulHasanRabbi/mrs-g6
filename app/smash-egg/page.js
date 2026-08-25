@@ -16,12 +16,18 @@ import { HamburgerMenu } from "../components/hamburger";
 import { SMASH_EGG_ASSETS } from "../components/smash-egg/smashEggAssets";
 import SmashEggResultModal from "../components/smash-egg/SmashEggResultModal";
 import { useTheme } from "../contexts/ThemeContext";
-import Acebet77SmashEggPage from "../components/themes/acebet77/Acebet77SmashEggPage";
-import UbetclubSmashEggPage from "../components/themes/ubetclub/UbetclubSmashEggPage";
-import Ep369SmashEggPage from "../components/themes/ep369/Ep369SmashEggPage";
-import Kgame99SmashEggPage from "../components/themes/kgame99/Kgame99SmashEggPage";
-import Lv918SmashEggPage from "../components/themes/lv918/Lv918SmashEggPage";
-import N1gangSmashEggPage from "../components/themes/n1gang/N1gangSmashEggPage";
+import { THEME_IDS } from "../config/themes";
+import { lazySkins, skinFor } from "../components/themes/skinRoute";
+
+// One chunk per skin, warmed at module scope — see lazySkins.
+const SKINS = lazySkins({
+  [THEME_IDS.ACEBET77]: () => import("../components/themes/acebet77/Acebet77SmashEggPage"),
+  [THEME_IDS.UBETCLUB]: () => import("../components/themes/ubetclub/UbetclubSmashEggPage"),
+  [THEME_IDS.EP369]: () => import("../components/themes/ep369/Ep369SmashEggPage"),
+  [THEME_IDS.KGAME99]: () => import("../components/themes/kgame99/Kgame99SmashEggPage"),
+  [THEME_IDS.LV918]: () => import("../components/themes/lv918/Lv918SmashEggPage"),
+  [THEME_IDS.N1GANG]: () => import("../components/themes/n1gang/N1gangSmashEggPage"),
+});
 import { useSmashEggGame, HISTORY_PAGE_SIZE } from "../components/smash-egg/useSmashEggGame";
 
 function DefaultSmashEggPage() {
@@ -215,12 +221,9 @@ function DefaultSmashEggPage() {
 }
 
 export default function SmashEggPage() {
-  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang } = useTheme();
-  if (isAcebet77) return <Acebet77SmashEggPage />;
-  if (isUbetclub) return <UbetclubSmashEggPage />;
-  if (isEp369) return <Ep369SmashEggPage />;
-  if (isKgame99) return <Kgame99SmashEggPage />;
-  if (isLv918) return <Lv918SmashEggPage />;
-  if (isN1gang) return <N1gangSmashEggPage />;
+  const { themeId } = useTheme();
+
+  const skin = skinFor(SKINS, themeId);
+  if (skin) return skin;
   return <DefaultSmashEggPage />;
 }

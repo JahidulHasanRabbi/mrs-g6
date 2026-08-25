@@ -1,17 +1,18 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { tokenStorage } from '../api/tokenStorage';
 import { onAuthChanged } from '../api/authEvents';
-import { THEME_IDS, resolveThemeIdFromOrigin } from '../config/themes';
+import { THEME_IDS, readActiveThemeId } from '../config/themes';
 
 /**
  * Origin-based theme engine.
  *
- * Reads the origin site persisted by /auth (tokenStorage.getRedirectO) and
- * exposes the resolved theme id to the member portal. Re-resolves whenever a
- * new auth happens (mrs_auth_changed), so switching wallets switches skins
- * without a reload.
+ * Resolves the skin from the persisted origin first and uses the `o` origin on
+ * the /auth URL as the first-time visitor fallback. Reading the URL
+ * keeps the skin off the critical path of the token request — the brand is in
+ * the address bar from the first byte, so the member never renders default
+ * chrome while auth is in flight. Re-resolves on mrs_auth_changed, so
+ * switching wallets switches skins without a reload.
  */
 const ThemeContext = createContext({
   themeId: THEME_IDS.DEFAULT,
@@ -32,29 +33,14 @@ const ThemeContext = createContext({
 // belongs to N1GANG must keep the N1GANG skin when they open a link shared
 // from KGAME99 — the claim link never switches an existing session's theme.
 // The link's `o` is only the fallback, for a visitor who has no session yet.
-function originFromUrl() {
-  if (typeof window === 'undefined') return null;
-  try {
-    return new URL(window.location.href).searchParams.get('o');
-  } catch {
-    return null;
-  }
-}
-
-function currentThemeId() {
-  return resolveThemeIdFromOrigin(tokenStorage.getRedirectO() || originFromUrl());
-}
-
 export function ThemeProvider({ children }) {
-  // Lazy init so a returning member gets their skin on first client render
-  // (SSR always renders default; the pre-hydration script in app/layout.js
-  // keeps <html data-theme> correct before paint).
-  const [themeId, setThemeId] = useState(() =>
-    typeof window === 'undefined' ? THEME_IDS.DEFAULT : currentThemeId()
-  );
+  // Lazy init so the first client render is already themed (SSR always renders
+  // default; the pre-hydration script in app/layout.js keeps <html data-theme>
+  // correct before paint).
+  const [themeId, setThemeId] = useState(readActiveThemeId);
 
   useEffect(() => {
-    const sync = () => setThemeId(currentThemeId());
+    const sync = () => setThemeId(readActiveThemeId());
     sync();
     const unsubscribe = onAuthChanged(sync);
     return unsubscribe;

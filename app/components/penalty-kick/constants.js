@@ -52,8 +52,6 @@ export const ICONS = {
   volumeOff: "/assets/penalty-kick/icons/mdi-volume-off.svg",
   play: "/assets/penalty-kick/icons/material-symbols-play-arrow-rounded.svg",
   soccer: "/assets/penalty-kick/icons/mdi-soccer.svg",
-  coin: "/assets/penalty-kick/icons/iconoir-coins.svg",
-  flag: "/assets/penalty-kick/icons/material-symbols-flag.svg",
   close: "/assets/penalty-kick/icons/mdi-close.svg",
 };
 

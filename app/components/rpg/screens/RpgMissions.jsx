@@ -18,12 +18,7 @@ const TAB_LABELS = { daily: "DAILY", weekly: "WEEKLY", monthly: "MONTHLY", achie
 
 function MissionIcon({ mission }) {
   if (mission.metric === "deposit") {
-    return (
-      <span
-        className="inline-block size-[22px] rounded-full border"
-        style={{ background: RPG_GRADIENTS.coin, borderColor: RPG_COLORS.coinBorder }}
-      />
-    );
+    return <img src={RPG_IMAGES.icons.token} alt="" className="size-[22px] object-contain" />;
   }
   return <img src={RPG_IMAGES.icons.bpGem} alt="" className="size-[22px]" />;
 }

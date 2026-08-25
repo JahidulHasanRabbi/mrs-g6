@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { memo } from 'react';
 import { tokenStorage } from '@/app/api/tokenStorage';
 import { EP369_ASSETS } from './assets';
+import { NationalDayBottomNavOverlay } from '../../phase4/NationalDayChrome';
 
 const fluid = (px) => `min(${px}px, ${((px / 475) * 100).toFixed(2)}vw)`;
 
@@ -97,8 +98,9 @@ function Ep369BottomNav() {
         alt=""
         className="absolute left-[-1%] right-[-1%] top-[-8%] bottom-0 w-[102%] h-[108%] max-w-none"
       />
+      <NationalDayBottomNavOverlay />
       <nav
-        className="relative flex items-end justify-between px-[14px] h-full pb-[8px] pointer-events-auto"
+        className="relative z-10 flex items-end justify-between px-[14px] h-full pb-[8px] pointer-events-auto"
         role="navigation"
         aria-label="EP369 navigation"
       >

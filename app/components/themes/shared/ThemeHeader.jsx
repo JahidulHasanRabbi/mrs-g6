@@ -5,6 +5,9 @@ import { usePathname } from 'next/navigation';
 import ProfileFrame from '../../profile/ProfileFrame';
 import { PROFILE_ASSETS } from '../../profile/profileAssets';
 import { useUser } from '../../../contexts/UserContext';
+import { useTheme } from '../../../contexts/ThemeContext';
+import { PHASE4_ASSETS } from '../../../config/phase4';
+import HeaderBalances from '../../header/HeaderBalances';
 
 /**
  * Shared themed top app bar for the member game pages (acebet77 / ubetclub /
@@ -31,7 +34,7 @@ function formatBattlePoints(value) {
 export default function ThemeHeader({
   hamburgerIcon,
   infoIcon,
-  coinIcon,
+  coinIcon = PHASE4_ASSETS.token,
   onMenuClick,
   onInfoClick,
   balance = null,
@@ -45,11 +48,14 @@ export default function ThemeHeader({
 }) {
   const pathname = usePathname();
   const { userData, profilePicture, selectedFrameId } = useUser();
+  const { themeId } = useTheme();
   const battlePoints = userData?.battlePoints;
   // Default rule: hide the pill on the themed home page, which has its own
   // layout for it. An explicit prop overrides that — the redeem screen also
   // lives at "/" (it is app/page.js with ?reward=) but does want the pill.
   const showBp = showBattlePoints ?? pathname !== '/';
+  const showFigmaBalances =
+    showBp && balance !== null && balanceAlign === 'right';
 
   return (
     <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[475px] h-[64px] z-40 flex items-center justify-between px-4">
@@ -92,7 +98,7 @@ export default function ThemeHeader({
       {/* Centre: optional balance pill (default alignment) */}
       {balance !== null && balanceAlign === 'center' && (
         <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 h-[38px] px-4 rounded-full border border-[rgba(255,225,109,0.3)] bg-[rgba(57,53,40,0.85)] backdrop-blur-[6px]">
-          {coinIcon && <img src={coinIcon} alt="" className="w-[16px] h-[16px]" />}
+          <img src={coinIcon} alt="" className="w-[18px] h-[18px] object-contain" />
           <span className="text-[15px] font-semibold" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: '#ffe16d' }}>
             {formatBalance(balance)}
           </span>
@@ -101,13 +107,19 @@ export default function ThemeHeader({
 
       {/* Right: optional balance pill (right alignment) + profile/info button */}
       <div className="relative flex items-center gap-2">
-        {showBp && (
+        {showFigmaBalances ? (
+          <HeaderBalances
+            themeId={themeId}
+            battlePoints={battlePoints}
+            balance={balance}
+          />
+        ) : showBp ? (
           <div
             className="flex h-[36px] min-w-[70px] max-w-[92px] items-center justify-center gap-1 rounded-full border border-[rgba(255,225,109,0.3)] bg-[rgba(57,53,40,0.85)] px-2 backdrop-blur-[6px]"
             aria-label={`${formatBattlePoints(battlePoints)} Battle Points`}
           >
             <img
-              src="/assets/rpg/icons/bp-gem.svg"
+              src={PHASE4_ASSETS.battlePoint}
               alt=""
               className="h-[18px] w-[18px] shrink-0 object-contain"
             />
@@ -118,16 +130,16 @@ export default function ThemeHeader({
               {formatBattlePoints(battlePoints)}
             </span>
           </div>
-        )}
-        {balance !== null && balanceAlign === 'right' && (
+        ) : null}
+        {!showFigmaBalances && balance !== null && balanceAlign === 'right' && (
           <div className="flex items-center gap-2 h-[36px] px-3 rounded-full border border-[rgba(255,225,109,0.3)] bg-[rgba(57,53,40,0.85)] backdrop-blur-[6px]">
-            {coinIcon && <img src={coinIcon} alt="" className="w-[16px] h-[16px]" />}
+            <img src={coinIcon} alt="" className="w-[18px] h-[18px] object-contain" />
             <span className="text-[14px] font-semibold" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: '#ffe16d' }}>
               {formatBalance(balance)}
             </span>
           </div>
         )}
-        {onInfoClick ? (
+        {!showFigmaBalances && (onInfoClick ? (
           profileMode ? (
             <ProfileFrame
               src={profilePicture || PROFILE_ASSETS.profileAvatar}
@@ -147,7 +159,7 @@ export default function ThemeHeader({
           )
         ) : (
           <span className="w-9 h-9" />
-        )}
+        ))}
       </div>
     </header>
   );

@@ -1,7 +1,10 @@
+import { PHASE4_ASSETS, PHASE4_EVENT, PHASE4_PREVIEW_ENABLED } from "../../config/phase4";
+
 export const LEADERBOARD_TYPES = {
   DEPOSIT: 'deposit',
   REFERRER: 'referrer',
   WITHDRAWAL: 'withdrawal',
+  TURNOVER: 'turnover',
 };
 
 export const LEADERBOARD_CONFIG = {
@@ -10,6 +13,8 @@ export const LEADERBOARD_CONFIG = {
     title: 'Deposit Leaderboard',
     valueLabel: 'Deposit',
     tableValueHeader: 'TOTAL DEPOSIT',
+    myRankMetricLabel: 'Total Deposit',
+    myRankMetricKind: 'currency',
     color: '#ff8c00',
     colorLight: '#ffb965',
     colorMuted: '#ddc1ae',
@@ -38,6 +43,9 @@ export const LEADERBOARD_CONFIG = {
     title: 'Referrer Leaderboard',
     valueLabel: 'Referral Score',
     tableValueHeader: 'REFERRAL SCORE',
+    myRankMetricLabel: 'Total Referrer',
+    myRankMetricKind: 'count',
+    myRankGapUnit: 'referrers',
     color: '#007bff',
     colorLight: '#65aaff',
     colorMuted: '#ddc1ae',
@@ -66,6 +74,8 @@ export const LEADERBOARD_CONFIG = {
     title: 'Withdrawal',
     valueLabel: 'Withdrawal',
     tableValueHeader: 'TOTAL WITHDRAWAL',
+    myRankMetricLabel: 'Total Withdraw',
+    myRankMetricKind: 'currency',
     color: '#ae00ff',
     colorLight: '#c850ff',
     colorMuted: '#ddc1ae',
@@ -89,4 +99,48 @@ export const LEADERBOARD_CONFIG = {
     showCountdown: false,
     showPrizeColumn: false,
   },
+  [LEADERBOARD_TYPES.TURNOVER]: {
+    label: 'Turnover',
+    title: 'Turnover Leaderboard',
+    valueLabel: 'Total Turnover',
+    tableValueHeader: 'TOTAL TURNOVER',
+    myRankMetricLabel: 'Total Turnover',
+    myRankMetricKind: 'currency',
+    // Client-supplied copy for the no-activity state (13/08). The other three
+    // boards have no approved wording yet, so they render without a hint.
+    myRankEmptyHint: 'Complete a valid bet to enter the ranking.',
+    color: '#e9af41',
+    colorLight: '#f9d774',
+    colorMuted: '#ddc1ae',
+    tableBorder: '#745c2e',
+    rowBorder: '#5c4a2a',
+    headerBg: 'rgba(233,175,65,0.2)',
+    rank1Bg: '#e9af41',
+    rank1Shadow: 'rgba(233,175,65,0.5)',
+    rank1Border: '#e9af41',
+    rank2Color: '#83aeea',
+    rank2Bg: '#83aeea',
+    rank2Border: '#83aeea',
+    rank2TextDark: '#17355b',
+    rank2PrizeColor: '#c9dcf7',
+    rank3Color: '#d58a63',
+    rank3Bg: '#d58a63',
+    rank3Border: '#d58a63',
+    rank3TextDark: '#522512',
+    rank3PrizeColor: '#efbea4',
+    icon: PHASE4_ASSETS.token,
+    showCountdown: true,
+    showPrizeColumn: false,
+    eventBadge: PHASE4_EVENT.badge,
+    eventPeriod: PHASE4_EVENT.periodLabel,
+    // Gated out of the tab strip and the menu until the board has a real
+    // endpoint; the notice goes away with the fixture, not with a prop.
+    previewOnly: true,
+    previewNotice: 'Preview data — not connected to live ranking results.',
+  },
 };
+
+// Boards the member can actually reach. Turnover is fixture-only for now.
+export const ENABLED_LEADERBOARD_TYPES = Object.keys(LEADERBOARD_CONFIG).filter(
+  (type) => !LEADERBOARD_CONFIG[type].previewOnly || PHASE4_PREVIEW_ENABLED
+);

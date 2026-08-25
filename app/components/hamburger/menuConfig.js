@@ -44,6 +44,8 @@ export const MENU_CONFIG = {
         { icon: "/assets/menu-icons/deposit.svg", label: "Top 20 Deposit", link: "/leaderboard" },
         { icon: "/assets/menu-icons/withdrawal.svg", label: "Top 20 Withdraw", link: "/leaderboard?tab=withdrawal" },
         { icon: "/assets/menu-icons/referral.svg", label: "Top 20 Referral", link: "/leaderboard?tab=referrer" },
+        // Top Turnover remains reachable by direct route, but is intentionally
+        // hidden from the member sidebar/hamburger until it is released.
       ],
     },
     { icon: "/assets/menu-icons/missions.svg", label: "Missions", link: "/missions" },

@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { usePathname } from "next/navigation";
 import AppLayout from "./components/layout/AppLayout";
 import { MemberRouteGuard } from "./components/guards/MemberRouteGuard";
@@ -27,7 +28,13 @@ export default function LayoutShell({ children }) {
       <ThemeProvider>
         <MemberRouteGuard>
           <div className="min-h-screen max-w-[475px] mx-auto overflow-hidden">
-            <AppLayout>{children}</AppLayout>
+            {/* One boundary for every lazy skin chunk, and it lives above the
+                router so it survives navigation. React keeps the screen the
+                member is already looking at while the next route's skin loads,
+                instead of dropping to a fallback. */}
+            <Suspense fallback={<div className="min-h-screen w-full skin-backdrop" />}>
+              <AppLayout>{children}</AppLayout>
+            </Suspense>
           </div>
         </MemberRouteGuard>
       </ThemeProvider>

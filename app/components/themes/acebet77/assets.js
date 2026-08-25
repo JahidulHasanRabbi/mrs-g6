@@ -2,6 +2,8 @@
  * Acebet77 theme asset map (exported from the "MRS Theme Engine" Figma file).
  * All files live under public/assets/themes/acebet77/.
  */
+import { PHASE4_ASSETS } from '../../../config/phase4';
+
 const BASE = '/assets/themes/acebet77';
 
 export const ACEBET_ASSETS = {
@@ -18,7 +20,8 @@ export const ACEBET_ASSETS = {
     frameBottom: `${BASE}/ui/frame-bottom.png`,
     btnGold: `${BASE}/ui/btn-gold.png`,
     iconGift: `${BASE}/ui/icon-gift.svg`,
-    iconCoins: `${BASE}/ui/icon-coins.svg`,
+    // Phase 4: the token art is shared across every station.
+    iconCoins: PHASE4_ASSETS.token,
     iconParty: `${BASE}/ui/icon-party.svg`,
     jackpotPanel: `${BASE}/ui/jackpot-panel.png`,
   },

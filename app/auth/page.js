@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useRef, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { generateMemberToken } from '../api/memberApi';
 import { tokenStorage } from '../api/tokenStorage';
@@ -10,8 +10,14 @@ function AuthContent() {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState('authenticating');
   const [error, setError] = useState(null);
+  // useSearchParams/router change identity across renders, so the effect can
+  // re-fire and POST a second token — which also clears the first one mid-load.
+  const startedRef = useRef(false);
 
   useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+
     const authenticate = async () => {
       try {
         const id = searchParams.get('id');

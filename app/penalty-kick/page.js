@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -44,12 +44,18 @@ import { useUser } from "../contexts/UserContext";
 import { HamburgerMenu } from "../components/hamburger";
 import { preloadGameAssets } from "../components/penalty-kick/assets";
 import { usePkColors } from "../components/penalty-kick/usePkColors";
-import AcebetBottomNav from "../components/themes/acebet77/AcebetBottomNav";
-import UbetclubBottomNav from "../components/themes/ubetclub/UbetclubBottomNav";
-import Ep369BottomNav from "../components/themes/ep369/Ep369BottomNav";
-import KgameBottomNav from "../components/themes/kgame99/KgameBottomNav";
-import Lv918BottomNav from "../components/themes/lv918/Lv918BottomNav";
-import N1gangBottomNav from "../components/themes/n1gang/N1gangBottomNav";
+import { THEME_IDS } from "../config/themes";
+import { lazySkins } from "../components/themes/skinRoute";
+
+// One chunk per skin, warmed at module scope — see lazySkins.
+const NAVS = lazySkins({
+  [THEME_IDS.ACEBET77]: () => import("../components/themes/acebet77/AcebetBottomNav"),
+  [THEME_IDS.UBETCLUB]: () => import("../components/themes/ubetclub/UbetclubBottomNav"),
+  [THEME_IDS.EP369]: () => import("../components/themes/ep369/Ep369BottomNav"),
+  [THEME_IDS.KGAME99]: () => import("../components/themes/kgame99/KgameBottomNav"),
+  [THEME_IDS.LV918]: () => import("../components/themes/lv918/Lv918BottomNav"),
+  [THEME_IDS.N1GANG]: () => import("../components/themes/n1gang/N1gangBottomNav"),
+});
 
 const HISTORY_PAGE_SIZE = 10;
 const ITEM_TYPE_LABELS = {
@@ -153,7 +159,8 @@ function mapHistoryRow(row) {
 export default function PenaltyKickPage() {
   const router = useRouter();
   const { userData, refreshUserData } = useUser();
-  const { colors: themeColors, isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang } = usePkColors();
+  const { colors: themeColors, themeId } = usePkColors();
+  const ThemedNav = NAVS[themeId];
   // muted/toggleMuted destructured but unused — the Figma header dropped the
   // mute toggle. Audio still works (and respects the persisted-mute flag the
   // hook owns); the toggle can be reintroduced from a sub-menu later if needed.
@@ -547,7 +554,7 @@ export default function PenaltyKickPage() {
           fixed bottom: 0 at max-w-475, so it overlays the bottom of the
           scene exactly where the old ArcadeFooter sat. Themed skins swap in
           their ornate bar (Acebet77 gold 59:665 / Ubetclub red 77:*). */}
-      {isN1gang ? <N1gangBottomNav /> : isEp369 ? <Ep369BottomNav /> : isUbetclub ? <UbetclubBottomNav /> : isAcebet77 ? <AcebetBottomNav /> : isKgame99 ? <KgameBottomNav /> : isLv918 ? <Lv918BottomNav /> : <FooterNav />}
+      {ThemedNav ? <Suspense fallback={null}><ThemedNav /></Suspense> : <FooterNav />}
 
       {!config.enabled && (
         <div className="absolute inset-x-0 top-[68px] bottom-[100px] z-30 grid place-items-center bg-black/70 px-6 backdrop-blur-md">

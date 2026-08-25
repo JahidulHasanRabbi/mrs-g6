@@ -3,20 +3,29 @@
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import HomeComponent from "./components/home/Home";
-import Acebet77Home from "./components/themes/acebet77/Acebet77Home";
-import UbetclubHome from "./components/themes/ubetclub/UbetclubHome";
-import Ep369Home from "./components/themes/ep369/Ep369Home";
-import Kgame99Home from "./components/themes/kgame99/Kgame99Home";
-import Lv918Home from "./components/themes/lv918/Lv918Home";
-import N1gangHome from "./components/themes/n1gang/N1gangHome";
+import { THEME_IDS } from "./config/themes";
+import { lazySkins, skinFor } from "./components/themes/skinRoute";
 import RedeemLinkScreen from "./components/redeem-link/RedeemLinkScreen";
 import { readRedeemParams } from "./components/redeem-link/redeemLinkMemberUtils.mjs";
 import { useTheme } from "./contexts/ThemeContext";
 
-// useSearchParams needs a Suspense boundary during prerender.
+// One chunk per skin, warmed at module scope so the active theme starts
+// loading before the first client render.
+const SKINS = lazySkins({
+  [THEME_IDS.ACEBET77]: () => import("./components/themes/acebet77/Acebet77Home"),
+  [THEME_IDS.UBETCLUB]: () => import("./components/themes/ubetclub/UbetclubHome"),
+  [THEME_IDS.EP369]: () => import("./components/themes/ep369/Ep369Home"),
+  [THEME_IDS.KGAME99]: () => import("./components/themes/kgame99/Kgame99Home"),
+  [THEME_IDS.LV918]: () => import("./components/themes/lv918/Lv918Home"),
+  [THEME_IDS.N1GANG]: () => import("./components/themes/n1gang/N1gangHome"),
+});
+
+// useSearchParams needs a Suspense boundary during prerender. The outer
+// LayoutShell boundary also keeps the active skin visible while route chunks
+// are loading.
 export default function Home() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<div className="min-h-screen w-full skin-backdrop" />}>
       <HomeContent />
     </Suspense>
   );
@@ -26,22 +35,15 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const { linkUuid, origin } = readRedeemParams(searchParams);
 
-  // Theming is handled in ThemeContext, which resolves the skin from the `o`
-  // station URL carried by the link itself.
+  // Redeem links keep their dedicated flow. Normal home navigation uses the
+  // active theme's lazy route entry.
   if (linkUuid) {
     return <RedeemLinkScreen linkUuid={linkUuid} origin={origin} />;
   }
 
-  return <ThemedHome />;
-}
+  const { themeId } = useTheme();
+  const skin = skinFor(SKINS, themeId);
+  if (skin) return skin;
 
-function ThemedHome() {
-  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang } = useTheme();
-  if (isAcebet77) return <Acebet77Home />;
-  if (isUbetclub) return <UbetclubHome />;
-  if (isEp369) return <Ep369Home />;
-  if (isKgame99) return <Kgame99Home />;
-  if (isLv918) return <Lv918Home />;
-  if (isN1gang) return <N1gangHome />;
   return <HomeComponent />;
 }
