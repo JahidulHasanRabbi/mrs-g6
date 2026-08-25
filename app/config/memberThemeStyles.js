@@ -33,12 +33,29 @@ const DEFAULT_TERMS = {
   glow: "rgba(233,175,65,0.15)",
 };
 
+const DEFAULT_MODAL = {
+  bg: "linear-gradient(to bottom, #0a1a0a 0%, #102810 100%)",
+  muted: "#a8c08a",
+  checkBg: "#3a8a2a",
+  checkStroke: "#fff",
+};
+
+// acebet77 and n1gang share the same dark-gold sheet.
+const DARK_GOLD_MODAL = {
+  bg: "linear-gradient(to bottom, #0a0805 0%, #17130c 100%)",
+  muted: "#d0c6ab",
+  checkBg: "#e9af41",
+  checkStroke: "#171006",
+};
+
 const STYLE_PACKS = {
   [THEME_IDS.DEFAULT]: {
     menu: DEFAULT_MENU,
     terms: DEFAULT_TERMS,
+    modal: DEFAULT_MODAL,
   },
   [THEME_IDS.ACEBET77]: {
+    modal: DARK_GOLD_MODAL,
     menu: {
       drawer: "linear-gradient(180deg, #17130c 0%, #050505 52%, #100b03 100%)",
       header: "rgba(12,10,7,0.96)",
@@ -78,6 +95,7 @@ const STYLE_PACKS = {
     },
   },
   [THEME_IDS.UBETCLUB]: {
+    modal: { bg: "linear-gradient(to bottom, #18080a 0%, #3d0d10 100%)", muted: "#d8c9a0", checkBg: "#f2c36b", checkStroke: "#280506" },
     menu: {
       drawer: "linear-gradient(180deg, #4b0b0d 0%, #18080a 48%, #090304 100%)",
       header: "rgba(72,14,15,0.98)",
@@ -115,6 +133,7 @@ const STYLE_PACKS = {
     },
   },
   [THEME_IDS.EP369]: {
+    modal: { bg: "linear-gradient(to bottom, #001002 0%, #0d3d1c 100%)", muted: "#bcd0a8", checkBg: "#e9af41", checkStroke: "#04140a" },
     menu: {
       drawer: "linear-gradient(180deg, #0b3a1b 0%, #001002 52%, #020a03 100%)",
       header: "rgba(9,48,23,0.98)",
@@ -149,6 +168,7 @@ const STYLE_PACKS = {
     },
   },
   [THEME_IDS.KGAME99]: {
+    modal: { bg: "linear-gradient(to bottom, #061527 0%, #0f2a4a 100%)", muted: "#a7c3e2", checkBg: "#e2b24a", checkStroke: "#0a1a2f" },
     menu: {
       drawer: "linear-gradient(180deg, #0f2a4a 0%, #061527 52%, #0a1a2f 100%)",
       header: "rgba(10,26,47,0.96)",
@@ -191,6 +211,7 @@ const STYLE_PACKS = {
     },
   },
   [THEME_IDS.LV918]: {
+    modal: { bg: "linear-gradient(to bottom, #2a0a1f 0%, #4a0f30 100%)", muted: "#e0b4cc", checkBg: "#e8b53a", checkStroke: "#2a0a1f" },
     menu: {
       drawer: "linear-gradient(180deg, #4a0f30 0%, #2a0518 52%, #200414 100%)",
       header: "rgba(42,10,31,0.96)",
@@ -224,6 +245,7 @@ const STYLE_PACKS = {
     },
   },
   [THEME_IDS.N1GANG]: {
+    modal: DARK_GOLD_MODAL,
     menu: {
       drawer: "linear-gradient(180deg, #17130c 0%, #050505 52%, #100b03 100%)",
       header: "rgba(12,10,7,0.96)",
@@ -261,4 +283,10 @@ const STYLE_PACKS = {
 
 export function getMemberThemeStyles(themeId) {
   return STYLE_PACKS[themeId] || STYLE_PACKS[THEME_IDS.DEFAULT];
+}
+
+// Palette for the pickers opened from Personal Data (Change Frame / Change
+// Theme), so the twin buttons open twin-looking dialogs.
+export function getMemberModalStyles(themeId) {
+  return getMemberThemeStyles(themeId).modal;
 }

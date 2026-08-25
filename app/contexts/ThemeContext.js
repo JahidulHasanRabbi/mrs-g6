@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthChanged } from '../api/authEvents';
-import { THEME_IDS, readActiveThemeId } from '../config/themes';
+import { THEME_IDS, readActiveThemeId, pinThemeId, unpinTheme } from '../config/themes';
 
 /**
  * Origin-based theme engine.
@@ -13,6 +13,9 @@ import { THEME_IDS, readActiveThemeId } from '../config/themes';
  * the address bar from the first byte, so the member never renders default
  * chrome while auth is in flight. Re-resolves on mrs_auth_changed, so
  * switching wallets switches skins without a reload.
+ *
+ * `setTheme` / `resetTheme` back Personal Data → Change Theme: a manual pick is
+ * persisted and outranks the origin until it's reset.
  */
 const ThemeContext = createContext({
   themeId: THEME_IDS.DEFAULT,
@@ -23,6 +26,8 @@ const ThemeContext = createContext({
   isLv918: false,
   isN1gang: false,
   isThemed: false,
+  setTheme: () => {},
+  resetTheme: () => {},
 });
 
 // A shared redeem link (/?o=<station_url>&reward=<uuid>) carries the station
@@ -46,6 +51,18 @@ export function ThemeProvider({ children }) {
     return unsubscribe;
   }, []);
 
+  // Personal Data → Change Theme.
+  const setTheme = (nextThemeId) => {
+    pinThemeId(nextThemeId);
+    setThemeId(readActiveThemeId());
+  };
+
+  // Drop the manual pick and hand the skin back to the station's origin rules.
+  const resetTheme = () => {
+    unpinTheme();
+    setThemeId(readActiveThemeId());
+  };
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', themeId);
   }, [themeId]);
@@ -63,6 +80,8 @@ export function ThemeProvider({ children }) {
         // True for any non-default skin — lets shared chrome (AppLayout,
         // penalty-kick components) branch once instead of per-theme.
         isThemed: themeId !== THEME_IDS.DEFAULT,
+        setTheme,
+        resetTheme,
       }}
     >
       {children}
