@@ -96,11 +96,7 @@ function KgameBottomNav() {
       }
       window.open(`https://${stationUrl}/chatroom`, '_blank', 'noopener,noreferrer');
     } else if (actionType === 'hot') {
-      // Hot promos live on the wallet site the member came from.
-      const origin = tokenStorage.getRedirectO();
-      if (origin) {
-        window.location.href = `${origin.replace(/\/$/, '')}/promotion`;
-      }
+      window.location.href = 'https://kgame99.com/lucky-scratch';
     }
   };
 
