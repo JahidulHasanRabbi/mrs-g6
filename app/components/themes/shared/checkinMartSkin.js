@@ -183,22 +183,17 @@ export function buildCheckinSkin(ASSETS, COLORS, overrides = {}) {
 
 /**
  * Mart item card (Figma acebet77 468:1997, 163x162):
- *   product panel 117x68 r27 at (23, 25)
- *   product image 40x51 centred in the panel
  *   name  8px at y=109   coins 6px at y=127
  *   redeem plaque 143x51 at (10, 132) — deliberately overhangs the frame's
  *   bottom edge, which the grid's row gap absorbs (matches the comp).
  */
 export const MART_CARD = {
   aspect: '163 / 162',
-  panel: {
-    left: (23 / 163) * 100,
-    top: (25 / 162) * 100,
-    w: (117 / 163) * 100,
-    h: (68 / 162) * 100,
-    radiusCqi: (27 / 163) * 100,
-  },
-  image: { w: (40 / 117) * 100, h: (51 / 68) * 100 },
+  // No gold plinth: the shot sits on the frame itself, sized to the tightest of
+  // the six inner areas (ep369's sides, acebet77's dipping top crown).
+  image: { left: 12, top: 14, w: 76, h: 44, lockW: 34 },
+  // Magnifier badge, as % of the image box it corners itself into.
+  zoom: { size: 21 },
   // Name is nudged up from the comp's y=109 to make room below it: the comps
   // only ever show ONE price line, but the real card can show two (a
   // strikethrough original plus the promo price), which collided at y=127.
@@ -229,11 +224,6 @@ export function buildMartSkin(ASSETS, COLORS, overrides = {}) {
     gridMaxWidth: 404,
     itemFrame: ASSETS.mart.itemFrame,
     redeemButton: ASSETS.mart.btnRedeem,
-    // Gold plinth behind each product shot (Figma linear-gradient 90deg).
-    // Figma 468:2000 — the same gold plinth gradient on every skin.
-    panelGradient:
-      ASSETS.mart.panelGradient ||
-      'linear-gradient(90deg, #8c6c1e 0%, #f2ba33 52%, #8c6c1e 100%)',
     // As with the check-in board, the comps use these golds across all six
     // skins rather than each theme's palette.
     // Background of the "Mart is currently closed" panel. Matches the value the
