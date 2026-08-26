@@ -34,12 +34,12 @@ export const THEME_IDS = {
  * so the picker doesn't pull all six asset maps into a shared chunk.
  */
 export const SELECTABLE_THEMES = [
-  { id: THEME_IDS.ACEBET77, label: 'ACEBET77', crest: '/assets/themes/acebet77/home/crest-acebet77.png' },
-  { id: THEME_IDS.UBETCLUB, label: 'UBETCLUB', crest: '/assets/themes/ubetclub/home/crest.png' },
-  { id: THEME_IDS.EP369, label: 'EP369', crest: '/assets/themes/ep369/home/crest.png' },
-  { id: THEME_IDS.KGAME99, label: 'KGAME99', crest: '/assets/themes/kgame99/home/crest-kgame99.png' },
-  { id: THEME_IDS.LV918, label: 'LV918', crest: '/assets/themes/lv918/home/crest-lv918.png' },
-  { id: THEME_IDS.N1GANG, label: 'N1GANG', crest: '/assets/themes/n1gang/home/crest-n1gang.png' },
+  { id: THEME_IDS.ACEBET77, label: 'ACEBET77', crest: '/assets/themes/acebet77/home/crest-acebet77.webp' },
+  { id: THEME_IDS.UBETCLUB, label: 'UBETCLUB', crest: '/assets/themes/ubetclub/home/crest.webp' },
+  { id: THEME_IDS.EP369, label: 'EP369', crest: '/assets/themes/ep369/home/crest.webp' },
+  { id: THEME_IDS.KGAME99, label: 'KGAME99', crest: '/assets/themes/kgame99/home/crest-kgame99.webp' },
+  { id: THEME_IDS.LV918, label: 'LV918', crest: '/assets/themes/lv918/home/crest-lv918.webp' },
+  { id: THEME_IDS.N1GANG, label: 'N1GANG', crest: '/assets/themes/n1gang/home/crest-n1gang.webp' },
   { id: THEME_IDS.DEFAULT, label: 'MRS DEFAULT', crest: '/android-chrome-512x512.png' },
 ];
 
