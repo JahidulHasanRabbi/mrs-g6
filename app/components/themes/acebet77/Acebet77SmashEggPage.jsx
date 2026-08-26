@@ -230,7 +230,7 @@ export default function Acebet77SmashEggPage() {
         onClose={closeModal}
         onReturn={handleReturnToWebsite}
         prize={wonPrize}
-        frameBg="/assets/acebet77-popup.png"
+        frameBg="/assets/acebet77-popup.webp"
         insets={{ x: '10%', top: '18%', bottom: '13%' }}
       />
 

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 
-const POPUP_CLOSE_IMG = "/assets/home/popup-close.png";
+const POPUP_CLOSE_IMG = "/assets/home/popup-close.webp";
 
 export default function SuccessModal({
   isOpen,
@@ -11,7 +11,7 @@ export default function SuccessModal({
   title = "100% Done — Reward Unlocked",
   message = "Thanks for completing your profile. 10 Free Coins added.",
   backgroundColor = "rgba(96, 128, 60, 1)",
-  popupBg = "/assets/personal-data/success-popup-bg.png",
+  popupBg = "/assets/personal-data/success-popup-bg.webp",
   actions = null,
 }) {
   if (!isOpen) return null;

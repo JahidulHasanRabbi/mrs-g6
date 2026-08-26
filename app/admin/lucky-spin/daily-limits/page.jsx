@@ -14,7 +14,7 @@ export default function DailyLimitsPage() {
           <div className="border border-[#f2c36b] border-solid flex gap-[6px] items-center justify-center px-[8px] py-[6px] rounded-[4px] flex-1 min-w-0">
             <div className="relative shrink-0 size-[32px]">
               <img
-                src="/assets/admin/lucky-spin/searchicon.png"
+                src="/assets/admin/lucky-spin/searchicon.webp"
                 alt=""
                 className="absolute inset-0 h-full w-full object-contain"
               />
@@ -25,7 +25,7 @@ export default function DailyLimitsPage() {
           <button className="flex items-center justify-center p-[6px] rounded-[8px] shrink-0" type="button">
             <div className="relative shrink-0 size-[42px]">
               <img
-                src="/assets/admin/lucky-spin/sorting.png"
+                src="/assets/admin/lucky-spin/sorting.webp"
                 alt=""
                 className="absolute inset-0 h-full w-full object-contain"
               />

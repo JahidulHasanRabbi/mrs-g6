@@ -112,7 +112,7 @@ export default function FormField({
       </label>
       <div className={`relative h-[40px] w-full ${disabled ? 'opacity-60' : ''}`}>
         <Image
-          src="/assets/personal-data/input-bg.png"
+          src="/assets/personal-data/input-bg.webp"
           alt=""
           fill
           className="object-cover"

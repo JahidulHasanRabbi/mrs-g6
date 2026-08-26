@@ -129,7 +129,7 @@ export default function AdminLoginPage() {
           {/* Logo */}
           <div className="mb-6">
             <Image
-              src="/assets/login/KingGroup44.png"
+              src="/assets/login/KingGroup44.webp"
               alt="King Group 44"
               width={130}
               height={48}

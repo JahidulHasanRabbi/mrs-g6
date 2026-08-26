@@ -44,22 +44,22 @@ const VideoGallery = memo(function VideoGallery() {
   const videos = useMemo(() => [
     {
       id: 1,
-      thumbnail: "/assets/home/special_for_you/video_image.png",
+      thumbnail: "/assets/home/special_for_you/video_image.webp",
       title: "Game Tutorial",
     },
     {
       id: 2,
-      thumbnail: "/assets/home/special_for_you/video_image.png",
+      thumbnail: "/assets/home/special_for_you/video_image.webp",
       title: "Winning Tips",
     },
     {
       id: 3,
-      thumbnail: "/assets/home/special_for_you/video_image.png",
+      thumbnail: "/assets/home/special_for_you/video_image.webp",
       title: "Advanced Strategies",
     },
     {
       id: 4,
-      thumbnail: "/assets/home/special_for_you/video_image.png",
+      thumbnail: "/assets/home/special_for_you/video_image.webp",
       title: "Bonus Features",
     },
   ], []);

@@ -35,7 +35,7 @@ const MRS_SLUGS = new Set(MRS_PAGES.map((p) => p.slug));
 const GOLD_BG =
   "linear-gradient(1deg, rgba(242,195,107,0) 74%, #dd8f1f 94%), linear-gradient(90deg, #ffff84, #ffff84)";
 
-const FALLBACK_ICON = "/assets/admin/Tier.png";
+const FALLBACK_ICON = "/assets/admin/Tier.webp";
 
 const TABLE_COLUMNS = [
   { key: "rowNum",         label: "No",            minW: "min-w-[60px]" },
@@ -177,7 +177,7 @@ function MenuFormModal({ menu, onClose, onSave, stations }) {
         {/* Icon badge */}
         <div className="flex justify-center mb-2">
           <Image
-            src="/assets/admin/Tier.png"
+            src="/assets/admin/Tier.webp"
             alt="Menu"
             width={70}
             height={70}
@@ -501,7 +501,7 @@ function RootIconFormModal({ rootIcon, onClose, onSave, stations }) {
         {/* Icon badge */}
         <div className="flex justify-center mb-2">
           <Image
-            src="/assets/admin/Tier.png"
+            src="/assets/admin/Tier.webp"
             alt="Root Icon"
             width={70}
             height={70}

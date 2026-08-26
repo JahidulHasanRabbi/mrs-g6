@@ -93,7 +93,7 @@ function Header() {
       <div className="pointer-events-none absolute inset-0 shadow-[inset_0px_0px_24px_0px_black]" />
       <div className="relative mx-auto flex max-w-[1440px] items-center gap-4 px-4 py-3 sm:gap-6 sm:px-6 lg:px-10">
         <Image
-          src="/assets/landing/logo.png"
+          src="/assets/landing/logo.webp"
           alt="KingGroup44"
           width={800}
           height={300}
@@ -151,7 +151,7 @@ function Hero() {
             style={{ filter: "drop-shadow(0 0 18px rgba(255,215,0,0.55))" }}
           >
             <Image
-              src="/assets/landing/logo.png"
+              src="/assets/landing/logo.webp"
               alt=""
               width={800}
               height={300}
@@ -565,7 +565,7 @@ function Footer() {
       >
         <motion.div variants={fadeUp}>
           <Image
-            src="/assets/landing/logo.png"
+            src="/assets/landing/logo.webp"
             alt="KingGroup44"
             width={800}
             height={300}

@@ -92,7 +92,7 @@ function DefaultVipDetailsPage() {
     <>
       <AnimatedSection
         title=""
-        imageSrc="/assets/vip-details/vip-details-title.png"
+        imageSrc="/assets/vip-details/vip-details-title.webp"
         imageAlt="VIP Details"
       />
 

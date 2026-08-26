@@ -4,8 +4,8 @@ import { MISSION_COLORS } from "./data";
 
 // Top HUD bar from the Figma "Missions Hub" frame (633:1207): sidebar menu on
 // the left, gold title, and the gold-rimmed info badge on the right.
-const INFO_ICON = "/assets/penalty-kick/icons/info-badge.png";
-const MENU_ICON = "/assets/penalty-kick/icons/menu-bars.png";
+const INFO_ICON = "/assets/penalty-kick/icons/info-badge.webp";
+const MENU_ICON = "/assets/penalty-kick/icons/menu-bars.webp";
 
 function IconButton({ src, onClick, label }) {
   return (

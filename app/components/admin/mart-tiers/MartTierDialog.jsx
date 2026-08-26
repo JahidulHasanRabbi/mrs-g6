@@ -161,6 +161,6 @@ export default function MartTierDialog({ open, mode = "create", initial, onClose
 
 function TierLogo() {
   return (
-    <Image src="/assets/admin/Tier.png" alt="Tier Logo" width={72} height={72} />
+    <Image src="/assets/admin/Tier.webp" alt="Tier Logo" width={72} height={72} />
   );
 }

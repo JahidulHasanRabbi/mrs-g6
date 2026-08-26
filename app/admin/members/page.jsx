@@ -407,7 +407,7 @@ function EditMemberModal({ member, onClose, onSave }) {
           <>
             {/* Gold badge + title */}
             <div className="flex flex-col items-center mb-6">
-              <Image src="/assets/admin/Edit-profile.png" alt="Gold Badge" width={80} height={80} className="object-contain" />
+              <Image src="/assets/admin/Edit-profile.webp" alt="Gold Badge" width={80} height={80} className="object-contain" />
               <h2 className=" font-bold text-[22px] text-white">
                 Edit Profile
               </h2>

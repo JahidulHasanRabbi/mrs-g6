@@ -59,7 +59,7 @@ export default function ProfilePage() {
     <>
       <AnimatedSection
           title=""
-          imageSrc="/assets/profile/my-profile.png"
+          imageSrc="/assets/profile/my-profile.webp"
           imageAlt="my profile"
         />
 

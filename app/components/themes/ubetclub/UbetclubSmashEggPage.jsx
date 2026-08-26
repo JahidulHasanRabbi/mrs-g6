@@ -230,7 +230,7 @@ export default function UbetclubSmashEggPage() {
         onClose={closeModal}
         onReturn={handleReturnToWebsite}
         prize={wonPrize}
-        frameBg="/assets/ubetclub-popup.png"
+        frameBg="/assets/ubetclub-popup.webp"
         insets={{ x: '10%', top: '17%', bottom: '13%' }}
         titleColor={UBET_COLORS.goldBright}
         Button={UbetButton}

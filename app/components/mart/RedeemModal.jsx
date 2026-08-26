@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { MART_ASSETS } from "./martAssets";
-const POPUP_CLOSE_IMG = "/assets/home/popup-close.png";
+const POPUP_CLOSE_IMG = "/assets/home/popup-close.webp";
 
 export default function RedeemModal({ isOpen, onClose, item, isRedeeming, redeemResult }) {
   if (!isOpen) return null;

@@ -386,7 +386,7 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
 
 function FlameLogo() {
   return (
-    <Image src="/assets/admin/Tier.png" alt="Flame Logo" width={72} height={72} />
+    <Image src="/assets/admin/Tier.webp" alt="Flame Logo" width={72} height={72} />
   );
 }
 

@@ -33,7 +33,7 @@ import {
 
 const TOKEN_ICON = PHASE4_ASSETS.token;
 const HISTORY_ICON = "/assets/penalty-kick/missions/icon-history.svg";
-const TAB_FRAME = "/assets/penalty-kick/missions/tab-active.png";
+const TAB_FRAME = "/assets/penalty-kick/missions/tab-active.webp";
 
 const SERIF = '"Times New Roman", serif';
 const MISSION_TERMS_CATEGORY = 10;

@@ -41,7 +41,7 @@ function Header({
         >
           <div className="flex flex-col items-center gap-0">
             <Image
-              src="/assets/images/hamburger-icon.png"
+              src="/assets/images/hamburger-icon.webp"
               alt="Menu"
               width={36}
               height={36}
