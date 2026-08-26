@@ -15,7 +15,7 @@ const PAGE_SIZE = 7;
 const GOLD_BG =
   "linear-gradient(1deg, rgba(242,195,107,0) 74%, #dd8f1f 94%), linear-gradient(90deg, #ffff84, #ffff84)";
 
-const FALLBACK_FRAME_ICON = "/assets/admin/Tier.png";
+const FALLBACK_FRAME_ICON = "/assets/admin/Tier.webp";
 
 // Challenge options (currently only VIP, but can be extended)
 const CHALLENGE_OPTIONS = [
@@ -186,7 +186,7 @@ function FrameFormModal({ frame, onClose, onSave, vipTiers }) {
         {/* Tier badge image */}
         <div className="flex justify-center mb-2">
           <Image
-            src="/assets/admin/Tier.png"
+            src="/assets/admin/Tier.webp"
             alt="Frame"
             width={70}
             height={70}

@@ -10,9 +10,9 @@ import SuccessModal from "@/app/components/ui/SuccessModal";
 import ThemedActionButton from "@/app/components/themes/shared/ThemedActionButton";
 import { useUser } from "@/app/contexts/UserContext";
 
-const POPUP_BG_IMG = "/assets/home/popup-deposit-bg.png";
-const POPUP_CLOSE_IMG = "/assets/home/popup-close.png";
-const POPUP_DAY7_BG_IMG = "/assets/home/popup-day7-bg.png";
+const POPUP_BG_IMG = "/assets/home/popup-deposit-bg.webp";
+const POPUP_CLOSE_IMG = "/assets/home/popup-close.webp";
+const POPUP_DAY7_BG_IMG = "/assets/home/popup-day7-bg.webp";
 const POPUP_DAY7_CLOSE_IMG = "/assets/home/popup-day7-close.png";
 
 const AssetFill = memo(function AssetFill({ src, alt, className }) {

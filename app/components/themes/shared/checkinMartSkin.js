@@ -95,9 +95,9 @@ const ICON_BOX = {
  * override any of them by setting ASSETS.checkin.iconBolt / iconCoin / iconCards.
  */
 const SHARED_ICONS = {
-  bolt: '/assets/themes/shared/checkin/icon-bolt.png',
-  coin: '/assets/themes/shared/checkin/icon-coin.png',
-  cards: '/assets/themes/shared/checkin/icon-cards.png',
+  bolt: '/assets/themes/shared/checkin/icon-bolt.webp',
+  coin: '/assets/themes/shared/checkin/icon-coin.webp',
+  cards: '/assets/themes/shared/checkin/icon-cards.webp',
 };
 
 /**

@@ -324,7 +324,7 @@ function Top20LeaderboardPageInner() {
               aria-label="Open menu"
             >
               <img
-                src="/assets/images/hamburger-icon.png"
+                src="/assets/images/hamburger-icon.webp"
                 alt="Menu"
                 className="h-9 w-9 object-contain"
               />

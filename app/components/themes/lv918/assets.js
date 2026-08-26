@@ -14,125 +14,125 @@ const BASE = '/assets/themes/lv918';
 
 export const LV918_ASSETS = {
   ui: {
-    hamburger: `${BASE}/ui/icon-hamburger.png`,
-    info: `${BASE}/ui/icon-info.png`,
+    hamburger: `${BASE}/ui/icon-hamburger.webp`,
+    info: `${BASE}/ui/icon-info.webp`,
     // Single ornate dialog frame (Figma 154:166) — used whole by Lv918OrnateCard
     // and Lv918Dialog, not sliced.
-    dialogFrame: `${BASE}/ui/dialog-frame.png`,
-    dialogFrameTall: `${BASE}/ui/dialog-frame-tall.png`,
-    btnGold: `${BASE}/ui/btn-gold.png`,
+    dialogFrame: `${BASE}/ui/dialog-frame.webp`,
+    dialogFrameTall: `${BASE}/ui/dialog-frame-tall.webp`,
+    btnGold: `${BASE}/ui/btn-gold.webp`,
     iconGift: `${BASE}/ui/icon-gift.svg`,
     // Phase 4: the token art is shared across every station.
     iconCoins: PHASE4_ASSETS.token,
     iconParty: `${BASE}/ui/icon-party.svg`,
-    jackpotPanel: `${BASE}/ui/jackpot-panel.png`,
+    jackpotPanel: `${BASE}/ui/jackpot-panel.webp`,
   },
   nav: {
     bar: `${BASE}/nav/nav-bar-union.svg`,
-    leaderboard: `${BASE}/nav/icon-leaderboard.png`,
-    hot: `${BASE}/nav/icon-hot.png`,
-    home: `${BASE}/nav/icon-home.png`,
-    profile: `${BASE}/nav/icon-profile.png`,
-    livechat: `${BASE}/nav/icon-livechat.png`,
+    leaderboard: `${BASE}/nav/icon-leaderboard.webp`,
+    hot: `${BASE}/nav/icon-hot.webp`,
+    home: `${BASE}/nav/icon-home.webp`,
+    profile: `${BASE}/nav/icon-profile.webp`,
+    livechat: `${BASE}/nav/icon-livechat.webp`,
   },
   home: {
-    bg: `${BASE}/home/bg-throne.png`,
-    king: `${BASE}/home/king.png`,
-    crest: `${BASE}/home/crest-lv918.png`,
-    tileLuckySpin: `${BASE}/home/tile-lucky-spin.png`,
-    tileSmashEgg: `${BASE}/home/tile-smash-egg.png`,
-    tilePenaltyKick: `${BASE}/home/tile-penalty-kick.png`,
+    bg: `${BASE}/home/bg-throne.webp`,
+    king: `${BASE}/home/king.webp`,
+    crest: `${BASE}/home/crest-lv918.webp`,
+    tileLuckySpin: `${BASE}/home/tile-lucky-spin.webp`,
+    tileSmashEgg: `${BASE}/home/tile-smash-egg.webp`,
+    tilePenaltyKick: `${BASE}/home/tile-penalty-kick.webp`,
   },
   spin: {
-    bg: `${BASE}/spin/bg-spin.png`,
-    title: `${BASE}/spin/title-lucky-spin.png`,
+    bg: `${BASE}/spin/bg-spin.webp`,
+    title: `${BASE}/spin/title-lucky-spin.webp`,
     // The wheel is a 3x3 prize grid. The ornate frame is the static border; the
     // eight gem plaques are placed as live slots filled with the API prize items
     // (like the default theme), and the centre SPIN NOW medallion rotates while
     // spinning.
-    wheelFrame: `${BASE}/spin/wheel-frame.png`,
+    wheelFrame: `${BASE}/spin/wheel-frame.webp`,
     // Key/file names keep the shared gold/green map shape; the art is the pink
     // crystal "?" tiles (Figma 295:5246 corner variant / 295:5258 edge variant).
-    slotGold: `${BASE}/spin/slot-gold.png`,
-    slotGreen: `${BASE}/spin/slot-green.png`,
-    spinNow: `${BASE}/spin/spin-now.png`,
-    btnPlay: `${BASE}/spin/btn-play.png`,
-    panel: `${BASE}/spin/panel-ornate.png`,
+    slotGold: `${BASE}/spin/slot-gold.webp`,
+    slotGreen: `${BASE}/spin/slot-green.webp`,
+    spinNow: `${BASE}/spin/spin-now.webp`,
+    btnPlay: `${BASE}/spin/btn-play.webp`,
+    panel: `${BASE}/spin/panel-ornate.webp`,
     // Wide ornate frame (Figma 154:692) used as the background behind the
     // Winning Record / Winning List / Terms sections.
-    listPanel: `${BASE}/spin/list-panel.png`,
+    listPanel: `${BASE}/spin/list-panel.webp`,
     // Ornate blue+gold "Loading…" frame from the boot screen (Figma 154:596,
     // node 170:1130) — a dedicated bar, not the reused egg CTA button.
-    loadingBar: `${BASE}/spin/loading-bar.png`,
+    loadingBar: `${BASE}/spin/loading-bar.webp`,
     // Asset map consumed by the shared <LuckySpinGrid> so the themed wheel runs
     // the exact same spin/selection engine as the default portal — only the art
     // changes. Keys mirror SPIN_ASSETS (background/itemEmptyGold/itemEmptyGreen/
     // centerButton/centerButtonStop). No dedicated stop art, so reuse spin-now.
     grid: {
-      background: `${BASE}/spin/wheel-frame.png`,
-      itemEmptyGold: `${BASE}/spin/slot-gold.png`,
-      itemEmptyGreen: `${BASE}/spin/slot-green.png`,
-      centerButton: `${BASE}/spin/spin-now.png`,
-      centerButtonStop: `${BASE}/spin/spin-now.png`,
+      background: `${BASE}/spin/wheel-frame.webp`,
+      itemEmptyGold: `${BASE}/spin/slot-gold.webp`,
+      itemEmptyGreen: `${BASE}/spin/slot-green.webp`,
+      centerButton: `${BASE}/spin/spin-now.webp`,
+      centerButtonStop: `${BASE}/spin/spin-now.webp`,
     },
   },
   egg: {
-    bg: `${BASE}/egg/bg-hall.png`,
-    bgLoading: `${BASE}/egg/bg-loading.png`,
-    rays: `${BASE}/egg/rays.png`,
-    eggIntact: `${BASE}/egg/egg-intact.png`,
-    eggCracked: `${BASE}/egg/egg-cracked.png`,
-    eggCrown: `${BASE}/egg/egg-crown.png`,
-    btnWide: `${BASE}/egg/btn-wide.png`,
+    bg: `${BASE}/egg/bg-hall.webp`,
+    bgLoading: `${BASE}/egg/bg-loading.webp`,
+    rays: `${BASE}/egg/rays.webp`,
+    eggIntact: `${BASE}/egg/egg-intact.webp`,
+    eggCracked: `${BASE}/egg/egg-cracked.webp`,
+    eggCrown: `${BASE}/egg/egg-crown.webp`,
+    btnWide: `${BASE}/egg/btn-wide.webp`,
     iconToken: `${BASE}/egg/icon-token.svg`,
-    logo: `${BASE}/home/tile-smash-egg.png`,
+    logo: `${BASE}/home/tile-smash-egg.webp`,
     // Jackpot panel cropped into text-free bands so the real won amount can
     // be rendered as live text between them.
     jackpotRibbon: `${BASE}/egg/jackpot-ribbon.png`,
     jackpotCoins: `${BASE}/egg/jackpot-coins.png`,
   },
   pk: {
-    bgStadium: `${BASE}/pk/bg-stadium.png`,
-    bgCrowd: `${BASE}/pk/bg-crowd.png`,
+    bgStadium: `${BASE}/pk/bg-stadium.webp`,
+    bgCrowd: `${BASE}/pk/bg-crowd.webp`,
     iconBall: `${BASE}/pk/icon-ball.svg`,
     iconTokenHud: `${BASE}/pk/icon-token-hud.svg`,
     iconShotHud: `${BASE}/pk/icon-shot-hud.svg`,
     prizePanel: `${BASE}/pk/prize-panel.png`,
   },
   profile: {
-    title: `${BASE}/profile/title-profile.png`,
-    badgeNum: `${BASE}/profile/badge-num.png`,
-    iconChevron: `${BASE}/profile/icon-chevron.png`,
+    title: `${BASE}/profile/title-profile.webp`,
+    badgeNum: `${BASE}/profile/badge-num.webp`,
+    iconChevron: `${BASE}/profile/icon-chevron.webp`,
     iconStar: `${BASE}/profile/icon-star.png`,
   },
   vip: {
-    title: `${BASE}/vip/title-vip.png`,
-    crest: `${BASE}/vip/crest-lion.png`,
-    iconCheck: `${BASE}/vip/icon-check.png`,
-    cardFrame: `${BASE}/ui/frame-crown.png`,
+    title: `${BASE}/vip/title-vip.webp`,
+    crest: `${BASE}/vip/crest-lion.webp`,
+    iconCheck: `${BASE}/vip/icon-check.webp`,
+    cardFrame: `${BASE}/ui/frame-crown.webp`,
   },
   terms: {
-    title: `${BASE}/ui/title-terms.png`,
+    title: `${BASE}/ui/title-terms.webp`,
   },
   frames: {
-    crown: `${BASE}/ui/frame-crown.png`,
-    scroll: `${BASE}/ui/frame-scroll.png`,
+    crown: `${BASE}/ui/frame-crown.webp`,
+    scroll: `${BASE}/ui/frame-scroll.webp`,
   },
   // Daily Check-in page (Figma 463:1130). Board geometry, day positions and the
   // reward glyphs are shared across all six skins via
   // app/components/themes/shared/checkinMartSkin.js — only the art differs here.
   checkin: {
-    title: `${BASE}/checkin/title-checkin.png`,
-    boardFrame: `${BASE}/checkin/board-frame.png`,
-    dayCard: `${BASE}/checkin/day-card.png`,
-    chest: `${BASE}/checkin/chest-day7.png`,
+    title: `${BASE}/checkin/title-checkin.webp`,
+    boardFrame: `${BASE}/checkin/board-frame.webp`,
+    dayCard: `${BASE}/checkin/day-card.webp`,
+    chest: `${BASE}/checkin/chest-day7.webp`,
   },
   // Mart page (Figma 468:2857). itemFrame is the ornate card each product sits
   // in; btnRedeem is the plaque at its foot.
   mart: {
-    title: `${BASE}/mart/title-mart.png`,
-    itemFrame: `${BASE}/mart/item-frame.png`,
-    btnRedeem: `${BASE}/mart/btn-redeem.png`,
+    title: `${BASE}/mart/title-mart.webp`,
+    itemFrame: `${BASE}/mart/item-frame.webp`,
+    btnRedeem: `${BASE}/mart/btn-redeem.webp`,
   },
 };
 

@@ -222,7 +222,7 @@ function HistoryModal({ type, onClose }) {
             ? LV918_ASSETS.frames.scroll
             : isN1gang
               ? N1GANG_ASSETS.frames.scroll
-              : "/assets/profile/history-frame.png";
+              : "/assets/profile/history-frame.webp";
   const closeSrc = isAcebet77
     ? ACEBET_ASSETS.spin.btnPlay
     : isUbetclub
@@ -235,7 +235,7 @@ function HistoryModal({ type, onClose }) {
             ? LV918_ASSETS.spin.btnPlay
             : isN1gang
               ? N1GANG_ASSETS.spin.btnPlay
-              : "/assets/profile/close-icon.png";
+              : "/assets/profile/close-icon.webp";
   const closeTextColor = isAcebet77
     ? ACEBET_COLORS.goldBright
     : isUbetclub
@@ -571,7 +571,7 @@ export default function HistorySection() {
   } else if (isN1gang) {
     buttonSkin = { bannerSrc: N1GANG_ASSETS.spin.btnPlay, textColor: N1GANG_COLORS.goldBright, objectFit: "object-fill" };
   } else {
-    buttonSkin = { bannerSrc: "/assets/profile/history-title-banner.png", textColor: "#60803c", objectFit: "object-cover" };
+    buttonSkin = { bannerSrc: "/assets/profile/history-title-banner.webp", textColor: "#60803c", objectFit: "object-cover" };
   }
 
   return (

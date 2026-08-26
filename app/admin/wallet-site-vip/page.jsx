@@ -35,7 +35,7 @@ const PAGE_SIZE = 10;
 const GOLD_BG =
   "linear-gradient(1deg, rgba(242,195,107,0) 74%, #dd8f1f 94%), linear-gradient(90deg, #ffff84, #ffff84)";
 
-const FALLBACK_ICON = "/assets/admin/Tier.png";
+const FALLBACK_ICON = "/assets/admin/Tier.webp";
 
 const TABLE_COLUMNS = [
   { key: "rowNum", label: "No", minW: "min-w-[60px]" },
@@ -202,7 +202,7 @@ function TierFormModal({ tier, onClose, onSave, stations }) {
         <div className="flex justify-center -mt-2 mb-2">
           <div className=" flex items-center justify-center">
             <Image
-              src="/assets/admin/Tier.png"
+              src="/assets/admin/Tier.webp"
               alt="VIP"
               width={70}
               height={70}

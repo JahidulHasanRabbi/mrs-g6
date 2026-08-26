@@ -229,7 +229,7 @@ export default function Ep369SmashEggPage() {
         onClose={closeModal}
         onReturn={handleReturnToWebsite}
         prize={wonPrize}
-        frameBg="/assets/ep369-popup.png"
+        frameBg="/assets/ep369-popup.webp"
         insets={{ x: '11%', top: '14%', bottom: '14%' }}
       />
 

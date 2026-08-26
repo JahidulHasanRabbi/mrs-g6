@@ -22,7 +22,7 @@ export default function MartHeader({ balance = "5,450.00", onMenuClick, onProfil
         <div className="relative">
           <img
             alt="Menu"
-            src={"/assets/images/hamburger-icon.png"}
+            src={"/assets/images/hamburger-icon.webp"}
             width={32}
             height={32}
             className="object-contain"

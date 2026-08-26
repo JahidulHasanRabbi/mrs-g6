@@ -9,13 +9,13 @@ const BASE = '/assets/themes/ep369';
 
 export const EP369_ASSETS = {
   ui: {
-    hamburger: `${BASE}/ui/icon-hamburger.png`,
-    info: `${BASE}/ui/icon-info.png`,
+    hamburger: `${BASE}/ui/icon-hamburger.webp`,
+    info: `${BASE}/ui/icon-info.webp`,
     // Ornate green-gold dialog frame, stretched via backgroundSize:100% 100%
     // with percentage padding (same technique as the ubetclub frame).
-    frame: `${BASE}/ui/frame-full.png`,
-    btnGreen: `${BASE}/ui/btn-green.png`, // green plaque, gold text
-    btnGold: `${BASE}/ui/btn-gold.png`,   // gold plaque, dark text
+    frame: `${BASE}/ui/frame-full.webp`,
+    btnGreen: `${BASE}/ui/btn-green.webp`, // green plaque, gold text
+    btnGold: `${BASE}/ui/btn-gold.webp`,   // gold plaque, dark text
     iconParty: `${BASE}/ui/icon-party.svg`,
     // Phase 4: the token art is shared across every station.
     iconCoin: PHASE4_ASSETS.token,
@@ -23,84 +23,84 @@ export const EP369_ASSETS = {
   nav: {
     bar: `${BASE}/nav/nav-bar.svg`,
     // Medallions carry their labels baked in (Figma hides the text nodes).
-    leaderboard: `${BASE}/nav/icon-leaderboard.png`,
-    hot: `${BASE}/nav/icon-hot.png`,
-    home: `${BASE}/nav/icon-home.png`,
-    profile: `${BASE}/nav/icon-profile.png`,
-    livechat: `${BASE}/nav/icon-livechat.png`,
+    leaderboard: `${BASE}/nav/icon-leaderboard.webp`,
+    hot: `${BASE}/nav/icon-hot.webp`,
+    home: `${BASE}/nav/icon-home.webp`,
+    profile: `${BASE}/nav/icon-profile.webp`,
+    livechat: `${BASE}/nav/icon-livechat.webp`,
   },
   home: {
-    bg: `${BASE}/home/bg-menu.png`,
-    fae: `${BASE}/home/fae.png`,
-    crest: `${BASE}/home/crest.png`,
-    tileLuckySpin: `${BASE}/home/tile-lucky-spin.png`,
-    tilePenaltyKick: `${BASE}/home/tile-penalty-kick.png`,
-    tileSmashEgg: `${BASE}/home/tile-smash-egg.png`,
+    bg: `${BASE}/home/bg-menu.webp`,
+    fae: `${BASE}/home/fae.webp`,
+    crest: `${BASE}/home/crest.webp`,
+    tileLuckySpin: `${BASE}/home/tile-lucky-spin.webp`,
+    tilePenaltyKick: `${BASE}/home/tile-penalty-kick.webp`,
+    tileSmashEgg: `${BASE}/home/tile-smash-egg.webp`,
   },
   spin: {
-    bg: `${BASE}/spin/bg-spin.png`,
-    title: `${BASE}/spin/title-lucky-spin.png`,
-    panel: `${BASE}/spin/panel.png`,
-    btnPlay: `${BASE}/spin/btn-play.png`,
+    bg: `${BASE}/spin/bg-spin.webp`,
+    title: `${BASE}/spin/title-lucky-spin.webp`,
+    panel: `${BASE}/spin/panel.webp`,
+    btnPlay: `${BASE}/spin/btn-play.webp`,
     // Decomposed pieces (cropped from wheel.png) fed to the shared
     // <LuckySpinGrid> so the themed wheel runs the exact same spin/selection
     // engine as the default portal. Keys mirror SPIN_ASSETS.
     grid: {
-      background: `${BASE}/spin/grid-frame.png`,
+      background: `${BASE}/spin/grid-frame.webp`,
       // Theme-owned emerald "?" tiles (Figma 290:2893 corner variant /
       // 290:2894 edge variant). Key/file names keep the shared gold/green
       // map shape.
-      itemEmptyGold: `${BASE}/spin/slot-gold.png`,
-      itemEmptyGreen: `${BASE}/spin/slot-green.png`,
-      centerButton: `${BASE}/spin/center.png`,
-      centerButtonStop: `${BASE}/spin/center.png`,
+      itemEmptyGold: `${BASE}/spin/slot-gold.webp`,
+      itemEmptyGreen: `${BASE}/spin/slot-green.webp`,
+      centerButton: `${BASE}/spin/center.webp`,
+      centerButtonStop: `${BASE}/spin/center.webp`,
     },
   },
   egg: {
-    bg: `${BASE}/egg/bg-hall.png`,
-    rays: `${BASE}/egg/rays.png`,
-    eggIntact: `${BASE}/egg/egg-intact.png`,
-    eggCracked: `${BASE}/egg/egg-cracked.png`,
+    bg: `${BASE}/egg/bg-hall.webp`,
+    rays: `${BASE}/egg/rays.webp`,
+    eggIntact: `${BASE}/egg/egg-intact.webp`,
+    eggCracked: `${BASE}/egg/egg-cracked.webp`,
   },
   pk: {
-    bgStadium: `${BASE}/pk/bg-stadium.png`,
-    bgCrowd: `${BASE}/pk/bg-stadium.png`,
+    bgStadium: `${BASE}/pk/bg-stadium.webp`,
+    bgCrowd: `${BASE}/pk/bg-stadium.webp`,
     iconBall: `${BASE}/pk/icon-ball.svg`,
   },
   profile: {
-    title: `${BASE}/profile/title-profile.png`,
-    badgeNum: `${BASE}/profile/badge-num.png`,
-    iconChevron: `${BASE}/profile/icon-chevron.png`,
+    title: `${BASE}/profile/title-profile.webp`,
+    badgeNum: `${BASE}/profile/badge-num.webp`,
+    iconChevron: `${BASE}/profile/icon-chevron.webp`,
     iconStar: `${BASE}/profile/icon-star.svg`,
   },
   vip: {
-    title: `${BASE}/vip/title-vip.png`,
-    crest: `${BASE}/vip/crest-lion.png`,
-    iconCheck: `${BASE}/vip/icon-check.png`,
-    cardFrame: `${BASE}/ui/frame-crown.png`,
+    title: `${BASE}/vip/title-vip.webp`,
+    crest: `${BASE}/vip/crest-lion.webp`,
+    iconCheck: `${BASE}/vip/icon-check.webp`,
+    cardFrame: `${BASE}/ui/frame-crown.webp`,
   },
   terms: {
-    title: `${BASE}/ui/title-terms.png`,
+    title: `${BASE}/ui/title-terms.webp`,
   },
   frames: {
-    crown: `${BASE}/ui/frame-crown.png`,
-    scroll: `${BASE}/ui/frame-scroll.png`,
+    crown: `${BASE}/ui/frame-crown.webp`,
+    scroll: `${BASE}/ui/frame-scroll.webp`,
   },
   // Daily Check-in page (Figma 463:625). Board geometry, day positions and the
   // reward glyphs are shared across all six skins via
   // app/components/themes/shared/checkinMartSkin.js — only the art differs here.
   checkin: {
-    title: `${BASE}/checkin/title-checkin.png`,
-    boardFrame: `${BASE}/checkin/board-frame.png`,
-    dayCard: `${BASE}/checkin/day-card.png`,
-    chest: `${BASE}/checkin/chest-day7.png`,
+    title: `${BASE}/checkin/title-checkin.webp`,
+    boardFrame: `${BASE}/checkin/board-frame.webp`,
+    dayCard: `${BASE}/checkin/day-card.webp`,
+    chest: `${BASE}/checkin/chest-day7.webp`,
   },
   // Mart page (Figma 468:2543). itemFrame is the ornate card each product sits
   // in; btnRedeem is the plaque at its foot.
   mart: {
-    title: `${BASE}/mart/title-mart.png`,
-    itemFrame: `${BASE}/mart/item-frame.png`,
-    btnRedeem: `${BASE}/mart/btn-redeem.png`,
+    title: `${BASE}/mart/title-mart.webp`,
+    itemFrame: `${BASE}/mart/item-frame.webp`,
+    btnRedeem: `${BASE}/mart/btn-redeem.webp`,
   },
 };
 

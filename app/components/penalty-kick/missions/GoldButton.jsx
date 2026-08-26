@@ -7,7 +7,7 @@ import { MISSION_COLORS } from "./data";
 // wide bar with decorative end caps; the design stretches it to the button
 // box (img is w-full / h-101% inside an overflow-clip frame), so we mirror
 // that with objectFit: "fill". Content (icon + label) sits on top.
-const GOLD_BTN = "/assets/penalty-kick/missions/gold-button.png";
+const GOLD_BTN = "/assets/penalty-kick/missions/gold-button.webp";
 
 export default function GoldButton({
   children,

@@ -449,14 +449,14 @@ const SECONDARY_MENU = [
   {
     id: "floating-menu",
     label: "Floating Menu",
-    icon: "/assets/admin/home-icon.png", // Using home icon as placeholder
+    icon: "/assets/admin/home-icon.webp", // Using home icon as placeholder
     href: "/admin/floating-menu",
     disabled: false,
   },
   {
     id: "external-api",
     label: "External API",
-    icon: "/assets/admin/home-icon.png", // Using home icon as placeholder
+    icon: "/assets/admin/home-icon.webp", // Using home icon as placeholder
     href: "/admin/external-api",
     disabled: false,
   },
@@ -496,7 +496,7 @@ const SECONDARY_MENU = [
   {
     id: "terms-conditions",
     label: "Terms & Conditions",
-    icon: "/assets/images/terms-icon.png",
+    icon: "/assets/images/terms-icon.webp",
     href: "/admin/terms-conditions",
     disabled: false,
   },
@@ -1196,7 +1196,7 @@ export default function Sidebar({ activeItem: activeItemProp }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={collapseTransition}
-              src="/assets/admin/sidebar/icons/Logo-collapsed.png"
+              src="/assets/admin/sidebar/icons/Logo-collapsed.webp"
               alt="King Group 44"
               title="King Group 44"
               className="h-9 w-9 shrink-0 object-contain"
@@ -1211,7 +1211,7 @@ export default function Sidebar({ activeItem: activeItemProp }) {
               className="flex items-center"
             >
               <img
-                src="/assets/login/KingGroup44.png"
+                src="/assets/login/KingGroup44.webp"
                 alt="King Group 44"
                 className="h-16 w-auto"
               />

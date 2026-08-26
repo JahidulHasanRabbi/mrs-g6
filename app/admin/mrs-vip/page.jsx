@@ -212,7 +212,7 @@ function TierFormModal({ tier, onClose, onSave, martTiers }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-center mb-2">
-          <Image src="/assets/admin/Tier.png" alt="Tier" width={70} height={70} priority />
+          <Image src="/assets/admin/Tier.webp" alt="Tier" width={70} height={70} priority />
         </div>
 
         <h2 className="font-bold text-[28px] text-white text-center capitalize mb-8">

@@ -7,7 +7,7 @@ export const FOOTER_CONFIG = {
   navItems: [
     {
       id: 'lucky-spin',
-      icon: '/assets/images/kasih-spin-icon.png',
+      icon: '/assets/images/kasih-spin-icon.webp',
       label: 'LUCKY SPIN',
       link: '/spin',
       width: 40,
@@ -15,7 +15,7 @@ export const FOOTER_CONFIG = {
     },
     {
       id: 'smash-egg',
-      icon: '/assets/images/coming-soon-icon.png',
+      icon: '/assets/images/coming-soon-icon.webp',
       label: 'SMASH EGG',
       link: '/smash-egg',
       width: 40,
@@ -23,7 +23,7 @@ export const FOOTER_CONFIG = {
     },
     {
       id: 'home',
-      icon: '/assets/images/footer-home.png',
+      icon: '/assets/images/footer-home.webp',
       label: 'HOME',
       link: '/',
       width: 60,
@@ -32,7 +32,7 @@ export const FOOTER_CONFIG = {
     },
     {
       id: 'leaderboard',
-      icon: '/assets/images/footer-leaderboard.png',
+      icon: '/assets/images/footer-leaderboard.webp',
       label: 'LEADERBOARD',
       link: '/leaderboard',
       // The source artwork is 3:2 and was previously rendered at 40px high
@@ -42,7 +42,7 @@ export const FOOTER_CONFIG = {
     },
     {
       id: 'livechat',
-      icon: '/assets/images/footer-livechat.png',
+      icon: '/assets/images/footer-livechat.webp',
       label: 'LIVECHAT',
       action: 'livechat',
       width: 40,

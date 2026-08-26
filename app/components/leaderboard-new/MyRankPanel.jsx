@@ -52,7 +52,7 @@ export default function MyRankPanel({
       ? `#${data.nextRank}`
       : "—";
   const displayName = String(memberName || "Member").trim() || "Member";
-  const avatarSrc = profilePicture || "/assets/personal-data/profile-placeholder.png";
+  const avatarSrc = profilePicture || "/assets/personal-data/profile-placeholder.webp";
 
   return (
     <section

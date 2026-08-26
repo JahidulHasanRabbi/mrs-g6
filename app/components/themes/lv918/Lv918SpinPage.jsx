@@ -336,14 +336,16 @@ export default function Lv918SpinPage() {
                 // Taller plaques: the button keeps the art's native 3:1 ratio
                 // (no stretch) but scales up with the column so the two stacked
                 // lines aren't cramped, and shrinks on narrow phones.
-                className="relative flex aspect-[3/1] max-w-[208px] flex-1 cursor-pointer items-center justify-center transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+                className="@container relative flex aspect-[3/1] max-w-[208px] flex-1 cursor-pointer items-center justify-center transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <img src={LV918_ASSETS.spin.btnPlay} alt="" draggable={false} className="absolute inset-0 h-full w-full select-none object-fill" />
+                {/* cqi, not px: the plaque is fluid (flex-1) but a fixed size
+                    overflowed the bevel once the button dropped below 208px. */}
                 <span className="relative z-10 flex flex-col items-center justify-center gap-0.5 leading-[1.1]">
-                  <span className="text-[12px]" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: LV918_COLORS.cream }}>
+                  <span className="whitespace-nowrap text-[5.5cqi]" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: LV918_COLORS.cream }}>
                     {btn.tokens} Token
                   </span>
-                  <span className="text-[17px] leading-none" style={{ fontFamily: 'var(--font-berkshire-swash), cursive', color: LV918_COLORS.goldBright }}>
+                  <span className="whitespace-nowrap text-[7.8cqi] leading-none" style={{ fontFamily: 'var(--font-berkshire-swash), cursive', color: LV918_COLORS.goldBright }}>
                     {btn.spins}
                   </span>
                 </span>

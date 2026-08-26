@@ -266,13 +266,13 @@ function DefaultSpinPage() {
   const winningButtons = useMemo(() => [
     {
       spins: "Winning Record",
-      image: "/assets/lucky-spin/buttons/winning.png",
+      image: "/assets/lucky-spin/buttons/winning.webp",
       className: "w-[160px] h-[70px] sm:w-[200px] sm:h-[80px]",
       dimmed: activeWinningView === "list",
     },
     {
       spins: "Winning List",
-      image: "/assets/lucky-spin/buttons/winning.png",
+      image: "/assets/lucky-spin/buttons/winning.webp",
       className: "w-[160px] h-[70px] sm:w-[200px] sm:h-[80px]",
       dimmed: activeWinningView === "record",
     },
@@ -280,7 +280,7 @@ function DefaultSpinPage() {
 
   return (
     <>
-      <AnimatedSection title="" imageSrc='/assets/lucky-spin/lucky-spin.png' imageAlt="lucky spin" />
+      <AnimatedSection title="" imageSrc='/assets/lucky-spin/lucky-spin.webp' imageAlt="lucky spin" />
 
         <AnimatedSectionWrapper animation="fadeInUp" delay={0.1} viewportAmount={0.3}>
           <div className="flex justify-center items-center py-8">

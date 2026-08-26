@@ -45,8 +45,8 @@ export const ICONS = {
   // arcade-style hamburger bars. PNGs from the Figma export (see
   // public/assets/penalty-kick/icons/). The plain SVG fallbacks stay around
   // because dialogs (close button, soccer mask, etc.) still reference them.
-  info: "/assets/penalty-kick/icons/info-badge.png",
-  menu: "/assets/penalty-kick/icons/menu-bars.png",
+  info: "/assets/penalty-kick/icons/info-badge.webp",
+  menu: "/assets/penalty-kick/icons/menu-bars.webp",
   history: "/assets/penalty-kick/icons/material-symbols-flag.svg",
   volumeOn: "/assets/penalty-kick/icons/mdi-volume-high.svg",
   volumeOff: "/assets/penalty-kick/icons/mdi-volume-off.svg",
@@ -59,11 +59,11 @@ export const ICONS = {
 // the Union bezel SVG that frames them with a curved cutout for the
 // elevated HOME button. Decorative only — actions are no-ops for now.
 export const NAV_ICONS = {
-  leaderboard: "/assets/penalty-kick/nav/leaderboard.png",
-  hot: "/assets/penalty-kick/nav/hot.png",
-  home: "/assets/penalty-kick/nav/home.png",
-  profile: "/assets/penalty-kick/nav/profile.png",
-  livechat: "/assets/penalty-kick/nav/livechat.png",
+  leaderboard: "/assets/penalty-kick/nav/leaderboard.webp",
+  hot: "/assets/penalty-kick/nav/hot.webp",
+  home: "/assets/penalty-kick/nav/home.webp",
+  profile: "/assets/penalty-kick/nav/profile.webp",
+  livechat: "/assets/penalty-kick/nav/livechat.webp",
   unionBezel: "/assets/penalty-kick/nav/union-bezel.svg",
 };
 

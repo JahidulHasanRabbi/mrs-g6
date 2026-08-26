@@ -7,21 +7,21 @@
  * for reference/rollback. Do not delete them:
  *
  * Mini Game section: /assets/images/mini-game-icon.svg
- * Lucky Spin: /assets/images/kasih-spin-icon.png
+ * Lucky Spin: /assets/images/kasih-spin-icon.webp
  * Penalty Kick: /assets/penalty-kick/icons/soccer-gold.svg
  * Smash Egg: /assets/smash-egg/egg-icon.svg
- * Leaderboard: /assets/images/leaderboard-icon.png
+ * Leaderboard: /assets/images/leaderboard-icon.webp
  * Top Deposit: /assets/leaderboard/wallet-icon.svg
  * Top Withdraw: /assets/leaderboard/withdrawal-icon.svg
  * Top Referral: /assets/leaderboard/referrer-icon.svg
  * Missions: /assets/penalty-kick/icons/flag-gold.svg
- * VIP Membership: /assets/images/vip-membership-icon.png
- * Mart: /assets/images/pagcor-mart-icon.png
- * Stay Connected: /assets/images/mini-game-icon.png
+ * VIP Membership: /assets/images/vip-membership-icon.webp
+ * Mart: /assets/images/pagcor-mart-icon.webp
+ * Stay Connected: /assets/images/mini-game-icon.webp
  * Feedback: /assets/images/feedback-icon.svg
- * Live Chat: /assets/images/live-chat-icon.png
- * Terms: /assets/images/terms-icon.png
- * Back to Station: /assets/images/logout-icon.png
+ * Live Chat: /assets/images/live-chat-icon.webp
+ * Terms: /assets/images/terms-icon.webp
+ * Back to Station: /assets/images/logout-icon.webp
  */
 
 export const MENU_CONFIG = {
