@@ -97,7 +97,7 @@ export const LEADERBOARD_CONFIG = {
     rank3PrizeColor: '#ffb2ba',
     icon: '/assets/leaderboard/withdrawal-icon.svg',
     showCountdown: false,
-    showPrizeColumn: false,
+    showPrizeColumn: true,
   },
   [LEADERBOARD_TYPES.TURNOVER]: {
     label: 'Turnover',
