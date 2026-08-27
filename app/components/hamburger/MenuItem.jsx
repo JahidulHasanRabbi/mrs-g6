@@ -95,15 +95,15 @@ function MenuItem({
         <MenuIcon src={icon} size={iconSize} />
       </motion.div>
       <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-1.5">
+        <span className={`flex items-center gap-1.5 ${badge ? "flex-wrap" : ""}`}>
           <span
-            className={`${textSize} truncate font-['Times_New_Roman'] leading-[1.5] tracking-[-0.11px]`}
+            className={`${textSize} ${badge ? "" : "truncate"} font-['Times_New_Roman'] leading-[1.5] tracking-[-0.11px]`}
             style={{ fontFamily: '"Times New Roman", serif', color: appearance.itemText }}
           >
             {label}
           </span>
           {badge && (
-            <span className="rounded-full bg-[#e9af41] px-1.5 py-0.5 text-[7px] font-bold leading-none tracking-[0.5px] text-[#07190d]">
+            <span className="shrink-0 rounded-full bg-[#e9af41] px-1.5 py-0.5 text-[7px] font-bold leading-none tracking-[0.5px] text-[#07190d]">
               {badge}
             </span>
           )}
