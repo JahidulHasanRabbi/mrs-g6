@@ -1,4 +1,4 @@
-import { PHASE4_ASSETS, PHASE4_EVENT, PHASE4_PREVIEW_ENABLED } from "../../config/phase4";
+import { PHASE4_ASSETS, PHASE4_EVENT } from "../../config/phase4";
 
 export const LEADERBOARD_TYPES = {
   DEPOSIT: 'deposit',
@@ -133,14 +133,8 @@ export const LEADERBOARD_CONFIG = {
     showPrizeColumn: false,
     eventBadge: PHASE4_EVENT.badge,
     eventPeriod: PHASE4_EVENT.periodLabel,
-    // Gated out of the tab strip and the menu until the board has a real
-    // endpoint; the notice goes away with the fixture, not with a prop.
-    previewOnly: true,
-    previewNotice: 'Preview data — not connected to live ranking results.',
   },
 };
 
-// Boards the member can actually reach. Turnover is fixture-only for now.
-export const ENABLED_LEADERBOARD_TYPES = Object.keys(LEADERBOARD_CONFIG).filter(
-  (type) => !LEADERBOARD_CONFIG[type].previewOnly || PHASE4_PREVIEW_ENABLED
-);
+// Boards the member can actually reach. All four are live.
+export const ENABLED_LEADERBOARD_TYPES = Object.keys(LEADERBOARD_CONFIG);

@@ -54,6 +54,7 @@ function pathnameToActiveItem(pathname) {
   if (pathname.startsWith("/admin/leaderboards/deposit")) return "lb-deposit";
   if (pathname.startsWith("/admin/leaderboards/referrer")) return "lb-referrer";
   if (pathname.startsWith("/admin/leaderboards/withdrawal")) return "lb-withdrawal";
+  if (pathname.startsWith("/admin/leaderboards/turnover")) return "lb-turnover";
   if (pathname.startsWith("/admin/world-cup/predictions")) return "wc-predictions";
   if (pathname.startsWith("/admin/world-cup/settings")) return "wc-settings";
   if (pathname.startsWith("/admin/world-cup")) return "wc-dashboard";
@@ -365,6 +366,13 @@ const LEADERBOARDS_MENU = [
     label: "Withdrawal",
     iconMask: "/assets/leaderboard/withdrawal-icon.svg",
     href: "/admin/leaderboards/withdrawal",
+    disabled: false,
+  },
+  {
+    id: "lb-turnover",
+    label: "Turnover",
+    iconMask: "/assets/admin/sidebar/icons/iconoir-coins.svg",
+    href: "/admin/leaderboards/turnover",
     disabled: false,
   },
 ];

@@ -276,6 +276,21 @@ export const ENDPOINTS = {
     PUBLIC_DEPOSIT_RANKING: '/leaderboard/public/deposit-ranking/',
     PUBLIC_WITHDRAW_RANKING: '/leaderboard/public/withdraw-ranking/',
     PUBLIC_REFERRAL_RANKING: '/leaderboard/public/referral-ranking/',
+
+    // Turnover (postman/turnover.md) — shaped differently from the trio above:
+    // no info/campaign/exclusions/generate-ranking, own payout schedule + logs.
+    PUBLIC_TURNOVER_RANKING: '/leaderboard/public/turnover-ranking/',
+    TURNOVER_MEMBER_RANK: (uuid) => `/leaderboard/turnover/member-rank/${uuid}/`,
+    TURNOVER_REWARD_ITEMS: '/leaderboard/turnover-reward-items/',
+    TURNOVER_REWARD_ITEM: (uuid) => `/leaderboard/turnover-reward-items/${uuid}/`,
+    TURNOVER_REWARD_ITEM_ARCHIVE: (uuid) => `/leaderboard/turnover-reward-items/${uuid}/archive/`,
+    TURNOVER_FAKE_DATA: '/leaderboard/turnover-fake-data/',
+    TURNOVER_FAKE_DATA_SINGLE: (uuid) => `/leaderboard/turnover-fake-data/${uuid}/`,
+    TURNOVER_FAKE_DATA_ARCHIVE: (uuid) => `/leaderboard/turnover-fake-data/${uuid}/archive/`,
+    TURNOVER_ADMIN_RANKING: '/leaderboard/turnover/admin-ranking/',
+    TURNOVER_PAYOUT_SCHEDULE: '/leaderboard/turnover/payout-schedule/',
+    TURNOVER_SETTLE_PAYOUTS: '/leaderboard/turnover/settle-payouts/',
+    TURNOVER_PAYOUT_LOGS: '/leaderboard/turnover-payout-logs/',
   },
   CRM: {
     // User Access Panel

@@ -546,6 +546,22 @@ export async function getMemberReferrerRewardItems(params = {}) {
   return await apiRequest(`${ENDPOINTS.LEADERBOARD.REFERRAL_REWARD_ITEMS}${qs}`, { method: 'GET' }, true, 'member');
 }
 
+// GET /leaderboard/public/turnover-ranking/ — top 20, real + fake combined
+export async function getPublicTurnoverRanking() {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.PUBLIC_TURNOVER_RANKING, { method: 'GET' }, true, 'member');
+}
+
+// GET /leaderboard/turnover-reward-items/ for display prize mapping
+export async function getMemberTurnoverRewardItems(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.TURNOVER_REWARD_ITEMS}${qs}`, { method: 'GET' }, true, 'member');
+}
+
+// GET /leaderboard/turnover/member-rank/<uuid>/ — member's own rank vs combined ranking
+export async function getTurnoverMemberRank(uuid) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.TURNOVER_MEMBER_RANK(uuid), { method: 'GET' }, true, 'member');
+}
+
 // ============================================================================
 // AVATAR RPG (Phase 3) — MEMBER / USER
 // docs/MRS - G6 Avatar API Documentation.md — all endpoints under /avatar/.

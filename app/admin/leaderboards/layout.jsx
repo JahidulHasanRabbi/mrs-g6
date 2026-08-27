@@ -2,15 +2,26 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { generateLeaderboardRanking, getLeaderboardStatus, updateLeaderboardStatus } from "../../api/adminApi";
+import {
+  generateLeaderboardRanking,
+  getLeaderboardStatus,
+  updateLeaderboardStatus,
+  getTurnoverStatus,
+  updateTurnoverStatus,
+} from "../../api/adminApi";
 import Button from "../../components/admin/ui/Button";
 import { useToast } from "../../components/admin/ui/Toast";
 import LeaderboardStatusModal from "../../components/admin/leaderboards/LeaderboardStatusModal";
 
+// Turnover has no `type` — it has no generate-ranking batch job (ranking is
+// computed live) and answers to its own is_turnover_open field instead of
+// the shared is_open the other three boards use, so it's flagged isTurnover
+// rather than given a numeric leaderboard_type.
 const BOARDS = {
   "/admin/leaderboards/deposit": { title: "Deposit", type: 1 },
   "/admin/leaderboards/referrer": { title: "Referrer", type: 3 },
   "/admin/leaderboards/withdrawal": { title: "Withdrawal", type: 2 },
+  "/admin/leaderboards/turnover": { title: "Turnover", type: null, isTurnover: true },
 };
 
 function resolveTitle(pathname) {
@@ -18,6 +29,7 @@ function resolveTitle(pathname) {
   if (pathname.startsWith("/admin/leaderboards/deposit")) return "Deposit";
   if (pathname.startsWith("/admin/leaderboards/referrer")) return "Referrer";
   if (pathname.startsWith("/admin/leaderboards/withdrawal")) return "Withdrawal";
+  if (pathname.startsWith("/admin/leaderboards/turnover")) return "Turnover";
   return "Deposit";
 }
 
@@ -49,23 +61,29 @@ export default function LeaderboardsLayout({ children }) {
   const pathname = usePathname();
   const title = resolveTitle(pathname);
   const board = resolveBoard(pathname);
+  const isTurnover = Boolean(board?.isTurnover);
   const toast = useToast();
   const [generating, setGenerating] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const [leaderboardOpen, setLeaderboardOpen] = useState(true);
 
   useEffect(() => {
-    getLeaderboardStatus()
-      .then((s) => setLeaderboardOpen(s?.is_open !== false))
+    const fetchStatus = isTurnover ? getTurnoverStatus : getLeaderboardStatus;
+    fetchStatus()
+      .then((s) => setLeaderboardOpen(isTurnover ? s?.is_turnover_open !== false : s?.is_open !== false))
       .catch(() => {});
-  }, []);
+  }, [isTurnover]);
 
   const onSaveStatus = async (isOpen) => {
     try {
-      await updateLeaderboardStatus(isOpen);
+      if (isTurnover) {
+        await updateTurnoverStatus(isOpen);
+      } else {
+        await updateLeaderboardStatus(isOpen);
+      }
       setLeaderboardOpen(isOpen);
       toast.success("Leaderboard status saved", {
-        description: isOpen ? "Leaderboards are now open." : "Leaderboards are now closed.",
+        description: isOpen ? "Leaderboard is now open." : "Leaderboard is now closed.",
       });
     } catch (error) {
       toast.error("Failed to save leaderboard status", {
@@ -75,7 +93,7 @@ export default function LeaderboardsLayout({ children }) {
   };
 
   const onGenerateRanking = async () => {
-    if (!board || generating) return;
+    if (!board || board.type == null || generating) return;
     setGenerating(true);
     try {
       const rows = await generateLeaderboardRanking(board.type);
@@ -126,7 +144,7 @@ export default function LeaderboardsLayout({ children }) {
             >
               Leaderboard Status
             </Button>
-            {board && (
+            {board && board.type != null && (
               <Button
                 type="button"
                 size="lg"
@@ -148,6 +166,7 @@ export default function LeaderboardsLayout({ children }) {
         initial={leaderboardOpen}
         onClose={() => setStatusOpen(false)}
         onSave={onSaveStatus}
+        scopeLabel={isTurnover ? "Turnover" : "Deposit, Withdrawal, and Referrer"}
       />
     </main>
   );

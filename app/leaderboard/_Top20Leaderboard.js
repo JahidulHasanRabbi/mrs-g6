@@ -16,27 +16,41 @@ import {
   ENABLED_LEADERBOARD_TYPES,
 } from "../components/leaderboard-new/constants";
 import { formatAmount } from "../components/leaderboard-new/format";
-import {
-  TURNOVER_PREVIEW_BOARD,
-  TURNOVER_EVENT_COUNTDOWN,
-  PREVIEW_MY_RANK,
-  PREVIEW_MY_RANK_STATES,
-} from "../components/leaderboard-new/turnoverPreview";
-import { PHASE4_PREVIEW_ENABLED, TURNOVER_MAINTENANCE } from "../config/phase4";
+import { PHASE4_EVENT } from "../config/phase4";
 import {
   getPublicDepositRanking,
   getPublicWithdrawRanking,
   getPublicReferralRanking,
+  getPublicTurnoverRanking,
   getPublicLeaderboardInfo,
   getPublicLeaderboardCampaign,
   getPublicTermsAndConditions,
   getMemberDepositRewardItems,
   getMemberReferrerRewardItems,
   getMemberWithdrawalRewardItems,
+  getMemberTurnoverRewardItems,
   getPublicLeaderboardStatus,
+  getTurnoverMemberRank,
 } from "../api/memberApi";
 
-// type = leaderboard info/ranking API. termsCategory = main T&C API category.
+// Row 5: only turnover inside the event window counts, so the countdown card
+// always points at the boundary that hasn't passed yet — the opening before
+// 31/8, the close after it. Evaluated per-call (not once at module load) so a
+// tab left open across the 31/8 boundary flips from "starts in" to "ends in"
+// on its own instead of freezing at whatever was true on page load.
+function getTurnoverCountdown(now = Date.now()) {
+  const notStarted = now < PHASE4_EVENT.startsAt;
+  return {
+    endDate: notStarted ? PHASE4_EVENT.startsAt : PHASE4_EVENT.endsAt,
+    label: notStarted ? "EVENT STARTS IN" : "EVENT ENDS IN",
+  };
+}
+
+// type = leaderboard info/ranking API. termsCategory = main T&C API category
+// (postman/terms.md categories, admin-managed at /admin/terms-conditions).
+// Turnover has no /leaderboard/info/ or /campaign/ (type stays null so those
+// two calls are skipped below), but it does have its own T&C category (11 —
+// "Turnover Leaderboard").
 const BOARD_META = {
   [LEADERBOARD_TYPES.DEPOSIT]: {
     type: 1,
@@ -56,7 +70,36 @@ const BOARD_META = {
     getRanking: getPublicReferralRanking,
     getRewards: getMemberReferrerRewardItems,
   },
+  [LEADERBOARD_TYPES.TURNOVER]: {
+    type: null,
+    termsCategory: 11,
+    getRanking: getPublicTurnoverRanking,
+    getRewards: getMemberTurnoverRewardItems,
+  },
 };
+
+// Maps GET /leaderboard/turnover/member-rank/<uuid>/ -> MyRankPanel's shape.
+// The API gives {rank, amount, upgrade_rank_amount}; the panel additionally
+// wants a 0-100 progress bar and a "next rank" number, which aren't in the
+// response, so they're derived here from rank/upgrade distance.
+function mapTurnoverMemberRank(res) {
+  if (!res || res.rank == null) {
+    return { rank: 0, value: 0, amountToNextRank: 0, nextRank: null, progressPercent: 0 };
+  }
+  const rank = Number(res.rank);
+  const value = Number(res.amount) || 0;
+  const upgradeAmount = res.upgrade_rank_amount != null ? Number(res.upgrade_rank_amount) : null;
+  return {
+    rank,
+    value,
+    amountToNextRank: upgradeAmount ?? 0,
+    nextRank: upgradeAmount != null && rank > 1 ? rank - 1 : null,
+    // No total-to-next-rank baseline is returned, so the bar can only reflect
+    // "made progress" (some value banked) vs "just entered" — same visual
+    // language MyRankPanel already uses for the unranked/top-rank edge cases.
+    progressPercent: upgradeAmount == null ? 100 : value > 0 ? 50 : 0,
+  };
+}
 
 const EMPTY_BOARD = {
   top3: [],
@@ -185,39 +228,27 @@ function Top20LeaderboardPageInner() {
     tabParam && ENABLED_LEADERBOARD_TYPES.includes(tabParam)
       ? tabParam
       : LEADERBOARD_TYPES.DEPOSIT;
-  const isTurnoverPreview =
-    PHASE4_PREVIEW_ENABLED && activeTab === LEADERBOARD_TYPES.TURNOVER;
-  // Review affordance for the mock My Rank states (?myrank=top|unranked).
-  // Inert unless the preview flag is on, and gone with the mock data.
-  const myRankOverride = PHASE4_PREVIEW_ENABLED
-    ? PREVIEW_MY_RANK_STATES[searchParams.get("myrank")] ?? null
-    : null;
+  const isTurnoverTab = activeTab === LEADERBOARD_TYPES.TURNOVER;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [data, setData] = useState(EMPTY_BOARD);
   const [loading, setLoading] = useState(true);
   // null = not checked yet, so the maintenance overlay never flashes on load.
+  // Deposit/Withdraw/Referral share is_open; Turnover answers to its own
+  // is_turnover_open field on the same /leaderboard/status/ response.
   const [maintenance, setMaintenance] = useState(null);
-  // Requirement 6: Turnover answers to its own switch, so putting the shared
-  // leaderboard into maintenance must not take the event board down with it.
-  const isMaintenance = isTurnoverPreview
-    ? TURNOVER_MAINTENANCE
-    : maintenance === true;
+  const isMaintenance = maintenance === true;
   // Cache each tab's loaded board so switching back doesn't refetch.
   const boardCache = useRef({});
 
-  // Single admin toggle (PUT /leaderboard/status/ { is_open }) covers all
-  // three boards (Deposit/Withdraw/Referral) at once — there's no per-type
-  // switch, so this one check gates the whole page.
   useEffect(() => {
-    // A direct Turnover-preview visit never calls the shared status endpoint;
-    // once it has answered, leaving that tab must not refetch it.
-    if (isTurnoverPreview || maintenance !== null) return undefined;
+    setMaintenance(null);
     getPublicLeaderboardStatus()
-      .then((s) => setMaintenance(s?.is_open === false))
+      .then((s) =>
+        setMaintenance(isTurnoverTab ? s?.is_turnover_open === false : s?.is_open === false)
+      )
       .catch(() => setMaintenance(false));
-    return undefined;
-  }, [isTurnoverPreview, maintenance]);
+  }, [isTurnoverTab]);
 
   useEffect(() => {
     if (!isMaintenance || typeof document === "undefined") return undefined;
@@ -243,27 +274,27 @@ function Top20LeaderboardPageInner() {
   );
 
   useEffect(() => {
-    if (isTurnoverPreview) {
-      setData(TURNOVER_PREVIEW_BOARD);
-      setLoading(false);
-      return undefined;
-    }
     if (maintenance !== false) return undefined;
     let cancelled = false;
     // Already loaded this tab - show cached data, skip the API calls.
     if (boardCache.current[activeTab]) {
       setData(boardCache.current[activeTab]);
       setLoading(false);
-      return;
+      return undefined;
     }
     const meta = BOARD_META[activeTab];
     setData(EMPTY_BOARD);
     setLoading(true);
+    // Turnover has no info/campaign endpoints (see BOARD_META: type is null),
+    // so those two calls are skipped for it; its T&C call still runs against
+    // category 11.
     Promise.all([
       meta.getRanking().catch(() => []),
-      getPublicLeaderboardInfo(meta.type).catch(() => null),
-      getPublicLeaderboardCampaign(meta.type).catch(() => null),
-      getPublicTermsAndConditions(meta.termsCategory).catch(() => null),
+      meta.type ? getPublicLeaderboardInfo(meta.type).catch(() => null) : Promise.resolve(null),
+      meta.type ? getPublicLeaderboardCampaign(meta.type).catch(() => null) : Promise.resolve(null),
+      meta.termsCategory
+        ? getPublicTermsAndConditions(meta.termsCategory).catch(() => null)
+        : Promise.resolve(null),
       meta.getRewards({ page_size: 100 }).catch(() => []),
     ]).then(([ranking, info, campaign, mainTerms, rewards]) => {
       if (cancelled) return;
@@ -287,10 +318,9 @@ function Top20LeaderboardPageInner() {
         notes,
         infoTerms,
         terms: splitLines(mainTerms?.terms_and_conditions),
-        // My Rank has no endpoint yet. While the preview flag is on the panel
-        // is filled with mock values (tagged PREVIEW in the UI); with the flag
-        // off it stays null and the section doesn't render.
-        myRank: PHASE4_PREVIEW_ENABLED ? PREVIEW_MY_RANK[activeTab] ?? null : null,
+        // My Rank for turnover is fetched separately below (it needs the
+        // member's uuid); the other three boards have no rank endpoint yet.
+        myRank: null,
       };
       boardCache.current[activeTab] = board;
       setData(board);
@@ -299,9 +329,36 @@ function Top20LeaderboardPageInner() {
     return () => {
       cancelled = true;
     };
-  }, [activeTab, isTurnoverPreview, maintenance]);
+  }, [activeTab, maintenance]);
+
+  const [turnoverMyRank, setTurnoverMyRank] = useState(null);
+
+  useEffect(() => {
+    if (!isTurnoverTab || maintenance !== false || !userData?.uuid) {
+      setTurnoverMyRank(null);
+      return undefined;
+    }
+    let cancelled = false;
+    getTurnoverMemberRank(userData.uuid)
+      .then((res) => {
+        if (!cancelled) setTurnoverMyRank(mapTurnoverMemberRank(res));
+      })
+      .catch(() => {
+        if (!cancelled) setTurnoverMyRank(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isTurnoverTab, maintenance, userData?.uuid]);
 
   const config = LEADERBOARD_CONFIG[activeTab];
+  const myRank = isTurnoverTab ? turnoverMyRank : data.myRank;
+  // Turnover has no campaign endpoint (BOARD_META.type is null for it, so
+  // data.endDate is always null) — its countdown instead tracks the event
+  // window directly: counts down to the opening before 31/8, then to the
+  // close after it.
+  const turnoverCountdown = isTurnoverTab ? getTurnoverCountdown() : null;
+  const countdownEndDate = isTurnoverTab ? turnoverCountdown.endDate : data.endDate;
 
   const page = (
     <div
@@ -378,15 +435,15 @@ function Top20LeaderboardPageInner() {
               top3={data.top3}
               tableEntries={data.table}
               currentUserRank={null}
-              campaignEndDate={data.endDate}
+              campaignEndDate={countdownEndDate}
               periodLabel={config.eventPeriod || data.periodLabel || ""}
               updateNotes={data.notes}
               terms={data.terms}
               loading={loading}
-              myRank={myRankOverride ?? data.myRank}
+              myRank={myRank}
               memberName={userData.name}
               profilePicture={profilePicture}
-              countdownLabel={isTurnoverPreview ? TURNOVER_EVENT_COUNTDOWN.label : undefined}
+              countdownLabel={isTurnoverTab ? turnoverCountdown.label : undefined}
             />
           </AnimatePresence>
         </div>
