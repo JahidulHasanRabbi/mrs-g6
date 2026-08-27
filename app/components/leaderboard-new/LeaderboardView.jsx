@@ -198,7 +198,7 @@ export default function LeaderboardView({
           )}
 
           {/* Podium - Top 3 */}
-          <PodiumCards top3={top3} config={config} />
+          <PodiumCards top3={top3} config={config} currentUserRank={currentUserRank} />
 
           {/* Table - Ranks 4-20 */}
           <LeaderboardTable

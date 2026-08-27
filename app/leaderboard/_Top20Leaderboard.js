@@ -434,7 +434,7 @@ function Top20LeaderboardPageInner() {
               config={config}
               top3={data.top3}
               tableEntries={data.table}
-              currentUserRank={null}
+              currentUserRank={isTurnoverTab && turnoverMyRank?.rank > 0 ? turnoverMyRank.rank : null}
               campaignEndDate={countdownEndDate}
               periodLabel={config.eventPeriod || data.periodLabel || ""}
               updateNotes={data.notes}
