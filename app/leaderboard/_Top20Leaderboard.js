@@ -30,7 +30,7 @@ import {
   getMemberWithdrawalRewardItems,
   getMemberTurnoverRewardItems,
   getPublicLeaderboardStatus,
-  getTurnoverMemberRank,
+  getMemberRankAllBoards,
 } from "../api/memberApi";
 
 // Row 5: only turnover inside the event window counts, so the countdown card
@@ -78,11 +78,13 @@ const BOARD_META = {
   },
 };
 
-// Maps GET /leaderboard/turnover/member-rank/<uuid>/ -> MyRankPanel's shape.
-// The API gives {rank, amount, upgrade_rank_amount}; the panel additionally
-// wants a 0-100 progress bar and a "next rank" number, which aren't in the
-// response, so they're derived here from rank/upgrade distance.
-function mapTurnoverMemberRank(res) {
+// Maps one board's slice of GET /leaderboard/member-rank/<uuid>/ (or the
+// turnover-only GET /leaderboard/turnover/member-rank/<uuid>/, same shape) to
+// MyRankPanel's props. The API gives {rank, amount, upgrade_rank_amount}; the
+// panel additionally wants a 0-100 progress bar and a "next rank" number,
+// which aren't in the response, so they're derived here from rank/upgrade
+// distance.
+function mapMemberRank(res) {
   if (!res || res.rank == null) {
     return { rank: 0, value: 0, amountToNextRank: 0, nextRank: null, progressPercent: 0 };
   }
@@ -101,6 +103,15 @@ function mapTurnoverMemberRank(res) {
   };
 }
 
+// activeTab (deposit/withdrawal/referrer/turnover) -> key in the combined
+// GET /leaderboard/member-rank/<uuid>/ response.
+const MEMBER_RANK_BOARD_KEY = {
+  [LEADERBOARD_TYPES.DEPOSIT]: "deposit",
+  [LEADERBOARD_TYPES.WITHDRAWAL]: "withdraw",
+  [LEADERBOARD_TYPES.REFERRER]: "referral",
+  [LEADERBOARD_TYPES.TURNOVER]: "turnover",
+};
+
 const EMPTY_BOARD = {
   top3: [],
   table: [],
@@ -108,7 +119,6 @@ const EMPTY_BOARD = {
   notes: [],
   terms: [],
   infoTerms: [],
-  myRank: null,
 };
 
 function asList(response) {
@@ -318,9 +328,6 @@ function Top20LeaderboardPageInner() {
         notes,
         infoTerms,
         terms: splitLines(mainTerms?.terms_and_conditions),
-        // My Rank for turnover is fetched separately below (it needs the
-        // member's uuid); the other three boards have no rank endpoint yet.
-        myRank: null,
       };
       boardCache.current[activeTab] = board;
       setData(board);
@@ -331,28 +338,32 @@ function Top20LeaderboardPageInner() {
     };
   }, [activeTab, maintenance]);
 
-  const [turnoverMyRank, setTurnoverMyRank] = useState(null);
+  // Combined My Rank across all four boards, fetched once per member (not
+  // per tab) since GET /leaderboard/member-rank/<uuid>/ returns all of them
+  // together. Keyed by board so switching tabs just re-reads the same
+  // response instead of refetching.
+  const [memberRanks, setMemberRanks] = useState(null);
 
   useEffect(() => {
-    if (!isTurnoverTab || maintenance !== false || !userData?.uuid) {
-      setTurnoverMyRank(null);
+    if (maintenance !== false || !userData?.uuid) {
+      setMemberRanks(null);
       return undefined;
     }
     let cancelled = false;
-    getTurnoverMemberRank(userData.uuid)
+    getMemberRankAllBoards(userData.uuid)
       .then((res) => {
-        if (!cancelled) setTurnoverMyRank(mapTurnoverMemberRank(res));
+        if (!cancelled) setMemberRanks(res || null);
       })
       .catch(() => {
-        if (!cancelled) setTurnoverMyRank(null);
+        if (!cancelled) setMemberRanks(null);
       });
     return () => {
       cancelled = true;
     };
-  }, [isTurnoverTab, maintenance, userData?.uuid]);
+  }, [maintenance, userData?.uuid]);
 
   const config = LEADERBOARD_CONFIG[activeTab];
-  const myRank = isTurnoverTab ? turnoverMyRank : data.myRank;
+  const myRank = memberRanks ? mapMemberRank(memberRanks[MEMBER_RANK_BOARD_KEY[activeTab]]) : null;
   // Turnover has no campaign endpoint (BOARD_META.type is null for it, so
   // data.endDate is always null) — its countdown instead tracks the event
   // window directly: counts down to the opening before 31/8, then to the
@@ -434,7 +445,7 @@ function Top20LeaderboardPageInner() {
               config={config}
               top3={data.top3}
               tableEntries={data.table}
-              currentUserRank={isTurnoverTab && turnoverMyRank?.rank > 0 ? turnoverMyRank.rank : null}
+              currentUserRank={myRank?.rank > 0 ? myRank.rank : null}
               campaignEndDate={countdownEndDate}
               periodLabel={config.eventPeriod || data.periodLabel || ""}
               updateNotes={data.notes}

@@ -78,18 +78,22 @@ function PodiumCard({ rank, entry, config, isCurrentUser }) {
         </div>
       </div>
 
-      {/* User */}
+      {/* User — text stays the same light gray whether or not this card is
+          highlighted (matching LeaderboardTable's row), rather than flipping
+          to pure white: Turnover's accent (#e9af41, a light gold) doesn't
+          give white text enough contrast the way Deposit/Referrer/
+          Withdrawal's darker/more saturated colors do. */}
       <p
-        className="text-sm font-light mb-1"
-        style={{ fontFamily: "var(--font-inter)", color: isCurrentUser ? "#ffffff" : "#e5e2e1" }}
+        className="text-sm font-light text-[#e5e2e1] mb-1"
+        style={{ fontFamily: "var(--font-inter)" }}
       >
         User: {isCurrentUser ? "You" : entry.user}
       </p>
 
       {/* Value */}
       <p
-        className="text-xl font-semibold mb-1"
-        style={{ fontFamily: "var(--font-inter)", color: isCurrentUser ? "#ffffff" : "#e5e2e1" }}
+        className="text-xl font-semibold text-[#e5e2e1] mb-1"
+        style={{ fontFamily: "var(--font-inter)" }}
       >
         {config.valueLabel}: {entry.value}
       </p>
@@ -99,7 +103,7 @@ function PodiumCard({ rank, entry, config, isCurrentUser }) {
         <p
           className="text-xs font-semibold tracking-[1.2px]"
           style={{
-            color: isCurrentUser ? "#ffffff" : rc.prizeColor,
+            color: isCurrentUser ? "#e5e2e1" : rc.prizeColor,
             fontFamily: "var(--font-jetbrains-mono)",
           }}
         >

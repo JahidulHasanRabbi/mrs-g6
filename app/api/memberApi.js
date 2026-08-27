@@ -562,6 +562,15 @@ export async function getTurnoverMemberRank(uuid) {
   return await apiRequest(ENDPOINTS.LEADERBOARD.TURNOVER_MEMBER_RANK(uuid), { method: 'GET' }, true, 'member');
 }
 
+// GET /leaderboard/member-rank/<uuid>/ — My Rank for all four boards in one
+// call: { uuid, deposit, withdraw, referral, turnover }, each
+// { rank, amount, upgrade_rank_amount }. Deposit/withdraw/referral come from
+// the latest generated ranking snapshot (only as fresh as the last
+// regenerate); turnover is computed live.
+export async function getMemberRankAllBoards(uuid) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.MEMBER_RANK_ALL(uuid), { method: 'GET' }, true, 'member');
+}
+
 // ============================================================================
 // AVATAR RPG (Phase 3) — MEMBER / USER
 // docs/MRS - G6 Avatar API Documentation.md — all endpoints under /avatar/.

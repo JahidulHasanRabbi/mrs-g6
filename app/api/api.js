@@ -281,6 +281,9 @@ export const ENDPOINTS = {
     // no info/campaign/exclusions/generate-ranking, own payout schedule + logs.
     PUBLIC_TURNOVER_RANKING: '/leaderboard/public/turnover-ranking/',
     TURNOVER_MEMBER_RANK: (uuid) => `/leaderboard/turnover/member-rank/${uuid}/`,
+    // Combined My Rank for all four boards in one call (deposit/withdraw are
+    // from the latest generated snapshot; turnover is computed live).
+    MEMBER_RANK_ALL: (uuid) => `/leaderboard/member-rank/${uuid}/`,
     TURNOVER_REWARD_ITEMS: '/leaderboard/turnover-reward-items/',
     TURNOVER_REWARD_ITEM: (uuid) => `/leaderboard/turnover-reward-items/${uuid}/`,
     TURNOVER_REWARD_ITEM_ARCHIVE: (uuid) => `/leaderboard/turnover-reward-items/${uuid}/archive/`,
