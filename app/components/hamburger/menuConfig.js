@@ -1,3 +1,5 @@
+import { PHASE4_EVENT } from "../../config/phase4";
+
 /**
  * Menu configuration - separating data from presentation
  * Following Facebook's pattern of configuration-driven UIs
@@ -46,7 +48,13 @@ export const MENU_CONFIG = {
         { icon: "/assets/menu-icons/deposit.svg", label: "Top 20 Deposit", link: "/leaderboard" },
         { icon: "/assets/menu-icons/withdrawal.svg", label: "Top 20 Withdraw", link: "/leaderboard?tab=withdrawal" },
         { icon: "/assets/menu-icons/referral.svg", label: "Top 20 Referral", link: "/leaderboard?tab=referrer" },
-        { icon: "/assets/menu-icons/deposit.svg", label: "Top Turnover", link: "/leaderboard?tab=turnover" },
+        {
+          icon: "/assets/menu-icons/deposit.svg",
+          label: "Top Turnover",
+          link: "/leaderboard?tab=turnover",
+          badge: PHASE4_EVENT.badge,
+          subtitle: PHASE4_EVENT.periodLabel,
+        },
       ],
     },
     { icon: "/assets/menu-icons/missions.svg", label: "Missions", link: "/missions" },
