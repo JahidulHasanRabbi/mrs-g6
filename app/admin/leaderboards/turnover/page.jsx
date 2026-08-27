@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Pagination } from "../../../components/admin/members/DataTable";
 import SettingsSection from "../../../components/admin/world-cup/SettingsSection";
 import ConfirmArchive from "../../../components/admin/world-cup/ConfirmArchive";
+import InformationTable from "../../../components/admin/leaderboards/deposit/InformationTable";
 import TurnoverRewardTable from "../../../components/admin/leaderboards/turnover/TurnoverRewardTable";
 import TurnoverPlayerTable from "../../../components/admin/leaderboards/turnover/TurnoverPlayerTable";
 import PayoutScheduleCard from "../../../components/admin/leaderboards/turnover/PayoutScheduleCard";
@@ -12,6 +13,8 @@ import PayoutLogTable from "../../../components/admin/leaderboards/turnover/Payo
 import RankingTable from "../../../components/admin/leaderboards/RankingTable";
 import { useToast } from "../../../components/admin/ui/Toast";
 import {
+  getTurnoverBanners,
+  archiveTurnoverBanner,
   getTurnoverRewardItems,
   archiveTurnoverRewardItem,
   getTurnoverDummyPlayers,
@@ -38,6 +41,15 @@ function PaginatedFooter({ total, page, setPage }) {
 
 function errorMessage(error) {
   return error?.data?.detail || error?.data?.message || error?.message || "Please try again.";
+}
+
+function normalizeBanner(b) {
+  return {
+    id: b.uuid,
+    uuid: b.uuid,
+    description: b.information ?? "",
+    termsCondition: b.terms_and_conditions ?? "",
+  };
 }
 
 function normalizeReward(r) {
@@ -77,12 +89,14 @@ export default function TurnoverSettingsPage() {
   const router = useRouter();
   const toast = useToast();
 
+  const [banners, setBanners] = useState([]);
   const [rewards, setRewards] = useState([]);
   const [players, setPlayers] = useState([]);
   const [rankings, setRankings] = useState([]);
   const [payoutLogs, setPayoutLogs] = useState([]);
   const [payoutLogCount, setPayoutLogCount] = useState(0);
 
+  const [bannerPage, setBannerPage] = useState(1);
   const [rewardPage, setRewardPage] = useState(1);
   const [playerPage, setPlayerPage] = useState(1);
   const [rankingPage, setRankingPage] = useState(1);
@@ -92,13 +106,16 @@ export default function TurnoverSettingsPage() {
 
   const loadRewardsAndPlayers = () => {
     Promise.all([
+      getTurnoverBanners().catch(() => null),
       getTurnoverRewardItems().catch(() => null),
       getTurnoverDummyPlayers().catch(() => null),
       getTurnoverAdminRanking().catch(() => null),
-    ]).then(([rewardsRes, playersRes, rankingRes]) => {
+    ]).then(([bannersRes, rewardsRes, playersRes, rankingRes]) => {
+      const bList = bannersRes ? (bannersRes.results ?? bannersRes) : [];
       const rList = rewardsRes ? (rewardsRes.results ?? rewardsRes) : [];
       const pList = playersRes ? (playersRes.results ?? playersRes) : [];
       const rankingList = rankingRes ? (rankingRes.results ?? rankingRes) : [];
+      setBanners((Array.isArray(bList) ? bList : []).map(normalizeBanner));
       setRewards((Array.isArray(rList) ? rList : []).map(normalizeReward));
       setPlayers((Array.isArray(pList) ? pList : []).map(normalizePlayer));
       setRankings((Array.isArray(rankingList) ? rankingList : []).map(normalizeRanking));
@@ -125,6 +142,10 @@ export default function TurnoverSettingsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [payoutLogPage]);
 
+  const pagedBanners = useMemo(
+    () => banners.slice((bannerPage - 1) * PAGE_SIZE, bannerPage * PAGE_SIZE),
+    [banners, bannerPage],
+  );
   const pagedRewards = useMemo(
     () => rewards.slice((rewardPage - 1) * PAGE_SIZE, rewardPage * PAGE_SIZE),
     [rewards, rewardPage],
@@ -140,18 +161,38 @@ export default function TurnoverSettingsPage() {
 
   const confirmArchive = async () => {
     if (!archiveTarget) return;
+    const { type, item } = archiveTarget;
     try {
-      await archiveTurnoverRewardItem(archiveTarget.uuid);
-      setRewards((list) => list.filter((r) => r.uuid !== archiveTarget.uuid));
-      toast.success("Reward archived");
+      if (type === "reward") {
+        await archiveTurnoverRewardItem(item.uuid);
+        setRewards((list) => list.filter((r) => r.uuid !== item.uuid));
+        toast.success("Reward archived");
+      }
+      if (type === "banner") {
+        await archiveTurnoverBanner(item.uuid);
+        setBanners((list) => list.filter((b) => b.uuid !== item.uuid));
+        toast.success("Information archived");
+      }
     } catch (error) {
-      toast.error("Failed to archive reward", { description: errorMessage(error) });
+      toast.error("Failed to archive", { description: errorMessage(error) });
     }
     setArchiveTarget(null);
   };
 
   return (
     <div className="flex flex-col gap-6">
+      <SettingsSection
+        title="Information"
+        addLabel="Add Information"
+        onAdd={() => router.push("/admin/leaderboards/turnover/banner")}
+      >
+        <InformationTable
+          items={pagedBanners}
+          onEdit={(b) => router.push(`/admin/leaderboards/turnover/banner?uuid=${b.uuid}`)}
+        />
+        <PaginatedFooter total={banners.length} page={bannerPage} setPage={setBannerPage} />
+      </SettingsSection>
+
       <SettingsSection
         title="Reward Items"
         addLabel="Add Reward"
@@ -160,7 +201,7 @@ export default function TurnoverSettingsPage() {
         <TurnoverRewardTable
           rewards={pagedRewards}
           onEdit={(r) => router.push(`/admin/leaderboards/turnover/reward?uuid=${r.uuid}`)}
-          onArchive={(r) => setArchiveTarget(r)}
+          onArchive={(r) => setArchiveTarget({ type: "reward", item: r })}
         />
         <PaginatedFooter total={rewards.length} page={rewardPage} setPage={setRewardPage} />
       </SettingsSection>

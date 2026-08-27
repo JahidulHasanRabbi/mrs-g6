@@ -1052,7 +1052,7 @@ export async function getWorldCupDashboardKpi(params = {}) {
 // "Dummy player" functions map to the per-board fake-data endpoint.
 // ===========================================================================
 
-const LB_TYPE = { deposit: 1, withdraw: 2, referral: 3 };
+const LB_TYPE = { deposit: 1, withdraw: 2, referral: 3, turnover: 4 };
 
 // --- Info (shared endpoint, filtered/created by leaderboard_type) -----------
 async function getLeaderboardInfoList(type, params = {}) {
@@ -1256,13 +1256,20 @@ export async function archiveWithdrawalDummyPlayer(uuid) {
 // ---------------------------------------------------------------------------
 // Turnover Leaderboard — postman/turnover.md
 //
-// Shaped differently from Deposit/Withdraw/Referral: no shared Info/Campaign/
-// Exclusions/Generate-Ranking endpoints. Instead it has its own admin ranking
-// (computed live, not a generated batch), a payout schedule, a manual settle
-// trigger, and a payout audit log. Status is a separate field
-// (is_turnover_open) on the same /leaderboard/status/ endpoint the other
-// three boards use for is_open.
+// Shares the generic Info endpoint (leaderboard_type 4, confirmed live) with
+// Deposit/Withdraw/Referral, same as the "banner" pattern below. It still has
+// no confirmed Campaign or Exclusions/Generate-Ranking support — instead it
+// has its own admin ranking (computed live, not a generated batch), a payout
+// schedule, a manual settle trigger, and a payout audit log. Status is a
+// separate field (is_turnover_open) on the same /leaderboard/status/
+// endpoint the other three boards use for is_open.
 // ---------------------------------------------------------------------------
+export const getTurnoverBanners = (params = {}) => getLeaderboardInfoList(LB_TYPE.turnover, params);
+export const getTurnoverBanner = (uuid) => getLeaderboardInfo(uuid);
+export const createTurnoverBanner = (data) => createLeaderboardInfo(LB_TYPE.turnover, data);
+export const updateTurnoverBanner = (uuid, data) => updateLeaderboardInfo(uuid, data);
+export const archiveTurnoverBanner = (uuid) => archiveLeaderboardInfo(uuid);
+
 export async function getTurnoverRewardItems(params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.LEADERBOARD.TURNOVER_REWARD_ITEMS}${qs}`, { method: 'GET' }, true, 'admin');

@@ -46,60 +46,73 @@ function getTurnoverCountdown(now = Date.now()) {
   };
 }
 
-// type = leaderboard info/ranking API. termsCategory = main T&C API category
-// (postman/terms.md categories, admin-managed at /admin/terms-conditions).
-// Turnover has no /leaderboard/info/ or /campaign/ (type stays null so those
-// two calls are skipped below), but it does have its own T&C category (11 —
-// "Turnover Leaderboard").
+// infoType = /leaderboard/info/ + /leaderboard/public/info/ (banner-style
+// event info text). campaignType = /leaderboard/campaign/ (drives endDate).
+// termsCategory = main T&C API category (postman/terms.md, admin-managed at
+// /admin/terms-conditions). Turnover now has its own info type (4, confirmed
+// live) but no confirmed campaign type — /leaderboard/campaign/?type=4
+// returns an empty list either way (no rows, or type not recognized), so
+// campaignType stays null for it rather than assuming that endpoint applies.
 const BOARD_META = {
   [LEADERBOARD_TYPES.DEPOSIT]: {
-    type: 1,
+    infoType: 1,
+    campaignType: 1,
     termsCategory: 2,
     getRanking: getPublicDepositRanking,
     getRewards: getMemberDepositRewardItems,
   },
   [LEADERBOARD_TYPES.WITHDRAWAL]: {
-    type: 2,
+    infoType: 2,
+    campaignType: 2,
     termsCategory: 3,
     getRanking: getPublicWithdrawRanking,
     getRewards: getMemberWithdrawalRewardItems,
   },
   [LEADERBOARD_TYPES.REFERRER]: {
-    type: 3,
+    infoType: 3,
+    campaignType: 3,
     termsCategory: 4,
     getRanking: getPublicReferralRanking,
     getRewards: getMemberReferrerRewardItems,
   },
   [LEADERBOARD_TYPES.TURNOVER]: {
-    type: null,
+    infoType: 4,
+    campaignType: null,
     termsCategory: 11,
     getRanking: getPublicTurnoverRanking,
     getRewards: getMemberTurnoverRewardItems,
   },
 };
 
-// Maps one board's slice of GET /leaderboard/member-rank/<uuid>/ (or the
-// turnover-only GET /leaderboard/turnover/member-rank/<uuid>/, same shape) to
-// MyRankPanel's props. The API gives {rank, amount, upgrade_rank_amount}; the
-// panel additionally wants a 0-100 progress bar and a "next rank" number,
-// which aren't in the response, so they're derived here from rank/upgrade
-// distance.
+// Maps one board's slice of GET /leaderboard/member-rank/<uuid>/ to
+// MyRankPanel's props. Current shape: {rank, amount, next_rank,
+// next_rank_amount} — next_rank is the rank number directly above (rank - 1),
+// next_rank_amount is that rank's amount; both null at rank 1 or unranked.
+// The gap to close and the 0-100 progress bar aren't returned directly, so
+// they're derived here: gap = next_rank_amount - amount, progress = how far
+// into that gap the member's own amount already reaches.
 function mapMemberRank(res) {
   if (!res || res.rank == null) {
     return { rank: 0, value: 0, amountToNextRank: 0, nextRank: null, progressPercent: 0 };
   }
   const rank = Number(res.rank);
   const value = Number(res.amount) || 0;
-  const upgradeAmount = res.upgrade_rank_amount != null ? Number(res.upgrade_rank_amount) : null;
+  const nextRank = res.next_rank != null ? Number(res.next_rank) : null;
+  const nextRankAmount = res.next_rank_amount != null ? Number(res.next_rank_amount) : null;
+  const gap = nextRankAmount != null ? Math.max(0, nextRankAmount - value) : 0;
   return {
     rank,
     value,
-    amountToNextRank: upgradeAmount ?? 0,
-    nextRank: upgradeAmount != null && rank > 1 ? rank - 1 : null,
-    // No total-to-next-rank baseline is returned, so the bar can only reflect
-    // "made progress" (some value banked) vs "just entered" — same visual
-    // language MyRankPanel already uses for the unranked/top-rank edge cases.
-    progressPercent: upgradeAmount == null ? 100 : value > 0 ? 50 : 0,
+    amountToNextRank: gap,
+    nextRank,
+    // Already rank 1 (no next_rank) reads as "maxed out"; otherwise the bar
+    // fills by how close `value` already is to next_rank_amount.
+    progressPercent:
+      nextRank == null
+        ? 100
+        : nextRankAmount > 0
+          ? Math.max(0, Math.min(100, (value / nextRankAmount) * 100))
+          : 0,
   };
 }
 
@@ -231,7 +244,7 @@ function Top20LeaderboardPageInner() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { userData, profilePicture } = useUser();
+  const { userData } = useUser();
   const { isThemed } = useTheme();
   const tabParam = searchParams.get("tab");
   const activeTab =
@@ -239,6 +252,12 @@ function Top20LeaderboardPageInner() {
       ? tabParam
       : LEADERBOARD_TYPES.DEPOSIT;
   const isTurnoverTab = activeTab === LEADERBOARD_TYPES.TURNOVER;
+  // Temporary preview aid: ?mockrank=N shows a fake My Rank card (matching
+  // the client's own mockup numbers, rank scaled by N) without needing a
+  // real member-rank API response. Inert unless the query param is present
+  // — remove once the live panel has been checked against a real member.
+  const mockRankParam = searchParams.get("mockrank");
+  const mockRank = mockRankParam ? Number(mockRankParam) : null;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [data, setData] = useState(EMPTY_BOARD);
@@ -295,13 +314,12 @@ function Top20LeaderboardPageInner() {
     const meta = BOARD_META[activeTab];
     setData(EMPTY_BOARD);
     setLoading(true);
-    // Turnover has no info/campaign endpoints (see BOARD_META: type is null),
-    // so those two calls are skipped for it; its T&C call still runs against
-    // category 11.
+    // Turnover now has a confirmed info type (4) but no confirmed campaign
+    // type, so only the campaign call is skipped for it (see BOARD_META).
     Promise.all([
       meta.getRanking().catch(() => []),
-      meta.type ? getPublicLeaderboardInfo(meta.type).catch(() => null) : Promise.resolve(null),
-      meta.type ? getPublicLeaderboardCampaign(meta.type).catch(() => null) : Promise.resolve(null),
+      meta.infoType ? getPublicLeaderboardInfo(meta.infoType).catch(() => null) : Promise.resolve(null),
+      meta.campaignType ? getPublicLeaderboardCampaign(meta.campaignType).catch(() => null) : Promise.resolve(null),
       meta.termsCategory
         ? getPublicTermsAndConditions(meta.termsCategory).catch(() => null)
         : Promise.resolve(null),
@@ -363,7 +381,18 @@ function Top20LeaderboardPageInner() {
   }, [maintenance, userData?.uuid]);
 
   const config = LEADERBOARD_CONFIG[activeTab];
-  const myRank = memberRanks ? mapMemberRank(memberRanks[MEMBER_RANK_BOARD_KEY[activeTab]]) : null;
+  const myRank = mockRank
+    ? {
+        rank: mockRank,
+        value: mockRank === 186 ? 25680 : mockRank * 138,
+        amountToNextRank: mockRank === 186 ? 1250 : Math.max(1, mockRank) * 10,
+        nextRank: mockRank > 1 ? mockRank - 1 : null,
+        progressPercent: 68,
+        isMock: true,
+      }
+    : memberRanks
+      ? mapMemberRank(memberRanks[MEMBER_RANK_BOARD_KEY[activeTab]])
+      : null;
   // Turnover has no campaign endpoint (BOARD_META.type is null for it, so
   // data.endDate is always null) — its countdown instead tracks the event
   // window directly: counts down to the opening before 31/8, then to the
@@ -453,7 +482,6 @@ function Top20LeaderboardPageInner() {
               loading={loading}
               myRank={myRank}
               memberName={userData.name}
-              profilePicture={profilePicture}
               countdownLabel={isTurnoverTab ? turnoverCountdown.label : undefined}
             />
           </AnimatePresence>

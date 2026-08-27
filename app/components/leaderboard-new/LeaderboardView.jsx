@@ -25,7 +25,6 @@ export default function LeaderboardView({
   loading = false,
   myRank = null,
   memberName = "Member",
-  profilePicture = "",
   countdownLabel = undefined,
 }) {
   const { isKgame99, isLv918 } = useTheme();
@@ -58,7 +57,7 @@ export default function LeaderboardView({
           themed shadow elsewhere). */}
       {isKgame99 ? (
         <div className="flex flex-col items-center gap-1 w-full pt-2">
-          <KgameSectionHeading className="!text-[30px] sm:!text-[36px]">TOP 20</KgameSectionHeading>
+          <KgameSectionHeading className="!text-[30px] sm:!text-[36px]">MY RANK</KgameSectionHeading>
           <KgameSectionHeading className="!text-[24px] sm:!text-[28px]">{config.title}</KgameSectionHeading>
           {periodLabel && (
             <p className="text-base text-center mt-1" style={{ fontFamily: "var(--font-inter)", color: KGAME99_COLORS.dark }}>
@@ -68,7 +67,7 @@ export default function LeaderboardView({
         </div>
       ) : isLv918 ? (
         <div className="flex flex-col items-center gap-1 w-full pt-2">
-          <Lv918SectionHeading className="!text-[30px] sm:!text-[36px]">TOP 20</Lv918SectionHeading>
+          <Lv918SectionHeading className="!text-[30px] sm:!text-[36px]">MY RANK</Lv918SectionHeading>
           <Lv918SectionHeading className="!text-[24px] sm:!text-[28px]">{config.title}</Lv918SectionHeading>
           {periodLabel && (
             <p className="text-base text-center mt-1" style={{ fontFamily: "var(--font-inter)", color: LV918_COLORS.inkStrong }}>
@@ -87,7 +86,7 @@ export default function LeaderboardView({
                 textShadow: "var(--lb-heading-shadow, 0 1px 4px rgba(0,0,0,0.6), 0 0 12px rgba(0,0,0,0.3))",
               }}
             >
-              TOP 20
+              MY RANK
             </p>
             <p
               className="text-2xl sm:text-[32px] font-extrabold leading-10 sm:leading-[48px]"
@@ -156,7 +155,6 @@ export default function LeaderboardView({
             gapUnit={config.myRankGapUnit}
             emptyHint={config.myRankEmptyHint}
             memberName={memberName}
-            profilePicture={profilePicture}
           />
 
           {/* Countdown timer (deposit campaign / turnover event window) */}
@@ -197,10 +195,8 @@ export default function LeaderboardView({
             </div>
           )}
 
-          {/* Podium - Top 3 */}
+          {/* Top 20 podium + table, shown together with My Rank above. */}
           <PodiumCards top3={top3} config={config} currentUserRank={currentUserRank} />
-
-          {/* Table - Ranks 4-20 */}
           <LeaderboardTable
             entries={tableEntries}
             config={config}
