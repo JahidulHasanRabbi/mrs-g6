@@ -75,6 +75,10 @@ export default function MyRankPanel({
         </span>
       )}
 
+      <h2 className="text-center text-base font-bold" style={{ color }}>
+        My Rank
+      </h2>
+      <div className="mt-2 h-px w-full" style={{ backgroundColor: color }} />
 
       <div className="mt-4 flex flex-col items-center text-center">
         <p className="max-w-full truncate text-lg font-bold" style={{ color }}>

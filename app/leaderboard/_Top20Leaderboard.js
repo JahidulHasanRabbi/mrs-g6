@@ -252,12 +252,12 @@ function Top20LeaderboardPageInner() {
       ? tabParam
       : LEADERBOARD_TYPES.DEPOSIT;
   const isTurnoverTab = activeTab === LEADERBOARD_TYPES.TURNOVER;
-  // Temporary preview aid: ?mockrank=N shows a fake My Rank card (matching
-  // the client's own mockup numbers, rank scaled by N) without needing a
-  // real member-rank API response. Inert unless the query param is present
-  // — remove once the live panel has been checked against a real member.
+  // TEMP mock (real API call commented out above): ?mockrank=N overrides the
+  // rank shown; with no param it defaults to 186 (the client's own mockup
+  // number) so My Rank always shows something to look at right now. Restore
+  // the real fetch and delete this default once done testing.
   const mockRankParam = searchParams.get("mockrank");
-  const mockRank = mockRankParam ? Number(mockRankParam) : null;
+  const mockRank = mockRankParam != null ? Number(mockRankParam) : 186;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [data, setData] = useState(EMPTY_BOARD);
@@ -360,39 +360,54 @@ function Top20LeaderboardPageInner() {
   // per tab) since GET /leaderboard/member-rank/<uuid>/ returns all of them
   // together. Keyed by board so switching tabs just re-reads the same
   // response instead of refetching.
+  //
+  // TEMP: real fetch commented out for mock testing — myRank below falls
+  // back to a mocked value whenever ?mockrank isn't given. Restore this
+  // effect (and drop the `?? 186` default a few lines down) once done.
   const [memberRanks, setMemberRanks] = useState(null);
 
-  useEffect(() => {
-    if (maintenance !== false || !userData?.uuid) {
-      setMemberRanks(null);
-      return undefined;
-    }
-    let cancelled = false;
-    getMemberRankAllBoards(userData.uuid)
-      .then((res) => {
-        if (!cancelled) setMemberRanks(res || null);
-      })
-      .catch(() => {
-        if (!cancelled) setMemberRanks(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [maintenance, userData?.uuid]);
+  // useEffect(() => {
+  //   if (maintenance !== false || !userData?.uuid) {
+  //     setMemberRanks(null);
+  //     return undefined;
+  //   }
+  //   let cancelled = false;
+  //   getMemberRankAllBoards(userData.uuid)
+  //     .then((res) => {
+  //       if (!cancelled) setMemberRanks(res || null);
+  //     })
+  //     .catch(() => {
+  //       if (!cancelled) setMemberRanks(null);
+  //     });
+  //   return () => {
+  //     cancelled = true;
+  //   };
+  // }, [maintenance, userData?.uuid]);
 
   const config = LEADERBOARD_CONFIG[activeTab];
-  const myRank = mockRank
-    ? {
-        rank: mockRank,
-        value: mockRank === 186 ? 25680 : mockRank * 138,
-        amountToNextRank: mockRank === 186 ? 1250 : Math.max(1, mockRank) * 10,
-        nextRank: mockRank > 1 ? mockRank - 1 : null,
-        progressPercent: 68,
-        isMock: true,
-      }
-    : memberRanks
-      ? mapMemberRank(memberRanks[MEMBER_RANK_BOARD_KEY[activeTab]])
-      : null;
+  const mockMyRank = () => {
+    if (mockRank === 0) {
+      // ?mockrank=0 previews the unranked state.
+      return { rank: 0, value: 0, amountToNextRank: 0, nextRank: null, progressPercent: 0, isMock: true };
+    }
+    const value = mockRank === 186 ? 25680 : mockRank * 138;
+    const nextRank = mockRank > 1 ? mockRank - 1 : null;
+    const nextRankAmount = mockRank === 186 ? 26930 : nextRank ? nextRank * 138 : null;
+    const gap = nextRankAmount != null ? Math.max(0, nextRankAmount - value) : 0;
+    return {
+      rank: mockRank,
+      value,
+      amountToNextRank: gap,
+      nextRank,
+      // Same formula the real mapMemberRank uses, so the bar actually moves
+      // with the mocked numbers instead of a fixed placeholder percentage.
+      progressPercent: nextRank == null ? 100 : nextRankAmount > 0 ? Math.max(0, Math.min(100, (value / nextRankAmount) * 100)) : 0,
+      isMock: true,
+    };
+  };
+  // TEMP: mocked while the real fetch above is commented out. My Rank shows
+  // on all four boards using the same mocked rank/progress numbers.
+  const myRank = mockMyRank();
   // Turnover has no campaign endpoint (BOARD_META.type is null for it, so
   // data.endDate is always null) — its countdown instead tracks the event
   // window directly: counts down to the opening before 31/8, then to the
