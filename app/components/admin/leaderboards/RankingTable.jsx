@@ -12,7 +12,13 @@ function fmt(n) {
 
 export default function RankingTable({ rows = [], type = "deposit", onArchive }) {
   const isReferral = type === "referral";
-  const amountLabel = isReferral ? "Referral Deposit" : type === "withdrawal" ? "Total Withdraw" : "Total Deposit";
+  const amountLabel = isReferral
+    ? "Referral Deposit"
+    : type === "withdrawal"
+      ? "Total Withdraw"
+      : type === "turnover"
+        ? "Total Turnover"
+        : "Total Deposit";
   const countLabel = isReferral ? "New Member" : "Count";
   const hasActions = typeof onArchive === "function";
 

@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 
-function PodiumCard({ rank, entry, config }) {
+function PodiumCard({ rank, entry, config, isCurrentUser }) {
   const rankColors = {
     1: {
       bg: config.rank1Bg,
@@ -44,7 +44,7 @@ function PodiumCard({ rank, entry, config }) {
       transition={{ delay: rank * 0.1 }}
       className="w-full rounded-lg flex flex-col gap-1 items-center justify-end p-6"
       style={{
-        backgroundColor: "var(--lb-card-overlay)",
+        backgroundColor: isCurrentUser ? config.color : "var(--lb-card-overlay)",
         border: `${rc.borderWidth}px solid ${rc.border}`,
         boxShadow: rc.shadow,
       }}
@@ -78,12 +78,16 @@ function PodiumCard({ rank, entry, config }) {
         </div>
       </div>
 
-      {/* User */}
+      {/* User — text stays the same light gray whether or not this card is
+          highlighted (matching LeaderboardTable's row), rather than flipping
+          to pure white: Turnover's accent (#e9af41, a light gold) doesn't
+          give white text enough contrast the way Deposit/Referrer/
+          Withdrawal's darker/more saturated colors do. */}
       <p
         className="text-sm font-light text-[#e5e2e1] mb-1"
         style={{ fontFamily: "var(--font-inter)" }}
       >
-        User: {entry.user}
+        User: {isCurrentUser ? "You" : entry.user}
       </p>
 
       {/* Value */}
@@ -99,7 +103,7 @@ function PodiumCard({ rank, entry, config }) {
         <p
           className="text-xs font-semibold tracking-[1.2px]"
           style={{
-            color: rc.prizeColor,
+            color: isCurrentUser ? "#e5e2e1" : rc.prizeColor,
             fontFamily: "var(--font-jetbrains-mono)",
           }}
         >
@@ -110,19 +114,23 @@ function PodiumCard({ rank, entry, config }) {
   );
 }
 
-export default function PodiumCards({ top3 = [], config }) {
+export default function PodiumCards({ top3 = [], config, currentUserRank }) {
   if (!top3.length) return null;
 
   return (
     <div className="w-full flex flex-col gap-1">
-      {top3.map((entry, i) => (
-        <PodiumCard
-          key={entry.rank || i + 1}
-          rank={entry.rank || i + 1}
-          entry={entry}
-          config={config}
-        />
-      ))}
+      {top3.map((entry, i) => {
+        const rank = entry.rank || i + 1;
+        return (
+          <PodiumCard
+            key={rank}
+            rank={rank}
+            entry={entry}
+            config={config}
+            isCurrentUser={rank === currentUserRank}
+          />
+        );
+      })}
     </div>
   );
 }

@@ -109,5 +109,11 @@ export const ADMIN_NAVIGATION = [
     path: '/admin/leaderboards/withdrawal',
     enabled: true,
     id: 'lb-withdrawal'
+  },
+  {
+    label: 'Turnover Leaderboard',
+    path: '/admin/leaderboards/turnover',
+    enabled: true,
+    id: 'lb-turnover'
   }
 ];

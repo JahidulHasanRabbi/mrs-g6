@@ -16,46 +16,113 @@ import {
   ENABLED_LEADERBOARD_TYPES,
 } from "../components/leaderboard-new/constants";
 import { formatAmount } from "../components/leaderboard-new/format";
-import {
-  TURNOVER_PREVIEW_BOARD,
-  TURNOVER_EVENT_COUNTDOWN,
-  PREVIEW_MY_RANK,
-  PREVIEW_MY_RANK_STATES,
-} from "../components/leaderboard-new/turnoverPreview";
-import { PHASE4_PREVIEW_ENABLED, TURNOVER_MAINTENANCE } from "../config/phase4";
+import { PHASE4_EVENT } from "../config/phase4";
 import {
   getPublicDepositRanking,
   getPublicWithdrawRanking,
   getPublicReferralRanking,
+  getPublicTurnoverRanking,
   getPublicLeaderboardInfo,
   getPublicLeaderboardCampaign,
   getPublicTermsAndConditions,
   getMemberDepositRewardItems,
   getMemberReferrerRewardItems,
   getMemberWithdrawalRewardItems,
+  getMemberTurnoverRewardItems,
   getPublicLeaderboardStatus,
+  getMemberRankAllBoards,
 } from "../api/memberApi";
 
-// type = leaderboard info/ranking API. termsCategory = main T&C API category.
+// Row 5: only turnover inside the event window counts, so the countdown card
+// always points at the boundary that hasn't passed yet — the opening before
+// 31/8, the close after it. Evaluated per-call (not once at module load) so a
+// tab left open across the 31/8 boundary flips from "starts in" to "ends in"
+// on its own instead of freezing at whatever was true on page load.
+function getTurnoverCountdown(now = Date.now()) {
+  const notStarted = now < PHASE4_EVENT.startsAt;
+  return {
+    endDate: notStarted ? PHASE4_EVENT.startsAt : PHASE4_EVENT.endsAt,
+    label: notStarted ? "EVENT STARTS IN" : "EVENT ENDS IN",
+  };
+}
+
+// infoType = /leaderboard/info/ + /leaderboard/public/info/ (banner-style
+// event info text). campaignType = /leaderboard/campaign/ (drives endDate).
+// termsCategory = main T&C API category (postman/terms.md, admin-managed at
+// /admin/terms-conditions). Turnover now has its own info type (4, confirmed
+// live) but no confirmed campaign type — /leaderboard/campaign/?type=4
+// returns an empty list either way (no rows, or type not recognized), so
+// campaignType stays null for it rather than assuming that endpoint applies.
 const BOARD_META = {
   [LEADERBOARD_TYPES.DEPOSIT]: {
-    type: 1,
+    infoType: 1,
+    campaignType: 1,
     termsCategory: 2,
     getRanking: getPublicDepositRanking,
     getRewards: getMemberDepositRewardItems,
   },
   [LEADERBOARD_TYPES.WITHDRAWAL]: {
-    type: 2,
+    infoType: 2,
+    campaignType: 2,
     termsCategory: 3,
     getRanking: getPublicWithdrawRanking,
     getRewards: getMemberWithdrawalRewardItems,
   },
   [LEADERBOARD_TYPES.REFERRER]: {
-    type: 3,
+    infoType: 3,
+    campaignType: 3,
     termsCategory: 4,
     getRanking: getPublicReferralRanking,
     getRewards: getMemberReferrerRewardItems,
   },
+  [LEADERBOARD_TYPES.TURNOVER]: {
+    infoType: 4,
+    campaignType: null,
+    termsCategory: 11,
+    getRanking: getPublicTurnoverRanking,
+    getRewards: getMemberTurnoverRewardItems,
+  },
+};
+
+// Maps one board's slice of GET /leaderboard/member-rank/<uuid>/ to
+// MyRankPanel's props. Current shape: {rank, amount, next_rank,
+// next_rank_amount} — next_rank is the rank number directly above (rank - 1),
+// next_rank_amount is that rank's amount; both null at rank 1 or unranked.
+// The gap to close and the 0-100 progress bar aren't returned directly, so
+// they're derived here: gap = next_rank_amount - amount, progress = how far
+// into that gap the member's own amount already reaches.
+function mapMemberRank(res) {
+  if (!res || res.rank == null) {
+    return { rank: 0, value: 0, amountToNextRank: 0, nextRank: null, progressPercent: 0 };
+  }
+  const rank = Number(res.rank);
+  const value = Number(res.amount) || 0;
+  const nextRank = res.next_rank != null ? Number(res.next_rank) : null;
+  const nextRankAmount = res.next_rank_amount != null ? Number(res.next_rank_amount) : null;
+  const gap = nextRankAmount != null ? Math.max(0, nextRankAmount - value) : 0;
+  return {
+    rank,
+    value,
+    amountToNextRank: gap,
+    nextRank,
+    // Already rank 1 (no next_rank) reads as "maxed out"; otherwise the bar
+    // fills by how close `value` already is to next_rank_amount.
+    progressPercent:
+      nextRank == null
+        ? 100
+        : nextRankAmount > 0
+          ? Math.max(0, Math.min(100, (value / nextRankAmount) * 100))
+          : 0,
+  };
+}
+
+// activeTab (deposit/withdrawal/referrer/turnover) -> key in the combined
+// GET /leaderboard/member-rank/<uuid>/ response.
+const MEMBER_RANK_BOARD_KEY = {
+  [LEADERBOARD_TYPES.DEPOSIT]: "deposit",
+  [LEADERBOARD_TYPES.WITHDRAWAL]: "withdraw",
+  [LEADERBOARD_TYPES.REFERRER]: "referral",
+  [LEADERBOARD_TYPES.TURNOVER]: "turnover",
 };
 
 const EMPTY_BOARD = {
@@ -65,7 +132,6 @@ const EMPTY_BOARD = {
   notes: [],
   terms: [],
   infoTerms: [],
-  myRank: null,
 };
 
 function asList(response) {
@@ -178,46 +244,40 @@ function Top20LeaderboardPageInner() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { userData, profilePicture } = useUser();
+  const { userData } = useUser();
   const { isThemed } = useTheme();
   const tabParam = searchParams.get("tab");
   const activeTab =
     tabParam && ENABLED_LEADERBOARD_TYPES.includes(tabParam)
       ? tabParam
       : LEADERBOARD_TYPES.DEPOSIT;
-  const isTurnoverPreview =
-    PHASE4_PREVIEW_ENABLED && activeTab === LEADERBOARD_TYPES.TURNOVER;
-  // Review affordance for the mock My Rank states (?myrank=top|unranked).
-  // Inert unless the preview flag is on, and gone with the mock data.
-  const myRankOverride = PHASE4_PREVIEW_ENABLED
-    ? PREVIEW_MY_RANK_STATES[searchParams.get("myrank")] ?? null
-    : null;
+  const isTurnoverTab = activeTab === LEADERBOARD_TYPES.TURNOVER;
+  // TEMP mock (real API call commented out above): ?mockrank=N overrides the
+  // rank shown; with no param it defaults to 186 (the client's own mockup
+  // number) so My Rank always shows something to look at right now. Restore
+  // the real fetch and delete this default once done testing.
+  const mockRankParam = searchParams.get("mockrank");
+  const mockRank = mockRankParam != null ? Number(mockRankParam) : 186;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [data, setData] = useState(EMPTY_BOARD);
   const [loading, setLoading] = useState(true);
   // null = not checked yet, so the maintenance overlay never flashes on load.
+  // Deposit/Withdraw/Referral share is_open; Turnover answers to its own
+  // is_turnover_open field on the same /leaderboard/status/ response.
   const [maintenance, setMaintenance] = useState(null);
-  // Requirement 6: Turnover answers to its own switch, so putting the shared
-  // leaderboard into maintenance must not take the event board down with it.
-  const isMaintenance = isTurnoverPreview
-    ? TURNOVER_MAINTENANCE
-    : maintenance === true;
+  const isMaintenance = maintenance === true;
   // Cache each tab's loaded board so switching back doesn't refetch.
   const boardCache = useRef({});
 
-  // Single admin toggle (PUT /leaderboard/status/ { is_open }) covers all
-  // three boards (Deposit/Withdraw/Referral) at once — there's no per-type
-  // switch, so this one check gates the whole page.
   useEffect(() => {
-    // A direct Turnover-preview visit never calls the shared status endpoint;
-    // once it has answered, leaving that tab must not refetch it.
-    if (isTurnoverPreview || maintenance !== null) return undefined;
+    setMaintenance(null);
     getPublicLeaderboardStatus()
-      .then((s) => setMaintenance(s?.is_open === false))
+      .then((s) =>
+        setMaintenance(isTurnoverTab ? s?.is_turnover_open === false : s?.is_open === false)
+      )
       .catch(() => setMaintenance(false));
-    return undefined;
-  }, [isTurnoverPreview, maintenance]);
+  }, [isTurnoverTab]);
 
   useEffect(() => {
     if (!isMaintenance || typeof document === "undefined") return undefined;
@@ -243,27 +303,26 @@ function Top20LeaderboardPageInner() {
   );
 
   useEffect(() => {
-    if (isTurnoverPreview) {
-      setData(TURNOVER_PREVIEW_BOARD);
-      setLoading(false);
-      return undefined;
-    }
     if (maintenance !== false) return undefined;
     let cancelled = false;
     // Already loaded this tab - show cached data, skip the API calls.
     if (boardCache.current[activeTab]) {
       setData(boardCache.current[activeTab]);
       setLoading(false);
-      return;
+      return undefined;
     }
     const meta = BOARD_META[activeTab];
     setData(EMPTY_BOARD);
     setLoading(true);
+    // Turnover now has a confirmed info type (4) but no confirmed campaign
+    // type, so only the campaign call is skipped for it (see BOARD_META).
     Promise.all([
       meta.getRanking().catch(() => []),
-      getPublicLeaderboardInfo(meta.type).catch(() => null),
-      getPublicLeaderboardCampaign(meta.type).catch(() => null),
-      getPublicTermsAndConditions(meta.termsCategory).catch(() => null),
+      meta.infoType ? getPublicLeaderboardInfo(meta.infoType).catch(() => null) : Promise.resolve(null),
+      meta.campaignType ? getPublicLeaderboardCampaign(meta.campaignType).catch(() => null) : Promise.resolve(null),
+      meta.termsCategory
+        ? getPublicTermsAndConditions(meta.termsCategory).catch(() => null)
+        : Promise.resolve(null),
       meta.getRewards({ page_size: 100 }).catch(() => []),
     ]).then(([ranking, info, campaign, mainTerms, rewards]) => {
       if (cancelled) return;
@@ -287,10 +346,6 @@ function Top20LeaderboardPageInner() {
         notes,
         infoTerms,
         terms: splitLines(mainTerms?.terms_and_conditions),
-        // My Rank has no endpoint yet. While the preview flag is on the panel
-        // is filled with mock values (tagged PREVIEW in the UI); with the flag
-        // off it stays null and the section doesn't render.
-        myRank: PHASE4_PREVIEW_ENABLED ? PREVIEW_MY_RANK[activeTab] ?? null : null,
       };
       boardCache.current[activeTab] = board;
       setData(board);
@@ -299,9 +354,66 @@ function Top20LeaderboardPageInner() {
     return () => {
       cancelled = true;
     };
-  }, [activeTab, isTurnoverPreview, maintenance]);
+  }, [activeTab, maintenance]);
+
+  // Combined My Rank across all four boards, fetched once per member (not
+  // per tab) since GET /leaderboard/member-rank/<uuid>/ returns all of them
+  // together. Keyed by board so switching tabs just re-reads the same
+  // response instead of refetching.
+  //
+  // TEMP: real fetch commented out for mock testing — myRank below falls
+  // back to a mocked value whenever ?mockrank isn't given. Restore this
+  // effect (and drop the `?? 186` default a few lines down) once done.
+  const [memberRanks, setMemberRanks] = useState(null);
+
+  // useEffect(() => {
+  //   if (maintenance !== false || !userData?.uuid) {
+  //     setMemberRanks(null);
+  //     return undefined;
+  //   }
+  //   let cancelled = false;
+  //   getMemberRankAllBoards(userData.uuid)
+  //     .then((res) => {
+  //       if (!cancelled) setMemberRanks(res || null);
+  //     })
+  //     .catch(() => {
+  //       if (!cancelled) setMemberRanks(null);
+  //     });
+  //   return () => {
+  //     cancelled = true;
+  //   };
+  // }, [maintenance, userData?.uuid]);
 
   const config = LEADERBOARD_CONFIG[activeTab];
+  const mockMyRank = () => {
+    if (mockRank === 0) {
+      // ?mockrank=0 previews the unranked state.
+      return { rank: 0, value: 0, amountToNextRank: 0, nextRank: null, progressPercent: 0, isMock: true };
+    }
+    const value = mockRank === 186 ? 25680 : mockRank * 138;
+    const nextRank = mockRank > 1 ? mockRank - 1 : null;
+    const nextRankAmount = mockRank === 186 ? 26930 : nextRank ? nextRank * 138 : null;
+    const gap = nextRankAmount != null ? Math.max(0, nextRankAmount - value) : 0;
+    return {
+      rank: mockRank,
+      value,
+      amountToNextRank: gap,
+      nextRank,
+      // Same formula the real mapMemberRank uses, so the bar actually moves
+      // with the mocked numbers instead of a fixed placeholder percentage.
+      progressPercent: nextRank == null ? 100 : nextRankAmount > 0 ? Math.max(0, Math.min(100, (value / nextRankAmount) * 100)) : 0,
+      isMock: true,
+    };
+  };
+  // TEMP: mocked while the real fetch above is commented out. My Rank shows
+  // on all four boards using the same mocked rank/progress numbers.
+  const myRank = mockMyRank();
+  // Turnover has no campaign endpoint (BOARD_META.type is null for it, so
+  // data.endDate is always null) — its countdown instead tracks the event
+  // window directly: counts down to the opening before 31/8, then to the
+  // close after it.
+  const turnoverCountdown = isTurnoverTab ? getTurnoverCountdown() : null;
+  const countdownEndDate = isTurnoverTab ? turnoverCountdown.endDate : data.endDate;
 
   const page = (
     <div
@@ -377,16 +489,15 @@ function Top20LeaderboardPageInner() {
               config={config}
               top3={data.top3}
               tableEntries={data.table}
-              currentUserRank={null}
-              campaignEndDate={data.endDate}
+              currentUserRank={myRank?.rank > 0 ? myRank.rank : null}
+              campaignEndDate={countdownEndDate}
               periodLabel={config.eventPeriod || data.periodLabel || ""}
               updateNotes={data.notes}
               terms={data.terms}
               loading={loading}
-              myRank={myRankOverride ?? data.myRank}
+              myRank={myRank}
               memberName={userData.name}
-              profilePicture={profilePicture}
-              countdownLabel={isTurnoverPreview ? TURNOVER_EVENT_COUNTDOWN.label : undefined}
+              countdownLabel={isTurnoverTab ? turnoverCountdown.label : undefined}
             />
           </AnimatePresence>
         </div>

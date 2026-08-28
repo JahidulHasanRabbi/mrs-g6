@@ -26,10 +26,10 @@ function Toggle({ checked, onChange, label }) {
   );
 }
 
-// One toggle for all three boards — the backend only exposes a single
-// /leaderboard/status/ switch, there's no per-type (deposit/withdraw/
-// referrer) status.
-export default function LeaderboardStatusModal({ open, onClose, initial, onSave }) {
+// One toggle per scope — Deposit/Withdraw/Referrer share a single is_open
+// switch on /leaderboard/status/; Turnover has its own is_turnover_open field
+// on that same endpoint. `scopeLabel` just changes the description copy.
+export default function LeaderboardStatusModal({ open, onClose, initial, onSave, scopeLabel = "Deposit, Withdrawal, and Referrer" }) {
   const [isOpen, setIsOpen] = useState(initial ?? true);
   const [saving, setSaving] = useState(false);
 
@@ -57,7 +57,7 @@ export default function LeaderboardStatusModal({ open, onClose, initial, onSave 
       width="max-w-[420px]"
     >
       <p className="mb-4 text-[13px] leading-5 text-white/60">
-        Applies to Deposit, Withdrawal, and Referrer leaderboards together.
+        Applies to {scopeLabel} leaderboard{scopeLabel.includes(",") ? "s" : ""} together.
       </p>
       <Toggle checked={isOpen} onChange={setIsOpen} label="Open" />
     </ModalShell>

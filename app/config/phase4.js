@@ -31,8 +31,3 @@ export const NATIONAL_DAY_CHROME_ENABLED = true;
 export function isNationalDayChromeActive(now = Date.now()) {
   return NATIONAL_DAY_CHROME_ENABLED && now <= PHASE4_EVENT.endsAt;
 }
-
-// Requirement 6 — Top Turnover gets its own maintenance switch, separate from
-// the shared /leaderboard/status one that gates the other three boards. Mocked
-// as a constant until the backend endpoint and its admin control exist.
-export const TURNOVER_MAINTENANCE = false;

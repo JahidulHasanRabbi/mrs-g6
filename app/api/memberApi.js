@@ -546,6 +546,31 @@ export async function getMemberReferrerRewardItems(params = {}) {
   return await apiRequest(`${ENDPOINTS.LEADERBOARD.REFERRAL_REWARD_ITEMS}${qs}`, { method: 'GET' }, true, 'member');
 }
 
+// GET /leaderboard/public/turnover-ranking/ — top 20, real + fake combined
+export async function getPublicTurnoverRanking() {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.PUBLIC_TURNOVER_RANKING, { method: 'GET' }, true, 'member');
+}
+
+// GET /leaderboard/turnover-reward-items/ for display prize mapping
+export async function getMemberTurnoverRewardItems(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.TURNOVER_REWARD_ITEMS}${qs}`, { method: 'GET' }, true, 'member');
+}
+
+// GET /leaderboard/turnover/member-rank/<uuid>/ — member's own rank vs combined ranking
+export async function getTurnoverMemberRank(uuid) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.TURNOVER_MEMBER_RANK(uuid), { method: 'GET' }, true, 'member');
+}
+
+// GET /leaderboard/member-rank/<uuid>/ — My Rank for all four boards in one
+// call: { uuid, deposit, withdraw, referral, turnover }, each
+// { rank, amount, upgrade_rank_amount }. Deposit/withdraw/referral come from
+// the latest generated ranking snapshot (only as fresh as the last
+// regenerate); turnover is computed live.
+export async function getMemberRankAllBoards(uuid) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.MEMBER_RANK_ALL(uuid), { method: 'GET' }, true, 'member');
+}
+
 // ============================================================================
 // AVATAR RPG (Phase 3) — MEMBER / USER
 // docs/MRS - G6 Avatar API Documentation.md — all endpoints under /avatar/.

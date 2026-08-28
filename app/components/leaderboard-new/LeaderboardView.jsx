@@ -25,7 +25,6 @@ export default function LeaderboardView({
   loading = false,
   myRank = null,
   memberName = "Member",
-  profilePicture = "",
   countdownLabel = undefined,
 }) {
   const { isKgame99, isLv918 } = useTheme();
@@ -156,7 +155,6 @@ export default function LeaderboardView({
             gapUnit={config.myRankGapUnit}
             emptyHint={config.myRankEmptyHint}
             memberName={memberName}
-            profilePicture={profilePicture}
           />
 
           {/* Countdown timer (deposit campaign / turnover event window) */}
@@ -197,10 +195,8 @@ export default function LeaderboardView({
             </div>
           )}
 
-          {/* Podium - Top 3 */}
-          <PodiumCards top3={top3} config={config} />
-
-          {/* Table - Ranks 4-20 */}
+          {/* Top 20 podium + table, shown together with My Rank above. */}
+          <PodiumCards top3={top3} config={config} currentUserRank={currentUserRank} />
           <LeaderboardTable
             entries={tableEntries}
             config={config}

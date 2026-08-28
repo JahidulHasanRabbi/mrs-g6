@@ -1,3 +1,5 @@
+import { PHASE4_EVENT } from "../../config/phase4";
+
 /**
  * Menu configuration - separating data from presentation
  * Following Facebook's pattern of configuration-driven UIs
@@ -14,6 +16,8 @@
  * Top Deposit: /assets/leaderboard/wallet-icon.svg
  * Top Withdraw: /assets/leaderboard/withdrawal-icon.svg
  * Top Referral: /assets/leaderboard/referrer-icon.svg
+ * Top Turnover: reuses /assets/menu-icons/deposit.svg (placeholder — no
+ *   dedicated turnover icon exists yet in menu-icons)
  * Missions: /assets/penalty-kick/icons/flag-gold.svg
  * VIP Membership: /assets/images/vip-membership-icon.webp
  * Mart: /assets/images/pagcor-mart-icon.webp
@@ -44,8 +48,13 @@ export const MENU_CONFIG = {
         { icon: "/assets/menu-icons/deposit.svg", label: "Top 20 Deposit", link: "/leaderboard" },
         { icon: "/assets/menu-icons/withdrawal.svg", label: "Top 20 Withdraw", link: "/leaderboard?tab=withdrawal" },
         { icon: "/assets/menu-icons/referral.svg", label: "Top 20 Referral", link: "/leaderboard?tab=referrer" },
-        // Top Turnover remains reachable by direct route, but is intentionally
-        // hidden from the member sidebar/hamburger until it is released.
+        {
+          icon: "/assets/menu-icons/deposit.svg",
+          label: "Top Turnover",
+          link: "/leaderboard?tab=turnover",
+          badge: PHASE4_EVENT.badge,
+          subtitle: PHASE4_EVENT.periodLabel,
+        },
       ],
     },
     { icon: "/assets/menu-icons/missions.svg", label: "Missions", link: "/missions" },

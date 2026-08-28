@@ -1052,7 +1052,7 @@ export async function getWorldCupDashboardKpi(params = {}) {
 // "Dummy player" functions map to the per-board fake-data endpoint.
 // ===========================================================================
 
-const LB_TYPE = { deposit: 1, withdraw: 2, referral: 3 };
+const LB_TYPE = { deposit: 1, withdraw: 2, referral: 3, turnover: 4 };
 
 // --- Info (shared endpoint, filtered/created by leaderboard_type) -----------
 async function getLeaderboardInfoList(type, params = {}) {
@@ -1251,6 +1251,91 @@ export async function updateWithdrawalDummyPlayer(uuid, data) {
 }
 export async function archiveWithdrawalDummyPlayer(uuid) {
   return await apiRequest(ENDPOINTS.LEADERBOARD.WITHDRAW_FAKE_DATA_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
+// ---------------------------------------------------------------------------
+// Turnover Leaderboard — postman/turnover.md
+//
+// Shares the generic Info endpoint (leaderboard_type 4, confirmed live) with
+// Deposit/Withdraw/Referral, same as the "banner" pattern below. It still has
+// no confirmed Campaign or Exclusions/Generate-Ranking support — instead it
+// has its own admin ranking (computed live, not a generated batch), a payout
+// schedule, a manual settle trigger, and a payout audit log. Status is a
+// separate field (is_turnover_open) on the same /leaderboard/status/
+// endpoint the other three boards use for is_open.
+// ---------------------------------------------------------------------------
+export const getTurnoverBanners = (params = {}) => getLeaderboardInfoList(LB_TYPE.turnover, params);
+export const getTurnoverBanner = (uuid) => getLeaderboardInfo(uuid);
+export const createTurnoverBanner = (data) => createLeaderboardInfo(LB_TYPE.turnover, data);
+export const updateTurnoverBanner = (uuid, data) => updateLeaderboardInfo(uuid, data);
+export const archiveTurnoverBanner = (uuid) => archiveLeaderboardInfo(uuid);
+
+export async function getTurnoverRewardItems(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.TURNOVER_REWARD_ITEMS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+export async function getTurnoverRewardItem(uuid) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.TURNOVER_REWARD_ITEM(uuid), { method: 'GET' }, true, 'admin');
+}
+export async function createTurnoverRewardItem(data) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.TURNOVER_REWARD_ITEMS, { method: 'POST', body: data }, true, 'admin');
+}
+export async function updateTurnoverRewardItem(uuid, data) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.TURNOVER_REWARD_ITEM(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+export async function archiveTurnoverRewardItem(uuid) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.TURNOVER_REWARD_ITEM_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
+export async function getTurnoverDummyPlayers(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.TURNOVER_FAKE_DATA}${qs}`, { method: 'GET' }, true, 'admin');
+}
+export async function getTurnoverDummyPlayer(uuid) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.TURNOVER_FAKE_DATA_SINGLE(uuid), { method: 'GET' }, true, 'admin');
+}
+export async function createTurnoverDummyPlayer(data) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.TURNOVER_FAKE_DATA, { method: 'POST', body: data }, true, 'admin');
+}
+export async function updateTurnoverDummyPlayer(uuid, data) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.TURNOVER_FAKE_DATA_SINGLE(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+export async function archiveTurnoverDummyPlayer(uuid) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.TURNOVER_FAKE_DATA_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
+// GET /leaderboard/turnover/admin-ranking/ — real members only, paginated
+export async function getTurnoverAdminRanking(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.TURNOVER_ADMIN_RANKING}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+// GET/PUT /leaderboard/turnover/payout-schedule/ — { payout_at } (null cancels)
+export async function getTurnoverPayoutSchedule() {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.TURNOVER_PAYOUT_SCHEDULE, { method: 'GET' }, true, 'admin');
+}
+export async function updateTurnoverPayoutSchedule(payoutAt) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.TURNOVER_PAYOUT_SCHEDULE, { method: 'PUT', body: { payout_at: payoutAt } }, true, 'admin');
+}
+
+// POST /leaderboard/turnover/settle-payouts/ — manual settlement, safe to repeat
+export async function settleTurnoverPayouts() {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.TURNOVER_SETTLE_PAYOUTS, { method: 'POST' }, true, 'admin');
+}
+
+// GET /leaderboard/turnover-payout-logs/ — read-only audit trail, paginated
+export async function getTurnoverPayoutLogs(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.TURNOVER_PAYOUT_LOGS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+// GET/PUT /leaderboard/status/ — is_turnover_open only (is_open is the other
+// three boards' field on this same response; never overwrite it here).
+export async function getTurnoverStatus() {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.STATUS, { method: 'GET' }, true, 'admin');
+}
+export async function updateTurnoverStatus(isOpen) {
+  return await apiRequest(ENDPOINTS.LEADERBOARD.STATUS, { method: 'PUT', body: { is_turnover_open: Boolean(isOpen) } }, true, 'admin');
 }
 
 // ============================================================================
