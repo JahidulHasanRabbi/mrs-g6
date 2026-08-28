@@ -45,18 +45,11 @@ function PillBody({ label, value, valueColor, glowColor, labelColor, align = "le
   );
 }
 
-function PillIcon({ iconSrc, iconBg }) {
+function PillIcon({ iconSrc }) {
+  // The KR token art is already a gold-rimmed coin, so it renders bare — a
+  // circle behind it read as a second, mismatched ring.
   return (
-    <div
-      className="grid h-8 w-8 shrink-0 place-items-center rounded-full"
-      style={{
-        backgroundColor: iconBg,
-        boxShadow:
-          "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)",
-      }}
-    >
-      <img aria-hidden="true" src={iconSrc} alt="" className="h-6 w-6 object-contain" />
-    </div>
+    <img aria-hidden="true" src={iconSrc} alt="" className="h-8 w-8 shrink-0 object-contain" />
   );
 }
 
@@ -79,7 +72,7 @@ export default function TokenPills({ tokens = 0, perShot = 0 }) {
           border: "1px solid rgba(255,255,255,0.2)",
         }}
       >
-        <PillIcon iconSrc={PHASE4_ASSETS.token} iconBg={COLORS.goldIcon} />
+        <PillIcon iconSrc={PHASE4_ASSETS.token} />
         <PillBody
           label="Tokens"
           value={formatTokenAmount(tokens)}
@@ -105,7 +98,7 @@ export default function TokenPills({ tokens = 0, perShot = 0 }) {
           labelColor={colors.textMuted}
           align="right"
         />
-        <PillIcon iconSrc={PHASE4_ASSETS.token} iconBg={colors.primary} />
+        <PillIcon iconSrc={PHASE4_ASSETS.token} />
       </div>
     </div>
   );

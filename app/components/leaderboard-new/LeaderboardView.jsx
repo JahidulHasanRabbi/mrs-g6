@@ -7,9 +7,7 @@ import LeaderboardTable from "./LeaderboardTable";
 import TermsConditions from "./TermsConditions";
 import LeaderboardSkeleton from "./LeaderboardSkeleton";
 import { useTheme } from "../../contexts/ThemeContext";
-import KgameSectionHeading from "../themes/kgame99/KgameSectionHeading";
 import { KGAME99_COLORS } from "../themes/kgame99/assets";
-import Lv918SectionHeading from "../themes/lv918/Lv918SectionHeading";
 import { LV918_COLORS } from "../themes/lv918/assets";
 import MyRankPanel from "./MyRankPanel";
 
@@ -38,82 +36,27 @@ export default function LeaderboardView({
       transition={{ duration: 0.25 }}
       className="flex flex-col gap-6 items-center w-full px-4"
     >
-      {/* Header icon */}
-      <div className="flex justify-center w-full">
-        <img
-          src={config.icon}
-          alt={config.label}
-          className="w-12 h-12 sm:w-16 sm:h-16"
-          style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.5))" }}
-        />
-      </div>
-
-      {/* Title. On the bright themes (kgame99 sky, lv918 pink) this keeps the
-          theme's own full-bleed art but renders the title with that theme's
-          SectionHeading — the same gold-gradient-on-shadow treatment used
-          for every other on-backdrop heading in those skins — so it reads as
-          native, not a recolored generic. Other themes float the title on the
-          backdrop via --lb-heading-shadow (plain shadow on the dark default,
-          themed shadow elsewhere). */}
-      {isKgame99 ? (
-        <div className="flex flex-col items-center gap-1 w-full pt-2">
-          <KgameSectionHeading className="!text-[30px] sm:!text-[36px]">TOP 20</KgameSectionHeading>
-          <KgameSectionHeading className="!text-[24px] sm:!text-[28px]">{config.title}</KgameSectionHeading>
-          {periodLabel && (
-            <p className="text-base text-center mt-1" style={{ fontFamily: "var(--font-inter)", color: KGAME99_COLORS.dark }}>
-              {periodLabel}
-            </p>
-          )}
-        </div>
-      ) : isLv918 ? (
-        <div className="flex flex-col items-center gap-1 w-full pt-2">
-          <Lv918SectionHeading className="!text-[30px] sm:!text-[36px]">TOP 20</Lv918SectionHeading>
-          <Lv918SectionHeading className="!text-[24px] sm:!text-[28px]">{config.title}</Lv918SectionHeading>
-          {periodLabel && (
-            <p className="text-base text-center mt-1" style={{ fontFamily: "var(--font-inter)", color: LV918_COLORS.inkStrong }}>
-              {periodLabel}
-            </p>
-          )}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center gap-2 w-full pt-2">
-          <div className="text-center w-full">
-            <p
-              className="text-3xl sm:text-4xl font-extrabold leading-10 sm:leading-[48px]"
-              style={{
-                fontFamily: "var(--font-inter)",
-                color: "var(--lb-heading)",
-                textShadow: "var(--lb-heading-shadow, 0 1px 4px rgba(0,0,0,0.6), 0 0 12px rgba(0,0,0,0.3))",
-              }}
-            >
-              TOP 20
-            </p>
-            <p
-              className="text-2xl sm:text-[32px] font-extrabold leading-10 sm:leading-[48px]"
-              style={{
-                color: config.color,
-                fontFamily: "var(--font-inter)",
-                textShadow: "var(--lb-heading-shadow, 0 1px 4px rgba(0,0,0,0.6), 0 0 12px rgba(0,0,0,0.3))",
-              }}
-            >
-              {config.title}
-            </p>
-          </div>
-
-          {/* Period label */}
-          {periodLabel && (
-            <p
-              className="text-base text-center font-semibold"
-              style={{
-                fontFamily: "var(--font-inter)",
-                color: "var(--lb-heading-muted)",
-                textShadow: "var(--lb-heading-shadow, 0 1px 4px rgba(0,0,0,0.6), 0 0 12px rgba(0,0,0,0.3))",
-              }}
-            >
-              {periodLabel}
-            </p>
-          )}
-        </div>
+      {/* Period label. The board icon, the "TOP 20" line and the board title
+          were removed at the client's request (28/08); the tab bar above
+          already names the board. */}
+      {periodLabel && (
+        <p
+          className={`text-base text-center pt-2 ${isKgame99 || isLv918 ? "" : "font-semibold"}`}
+          style={{
+            fontFamily: "var(--font-inter)",
+            color: isKgame99
+              ? KGAME99_COLORS.dark
+              : isLv918
+                ? LV918_COLORS.inkStrong
+                : "var(--lb-heading-muted)",
+            textShadow:
+              isKgame99 || isLv918
+                ? undefined
+                : "var(--lb-heading-shadow, 0 1px 4px rgba(0,0,0,0.6), 0 0 12px rgba(0,0,0,0.3))",
+          }}
+        >
+          {periodLabel}
+        </p>
       )}
 
       {config.eventBadge && (
