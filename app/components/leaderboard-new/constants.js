@@ -1,4 +1,4 @@
-import { PHASE4_ASSETS, PHASE4_EVENT } from "../../config/phase4";
+import { PHASE4_ASSETS } from "../../config/phase4";
 
 export const LEADERBOARD_TYPES = {
   DEPOSIT: 'deposit',
@@ -131,8 +131,6 @@ export const LEADERBOARD_CONFIG = {
     icon: PHASE4_ASSETS.token,
     showCountdown: true,
     showPrizeColumn: false,
-    eventBadge: PHASE4_EVENT.badge,
-    eventPeriod: PHASE4_EVENT.periodLabel,
   },
 };
 
