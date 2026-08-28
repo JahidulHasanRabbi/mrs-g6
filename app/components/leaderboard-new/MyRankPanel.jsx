@@ -66,15 +66,6 @@ export default function MyRankPanel({
       }}
       aria-label="My Rank"
     >
-      {safeData.isMock && (
-        <span
-          className="absolute right-3 top-3 rounded-full px-1.5 py-0.5 text-[8px] font-bold tracking-[0.7px]"
-          style={{ backgroundColor: `${color}20`, color }}
-        >
-          PREVIEW
-        </span>
-      )}
-
       <h2 className="text-center text-base font-bold" style={{ color }}>
         My Rank
       </h2>

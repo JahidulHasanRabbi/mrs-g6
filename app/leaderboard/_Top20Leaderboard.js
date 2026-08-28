@@ -85,34 +85,52 @@ const BOARD_META = {
 };
 
 // Maps one board's slice of GET /leaderboard/member-rank/<uuid>/ to
-// MyRankPanel's props. Current shape: {rank, amount, next_rank,
-// next_rank_amount} — next_rank is the rank number directly above (rank - 1),
-// next_rank_amount is that rank's amount; both null at rank 1 or unranked.
-// The gap to close and the 0-100 progress bar aren't returned directly, so
-// they're derived here: gap = next_rank_amount - amount, progress = how far
-// into that gap the member's own amount already reaches.
+// MyRankPanel's props. The documented API returns {rank, amount,
+// upgrade_rank_amount}; newer responses may also include next_rank and
+// next_rank_amount. The latter gives the exact progress baseline, while the
+// former only gives the amount still needed to move up.
 function mapMemberRank(res) {
   if (!res || res.rank == null) {
     return { rank: 0, value: 0, amountToNextRank: 0, nextRank: null, progressPercent: 0 };
   }
   const rank = Number(res.rank);
-  const value = Number(res.amount) || 0;
-  const nextRank = res.next_rank != null ? Number(res.next_rank) : null;
-  const nextRankAmount = res.next_rank_amount != null ? Number(res.next_rank_amount) : null;
-  const gap = nextRankAmount != null ? Math.max(0, nextRankAmount - value) : 0;
+  if (!Number.isFinite(rank) || rank <= 0) {
+    return { rank: 0, value: 0, amountToNextRank: 0, nextRank: null, progressPercent: 0 };
+  }
+  const parsedValue = Number(res.amount);
+  const value = Number.isFinite(parsedValue) ? parsedValue : 0;
+  const parsedNextRank = res.next_rank != null ? Number(res.next_rank) : null;
+  const nextRank = Number.isFinite(parsedNextRank)
+    ? parsedNextRank
+    : rank > 1
+      ? rank - 1
+      : null;
+  const parsedNextRankAmount = res.next_rank_amount != null ? Number(res.next_rank_amount) : null;
+  const nextRankAmount = Number.isFinite(parsedNextRankAmount) ? parsedNextRankAmount : null;
+  const parsedUpgradeAmount = res.upgrade_rank_amount != null ? Number(res.upgrade_rank_amount) : null;
+  const upgradeAmount = Number.isFinite(parsedUpgradeAmount) ? parsedUpgradeAmount : null;
+  const gap = nextRankAmount != null ? Math.max(0, nextRankAmount - value) : Math.max(0, upgradeAmount ?? 0);
   return {
     rank,
     value,
     amountToNextRank: gap,
     nextRank,
-    // Already rank 1 (no next_rank) reads as "maxed out"; otherwise the bar
-    // fills by how close `value` already is to next_rank_amount.
+    // The documented upgrade amount is the extra amount needed, so the
+    // current total plus that amount gives us a progress baseline.
     progressPercent:
-      nextRank == null
-        ? 100
-        : nextRankAmount > 0
-          ? Math.max(0, Math.min(100, (value / nextRankAmount) * 100))
-          : 0,
+      nextRankAmount == null
+        ? upgradeAmount == null
+          ? nextRank == null
+            ? 100
+            : 0
+          : upgradeAmount <= 0
+            ? 100
+            : Math.max(0, Math.min(100, (value / (value + upgradeAmount)) * 100))
+        : nextRank == null
+          ? 100
+          : nextRankAmount > 0
+            ? Math.max(0, Math.min(100, (value / nextRankAmount) * 100))
+            : 0,
   };
 }
 
@@ -244,7 +262,7 @@ function Top20LeaderboardPageInner() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { userData } = useUser();
+  const { authReady, memberUuid, userData } = useUser();
   const { isThemed } = useTheme();
   const tabParam = searchParams.get("tab");
   const activeTab =
@@ -252,12 +270,6 @@ function Top20LeaderboardPageInner() {
       ? tabParam
       : LEADERBOARD_TYPES.DEPOSIT;
   const isTurnoverTab = activeTab === LEADERBOARD_TYPES.TURNOVER;
-  // TEMP mock (real API call commented out above): ?mockrank=N overrides the
-  // rank shown; with no param it defaults to 186 (the client's own mockup
-  // number) so My Rank always shows something to look at right now. Restore
-  // the real fetch and delete this default once done testing.
-  const mockRankParam = searchParams.get("mockrank");
-  const mockRank = mockRankParam != null ? Number(mockRankParam) : 186;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [data, setData] = useState(EMPTY_BOARD);
@@ -361,53 +373,30 @@ function Top20LeaderboardPageInner() {
   // together. Keyed by board so switching tabs just re-reads the same
   // response instead of refetching.
   //
-  // TEMP: real fetch commented out for mock testing — myRank below falls
-  // back to a mocked value whenever ?mockrank isn't given. Restore this
-  // effect (and drop the `?? 186` default a few lines down) once done.
   const [memberRanks, setMemberRanks] = useState(null);
 
-  // useEffect(() => {
-  //   if (maintenance !== false || !userData?.uuid) {
-  //     setMemberRanks(null);
-  //     return undefined;
-  //   }
-  //   let cancelled = false;
-  //   getMemberRankAllBoards(userData.uuid)
-  //     .then((res) => {
-  //       if (!cancelled) setMemberRanks(res || null);
-  //     })
-  //     .catch(() => {
-  //       if (!cancelled) setMemberRanks(null);
-  //     });
-  //   return () => {
-  //     cancelled = true;
-  //   };
-  // }, [maintenance, userData?.uuid]);
+  useEffect(() => {
+    if (!authReady || maintenance !== false || !memberUuid) {
+      setMemberRanks(null);
+      return undefined;
+    }
+    let cancelled = false;
+    getMemberRankAllBoards(memberUuid)
+      .then((res) => {
+        if (!cancelled) setMemberRanks(res || null);
+      })
+      .catch(() => {
+        if (!cancelled) setMemberRanks(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [authReady, maintenance, memberUuid]);
 
   const config = LEADERBOARD_CONFIG[activeTab];
-  const mockMyRank = () => {
-    if (mockRank === 0) {
-      // ?mockrank=0 previews the unranked state.
-      return { rank: 0, value: 0, amountToNextRank: 0, nextRank: null, progressPercent: 0, isMock: true };
-    }
-    const value = mockRank === 186 ? 25680 : mockRank * 138;
-    const nextRank = mockRank > 1 ? mockRank - 1 : null;
-    const nextRankAmount = mockRank === 186 ? 26930 : nextRank ? nextRank * 138 : null;
-    const gap = nextRankAmount != null ? Math.max(0, nextRankAmount - value) : 0;
-    return {
-      rank: mockRank,
-      value,
-      amountToNextRank: gap,
-      nextRank,
-      // Same formula the real mapMemberRank uses, so the bar actually moves
-      // with the mocked numbers instead of a fixed placeholder percentage.
-      progressPercent: nextRank == null ? 100 : nextRankAmount > 0 ? Math.max(0, Math.min(100, (value / nextRankAmount) * 100)) : 0,
-      isMock: true,
-    };
-  };
-  // TEMP: mocked while the real fetch above is commented out. My Rank shows
-  // on all four boards using the same mocked rank/progress numbers.
-  const myRank = mockMyRank();
+  const myRank = memberRanks
+    ? mapMemberRank(memberRanks[MEMBER_RANK_BOARD_KEY[activeTab]])
+    : null;
   // Turnover has no campaign endpoint (BOARD_META.type is null for it, so
   // data.endDate is always null) — its countdown instead tracks the event
   // window directly: counts down to the opening before 31/8, then to the
