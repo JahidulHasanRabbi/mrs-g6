@@ -69,6 +69,25 @@ export async function getMissionProgressHistory(params = {}) {
   return await apiRequest(`${ENDPOINTS.MISSION.PROGRESS_HISTORY}${qs}`, { method: 'GET' }, true, 'member');
 }
 
+// Mission Pop Out promotion. Consumed through
+// app/components/missions/promotion/promoApi.js — do not call these directly
+// from the page, so the mock adapter stays swappable.
+export async function getMissionPopup(missionUuid) {
+  return await apiRequest(ENDPOINTS.MISSION.POPUP_FOR_MISSION(missionUuid), { method: 'GET' }, true, 'member');
+}
+
+export async function getPendingMissionPopup() {
+  return await apiRequest(ENDPOINTS.MISSION.POPUP_PENDING, { method: 'GET' }, true, 'member');
+}
+
+export async function recordMissionPopupShown(uuid) {
+  return await apiRequest(ENDPOINTS.MISSION.POPUP_SHOWN(uuid), { method: 'POST' }, true, 'member');
+}
+
+export async function acknowledgeMissionPopup(uuid) {
+  return await apiRequest(ENDPOINTS.MISSION.POPUP_ACK(uuid), { method: 'POST' }, true, 'member');
+}
+
 // GET /member/{uuid}/profile/
 export async function getProfile(memberUuid) {
   return await apiRequest(ENDPOINTS.MEMBER.PROFILE(memberUuid), {

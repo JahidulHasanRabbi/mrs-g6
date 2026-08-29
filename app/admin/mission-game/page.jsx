@@ -56,6 +56,15 @@ function LevelIcon() {
   );
 }
 
+function PopOutIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="13" height="11" rx="2" />
+      <path d="M8 20h13V9" />
+    </svg>
+  );
+}
+
 function MaintenanceToggle({ checked, onChange, saving }) {
   return (
     <div className="flex items-center gap-3 rounded-[8px] border border-white/10 bg-white/[0.03] px-4 py-2">
@@ -151,6 +160,14 @@ export default function MissionGamePage() {
             onChange={handleMaintenanceChange}
             saving={savingMaintenance}
           />
+          <button
+            type="button"
+            onClick={() => router.push("/admin/mission-game/pop-out")}
+            className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold tracking-[-0.5px] text-[#fbeed2] transition-colors hover:bg-white/5"
+          >
+            <PopOutIcon />
+            Pop-out Setting
+          </button>
           <button
             type="button"
             onClick={() => router.push("/admin/mission-game/add")}

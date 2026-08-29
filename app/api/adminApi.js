@@ -129,6 +129,29 @@ export async function archiveMission(uuid) {
   return await apiRequest(ENDPOINTS.MISSION.ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
 }
 
+// Mission Pop Out promotion settings. `banner_image` may be a File — apiRequest
+// switches to multipart on its own when it finds one in the body.
+export async function getMissionPopupSettings(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.MISSION.POPUP_SETTINGS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+export async function getMissionPopupSetting(uuid) {
+  return await apiRequest(ENDPOINTS.MISSION.POPUP_SETTING(uuid), { method: 'GET' }, true, 'admin');
+}
+
+export async function createMissionPopupSetting(data) {
+  return await apiRequest(ENDPOINTS.MISSION.POPUP_SETTINGS, { method: 'POST', body: data }, true, 'admin');
+}
+
+export async function updateMissionPopupSetting(uuid, data) {
+  return await apiRequest(ENDPOINTS.MISSION.POPUP_SETTING(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+
+export async function archiveMissionPopupSetting(uuid) {
+  return await apiRequest(ENDPOINTS.MISSION.POPUP_SETTING_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
 export async function getLuckySpinItems() {
   return await apiRequest(ENDPOINTS.ADMIN.LUCKY_SPIN_ITEMS, {
     method: 'GET'

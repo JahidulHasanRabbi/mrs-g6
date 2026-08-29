@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 
+import { STICKY_ACTION, STICKY_ACTION_CELL, TABLE_HEAD_BG } from "./formControls";
+
 const GOLD_BG = "linear-gradient(96deg, #dc9d16 1%, #f2cb7a 98%)";
 
 function KebabIcon() {
@@ -67,7 +69,7 @@ export default function MissionsTable({ missions = [], loading = false, onEdit, 
             <tr
               className="text-left"
               style={{
-                backgroundImage: "linear-gradient(180deg, #141828 0%, #333333 99.75%)",
+                backgroundImage: TABLE_HEAD_BG,
               }}
             >
               <th className="px-5 py-4 text-[13px] font-semibold tracking-[-0.5px] text-[#fbeed2]">Mission Name</th>
@@ -79,7 +81,14 @@ export default function MissionsTable({ missions = [], loading = false, onEdit, 
               <th className="px-5 py-4 text-[13px] font-semibold tracking-[-0.5px] text-[#fbeed2]">Target</th>
               <th className="px-5 py-4 text-[13px] font-semibold tracking-[-0.5px] text-[#fbeed2]">Reward</th>
               <th className="px-5 py-4 text-[13px] font-semibold tracking-[-0.5px] text-[#fbeed2]">Limit Control</th>
-              <th className="px-5 py-4 text-right text-[13px] font-semibold tracking-[-0.5px] text-[#fbeed2]">Action</th>
+              {/* Pinned: the table is wider than the panel at 1440, and Edit /
+                  Archive were landing off-screen behind the sidebar. */}
+              <th
+                className={`${STICKY_ACTION} px-5 py-4 text-right text-[13px] font-semibold tracking-[-0.5px] text-[#fbeed2]`}
+                style={{ backgroundImage: TABLE_HEAD_BG }}
+              >
+                Action
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -97,7 +106,7 @@ export default function MissionsTable({ missions = [], loading = false, onEdit, 
               </tr>
             ) : (
               missions.map((m) => (
-                <tr key={m.id} className="border-b border-white/5 last:border-b-0 hover:bg-white/[0.02]">
+                <tr key={m.id} className="group border-b border-white/5 last:border-b-0 hover:bg-white/[0.02]">
                   <td className="px-5 py-5 text-[12px] text-white">{m.name}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{m.category}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{m.description}</td>
@@ -107,7 +116,7 @@ export default function MissionsTable({ missions = [], loading = false, onEdit, 
                   <td className="px-5 py-5 text-[12px] text-white">{m.target}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{m.reward}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{m.limitControl}</td>
-                  <td className="px-5 py-5 text-right">
+                  <td className={`${STICKY_ACTION} ${STICKY_ACTION_CELL} px-5 py-5 text-right`}>
                     <ActionMenu
                       onEdit={() => onEdit?.(m)}
                       onArchive={() => onArchive?.(m)}
