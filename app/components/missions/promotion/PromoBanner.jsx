@@ -1,11 +1,11 @@
 "use client";
 
-import { PROMO } from "./promoColors";
+import PromoOfferArt from "./PromoOfferArt";
 
-// The promotion artwork is admin-uploaded (Pop Out Setting → Content), so the
-// headline/offer copy lives inside the image. The text block is the fallback
-// for a promotion saved without one.
-export default function PromoBanner({ image, title, content }) {
+// The designed pop-out (client slide 4) is what a promotion renders by default,
+// built from the backend's own title / deposit / reward fields. An admin-
+// uploaded banner (Pop Out Setting -> Content) replaces it when present.
+export default function PromoBanner({ image, title, content, promo }) {
   if (image) {
     return (
       <img
@@ -17,23 +17,12 @@ export default function PromoBanner({ image, title, content }) {
   }
 
   return (
-    <div
-      className="flex w-full flex-col items-center gap-2 rounded-[16px] px-4 py-6 text-center"
-      style={{ backgroundColor: PROMO.cardBg, border: `2px solid ${PROMO.cardBorder}` }}
-    >
-      {title && (
-        <p
-          className="font-black uppercase leading-tight"
-          style={{ color: PROMO.titleFront, fontSize: "clamp(22px,7vw,32px)" }}
-        >
-          {title}
-        </p>
-      )}
-      {content && (
-        <p className="text-[clamp(14px,4.2vw,17px)] leading-[1.4]" style={{ color: PROMO.text }}>
-          {content}
-        </p>
-      )}
-    </div>
+    <PromoOfferArt
+      title={title}
+      content={content}
+      depositAmount={promo?.deposit_amount}
+      rewardAmount={promo?.reward_amount}
+      rewardCategory={promo?.reward_category ?? 1}
+    />
   );
 }

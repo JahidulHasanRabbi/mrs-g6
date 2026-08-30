@@ -66,18 +66,18 @@ export default function MissionCompletedModal({
           src={PROMO_ASSETS.chest}
           alt=""
           aria-hidden="true"
-          className="h-[clamp(84px,26vw,110px)] w-[clamp(84px,26vw,110px)] shrink-0 select-none object-contain"
+          className="h-[clamp(72px,21vw,96px)] w-[clamp(72px,21vw,96px)] shrink-0 select-none object-contain"
         />
-        <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-2">
+        <div className="flex min-w-0 flex-1 items-baseline justify-center gap-2 whitespace-nowrap">
           <span
             className="font-black leading-none"
-            style={{ color: PROMO.amount, fontSize: "clamp(34px,11vw,48px)" }}
+            style={{ color: PROMO.amount, fontSize: "clamp(28px,8.6vw,42px)" }}
           >
             +{Number(rewardAmount).toLocaleString("en-US")}
           </span>
           <span
             className="font-extrabold leading-none"
-            style={{ color: PROMO.text, fontSize: "clamp(19px,6.2vw,28px)" }}
+            style={{ color: PROMO.text, fontSize: "clamp(15px,4.6vw,22px)" }}
           >
             {unit}
           </span>

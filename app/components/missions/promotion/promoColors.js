@@ -38,6 +38,22 @@ export const PROMO = {
   gloss: "rgba(255,255,255,0.38)",
   warning: "#ffb300",
 
+  // Offer artwork (client slide 4).
+  artBg: "#12073a",
+  artMid: "#26127a",
+  artGlow: "#4a1fb8",
+  artChestGlow: "rgba(64,140,255,0.55)",
+  artStroke: "#0a0327",
+  artDepthGold: "#a03d00",
+  artDepthWhite: "#1a49a8",
+  artTitleGoldTop: "#ffe27a",
+  artTitleGoldBottom: "#ff9500",
+  artTitleWhiteTop: "#ffffff",
+  artTitleWhiteBottom: "#bcd8ff",
+  ribbonFrom: "#f0323c",
+  ribbonTo: "#a80d16",
+  ribbonFold: "#6d060d",
+
   badgeFrom: "#ffd043",
   badgeTo: "#e27b00",
   checkFill: "#00c853",

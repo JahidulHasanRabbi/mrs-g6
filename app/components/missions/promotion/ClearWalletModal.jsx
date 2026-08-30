@@ -7,7 +7,7 @@ import { PROMO } from "./promoColors";
 
 function WarningIcon() {
   return (
-    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" aria-hidden="true" className="shrink-0">
       <path
         d="M12 3.5 22 20H2L12 3.5Z"
         fill={PROMO.warning}
@@ -27,18 +27,16 @@ function WarningIcon() {
 // The slide mocks this primary button as "GOT IT", but requirement row 5 and
 // slide 3 both specify "Clear Now → redirect to NS Wallet Profile" — a member
 // who cannot participate needs the route to go fix it, so the written spec wins.
-export default function ClearWalletModal({
-  open,
-  onClose,
-  onClearNow,
-  bannerImage,
-  title,
-  content,
-}) {
+export default function ClearWalletModal({ open, onClose, onClearNow, promo }) {
   return (
     <PromoModalShell open={open} onClose={onClose} labelledBy="promo-clear-title">
       <div className="w-full">
-        <PromoBanner image={bannerImage} title={title} content={content} />
+        <PromoBanner
+          image={promo?.banner_image}
+          title={promo?.title}
+          content={promo?.content}
+          promo={promo}
+        />
       </div>
 
       <div
@@ -54,7 +52,7 @@ export default function ClearWalletModal({
       </div>
 
       <div className="flex w-full items-stretch gap-3">
-        <div className="flex-[2]">
+        <div className="flex-[1.7]">
           <PromoButton tone="blue" onClick={onClearNow}>
             Clear Now
           </PromoButton>

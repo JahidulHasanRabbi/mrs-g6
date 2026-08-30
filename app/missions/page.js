@@ -638,22 +638,18 @@ export default function MissionsPage() {
         open={promo?.state === "offer"}
         onClose={closePromo}
         onUnlock={handleUnlockReward}
-        bannerImage={promo?.banner_image}
-        title={promo?.title}
-        content={promo?.content}
+        promo={promo}
       />
 
       <ClearWalletModal
         open={promo?.state === "blocked"}
         onClose={closePromo}
         onClearNow={handleClearNow}
-        bannerImage={promo?.banner_image}
-        title={promo?.title}
-        content={promo?.content}
+        promo={promo}
       />
 
       <MissionCompletedModal
-        open={!!completedPromo && !isMaintenance}
+        open={!!completedPromo && maintenance === false}
         onClose={handleAcknowledgeCompleted}
         rewardAmount={completedPromo?.reward_amount ?? 0}
         rewardCategory={completedPromo?.reward_category ?? 1}
