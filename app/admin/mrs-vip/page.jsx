@@ -418,10 +418,6 @@ function MrsVipContent() {
       <main className="min-h-screen px-4 pt-6 pb-10 sm:px-6 md:px-8 xl:admin-content-pl xl:pr-10 xl:pt-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-4xl font-bold leading-[1.05] text-white">MRS VIP Level</h1>
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#e9af41" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-          </svg>
         </div>
 
         <LoadingState isLoading={isLoading} skeleton={BARE_SKELETON}>

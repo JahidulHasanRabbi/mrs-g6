@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback, Suspense } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, Suspense } from "react";
 import { AdminRouteGuard } from "../../../components/guards/AdminRouteGuard";
 import { FilterDropdown, DateFilter, TextSearchInput } from "../../../components/admin/members/FilterControls";
 import { Pagination } from "../../../components/admin/members/DataTable";
@@ -8,6 +8,11 @@ import { getRewardReport } from "../../../api/adminApi";
 import { getCategoryOptions } from "../../../api/queryParams";
 
 const PAGE_SIZE = 8;
+
+// The summary totals cover every filtered record, so they are swept separately
+// from the table page at the largest page size the endpoint allows.
+const TOTALS_PAGE_SIZE = 100;
+const TOTALS_MAX_PAGES = 50;
 
 // Column widths are tuned so the total (≈1040px) fits inside the admin
 // content area on a 1440px viewport with the expanded sidebar. Below that
@@ -39,6 +44,112 @@ function formatDateTime(isoStr) {
   } catch {
     return isoStr;
   }
+}
+
+function toIsoDate(date) {
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${mm}-${dd}`;
+}
+
+function formatIsoDate(iso) {
+  const [y, m, d] = String(iso || "").split("-");
+  return d ? `${d}/${m}/${y}` : iso || "";
+}
+
+function formatMoney(value) {
+  return Number(value || 0).toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatCount(value) {
+  return Number(value || 0).toLocaleString("en-MY");
+}
+
+function isCategory(row, name) {
+  const raw = String(row?.category ?? "").trim().toLowerCase();
+  return raw === name || raw === (name === "prize" ? "1" : "2");
+}
+
+// Credit rows carry the money in `reward_details` ("RM 2.64"); `amount` is used
+// first in case the backend starts sending it as a number.
+function creditAmountOf(row) {
+  if (row?.amount != null && row.amount !== "") {
+    const direct = Number(row.amount);
+    if (Number.isFinite(direct)) return direct;
+  }
+  const match = String(row?.reward_details ?? "").match(/-?\d[\d,]*(?:\.\d+)?/);
+  if (!match) return 0;
+  const parsed = Number(match[0].replace(/,/g, ""));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function readBackendTotals(res) {
+  const credit = res?.total_credit_amount ?? res?.totals?.total_credit_amount;
+  const prizes = res?.total_prizes_claimed ?? res?.totals?.total_prizes_claimed;
+  if (credit == null && prizes == null) return null;
+  return { credit: Number(credit ?? 0), prizes: Number(prizes ?? 0), truncated: false };
+}
+
+// Returns null when `stillCurrent()` goes false — a newer filter change has
+// superseded this sweep, so there is nothing worth finishing.
+async function sweepTotals(params, stillCurrent) {
+  let credit = 0;
+  let prizes = 0;
+  for (let page = 1; page <= TOTALS_MAX_PAGES; page += 1) {
+    const res = await getRewardReport({ ...params, page, page_size: TOTALS_PAGE_SIZE });
+    const provided = readBackendTotals(res);
+    if (provided) return provided;
+
+    const rows = res?.results || [];
+    for (const row of rows) {
+      if (isCategory(row, "credit")) credit += creditAmountOf(row);
+      else if (isCategory(row, "prize")) prizes += 1;
+    }
+    if (!res?.next || rows.length === 0) return { credit, prizes, truncated: false };
+    if (!stillCurrent()) return null;
+  }
+  return { credit, prizes, truncated: true };
+}
+
+function TotalStat({ label, value, truncated }) {
+  return (
+    <div className="min-w-[140px] px-4 py-2">
+      <p className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.06em] text-[#f6dda6]/80">{label}</p>
+      <p className="mt-0.5 whitespace-nowrap text-[19px] font-bold tabular-nums text-[#f2cb7a]">
+        {truncated ? <span className="text-[13px] text-white/50">≥ </span> : null}{value}
+      </p>
+    </div>
+  );
+}
+
+function TotalsPanel({ totals, loading, showCredit, showPrizes, period }) {
+  const value = (formatted) => (loading || !totals ? "—" : formatted);
+
+  return (
+    <div className="shrink-0 overflow-hidden rounded-[10px] border border-[#f2cb7a] bg-black/30">
+      <div className="flex items-stretch divide-x divide-[#f2cb7a]/30 py-1">
+        {showCredit ? (
+          <TotalStat
+            label="Total Credit Amount"
+            value={value(`RM ${formatMoney(totals?.credit)}`)}
+            truncated={!loading && totals?.truncated}
+          />
+        ) : null}
+        {showPrizes ? (
+          <TotalStat
+            label="Total Prizes Claimed"
+            value={value(formatCount(totals?.prizes))}
+            truncated={!loading && totals?.truncated}
+          />
+        ) : null}
+      </div>
+      <p className="border-t border-[#f2cb7a]/20 px-4 py-1.5 text-[11px] text-white/45">
+        {loading ? "Calculating…" : `${formatIsoDate(period.start)} – ${formatIsoDate(period.end)}`}
+        {period.isDefault ? " · this month (default)" : ""}
+        {!loading && totals?.truncated ? ` · first ${formatCount(TOTALS_MAX_PAGES * TOTALS_PAGE_SIZE)} records` : ""}
+      </p>
+    </div>
+  );
 }
 
 function SortIcon({ active, direction }) {
@@ -85,16 +196,48 @@ function RewardReportContent() {
   const [usernameQuery, setUsernameQuery] = useState("");
   const [phoneQuery, setPhoneQuery] = useState("");
 
+  const activeFilters = [dateFrom, dateTo, categoryFilter, detailFilter, rewardNameFilter, usernameQuery, phoneQuery];
+  const hasActiveFilters = activeFilters.some(Boolean);
+
+  const clearFilters = () => {
+    setDateFrom("");
+    setDateTo("");
+    setCategoryFilter("");
+    setDetailFilter("");
+    setRewardNameFilter("");
+    setUsernameQuery("");
+    setPhoneQuery("");
+  };
+
   const [sortConfig, setSortConfig] = useState({ key: "created", direction: "desc" });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [totals, setTotals] = useState(null);
+  const [totalsLoading, setTotalsLoading] = useState(false);
+  const totalsRunRef = useRef(0);
+
+  const catValue = useMemo(
+    () => getCategoryOptions("reward").find((o) => o.label === categoryFilter)?.value,
+    [categoryFilter]
+  );
+
+  // With no date filter the totals default to the current calendar month; the
+  // table itself stays unfiltered, so the panel captions its own period.
+  const totalsPeriod = useMemo(() => {
+    if (dateFrom && dateTo) return { start: dateFrom, end: dateTo, isDefault: false };
+    const now = new Date();
+    return {
+      start: toIsoDate(new Date(now.getFullYear(), now.getMonth(), 1)),
+      end: toIsoDate(new Date(now.getFullYear(), now.getMonth() + 1, 0)),
+      isDefault: true,
+    };
+  }, [dateFrom, dateTo]);
 
   const fetchReport = useCallback(async (page) => {
     setLoading(true);
     try {
-      const catValue = getCategoryOptions("reward").find(o => o.label === categoryFilter)?.value;
       const params = {
         page,
         page_size: PAGE_SIZE,
@@ -115,7 +258,7 @@ function RewardReportContent() {
     } finally {
       setLoading(false);
     }
-  }, [dateFrom, dateTo, categoryFilter, detailFilter, rewardNameFilter, usernameQuery, phoneQuery]);
+  }, [dateFrom, dateTo, catValue, detailFilter, rewardNameFilter, usernameQuery, phoneQuery]);
 
   useEffect(() => {
     // Only fetch if both dates are filled or both are empty
@@ -127,6 +270,41 @@ function RewardReportContent() {
     setCurrentPage(1);
     fetchReport(1);
   }, [fetchReport]);
+
+  useEffect(() => {
+    const isDateRangeValid = (!dateFrom && !dateTo) || (dateFrom && dateTo);
+    if (!isDateRangeValid) return;
+
+    const runId = totalsRunRef.current + 1;
+    totalsRunRef.current = runId;
+    const isCurrent = () => totalsRunRef.current === runId;
+
+    // Debounced: the text filters refetch on every keystroke, and a sweep is a
+    // lot more expensive than one table page.
+    const timer = setTimeout(async () => {
+      setTotalsLoading(true);
+      try {
+        const result = await sweepTotals({
+          start_date: totalsPeriod.start,
+          end_date: totalsPeriod.end,
+          category: catValue || undefined,
+          reward_details: detailFilter || undefined,
+          reward_name: rewardNameFilter || undefined,
+          username: usernameQuery || undefined,
+          phone_number: phoneQuery || undefined,
+        }, isCurrent);
+        if (!isCurrent() || result === null) return;
+        setTotals(result);
+      } catch (err) {
+        console.error(err);
+        if (isCurrent()) setTotals(null);
+      } finally {
+        if (isCurrent()) setTotalsLoading(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [dateFrom, dateTo, totalsPeriod, catValue, detailFilter, rewardNameFilter, usernameQuery, phoneQuery]);
 
   const sortedRows = useMemo(() => {
     return [...rows].sort((a, b) => compareRows(a, b, sortConfig));
@@ -158,31 +336,55 @@ function RewardReportContent() {
             </p>
           </div>
 
-          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#e0a744] bg-[rgba(233,175,65,0.08)] text-[#e9af41] shadow-[0_0_24px_rgba(233,175,65,0.18)]">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            </svg>
-          </div>
         </div>
 
         <section className="overflow-hidden rounded-[12px] border border-[rgba(255,255,132,0.18)] bg-[linear-gradient(180deg,rgba(28,48,31,0.98)_0%,rgba(24,44,28,0.98)_100%)] shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
+          {/* Two deliberate rows — title/totals, then the filters. Previously all
+              eight elements shared one flex-wrap, so the wrap point was accidental. */}
           <div className="border-b border-white/5 px-4 pt-4 pb-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <h2 className="mr-auto whitespace-nowrap text-[15px] font-bold text-[#f4efe0] sm:text-[16px] lg:text-[17px]">
-                The Reward Reports Are Given
-              </h2>
+            <div className="flex flex-wrap items-start gap-4">
+              <div className="min-w-0 flex-1">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <h2 className="text-[15px] font-bold text-[#f4efe0] sm:text-[16px] lg:text-[17px]">
+                    The Reward Reports Are Given
+                  </h2>
 
-              <span className="whitespace-nowrap text-[13px] text-[#d6d6d6]">
-                Filter By:
-              </span>
+                  {hasActiveFilters && (
+                    <button
+                      type="button"
+                      onClick={clearFilters}
+                      className="shrink-0 whitespace-nowrap rounded-[8px] border border-[#f2cb7a]/60 px-3 py-1.5 text-[12px] font-semibold text-[#eaad2c] transition-colors hover:bg-white/5"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </div>
 
-              <DateFilter label="Date/Time" fromDate={dateFrom} toDate={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
-              <FilterDropdown label="Category" options={getCategoryOptions("reward").map(o => o.label)} value={categoryFilter} onChange={setCategoryFilter} />
-              <TextSearchInput placeholder="Reward Details" value={detailFilter} onChange={setDetailFilter} />
-              <TextSearchInput placeholder="Reward Name" value={rewardNameFilter} onChange={setRewardNameFilter} />
-              <TextSearchInput placeholder="Enter Username" value={usernameQuery} onChange={setUsernameQuery} />
-              <TextSearchInput placeholder="Enter Phone" value={phoneQuery} onChange={setPhoneQuery} />
+                <div className="flex items-start gap-3">
+                  <span className="mt-2 shrink-0 text-[13px] text-[#d6d6d6]">
+                    Filter By:
+                  </span>
+
+                  {/* An even grid, so six controls land in tidy columns instead of
+                      wrapping raggedly and orphaning the last one. */}
+                  <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                    <DateFilter fullWidth label="Date/Time" fromDate={dateFrom} toDate={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
+                    <FilterDropdown fullWidth label="Category" options={getCategoryOptions("reward").map(o => o.label)} value={categoryFilter} onChange={setCategoryFilter} />
+                    <TextSearchInput fullWidth placeholder="Reward Details" value={detailFilter} onChange={setDetailFilter} />
+                    <TextSearchInput fullWidth placeholder="Reward Name" value={rewardNameFilter} onChange={setRewardNameFilter} />
+                    <TextSearchInput fullWidth placeholder="Enter Username" value={usernameQuery} onChange={setUsernameQuery} />
+                    <TextSearchInput fullWidth placeholder="Enter Phone" value={phoneQuery} onChange={setPhoneQuery} />
+                  </div>
+                </div>
+              </div>
+
+              <TotalsPanel
+                totals={totals}
+                loading={totalsLoading}
+                showCredit={categoryFilter !== "Prize"}
+                showPrizes={categoryFilter !== "Credit"}
+                period={totalsPeriod}
+              />
             </div>
           </div>
 

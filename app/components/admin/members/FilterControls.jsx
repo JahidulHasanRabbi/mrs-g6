@@ -10,7 +10,7 @@ export const GOLD_BG =
  * Reusable gold-gradient dropdown filter.
  * Renders a toggle button and a dropdown panel with "All" + supplied options.
  */
-export function FilterDropdown({ label, options, value, onChange, align = "left", disabled = false }) {
+export function FilterDropdown({ label, options, value, onChange, align = "left", disabled = false, fullWidth = false }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -23,12 +23,12 @@ export function FilterDropdown({ label, options, value, onChange, align = "left"
   }, []);
 
   return (
-    <div className="relative" ref={ref}>
+    <div className={`relative ${fullWidth ? "w-full" : ""}`} ref={ref}>
       <button
         type="button"
         onClick={() => { if (!disabled) setOpen((v) => !v); }}
         disabled={disabled}
-        className="flex items-center gap-1 h-9 rounded px-3 py-2 shrink-0 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+        className={`flex items-center gap-1 h-9 rounded px-3 py-2 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 ${fullWidth ? "w-full justify-between" : "shrink-0"}`}
         style={{ background: GOLD_BG }}
       >
         <span className=" text-[14px] text-black whitespace-nowrap">
@@ -88,7 +88,7 @@ export function FilterDropdown({ label, options, value, onChange, align = "left"
  * call-site API (separate from/to setters) stays the same, but the popover
  * matches the Duralux-style preset + two-month layout.
  */
-export function DateFilter({ label, fromDate, toDate, onFromChange, onToChange, align = "left" }) {
+export function DateFilter({ label, fromDate, toDate, onFromChange, onToChange, align = "left", fullWidth = false }) {
   const hasValue = fromDate || toDate;
   const handleApply = (f, t) => {
     onFromChange(f || "");
@@ -105,10 +105,10 @@ export function DateFilter({ label, fromDate, toDate, onFromChange, onToChange, 
         <button
           type="button"
           onClick={open}
-          className="flex items-center gap-1 h-9 rounded px-3 py-2 shrink-0 transition-opacity hover:opacity-90"
+          className={`flex items-center gap-1 h-9 rounded px-3 py-2 transition-opacity hover:opacity-90 ${fullWidth ? "w-full" : "shrink-0"}`}
           style={{ background: GOLD_BG }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
             <line x1="16" y1="2" x2="16" y2="6" />
             <line x1="8" y1="2" x2="8" y2="6" />
@@ -130,9 +130,10 @@ export function DateFilter({ label, fromDate, toDate, onFromChange, onToChange, 
 /**
  * Gold-gradient text search input with clear button.
  */
-export function TextSearchInput({ placeholder, value, onChange, disabled = false, title }) {
+// `fullWidth` lets a caller drop the fixed width and fill a grid cell instead.
+export function TextSearchInput({ placeholder, value, onChange, disabled = false, title, fullWidth = false }) {
   return (
-    <div className="relative" title={title}>
+    <div className={`relative ${fullWidth ? "w-full" : ""}`} title={title}>
       <input
         type="text"
         placeholder={placeholder}
@@ -140,7 +141,7 @@ export function TextSearchInput({ placeholder, value, onChange, disabled = false
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        className="h-9 w-[140px] sm:w-[160px] rounded px-3 py-2 text-[14px] text-black italic placeholder:text-black/50 outline-none disabled:cursor-not-allowed disabled:opacity-60"
+        className={`h-9 rounded px-3 py-2 text-[14px] text-black italic placeholder:text-black/50 outline-none disabled:cursor-not-allowed disabled:opacity-60 ${fullWidth ? "w-full" : "w-[140px] sm:w-[160px]"}`}
         style={{ background: GOLD_BG }}
       />
       {value && !disabled && (
