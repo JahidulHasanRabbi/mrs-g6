@@ -8,24 +8,31 @@ import ThemedEditProfileList from "../shared/ThemedEditProfileList";
 import { LV918_ASSETS, LV918_COLORS } from "./assets";
 import { useUser } from "../../../contexts/UserContext";
 
+// Royal-pink frame: LIGHT pink interior, so the ink is deep rose and the
+// token amount carries no glow.
 const LV918_CARD_COLORS = {
   name: "#6b0a32",
   label: "rgba(58,10,30,0.75)",
-  tokenValue: "#6b0a32",
   level: "#6b0a32",
   getText: "rgba(58,10,30,0.85)",
+  getNum: "#c22060",
   getEmph: "#6b0a32",
-  // A gold-brown track (the shared progressTrack) reads as a black bar on this
-  // card's light-pink interior — use a translucent rose well instead.
+  nextLabel: "#6b0a32",
+  wellBg: "rgba(107,10,50,0.08)",
+  wellBorder: "rgba(107,10,50,0.3)",
+  tokenColor: "#6b0a32",
   barBase: "rgba(107,10,50,0.20)",
-  barFill: "linear-gradient(90deg, #c22060 0%, #e05888 100%)",
+  barFill: "linear-gradient(90deg, #c22060, #e05888)",
   barGlow: "rgba(194,32,96,0.7)",
-  barBorder: "#8a1848",
-  divider: "rgba(107,10,50,0.3)",
+  avatarFrom: "#ffe2ee",
+  avatarTo: "#d898b4",
+  avatarInk: "#6b0a32",
+  avatarRing: "#8a1848",
   pillFrom: "#f5c451",
+  pillMid: "#d79f2e",
   pillTo: "#b57718",
   pillText: "#2a0a1f",
-  avatarRing: "#8a1848",
+  pillGlow: "rgba(245,196,81,0.45)",
 };
 
 export default function Lv918ProfilePage() {
@@ -39,7 +46,6 @@ export default function Lv918ProfilePage() {
   const progress = Number.isFinite(userData?.progress) ? userData.progress : 0;
   const tokensNeeded = userData?.tokensNeeded ?? 0;
   const currentTierIcon = userData?.currentTierIcon;
-  const nextTierIcon = userData?.nextTierIcon;
 
   const goPersonalData = () => router.push("/personal-data");
   const goVip = () => router.push("/vip");
@@ -57,15 +63,9 @@ export default function Lv918ProfilePage() {
           transition={{ type: "spring", stiffness: 200, damping: 18 }}
         />
 
-        {/* lv918's crown frame is a wide 1672×941 plate squeezed into a nearly
-            square card, which stretches its ornaments: the top crown-and-heart
-            hangs down to ~34% of the rendered height and the bottom crown
-            starts at ~78%. The shared 24/20% pad let the name + VIP pill row
-            sit under the hanging heart — these deeper pads size the card so the
-            whole block lands in the clear pink interior. */}
         <ThemedProfileCard
           frame={LV918_ASSETS.frames.crown}
-          pad={{ x: "20%", top: "39%", bottom: "26%" }}
+          pad={{ left: "12.2%", right: "10.7%", top: "35.4%", bottom: "24%" }}
           colors={LV918_CARD_COLORS}
           coinIcon={LV918_ASSETS.ui.iconCoins}
           name={name}
@@ -75,10 +75,8 @@ export default function Lv918ProfilePage() {
           progress={progress}
           tokensNeeded={tokensNeeded}
           currentTierIcon={currentTierIcon}
-          nextTierIcon={nextTierIcon}
           profilePicture={profilePicture}
           onVipDetails={goVip}
-          avatarSize={44}
         />
 
         <div className="w-full max-w-[360px]">

@@ -8,22 +8,25 @@ import ThemedEditProfileList from "../shared/ThemedEditProfileList";
 import { UBET_ASSETS, UBET_COLORS } from "./assets";
 import { useUser } from "../../../contexts/UserContext";
 
-// God-of-Wealth red-on-gold card palette. Dark red interior → cream/gold text.
+// God-of-Wealth frame: dark red interior, so cream/gold ink.
 const UBET_CARD_COLORS = {
   name: "#fff6df",
   label: "rgba(255,246,223,0.7)",
-  tokenValue: "#ffe16d",
   level: "#f2c36b",
   getText: "rgba(255,246,223,0.85)",
+  getNum: "#ffe16d",
   getEmph: "#f2c36b",
+  nextLabel: "#f2c36b",
+  wellBg: "rgba(255,255,255,0.06)",
+  wellBorder: "rgba(242,195,107,0.35)",
+  tokenColor: "#ffe16d",
+  tokenGlow: "rgba(255,225,109,0.45)",
   barBase: "#480e0f",
-  barFill: "linear-gradient(90deg, #dd8f1f 0%, #f2c36b 100%)",
+  barFill: "linear-gradient(90deg, #dd8f1f, #f2c36b)",
   barGlow: "rgba(242,195,107,0.7)",
-  barBorder: "#f2c36b",
-  divider: "rgba(242,195,107,0.26)",
-  pillFrom: "#f2c36b",
-  pillTo: "#dd8f1f",
-  pillText: "#280506",
+  avatarFrom: "#ffe6d2",
+  avatarTo: "#d9a184",
+  avatarInk: "#480e0f",
   avatarRing: "#f2c36b",
 };
 
@@ -38,7 +41,6 @@ export default function UbetclubProfilePage() {
   const progress = Number.isFinite(userData?.progress) ? userData.progress : 0;
   const tokensNeeded = userData?.tokensNeeded ?? 0;
   const currentTierIcon = userData?.currentTierIcon;
-  const nextTierIcon = userData?.nextTierIcon;
 
   const goPersonalData = () => router.push("/personal-data");
   const goVip = () => router.push("/vip");
@@ -58,7 +60,7 @@ export default function UbetclubProfilePage() {
 
         <ThemedProfileCard
           frame={UBET_ASSETS.frames.crown}
-          pad={{ x: "15%", top: "22%", bottom: "15%" }}
+          pad={{ left: "13.6%", right: "13.6%", top: "25.5%", bottom: "17.6%" }}
           colors={UBET_CARD_COLORS}
           coinIcon={UBET_ASSETS.ui.iconCoin}
           name={name}
@@ -68,7 +70,6 @@ export default function UbetclubProfilePage() {
           progress={progress}
           tokensNeeded={tokensNeeded}
           currentTierIcon={currentTierIcon}
-          nextTierIcon={nextTierIcon}
           profilePicture={profilePicture}
           onVipDetails={goVip}
         />

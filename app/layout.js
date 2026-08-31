@@ -1,4 +1,4 @@
-import { Inter, Geist, Geist_Mono, Montserrat, DM_Sans, JetBrains_Mono, Sora, Chakra_Petch, Rajdhani, Acme, Rubik, Berkshire_Swash, Lexend } from "next/font/google";
+import { Inter, Geist, Geist_Mono, Montserrat, DM_Sans, JetBrains_Mono, Sora, Chakra_Petch, Rajdhani, Acme, Rubik, Berkshire_Swash, Lexend, Archivo } from "next/font/google";
 import "./globals.css";
 
 /**
@@ -98,6 +98,13 @@ const lexend = Lexend({
   weight: ["400", "700"],
 });
 
+// Homepage game list + Special For You banner (Figma 535:61).
+const archivo = Archivo({
+  variable: "--font-archivo",
+  subsets: ["latin"],
+  weight: ["700", "900"],
+});
+
 export const metadata = {
   title: "VIP Access | Claim Your Elite Benefits & Rewards",
   description: "Access your exclusive member dashboard. Log in now to claim your daily benefits, unlock rewards, and compete in our latest mini-games!",
@@ -118,7 +125,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${montserrat.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${sora.variable} ${chakraPetch.variable} ${rajdhani.variable} ${acme.variable} ${rubik.variable} ${berkshireSwash.variable} ${lexend.variable} antialiased bg-black`}
+        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${montserrat.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${sora.variable} ${chakraPetch.variable} ${rajdhani.variable} ${acme.variable} ${rubik.variable} ${berkshireSwash.variable} ${lexend.variable} ${archivo.variable} antialiased bg-black`}
         style={{ fontFamily: '"Times New Roman", serif' }}
       >
         {/* Stamps <html data-theme> before paint — see buildThemeStampScript. */}

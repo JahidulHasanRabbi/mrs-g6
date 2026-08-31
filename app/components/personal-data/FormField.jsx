@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { FORM_COLORS } from "./constants";
+import { useThemeInk } from "../themes/shared/themeInk";
 import { CalendarIcon, ArrowIcon } from "./FormIcons";
 
 export default function FormField({
@@ -15,6 +16,8 @@ export default function FormField({
   options = [],
   disabled = false,
 }) {
+  const ink = useThemeInk();
+
   const renderInput = () => {
     const commonClasses = `absolute inset-0 bg-transparent px-4 outline-none ${disabled ? 'cursor-not-allowed opacity-50' : ''}`;
     const commonStyles = {
@@ -100,7 +103,7 @@ export default function FormField({
         style={{
           fontFamily: '"Times New Roman", serif',
           fontWeight: "bold",
-          color: FORM_COLORS.textLabel,
+          color: ink.label,
         }}
       >
         {label}

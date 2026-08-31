@@ -37,6 +37,18 @@ export const EP369_ASSETS = {
     tilePenaltyKick: `${BASE}/home/tile-penalty-kick.webp`,
     tileSmashEgg: `${BASE}/home/tile-smash-egg.webp`,
   },
+  // Homepage game list badges (Figma 544:* — one nine-badge sheet per skin).
+  modules: {
+    luckySpin: `${BASE}/modules/lucky-spin.webp`,
+    penaltyKick: `${BASE}/modules/penalty-kick.webp`,
+    avatar: `${BASE}/modules/avatar.webp`,
+    smashEgg: `${BASE}/modules/smash-egg.webp`,
+    leaderboard: `${BASE}/modules/leaderboard.webp`,
+    missions: `${BASE}/modules/missions.webp`,
+    vip: `${BASE}/modules/vip.webp`,
+    dailyCheckin: `${BASE}/modules/daily-checkin.webp`,
+    mart: `${BASE}/modules/mart.webp`,
+  },
   spin: {
     bg: `${BASE}/spin/bg-spin.webp`,
     title: `${BASE}/spin/title-lucky-spin.webp`,

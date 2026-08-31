@@ -17,6 +17,7 @@ import { getProfile, updateProfile } from "@/app/api/memberApi";
 import { mapProfileDataToForm, mapFormDataToProfileUpdate } from "@/app/api/responseMappers";
 import { tokenStorage } from "@/app/api/tokenStorage";
 import ThemedActionButton from "../themes/shared/ThemedActionButton";
+import { useThemeInk } from "../themes/shared/themeInk";
 import { useUser } from "@/app/contexts/UserContext";
 import { useTheme } from "@/app/contexts/ThemeContext";
 
@@ -52,12 +53,11 @@ const THEME_ICON = (
 export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
   const router = useRouter();
   const { updateProfilePicture, selectedFrameId, updateSelectedFrame } = useUser();
-  // Loading text sits directly on the page backdrop. On kgame99's bright
-  // celestial-blue sky, warm gold washes out — swap to dark navy w/ shadow.
-  const { isKgame99, themeId } = useTheme();
-  const loadingTextStyle = isKgame99
-    ? { color: "#0a1a2f", textShadow: "0 1px 2px rgba(255,255,255,0.55)" }
-    : { color: "#e9af41" };
+  const { themeId } = useTheme();
+  // Loading text sits directly on the page backdrop, so it follows the same
+  // light/dark split as every other label on this page.
+  const ink = useThemeInk();
+  const loadingTextStyle = { color: ink.label, textShadow: ink.onLight ? ink.halo : undefined };
   const [formData, setFormData] = useState(
     FORM_FIELDS.reduce((acc, field) => ({ ...acc, [field.id]: "" }), {})
   );
@@ -329,7 +329,10 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
           </ThemedActionButton>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 mt-1 text-[10px] font-['Times_New_Roman'] text-[#d0c6ab]">
+        <div
+          className="grid grid-cols-2 gap-2 mt-1 text-[10px] font-['Times_New_Roman']"
+          style={{ color: ink.meta }}
+        >
           <span className="text-center truncate">{currentFrame?.name}</span>
           <span className="text-center truncate">{getThemeLabel(themeId)}</span>
         </div>

@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { memo } from "react";
+import { useThemeInk } from "../themes/shared/themeInk";
 
 const AssetBlock = memo(function AssetBlock({ src, alt, className, fill }) {
   if (!src) {
@@ -50,6 +51,8 @@ const AnimatedSection = memo(function AnimatedSection({
   children,
   className = "",
 }) {
+  const ink = useThemeInk();
+
   return (
     <motion.section
       className={`relative w-full ${className}`}
@@ -63,9 +66,9 @@ const AnimatedSection = memo(function AnimatedSection({
           className="text-center font-bold  "
           style={{
             fontFamily: '"Times New Roman", serif',
-            color: "#e9af41",
+            color: ink.heading,
             letterSpacing,
-            textShadow: "0px 3px 0px rgba(0,0,0,0.35)",
+            textShadow: ink.halo,
           }}
         >
           {title}

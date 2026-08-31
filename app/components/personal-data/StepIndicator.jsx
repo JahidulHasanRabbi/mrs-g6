@@ -9,10 +9,12 @@ import { EP369_COLORS } from "../themes/ep369/assets";
 import { KGAME99_COLORS } from "../themes/kgame99/assets";
 import { LV918_COLORS } from "../themes/lv918/assets";
 import { N1GANG_COLORS } from "../themes/n1gang/assets";
+import { useThemeInk } from "../themes/shared/themeInk";
 
 export default function ProgressBar({ progress = 0 }) {
   const progressPercentage = Math.min(100, Math.max(0, progress));
   const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang } = useTheme();
+  const ink = useThemeInk();
 
   let trackClass = "relative h-3 bg-gray-200 rounded-full overflow-hidden";
   let textColor = FORM_COLORS.textButton;
@@ -35,6 +37,8 @@ export default function ProgressBar({ progress = 0 }) {
     trackClass = "relative h-3 rounded-full overflow-hidden border border-[#5c3f0f] bg-[#1a1105]";
     textColor = N1GANG_COLORS.gold;
   }
+  // kgame99 and lv918 sit on light backdrops, where every gold above is unreadable.
+  if (ink.onLight) textColor = ink.label;
 
   return (
     <div className="relative w-full mb-6">
@@ -50,7 +54,7 @@ export default function ProgressBar({ progress = 0 }) {
 
       <div className="flex justify-between items-center mt-2">
         <span className="text-sm font-medium" style={{ color: textColor }}>
-          Progress: {progressPercentage}%
+          Progress: {Math.round(progressPercentage)}%
         </span>
         <span className="text-xs opacity-75" style={{ color: textColor }}>
           {Math.floor(progressPercentage / 20)} / 5 fields completed
