@@ -5,6 +5,9 @@ Base path: `/usage-report/`. All endpoints require JWT authentication (`IsAuthen
 This is a **read-only analytics** module. It aggregates over the existing mini-game
 logs — it never writes, has no model of its own, and does not touch any game flow.
 
+> A 5th endpoint, `GET /usage-report/members/`, is requested but not yet built — the
+> contract is in [phase-enhancement-requests.md](./phase-enhancement-requests.md).
+
 There are 4 endpoints, each covering one or more sections of the Usage Report dashboard:
 **Summary**, **Games**, **Retention**, **Insights**.
 

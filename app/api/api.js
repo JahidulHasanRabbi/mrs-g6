@@ -193,6 +193,7 @@ export const ENDPOINTS = {
     GAMES: '/usage-report/games/',
     RETENTION: '/usage-report/games/retention/',
     INSIGHTS: '/usage-report/insights/',
+    MEMBERS: '/usage-report/members/',
   },
   EXTERNAL: {
     SPECIAL_CODE: '/third-party/special-codes/',

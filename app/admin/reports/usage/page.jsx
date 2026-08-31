@@ -8,6 +8,7 @@ import LoadingOverlay from "../../../components/admin/ui/LoadingOverlay";
 import {
   getUsageReportGames,
   getUsageReportInsights,
+  getUsageReportMembers,
   getUsageReportRetention,
   getUsageReportSummary,
 } from "../../../api/adminApi";
@@ -16,13 +17,22 @@ const GOLD_BG = "linear-gradient(101deg, #dc9d16 1%, #f2cb7a 98%)";
 const CARD_BG = "linear-gradient(178deg, #11320e 0%, #031101 99.749%)";
 const PANEL_BG = "linear-gradient(180deg, rgba(28,48,31,0.98) 0%, rgba(24,44,28,0.98) 100%)";
 
-const GAME_OPTIONS = [
-  { value: "all", label: "All Games" },
-  { value: "1", label: "Lucky Spin" },
-  { value: "2", label: "Penalty Kick" },
-  { value: "3", label: "Smash Egg" },
-  { value: "4", label: "Prediction" },
-];
+const ALL_GAMES_OPTION = { value: "all", label: "All Games" };
+
+// Labels for ids the API sends without one. The filter itself is built from the
+// unfiltered /usage-report/games/ rows (see gameOptions), so a game the backend
+// does not know about — Avatar, until it joins the enum — is never offered and
+// can never be sent back as an id the API would reject with a 400.
+const GAME_LABELS = {
+  1: "Lucky Spin",
+  2: "Penalty Kick",
+  3: "Smash Egg",
+  4: "Prediction",
+  5: "Avatar",
+};
+
+// Only used before the first /games/ response lands, or if that call fails.
+const GAME_FALLBACK_OPTIONS = [1, 2, 3, 4].map((id) => ({ value: String(id), label: GAME_LABELS[id] }));
 
 // The all-games view maps to /usage-report/summary/. For a selected game, these
 // same cards are populated from that game's /usage-report/games/ row because
@@ -30,9 +40,10 @@ const GAME_OPTIONS = [
 const SUMMARY_CARDS = [
   { key: "total_active_users", label: "Active Users", icon: "users", hint: "Distinct members who played in this view" },
   { key: "total_sessions", label: "Total Sessions", icon: "plays", hint: "Total plays in this view" },
-  { key: "total_tokens_consumed", label: "Tokens Consumed", icon: "tokens", hint: "Tokens spent in this view" },
+  { key: "total_withdrawal", label: "Total Withdrawal", prefix: "RM", icon: "withdraw", hint: "RM withdrawn in this period" },
   { key: "total_rewards_given", label: "Rewards Given", prefix: "RM", icon: "rm", hint: "RM paid out where tracked" },
   { key: "average_session_per_user", label: "Avg Sessions/User", decimals: 2, icon: "avg", hint: "Sessions ÷ active users" },
+  { key: "avg_session_duration", label: "Avg. Session Duration", format: "duration", icon: "clock", hint: "Time in this view ÷ its sessions" },
 ];
 
 function toIso(date) {
@@ -86,13 +97,6 @@ function formatNumber(value, decimals = 0) {
   });
 }
 
-function formatDate(iso) {
-  if (!iso) return "N/A";
-  const [y, m, d] = iso.split("-");
-  if (!d) return iso;
-  return `${d}/${m}/${y}`;
-}
-
 // One uniform, viewport-scaled size for every card — same as the PIC
 // dashboard's KpiCard — so all values in the row read at the same size.
 // Tuned small enough that the longest value ("RM 2,510.50") still clears the
@@ -105,6 +109,17 @@ function formatMoney(value) {
   const num = Number(value);
   if (!Number.isFinite(num)) return String(value);
   return num.toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatDuration(seconds) {
+  if (seconds == null || seconds === "") return "N/A";
+  const total = Math.round(Number(seconds));
+  if (!Number.isFinite(total)) return "N/A";
+  if (total < 60) return `${Math.max(0, total)}s`;
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  if (hours) return `${hours}h ${String(minutes).padStart(2, "0")}m`;
+  return `${minutes}m ${String(total % 60).padStart(2, "0")}s`;
 }
 
 function asPercentRate(value) {
@@ -144,26 +159,32 @@ function rowsOf(res) {
   return [];
 }
 
+// Total Withdrawal is scoped to the period, not the game, so it always reads
+// from /summary/ — unlike Avg. Session Duration, which follows the selection.
 function gameSummary(overallSummary, gameRows, game) {
-  if (game === "all") return overallSummary;
+  const totalWithdrawal = overallSummary?.total_withdrawal ?? null;
+
+  if (game === "all") return { ...overallSummary, total_withdrawal: totalWithdrawal };
 
   const row = gameRows.find((item) => String(item.game) === String(game));
   if (!row) {
     return {
       total_active_users: 0,
       total_sessions: 0,
-      total_tokens_consumed: 0,
       total_rewards_given: null,
       average_session_per_user: 0,
+      total_withdrawal: totalWithdrawal,
+      avg_session_duration: null,
     };
   }
 
   return {
     total_active_users: row.unique_players,
     total_sessions: row.sessions,
-    total_tokens_consumed: row.tokens_consumed,
     total_rewards_given: row.credit_rm,
     average_session_per_user: row.avg_sessions_per_player,
+    total_withdrawal: totalWithdrawal,
+    avg_session_duration: row.avg_session_duration ?? null,
   };
 }
 
@@ -187,6 +208,8 @@ function TinyIcon({ type, size = 22 }) {
   const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" };
   if (type === "tokens") return <svg {...common}><circle cx="8" cy="8" r="4" /><circle cx="16" cy="16" r="4" /><path d="M12 8h3a3 3 0 0 1 3 3v1" /></svg>;
   if (type === "rm") return <svg {...common}><path d="M6 18V6h6a4 4 0 0 1 0 8H6" /><path d="M14 14l4 4" /></svg>;
+  if (type === "withdraw") return <svg {...common}><rect x="3" y="10" width="18" height="10" rx="2" /><path d="M3 10l9-6 9 6" /><path d="M12 20v-6" /><path d="M9 17l3 3 3-3" /></svg>;
+  if (type === "clock") return <svg {...common}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3.5 2" /></svg>;
   if (type === "avg") return <svg {...common}><path d="M4 19V5" /><path d="M4 19h16" /><path d="M7 15l4-4 3 3 5-7" /></svg>;
   if (type === "plays") return <svg {...common}><path d="M8 5v14l11-7z" /></svg>;
   return <svg {...common}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>;
@@ -194,7 +217,13 @@ function TinyIcon({ type, size = 22 }) {
 
 function MetricCard({ metric, summary }) {
   const raw = summary?.[metric.key];
-  const value = metric.prefix === "RM" ? formatMoney(raw) : formatNumber(raw, metric.decimals || 0);
+  let value;
+  if (metric.format === "duration") value = formatDuration(raw);
+  else if (metric.prefix === "RM") value = formatMoney(raw);
+  else value = formatNumber(raw, metric.decimals || 0);
+
+  // "RM N/A" reads like a bug, so the prefix is dropped when there is no figure.
+  const prefix = metric.prefix && value !== "N/A" ? metric.prefix : null;
 
   return (
     <div className="flex flex-col gap-3 rounded-[16px] border-2 border-[#05060a] p-4" style={{ backgroundImage: CARD_BG }}>
@@ -209,9 +238,9 @@ function MetricCard({ metric, summary }) {
       <p
         className="block w-full overflow-hidden text-ellipsis whitespace-nowrap bg-clip-text font-bold text-transparent tabular-nums"
         style={{ backgroundImage: GOLD_BG, fontSize: KPI_VALUE_FONT, lineHeight: "1.2" }}
-        title={`${metric.prefix ? `${metric.prefix} ` : ""}${value}`}
+        title={`${prefix ? `${prefix} ` : ""}${value}`}
       >
-        {metric.prefix ? <span className="text-[0.7em]">{metric.prefix} </span> : null}{value}
+        {prefix ? <span className="text-[0.7em]">{prefix} </span> : null}{value}
       </p>
       {metric.hint ? <p className="text-[11px] leading-4 text-white/45">{metric.hint}</p> : null}
     </div>
@@ -292,7 +321,7 @@ function PresetButton({ active, onClick, children }) {
   );
 }
 
-function FilterBar({ preset, range, game, onPreset, onRangeChange, onGameChange }) {
+function FilterBar({ preset, range, game, gameOptions, onPreset, onRangeChange, onGameChange }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-white/10 bg-black/20 p-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -324,7 +353,7 @@ function FilterBar({ preset, range, game, onPreset, onRangeChange, onGameChange 
         {preset !== "custom" ? <span className="ml-1 hidden text-[12px] text-white/45 lg:inline">{formatRangeLabel(range)}</span> : null}
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <Dropdown value={game} options={GAME_OPTIONS} onChange={onGameChange} />
+        <Dropdown value={game} options={gameOptions} onChange={onGameChange} />
       </div>
     </div>
   );
@@ -526,69 +555,162 @@ function RetentionPanel({ rows }) {
   );
 }
 
-const HISTORY_PAGE_SIZE = 10;
+const MEMBER_PAGE_SIZE = 10;
 
-// Full daily-history table built from the insights `trend` series. Same data as
-// the trend chart but as a paginated, totalled list (newest day first). Players
-// is daily-distinct so it is not summed in the footer; sessions/tokens are
-// additive and totalled.
-function HistoryTable({ rows }) {
-  const [page, setPage] = useState(1);
-  const ordered = useMemo(() => [...rows].reverse(), [rows]);
-  const totalPages = Math.max(1, Math.ceil(ordered.length / HISTORY_PAGE_SIZE));
+// Sortable keys double as the endpoint's `ordering` values. Only the five
+// columns named in the spec are sortable.
+const MEMBER_COLUMNS = [
+  { key: "no", label: "No.", className: "w-[56px]" },
+  { key: "phone_number", label: "Phone Number", className: "w-[130px]" },
+  { key: "username", label: "Username", className: "w-[130px]" },
+  { key: "station", label: "Station", className: "w-[110px]" },
+  { key: "tokens_used", label: "Tokens Used", className: "w-[115px]", sortable: true },
+  { key: "battle_points_used", label: "Battle Point Used", className: "w-[145px]", sortable: true },
+  { key: "avg_session_duration", label: "Avg. Session Duration", className: "w-[165px]", sortable: true },
+  { key: "most_played_game", label: "Most Played Game", className: "w-[145px]" },
+  { key: "total_rewards", label: "Total Rewards", className: "w-[125px]", sortable: true },
+  { key: "total_withdrawal", label: "Total Withdrawal", className: "w-[140px]", sortable: true },
+];
 
-  useEffect(() => { setPage(1); }, [rows]);
-  useEffect(() => { if (page > totalPages) setPage(totalPages); }, [page, totalPages]);
+function gameLabel(value) {
+  if (value == null || value === "") return "N/A";
+  return GAME_LABELS[String(value)] || String(value);
+}
 
-  const pageRows = ordered.slice((page - 1) * HISTORY_PAGE_SIZE, page * HISTORY_PAGE_SIZE);
-  const totals = ordered.reduce(
-    (acc, row) => {
-      acc.sessions += Number(row.sessions || 0);
-      acc.tokens += Number(row.tokens_consumed || 0);
-      return acc;
-    },
-    { sessions: 0, tokens: 0 }
+function normalizeMemberRow(row, index) {
+  return {
+    key: row.uuid || row.member_uuid || row.id || `${row.phone_number || ""}-${index}`,
+    phone_number: row.phone_number,
+    username: row.username,
+    station: row.station ?? row.station_name,
+    tokens_used: row.tokens_used ?? row.tokens_consumed,
+    battle_points_used: row.battle_points_used ?? row.battle_point_used,
+    avg_session_duration: row.avg_session_duration ?? row.avg_session_duration_seconds,
+    most_played_game: row.most_played_game_label ?? row.most_played_game,
+    total_rewards: row.total_rewards,
+    total_withdrawal: row.total_withdrawal,
+  };
+}
+
+function SortIcon({ active, direction }) {
+  const stroke = active ? "#f2cb7a" : "rgba(255,255,255,0.5)";
+  return (
+    <svg width="12" height="12" viewBox="0 0 14 14" fill="none" className="ml-1 shrink-0">
+      <path d="M4 5L7 2L10 5" stroke={stroke} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" opacity={!active || direction === "asc" ? 1 : 0.3} />
+      <path d="M4 9L7 12L10 9" stroke={stroke} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" opacity={!active || direction === "desc" ? 1 : 0.3} />
+    </svg>
   );
+}
+
+// One row per member for the selected range/game, paged and ordered by the
+// backend so a sort covers every member, not just the visible page.
+function MemberUsageHistory({ range, game }) {
+  const [rows, setRows] = useState([]);
+  const [count, setCount] = useState(0);
+  const [page, setPage] = useState(1);
+  const [sort, setSort] = useState({ key: "tokens_used", direction: "desc" });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [unavailable, setUnavailable] = useState(false);
+
+  const fetchPage = useCallback(async (nextPage) => {
+    if (!range.from || !range.to) return;
+    setLoading(true);
+    setError("");
+    try {
+      const res = await getUsageReportMembers({
+        ...gameParams(range, game),
+        page: nextPage,
+        page_size: MEMBER_PAGE_SIZE,
+        ordering: `${sort.direction === "asc" ? "" : "-"}${sort.key}`,
+      });
+      setRows(rowsOf(res).map(normalizeMemberRow));
+      setCount(Number(res?.count ?? 0));
+      setUnavailable(false);
+    } catch (err) {
+      console.error(err);
+      setRows([]);
+      setCount(0);
+      setUnavailable(err?.status === 404);
+      setError(err?.status === 404 ? "" : firstApiMessage(err?.data) || err?.message || "Failed to load member usage history.");
+    } finally {
+      setLoading(false);
+    }
+  }, [range, game, sort]);
+
+  useEffect(() => {
+    setPage(1);
+    fetchPage(1);
+  }, [fetchPage]);
+
+  const totalPages = Math.max(1, Math.ceil(count / MEMBER_PAGE_SIZE));
+  const startIndex = (page - 1) * MEMBER_PAGE_SIZE;
+
+  const handlePageChange = (next) => {
+    setPage(next);
+    fetchPage(next);
+  };
+
+  // Sortable columns open on descending — the spec asks for highest-to-lowest.
+  const handleSort = (key) => {
+    setSort((current) => (current.key === key
+      ? { key, direction: current.direction === "desc" ? "asc" : "desc" }
+      : { key, direction: "desc" }));
+  };
+
+  const emptyMessage = unavailable
+    ? "Member usage history is not available yet — /usage-report/members/ has not been deployed."
+    : "No member usage for this range.";
 
   return (
     <section className="overflow-hidden rounded-[16px] border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.25)]" style={{ backgroundImage: PANEL_BG }}>
       <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
         <div>
-          <h2 className="text-[20px] font-bold text-[#f4efe0]">Daily Activity History</h2>
+          <h2 className="text-[20px] font-bold text-[#f4efe0]">Member Usage History</h2>
+          <p className="mt-1 text-[12px] text-white/45">{formatRangeLabel(range)}</p>
         </div>
-        <span className="rounded-full border border-[#e9af41]/50 px-3 py-1 text-[11px] font-semibold text-[#e9af41]">{formatNumber(ordered.length)} days</span>
+        <span className="rounded-full border border-[#e9af41]/50 px-3 py-1 text-[11px] font-semibold text-[#e9af41]">{formatNumber(count)} members</span>
       </div>
+      {error ? <div className="mx-5 mb-4 rounded-[10px] border border-red-400/40 bg-red-500/10 px-4 py-2 text-[12px] text-red-100">{error}</div> : null}
       <div className="overflow-x-auto scrollbar-admin">
-        <table className="w-full min-w-[640px] table-fixed border-separate border-spacing-0">
+        <table className="w-full min-w-[1260px] table-fixed border-separate border-spacing-0">
           <thead><tr className="bg-black text-left">
-            {["No", "Date", "Players", "Sessions", "Tokens"].map((h) => <th key={h} className="px-4 py-3 text-[12px] font-bold uppercase text-white">{h}</th>)}
+            {MEMBER_COLUMNS.map((column) => (
+              <th key={column.key} className={`${column.className} px-4 py-3 text-[12px] font-bold uppercase text-white`}>
+                {column.sortable ? (
+                  <button type="button" onClick={() => handleSort(column.key)} className="flex w-full items-center text-left uppercase transition hover:text-[#f6dda6]">
+                    <span>{column.label}</span>
+                    <SortIcon active={sort.key === column.key} direction={sort.direction} />
+                  </button>
+                ) : column.label}
+              </th>
+            ))}
           </tr></thead>
           <tbody>
-            {pageRows.length ? pageRows.map((row, index) => (
-              <tr key={row.date} className="border-b border-white/5 hover:bg-white/[0.03]">
-                <td className="px-4 py-3 text-[13px] text-white/60">{(page - 1) * HISTORY_PAGE_SIZE + index + 1}</td>
-                <td className="px-4 py-3 text-[13px] font-semibold text-white">{formatDate(row.date)}</td>
-                <td className="px-4 py-3 text-[13px] text-[#54d7ff]">{formatNumber(row.players)}</td>
-                <td className="px-4 py-3 text-[13px] text-[#f6dda6]">{formatNumber(row.sessions)}</td>
-                <td className="px-4 py-3 text-[13px] text-[#a78bfa]">{formatNumber(row.tokens_consumed)}</td>
+            {loading ? (
+              <tr><td colSpan={MEMBER_COLUMNS.length} className="px-5 py-12 text-center text-[13px] text-white/50">Loading member usage...</td></tr>
+            ) : rows.length ? rows.map((row, index) => (
+              <tr key={row.key} className="border-b border-white/5 hover:bg-white/[0.03]">
+                <td className="px-4 py-3 text-[13px] text-white/60">{startIndex + index + 1}</td>
+                <td className="truncate px-4 py-3 text-[13px] text-white/85" title={row.phone_number || ""}>{row.phone_number || "N/A"}</td>
+                <td className="truncate px-4 py-3 text-[13px] font-semibold text-white" title={row.username || ""}>{row.username || "N/A"}</td>
+                <td className="truncate px-4 py-3 text-[13px] text-white/70" title={row.station || ""}>{row.station || "N/A"}</td>
+                <td className="px-4 py-3 text-[13px] text-[#a78bfa]">{formatNumber(row.tokens_used)}</td>
+                <td className="px-4 py-3 text-[13px] text-[#54d7ff]">{formatNumber(row.battle_points_used)}</td>
+                <td className="px-4 py-3 text-[13px] text-white/85">{formatDuration(row.avg_session_duration)}</td>
+                <td className="truncate px-4 py-3 text-[13px] text-white/85" title={gameLabel(row.most_played_game)}>{gameLabel(row.most_played_game)}</td>
+                <td className="px-4 py-3 text-[13px] text-[#f6dda6]">{row.total_rewards == null ? "N/A" : `RM ${formatMoney(row.total_rewards)}`}</td>
+                <td className="px-4 py-3 text-[13px] text-[#84ebb4]">{row.total_withdrawal == null ? "N/A" : `RM ${formatMoney(row.total_withdrawal)}`}</td>
               </tr>
             )) : (
-              <tr><td colSpan={5} className="px-5 py-12 text-center text-[13px] text-white/50">No daily activity for this range.</td></tr>
+              <tr><td colSpan={MEMBER_COLUMNS.length} className="px-5 py-12 text-center text-[13px] text-white/50">{emptyMessage}</td></tr>
             )}
           </tbody>
-          {ordered.length ? (
-            <tfoot><tr className="bg-black/40">
-              <td className="px-4 py-3 text-[12px] font-bold uppercase text-white/70" colSpan={2}>Total</td>
-              <td className="px-4 py-3 text-[13px] font-bold text-white/40">—</td>
-              <td className="px-4 py-3 text-[13px] font-bold text-[#f6dda6]">{formatNumber(totals.sessions)}</td>
-              <td className="px-4 py-3 text-[13px] font-bold text-[#a78bfa]">{formatNumber(totals.tokens)}</td>
-            </tr></tfoot>
-          ) : null}
         </table>
       </div>
       {totalPages > 1 ? (
         <div className="border-t border-white/5 px-3">
-          <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+          <Pagination currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />
         </div>
       ) : null}
     </section>
@@ -606,8 +728,22 @@ function UsageReportContent() {
   const [retention, setRetention] = useState([]);
   const [trend, setTrend] = useState([]);
 
-  const selectedGameLabel = useMemo(() => GAME_OPTIONS.find((option) => option.value === game)?.label || "All Games", [game]);
+  // Built from the games the API actually reports on, so a new game (Avatar)
+  // shows up in the filter as soon as the backend includes it — no release here.
+  const gameOptions = useMemo(() => {
+    const fromApi = games
+      .filter((row) => row?.game != null)
+      .map((row) => ({ value: String(row.game), label: row.label || GAME_LABELS[String(row.game)] || `Game ${row.game}` }))
+      .sort((a, b) => Number(a.value) - Number(b.value));
+    return [ALL_GAMES_OPTION, ...(fromApi.length ? fromApi : GAME_FALLBACK_OPTIONS)];
+  }, [games]);
+
+  const selectedGameLabel = useMemo(() => gameOptions.find((option) => option.value === game)?.label || "All Games", [gameOptions, game]);
   const metricSummary = useMemo(() => gameSummary(summary, games, game), [summary, games, game]);
+  const performanceRows = useMemo(
+    () => (game === "all" ? games : games.filter((row) => String(row.game) === String(game))),
+    [games, game],
+  );
 
   const handlePreset = useCallback((next) => {
     setPreset(next);
@@ -628,7 +764,9 @@ function UsageReportContent() {
       const params = gameParams(range, game);
       const [summaryRes, gamesRes, retentionRes, insightsRows] = await Promise.all([
         getUsageReportSummary({ from_date: range.from, to_date: range.to }),
-        getUsageReportGames({ ...params, page_size: 100 }),
+        // Deliberately unfiltered: this one response feeds the game filter's
+        // options, the per-game KPI lookup, and the table (narrowed locally).
+        getUsageReportGames({ from_date: range.from, to_date: range.to, page_size: 100 }),
         getUsageReportRetention({ ...params, page_size: 100 }),
         fetchAllInsights(params),
       ]);
@@ -666,13 +804,15 @@ function UsageReportContent() {
       </div>
 
       <div className="mb-5">
-        <FilterBar preset={preset} range={range} game={game} onPreset={handlePreset} onRangeChange={handleCustomRange} onGameChange={setGame} />
+        <FilterBar preset={preset} range={range} game={game} gameOptions={gameOptions} onPreset={handlePreset} onRangeChange={handleCustomRange} onGameChange={setGame} />
       </div>
 
       {error ? <div className="mb-5 rounded-[12px] border border-red-400/40 bg-red-500/10 px-4 py-3 text-[13px] text-red-100">{error}</div> : null}
 
       <div className="relative">
-        <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        {/* Two rows of three, not six across: at 6 columns a value like
+            "RM 51,200.00" truncates below ~1900px, including 1440 and 1600. */}
+        <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {SUMMARY_CARDS.map((metric) => <MetricCard key={metric.key} metric={metric} summary={metricSummary} />)}
         </div>
 
@@ -686,7 +826,7 @@ function UsageReportContent() {
         </div>
 
         <div className="mt-5">
-          <GamePerformance games={games} />
+          <GamePerformance games={performanceRows} />
         </div>
 
         <div className="mt-5">
@@ -694,7 +834,7 @@ function UsageReportContent() {
         </div>
 
         <div className="mt-5">
-          <HistoryTable rows={trend} />
+          <MemberUsageHistory range={range} game={game} />
         </div>
 
         {loading ? <LoadingOverlay label="Loading usage report..." /> : null}
