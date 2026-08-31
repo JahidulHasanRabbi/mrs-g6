@@ -72,6 +72,15 @@ function formatDateTime(dateString) {
   }
 }
 
+// Reads whichever battle-point key the member-list payload carries; null when
+// the backend has not added the field yet, so the cell reads N/A instead of 0.
+function battlePointsOf(member) {
+  const value = member.current_battle_points ?? member.battle_points ?? member.current_battle_point;
+  if (value == null || value === "") return null;
+  const num = Number(value);
+  return Number.isFinite(num) ? num : null;
+}
+
 function formatDateOnly(dateString) {
   if (!dateString) return "N/A";
   const raw = String(dateString);
@@ -616,8 +625,8 @@ function MembersContent() {
     let list = [...members];
     if (sortKey) {
       list.sort((a, b) => {
-        const va = a[sortKey] ?? "";
-        const vb = b[sortKey] ?? "";
+        const va = sortKey === "current_battle_points" ? battlePointsOf(a) ?? 0 : a[sortKey] ?? "";
+        const vb = sortKey === "current_battle_points" ? battlePointsOf(b) ?? 0 : b[sortKey] ?? "";
         if (typeof va === "number" && typeof vb === "number")
           return sortDir === "asc" ? va - vb : vb - va;
         return sortDir === "asc"
@@ -653,6 +662,7 @@ function MembersContent() {
     { key: "phone_number", label: "Phone Number", minW: "min-w-[130px]" },
     { key: "vip_tier", label: "MRS VIP Tier", minW: "min-w-[110px]" },
     { key: "current_tokens", label: "Current Tokens", minW: "min-w-[110px]" },
+    { key: "current_battle_points", label: "Current Battle Points", minW: "min-w-[150px]" },
     {
       key: "registered_datetime",
       label: "Registered Date",
@@ -688,19 +698,6 @@ function MembersContent() {
           <h1 className="text-4xl font-bold leading-[1.05] text-white">
             Member List
           </h1>
-          <svg
-            width="26"
-            height="26"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#e9af41"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-            <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-          </svg>
         </div>
 
         {/* Error Display */}
@@ -826,7 +823,7 @@ function MembersContent() {
           {/* Table */}
           {!isLoading && (
             <div className="overflow-x-auto scrollbar-admin rounded-lg">
-              <table className="w-full min-w-[1100px]">
+              <table className="w-full min-w-[1250px]">
                 <thead>
                   <tr className="bg-black">
                     {columns.map((c) => (
@@ -884,6 +881,9 @@ function MembersContent() {
                         </td>
                         <td className="px-2 py-3 text-[13px] text-white/80 whitespace-nowrap">
                           {m.current_tokens?.toLocaleString() || "0"}
+                        </td>
+                        <td className="px-2 py-3 text-[13px] text-white/80 whitespace-nowrap">
+                          {battlePointsOf(m)?.toLocaleString() ?? "N/A"}
                         </td>
                         <td className="px-2 py-3 text-[13px] text-white/80 whitespace-nowrap">
                           {formatDateTime(m.registered_datetime)}
