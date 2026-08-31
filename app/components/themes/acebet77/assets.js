@@ -126,6 +126,18 @@ export const ACEBET_ASSETS = {
     dayCard: `${BASE}/checkin/day-card.webp`,
     chest: `${BASE}/checkin/chest-day7.webp`,
   },
+  // Avatar mini-game nav crests (Figma a83SqWgqIGNF6dJD1aP13w 2421:4296+). The
+  // raised centre HOME reuses nav.home; every other RPG surface is dressed with
+  // art already listed above.
+  rpg: {
+    iconBase: `${BASE}/rpg/icon-base.webp`,
+    iconHeroItem: `${BASE}/rpg/icon-hero-item.webp`,
+    iconChallenge: `${BASE}/rpg/icon-challenge.webp`,
+    iconMission: `${BASE}/rpg/icon-mission.webp`,
+    // Downscaled from checkin/board-frame.webp — the chip renders at ~73px,
+    // so the full board bitmap was ~200KB of waste per themed session.
+    tileFrame: `${BASE}/rpg/tile-frame.webp`,
+  },
   // Mart page (Figma 468:1790). itemFrame is the ornate card the product sits
   // in; btnRedeem is the dark plaque at its foot.
   mart: {

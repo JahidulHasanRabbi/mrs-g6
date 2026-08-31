@@ -13,6 +13,7 @@ import { RPG_COLORS, RPG_FONTS } from "../constants";
 import { RPG_IMAGES, bossArtFor } from "../rpgAssets";
 import * as rpgApi from "../rpgApi";
 import { GoldCta } from "../primitives";
+import { useRpgSkin } from "../rpgSkin";
 import NoticeModal from "../NoticeModal";
 
 const fmt = (n) => Number(n).toLocaleString("en-GB");
@@ -57,6 +58,7 @@ function Planet({ boss, locked }) {
 }
 
 export default function Challenge({ onBattleStart }) {
+  const skin = useRpgSkin();
   const [data, setData] = useState(null);
   const [selectedId, setSelectedId] = useState(null);
   const [confirmPaid, setConfirmPaid] = useState(false);
@@ -111,11 +113,11 @@ export default function Challenge({ onBattleStart }) {
     <div className="flex w-full flex-1 flex-col px-[18px]">
       <h2
         className="pt-[20px] text-center text-[24px] font-bold tracking-[6px]"
-        style={{ color: RPG_COLORS.text, fontFamily: RPG_FONTS.display, textShadow: "0 0 24px rgba(124,77,255,0.8)" }}
+        style={{ color: skin.c.title, fontFamily: RPG_FONTS.display, textShadow: skin.c.titleShadow }}
       >
         UNIVERSE
       </h2>
-      <p className="mt-[4px] pb-[2px] text-center text-[12px]" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
+      <p className="mt-[4px] pb-[2px] text-center text-[12px]" style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}>
         Choose a planet boss to challenge
       </p>
 
@@ -131,36 +133,42 @@ export default function Challenge({ onBattleStart }) {
               className="flex w-full items-center gap-[12px] rounded-[16px] border p-[13px] text-left transition-transform active:scale-[0.99]"
               style={
                 boss.locked
-                  ? { background: "rgba(255,255,255,0.02)", borderColor: "rgba(139,92,246,0.3)", opacity: 0.62 }
+                  ? {
+                      background: skin.c.rowLocked,
+                      borderColor: skin.c.edgeSoft,
+                      opacity: 0.62,
+                    }
                   : {
-                      background: isSelected ? "rgba(47,230,200,0.09)" : "rgba(47,230,200,0.05)",
-                      borderColor: isSelected ? RPG_COLORS.cyan : "rgba(47,230,200,0.45)",
-                      boxShadow: isSelected ? "0 0 16px rgba(47,230,200,0.18)" : "none",
+                      background: isSelected ? skin.c.rowActive : skin.c.rowIdle,
+                      borderColor: isSelected ? skin.hud.badgeBorder : skin.c.edgeSoft,
+                      boxShadow: isSelected ? `0 0 14px ${skin.hud.badgeBorder}59` : "none",
                     }
               }
             >
               <Planet boss={boss} locked={boss.locked} />
               <div className="flex min-w-0 flex-1 flex-col">
-                <span className="flex items-center gap-[6px] text-[15px] font-bold" style={{ color: RPG_COLORS.text, fontFamily: RPG_FONTS.display }}>
+                <span className="flex items-center gap-[6px] text-[15px] font-bold" style={{ color: skin.c.text, fontFamily: RPG_FONTS.display }}>
                   {boss.name}
                   {boss.locked ? <span className="text-[12px]">🔒</span> : null}
                 </span>
-                <span className="pt-[2px] text-[9px] font-semibold tracking-[1px]" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
+                <span className="pt-[2px] text-[9px] font-semibold tracking-[1px]" style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}>
                   POWER REQUIRED
                 </span>
                 <span
                   className="text-[14px] font-bold"
-                  style={{ color: boss.locked ? "#ff8faf" : RPG_COLORS.cyan, fontFamily: RPG_FONTS.number }}
+                  style={{ color: boss.locked ? "#ff8faf" : skin.c.accent, fontFamily: RPG_FONTS.number }}
                 >
                   {boss.locked ? `${fmt(boss.requiredPower)} — need ${fmt(boss.deficit)} more` : fmt(boss.requiredPower)}
                 </span>
               </div>
               <div
                 className="flex flex-col items-center gap-[4px] rounded-[12px] border px-[11px] py-[9px]"
-                style={{ background: "rgba(124,77,255,0.1)", borderColor: "rgba(139,92,246,0.4)" }}
+                style={
+                  { background: skin.hud.badgeBg, borderColor: skin.c.edgeSoft }
+                }
               >
                 <img src={RPG_IMAGES.equipment[boss.rewardSlot]} alt="" className="size-[20px]" />
-                <span className="text-[9px] font-bold uppercase tracking-[1px]" style={{ color: "#b9a4ff", fontFamily: RPG_FONTS.display }}>
+                <span className="text-[9px] font-bold uppercase tracking-[1px]" style={{ color: skin.c.slotLabel, fontFamily: RPG_FONTS.display }}>
                   {boss.rewardSlot}
                 </span>
               </div>
@@ -169,14 +177,14 @@ export default function Challenge({ onBattleStart }) {
         })}
       </div>
 
-      <p className="pt-[14px] text-center text-[11px]" style={{ color: RPG_COLORS.slotEmpty, fontFamily: RPG_FONTS.display }}>
+      <p className="pt-[14px] text-center text-[11px]" style={{ color: skin.c.slotEmpty, fontFamily: RPG_FONTS.display }}>
         {freeLeft > 0
           ? `${freeLeft} free attempt${freeLeft > 1 ? "s" : ""} left today`
           : "No free attempts left today"}{" "}
         · extra attempt {extraCost} Tokens · reward 1 Mystery Box
       </p>
       {data?.unopenedBoxes > 0 ? (
-        <p className="pt-[4px] text-center text-[11px] font-bold" style={{ color: RPG_COLORS.gold, fontFamily: RPG_FONTS.display }}>
+        <p className="pt-[4px] text-center text-[11px] font-bold" style={{ color: skin.c.value, fontFamily: RPG_FONTS.display }}>
           You have {data.unopenedBoxes} unopened Mystery Box{data.unopenedBoxes > 1 ? "es" : ""}
         </p>
       ) : null}

@@ -5,6 +5,7 @@
 // rules always match what the back office has configured.
 
 import { RPG_COLORS, RPG_FONTS, EXTRA_ATTEMPT_COST, DISCARD_COST, POWER_PER_LEVEL, EQUIP_POWER, MAX_LEVEL } from "./constants";
+import { useRpgSkin } from "./rpgSkin";
 import { GoldCta } from "./primitives";
 
 const fmt = (n) => Number(n).toLocaleString("en-GB");
@@ -26,6 +27,7 @@ function rulesFor(profile) {
 }
 
 export default function InfoModal({ open, onClose, profile }) {
+  const skin = useRpgSkin();
   if (!open) return null;
 
   const RULES = rulesFor(profile);
@@ -35,22 +37,22 @@ export default function InfoModal({ open, onClose, profile }) {
       <div
         className="max-h-[78vh] w-full max-w-[350px] overflow-y-auto rounded-[18px] border p-[22px]"
         style={{
-          background: "rgba(10,14,24,0.97)",
-          borderColor: RPG_COLORS.violetBorder,
-          boxShadow: "0 16px 50px rgba(0,0,0,0.5), 0 0 30px rgba(124,77,255,0.25)",
+          background: skin.modal.bg,
+          borderColor: skin.modal.border,
+          boxShadow: skin.modal.shadow,
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="text-center text-[18px] font-bold tracking-[3px]" style={{ color: RPG_COLORS.text, fontFamily: RPG_FONTS.display }}>
+        <p className="text-center text-[18px] font-bold tracking-[3px]" style={{ color: skin.c.text, fontFamily: RPG_FONTS.display }}>
           HOW TO PLAY
         </p>
         <div className="mt-[14px] flex flex-col gap-[12px]">
           {RULES.map(([title, body]) => (
             <div key={title}>
-              <p className="text-[11px] font-bold tracking-[2px]" style={{ color: RPG_COLORS.cyan, fontFamily: RPG_FONTS.display }}>
+              <p className="text-[11px] font-bold tracking-[2px]" style={{ color: skin.c.accent, fontFamily: RPG_FONTS.display }}>
                 {title}
               </p>
-              <p className="mt-[3px] text-[12px] leading-[17px]" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
+              <p className="mt-[3px] text-[12px] leading-[17px]" style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}>
                 {body}
               </p>
             </div>

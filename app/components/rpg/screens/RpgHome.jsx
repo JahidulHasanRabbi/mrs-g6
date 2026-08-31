@@ -7,8 +7,10 @@
 import { RPG_COLORS, RPG_FONTS, RPG_GRADIENTS, RPG_VIEWS, EQUIP_SLOTS } from "../constants";
 import { heroPoseFor } from "../rpgAssets";
 import { SlotChip, HeroShowcase } from "../primitives";
+import { useRpgSkin } from "../rpgSkin";
 
 export default function RpgHome({ profile, equipment, onNavigate }) {
+  const skin = useRpgSkin();
   const gender = profile?.gender || "male";
   // Hero visually wears whatever's equipped (falls back to the base pose).
   const heroPose = heroPoseFor(gender, equipment);
@@ -20,14 +22,14 @@ export default function RpgHome({ profile, equipment, onNavigate }) {
       <div className="mt-[30px] flex w-full flex-col items-center">
         <span
           className="text-[18px] font-bold tracking-[6px]"
-          style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}
+          style={{ color: skin.c.caption, fontFamily: RPG_FONTS.display }}
         >
           — POWER —
         </span>
         <span
           className="text-[56px] font-bold leading-[62px]"
           style={{
-            color: RPG_COLORS.gold,
+            color: skin.c.value,
             fontFamily: RPG_FONTS.number,
             textShadow: "0 0 30px rgba(255,201,77,0.45)",
           }}
@@ -39,13 +41,13 @@ export default function RpgHome({ profile, equipment, onNavigate }) {
           onClick={() => onNavigate(RPG_VIEWS.LEVEL)}
           className="mt-[8px] rounded-[7px] border px-[18px] py-[7px] text-[11px] font-bold tracking-[1.5px] transition-transform active:scale-95"
           style={{
-            background: profile?.canLevelUp ? RPG_GRADIENTS.cta : "rgba(68,31,126,0.72)",
-            borderColor: profile?.canLevelUp ? RPG_COLORS.gold : RPG_COLORS.violetBorderStrong,
-            color: profile?.canLevelUp ? RPG_COLORS.darkText : RPG_COLORS.text,
+            background: profile?.canLevelUp ? RPG_GRADIENTS.cta : skin.c.muted,
+            borderColor: profile?.canLevelUp ? RPG_COLORS.gold : skin.hud.badgeBorder,
+            color: profile?.canLevelUp ? RPG_COLORS.darkText : skin.c.text,
             fontFamily: RPG_FONTS.display,
             boxShadow: profile?.canLevelUp
               ? "0 0 18px rgba(255,201,77,0.45)"
-              : "0 0 14px rgba(124,77,255,0.28)",
+              : `0 0 14px ${skin.hud.badgeBorder}47`,
           }}
           aria-label="Level up avatar"
         >

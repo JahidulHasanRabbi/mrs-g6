@@ -15,6 +15,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { RPG_COLORS, RPG_FONTS } from "../constants";
 import { RPG_IMAGES, heroBattlePoseFor, heroMovesetFor } from "../rpgAssets";
 import { GoldCta } from "../primitives";
+import { useRpgSkin } from "../rpgSkin";
 import BossSprite from "../BossSprite";
 
 const PHASES = {
@@ -73,6 +74,7 @@ const DIE_FRONT = {
 };
 
 function Die3D({ value, rolling, size = 84 }) {
+  const skin = useRpgSkin();
   const half = size / 2;
   // The die "value" prop tracks the fast face-cycle while rolling; freeze the
   // orientation target to the last SETTLED value so mid-roll cycling doesn't
@@ -116,8 +118,8 @@ function Die3D({ value, rolling, size = 84 }) {
               className="absolute inset-0 rounded-[16%]"
               style={{
                 transform: `${face.transform} translateZ(${half}px)`,
-                background: "linear-gradient(145deg, #ffffff 0%, #edeef4 52%, #c9cedd 100%)",
-                boxShadow: "inset 0 0 7px rgba(60,70,100,0.28), inset 0 -3px 6px rgba(60,70,100,0.22)",
+                background: skin.dice.face,
+                boxShadow: skin.dice.faceShadow,
                 backfaceVisibility: "hidden",
               }}
             >
@@ -131,8 +133,8 @@ function Die3D({ value, rolling, size = 84 }) {
                     left: `${cx}%`,
                     top: `${cy}%`,
                     transform: "translate(-50%, -50%)",
-                    background: "radial-gradient(circle at 35% 30%, #3c4150 0%, #15171f 55%, #04050a 100%)",
-                    boxShadow: "inset 0 2px 3px rgba(0,0,0,0.6), 0 1px 1px rgba(255,255,255,0.55)",
+                    background: skin.dice.pip,
+                    boxShadow: skin.dice.pipShadow,
                   }}
                 />
               ))}
@@ -145,6 +147,7 @@ function Die3D({ value, rolling, size = 84 }) {
 }
 
 export default function Battle({ script, profile, equipment, onClaimBox, onExit }) {
+  const skin = useRpgSkin();
   const [phase, setPhase] = useState(PHASES.IDLE);
   const [roundIndex, setRoundIndex] = useState(0);
   const [shownRoll, setShownRoll] = useState(1);
@@ -298,7 +301,7 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
       <div className="relative z-10 flex w-full min-h-0 flex-1 flex-col items-center px-[18px] pb-[6px]">
         {/* Header — fixed height */}
         <div className="flex w-full shrink-0 flex-col items-center">
-          <span className="pt-[12px] text-[11px] font-semibold tracking-[5px]" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
+          <span className="pt-[12px] text-[11px] font-semibold tracking-[5px]" style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}>
             PLANET BOSS
           </span>
           <h2 className="text-[24px] font-bold tracking-[2px]" style={{ color: "#fff", fontFamily: RPG_FONTS.display, textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}>
@@ -498,12 +501,12 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
           >
             <Die3D value={shownRoll} rolling={phase === PHASES.ROLLING} size={60} />
           </motion.button>
-          <span className="hidden text-[13px] font-bold tracking-[4px]" style={{ color: RPG_COLORS.cyanSoft, fontFamily: RPG_FONTS.display }}>
+          <span className="hidden text-[13px] font-bold tracking-[4px]" style={{ color: skin.c.accentSoft, fontFamily: RPG_FONTS.display }}>
             {/* {phase === PHASES.ROLLING ? "ROLLING..." : `ROLL DICE${roundIndex > 0 && phase === PHASES.IDLE ? ` · TOTAL ${rounds[roundIndex - 1]?.cumulative ?? 0}/${threshold}` : ""}`} */}
           </span>
           <span
             className="rounded-full  py-[8px] text-[10px] font-semibold "
-            style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display,  }}
+            style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}
           >
             Dice number = number of attacks · beat {threshold} to win
           </span>
@@ -537,7 +540,7 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
           >
             <motion.p
               className="text-[38px] font-bold tracking-[8px]"
-              style={{ color: RPG_COLORS.gold, fontFamily: RPG_FONTS.display, textShadow: "0 0 40px rgba(255,201,77,0.8)" }}
+              style={{ color: skin.c.value, fontFamily: RPG_FONTS.display, textShadow: "0 0 40px rgba(255,201,77,0.8)" }}
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", stiffness: 260, damping: 16, delay: 0.15 }}
@@ -552,7 +555,7 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
               animate={{ y: 0, opacity: 1, rotate: 0 }}
               transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.4 }}
             />
-            <p className="text-center text-[13px]" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
+            <p className="text-center text-[13px]" style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}>
               {boss.name} defeated — you earned a Mystery Box!
             </p>
             <div className="w-full max-w-[300px]">
@@ -582,7 +585,7 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
             >
               OUT OF ROLLS
             </motion.p>
-            <p className="text-center text-[13px] leading-[1.6]" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
+            <p className="text-center text-[13px] leading-[1.6]" style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}>
               {boss.name} survived with {fmt(hpNow)} HP left — you needed more than {threshold} to win.
             </p>
             <div className="w-full max-w-[300px]">

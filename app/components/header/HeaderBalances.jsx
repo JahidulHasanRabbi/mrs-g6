@@ -15,8 +15,10 @@ function BalanceItem({ frame, icon, iconKind, label, value, textColor }) {
   const usesCompactType = value.length > 8;
 
   return (
+    // Three tiers: the widest only from 420px, where the header still has room
+    // for the profile avatar beside two chips.
     <div
-      className="relative h-[42px] w-[114px] shrink-0 overflow-hidden min-[360px]:h-[47px] min-[360px]:w-[128px]"
+      className="relative h-[38px] w-[100px] shrink-0 overflow-hidden min-[360px]:h-[42px] min-[360px]:w-[114px] min-[420px]:h-[47px] min-[420px]:w-[128px]"
       aria-label={`${value} ${label}`}
     >
       <img
@@ -26,9 +28,9 @@ function BalanceItem({ frame, icon, iconKind, label, value, textColor }) {
         className="pointer-events-none absolute inset-0 h-full w-full select-none"
         draggable={false}
       />
-      <div className="absolute inset-0 flex items-center justify-center p-[7px] min-[360px]:p-[10px]">
-        <div className="flex w-[86px] items-center gap-[5px] min-[360px]:w-[94px] min-[360px]:gap-2">
-          <div className="relative size-7 shrink-0 overflow-hidden min-[360px]:size-8">
+      <div className="absolute inset-0 flex items-center justify-center p-[5px] min-[360px]:p-[7px] min-[420px]:p-[10px]">
+        <div className="flex w-[76px] items-center gap-[4px] min-[360px]:w-[86px] min-[360px]:gap-[5px] min-[420px]:w-[94px] min-[420px]:gap-2">
+          <div className="relative size-6 shrink-0 overflow-hidden min-[360px]:size-7 min-[420px]:size-8">
             <img
               src={icon}
               alt=""
@@ -44,8 +46,8 @@ function BalanceItem({ frame, icon, iconKind, label, value, textColor }) {
           <span
             className={`shrink-0 whitespace-nowrap font-['Times_New_Roman'] font-bold leading-normal ${
               usesCompactType
-                ? 'text-[11px] min-[360px]:text-[12px]'
-                : 'text-[12px] min-[360px]:text-[14px]'
+                ? 'text-[10px] min-[360px]:text-[11px] min-[420px]:text-[12px]'
+                : 'text-[11px] min-[360px]:text-[12px] min-[420px]:text-[14px]'
             }`}
             style={{ color: textColor }}
           >
