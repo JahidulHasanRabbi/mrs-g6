@@ -184,8 +184,9 @@ export async function archiveLuckySpinItem(uuid) {
   }, true, 'admin');
 }
 
-export async function getLuckySpinSequences() {
-  return await apiRequest(ENDPOINTS.ADMIN.LUCKY_SPIN_SEQUENCES, {
+export async function getLuckySpinSequences(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.LUCKY_SPIN_SEQUENCES}${qs}`, {
     method: 'GET'
   }, true, 'admin');
 }
@@ -707,6 +708,12 @@ export async function getUsageReportRetention(params = {}) {
 export async function getUsageReportInsights(params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.USAGE_REPORT.INSIGHTS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+// GET /usage-report/members/ — see postman/usgae_report.md "MEMBERS" for the contract.
+export async function getUsageReportMembers(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.USAGE_REPORT.MEMBERS}${qs}`, { method: 'GET' }, true, 'admin');
 }
 // Front View Dashboard APIs
 // GET /front-view/total-users/ - Get total users count

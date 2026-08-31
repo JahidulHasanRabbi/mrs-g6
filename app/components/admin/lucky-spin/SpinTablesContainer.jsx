@@ -5,12 +5,15 @@ import SpinItemsTable from "./SpinItemsTable";
 import SpinSequenceTable from "./SpinSequenceTable";
 import LuckySpinItemForm from "./LuckySpinItemForm";
 import ErrorDisplay from "../../ui/ErrorDisplay";
+import ImportSequenceModal, { ImportIcon } from "../ui/ImportSequenceModal";
 import * as adminApi from "../../../api/adminApi";
 import { ADMIN_PERMISSIONS, hasAdminPermission } from "../../../config/adminPermissions";
+import { fetchAllSequences, replaceSequence } from "../../../lib/sequenceImport";
 
 export default function SpinTablesContainer() {
   const [activeTab, setActiveTab] = useState("items"); // "items" or "sequence"
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [modalMode, setModalMode] = useState("add");
   const [selectedItem, setSelectedItem] = useState(null);
   const [spinItems, setSpinItems] = useState([]);
@@ -57,10 +60,9 @@ export default function SpinTablesContainer() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await adminApi.getLuckySpinSequences();
-      // Handle paginated response
-      const sequences = Array.isArray(response) ? response : (response?.results || []);
-      // Sort by item_order
+      // Every page, not just the first: this table has no pagination control,
+      // and Import Sequence reports how many rows it is about to replace.
+      const sequences = await fetchAllSequences(adminApi.getLuckySpinSequences);
       sequences.sort((a, b) => a.item_order - b.item_order);
       setSpinSequences(sequences);
     } catch (err) {
@@ -152,6 +154,31 @@ export default function SpinTablesContainer() {
       setError(err);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSequenceImport = async (entries, onProgress) => {
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const existing = await fetchAllSequences(adminApi.getLuckySpinSequences);
+      await replaceSequence({
+        existing,
+        entries,
+        onProgress,
+        deleteOne: (row) => adminApi.deleteLuckySpinSequence(row.uuid),
+        createOne: (entry) => adminApi.createLuckySpinSequence(entry.position, entry.rewardId),
+      });
+      setIsImportOpen(false);
+    } catch (err) {
+      console.error('Failed to import sequence:', err);
+      // A mid-run failure leaves the sequence partly written, so the reloaded
+      // table below is the source of truth.
+      setError(err);
+    } finally {
+      setIsSubmitting(false);
+      await loadSpinSequences();
     }
   };
 
@@ -264,6 +291,16 @@ export default function SpinTablesContainer() {
             >
               Spin Sequence Setting
             </button>
+            {activeTab === "sequence" && (
+              <button
+                onClick={() => setIsImportOpen(true)}
+                className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-[#e9af41]/30 bg-[#e9af41]/10 px-4 py-2 text-center text-sm font-bold leading-none text-[#e9af41] transition-colors hover:bg-[#e9af41]/20 disabled:opacity-50"
+                disabled={isLoading || isSubmitting}
+              >
+                <ImportIcon />
+                Import Sequence
+              </button>
+            )}
             {activeTab === "items" && canCreatePrizes && (
               <button 
                 onClick={handleAddClick}
@@ -304,6 +341,16 @@ export default function SpinTablesContainer() {
         )}
 
       </div>
+
+      <ImportSequenceModal
+        open={isImportOpen}
+        title="Import Spin Sequence"
+        rewards={spinItems.map((item) => ({ id: item.uuid, name: item.reward_name }))}
+        existingCount={spinSequences.length}
+        templateFilename="spin-sequence-template.csv"
+        onClose={() => setIsImportOpen(false)}
+        onImport={handleSequenceImport}
+      />
 
       {/* Modal - Only for Items */}
       {activeTab === "items" && (

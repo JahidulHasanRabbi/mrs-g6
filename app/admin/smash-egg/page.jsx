@@ -8,9 +8,11 @@ import SmashSequenceModal from "../../components/admin/smash-egg/SmashSequenceMo
 import CostSettingModal from "../../components/admin/penalty-kick/CostSettingModal";
 import GameStatusModal from "../../components/admin/smash-egg/GameStatusModal";
 import ConfirmDialog from "../../components/admin/ui/ConfirmDialog";
+import ImportSequenceModal, { ImportIcon } from "../../components/admin/ui/ImportSequenceModal";
 import { useToast } from "../../components/admin/ui/Toast";
 import * as adminApi from "../../api/adminApi";
 import { mapSmashEggItems, mapSmashEggSequences } from "../../api/responseMappers";
+import { fetchAllSequences, replaceSequence } from "../../lib/sequenceImport";
 
 const GOLD_BG = "linear-gradient(101deg, #dc9d16 1%, #f2cb7a 98%)";
 const PAGE_SIZE = 7;
@@ -194,6 +196,7 @@ export default function SmashEggPage() {
   const [formMode, setFormMode] = useState("add");
   const [editTarget, setEditTarget] = useState(null);
   const [sequenceOpen, setSequenceOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [costOpen, setCostOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState(null);
@@ -311,6 +314,27 @@ export default function SmashEggPage() {
     }
   };
 
+  const handleSequenceImport = async (entries, onProgress) => {
+    try {
+      const existing = await fetchAllSequences(adminApi.getSmashEggSequences);
+      await replaceSequence({
+        existing,
+        entries,
+        onProgress,
+        deleteOne: (row) => adminApi.deleteSmashEggSequence(row.uuid),
+        createOne: (entry) => adminApi.createSmashEggSequence(entry.position, entry.rewardId),
+      });
+      toast.success(`Imported ${entries.length} smash sequence position${entries.length === 1 ? "" : "s"}`);
+      setImportOpen(false);
+    } catch (error) {
+      toast.error("Smash sequence import failed", {
+        description: `${describeApiError(error)} — the sequence may be partly written, check the table below.`,
+      });
+    } finally {
+      await loadSequences(1);
+    }
+  };
+
   const confirmSequenceDelete = async () => {
     if (!sequenceDeleteTarget?.uuid) return;
     try {
@@ -395,6 +419,14 @@ export default function SmashEggPage() {
           </button>
           <button
             type="button"
+            onClick={() => setImportOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold tracking-[-0.5px] text-[#fbeed2] transition-colors hover:bg-white/5"
+          >
+            <ImportIcon />
+            Import Sequence
+          </button>
+          <button
+            type="button"
             onClick={openAdd}
             className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold tracking-[-0.5px] text-[#141828] transition-opacity hover:opacity-90"
             style={{ backgroundImage: GOLD_BG }}
@@ -452,6 +484,16 @@ export default function SmashEggPage() {
         sequences={sequences}
         onClose={() => setSequenceOpen(false)}
         onSave={handleSequenceSave}
+      />
+
+      <ImportSequenceModal
+        open={importOpen}
+        title="Import Smash Sequence"
+        rewards={rewards.map((r) => ({ id: r.uuid, name: r.name }))}
+        existingCount={sequenceTotal}
+        templateFilename="smash-sequence-template.csv"
+        onClose={() => setImportOpen(false)}
+        onImport={handleSequenceImport}
       />
 
       <CostSettingModal

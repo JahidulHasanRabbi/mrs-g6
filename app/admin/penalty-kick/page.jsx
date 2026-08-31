@@ -9,8 +9,10 @@ import GameStatusModal from "../../components/admin/penalty-kick/GameStatusModal
 import CostSettingModal from "../../components/admin/penalty-kick/CostSettingModal";
 import KickSequenceModal from "../../components/admin/penalty-kick/KickSequenceModal";
 import ConfirmDialog from "../../components/admin/ui/ConfirmDialog";
+import ImportSequenceModal, { ImportIcon } from "../../components/admin/ui/ImportSequenceModal";
 import { useToast } from "../../components/admin/ui/Toast";
 import * as adminApi from "../../api/adminApi";
+import { fetchAllSequences, replaceSequence } from "../../lib/sequenceImport";
 
 const GOLD_BG = "linear-gradient(101deg, #dc9d16 1%, #f2cb7a 98%)";
 const PAGE_SIZE = 7;
@@ -201,6 +203,7 @@ export default function PenaltyKickPage() {
   const [costOpen, setCostOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const [sequenceOpen, setSequenceOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const [keeperData, setKeeperData] = useState({ easy: 75, medium: 50, hard: 25, selected: "easy" });
   const [costData, setCostData] = useState({ cost: 10 });
@@ -296,6 +299,27 @@ export default function PenaltyKickPage() {
     }
   };
 
+  const handleSequenceImport = async (entries, onProgress) => {
+    try {
+      const existing = await fetchAllSequences(adminApi.getPenaltyKickSequences);
+      await replaceSequence({
+        existing,
+        entries,
+        onProgress,
+        deleteOne: (row) => adminApi.deletePenaltyKickSequence(row.uuid),
+        createOne: (entry) => adminApi.createPenaltyKickSequence(entry.position, entry.rewardId),
+      });
+      toast.success(`Imported ${entries.length} kick sequence position${entries.length === 1 ? "" : "s"}`);
+      setImportOpen(false);
+    } catch (error) {
+      toast.error("Kick sequence import failed", {
+        description: `${error?.data?.detail || error?.message} — the sequence may be partly written, check the table below.`,
+      });
+    } finally {
+      await loadSequences(1);
+    }
+  };
+
   const moveSequence = async (index, delta) => {
     const target = sequences[index];
     const swap = sequences[index + delta];
@@ -332,6 +356,9 @@ export default function PenaltyKickPage() {
           </ActionButton>
           <ActionButton icon={<MaskIcon src={ICON.soccer} />} onClick={() => setSequenceOpen(true)}>
             Kick Sequence
+          </ActionButton>
+          <ActionButton icon={<ImportIcon />} onClick={() => setImportOpen(true)}>
+            Import Sequence
           </ActionButton>
           <ActionButton
             icon={<MaskIcon src={ICON.level} />}
@@ -445,6 +472,16 @@ export default function PenaltyKickPage() {
             toast.error("Failed to save kick sequence", { description: error?.data?.detail || error?.message });
           }
         }}
+      />
+
+      <ImportSequenceModal
+        open={importOpen}
+        title="Import Kick Sequence"
+        rewards={rewards.map((r) => ({ id: r.uuid, name: r.name }))}
+        existingCount={sequenceTotal}
+        templateFilename="kick-sequence-template.csv"
+        onClose={() => setImportOpen(false)}
+        onImport={handleSequenceImport}
       />
 
       <ConfirmDialog
