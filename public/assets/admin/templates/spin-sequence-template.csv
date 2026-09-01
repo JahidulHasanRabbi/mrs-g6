@@ -1,9 +1,9 @@
-Position,Reward Name,Reward UUID
-1,Free Credit 10,
-2,Token x5,
-3,Grand Prize,
-4,Token x5,
-5,Free Credit 20,
-6,Token x10,
-7,Free Credit 10,
-8,Token x5,
+Item Order,Item ID,Item Name
+1,,Free Credit 10
+2,,Token x5
+3,,Grand Prize
+4,,Token x5
+5,,Free Credit 20
+6,,Token x10
+7,,Free Credit 10
+8,,Token x5

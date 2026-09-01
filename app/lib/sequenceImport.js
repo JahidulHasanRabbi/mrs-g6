@@ -6,7 +6,7 @@ export const ACCEPTED_EXTENSIONS = [".csv", ".xls", ".xlsx", ".xlsb", ".ods"];
 export const ACCEPT_ATTR = ACCEPTED_EXTENSIONS.join(",");
 export const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
-export const TEMPLATE_HEADERS = ["Position", "Reward Name", "Reward UUID"];
+export const TEMPLATE_HEADERS = ["Item Order", "Item ID", "Item Name"];
 
 const POSITION_ALIASES = [
   "position", "positions", "order", "itemorder", "item order", "sequence",
@@ -16,9 +16,13 @@ const NAME_ALIASES = [
   "rewardname", "reward name", "reward", "itemname", "item name", "item",
   "prize", "prizename", "prize name", "name",
 ];
-const UUID_ALIASES = [
+// The column's cell values are the reward's short numeric ID (matches the ID
+// column in the reward table), not its UUID — but a header still spelled
+// "UUID" from an older template is accepted too, since header text is only
+// used to locate the column.
+const ID_ALIASES = [
   "rewarduuid", "reward uuid", "itemuuid", "item uuid", "uuid", "rewardid",
-  "reward id", "itemid", "item id",
+  "reward id", "itemid", "item id", "id",
 ];
 
 function cellText(value) {
@@ -91,7 +95,7 @@ export async function readSheetGrid(file) {
  * preview the whole file instead of only the first failure.
  *
  * @param {string[][]} grid
- * @param {{id: string, name: string}[]} rewards
+ * @param {{id: string|number, uuid: string, name: string}[]} rewards
  */
 export function buildSequenceImport(grid, rewards = []) {
   const rows = (grid || []).filter((row) => !isBlankRow(row));
@@ -99,10 +103,13 @@ export function buildSequenceImport(grid, rewards = []) {
     return { rows: [], entries: [], errorCount: 0, fatal: "That file is empty." };
   }
 
-  const byUuid = new Map();
+  // `rewards[].id` is the short numeric ID shown in the reward table — the
+  // sheet's "Reward ID" column matches against that, never the UUID. The
+  // resolved UUID (`rewards[].uuid`) is what actually gets submitted.
+  const byId = new Map();
   const byName = new Map();
   for (const reward of rewards) {
-    if (reward?.id) byUuid.set(String(reward.id).toLowerCase(), reward);
+    if (reward?.id != null && reward.id !== "") byId.set(String(reward.id).toLowerCase(), reward);
     const key = nameKey(reward?.name);
     if (!key) continue;
     if (byName.has(key)) byName.get(key).push(reward);
@@ -111,14 +118,14 @@ export function buildSequenceImport(grid, rewards = []) {
 
   // Header row: the first of the top few rows that names any known column.
   let headerIndex = -1;
-  let cols = { position: -1, name: -1, uuid: -1 };
+  let cols = { position: -1, name: -1, id: -1 };
   for (let i = 0; i < Math.min(rows.length, 5); i += 1) {
     const candidate = {
       position: matchColumn(rows[i], POSITION_ALIASES),
       name: matchColumn(rows[i], NAME_ALIASES),
-      uuid: matchColumn(rows[i], UUID_ALIASES),
+      id: matchColumn(rows[i], ID_ALIASES),
     };
-    if (candidate.name !== -1 || candidate.uuid !== -1) {
+    if (candidate.name !== -1 || candidate.id !== -1) {
       headerIndex = i;
       cols = candidate;
       break;
@@ -127,7 +134,7 @@ export function buildSequenceImport(grid, rewards = []) {
 
   // No header: fall back to the template's own column order.
   const headerless = headerIndex === -1;
-  if (headerless) cols = { position: 0, name: 1, uuid: 2 };
+  if (headerless) cols = { position: 0, id: 1, name: 2 };
 
   const dataRows = headerless ? rows : rows.slice(headerIndex + 1);
   if (dataRows.length === 0) {
@@ -138,13 +145,13 @@ export function buildSequenceImport(grid, rewards = []) {
   const annotated = dataRows.map((row, index) => {
     const rawPosition = cols.position === -1 ? "" : cellText(row[cols.position]);
     const rawName = cols.name === -1 ? "" : cellText(row[cols.name]);
-    const rawUuid = cols.uuid === -1 ? "" : cellText(row[cols.uuid]);
+    const rawId = cols.id === -1 ? "" : cellText(row[cols.id]);
 
     const entry = {
       line: index + 1,
       rawPosition,
       rawName,
-      rawUuid,
+      rawId,
       position: null,
       rewardId: null,
       rewardName: rawName,
@@ -163,21 +170,21 @@ export function buildSequenceImport(grid, rewards = []) {
     }
 
     if (!entry.error) {
-      if (rawUuid) {
-        const match = byUuid.get(rawUuid.toLowerCase());
+      if (rawId) {
+        const match = byId.get(rawId.toLowerCase());
         if (match) {
-          entry.rewardId = match.id;
+          entry.rewardId = match.uuid;
           entry.rewardName = match.name;
         } else {
-          entry.error = `No reward with UUID "${rawUuid}".`;
+          entry.error = `No reward with ID "${rawId}".`;
         }
       } else if (rawName) {
         const matches = byName.get(nameKey(rawName)) || [];
         if (matches.length === 1) {
-          entry.rewardId = matches[0].id;
+          entry.rewardId = matches[0].uuid;
           entry.rewardName = matches[0].name;
         } else if (matches.length > 1) {
-          entry.error = `"${rawName}" matches ${matches.length} rewards - add a Reward UUID column.`;
+          entry.error = `"${rawName}" matches ${matches.length} rewards - add a Reward ID column.`;
         } else {
           entry.error = `No reward named "${rawName}".`;
         }
@@ -219,16 +226,17 @@ export function toCsv(rows) {
 
 /**
  * A template pre-filled with this game's real rewards, so an operator edits the
- * Position column instead of guessing at names.
+ * Item Order column instead of guessing at IDs. Column order matches Export
+ * Sequence exactly: Item Order, Item ID, Item Name.
  */
 export function buildTemplateCsv(rewards = []) {
   const sample = rewards.slice(0, 8);
   const rows = [TEMPLATE_HEADERS];
 
   if (sample.length === 0) {
-    rows.push([1, "Free Credit 10", ""], [2, "Token x5", ""]);
+    rows.push([1, "", "Free Credit 10"], [2, "", "Token x5"]);
   } else {
-    sample.forEach((reward, index) => rows.push([index + 1, reward.name, reward.id]));
+    sample.forEach((reward, index) => rows.push([index + 1, reward.id, reward.name]));
   }
 
   return toCsv(rows);
@@ -248,28 +256,53 @@ export function downloadCsv(filename, csv) {
 }
 
 /**
- * Clear the existing sequence, then create the imported one. There is no bulk
- * sequence endpoint, so this is one request per row — and a mid-run failure
- * leaves the sequence partially written, which callers must report.
+ * Turn locally-validated entries into the bulk import payload and send it in
+ * one request. The backend re-checks every row against live reward state
+ * (archived rewards, duplicate order, unknown uuid), so its response —
+ * success_count / failed_count / failed_rows — is the source of truth even
+ * though the file already passed client-side validation.
  */
-export async function replaceSequence({ existing = [], entries = [], deleteOne, createOne, onProgress }) {
-  const total = existing.length + entries.length;
-  let done = 0;
-  const report = (label) => onProgress?.({ done, total, label });
+export async function submitSequenceImport(entries, importFn) {
+  const rows = entries.map((entry) => ({
+    item_uuid: entry.rewardId,
+    item_name: entry.rewardName || "",
+    item_order: entry.position,
+  }));
+  return await importFn(rows);
+}
 
-  report(existing.length ? `Clearing ${existing.length} existing positions...` : "Creating positions...");
+export const CURRENT_SEQUENCE_EXPORT_HEADERS = ["Item Order", "Item ID", "Item Name"];
 
-  for (const row of existing) {
-    await deleteOne(row);
-    done += 1;
-    report(`Cleared ${done} of ${existing.length} existing positions...`);
+/**
+ * Rows for the Export Sequence workbook, straight from a
+ * `.../sequences/current/` response (same shape for all three games).
+ */
+export function buildCurrentSequenceExportRows(current = []) {
+  const rows = [CURRENT_SEQUENCE_EXPORT_HEADERS];
+  for (const row of current) {
+    rows.push([row.item_order, row.item_id, row.item_name || ""]);
   }
+  return rows;
+}
 
-  for (let i = 0; i < entries.length; i += 1) {
-    await createOne(entries[i]);
-    done += 1;
-    report(`Created ${i + 1} of ${entries.length} positions...`);
-  }
+/** Build a one-sheet .xlsx from a grid and trigger a download. */
+export async function downloadXlsx(filename, rows) {
+  const XLSX = await import("xlsx");
+  const sheet = XLSX.utils.aoa_to_sheet(rows);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, sheet, "Sequence");
+  const buffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 /**

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Pagination } from "../../components/admin/members/DataTable";
 import RewardsTable from "../../components/admin/smash-egg/RewardsTable";
 import RewardForm from "../../components/admin/smash-egg/RewardForm";
@@ -9,10 +10,11 @@ import CostSettingModal from "../../components/admin/penalty-kick/CostSettingMod
 import GameStatusModal from "../../components/admin/smash-egg/GameStatusModal";
 import ConfirmDialog from "../../components/admin/ui/ConfirmDialog";
 import ImportSequenceModal, { ImportIcon } from "../../components/admin/ui/ImportSequenceModal";
+import SequenceHistoryTable from "../../components/admin/ui/SequenceHistoryTable";
 import { useToast } from "../../components/admin/ui/Toast";
 import * as adminApi from "../../api/adminApi";
 import { mapSmashEggItems, mapSmashEggSequences } from "../../api/responseMappers";
-import { fetchAllSequences, replaceSequence } from "../../lib/sequenceImport";
+import { buildCurrentSequenceExportRows, downloadXlsx } from "../../lib/sequenceImport";
 
 const GOLD_BG = "linear-gradient(101deg, #dc9d16 1%, #f2cb7a 98%)";
 const PAGE_SIZE = 7;
@@ -178,7 +180,10 @@ function SequenceTable({ rows, loading, onDelete, onMove }) {
   );
 }
 
+const HISTORY_PAGE_SIZE = 10;
+
 export default function SmashEggPage() {
+  const router = useRouter();
   const toast = useToast();
   const [rewards, setRewards] = useState([]);
   const [page, setPage] = useState(1);
@@ -191,6 +196,12 @@ export default function SmashEggPage() {
   const [sequencePage, setSequencePage] = useState(1);
   const [sequenceTotal, setSequenceTotal] = useState(0);
   const [sequenceLoading, setSequenceLoading] = useState(true);
+
+  const [historyRows, setHistoryRows] = useState([]);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyTotal, setHistoryTotal] = useState(0);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   const [view, setView] = useState("list");
   const [formMode, setFormMode] = useState("add");
@@ -241,16 +252,53 @@ export default function SmashEggPage() {
     }
   };
 
+  const loadImportHistory = async (nextPage = historyPage) => {
+    setHistoryLoading(true);
+    try {
+      const data = await adminApi.getSmashEggSequenceImports({ page: nextPage, page_size: HISTORY_PAGE_SIZE });
+      setHistoryRows(data?.results || []);
+      setHistoryTotal(Number(data?.count ?? 0));
+      setHistoryPage(nextPage);
+    } catch (error) {
+      toast.error("Failed to load sequence import history", {
+        description: error?.data?.detail || error?.message,
+      });
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const handleExportSequence = async () => {
+    setExporting(true);
+    try {
+      const current = await adminApi.getSmashEggSequenceCurrent();
+      downloadXlsx(`smash-sequence-${new Date().toISOString().slice(0, 10)}.xlsx`, buildCurrentSequenceExportRows(current));
+    } catch (error) {
+      toast.error("Failed to export smash sequence", {
+        description: error?.data?.detail || error?.message,
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   useEffect(() => {
     loadData();
     loadSequences(1);
+    loadImportHistory(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const totalPages = Math.max(1, Math.ceil(rewards.length / PAGE_SIZE));
+  // Sorted by reward ID before slicing, so pagination reflects the same
+  // global order the table defaults to, not just the API's response order.
+  const sortedRewards = useMemo(
+    () => [...rewards].sort((a, b) => Number(a.numericId ?? 0) - Number(b.numericId ?? 0)),
+    [rewards],
+  );
   const pageRewards = useMemo(
-    () => rewards.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [rewards, page],
+    () => sortedRewards.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [sortedRewards, page],
   );
 
   useEffect(() => {
@@ -314,25 +362,16 @@ export default function SmashEggPage() {
     }
   };
 
-  const handleSequenceImport = async (entries, onProgress) => {
-    try {
-      const existing = await fetchAllSequences(adminApi.getSmashEggSequences);
-      await replaceSequence({
-        existing,
-        entries,
-        onProgress,
-        deleteOne: (row) => adminApi.deleteSmashEggSequence(row.uuid),
-        createOne: (entry) => adminApi.createSmashEggSequence(entry.position, entry.rewardId),
+  const handleSequenceImported = (response) => {
+    if (response?.failed_count) {
+      toast.warning(`Imported with ${response.failed_count} row${response.failed_count === 1 ? "" : "s"} rejected`, {
+        description: `${response.success_count ?? 0} saved. See the result above for details.`,
       });
-      toast.success(`Imported ${entries.length} smash sequence position${entries.length === 1 ? "" : "s"}`);
-      setImportOpen(false);
-    } catch (error) {
-      toast.error("Smash sequence import failed", {
-        description: `${describeApiError(error)} — the sequence may be partly written, check the table below.`,
-      });
-    } finally {
-      await loadSequences(1);
+    } else {
+      toast.success(`Imported ${response?.success_count ?? 0} smash sequence position${response?.success_count === 1 ? "" : "s"}`);
     }
+    loadSequences(1);
+    loadImportHistory(1);
   };
 
   const confirmSequenceDelete = async () => {
@@ -419,14 +458,6 @@ export default function SmashEggPage() {
           </button>
           <button
             type="button"
-            onClick={() => setImportOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold tracking-[-0.5px] text-[#fbeed2] transition-colors hover:bg-white/5"
-          >
-            <ImportIcon />
-            Import Sequence
-          </button>
-          <button
-            type="button"
             onClick={openAdd}
             className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold tracking-[-0.5px] text-[#141828] transition-opacity hover:opacity-90"
             style={{ backgroundImage: GOLD_BG }}
@@ -455,9 +486,29 @@ export default function SmashEggPage() {
       </div>
 
       <div className="border-t border-white/10 p-6">
-        <h2 className="mb-4 text-[22px] font-bold text-white" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-          Smash Sequences
-        </h2>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-[22px] font-bold text-white" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+            Smash Sequences
+          </h2>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleExportSequence}
+              disabled={exporting}
+              className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-5 py-2 text-[13px] font-semibold tracking-[-0.5px] text-[#fbeed2] transition-colors hover:bg-white/5 disabled:opacity-50"
+            >
+              {exporting ? "Exporting..." : "Export Sequence"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setImportOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-5 py-2 text-[13px] font-semibold tracking-[-0.5px] text-[#fbeed2] transition-colors hover:bg-white/5"
+            >
+              <ImportIcon />
+              Import Sequence
+            </button>
+          </div>
+        </div>
         <SequenceTable
           rows={sequences}
           loading={sequenceLoading}
@@ -478,6 +529,29 @@ export default function SmashEggPage() {
         </div>
       </div>
 
+      <div className="border-t border-white/10 p-6">
+        <h2 className="mb-4 text-[22px] font-bold text-white" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+          Sequence Import History
+        </h2>
+        <SequenceHistoryTable
+          rows={historyRows}
+          loading={historyLoading}
+          onViewDetails={(uuid) => router.push(`/admin/smash-egg/sequence-history?uuid=${uuid}`)}
+        />
+        <div className="flex items-center justify-between py-3">
+          <p className="text-[10px] text-white/80">
+            {historyTotal === 0
+              ? "Showing 0 to 0 of 0 Results"
+              : `Showing ${(historyPage - 1) * HISTORY_PAGE_SIZE + 1} to ${Math.min(historyPage * HISTORY_PAGE_SIZE, historyTotal)} of ${historyTotal} Results`}
+          </p>
+          <Pagination
+            currentPage={historyPage}
+            totalPages={Math.max(1, Math.ceil(historyTotal / HISTORY_PAGE_SIZE))}
+            onPageChange={loadImportHistory}
+          />
+        </div>
+      </div>
+
       <SmashSequenceModal
         open={sequenceOpen}
         rewards={rewards}
@@ -489,11 +563,12 @@ export default function SmashEggPage() {
       <ImportSequenceModal
         open={importOpen}
         title="Import Smash Sequence"
-        rewards={rewards.map((r) => ({ id: r.uuid, name: r.name }))}
+        rewards={rewards.map((r) => ({ id: r.numericId, uuid: r.uuid, name: r.name }))}
         existingCount={sequenceTotal}
         templateFilename="smash-sequence-template.csv"
+        importFn={adminApi.importSmashEggSequence}
+        onImported={handleSequenceImported}
         onClose={() => setImportOpen(false)}
-        onImport={handleSequenceImport}
       />
 
       <CostSettingModal

@@ -1,16 +1,24 @@
 ﻿"use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import SpinItemsTable from "./SpinItemsTable";
 import SpinSequenceTable from "./SpinSequenceTable";
 import LuckySpinItemForm from "./LuckySpinItemForm";
 import ErrorDisplay from "../../ui/ErrorDisplay";
 import ImportSequenceModal, { ImportIcon } from "../ui/ImportSequenceModal";
+import SequenceHistoryTable from "../ui/SequenceHistoryTable";
+import { Pagination } from "../members/DataTable";
+import { useToast } from "../ui/Toast";
 import * as adminApi from "../../../api/adminApi";
 import { ADMIN_PERMISSIONS, hasAdminPermission } from "../../../config/adminPermissions";
-import { fetchAllSequences, replaceSequence } from "../../../lib/sequenceImport";
+import { fetchAllSequences, buildCurrentSequenceExportRows, downloadXlsx } from "../../../lib/sequenceImport";
+
+const HISTORY_PAGE_SIZE = 10;
 
 export default function SpinTablesContainer() {
+  const router = useRouter();
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState("items"); // "items" or "sequence"
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
@@ -20,8 +28,13 @@ export default function SpinTablesContainer() {
   const [spinSequences, setSpinSequences] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState(null);
   const [formError, setFormError] = useState(null);
+  const [historyRows, setHistoryRows] = useState([]);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyTotal, setHistoryTotal] = useState(0);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const canCreatePrizes = hasAdminPermission(ADMIN_PERMISSIONS.CREATE_LUCKY_SPIN_PRIZES);
   const canEditPrizes = hasAdminPermission(ADMIN_PERMISSIONS.EDIT_LUCKY_SPIN_PRIZES);
   const canArchivePrizes = hasAdminPermission(ADMIN_PERMISSIONS.ARCHIVE_LUCKY_SPIN_PRIZES);
@@ -35,12 +48,43 @@ export default function SpinTablesContainer() {
   useEffect(() => {
     if (activeTab === "sequence") {
       loadSpinSequences();
+      loadImportHistory(1);
       // Also load spin items for the dropdown in sequence modal
       if (spinItems.length === 0) {
         loadSpinItems();
       }
     }
   }, [activeTab]);
+
+  const loadImportHistory = async (nextPage = historyPage) => {
+    setHistoryLoading(true);
+    try {
+      const data = await adminApi.getLuckySpinSequenceImports({ page: nextPage, page_size: HISTORY_PAGE_SIZE });
+      setHistoryRows(data?.results || []);
+      setHistoryTotal(Number(data?.count ?? 0));
+      setHistoryPage(nextPage);
+    } catch (err) {
+      toast.error("Failed to load sequence import history", {
+        description: err?.data?.detail || err?.message,
+      });
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const handleExportSequence = async () => {
+    setExporting(true);
+    try {
+      const current = await adminApi.getLuckySpinSequenceCurrent();
+      downloadXlsx(`spin-sequence-${new Date().toISOString().slice(0, 10)}.xlsx`, buildCurrentSequenceExportRows(current));
+    } catch (err) {
+      toast.error("Failed to export spin sequence", {
+        description: err?.data?.detail || err?.message,
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const loadSpinItems = async () => {
     setIsLoading(true);
@@ -157,29 +201,16 @@ export default function SpinTablesContainer() {
     }
   };
 
-  const handleSequenceImport = async (entries, onProgress) => {
-    setIsSubmitting(true);
-    setError(null);
-
-    try {
-      const existing = await fetchAllSequences(adminApi.getLuckySpinSequences);
-      await replaceSequence({
-        existing,
-        entries,
-        onProgress,
-        deleteOne: (row) => adminApi.deleteLuckySpinSequence(row.uuid),
-        createOne: (entry) => adminApi.createLuckySpinSequence(entry.position, entry.rewardId),
+  const handleSequenceImported = (response) => {
+    if (response?.failed_count) {
+      toast.warning(`Imported with ${response.failed_count} row${response.failed_count === 1 ? "" : "s"} rejected`, {
+        description: `${response.success_count ?? 0} saved. See the result above for details.`,
       });
-      setIsImportOpen(false);
-    } catch (err) {
-      console.error('Failed to import sequence:', err);
-      // A mid-run failure leaves the sequence partly written, so the reloaded
-      // table below is the source of truth.
-      setError(err);
-    } finally {
-      setIsSubmitting(false);
-      await loadSpinSequences();
+    } else {
+      toast.success(`Imported ${response?.success_count ?? 0} spin sequence position${response?.success_count === 1 ? "" : "s"}`);
     }
+    loadSpinSequences();
+    loadImportHistory(1);
   };
 
   const handleSequenceReorder = async (luckySpins) => {
@@ -292,14 +323,23 @@ export default function SpinTablesContainer() {
               Spin Sequence Setting
             </button>
             {activeTab === "sequence" && (
-              <button
-                onClick={() => setIsImportOpen(true)}
-                className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-[#e9af41]/30 bg-[#e9af41]/10 px-4 py-2 text-center text-sm font-bold leading-none text-[#e9af41] transition-colors hover:bg-[#e9af41]/20 disabled:opacity-50"
-                disabled={isLoading || isSubmitting}
-              >
-                <ImportIcon />
-                Import Sequence
-              </button>
+              <>
+                <button
+                  onClick={handleExportSequence}
+                  className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-[#e9af41]/30 bg-[#e9af41]/10 px-4 py-2 text-center text-sm font-bold leading-none text-[#e9af41] transition-colors hover:bg-[#e9af41]/20 disabled:opacity-50"
+                  disabled={isLoading || isSubmitting || exporting}
+                >
+                  {exporting ? "Exporting..." : "Export Sequence"}
+                </button>
+                <button
+                  onClick={() => setIsImportOpen(true)}
+                  className="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-[#e9af41]/30 bg-[#e9af41]/10 px-4 py-2 text-center text-sm font-bold leading-none text-[#e9af41] transition-colors hover:bg-[#e9af41]/20 disabled:opacity-50"
+                  disabled={isLoading || isSubmitting}
+                >
+                  <ImportIcon />
+                  Import Sequence
+                </button>
+              </>
             )}
             {activeTab === "items" && canCreatePrizes && (
               <button 
@@ -337,6 +377,27 @@ export default function SpinTablesContainer() {
               onReorder={handleSequenceReorder}
               isLoading={isLoading || isSubmitting}
             />
+
+            <div className="mt-8">
+              <h2 className="mb-4 text-xl font-bold text-white">Sequence Import History</h2>
+              <SequenceHistoryTable
+                rows={historyRows}
+                loading={historyLoading}
+                onViewDetails={(uuid) => router.push(`/admin/lucky-spin/sequence-history?uuid=${uuid}`)}
+              />
+              <div className="flex items-center justify-between py-3">
+                <p className="text-[10px] text-white/80">
+                  {historyTotal === 0
+                    ? "Showing 0 to 0 of 0 Results"
+                    : `Showing ${(historyPage - 1) * HISTORY_PAGE_SIZE + 1} to ${Math.min(historyPage * HISTORY_PAGE_SIZE, historyTotal)} of ${historyTotal} Results`}
+                </p>
+                <Pagination
+                  currentPage={historyPage}
+                  totalPages={Math.max(1, Math.ceil(historyTotal / HISTORY_PAGE_SIZE))}
+                  onPageChange={loadImportHistory}
+                />
+              </div>
+            </div>
           </div>
         )}
 
@@ -345,11 +406,12 @@ export default function SpinTablesContainer() {
       <ImportSequenceModal
         open={isImportOpen}
         title="Import Spin Sequence"
-        rewards={spinItems.map((item) => ({ id: item.uuid, name: item.reward_name }))}
+        rewards={spinItems.map((item) => ({ id: item.id, uuid: item.uuid, name: item.reward_name }))}
         existingCount={spinSequences.length}
         templateFilename="spin-sequence-template.csv"
+        importFn={adminApi.importLuckySpinSequence}
+        onImported={handleSequenceImported}
         onClose={() => setIsImportOpen(false)}
-        onImport={handleSequenceImport}
       />
 
       {/* Modal - Only for Items */}

@@ -104,6 +104,7 @@ function normalizeItemTypeLabel(value) {
 export function mapSmashEggItems(apiResponse) {
   return normalizeApiList(apiResponse).map(item => ({
     id: item.uuid || item.id,
+    numericId: item.id ?? null,
     uuid: item.uuid,
     name: item.reward_name || item.name || "",
     reward_name: item.reward_name || item.name || "",

@@ -10,6 +10,7 @@ import {
   buildTemplateCsv,
   downloadCsv,
   readSheetGrid,
+  submitSequenceImport,
 } from "../../../lib/sequenceImport";
 
 function UploadIcon() {
@@ -44,13 +45,13 @@ export function ImportIcon({ size = 16 }) {
   );
 }
 
-const EMPTY_PROGRESS = { done: 0, total: 0, label: "" };
-
 /**
  * Spreadsheet importer shared by the Smash Egg, Lucky Spin and Penalty Kick
  * sequence tables. Parses and validates the whole file up front, previews it,
- * and only then hands the resolved entries to `onImport`, which replaces the
- * game's entire sequence.
+ * then sends the resolved entries to the bulk import endpoint in one call.
+ * The backend re-validates against live reward state, so its response —
+ * success_count / failed_count / failed_rows — is shown even for rows the
+ * client-side preview marked OK.
  */
 export default function ImportSequenceModal({
   open,
@@ -59,7 +60,8 @@ export default function ImportSequenceModal({
   rewards = [],
   existingCount = 0,
   templateFilename = "sequence-template.csv",
-  onImport,
+  importFn,
+  onImported,
 }) {
   const inputRef = useRef(null);
   const [fileName, setFileName] = useState("");
@@ -68,7 +70,8 @@ export default function ImportSequenceModal({
   const [result, setResult] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [applying, setApplying] = useState(false);
-  const [progress, setProgress] = useState(EMPTY_PROGRESS);
+  const [apiResult, setApiResult] = useState(null);
+  const [apiError, setApiError] = useState(null);
 
   useEffect(() => {
     if (open) return;
@@ -78,7 +81,8 @@ export default function ImportSequenceModal({
     setResult(null);
     setDragging(false);
     setApplying(false);
-    setProgress(EMPTY_PROGRESS);
+    setApiResult(null);
+    setApiError(null);
   }, [open]);
 
   const handleFile = async (file) => {
@@ -86,6 +90,8 @@ export default function ImportSequenceModal({
     setFileName(file.name);
     setParseError(null);
     setResult(null);
+    setApiResult(null);
+    setApiError(null);
     setParsing(true);
     try {
       const grid = await readSheetGrid(file);
@@ -110,7 +116,8 @@ export default function ImportSequenceModal({
   };
 
   const entries = result?.entries || [];
-  const canImport = !parsing && !applying && entries.length > 0 && !result?.errorCount && !result?.fatal;
+  const canImport =
+    !parsing && !applying && !apiResult && entries.length > 0 && !result?.errorCount && !result?.fatal;
 
   // Preview in the order the sequence will be created, not file order — the
   // hint above promises Position drives order. Rows whose position never parsed
@@ -128,12 +135,15 @@ export default function ImportSequenceModal({
   const handleImport = async () => {
     if (!canImport) return;
     setApplying(true);
-    setProgress({ done: 0, total: entries.length, label: "Starting..." });
+    setApiError(null);
     try {
-      await onImport?.(entries, setProgress);
+      const response = await submitSequenceImport(entries, importFn);
+      setApiResult(response);
+      onImported?.(response);
+    } catch (error) {
+      setApiError(error?.data?.detail || error?.data?.error || error?.message || "Import failed.");
     } finally {
       setApplying(false);
-      setProgress(EMPTY_PROGRESS);
     }
   };
 
@@ -145,8 +155,9 @@ export default function ImportSequenceModal({
       onClose={applying ? undefined : onClose}
       onSave={handleImport}
       saving={applying || parsing}
-      saveLabel={applying ? `Importing ${progress.done}/${progress.total}` : `Import ${entries.length || ""}`.trim()}
+      saveLabel={applying ? "Importing..." : `Import ${entries.length || ""}`.trim()}
       showSave={canImport || applying}
+      closeLabel={apiResult ? "Done" : "Close"}
       width="max-w-[760px]"
     >
       <div className="space-y-4">
@@ -155,7 +166,7 @@ export default function ImportSequenceModal({
             <p>
               Columns: <span className="font-semibold text-[#f2cb7a]">{TEMPLATE_HEADERS.join(" · ")}</span>
               {" — "}
-              <span className="text-white/60">Reward UUID is optional and wins over the name when both are set.</span>
+              <span className="text-white/60">Reward ID is optional and wins over the name when both are set.</span>
             </p>
             <p className="mt-1 text-white/50">Accepts {ACCEPTED_EXTENSIONS.join(", ")}. Row order is taken from Position, not from the file.</p>
           </div>
@@ -241,7 +252,7 @@ export default function ImportSequenceModal({
                     <tr key={row.line} className="border-b border-white/5 last:border-b-0">
                       <td className="px-4 py-2.5 text-[12px] text-white/40">{row.line}</td>
                       <td className="px-4 py-2.5 text-[12px] text-white">{row.position ? `#${row.position}` : row.rawPosition || "-"}</td>
-                      <td className="px-4 py-2.5 text-[12px] text-white">{row.rewardName || row.rawUuid || "-"}</td>
+                      <td className="px-4 py-2.5 text-[12px] text-white">{row.rewardName || row.rawId || "-"}</td>
                       <td className={`px-4 py-2.5 text-[12px] ${row.error ? "text-red-300" : "text-[#06b800]"}`}>
                         {row.error || "OK"}
                       </td>
@@ -268,14 +279,52 @@ export default function ImportSequenceModal({
         )}
 
         {applying && (
-          <div className="space-y-1.5">
-            <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
-              <div
-                className="h-full rounded-full bg-[#eaad2c] transition-[width]"
-                style={{ width: `${progress.total ? Math.round((progress.done / progress.total) * 100) : 0}%` }}
-              />
+          <p className="text-[12px] text-white/60">Sending {entries.length} row{entries.length === 1 ? "" : "s"} to the server...</p>
+        )}
+
+        {apiError && (
+          <p className="rounded-[8px] border border-red-400/40 bg-red-500/10 px-4 py-3 text-[12px] text-red-200">{apiError}</p>
+        )}
+
+        {apiResult && (
+          <div className="space-y-3 rounded-[10px] border border-white/10 bg-white/[0.03] p-4">
+            <p className="text-[13px] font-semibold text-[#fbeed2]">Import result</p>
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[12px]">
+              <span className="text-[#06b800]">
+                <span className="font-semibold">{apiResult.success_count ?? 0}</span> saved
+              </span>
+              <span className={apiResult.failed_count ? "text-red-300" : "text-white/50"}>
+                <span className="font-semibold">{apiResult.failed_count ?? 0}</span> failed
+              </span>
             </div>
-            <p className="text-[12px] text-white/60">{progress.label || `Importing ${progress.done} of ${progress.total}...`}</p>
+
+            {apiResult.failed_rows?.length > 0 && (
+              <div className="max-h-[220px] overflow-y-auto rounded-[10px] border border-white/10 scrollbar-admin">
+                <table className="w-full">
+                  <thead className="sticky top-0 bg-gradient-to-b from-[#141828] to-[#333333] text-left">
+                    <tr>
+                      <th className="px-4 py-2.5 text-[12px] font-semibold text-[#fbeed2]">Position</th>
+                      <th className="px-4 py-2.5 text-[12px] font-semibold text-[#fbeed2]">Reward</th>
+                      <th className="px-4 py-2.5 text-[12px] font-semibold text-[#fbeed2]">Reason</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {apiResult.failed_rows.map((row) => {
+                      const source = entries[row.row_number - 1];
+                      return (
+                        <tr key={row.row_number} className="border-b border-white/5 last:border-b-0">
+                          <td className="px-4 py-2.5 text-[12px] text-white">{source ? `#${source.position}` : "-"}</td>
+                          <td className="px-4 py-2.5 text-[12px] text-white">{source?.rewardName || "-"}</td>
+                          <td className="px-4 py-2.5 text-[12px] text-red-300">{row.reason}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <p className="text-[12px] text-white/50">The sequence table and import history below have been refreshed.</p>
           </div>
         )}
       </div>

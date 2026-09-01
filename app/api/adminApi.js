@@ -277,6 +277,33 @@ export async function changeSpinSequencesOrder(luckySpins) {
   }
 }
 
+export async function getLuckySpinSequenceCurrent() {
+  return await apiRequest(ENDPOINTS.ADMIN.LUCKY_SPIN_SEQUENCE_CURRENT, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function importLuckySpinSequence(rows) {
+  return await apiRequest(ENDPOINTS.ADMIN.LUCKY_SPIN_SEQUENCE_IMPORTS, {
+    method: 'POST',
+    body: { rows }
+  }, true, 'admin');
+}
+
+export async function getLuckySpinSequenceImports(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.LUCKY_SPIN_SEQUENCE_IMPORTS}${qs}`, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function getLuckySpinSequenceImportDetail(uuid, params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.LUCKY_SPIN_SEQUENCE_IMPORT(uuid)}${qs}`, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
 export async function getSmashEggItems(params = {}) {
   const qs = buildQueryParams(params);
   return await apiRequest(`${ENDPOINTS.ADMIN.SMASH_EGG_ITEMS}${qs}`, {
@@ -334,6 +361,33 @@ export async function changeSmashEggSequencesOrder(smashes) {
   return await apiRequest(ENDPOINTS.ADMIN.CHANGE_SMASH_EGG_SEQUENCES, {
     method: 'PATCH',
     body: { smashes }
+  }, true, 'admin');
+}
+
+export async function getSmashEggSequenceCurrent() {
+  return await apiRequest(ENDPOINTS.ADMIN.SMASH_EGG_SEQUENCE_CURRENT, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function importSmashEggSequence(rows) {
+  return await apiRequest(ENDPOINTS.ADMIN.SMASH_EGG_SEQUENCE_IMPORTS, {
+    method: 'POST',
+    body: { rows }
+  }, true, 'admin');
+}
+
+export async function getSmashEggSequenceImports(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.SMASH_EGG_SEQUENCE_IMPORTS}${qs}`, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function getSmashEggSequenceImportDetail(uuid, params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.SMASH_EGG_SEQUENCE_IMPORT(uuid)}${qs}`, {
+    method: 'GET'
   }, true, 'admin');
 }
 
@@ -940,6 +994,33 @@ export async function reorderPenaltyKickSequences(kicks) {
   return await apiRequest(ENDPOINTS.ADMIN.PENALTY_KICK_SEQUENCE_REORDER, {
     method: 'PATCH',
     body: { kicks }
+  }, true, 'admin');
+}
+
+export async function getPenaltyKickSequenceCurrent() {
+  return await apiRequest(ENDPOINTS.ADMIN.PENALTY_KICK_SEQUENCE_CURRENT, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function importPenaltyKickSequence(rows) {
+  return await apiRequest(ENDPOINTS.ADMIN.PENALTY_KICK_SEQUENCE_IMPORTS, {
+    method: 'POST',
+    body: { rows }
+  }, true, 'admin');
+}
+
+export async function getPenaltyKickSequenceImports(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.PENALTY_KICK_SEQUENCE_IMPORTS}${qs}`, {
+    method: 'GET'
+  }, true, 'admin');
+}
+
+export async function getPenaltyKickSequenceImportDetail(uuid, params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.PENALTY_KICK_SEQUENCE_IMPORT(uuid)}${qs}`, {
+    method: 'GET'
   }, true, 'admin');
 }
 
