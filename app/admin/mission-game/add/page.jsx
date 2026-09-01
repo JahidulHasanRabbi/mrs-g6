@@ -84,6 +84,13 @@ function toForm(api) {
   };
 }
 
+// The backend field carries the whole moment now (date + time), not a bare
+// date — there is no separate start_time/end_time on the model.
+function combineDateTime(date, time) {
+  if (!date) return null;
+  return `${date}T${time || "00:00"}:00`;
+}
+
 function toPayload(form) {
   const rewardQuantity = Math.max(0, Number(form.rewardQuantity) || 0);
   const isBattlePointReward = Number(form.rewardType) === 2;
@@ -103,10 +110,8 @@ function toPayload(form) {
     limit_control: form.limitControl === "" ? null : Math.max(1, Number(form.limitControl) || 1),
   };
   if (form.timeBased) {
-    payload.start_date = form.startDate;
-    payload.end_date = form.endDate;
-    payload.start_time = form.startTime || null;
-    payload.end_time = form.endTime || null;
+    payload.start_date = combineDateTime(form.startDate, form.startTime);
+    payload.end_date = combineDateTime(form.endDate, form.endTime);
   }
   return payload;
 }

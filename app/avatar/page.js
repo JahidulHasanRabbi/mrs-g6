@@ -16,6 +16,7 @@ import { useUser } from "../contexts/UserContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { THEME_IDS } from "../config/themes";
 import { lazySkins } from "../components/themes/skinRoute";
+import { useGameSessionPing, GAME_SESSION_IDS } from "../hooks/useGameSessionPing";
 import { RPG_DEFAULT_SKIN, RpgSkinProvider, useRpgSkin } from "../components/rpg/rpgSkin";
 import { HamburgerMenu } from "../components/hamburger";
 import { RPG_VIEWS, RPG_FONTS } from "../components/rpg/constants";
@@ -58,6 +59,7 @@ function RpgPageInner() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { authReady, memberUuid, updateUserData } = useUser();
+  useGameSessionPing(GAME_SESSION_IDS.AVATAR);
 
   const viewParam = searchParams.get("view") || RPG_VIEWS.HOME;
   const view = VALID_VIEWS.has(viewParam) ? viewParam : RPG_VIEWS.HOME;

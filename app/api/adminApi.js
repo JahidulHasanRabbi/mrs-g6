@@ -565,6 +565,14 @@ export async function getRewardReport(params = {}) {
   return await apiRequest(`${ENDPOINTS.ADMIN.REWARD_REPORT}${qs}`, { method: 'GET' }, true, 'admin');
 }
 
+// GET /member/reward-report-kpi/ — total_credit_amount + total_prizes_claimed
+// over every filtered record (not just the current page). Same filter set as
+// getRewardReport, so the two never disagree.
+export async function getRewardReportKpi(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.REWARD_REPORT_KPI}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
 // GET /member/member-list/
 export async function getMemberList(params = {}) {
   const qs = buildQueryParams(params);

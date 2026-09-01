@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AdminRouteGuard } from "../../../components/guards/AdminRouteGuard";
-import RangePicker from "../../../components/admin/RangePicker";
 import { Pagination } from "../../../components/admin/members/DataTable";
 import LoadingOverlay from "../../../components/admin/ui/LoadingOverlay";
+import ReportRangeBar, { presetRange, formatRangeLabel } from "../../../components/admin/reports/ReportRangeBar";
 import {
   getUsageReportGames,
   getUsageReportInsights,
@@ -21,8 +21,8 @@ const ALL_GAMES_OPTION = { value: "all", label: "All Games" };
 
 // Labels for ids the API sends without one. The filter itself is built from the
 // unfiltered /usage-report/games/ rows (see gameOptions), so a game the backend
-// does not know about — Avatar, until it joins the enum — is never offered and
-// can never be sent back as an id the API would reject with a 400.
+// doesn't report on is never offered and can never be sent back as an id the
+// API would reject with a 400.
 const GAME_LABELS = {
   1: "Lucky Spin",
   2: "Penalty Kick",
@@ -37,55 +37,18 @@ const GAME_FALLBACK_OPTIONS = [1, 2, 3, 4].map((id) => ({ value: String(id), lab
 // The all-games view maps to /usage-report/summary/. For a selected game, these
 // same cards are populated from that game's /usage-report/games/ row because
 // the summary endpoint intentionally ignores the `game` query parameter.
+//
+// "Total Withdrawal" is a label-only rename of the existing total_tokens_consumed
+// figure (per the approved spec, slide 12) — the API has no separate withdrawal
+// metric, so this card intentionally reads that field.
 const SUMMARY_CARDS = [
   { key: "total_active_users", label: "Active Users", icon: "users", hint: "Distinct members who played in this view" },
   { key: "total_sessions", label: "Total Sessions", icon: "plays", hint: "Total plays in this view" },
-  { key: "total_withdrawal", label: "Total Withdrawal", prefix: "RM", icon: "withdraw", hint: "RM withdrawn in this period" },
+  { key: "total_tokens_consumed", label: "Total Withdrawal", icon: "withdraw", hint: "Tokens consumed in this period" },
   { key: "total_rewards_given", label: "Rewards Given", prefix: "RM", icon: "rm", hint: "RM paid out where tracked" },
   { key: "average_session_per_user", label: "Avg Sessions/User", decimals: 2, icon: "avg", hint: "Sessions ÷ active users" },
-  { key: "avg_session_duration", label: "Avg. Session Duration", format: "duration", icon: "clock", hint: "Time in this view ÷ its sessions" },
+  { key: "avg_sessions_per_day", label: "Avg. Session Duration", format: "rate", icon: "clock", hint: "Plays ÷ days in this view" },
 ];
-
-function toIso(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-const QUICK_FILTERS = [
-  { value: "daily", label: "Daily" },
-  { value: "monthly", label: "Monthly" },
-  { value: "yearly", label: "Yearly" },
-];
-
-// Range presets used by the quick-filter buttons. Each returns an inclusive
-// { from, to } window ending today; "custom" returns null (handled by the
-// RangePicker). Changing the preset re-drives every endpoint via the shared
-// `range` state, so all cards/charts/tables update together.
-function presetRange(preset) {
-  const today = new Date();
-  if (preset === "daily") {
-    const iso = toIso(today);
-    return { from: iso, to: iso };
-  }
-  if (preset === "monthly") {
-    return { from: toIso(new Date(today.getFullYear(), today.getMonth(), 1)), to: toIso(today) };
-  }
-  if (preset === "yearly") {
-    return { from: toIso(new Date(today.getFullYear(), 0, 1)), to: toIso(today) };
-  }
-  return null;
-}
-
-function formatRangeLabel(range) {
-  if (!range?.from || !range?.to) return "Select range";
-  const fmt = (iso) => {
-    const [y, m, d] = iso.split("-");
-    return `${d}/${m}/${y}`;
-  };
-  return range.from === range.to ? fmt(range.from) : `${fmt(range.from)} – ${fmt(range.to)}`;
-}
 
 function formatNumber(value, decimals = 0) {
   if (value == null || value === "") return "0";
@@ -111,15 +74,22 @@ function formatMoney(value) {
   return num.toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function formatDuration(seconds) {
-  if (seconds == null || seconds === "") return "N/A";
-  const total = Math.round(Number(seconds));
-  if (!Number.isFinite(total)) return "N/A";
-  if (total < 60) return `${Math.max(0, total)}s`;
-  const hours = Math.floor(total / 3600);
-  const minutes = Math.floor((total % 3600) / 60);
-  if (hours) return `${hours}h ${String(minutes).padStart(2, "0")}m`;
-  return `${minutes}m ${String(total % 60).padStart(2, "0")}s`;
+// avg_sessions_per_day is a frequency (plays ÷ days in range), not a length of
+// time — the API has no session-duration data. This is a placeholder display;
+// the final treatment for this metric is still being designed.
+function formatSessionsPerDay(value) {
+  if (value == null || value === "") return "N/A";
+  const num = Number(value);
+  if (!Number.isFinite(num)) return "N/A";
+  return `${formatNumber(num, 2)} / day`;
+}
+
+function daysInRange(range) {
+  if (!range?.from || !range?.to) return 1;
+  const from = new Date(`${range.from}T00:00:00`);
+  const to = new Date(`${range.to}T00:00:00`);
+  const diff = Math.round((to - from) / 86400000) + 1;
+  return Math.max(1, diff);
 }
 
 function asPercentRate(value) {
@@ -159,12 +129,21 @@ function rowsOf(res) {
   return [];
 }
 
-// Total Withdrawal is scoped to the period, not the game, so it always reads
-// from /summary/ — unlike Avg. Session Duration, which follows the selection.
-function gameSummary(overallSummary, gameRows, game) {
-  const totalWithdrawal = overallSummary?.total_withdrawal ?? null;
+// "Total Withdrawal" (really total_tokens_consumed, see SUMMARY_CARDS) is
+// scoped to the whole period, not the game, so it always reads from
+// /summary/ — unlike Avg. Session Duration, which follows the selection.
+// For "all games" there's no ready-made avg_sessions_per_day from the API
+// (that field only exists per-game), so it's derived with the same formula
+// the backend documents: total sessions ÷ days in the selected range.
+function gameSummary(overallSummary, gameRows, game, range) {
+  const totalTokensConsumed = overallSummary?.total_tokens_consumed ?? null;
 
-  if (game === "all") return { ...overallSummary, total_withdrawal: totalWithdrawal };
+  if (game === "all") {
+    const allGamesRate = overallSummary?.total_sessions != null
+      ? Number(overallSummary.total_sessions) / daysInRange(range)
+      : null;
+    return { ...overallSummary, total_tokens_consumed: totalTokensConsumed, avg_sessions_per_day: allGamesRate };
+  }
 
   const row = gameRows.find((item) => String(item.game) === String(game));
   if (!row) {
@@ -173,8 +152,8 @@ function gameSummary(overallSummary, gameRows, game) {
       total_sessions: 0,
       total_rewards_given: null,
       average_session_per_user: 0,
-      total_withdrawal: totalWithdrawal,
-      avg_session_duration: null,
+      total_tokens_consumed: totalTokensConsumed,
+      avg_sessions_per_day: null,
     };
   }
 
@@ -183,8 +162,8 @@ function gameSummary(overallSummary, gameRows, game) {
     total_sessions: row.sessions,
     total_rewards_given: row.credit_rm,
     average_session_per_user: row.avg_sessions_per_player,
-    total_withdrawal: totalWithdrawal,
-    avg_session_duration: row.avg_session_duration ?? null,
+    total_tokens_consumed: totalTokensConsumed,
+    avg_sessions_per_day: row.avg_sessions_per_day ?? null,
   };
 }
 
@@ -218,7 +197,7 @@ function TinyIcon({ type, size = 22 }) {
 function MetricCard({ metric, summary }) {
   const raw = summary?.[metric.key];
   let value;
-  if (metric.format === "duration") value = formatDuration(raw);
+  if (metric.format === "rate") value = formatSessionsPerDay(raw);
   else if (metric.prefix === "RM") value = formatMoney(raw);
   else value = formatNumber(raw, metric.decimals || 0);
 
@@ -244,17 +223,6 @@ function MetricCard({ metric, summary }) {
       </p>
       {metric.hint ? <p className="text-[11px] leading-4 text-white/45">{metric.hint}</p> : null}
     </div>
-  );
-}
-
-function CalendarIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-      <line x1="16" y1="2" x2="16" y2="6" />
-      <line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
-    </svg>
   );
 }
 
@@ -304,57 +272,6 @@ function Dropdown({ value, options, onChange, minWidth = 180 }) {
           })}
         </ul>
       )}
-    </div>
-  );
-}
-
-function PresetButton({ active, onClick, children }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`inline-flex h-10 items-center gap-2 rounded-[8px] border px-4 text-[13px] font-semibold transition ${active ? "border-[#f2cb7a] text-[#141828] shadow-[0_2px_10px_rgba(222,162,32,0.25)]" : "border-[#f2cb7a]/40 text-[#fbeed2] hover:bg-white/5"}`}
-      style={active ? { backgroundImage: GOLD_BG } : undefined}
-    >
-      {children}
-    </button>
-  );
-}
-
-function FilterBar({ preset, range, game, gameOptions, onPreset, onRangeChange, onGameChange }) {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border border-white/10 bg-black/20 p-3">
-      <div className="flex flex-wrap items-center gap-2">
-        {QUICK_FILTERS.map((filter) => (
-          <PresetButton key={filter.value} active={preset === filter.value} onClick={() => onPreset(filter.value)}>
-            <CalendarIcon />
-            {filter.label}
-          </PresetButton>
-        ))}
-        <RangePicker
-          fromDate={range.from}
-          toDate={range.to}
-          onApply={(from, to) => {
-            if (from && to) onRangeChange({ from, to });
-          }}
-          align="left"
-          trigger={({ open }) => (
-            <button
-              type="button"
-              onClick={open}
-              className={`inline-flex h-10 items-center gap-2 rounded-[8px] border px-4 text-[13px] font-semibold transition ${preset === "custom" ? "border-[#f2cb7a] text-[#141828]" : "border-[#f2cb7a]/40 text-[#fbeed2] hover:bg-white/5"}`}
-              style={preset === "custom" ? { backgroundImage: GOLD_BG } : undefined}
-            >
-              <CalendarIcon />
-              {preset === "custom" ? formatRangeLabel(range) : "Custom"}
-            </button>
-          )}
-        />
-        {preset !== "custom" ? <span className="ml-1 hidden text-[12px] text-white/45 lg:inline">{formatRangeLabel(range)}</span> : null}
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Dropdown value={game} options={gameOptions} onChange={onGameChange} />
-      </div>
     </div>
   );
 }
@@ -557,19 +474,18 @@ function RetentionPanel({ rows }) {
 
 const MEMBER_PAGE_SIZE = 10;
 
-// Sortable keys double as the endpoint's `ordering` values. Only the five
-// columns named in the spec are sortable.
+// Sortable keys double as the endpoint's `sort` values — the API only
+// accepts these five and always sorts high-to-low (no direction to send).
 const MEMBER_COLUMNS = [
   { key: "no", label: "No.", className: "w-[56px]" },
   { key: "phone_number", label: "Phone Number", className: "w-[130px]" },
   { key: "username", label: "Username", className: "w-[130px]" },
   { key: "station", label: "Station", className: "w-[110px]" },
   { key: "tokens_used", label: "Tokens Used", className: "w-[115px]", sortable: true },
-  { key: "battle_points_used", label: "Battle Point Used", className: "w-[145px]", sortable: true },
-  { key: "avg_session_duration", label: "Avg. Session Duration", className: "w-[165px]", sortable: true },
+  { key: "battle_point_used", label: "Battle Point Used", className: "w-[145px]", sortable: true },
+  { key: "avg_sessions_per_day", label: "Avg. Session Duration", className: "w-[165px]", sortable: true },
   { key: "most_played_game", label: "Most Played Game", className: "w-[145px]" },
   { key: "total_rewards", label: "Total Rewards", className: "w-[125px]", sortable: true },
-  { key: "total_withdrawal", label: "Total Withdrawal", className: "w-[140px]", sortable: true },
 ];
 
 function gameLabel(value) {
@@ -580,24 +496,25 @@ function gameLabel(value) {
 function normalizeMemberRow(row, index) {
   return {
     key: row.uuid || row.member_uuid || row.id || `${row.phone_number || ""}-${index}`,
+    no: row.no,
     phone_number: row.phone_number,
     username: row.username,
     station: row.station ?? row.station_name,
-    tokens_used: row.tokens_used ?? row.tokens_consumed,
-    battle_points_used: row.battle_points_used ?? row.battle_point_used,
-    avg_session_duration: row.avg_session_duration ?? row.avg_session_duration_seconds,
+    tokens_used: row.tokens_used,
+    battle_point_used: row.battle_point_used,
+    avg_sessions_per_day: row.avg_sessions_per_day,
     most_played_game: row.most_played_game_label ?? row.most_played_game,
     total_rewards: row.total_rewards,
-    total_withdrawal: row.total_withdrawal,
   };
 }
 
-function SortIcon({ active, direction }) {
+// The backend sorts high-to-low only — there is no ascending mode — so this
+// just marks which column is active rather than offering a direction toggle.
+function SortIcon({ active }) {
   const stroke = active ? "#f2cb7a" : "rgba(255,255,255,0.5)";
   return (
     <svg width="12" height="12" viewBox="0 0 14 14" fill="none" className="ml-1 shrink-0">
-      <path d="M4 5L7 2L10 5" stroke={stroke} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" opacity={!active || direction === "asc" ? 1 : 0.3} />
-      <path d="M4 9L7 12L10 9" stroke={stroke} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" opacity={!active || direction === "desc" ? 1 : 0.3} />
+      <path d="M4 9L7 12L10 9" stroke={stroke} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -608,7 +525,7 @@ function MemberUsageHistory({ range, game }) {
   const [rows, setRows] = useState([]);
   const [count, setCount] = useState(0);
   const [page, setPage] = useState(1);
-  const [sort, setSort] = useState({ key: "tokens_used", direction: "desc" });
+  const [sortKey, setSortKey] = useState("tokens_used");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [unavailable, setUnavailable] = useState(false);
@@ -622,7 +539,7 @@ function MemberUsageHistory({ range, game }) {
         ...gameParams(range, game),
         page: nextPage,
         page_size: MEMBER_PAGE_SIZE,
-        ordering: `${sort.direction === "asc" ? "" : "-"}${sort.key}`,
+        sort: sortKey,
       });
       setRows(rowsOf(res).map(normalizeMemberRow));
       setCount(Number(res?.count ?? 0));
@@ -636,7 +553,7 @@ function MemberUsageHistory({ range, game }) {
     } finally {
       setLoading(false);
     }
-  }, [range, game, sort]);
+  }, [range, game, sortKey]);
 
   useEffect(() => {
     setPage(1);
@@ -649,13 +566,6 @@ function MemberUsageHistory({ range, game }) {
   const handlePageChange = (next) => {
     setPage(next);
     fetchPage(next);
-  };
-
-  // Sortable columns open on descending — the spec asks for highest-to-lowest.
-  const handleSort = (key) => {
-    setSort((current) => (current.key === key
-      ? { key, direction: current.direction === "desc" ? "asc" : "desc" }
-      : { key, direction: "desc" }));
   };
 
   const emptyMessage = unavailable
@@ -678,9 +588,9 @@ function MemberUsageHistory({ range, game }) {
             {MEMBER_COLUMNS.map((column) => (
               <th key={column.key} className={`${column.className} px-4 py-3 text-[12px] font-bold uppercase text-white`}>
                 {column.sortable ? (
-                  <button type="button" onClick={() => handleSort(column.key)} className="flex w-full items-center text-left uppercase transition hover:text-[#f6dda6]">
+                  <button type="button" onClick={() => setSortKey(column.key)} className="flex w-full items-center text-left uppercase transition hover:text-[#f6dda6]">
                     <span>{column.label}</span>
-                    <SortIcon active={sort.key === column.key} direction={sort.direction} />
+                    <SortIcon active={sortKey === column.key} />
                   </button>
                 ) : column.label}
               </th>
@@ -691,16 +601,15 @@ function MemberUsageHistory({ range, game }) {
               <tr><td colSpan={MEMBER_COLUMNS.length} className="px-5 py-12 text-center text-[13px] text-white/50">Loading member usage...</td></tr>
             ) : rows.length ? rows.map((row, index) => (
               <tr key={row.key} className="border-b border-white/5 hover:bg-white/[0.03]">
-                <td className="px-4 py-3 text-[13px] text-white/60">{startIndex + index + 1}</td>
+                <td className="px-4 py-3 text-[13px] text-white/60">{row.no ?? startIndex + index + 1}</td>
                 <td className="truncate px-4 py-3 text-[13px] text-white/85" title={row.phone_number || ""}>{row.phone_number || "N/A"}</td>
                 <td className="truncate px-4 py-3 text-[13px] font-semibold text-white" title={row.username || ""}>{row.username || "N/A"}</td>
                 <td className="truncate px-4 py-3 text-[13px] text-white/70" title={row.station || ""}>{row.station || "N/A"}</td>
                 <td className="px-4 py-3 text-[13px] text-[#a78bfa]">{formatNumber(row.tokens_used)}</td>
-                <td className="px-4 py-3 text-[13px] text-[#54d7ff]">{formatNumber(row.battle_points_used)}</td>
-                <td className="px-4 py-3 text-[13px] text-white/85">{formatDuration(row.avg_session_duration)}</td>
+                <td className="px-4 py-3 text-[13px] text-[#54d7ff]">{formatNumber(row.battle_point_used)}</td>
+                <td className="px-4 py-3 text-[13px] text-white/85">{formatSessionsPerDay(row.avg_sessions_per_day)}</td>
                 <td className="truncate px-4 py-3 text-[13px] text-white/85" title={gameLabel(row.most_played_game)}>{gameLabel(row.most_played_game)}</td>
                 <td className="px-4 py-3 text-[13px] text-[#f6dda6]">{row.total_rewards == null ? "N/A" : `RM ${formatMoney(row.total_rewards)}`}</td>
-                <td className="px-4 py-3 text-[13px] text-[#84ebb4]">{row.total_withdrawal == null ? "N/A" : `RM ${formatMoney(row.total_withdrawal)}`}</td>
               </tr>
             )) : (
               <tr><td colSpan={MEMBER_COLUMNS.length} className="px-5 py-12 text-center text-[13px] text-white/50">{emptyMessage}</td></tr>
@@ -739,7 +648,7 @@ function UsageReportContent() {
   }, [games]);
 
   const selectedGameLabel = useMemo(() => gameOptions.find((option) => option.value === game)?.label || "All Games", [gameOptions, game]);
-  const metricSummary = useMemo(() => gameSummary(summary, games, game), [summary, games, game]);
+  const metricSummary = useMemo(() => gameSummary(summary, games, game, range), [summary, games, game, range]);
   const performanceRows = useMemo(
     () => (game === "all" ? games : games.filter((row) => String(row.game) === String(game))),
     [games, game],
@@ -804,7 +713,13 @@ function UsageReportContent() {
       </div>
 
       <div className="mb-5">
-        <FilterBar preset={preset} range={range} game={game} gameOptions={gameOptions} onPreset={handlePreset} onRangeChange={handleCustomRange} onGameChange={setGame} />
+        <ReportRangeBar
+          preset={preset}
+          range={range}
+          onPreset={handlePreset}
+          onRangeChange={handleCustomRange}
+          rightSlot={<Dropdown value={game} options={gameOptions} onChange={setGame} />}
+        />
       </div>
 
       {error ? <div className="mb-5 rounded-[12px] border border-red-400/40 bg-red-500/10 px-4 py-3 text-[13px] text-red-100">{error}</div> : null}

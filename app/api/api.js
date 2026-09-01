@@ -43,7 +43,8 @@ export const ENDPOINTS = {
     TOTAL_USERS: '/front-view/total-users/',
     ACTIVE_USERS: '/front-view/active-users/',
     DAILY_CHECK_IN: '/front-view/daily-check-in/',
-    FEATURE_STATUS: '/front-view/feature-status/'
+    FEATURE_STATUS: '/front-view/feature-status/',
+    GAME_SESSION_PING: '/front-view/game-sessions/ping/'
   },
   SETTINGS: {
     PUBLIC_BANNERS: '/settings/banners/public/'
@@ -150,6 +151,7 @@ export const ENDPOINTS = {
     MEMBERS: '/member/members/',
     TOKEN_REPORT: '/member/token-report/',
     REWARD_REPORT: '/member/reward-report/',
+    REWARD_REPORT_KPI: '/member/reward-report-kpi/',
     MEMBER_LIST: '/member/member-list/',
     MEMBER_LIST_SINGLE: (uuid) => `/member/member-list/${uuid}/`,
     MEMBER_DEPOSIT: (uuid) => `/member/${uuid}/member-deposit/`,

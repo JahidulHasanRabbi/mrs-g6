@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { LB_COLORS } from "./constants";
 import { DrawBadge, GlowCard, Flag } from "./primitives";
 import { submitPrediction } from "./worldcupApi";
+import { useGameSessionPing, GAME_SESSION_IDS } from "../../hooks/useGameSessionPing";
 
 // Two-step prediction modal for a single World Cup fixture (Figma 980:5399 →
 // 980:5447). Step "choose" lets the user pick the home or away team as their
@@ -92,6 +93,9 @@ function TeamOption({ team, selected, onSelect }) {
 }
 
 export default function PredictModal({ fixture, onClose, onPredicted }) {
+  // Mounted only while the modal is open ({predictFixture && <PredictModal>}
+  // in PredictionsList), so mount/unmount lines up exactly with open/close.
+  useGameSessionPing(GAME_SESSION_IDS.PREDICTION);
   const [step, setStep] = useState("choose");
   const [selected, setSelected] = useState(null);
   const [submitting, setSubmitting] = useState(false);

@@ -17,6 +17,7 @@ import { useUser } from "../contexts/UserContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { THEME_IDS } from "../config/themes";
 import { lazySkins, skinFor } from "../components/themes/skinRoute";
+import { useGameSessionPing, GAME_SESSION_IDS } from "../hooks/useGameSessionPing";
 
 // One chunk per skin, warmed at module scope — see lazySkins.
 const SKINS = lazySkins({
@@ -356,6 +357,7 @@ function DefaultSpinPage() {
 
 export default function SpinPage() {
   const { themeId } = useTheme();
+  useGameSessionPing(GAME_SESSION_IDS.LUCKY_SPIN);
 
   const skin = skinFor(SKINS, themeId);
   if (skin) return skin;

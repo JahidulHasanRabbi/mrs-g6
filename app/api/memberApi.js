@@ -111,6 +111,18 @@ export async function getPublicBanners(location = null) {
   }, false);
 }
 
+// POST /front-view/game-sessions/ping/ — session heartbeat behind Usage
+// Report's Avg. Session Duration. type: 1 start, 2 heartbeat, 3 end.
+// `options` lets callers pass `{ keepalive: true }` for the end signal so it
+// can finish sending after the page starts tearing down.
+export async function pingGameSession(game, type, options = {}) {
+  return await apiRequest(ENDPOINTS.FRONT_VIEW.GAME_SESSION_PING, {
+    ...options,
+    method: 'POST',
+    body: JSON.stringify({ game, type })
+  }, true, 'member');
+}
+
 // GET /lucky-spin/sequences/
 export async function getAllLuckySpinSequences() {
   return await apiRequest(ENDPOINTS.ADMIN.LUCKY_SPIN_SEQUENCES, {

@@ -259,6 +259,19 @@ export function DateField({ value, onChange, disabled, placeholder = "dd/mm/yyyy
   );
 }
 
+export function TimeField({ value, onChange, disabled, placeholder = "--:--" }) {
+  return (
+    <input
+      type="time"
+      value={value || ""}
+      onChange={(e) => onChange(e.target.value)}
+      disabled={disabled}
+      placeholder={placeholder}
+      className={`${INPUT_BASE} [color-scheme:dark]`}
+    />
+  );
+}
+
 export function Toggle({ checked, onChange, label, disabled }) {
   return (
     <div className="flex items-center justify-between gap-4">

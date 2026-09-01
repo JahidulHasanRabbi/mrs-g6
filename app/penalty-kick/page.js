@@ -46,6 +46,7 @@ import { preloadGameAssets } from "../components/penalty-kick/assets";
 import { usePkColors } from "../components/penalty-kick/usePkColors";
 import { THEME_IDS } from "../config/themes";
 import { lazySkins } from "../components/themes/skinRoute";
+import { useGameSessionPing, GAME_SESSION_IDS } from "../hooks/useGameSessionPing";
 
 // One chunk per skin, warmed at module scope — see lazySkins.
 const NAVS = lazySkins({
@@ -165,6 +166,7 @@ export default function PenaltyKickPage() {
   // mute toggle. Audio still works (and respects the persisted-mute flag the
   // hook owns); the toggle can be reintroduced from a sub-menu later if needed.
   const { play, stop } = useAudio();
+  useGameSessionPing(GAME_SESSION_IDS.PENALTY_KICK);
 
   const [phase, setPhase] = useState(PHASES.LOADING);
   const [dialog, setDialog] = useState(null);
