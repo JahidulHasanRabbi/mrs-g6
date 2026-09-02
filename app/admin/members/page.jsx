@@ -72,10 +72,10 @@ function formatDateTime(dateString) {
   }
 }
 
-// Reads whichever battle-point key the member-list payload carries; null when
-// the backend has not added the field yet, so the cell reads N/A instead of 0.
+// The member-list payload carries this as `current_bp` (confirmed live);
+// null only if a row genuinely omits it, so the cell reads N/A instead of 0.
 function battlePointsOf(member) {
-  const value = member.current_battle_points ?? member.battle_points ?? member.current_battle_point;
+  const value = member.current_bp ?? member.current_battle_points ?? member.battle_points;
   if (value == null || value === "") return null;
   const num = Number(value);
   return Number.isFinite(num) ? num : null;

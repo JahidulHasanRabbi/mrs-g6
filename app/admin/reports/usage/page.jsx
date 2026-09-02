@@ -47,7 +47,7 @@ const SUMMARY_CARDS = [
   { key: "total_tokens_consumed", label: "Total Withdrawal", icon: "withdraw", hint: "Tokens consumed in this period" },
   { key: "total_rewards_given", label: "Rewards Given", prefix: "RM", icon: "rm", hint: "RM paid out where tracked" },
   { key: "average_session_per_user", label: "Avg Sessions/User", decimals: 2, icon: "avg", hint: "Sessions ÷ active users" },
-  { key: "avg_sessions_per_day", label: "Avg. Session Duration", format: "rate", icon: "clock", hint: "Plays ÷ days in this view" },
+  { key: "avg_session_duration", label: "Avg. Session Duration", format: "duration", icon: "clock", hint: "Total time in-game ÷ days in this view" },
 ];
 
 function formatNumber(value, decimals = 0) {
@@ -74,22 +74,18 @@ function formatMoney(value) {
   return num.toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-// avg_sessions_per_day is a frequency (plays ÷ days in range), not a length of
-// time — the API has no session-duration data. This is a placeholder display;
-// the final treatment for this metric is still being designed.
-function formatSessionsPerDay(value) {
+// avg_session_duration is real now: total seconds spent in-game, summed
+// across sessions in range, divided by the number of days in range (confirmed
+// live and in doc/usage-report-api-reference.md, fed by the game-session
+// ping heartbeat). Render it as a duration, not a raw seconds count.
+function formatSessionDuration(value) {
   if (value == null || value === "") return "N/A";
-  const num = Number(value);
-  if (!Number.isFinite(num)) return "N/A";
-  return `${formatNumber(num, 2)} / day`;
-}
-
-function daysInRange(range) {
-  if (!range?.from || !range?.to) return 1;
-  const from = new Date(`${range.from}T00:00:00`);
-  const to = new Date(`${range.to}T00:00:00`);
-  const diff = Math.round((to - from) / 86400000) + 1;
-  return Math.max(1, diff);
+  const totalSeconds = Number(value);
+  if (!Number.isFinite(totalSeconds)) return "N/A";
+  if (totalSeconds < 60) return `${formatNumber(totalSeconds, 1)}s`;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = Math.round(totalSeconds % 60);
+  return `${minutes}m ${seconds}s`;
 }
 
 function asPercentRate(value) {
@@ -132,17 +128,13 @@ function rowsOf(res) {
 // "Total Withdrawal" (really total_tokens_consumed, see SUMMARY_CARDS) is
 // scoped to the whole period, not the game, so it always reads from
 // /summary/ — unlike Avg. Session Duration, which follows the selection.
-// For "all games" there's no ready-made avg_sessions_per_day from the API
-// (that field only exists per-game), so it's derived with the same formula
-// the backend documents: total sessions ÷ days in the selected range.
-function gameSummary(overallSummary, gameRows, game, range) {
+// /summary/ already returns its own avg_session_duration for "all games";
+// /games/ returns one per game — no client-side derivation needed for either.
+function gameSummary(overallSummary, gameRows, game) {
   const totalTokensConsumed = overallSummary?.total_tokens_consumed ?? null;
 
   if (game === "all") {
-    const allGamesRate = overallSummary?.total_sessions != null
-      ? Number(overallSummary.total_sessions) / daysInRange(range)
-      : null;
-    return { ...overallSummary, total_tokens_consumed: totalTokensConsumed, avg_sessions_per_day: allGamesRate };
+    return { ...overallSummary, total_tokens_consumed: totalTokensConsumed };
   }
 
   const row = gameRows.find((item) => String(item.game) === String(game));
@@ -153,7 +145,7 @@ function gameSummary(overallSummary, gameRows, game, range) {
       total_rewards_given: null,
       average_session_per_user: 0,
       total_tokens_consumed: totalTokensConsumed,
-      avg_sessions_per_day: null,
+      avg_session_duration: null,
     };
   }
 
@@ -163,7 +155,7 @@ function gameSummary(overallSummary, gameRows, game, range) {
     total_rewards_given: row.credit_rm,
     average_session_per_user: row.avg_sessions_per_player,
     total_tokens_consumed: totalTokensConsumed,
-    avg_sessions_per_day: row.avg_sessions_per_day ?? null,
+    avg_session_duration: row.avg_session_duration ?? null,
   };
 }
 
@@ -197,7 +189,7 @@ function TinyIcon({ type, size = 22 }) {
 function MetricCard({ metric, summary }) {
   const raw = summary?.[metric.key];
   let value;
-  if (metric.format === "rate") value = formatSessionsPerDay(raw);
+  if (metric.format === "duration") value = formatSessionDuration(raw);
   else if (metric.prefix === "RM") value = formatMoney(raw);
   else value = formatNumber(raw, metric.decimals || 0);
 
@@ -483,7 +475,7 @@ const MEMBER_COLUMNS = [
   { key: "station", label: "Station", className: "w-[110px]" },
   { key: "tokens_used", label: "Tokens Used", className: "w-[115px]", sortable: true },
   { key: "battle_point_used", label: "Battle Point Used", className: "w-[145px]", sortable: true },
-  { key: "avg_sessions_per_day", label: "Avg. Session Duration", className: "w-[165px]", sortable: true },
+  { key: "avg_session_duration", label: "Avg. Session Duration", className: "w-[165px]", sortable: true },
   { key: "most_played_game", label: "Most Played Game", className: "w-[145px]" },
   { key: "total_rewards", label: "Total Rewards", className: "w-[125px]", sortable: true },
 ];
@@ -502,7 +494,7 @@ function normalizeMemberRow(row, index) {
     station: row.station ?? row.station_name,
     tokens_used: row.tokens_used,
     battle_point_used: row.battle_point_used,
-    avg_sessions_per_day: row.avg_sessions_per_day,
+    avg_session_duration: row.avg_session_duration,
     most_played_game: row.most_played_game_label ?? row.most_played_game,
     total_rewards: row.total_rewards,
   };
@@ -607,7 +599,7 @@ function MemberUsageHistory({ range, game }) {
                 <td className="truncate px-4 py-3 text-[13px] text-white/70" title={row.station || ""}>{row.station || "N/A"}</td>
                 <td className="px-4 py-3 text-[13px] text-[#a78bfa]">{formatNumber(row.tokens_used)}</td>
                 <td className="px-4 py-3 text-[13px] text-[#54d7ff]">{formatNumber(row.battle_point_used)}</td>
-                <td className="px-4 py-3 text-[13px] text-white/85">{formatSessionsPerDay(row.avg_sessions_per_day)}</td>
+                <td className="px-4 py-3 text-[13px] text-white/85">{formatSessionDuration(row.avg_session_duration)}</td>
                 <td className="truncate px-4 py-3 text-[13px] text-white/85" title={gameLabel(row.most_played_game)}>{gameLabel(row.most_played_game)}</td>
                 <td className="px-4 py-3 text-[13px] text-[#f6dda6]">{row.total_rewards == null ? "N/A" : `RM ${formatMoney(row.total_rewards)}`}</td>
               </tr>
@@ -648,7 +640,7 @@ function UsageReportContent() {
   }, [games]);
 
   const selectedGameLabel = useMemo(() => gameOptions.find((option) => option.value === game)?.label || "All Games", [gameOptions, game]);
-  const metricSummary = useMemo(() => gameSummary(summary, games, game, range), [summary, games, game, range]);
+  const metricSummary = useMemo(() => gameSummary(summary, games, game), [summary, games, game]);
   const performanceRows = useMemo(
     () => (game === "all" ? games : games.filter((row) => String(row.game) === String(game))),
     [games, game],
