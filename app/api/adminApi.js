@@ -129,27 +129,47 @@ export async function archiveMission(uuid) {
   return await apiRequest(ENDPOINTS.MISSION.ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
 }
 
-// Mission Pop Out promotion settings. `banner_image` may be a File — apiRequest
+// Mission Promotion (doc/usage-report-api-reference.md, "MISSION PROMOTION").
+// One promotion per mission — there is no standalone list endpoint, so the
+// admin list page builds its own by checking each mission in turn (see
+// listMissionPromotions below). `banner_image` may be a File — apiRequest
 // switches to multipart on its own when it finds one in the body.
-export async function getMissionPopupSettings(params = {}) {
-  const qs = buildQueryParams(params);
-  return await apiRequest(`${ENDPOINTS.MISSION.POPUP_SETTINGS}${qs}`, { method: 'GET' }, true, 'admin');
+export async function getMissionPromotion(missionUuid) {
+  return await apiRequest(ENDPOINTS.MISSION.PROMOTION(missionUuid), { method: 'GET' }, true, 'admin');
 }
 
-export async function getMissionPopupSetting(uuid) {
-  return await apiRequest(ENDPOINTS.MISSION.POPUP_SETTING(uuid), { method: 'GET' }, true, 'admin');
+// PATCH is an upsert (create-or-update) and, despite the verb, not a partial
+// update — every field must be sent every time, same convention as Mission itself.
+export async function saveMissionPromotion(missionUuid, data) {
+  return await apiRequest(ENDPOINTS.MISSION.PROMOTION(missionUuid), { method: 'PATCH', body: data }, true, 'admin');
 }
 
-export async function createMissionPopupSetting(data) {
-  return await apiRequest(ENDPOINTS.MISSION.POPUP_SETTINGS, { method: 'POST', body: data }, true, 'admin');
+export async function archiveMissionPromotion(missionUuid) {
+  return await apiRequest(ENDPOINTS.MISSION.PROMOTION_ARCHIVE(missionUuid), { method: 'PATCH' }, true, 'admin');
 }
 
-export async function updateMissionPopupSetting(uuid, data) {
-  return await apiRequest(ENDPOINTS.MISSION.POPUP_SETTING(uuid), { method: 'PUT', body: data }, true, 'admin');
-}
-
-export async function archiveMissionPopupSetting(uuid) {
-  return await apiRequest(ENDPOINTS.MISSION.POPUP_SETTING_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+// Fans out to every mission and keeps the ones that have a promotion
+// configured. The API has no bulk endpoint for this (a promotion is only
+// reachable by its mission's uuid), so this is the only way to list them —
+// acceptable for an admin-only screen against a mission count in the tens to
+// low hundreds. Missions with no promotion resolve their GET as a rejection
+// (400 "does not exist") and are simply filtered out, not treated as errors.
+export async function listMissionPromotions() {
+  const rows = [];
+  let page = 1;
+  // page_size is capped server-side at 100 (StandardPagination), so a mission
+  // count past that needs more than one page.
+  for (;;) {
+    const data = await getMissions({ page, page_size: 100 });
+    const pageRows = Array.isArray(data) ? data : data?.results ?? [];
+    rows.push(...pageRows);
+    if (Array.isArray(data) || !data?.next) break;
+    page += 1;
+  }
+  const settled = await Promise.allSettled(rows.map((m) => getMissionPromotion(m.uuid)));
+  return settled
+    .filter((r) => r.status === 'fulfilled' && r.value && !r.value.archived)
+    .map((r) => r.value);
 }
 
 export async function getLuckySpinItems() {

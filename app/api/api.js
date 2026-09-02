@@ -57,15 +57,15 @@ export const ENDPOINTS = {
     JOIN: (uuid) => `/mission/missions/${uuid}/join/`,
     CLAIM: (uuid) => `/mission/missions/${uuid}/claim/`,
     PROGRESS_HISTORY: '/mission/missions/progress-history/',
-    // Pop Out promotion (client slides 3-6). Back office CRUD + the member
-    // lookups the /missions pop-ups run on claim and on page entry.
-    POPUP_SETTINGS: '/mission/pop-out-settings/',
-    POPUP_SETTING: (uuid) => `/mission/pop-out-settings/${uuid}/`,
-    POPUP_SETTING_ARCHIVE: (uuid) => `/mission/pop-out-settings/${uuid}/archive/`,
-    POPUP_FOR_MISSION: (uuid) => `/mission/missions/${uuid}/pop-out/`,
-    POPUP_PENDING: '/mission/pop-out/pending/',
-    POPUP_SHOWN: (uuid) => `/mission/pop-out/${uuid}/shown/`,
-    POPUP_ACK: (uuid) => `/mission/pop-out/${uuid}/acknowledge/`,
+    // Mission Promotion pop-up (doc/usage-report-api-reference.md, "MISSION
+    // PROMOTION"). A promotion is one-to-one with a mission — admin CRUD is
+    // GET/PATCH on the mission itself, member lookups are their own
+    // top-level resources keyed by participation uuid.
+    PROMOTION: (missionUuid) => `/mission/missions/${missionUuid}/promotion/`,
+    PROMOTION_ARCHIVE: (missionUuid) => `/mission/missions/${missionUuid}/promotion/archive/`,
+    PROMOTION_CHECK: (missionUuid) => `/mission/missions/${missionUuid}/promotion/check/`,
+    PROMOTION_PENDING: '/mission/promotions/pending-completions/',
+    PROMOTION_ACK: (participationUuid) => `/mission/promotions/${participationUuid}/acknowledge/`,
   },
   // Phase 3 planet RPG (docs/MRS - G6 Avatar API Documentation.md).
   // Shared by the member-facing game and the back-office pages.

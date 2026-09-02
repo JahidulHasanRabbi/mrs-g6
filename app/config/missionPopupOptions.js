@@ -46,3 +46,17 @@ export const POPUP_WEEKDAYS = [
 ];
 
 export const POPUP_REWARD_UNIT = { 1: "Tokens", 2: "Battle Points" };
+
+// Fixed station enum for a promotion's `eligibility_stations` (doc/usage-report-api-reference.md,
+// "MISSION PROMOTION" → Station). Not a live lookup of Station rows — these six ids are the
+// only brands the promotion eligibility check understands.
+export const POPUP_ELIGIBILITY_STATION_LABELS = {
+  1: "N1GANG",
+  2: "KGAME99",
+  3: "EP369",
+  4: "ACEBET77",
+  5: "UBETCLUB",
+  6: "LV918",
+};
+
+export const POPUP_ELIGIBILITY_STATION_OPTIONS = toOptions(POPUP_ELIGIBILITY_STATION_LABELS);

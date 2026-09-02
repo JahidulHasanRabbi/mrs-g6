@@ -38,7 +38,6 @@ import {
   beginUnlock,
   getMissionPopup,
   getPendingMissionPopup,
-  recordMissionPopupShown,
   walletUrlFor,
 } from "../components/missions/promotion/promoApi";
 
@@ -280,16 +279,17 @@ export default function MissionsPage() {
   // completion confirmation, independent of the claim-time trigger. Runs
   // alongside the feature-status call rather than behind it; the modal is held
   // back by `isMaintenance` at the render site.
-  useEffect(() => {
-    let cancelled = false;
+  const loadNextCompletedPromo = () => {
     getPendingMissionPopup()
       .then((pending) => {
-        if (!cancelled && pending?.can_show && pending.state === "completed") {
-          setCompletedPromo(pending);
-        }
+        if (pending?.can_show && pending.state === "completed") setCompletedPromo(pending);
       })
       .catch(() => {});
-    return () => { cancelled = true; };
+  };
+
+  useEffect(() => {
+    loadNextCompletedPromo();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -329,18 +329,21 @@ export default function MissionsPage() {
     setActionId(id);
     setError("");
     try {
-      await claimMissionReward(id);
+      const claimed = await claimMissionReward(id);
       loadMissions();
       refreshUserData?.().catch(() => {});
       // The promotion is a bonus on top of a claim that already succeeded, so
-      // a failure here must never surface as a claim error.
-      try {
-        const offer = await getMissionPopup(id);
-        if (offer?.can_show && (offer.state === "offer" || offer.state === "blocked")) {
-          setPromo(offer);
-          recordMissionPopupShown(offer.uuid).catch(() => {});
-        }
-      } catch { /* no promotion configured for this mission */ }
+      // a failure here must never surface as a claim error. promotion_available
+      // is the lightweight signal from the claim response telling us whether
+      // this mission even has an active promotion worth checking.
+      if (claimed?.promotion_available) {
+        try {
+          const offer = await getMissionPopup(id);
+          if (offer?.can_show && (offer.state === "offer" || offer.state === "blocked")) {
+            setPromo(offer);
+          }
+        } catch { /* eligibility check failed — skip the promotion silently */ }
+      }
     } catch (err) {
       setError(err?.data?.detail || err?.message || "Failed to claim reward.");
     } finally {
@@ -358,11 +361,14 @@ export default function MissionsPage() {
     window.location.href = walletUrlFor(promo);
   };
 
-  const handleAcknowledgeCompleted = () => {
+  const handleAcknowledgeCompleted = async () => {
     const uuid = completedPromo?.uuid;
     setCompletedPromo(null);
-    if (uuid) acknowledgeMissionPopup(uuid).catch(() => {});
+    if (uuid) await acknowledgeMissionPopup(uuid).catch(() => {});
     refreshUserData?.().catch(() => {});
+    // pending-completions can hold more than one row (e.g. the member was
+    // away when several promotions completed) — walk them one at a time.
+    loadNextCompletedPromo();
   };
 
   const loadHistory = async () => {

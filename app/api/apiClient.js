@@ -55,8 +55,13 @@ function convertToFormData(data) {
       if (value === null || value === undefined) {
         continue;
       }
-      
-      formData.append(key, value);
+
+      if (Array.isArray(value)) {
+        // DRF reads a repeated key as the list, not one comma-joined value.
+        value.forEach((item) => formData.append(key, item));
+      } else {
+        formData.append(key, value);
+      }
     }
   }
   
@@ -161,8 +166,11 @@ export async function apiRequest(endpoint, options = {}, requiresAuth = false, t
     }
 
     try {
-      const data = await response.json();
-      return data;
+      // A 200 with an empty body is a valid "nothing to report" response
+      // (e.g. GET .../promotion/check/ returns exactly this when there is no
+      // promotion to show) — treat it as null rather than a parse failure.
+      const text = await response.text();
+      return text ? JSON.parse(text) : null;
     } catch (parseError) {
       throw {
         message: 'Invalid JSON response',

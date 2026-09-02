@@ -5,14 +5,15 @@ Base path: `/usage-report/`. All endpoints require JWT authentication (`IsAuthen
 This is a **read-only analytics** module. It aggregates over the existing mini-game
 logs — it never writes, has no model of its own, and does not touch any game flow.
 
-There are 5 endpoints, each covering one or more sections of the Usage Report dashboard:
-**Summary**, **Games**, **Retention**, **Insights**, **Members**.
+There are 6 endpoints, each covering one or more sections of the Usage Report dashboard:
+**Summary**, **Participation**, **Games**, **Retention**, **Insights**, **Members**.
 
 Notes that apply to every endpoint:
 
 * `from_date` and `to_date` are **required** on every endpoint (format `YYYY-MM-DD`). The
   range is **inclusive** on both ends.
-* The **Summary** endpoint returns a **single JSON object** (no pagination). Top-level fields are scalars; `leaderboard` and `mission` are nested objects.
+* The **Summary** and **Participation** endpoints return a **single JSON object** (no
+  pagination). Summary is flat scalars; Participation is two nested objects.
 * The **Games**, **Retention**, **Insights** and **Members** endpoints return the standard **paginated
   envelope** (`count`, `next`, `previous`, `results`), matching every other paginated list in
   the project. The row list lives under `results`. They accept `page` and `page_size`
@@ -44,6 +45,7 @@ Notes that apply to every endpoint:
 | Method | Path | Description |
 | :--- | :--- | :--- |
 | GET | `/usage-report/summary/` | Overall usage KPIs + engagement breakdown (Reports 1 & 4) |
+| GET | `/usage-report/participation/` | Leaderboard participation + mission activity |
 | GET | `/usage-report/games/` | Per-game usage, rewards, new vs existing users (Reports 2, 5, 6, 7) |
 | GET | `/usage-report/games/retention/` | Per-game D1 / D7 / D30 retention (Report 8) |
 | GET | `/usage-report/insights/` | Daily trend over the range (Report 3) |
@@ -55,10 +57,11 @@ Common query parameters:
 | :--- | :--- | :--- | :--- |
 | from\_date | Date | Yes | Start of range, inclusive (`YYYY-MM-DD`) |
 | to\_date | Date | Yes | End of range, inclusive (`YYYY-MM-DD`) |
-| game | Int | No | Restrict to one game (1–5). Applies to `/games/`, `/games/retention/`, `/insights/`, `/members/`. Omit for all games |
+| game | Int | No | Restrict to one game (1–5). Applies to `/summary/`, `/games/`, `/games/retention/`, `/insights/`, `/members/` — every endpoint except `/participation/`, which has no game dimension. Omit for all games |
 | page | Int | No | Page number (paginated endpoints only: `/games/`, `/games/retention/`, `/insights/`, `/members/`). Default `1` |
 | page\_size | Int | No | Rows per page (paginated endpoints only). Default `20`, max `100` |
-| sort | Str | No | Column to order by, high to low (`/members/` only). See that section |
+| sort | Str | No | Column to order by (`/members/` only). See that section |
+| direction | Str | No | `High` or `Low` (`/members/` only, default `High`). See that section |
 
 Validation errors (any endpoint) return **400**:
 
@@ -68,6 +71,7 @@ Validation errors (any endpoint) return **400**:
 * `game` not an integer → `"game must be an integer"`
 * `game` not 1–5 → `"Invalid game id: <value>"`
 * `sort` not a sortable column → `"sort must be one of: ..."` (`/members/` only)
+* `direction` not `High`/`Low` → `"direction must be one of: High, Low"` (`/members/` only)
 
 Unauthenticated requests return **401**.
 
@@ -77,8 +81,99 @@ Unauthenticated requests return **401**.
 
 ### GET /usage-report/summary/
 
-Overall usage KPIs across all games, plus the user-engagement breakdown by number of
-games played.
+Overall usage KPIs, plus the user-engagement breakdown by number of games played.
+
+Query Parameters
+
+| Field | Type | Required | Description |
+| :--- | :--- | :--- | :--- |
+| from\_date | Date | Yes | Start of range, inclusive |
+| to\_date | Date | Yes | End of range, inclusive |
+| game | Int | No | Restrict to one game (1–5). Omit for all games |
+
+`game` behaves exactly as it does on `/games/`, `/games/retention/`, `/insights/` and
+`/members/`: omit it and every game is rolled up; send `game=1` and the totals cover Lucky
+Spin alone. An unknown id is a `400`, not a silently ignored filter — so the KPI cards and
+the table beneath them can never disagree.
+
+Response
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| total\_active\_users | Int | Distinct members who played in the range. Cross-game distinct when unfiltered; players of the selected game when filtered |
+| total\_sessions | Int | Total plays |
+| total\_tokens\_consumed | Int | Total tokens spent |
+| total\_rewards\_given | Str (Decimal) | Total RM paid out (Penalty Kick + Smash Egg only; see Limitations) |
+| average\_session\_per\_user | Float | `total_sessions / total_active_users` (0 if no users) |
+| avg\_session\_duration | Float | Total time (seconds) spent in the range, divided by the number of days in the range. Same measure as on `/games/` and `/members/`, rolled up. `0` if no sessions were tracked. See **AVG. SESSION DURATION** |
+| played\_1\_game | Int | Members who played exactly 1 distinct game. **All-games response only** |
+| played\_2\_games | Int | Members who played exactly 2 distinct games. **All-games response only** |
+| played\_3\_games | Int | Members who played exactly 3 distinct games. **All-games response only** |
+| played\_4\_plus\_games | Int | Members who played 4 or more distinct games. **All-games response only** |
+
+The first six fields always come back and follow `game`. The four `played_*` buckets are
+**present only when no game is selected**, where they sum to `total_active_users`. Send
+`game=N` and those four keys are **absent from the response entirely** — not zero, not
+null, absent. Read them with `.get()` or guard on the filter.
+
+> Why: they count how many *different* games each member played. Scope that to one game
+> and every player has played exactly one, so the breakdown would collapse into
+> `played_1_game` and stop meaning anything. Rather than return a misleading number, the
+> block is left out.
+
+> `total_rewards_given` is always a decimal string, including `"0.00"` for `game=4`
+> (Prediction), which tracks no RM at all. That differs from `credit_rm` on `/games/`,
+> which uses `null` for the same case. Summary keeps the type stable so the FE never has
+> to null-check a money field; treat `"0.00"` on Prediction as "not tracked".
+
+Example — all games
+
+`GET /usage-report/summary/?from_date=2026-08-01&to_date=2026-08-31`
+
+```json
+{
+  "total_active_users": 6,
+  "total_sessions": 11,
+  "total_tokens_consumed": 66,
+  "total_rewards_given": "35.50",
+  "avg_session_duration": 156.4,
+  "average_session_per_user": 1.83,
+  "played_1_game": 3,
+  "played_2_games": 3,
+  "played_3_games": 0,
+  "played_4_plus_games": 0
+}
+```
+
+Example — Lucky Spin only
+
+`GET /usage-report/summary/?from_date=2026-08-01&to_date=2026-08-31&game=1`
+
+```json
+{
+  "total_active_users": 4,
+  "total_sessions": 5,
+  "total_tokens_consumed": 30,
+  "total_rewards_given": "0.00",
+  "avg_session_duration": 61.2,
+  "average_session_per_user": 1.25
+}
+```
+
+Six keys, not ten — the `played_*` breakdown is gone.
+
+---
+
+# PARTICIPATION
+
+### GET /usage-report/participation/
+
+Leaderboard participation and mission activity for the range. These two blocks used to sit
+inside `/summary/`; they were split out because neither has a game dimension, so they would
+never respond to the dashboard's game filter. Load this endpoint only on the screens that
+show leaderboard or mission figures.
+
+The numbers themselves are unchanged — same fields, same calculations, same range handling.
 
 Query Parameters
 
@@ -87,25 +182,16 @@ Query Parameters
 | from\_date | Date | Yes | Start of range, inclusive |
 | to\_date | Date | Yes | End of range, inclusive |
 
-> Note: `/summary/` always rolls up **all** games; it ignores the `game` parameter.
+There is no `game` parameter. A leaderboard is not a game, and missions span all of them.
 
 Response
 
 | Field | Type | Description |
 | :--- | :--- | :--- |
-| total\_active\_users | Int | Distinct members who played **any** game in the range (cross-game distinct) |
-| total\_sessions | Int | Total plays across all games |
-| total\_tokens\_consumed | Int | Total tokens spent across all games |
-| total\_rewards\_given | Str (Decimal) | Total RM paid out (Penalty Kick + Smash Egg only; see Limitations) |
-| average\_session\_per\_user | Float | `total_sessions / total_active_users` (0 if no users) |
-| played\_1\_game | Int | Members who played exactly 1 distinct game |
-| played\_2\_games | Int | Members who played exactly 2 distinct games |
-| played\_3\_games | Int | Members who played exactly 3 distinct games |
-| played\_4\_plus\_games | Int | Members who played 4 or more distinct games |
-| leaderboard | Object | Leaderboard participation summary for the range (see below) |
-| mission | Object | Mission activity summary for the range (see below) |
+| leaderboard | Object | Leaderboard participation for the range (see below) |
+| mission | Object | Mission activity for the range (see below) |
 
-The four `played_*` buckets sum to `total_active_users`.
+Both keys are always present. There are no top-level scalars.
 
 **`leaderboard` object**
 
@@ -130,17 +216,10 @@ The four `played_*` buckets sum to `total_active_users`.
 
 Example
 
+`GET /usage-report/participation/?from_date=2026-08-01&to_date=2026-08-31`
+
 ```json
 {
-  "total_active_users": 6,
-  "total_sessions": 11,
-  "total_tokens_consumed": 66,
-  "total_rewards_given": "35.50",
-  "average_session_per_user": 1.83,
-  "played_1_game": 3,
-  "played_2_games": 3,
-  "played_3_games": 0,
-  "played_4_plus_games": 0,
   "leaderboard": {
     "total_participants": 18,
     "deposit_participants": 10,
@@ -156,6 +235,9 @@ Example
   }
 }
 ```
+
+Errors are the shared ones — missing dates, bad format, reversed range, and `401` without a
+token.
 
 ---
 
@@ -393,7 +475,8 @@ Query Parameters
 | from\_date | Date | Yes | Start of range, inclusive |
 | to\_date | Date | Yes | End of range, inclusive |
 | game | Int | No | Restrict to one game (1–5). See **What the game filter scopes** below |
-| sort | Str | No | Column to order by, always high to low. One of `tokens_used`, `battle_point_used`, `sessions`, `avg_session_duration`, `total_rewards`. Default `sessions` |
+| sort | Str | No | Column to order by. One of `tokens_used`, `battle_point_used`, `sessions`, `avg_session_duration`, `total_rewards`. Default `sessions` |
+| direction | Str | No | `High` or `Low` (matches the CRM member list convention). `High` = highest first (default), `Low` = lowest first |
 | page | Int | No | Default `1` |
 | page\_size | Int | No | Default `20`, max `100` |
 
@@ -469,7 +552,11 @@ Sorting happens on the server across the **complete filtered set**, then the res
 Selecting a sort therefore reorders every member in the range, not just the rows currently on
 screen. `no` is assigned after sorting, so it keeps counting across pages.
 
-Ties are broken by username then member uuid, so paging is stable between requests.
+`direction=High` (default) sorts highest to lowest; `direction=Low` sorts lowest to highest.
+If `sort` is omitted, `direction` still applies to the default `sessions` ordering.
+
+Ties are broken by username then member uuid (always ascending, regardless of `direction`),
+so paging is stable between requests.
 
 ### What the game filter scopes
 
@@ -711,3 +798,226 @@ One field was added to the existing endpoint. Everything else is unchanged.
 * Both `current_tokens` and `current_bp` are computed per row, so a page costs roughly
   4 queries per member. Fine at the default page size of 20; worth folding into the
   queryset if the page size is raised.
+
+---
+
+# MISSION PROMOTION
+
+Base path: `/mission/`. Covers requirement rows 2–18 (MRS Mission Promotion Pop-up).
+
+A **Promotion** is an optional, admin-configured deposit campaign attached to exactly one
+**Mission** (`OneToOneField`). Most missions have none. When a member claims a mission that
+has an active, eligible promotion, a pop-up is shown asking them to deposit; once they do,
+the reward is credited automatically — no further member action required.
+
+## Choices
+
+### Deposit Mode (`deposit_mode`)
+
+| ID | Meaning |
+| ---: | :--- |
+| 1 | Single Deposit — count of individual deposits each `>= deposit_amount`, must reach `deposit_times` |
+| 2 | Accumulated Deposit — sum of all deposits (any size) must reach `deposit_amount`; `deposit_times` is ignored |
+
+### Limit Type (`display_frequency_type` / `claim_limit_type` — same choice set, two independent uses)
+
+| ID | Meaning |
+| ---: | :--- |
+| 1 | Once per member |
+| 2 | Once per member per day |
+| 3 | Limited times during the promotion period — requires `display_frequency_limit` / `claim_limit_value` |
+
+### Reward Type (`reward_type`)
+
+| ID | Meaning |
+| ---: | :--- |
+| 1 | Token |
+| 2 | Battle Point |
+
+### Station (`eligibility_stations` — a fixed enum, not a live lookup of `Station` rows)
+
+| ID | Brand | Station.domain |
+| ---: | :--- | :--- |
+| 1 | N1GANG | n1gang |
+| 2 | KGAME99 | kgame99 |
+| 3 | EP369 | ep369 |
+| 4 | ACEBET77 | acebet77 |
+| 5 | UBETCLUB | ubetclub |
+| 6 | LV918 | lv918 |
+
+### Weekday (`days_of_week`)
+
+Monday = 1 ... Sunday = 7. Empty list means every day.
+
+---
+
+## Admin
+
+### GET /mission/missions/{mission_uuid}/promotion/
+
+Retrieve the promotion attached to a mission. **400** if none exists.
+
+```json
+{
+  "uuid": "...", "mission_uuid": "...", "mission_name": "Daily Deposit RM100",
+  "enabled": true,
+  "start_date": "2026-09-01T00:00:00Z", "end_date": "2026-09-30T23:59:59Z",
+  "days_of_week": [1, 2, 3, 4, 5], "daily_start_time": "09:00:00", "daily_end_time": "17:00:00",
+  "banner_image": "https://.../mission_promotion/xxxx.png",
+  "content_text": "Deposit RM200 & Get Extra 50 Tokens",
+  "deposit_amount": "200.00", "deposit_times": 1, "deposit_mode": 1,
+  "display_frequency_type": 2, "display_frequency_limit": null,
+  "claim_limit_type": 1, "claim_limit_value": null,
+  "reward_type": 1, "reward_amount": 50,
+  "eligibility_stations": [1, 4],
+  "eligibility_wallet_vip_tiers": ["uuid1"], "eligibility_mrs_tiers": ["uuid2"],
+  "archived": null
+}
+```
+
+### PATCH /mission/missions/{mission_uuid}/promotion/
+
+Create or update (upsert on whether one already exists for this mission). Despite the verb,
+this is **not a partial update** — every required field must be sent on every call, including
+updates. Same convention as the existing `Mission` update endpoint.
+
+Request — same shape as the GET response, plus these two swapped for write:
+
+```json
+{
+  "eligibility_wallet_vip_tier_uuids": ["uuid1"],
+  "eligibility_mrs_tier_uuids": ["uuid2"],
+  "...rest": "same fields as the GET response above (enabled, start_date, end_date, days_of_week, daily_start_time, daily_end_time, banner_image, content_text, deposit_amount, deposit_times, deposit_mode, display_frequency_type, display_frequency_limit, claim_limit_type, claim_limit_value, reward_type, reward_amount, eligibility_stations)"
+}
+```
+
+Validation (**400**):
+
+* `end_date` before `start_date`
+* `daily_end_time` before or equal to `daily_start_time`
+* `display_frequency_type == 3` without `display_frequency_limit`
+* `claim_limit_type == 3` without `claim_limit_value`
+
+### PATCH /mission/missions/{mission_uuid}/promotion/archive/
+
+Soft-delete. Same response shape as GET, with `archived` now set.
+
+---
+
+## Member
+
+### POST /mission/missions/{mission_uuid}/claim/ (extended)
+
+The existing claim endpoint now returns one extra field:
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| promotion\_available | Bool | Whether this mission has an active, in-window, eligible promotion for this member right now. Does **not** create a participation record or schedule the recheck task — it's a lightweight signal telling the frontend whether to call `promotion/check/` next |
+
+```json
+{
+  "uuid": "...", "mission_name": "...", "mission_uuid": "...", "category": 1,
+  "token_amount": 5, "battle_point_amount": 0, "created": "...",
+  "promotion_available": true
+}
+```
+
+### GET /mission/missions/{mission_uuid}/promotion/check/
+
+Call this when `promotion_available` is `true`. Runs the full eligibility chain (schedule
+window → station/wallet-tier/MRS-tier eligibility → display-frequency cap), creates the
+per-member participation record on first call, and schedules the deposit recheck task. The
+frontend decides which pop-up scenario to render from `wallet_balance` — the backend does not
+make that call.
+
+```json
+{
+  "banner_image": "https://.../xxxx.png",
+  "content_text": "Deposit RM200 & Get Extra 50 Tokens",
+  "deposit_amount": "200.00", "deposit_times": 1, "deposit_mode": 1,
+  "reward_type": 1, "reward_amount": 50,
+  "wallet_balance": "0.00",
+  "participation_uuid": "..."
+}
+```
+
+Returns `null` (still **200**) if there's nothing to show — no promotion, disabled, outside
+its schedule window, member not eligible, already completed/expired, or the display-frequency
+cap has been reached.
+
+`wallet_balance` is the member's live balance on their **current station**
+(`member.last_system`) — matching the same station every other reward-crediting flow in this
+codebase uses, not a cross-station total. Fetched via the third-party platform
+(`get_player_details`), same call the `GetMemberWallet` endpoint uses internally.
+
+**How the frontend picks the scenario** — the API does not return a `scenario` field; derive
+it from `wallet_balance`:
+
+* `wallet_balance == "0.00"` → **Scenario 1 (eligible)**. Render `banner_image` +
+  `content_text` from this response (e.g. "Deposit RM200 & Get Extra 50 Tokens") with
+  **Unlock Reward** (→ Deposit page) and **Skip** (→ close) buttons.
+* `wallet_balance > "0.00"` → **Scenario 2 (not yet eligible)**. Render the fixed message
+  "Clear your wallet balance to unlock this reward." with **Clear Now** (→ NS Wallet Profile)
+  and **Skip** (→ close) buttons.
+
+`banner_image` and `content_text` only apply to Scenario 1 — admin configures a banner/image
+for the deposit-CTA pop-up alone. Scenario 2's copy is **fixed system text, not
+admin-configurable**; there is no equivalent content field for it anywhere in this API. Do not
+use `banner_image`/`content_text` when rendering Scenario 2 — ignore them in that branch.
+
+### GET /mission/promotions/pending-completions/
+
+Promotions this member has qualified for (reward already auto-credited) that haven't been
+acknowledged yet. Call this when the member opens the Mission page and show a "Mission
+Completed" pop-up for each row returned.
+
+```json
+[
+  {
+    "uuid": "...", "mission_uuid": "...", "mission_name": "...",
+    "reward_type": 1, "reward_amount": 50,
+    "completed_at": "2026-09-02T10:00:00Z"
+  }
+]
+```
+
+### PATCH /mission/promotions/{participation_uuid}/acknowledge/
+
+The "Got It" button. Marks the completion pop-up as seen — the participation stops appearing
+in `pending-completions`. **400** if the participation hasn't been completed yet.
+
+**Completion pop-up copy**: same as Scenario 2, this is **fixed system text, not
+admin-configurable** — there is no content field for it anywhere in this API. Render it from
+`reward_type` / `reward_amount` on the `pending-completions` row, e.g. "Mission Completed! You
+earned 50 Tokens — auto-credited to your account." with a **Got It** button that calls
+`acknowledge`.
+
+---
+
+## Notes
+
+* **Eligibility logic**: empty on `eligibility_stations` / `eligibility_wallet_vip_tiers` /
+  `eligibility_mrs_tiers` means "applies to all" for that dimension. If **both**
+  `eligibility_wallet_vip_tiers` and `eligibility_mrs_tiers` are set, the member must satisfy
+  **both** (AND), not either.
+* **Deposit crediting is asynchronous, not real-time**: a Celery task
+  (`check_promotion_completion`) rechecks every 12 hours from when the participation was
+  created, until either the deposit requirement is met (reward credited, `completed_at` set)
+  or `end_date` passes (`expired_at` set, no reward). It is not triggered by the deposit
+  webhook directly.
+* Only successful deposits count toward the requirement — `MemberDeposit` rows only ever
+  exist for webhook-validated successful deposits, so failed/pending/cancelled ones are
+  already excluded with no extra filtering needed.
+* **Claim limit enforcement**: `claim_limit_type` is fully enforced per member per promotion.
+  `1` (once per member) allows exactly one completed cycle ever. `2` (once per member per day)
+  allows one completed cycle per local calendar day. `3` (limited times during the promotion
+  period) allows up to `claim_limit_value` completed cycles total. A member can have multiple
+  `MemberPromotionParticipation` rows over time for the same promotion — a new cycle starts
+  the next time `promotion/check/` is called after the previous cycle completed (or expired),
+  gated by whichever `claim_limit_type` rule applies. An expired, never-completed cycle does
+  **not** consume a claim-limit slot — only completions count.
+* Reward crediting reason types: Token credits use `reason_type=19` ("MISSION-PROMOTION" in
+  `apps.members.choices.REASON_TYPE_CHOICE`); Battle Point credits use `reason_type=12`
+  ("MISSION-PROMOTION" in `apps.avatar.choices.BP_REASON_TYPE_CHOICE`) — distinct from a
+  regular mission claim's reward (`11` / `2` respectively), so promotion-driven rewards are
+  traceable separately from normal mission-claim rewards in reporting.

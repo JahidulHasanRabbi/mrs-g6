@@ -21,6 +21,7 @@ import {
   TimeInput,
   Toggle,
 } from "../../../components/admin/mission-game/formControls";
+import ConfirmDialog from "../../../components/admin/ui/ConfirmDialog";
 
 const REWARD_TYPE_OPTIONS = [
   { value: 1, label: "Token" },
@@ -122,6 +123,7 @@ function AddMissionForm() {
   const editingUuid = searchParams.get("uuid") || null;
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
+  const [confirmingSave, setConfirmingSave] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -136,7 +138,7 @@ function AddMissionForm() {
 
   const set = (key) => (v) => setForm((p) => ({ ...p, [key]: v }));
 
-  const handleSave = async () => {
+  const handleSaveClick = () => {
     setError("");
     if (!form.missionName.trim()) {
       setError("Mission name is required.");
@@ -146,6 +148,10 @@ function AddMissionForm() {
       setError("Start date and end date are required for time based missions.");
       return;
     }
+    setConfirmingSave(true);
+  };
+
+  const handleSave = async () => {
     setSaving(true);
     try {
       const payload = toPayload(form);
@@ -153,6 +159,7 @@ function AddMissionForm() {
       else await createMission(payload);
       router.push("/admin/mission-game");
     } catch (err) {
+      setConfirmingSave(false);
       setError(apiErrorMessage(err, "Failed to save mission."));
     } finally {
       setSaving(false);
@@ -265,7 +272,7 @@ function AddMissionForm() {
         </button>
         <button
           type="button"
-          onClick={handleSave}
+          onClick={handleSaveClick}
           disabled={saving || loading}
           className="rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold tracking-[-0.5px] text-[#141828] transition-opacity hover:opacity-90 disabled:opacity-50"
           style={{ backgroundImage: GOLD_BG }}
@@ -273,6 +280,21 @@ function AddMissionForm() {
           {saving ? "Saving..." : "Save"}
         </button>
       </div>
+
+      <ConfirmDialog
+        open={confirmingSave}
+        title={editingUuid ? "Update mission?" : "Create mission?"}
+        message={
+          editingUuid
+            ? `Save these changes to "${form.missionName}"? Members already in progress on it keep their current progress.`
+            : `Create the mission "${form.missionName}"? It becomes available to members immediately.`
+        }
+        confirmLabel={editingUuid ? "Save Changes" : "Create"}
+        tone="primary"
+        loading={saving}
+        onConfirm={handleSave}
+        onCancel={() => setConfirmingSave(false)}
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pagination } from "../../components/admin/members/DataTable";
 import MissionsTable from "../../components/admin/mission-game/MissionsTable";
+import ConfirmDialog from "../../components/admin/ui/ConfirmDialog";
 import { archiveMission, getMissions, getMissionSettings, updateMissionSettings } from "../../api/adminApi";
 import {
   MISSION_ACTION_LABELS,
@@ -97,6 +98,8 @@ export default function MissionGamePage() {
   const [loading, setLoading] = useState(true);
   const [maintenance, setMaintenance] = useState(false);
   const [savingMaintenance, setSavingMaintenance] = useState(false);
+  const [archiveTarget, setArchiveTarget] = useState(null);
+  const [archiving, setArchiving] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -138,11 +141,16 @@ export default function MissionGamePage() {
     }
   };
 
-  const handleArchive = async (mission) => {
-    if (!mission?.uuid) return;
-    if (!window.confirm(`Archive "${mission.name}"?`)) return;
-    await archiveMission(mission.uuid);
-    loadMissions();
+  const confirmArchive = async () => {
+    if (!archiveTarget?.uuid) return;
+    setArchiving(true);
+    try {
+      await archiveMission(archiveTarget.uuid);
+      setArchiveTarget(null);
+      loadMissions();
+    } finally {
+      setArchiving(false);
+    }
   };
 
   return (
@@ -185,7 +193,7 @@ export default function MissionGamePage() {
           missions={missions}
           loading={loading}
           onEdit={(m) => router.push(`/admin/mission-game/add?uuid=${m.uuid}`)}
-          onArchive={handleArchive}
+          onArchive={setArchiveTarget}
         />
       </div>
 
@@ -195,6 +203,17 @@ export default function MissionGamePage() {
         </p>
         <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
       </div>
+
+      <ConfirmDialog
+        open={!!archiveTarget}
+        title="Archive mission?"
+        message={archiveTarget ? `Archive "${archiveTarget.name}"? Members lose any in-progress claim on it.` : ""}
+        confirmLabel="Archive"
+        tone="destructive"
+        loading={archiving}
+        onConfirm={confirmArchive}
+        onCancel={() => setArchiveTarget(null)}
+      />
     </div>
   );
 }
