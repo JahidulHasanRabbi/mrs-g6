@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import HistorySection from "../../profile/HistorySection";
 import ThemedProfileCard from "../shared/ThemedProfileCard";
 import ThemedEditProfileList from "../shared/ThemedEditProfileList";
+import WelcomeGiftButton from "../shared/WelcomeGiftButton";
 import { ACEBET_ASSETS, ACEBET_COLORS } from "./assets";
 import { useUser } from "../../../contexts/UserContext";
 
@@ -73,6 +74,8 @@ export default function Acebet77ProfilePage() {
           profilePicture={profilePicture}
           onVipDetails={goVip}
         />
+
+        <WelcomeGiftButton />
 
         <div className="w-full max-w-[360px]">
           <HistorySection />

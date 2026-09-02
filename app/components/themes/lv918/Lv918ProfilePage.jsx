@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import HistorySection from "../../profile/HistorySection";
 import ThemedProfileCard from "../shared/ThemedProfileCard";
 import ThemedEditProfileList from "../shared/ThemedEditProfileList";
+import WelcomeGiftButton from "../shared/WelcomeGiftButton";
 import { LV918_ASSETS, LV918_COLORS } from "./assets";
 import { useUser } from "../../../contexts/UserContext";
 
@@ -80,6 +81,8 @@ export default function Lv918ProfilePage() {
           onVipDetails={goVip}
           avatarSize={44}
         />
+
+        <WelcomeGiftButton />
 
         <div className="w-full max-w-[360px]">
           <HistorySection />

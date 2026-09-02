@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import HistorySection from "../../profile/HistorySection";
 import ThemedProfileCard from "../shared/ThemedProfileCard";
 import ThemedEditProfileList from "../shared/ThemedEditProfileList";
+import WelcomeGiftButton from "../shared/WelcomeGiftButton";
 import { EP369_ASSETS, EP369_COLORS } from "./assets";
 import { useUser } from "../../../contexts/UserContext";
 
@@ -71,6 +72,8 @@ export default function Ep369ProfilePage() {
           profilePicture={profilePicture}
           onVipDetails={goVip}
         />
+
+        <WelcomeGiftButton />
 
         <div className="w-full max-w-[360px]">
           <HistorySection />
