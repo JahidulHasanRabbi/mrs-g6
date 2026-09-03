@@ -10,7 +10,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { RPG_COLORS, RPG_FONTS, RPG_VIEWS } from "../constants";
 import { RPG_IMAGES } from "../rpgAssets";
 import * as rpgApi from "../rpgApi";
-import { GoldCta } from "../primitives";
+import { GoldCta, Panel } from "../primitives";
+import { useRpgSkin } from "../rpgSkin";
 import NoticeModal from "../NoticeModal";
 
 const STAGES = { CLOSED: "CLOSED", OPENING: "OPENING", REVEALED: "REVEALED" };
@@ -41,6 +42,8 @@ function RewardIcon({ type, size = 22, image }) {
 }
 
 export default function MysteryBox({ boxId, onProfileUpdate, onNavigate }) {
+  const skin = useRpgSkin();
+  const pc = skin.cOnPanel;
   const [stage, setStage] = useState(STAGES.CLOSED);
   const [box, setBox] = useState(undefined); // undefined = loading, null = none
   const [reward, setReward] = useState(null);
@@ -112,11 +115,11 @@ export default function MysteryBox({ boxId, onProfileUpdate, onNavigate }) {
     <div className="flex w-full flex-1 flex-col items-center px-[18px]">
       <h2
         className="pt-[22px] text-center text-[24px] font-bold tracking-[6px]"
-        style={{ color: RPG_COLORS.text, fontFamily: RPG_FONTS.display, textShadow: "0 0 24px rgba(124,77,255,0.8)" }}
+        style={{ color: skin.c.title, fontFamily: RPG_FONTS.display, textShadow: skin.c.titleShadow }}
       >
         MYSTERY BOX
       </h2>
-      <p className="mt-[4px] text-center text-[12px]" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
+      <p className="mt-[4px] text-center text-[12px]" style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}>
         {box?.boss ? `${box.boss.name} defeated — claim your reward!` : "Claim your reward!"}
       </p>
 
@@ -187,8 +190,8 @@ export default function MysteryBox({ boxId, onProfileUpdate, onNavigate }) {
             <motion.div
               className="absolute flex flex-col items-center gap-[10px] rounded-[18px] border px-[26px] py-[20px]"
               style={{
-                background: "rgba(10,14,26,0.95)",
-                borderColor: RPG_COLORS.gold,
+                background: skin.modal.bg,
+                borderColor: skin.c.value,
                 boxShadow: "0 0 50px rgba(255,201,77,0.45)",
               }}
               initial={{ scale: 0.4, opacity: 0, y: 30 }}
@@ -196,10 +199,10 @@ export default function MysteryBox({ boxId, onProfileUpdate, onNavigate }) {
               transition={{ type: "spring", stiffness: 240, damping: 15 }}
             >
               <RewardIcon type={reward.type} size={40} />
-              <p className="text-center text-[16px] font-bold tracking-[1px]" style={{ color: RPG_COLORS.gold, fontFamily: RPG_FONTS.display }}>
+              <p className="text-center text-[16px] font-bold tracking-[1px]" style={{ color: skin.c.value, fontFamily: RPG_FONTS.display }}>
                 {reward.item ? reward.item.name : reward.label}
               </p>
-              <p className="text-center text-[11px]" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
+              <p className="text-center text-[11px]" style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}>
                 {reward.type === "equipment" && reward.item
                   ? `Added to your backpack (${reward.item.slot})`
                   : reward.type === "levelup"
@@ -214,31 +217,31 @@ export default function MysteryBox({ boxId, onProfileUpdate, onNavigate }) {
       </div>
 
       {/* Possible rewards */}
-      <div
-        className="mt-[6px] w-full rounded-[18px] border px-[18px] py-[14px]"
-        style={{ background: "rgba(8,10,22,0.72)", borderColor: RPG_COLORS.violetBorder }}
+      <Panel
+        className="mt-[6px]"
+        tone="dark"
       >
-        <p className="pb-[10px] text-center text-[13px] font-bold tracking-[3px]" style={{ color: RPG_COLORS.text, fontFamily: RPG_FONTS.display }}>
+        <p className="pb-[10px] text-center text-[13px] font-bold tracking-[3px]" style={{ color: pc.text, fontFamily: RPG_FONTS.display }}>
           ◇ POSSIBLE REWARDS ◇
         </p>
-        <div className="grid grid-cols-2 gap-x-[18px]">
+        <div className="grid grid-cols-2 gap-x-[12px]">
           {rewardTable.map((r) => (
             <div
               key={r.id}
               className="flex items-center gap-[10px] border-b py-[9px]"
-              style={{ borderColor: "rgba(139,92,246,0.18)" }}
+              style={{ borderColor: pc.rule }}
             >
               <RewardIcon type={r.type} image={r.image} />
-              <span className="min-w-0 truncate text-[12px] font-semibold" style={{ color: RPG_COLORS.text, fontFamily: RPG_FONTS.display }}>
+              <span className="min-w-0 truncate text-[12px] font-semibold" style={{ color: pc.text, fontFamily: RPG_FONTS.display }}>
                 {r.label}
               </span>
             </div>
           ))}
         </div>
-        <p className="pt-[10px] text-center text-[10px]" style={{ color: "#cbb96a", fontFamily: RPG_FONTS.display }}>
+        <p className="pt-[10px] text-center text-[10px]" style={{ color: pc.footnote, fontFamily: RPG_FONTS.display }}>
           Rewards are randomly selected
         </p>
-      </div>
+      </Panel>
 
       <div className="mt-auto w-full pb-[6px] pt-[16px]">
         <GoldCta

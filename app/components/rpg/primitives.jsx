@@ -6,36 +6,57 @@
 import { motion } from "framer-motion";
 import { RPG_COLORS, RPG_FONTS, RPG_GRADIENTS } from "./constants";
 import { RPG_IMAGES } from "./rpgAssets";
+import { nineSlice, RpgSkinProvider, useRpgSkin } from "./rpgSkin";
 
-// Violet-bordered translucent card (stats card, power breakdown, etc.).
-export function Panel({ children, className = "", style }) {
+// Content card. Default look is a violet-bordered translucent box; a station
+// skin wears the theme's ornate frame as a 9-slice so the corners keep their
+// shape however tall the content grows.
+//
+// A theme whose frame has a light interior (lv918's pink) supplies `onPanel`
+// ink; re-providing the skin's precomputed `panelSkin` means child components
+// pick it up without knowing they sit inside a frame. Parents that write inline
+// styles read `skin.cOnPanel` instead — those resolve above this provider.
+export function Panel({ children, className = "", style, tone = "default" }) {
+  const skin = useRpgSkin();
+  const body =
+    skin.panelSkin === skin ? children : <RpgSkinProvider skin={skin.panelSkin}>{children}</RpgSkinProvider>;
+
+  if (!skin.panel.frame) {
+    return (
+      <div
+        className={`w-full rounded-[16px] border p-[16px] ${className}`}
+        style={{
+          background: tone === "dark" ? skin.panel.fillDark : skin.panel.fill,
+          borderColor: tone === "dark" ? skin.panel.borderDark : skin.panel.border,
+          ...style,
+        }}
+      >
+        {body}
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={`w-full rounded-[16px] border p-[16px] ${className}`}
-      style={{
-        background: RPG_COLORS.violetSoft,
-        borderColor: RPG_COLORS.violetBorder,
-        ...style,
-      }}
-    >
-      {children}
+    <div className={`w-full ${className}`} style={{ ...nineSlice(skin.panel), ...style }}>
+      {body}
     </div>
   );
 }
 
 // Label / value line used inside panels.
-export function StatRow({ label, value, valueColor = RPG_COLORS.text }) {
+export function StatRow({ label, value, valueColor }) {
+  const skin = useRpgSkin();
   return (
     <div className="flex w-full items-center justify-between">
       <span
         className="text-[13px] font-semibold"
-        style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}
+        style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}
       >
         {label}
       </span>
       <span
         className="text-[13px] font-semibold"
-        style={{ color: valueColor, fontFamily: RPG_FONTS.display }}
+        style={{ color: valueColor || skin.c.text, fontFamily: RPG_FONTS.display }}
       >
         {value}
       </span>
@@ -44,15 +65,16 @@ export function StatRow({ label, value, valueColor = RPG_COLORS.text }) {
 }
 
 // Animated horizontal bar (EXP, boss HP, mission progress).
-export function ProgressBar({ pct, gradient = RPG_GRADIENTS.exp, height = 8, className = "" }) {
+export function ProgressBar({ pct, gradient, height = 8, className = "" }) {
+  const skin = useRpgSkin();
   return (
     <div
       className={`w-full overflow-hidden rounded-full ${className}`}
-      style={{ height, background: "rgba(255,255,255,0.1)" }}
+      style={{ height, background: skin.bar.track }}
     >
       <motion.div
         className="h-full rounded-full"
-        style={{ background: gradient }}
+        style={{ background: gradient || skin.bar.fill }}
         initial={false}
         animate={{ width: `${Math.max(0, Math.min(100, pct))}%` }}
         transition={{ type: "spring", stiffness: 90, damping: 20 }}
@@ -77,12 +99,33 @@ export function SlotChip({
   onDragEnd,
   onDragStart,
 }) {
+  const skin = useRpgSkin();
+  const tileFrame = skin.tile.frame;
+  // The tile art shares its panel's interior, so the chip takes panel ink —
+  // read off the skin so it is the same whether or not a Panel wraps this chip.
+  const tc = skin.cOnPanel;
+  const lightTile = tc !== skin.c;
   const equipped = Boolean(item);
   const canDrag = draggable && equipped;
   // The +power tag reads the item's real power_bonus from the API.
   const tag =
     powerTag ?? (Number.isFinite(item?.power) ? `+${Number(item.power).toLocaleString("en-GB")}` : "+1,000");
   const pad = size === "sm" ? "pt-[10px] pb-[8px] px-[4px]" : "pt-[14px] pb-[10px] px-[4px]";
+
+  // 9-slice so the ornament keeps its shape in the portrait chip box, and the
+  // border width reserves the frame's opening for the icon/label/tag.
+  const frameStyle = tileFrame
+    ? {
+        ...nineSlice(skin.tile),
+        boxShadow: equipped ? `0 0 14px ${skin.hud.badgeBorder}55` : "none",
+      }
+    : {
+        background: equipped ? "rgba(47,230,200,0.06)" : "rgba(255,255,255,0.03)",
+        borderColor: equipped ? RPG_COLORS.cyan : RPG_COLORS.violetBorderStrong,
+        borderStyle: equipped ? "solid" : "dashed",
+        boxShadow: equipped ? "0 0 14px rgba(47,230,200,0.15)" : "none",
+      };
+
   return (
     <motion.button
       type="button"
@@ -98,13 +141,8 @@ export function SlotChip({
       onDragStart={onDragStart}
       onDrag={onDrag}
       onDragEnd={onDragEnd}
-      className={`flex min-w-0 flex-1 flex-col items-center gap-[7px] rounded-[14px] border ${pad} ${canDrag ? "touch-none" : ""} ${onClick ? "" : "cursor-default"}`}
-      style={{
-        background: equipped ? "rgba(47,230,200,0.06)" : "rgba(255,255,255,0.03)",
-        borderColor: equipped ? RPG_COLORS.cyan : RPG_COLORS.violetBorderStrong,
-        borderStyle: equipped ? "solid" : "dashed",
-        boxShadow: equipped ? "0 0 14px rgba(47,230,200,0.15)" : "none",
-      }}
+      className={`flex min-w-0 flex-1 flex-col items-center justify-center gap-[7px] ${tileFrame ? "" : `rounded-[14px] border ${pad}`} ${canDrag ? "touch-none" : ""} ${onClick ? "" : "cursor-default"}`}
+      style={frameStyle}
     >
       <img
         src={equipped ? RPG_IMAGES.equipmentArt[slot] : RPG_IMAGES.equipment[slot]}
@@ -114,16 +152,22 @@ export function SlotChip({
       />
       <span
         className="text-[9px] font-semibold uppercase tracking-[1px]"
-        style={{ color: RPG_COLORS.slotLabel, fontFamily: RPG_FONTS.display }}
+        style={{ color: tc.slotLabel, fontFamily: RPG_FONTS.display }}
       >
         {slot}
       </span>
       <span
         className="rounded-[5px] px-[6px] py-[2px] text-[9px] font-bold tracking-[1px]"
         style={
-          equipped
-            ? { background: "rgba(47,230,200,0.18)", color: RPG_COLORS.cyanSoft, fontFamily: RPG_FONTS.display }
-            : { background: "rgba(139,92,246,0.2)", color: RPG_COLORS.slotEmpty, fontFamily: RPG_FONTS.display }
+          tileFrame
+            ? {
+                background: lightTile ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)",
+                color: equipped ? tc.value : tc.slotEmpty,
+                fontFamily: RPG_FONTS.display,
+              }
+            : equipped
+              ? { background: "rgba(47,230,200,0.18)", color: RPG_COLORS.cyanSoft, fontFamily: RPG_FONTS.display }
+              : { background: "rgba(139,92,246,0.2)", color: RPG_COLORS.slotEmpty, fontFamily: RPG_FONTS.display }
         }
       >
         {equipped ? tag : "EMPTY"}
@@ -312,46 +356,65 @@ export function HeroShowcase({ pose, equippedCount = 0, heightClass = "h-[min(34
   );
 }
 
-// Gold gradient CTA (START JOURNEY / CHALLENGE / OPEN BOX / …).
-export function GoldCta({ children, onClick, disabled, className = "", glow = true }) {
+// Primary CTA (START JOURNEY / CHALLENGE / OPEN BOX / …). Default look is the
+// gold gradient pill; a station skin wears the theme's plaque art with the
+// script lettering the comps use.
+export function GoldCta({ children, onClick, disabled, className = "", glow = true, size = "md" }) {
+  const skin = useRpgSkin();
+  const plaque = skin.cta.plaque;
+  const compact = size === "sm";
+
+  if (!plaque) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        className={`w-full rounded-[14px] text-center font-bold tracking-[3px] transition-transform active:scale-[0.98] disabled:cursor-not-allowed ${compact ? "p-[12px] text-[13px]" : "p-[15px] text-[16px]"} ${className}`}
+        style={{
+          background: disabled ? "rgba(255,255,255,0.08)" : RPG_GRADIENTS.cta,
+          color: disabled ? RPG_COLORS.slotEmpty : RPG_COLORS.darkText,
+          fontFamily: RPG_FONTS.display,
+          filter: glow && !disabled ? "drop-shadow(0 0 14px rgba(47,230,200,0.35))" : "none",
+        }}
+      >
+        {children}
+      </button>
+    );
+  }
+
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`w-full rounded-[14px] p-[15px] text-center text-[16px] font-bold tracking-[3px] transition-transform active:scale-[0.98] disabled:cursor-not-allowed ${className}`}
-      style={{
-        background: disabled ? "rgba(255,255,255,0.08)" : RPG_GRADIENTS.cta,
-        color: disabled ? RPG_COLORS.slotEmpty : RPG_COLORS.darkText,
-        fontFamily: RPG_FONTS.display,
-        filter: glow && !disabled ? "drop-shadow(0 0 14px rgba(47,230,200,0.35))" : "none",
-      }}
+      className={`relative flex w-full items-center justify-center transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
+      style={{ height: compact ? 46 : 58 }}
     >
-      {children}
+      <img src={plaque} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full" draggable={false} />
+      <span
+        className="relative z-10 leading-none"
+        style={{ fontSize: compact ? 16 : 20, fontFamily: skin.cta.font, color: skin.cta.color }}
+      >
+        {children}
+      </span>
     </button>
   );
 }
 
-// Screen heading in the design's spaced Chakra Petch style ("HERO ITEM",
-// "UNIVERSE", "MISSIONS", …).
+// Screen heading in the design's spaced caps ("HERO ITEM", "UNIVERSE", …).
 export function ScreenTitle({ children, sub }) {
+  const skin = useRpgSkin();
   return (
     <div className="flex w-full flex-col items-center gap-[6px]">
       <h2
         className="text-center text-[26px] font-bold tracking-[4px]"
-        style={{
-          color: RPG_COLORS.text,
-          fontFamily: RPG_FONTS.display,
-          textShadow: "0 0 24px rgba(124,77,255,0.8)",
-        }}
+        style={{ color: skin.c.title, fontFamily: RPG_FONTS.display, textShadow: skin.c.titleShadow }}
       >
         {children}
       </h2>
       {sub ? (
-        <p
-          className="text-center text-[13px]"
-          style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}
-        >
+        <p className="text-center text-[13px]" style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}>
           {sub}
         </p>
       ) : null}

@@ -3,8 +3,11 @@
 // Smash Egg rewards table. Visual spec mirrors Figma 1727:4094 — gradient
 // header row (#141828 → #333333), a 48px image thumbnail cell, a gold-gradient
 // "Edit" button and a dark "Archive" button. Column set matches the Lucky Spin
-// / Penalty Kick rewards tables, plus a Position column: Reward Name, Position,
-// Quantity, Item Type, Image, Action.
+// / Penalty Kick rewards tables, plus a Position column: ID, Reward Name,
+// Position, Quantity, Item Type, Image, Action.
+
+import { useState } from "react";
+import { SortIcon } from "../members/DataTable";
 
 const GOLD_BG = "linear-gradient(96deg, #dc9d16 1%, #f2cb7a 98%)";
 const DARK_BG = "linear-gradient(178deg, #141828 0%, #333333 99.75%)";
@@ -39,13 +42,51 @@ function ImagePlaceholderIcon() {
 }
 
 export default function RewardsTable({ rewards = [], onEdit, onArchive }) {
+  const [sortKey, setSortKey] = useState("numericId");
+  const [sortDir, setSortDir] = useState("asc");
+
+  const handleSort = (key) => {
+    if (key === sortKey) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
+
+  const sortedRewards = [...rewards].sort((a, b) => {
+    let av = a[sortKey];
+    let bv = b[sortKey];
+    if (sortKey === "numericId") {
+      av = Number(av ?? 0);
+      bv = Number(bv ?? 0);
+    }
+    if (av < bv) return sortDir === "asc" ? -1 : 1;
+    if (av > bv) return sortDir === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  const SortableHeader = ({ label, sortableKey, ...rest }) => (
+    <th
+      className="cursor-pointer select-none px-6 py-4 text-[14px] font-semibold tracking-[-0.5px] text-[#fbeed2]"
+      onClick={() => handleSort(sortableKey)}
+      {...rest}
+    >
+      <span className="inline-flex items-center">
+        {label}
+        <SortIcon active={sortKey === sortableKey} direction={sortDir} />
+      </span>
+    </th>
+  );
+
   return (
     <div className="overflow-hidden rounded-[12px] border border-white/5">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[840px]">
+        <table className="w-full min-w-[900px]">
           <thead>
             <tr className="text-left" style={{ backgroundImage: DARK_BG }}>
-              <th className="px-6 py-4 text-[14px] font-semibold tracking-[-0.5px] text-[#fbeed2]" style={{ width: 245 }}>Reward Name</th>
+              <SortableHeader label="ID" sortableKey="numericId" style={{ width: 80 }} />
+              <SortableHeader label="Reward Name" sortableKey="name" style={{ width: 220 }} />
               <th className="px-6 py-4 text-[14px] font-semibold tracking-[-0.5px] text-[#fbeed2]">Position</th>
               <th className="px-6 py-4 text-[14px] font-semibold tracking-[-0.5px] text-[#fbeed2]">Quantity</th>
               <th className="px-6 py-4 text-[14px] font-semibold tracking-[-0.5px] text-[#fbeed2]">Item Type</th>
@@ -54,15 +95,16 @@ export default function RewardsTable({ rewards = [], onEdit, onArchive }) {
             </tr>
           </thead>
           <tbody>
-            {rewards.length === 0 ? (
+            {sortedRewards.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-10 text-center text-[13px] text-white/50">
+                <td colSpan={7} className="px-6 py-10 text-center text-[13px] text-white/50">
                   No rewards yet. Click &quot;Add Reward&quot; to create your first one.
                 </td>
               </tr>
             ) : (
-              rewards.map((r) => (
+              sortedRewards.map((r) => (
                 <tr key={r.id} className="border-b border-white/5 last:border-b-0 hover:bg-white/[0.02]">
+                  <td className="px-6 py-5 text-[12px] text-white/70">{r.numericId ?? "-"}</td>
                   <td className="px-6 py-5 text-[12px] text-white">{r.name}</td>
                   <td className="px-6 py-5 text-[12px] text-white">
                     {r.position == null ? <span className="text-white/40">—</span> : `#${r.position}`}

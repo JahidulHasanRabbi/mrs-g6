@@ -393,6 +393,19 @@ function TokenReportContent() {
   const [usernameQuery, setUsernameQuery] = useState("");
   const [phoneQuery, setPhoneQuery] = useState("");
   const [stationFilter, setStationFilter] = useState("");
+
+  const hasActiveFilters = [dateFrom, dateTo, currencyFilter, categoryFilter, detailFilter, usernameQuery, phoneQuery, stationFilter].some(Boolean);
+
+  const clearFilters = () => {
+    setDateFrom("");
+    setDateTo("");
+    setCurrencyFilter("");
+    setCategoryFilter("");
+    setDetailFilter("");
+    setUsernameQuery("");
+    setPhoneQuery("");
+    setStationFilter("");
+  };
   const [stations, setStations] = useState([]);
 
   const [sortConfig, setSortConfig] = useState({ key: "created", direction: "desc" });
@@ -494,55 +507,68 @@ function TokenReportContent() {
             </p>
           </div>
 
-          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#e0a744] bg-[rgba(233,175,65,0.08)] text-[#e9af41] shadow-[0_0_24px_rgba(233,175,65,0.18)]">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            </svg>
-          </div>
         </div>
 
         <ManualAddReward />
 
         <section className="overflow-hidden rounded-[12px] border border-[rgba(255,255,132,0.18)] bg-[linear-gradient(180deg,rgba(28,48,31,0.98)_0%,rgba(24,44,28,0.98)_100%)] shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
           <div className="border-b border-white/5 px-4 pt-4 pb-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <h2 className="mr-auto whitespace-nowrap text-[15px] font-bold text-[#f4efe0] sm:text-[16px] lg:text-[17px]">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 className="text-[15px] font-bold text-[#f4efe0] sm:text-[16px] lg:text-[17px]">
                 The Token &amp; Battle Point Reports Are Given
               </h2>
 
-              <span className="whitespace-nowrap text-[13px] text-[#d6d6d6]">
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="shrink-0 whitespace-nowrap rounded-[8px] border border-[#f2cb7a]/60 px-3 py-1.5 text-[12px] font-semibold text-[#eaad2c] transition-colors hover:bg-white/5"
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-start gap-3">
+              <span className="mt-2 shrink-0 text-[13px] text-[#d6d6d6]">
                 Filter By:
               </span>
 
-              <DateFilter label="Date/Time" fromDate={dateFrom} toDate={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
-              <FilterDropdown label="Currency" options={TOKEN_REPORT_CURRENCIES} value={currencyFilter} onChange={handleCurrencyChange} />
-              <FilterDropdown
-                label="Station"
-                options={stationOptions}
-                value={selectedStationName}
-                onChange={(name) => {
-                  const station = stations.find((item) => stationName(item) === name);
-                  setStationFilter(station?.uuid || "");
-                }}
-              />
-              <FilterDropdown
-                label={currencyValue ? "Category" : "Category (select currency)"}
-                options={categoryOptions}
-                value={categoryFilter}
-                onChange={setCategoryFilter}
-                disabled={!currencyValue}
-              />
-              {currencyValue !== 2 && (
-                <TextSearchInput
-                  placeholder="Token Details"
-                  title="Searches token rows only — battle point rows have no token details."
-                  value={detailFilter}
-                  onChange={setDetailFilter}
+              {/* An even grid — the control count varies (Token Details is
+                  conditional), so a plain flex-wrap wrapped unpredictably. */}
+              <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                <DateFilter fullWidth label="Date/Time" fromDate={dateFrom} toDate={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
+                <FilterDropdown fullWidth label="Currency" options={TOKEN_REPORT_CURRENCIES} value={currencyFilter} onChange={handleCurrencyChange} />
+                <FilterDropdown
+                  fullWidth
+                  label="Station"
+                  options={stationOptions}
+                  value={selectedStationName}
+                  onChange={(name) => {
+                    const station = stations.find((item) => stationName(item) === name);
+                    setStationFilter(station?.uuid || "");
+                  }}
                 />
-              )}
-              <TextSearchInput placeholder="Enter Username" value={usernameQuery} onChange={setUsernameQuery} />
-              <TextSearchInput placeholder="Enter Phone" value={phoneQuery} onChange={setPhoneQuery} />
+                <FilterDropdown
+                  fullWidth
+                  label={currencyValue ? "Category" : "Category (select currency)"}
+                  options={categoryOptions}
+                  value={categoryFilter}
+                  onChange={setCategoryFilter}
+                  disabled={!currencyValue}
+                />
+                {currencyValue !== 2 && (
+                  <TextSearchInput
+                    fullWidth
+                    placeholder="Token Details"
+                    title="Searches token rows only — battle point rows have no token details."
+                    value={detailFilter}
+                    onChange={setDetailFilter}
+                  />
+                )}
+                <TextSearchInput fullWidth placeholder="Enter Username" value={usernameQuery} onChange={setUsernameQuery} />
+                <TextSearchInput fullWidth placeholder="Enter Phone" value={phoneQuery} onChange={setPhoneQuery} />
+              </div>
             </div>
 
             {detailFilter && currencyValue !== 1 && (

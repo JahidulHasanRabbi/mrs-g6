@@ -43,7 +43,8 @@ export const ENDPOINTS = {
     TOTAL_USERS: '/front-view/total-users/',
     ACTIVE_USERS: '/front-view/active-users/',
     DAILY_CHECK_IN: '/front-view/daily-check-in/',
-    FEATURE_STATUS: '/front-view/feature-status/'
+    FEATURE_STATUS: '/front-view/feature-status/',
+    GAME_SESSION_PING: '/front-view/game-sessions/ping/'
   },
   SETTINGS: {
     PUBLIC_BANNERS: '/settings/banners/public/'
@@ -56,6 +57,15 @@ export const ENDPOINTS = {
     JOIN: (uuid) => `/mission/missions/${uuid}/join/`,
     CLAIM: (uuid) => `/mission/missions/${uuid}/claim/`,
     PROGRESS_HISTORY: '/mission/missions/progress-history/',
+    // Mission Promotion pop-up (doc/usage-report-api-reference.md, "MISSION
+    // PROMOTION"). A promotion is one-to-one with a mission — admin CRUD is
+    // GET/PATCH on the mission itself, member lookups are their own
+    // top-level resources keyed by participation uuid.
+    PROMOTION: (missionUuid) => `/mission/missions/${missionUuid}/promotion/`,
+    PROMOTION_ARCHIVE: (missionUuid) => `/mission/missions/${missionUuid}/promotion/archive/`,
+    PROMOTION_CHECK: (missionUuid) => `/mission/missions/${missionUuid}/promotion/check/`,
+    PROMOTION_PENDING: '/mission/promotions/pending-completions/',
+    PROMOTION_ACK: (participationUuid) => `/mission/promotions/${participationUuid}/acknowledge/`,
   },
   // Phase 3 planet RPG (docs/MRS - G6 Avatar API Documentation.md).
   // Shared by the member-facing game and the back-office pages.
@@ -123,16 +133,25 @@ export const ENDPOINTS = {
     LUCKY_SPIN_SEQUENCES: '/lucky-spin/lucky-spin-sequences/',
     LUCKY_SPIN_SEQUENCE: (uuid) => `/lucky-spin/lucky-spin-sequences/${uuid}/`,
     CHANGE_SPIN_SEQUENCES: '/lucky-spin/lucky-spin-sequences/change-spin-sequences/',
+    LUCKY_SPIN_SEQUENCE_CURRENT: '/lucky-spin/lucky-spin-sequences/current/',
+    LUCKY_SPIN_SEQUENCE_IMPORTS: '/lucky-spin/lucky-spin-sequence-imports/',
+    LUCKY_SPIN_SEQUENCE_IMPORT: (uuid) => `/lucky-spin/lucky-spin-sequence-imports/${uuid}/`,
+    LUCKY_SPIN_SEQUENCE_IMPORT_ARCHIVE: (uuid) => `/lucky-spin/lucky-spin-sequence-imports/${uuid}/archive/`,
     SMASH_EGG_ITEMS: '/smash-egg/smash-egg-items/',
     SMASH_EGG_ITEM: (uuid) => `/smash-egg/smash-egg-items/${uuid}/`,
     ARCHIVE_SMASH_EGG_ITEM: (uuid) => `/smash-egg/smash-egg-items/${uuid}/archive/`,
     SMASH_EGG_SEQUENCES: '/smash-egg/smash-sequences/',
     SMASH_EGG_SEQUENCE: (uuid) => `/smash-egg/smash-sequences/${uuid}/`,
     CHANGE_SMASH_EGG_SEQUENCES: '/smash-egg/smash-sequences/change-smash-sequences/',
+    SMASH_EGG_SEQUENCE_CURRENT: '/smash-egg/smash-sequences/current/',
+    SMASH_EGG_SEQUENCE_IMPORTS: '/smash-egg/smash-sequence-imports/',
+    SMASH_EGG_SEQUENCE_IMPORT: (uuid) => `/smash-egg/smash-sequence-imports/${uuid}/`,
+    SMASH_EGG_SEQUENCE_IMPORT_ARCHIVE: (uuid) => `/smash-egg/smash-sequence-imports/${uuid}/archive/`,
     SMASH_EGG_SETTINGS: '/smash-egg/smash-egg-settings/',
     MEMBERS: '/member/members/',
     TOKEN_REPORT: '/member/token-report/',
     REWARD_REPORT: '/member/reward-report/',
+    REWARD_REPORT_KPI: '/member/reward-report-kpi/',
     MEMBER_LIST: '/member/member-list/',
     MEMBER_LIST_SINGLE: (uuid) => `/member/member-list/${uuid}/`,
     MEMBER_DEPOSIT: (uuid) => `/member/${uuid}/member-deposit/`,
@@ -174,6 +193,10 @@ export const ENDPOINTS = {
     PENALTY_KICK_SEQUENCES: '/penalty-kick/kick-sequences/',
     PENALTY_KICK_SEQUENCE: (uuid) => `/penalty-kick/kick-sequences/${uuid}/`,
     PENALTY_KICK_SEQUENCE_REORDER: '/penalty-kick/kick-sequences/change-kick-sequences/',
+    PENALTY_KICK_SEQUENCE_CURRENT: '/penalty-kick/kick-sequences/current/',
+    PENALTY_KICK_SEQUENCE_IMPORTS: '/penalty-kick/kick-sequence-imports/',
+    PENALTY_KICK_SEQUENCE_IMPORT: (uuid) => `/penalty-kick/kick-sequence-imports/${uuid}/`,
+    PENALTY_KICK_SEQUENCE_IMPORT_ARCHIVE: (uuid) => `/penalty-kick/kick-sequence-imports/${uuid}/archive/`,
     AVAILABLE_PROMOTIONS: '/settings/available-promotions/',
     PROMOTIONS: '/settings/promotions/',
     PROMOTIONS_BY_STATION: (stationUuid) => `/settings/promotions/get-by-station/${stationUuid}/`,
@@ -184,6 +207,7 @@ export const ENDPOINTS = {
     GAMES: '/usage-report/games/',
     RETENTION: '/usage-report/games/retention/',
     INSIGHTS: '/usage-report/insights/',
+    MEMBERS: '/usage-report/members/',
   },
   EXTERNAL: {
     SPECIAL_CODE: '/third-party/special-codes/',

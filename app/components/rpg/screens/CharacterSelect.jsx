@@ -11,10 +11,12 @@ import RpgTopBar from "../RpgTopBar";
 import { RPG_COLORS, RPG_FONTS, RPG_GRADIENTS, POWER_PER_LEVEL, MAX_LEVEL, EQUIP_SLOTS } from "../constants";
 import { RPG_IMAGES } from "../rpgAssets";
 import { Panel, StatRow, GoldCta } from "../primitives";
+import { useRpgSkin } from "../rpgSkin";
 
 const GENDERS = ["male", "female"];
 
 export default function CharacterSelect({ onCreate, onInfoClick, onMenuClick, error, profile }) {
+  const skin = useRpgSkin();
   // Starting stats mirror the live game settings (/avatar/settings/).
   const basePower = profile?.powerPerLevel ?? POWER_PER_LEVEL;
   const slotCount = profile?.equipmentSlotCount ?? EQUIP_SLOTS.length;
@@ -33,18 +35,12 @@ export default function CharacterSelect({ onCreate, onInfoClick, onMenuClick, er
   };
 
   return (
-    <div className="relative flex min-h-[100dvh] w-full flex-col overflow-hidden" style={{ background: "#07130d" }}>
+    <div className="relative flex min-h-[100dvh] w-full flex-col overflow-hidden" style={{ background: skin.surface }}>
       <div
         className="pointer-events-none absolute inset-0"
-        style={{ backgroundImage: `url(${RPG_IMAGES.bg})`, backgroundSize: "cover", backgroundPosition: "top center" }}
+        style={{ backgroundImage: `url(${skin.bg})`, backgroundSize: "cover", backgroundPosition: "top center" }}
       />
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(40% 22% at 88% 22%, rgba(167,139,250,0.2) 0%, rgba(167,139,250,0) 70%), radial-gradient(45% 25% at 10% 88%, rgba(47,230,200,0.16) 0%, rgba(47,230,200,0) 70%)",
-        }}
-      />
+      <div className="pointer-events-none absolute inset-0" style={{ background: skin.overlay }} />
 
       <RpgTopBar onInfoClick={onInfoClick} onMenuClick={onMenuClick} />
 
@@ -52,14 +48,14 @@ export default function CharacterSelect({ onCreate, onInfoClick, onMenuClick, er
         <h1
           className="text-center text-[26px] font-bold tracking-[4px]"
           style={{
-            color: RPG_COLORS.text,
+            color: skin.c.title,
             fontFamily: RPG_FONTS.display,
-            textShadow: "0 0 24px rgba(124,77,255,0.8)",
+            textShadow: skin.c.titleShadow,
           }}
         >
           CHOOSE YOUR HERO
         </h1>
-        <p className="mt-[6px] text-center text-[13px]" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
+        <p className="mt-[6px] text-center text-[13px]" style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}>
           Your journey across the planets begins
         </p>
 
@@ -76,17 +72,17 @@ export default function CharacterSelect({ onCreate, onInfoClick, onMenuClick, er
                 style={
                   active
                     ? {
-                        background: RPG_GRADIENTS.maleToggle,
-                        borderColor: RPG_COLORS.cyan,
-                        color: RPG_COLORS.cyanSoft,
+                        background: skin.hud.badgeBg,
+                        borderColor: skin.hud.badgeBorder,
+                        color: skin.c.accentSoft,
                         fontFamily: RPG_FONTS.display,
                         fontWeight: 700,
-                        boxShadow: "0 0 18px rgba(47,230,200,0.3)",
+                        boxShadow: `0 0 14px ${skin.hud.badgeBorder}44`,
                       }
                     : {
                         background: "rgba(255,255,255,0.04)",
-                        borderColor: RPG_COLORS.violetBorder,
-                        color: "#6e5fa8",
+                        borderColor: skin.c.edgeSoft,
+                        color: skin.c.textDim,
                         fontFamily: RPG_FONTS.display,
                         fontWeight: 600,
                       }
@@ -121,9 +117,9 @@ export default function CharacterSelect({ onCreate, onInfoClick, onMenuClick, er
         {/* Stats card */}
         <Panel className="mt-[8px] flex flex-col gap-[10px]">
           <StatRow label="Starting Level" value="Lv.1" />
-          <StatRow label="Base Power" value={basePower.toLocaleString("en-GB")} valueColor={RPG_COLORS.cyan} />
+          <StatRow label="Base Power" value={basePower.toLocaleString("en-GB")} valueColor={skin.c.accent} />
           <StatRow label="Equipment Slots" value={String(slotCount)} />
-          <StatRow label="Max Level" value={`Lv.${maxLevel}`} valueColor={RPG_COLORS.gold} />
+          <StatRow label="Max Level" value={`Lv.${maxLevel}`} valueColor={skin.c.value} />
         </Panel>
 
         {error ? (

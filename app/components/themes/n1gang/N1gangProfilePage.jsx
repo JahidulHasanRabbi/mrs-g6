@@ -9,22 +9,26 @@ import WelcomeGiftButton from "../shared/WelcomeGiftButton";
 import { N1GANG_ASSETS, N1GANG_COLORS } from "./assets";
 import { useUser } from "../../../contexts/UserContext";
 
+// Charcoal panel: dark interior, so cream/gold ink.
 const N1GANG_CARD_COLORS = {
   name: "#fff6df",
   label: "rgba(255,246,223,0.7)",
-  tokenValue: "#f2ba33",
   level: "#f2ba33",
   getText: "rgba(255,246,223,0.85)",
-  getEmph: "#f2ba33",
+  getNum: "#ffe16d",
+  getEmph: "#f2cb7a",
+  nextLabel: "#f2cb7a",
+  wellBg: "rgba(255,255,255,0.06)",
+  wellBorder: "rgba(212,168,48,0.35)",
+  tokenColor: "#f2cb7a",
+  tokenGlow: "rgba(242,203,122,0.45)",
   barBase: "#2a1a06",
-  barFill: "linear-gradient(90deg, #dc9d16 0%, #f2cb7a 100%)",
+  barFill: "linear-gradient(90deg, #d4a830, #f2cb7a)",
   barGlow: "rgba(242,203,122,0.7)",
-  barBorder: "#e9af41",
-  divider: "rgba(233,175,65,0.28)",
-  pillFrom: "#f2cb7a",
-  pillTo: "#dc9d16",
-  pillText: "#241603",
-  avatarRing: "#e9af41",
+  avatarFrom: "#fff3d6",
+  avatarTo: "#cfbe8c",
+  avatarInk: "#2a2205",
+  avatarRing: "#d4a830",
 };
 
 export default function N1gangProfilePage() {
@@ -38,7 +42,6 @@ export default function N1gangProfilePage() {
   const progress = Number.isFinite(userData?.progress) ? userData.progress : 0;
   const tokensNeeded = userData?.tokensNeeded ?? 0;
   const currentTierIcon = userData?.currentTierIcon;
-  const nextTierIcon = userData?.nextTierIcon;
 
   const goPersonalData = () => router.push("/personal-data");
   const goVip = () => router.push("/vip");
@@ -58,7 +61,7 @@ export default function N1gangProfilePage() {
 
         <ThemedProfileCard
           frame={N1GANG_ASSETS.frames.panel}
-          pad={{ x: "13%", top: "15%", bottom: "13%" }}
+          pad={{ left: "14.4%", right: "14.9%", top: "17.9%", bottom: "20.5%" }}
           colors={N1GANG_CARD_COLORS}
           coinIcon={N1GANG_ASSETS.ui.iconCoins}
           name={name}
@@ -68,7 +71,6 @@ export default function N1gangProfilePage() {
           progress={progress}
           tokensNeeded={tokensNeeded}
           currentTierIcon={currentTierIcon}
-          nextTierIcon={nextTierIcon}
           profilePicture={profilePicture}
           onVipDetails={goVip}
         />

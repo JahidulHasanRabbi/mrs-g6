@@ -69,6 +69,21 @@ export async function getMissionProgressHistory(params = {}) {
   return await apiRequest(`${ENDPOINTS.MISSION.PROGRESS_HISTORY}${qs}`, { method: 'GET' }, true, 'member');
 }
 
+// Mission Promotion pop-up. Consumed through
+// app/components/missions/promotion/promoApi.js — do not call these directly
+// from the page, so the mock adapter stays swappable.
+export async function checkMissionPromotion(missionUuid) {
+  return await apiRequest(ENDPOINTS.MISSION.PROMOTION_CHECK(missionUuid), { method: 'GET' }, true, 'member');
+}
+
+export async function getPendingMissionPromotions() {
+  return await apiRequest(ENDPOINTS.MISSION.PROMOTION_PENDING, { method: 'GET' }, true, 'member');
+}
+
+export async function acknowledgeMissionPromotion(participationUuid) {
+  return await apiRequest(ENDPOINTS.MISSION.PROMOTION_ACK(participationUuid), { method: 'PATCH' }, true, 'member');
+}
+
 // GET /member/{uuid}/profile/
 export async function getProfile(memberUuid) {
   return await apiRequest(ENDPOINTS.MEMBER.PROFILE(memberUuid), {
@@ -90,6 +105,18 @@ export async function getPublicBanners(location = null) {
   return await apiRequest(`${ENDPOINTS.SETTINGS.PUBLIC_BANNERS}${queryParams}`, {
     method: 'GET'
   }, false);
+}
+
+// POST /front-view/game-sessions/ping/ — session heartbeat behind Usage
+// Report's Avg. Session Duration. type: 1 start, 2 heartbeat, 3 end.
+// `options` lets callers pass `{ keepalive: true }` for the end signal so it
+// can finish sending after the page starts tearing down.
+export async function pingGameSession(game, type, options = {}) {
+  return await apiRequest(ENDPOINTS.FRONT_VIEW.GAME_SESSION_PING, {
+    ...options,
+    method: 'POST',
+    body: JSON.stringify({ game, type })
+  }, true, 'member');
 }
 
 // GET /lucky-spin/sequences/

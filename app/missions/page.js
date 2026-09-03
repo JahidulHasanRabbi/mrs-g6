@@ -30,6 +30,16 @@ import {
   MISSION_CATEGORY_BY_TAB,
   MISSION_TAB_BY_CATEGORY,
 } from "../config/missionOptions";
+import PromotionOfferModal from "../components/missions/promotion/PromotionOfferModal";
+import ClearWalletModal from "../components/missions/promotion/ClearWalletModal";
+import MissionCompletedModal from "../components/missions/promotion/MissionCompletedModal";
+import {
+  acknowledgeMissionPopup,
+  beginUnlock,
+  getMissionPopup,
+  getPendingMissionPopup,
+  walletUrlFor,
+} from "../components/missions/promotion/promoApi";
 
 const TOKEN_ICON = PHASE4_ASSETS.token;
 const HISTORY_ICON = "/assets/penalty-kick/missions/icon-history.svg";
@@ -223,6 +233,10 @@ export default function MissionsPage() {
   const [termsLoading, setTermsLoading] = useState(false);
   const [termsText, setTermsText] = useState("");
   const [termsError, setTermsError] = useState("");
+  // Pop Out promotion: `promo` is the claim-time offer/blocked dialog,
+  // `completedPromo` the on-entry confirmation (requirement rows 2-5 and 8).
+  const [promo, setPromo] = useState(null);
+  const [completedPromo, setCompletedPromo] = useState(null);
   const isMaintenance = maintenance === true;
 
   const changeTab = (id) => {
@@ -261,6 +275,23 @@ export default function MissionsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, maintenance]);
 
+  // Requirement row 8: a qualified member returning to the page gets the
+  // completion confirmation, independent of the claim-time trigger. Runs
+  // alongside the feature-status call rather than behind it; the modal is held
+  // back by `isMaintenance` at the render site.
+  const loadNextCompletedPromo = () => {
+    getPendingMissionPopup()
+      .then((pending) => {
+        if (pending?.can_show && pending.state === "completed") setCompletedPromo(pending);
+      })
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    loadNextCompletedPromo();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (!isMaintenance || typeof document === "undefined") return undefined;
     const previousBodyOverflow = document.body.style.overflow;
@@ -298,14 +329,46 @@ export default function MissionsPage() {
     setActionId(id);
     setError("");
     try {
-      await claimMissionReward(id);
+      const claimed = await claimMissionReward(id);
       loadMissions();
       refreshUserData?.().catch(() => {});
+      // The promotion is a bonus on top of a claim that already succeeded, so
+      // a failure here must never surface as a claim error. promotion_available
+      // is the lightweight signal from the claim response telling us whether
+      // this mission even has an active promotion worth checking.
+      if (claimed?.promotion_available) {
+        try {
+          const offer = await getMissionPopup(id);
+          if (offer?.can_show && (offer.state === "offer" || offer.state === "blocked")) {
+            setPromo(offer);
+          }
+        } catch { /* eligibility check failed — skip the promotion silently */ }
+      }
     } catch (err) {
       setError(err?.data?.detail || err?.message || "Failed to claim reward.");
     } finally {
       setActionId(null);
     }
+  };
+
+  const closePromo = () => setPromo(null);
+
+  const handleUnlockReward = async () => {
+    window.location.href = await beginUnlock(promo);
+  };
+
+  const handleClearNow = () => {
+    window.location.href = walletUrlFor(promo);
+  };
+
+  const handleAcknowledgeCompleted = async () => {
+    const uuid = completedPromo?.uuid;
+    setCompletedPromo(null);
+    if (uuid) await acknowledgeMissionPopup(uuid).catch(() => {});
+    refreshUserData?.().catch(() => {});
+    // pending-completions can hold more than one row (e.g. the member was
+    // away when several promotions completed) — walk them one at a time.
+    loadNextCompletedPromo();
   };
 
   const loadHistory = async () => {
@@ -368,12 +431,17 @@ export default function MissionsPage() {
         <div className="flex flex-col gap-4">
           <div className="flex items-end justify-between gap-3">
             <div className="flex flex-col">
-              <h2
-                className="font-bold leading-[28.8px]"
-                style={{ fontFamily: SERIF, color: "var(--lb-heading)", fontSize: 24, textShadow: "var(--lb-heading-shadow, none)" }}
-              >
-                Missions
-              </h2>
+              {/* Themed shells render no page title, so the section heading is
+                  the only "Missions" there. On the default skin MissionsHeader
+                  already supplies it. */}
+              {isThemed && (
+                <h2
+                  className="font-bold leading-[28.8px]"
+                  style={{ fontFamily: SERIF, color: "var(--lb-heading)", fontSize: 24, textShadow: "var(--lb-heading-shadow, none)" }}
+                >
+                  Missions
+                </h2>
+              )}
               <p
                 className="leading-[24px]"
                 style={{ fontFamily: SERIF, color: "var(--lb-heading-muted)", fontSize: 16, textShadow: "var(--lb-heading-shadow, none)" }}
@@ -382,28 +450,30 @@ export default function MissionsPage() {
               </p>
             </div>
 
-            {/* Token balance pill */}
-            <div
-              className="flex shrink-0 items-center justify-center gap-2 rounded-full px-[9px] py-[5px]"
-              style={{
-                backgroundColor: MISSION_COLORS.pillFill,
-                border: "1px solid rgba(255,255,255,0.05)",
-                boxShadow: "0 0 7.5px rgba(255,221,116,0.3)",
-              }}
-            >
-              <img
-                src={TOKEN_ICON}
-                alt=""
-                aria-hidden="true"
-                style={{ width: 18.33, height: 13.33, objectFit: "contain" }}
-              />
-              <span
-                className="leading-[24px]"
-                style={{ fontFamily: SERIF, color: MISSION_COLORS.gold, fontSize: 16 }}
+            {/* Token balance pill — themed shells carry their own balance chip. */}
+            {!isThemed && (
+              <div
+                className="flex shrink-0 items-center justify-center gap-2 rounded-full px-[9px] py-[5px]"
+                style={{
+                  backgroundColor: MISSION_COLORS.pillFill,
+                  border: "1px solid rgba(255,255,255,0.05)",
+                  boxShadow: "0 0 7.5px rgba(255,221,116,0.3)",
+                }}
               >
-                {balance}
-              </span>
-            </div>
+                <img
+                  src={TOKEN_ICON}
+                  alt=""
+                  aria-hidden="true"
+                  style={{ width: 18.33, height: 13.33, objectFit: "contain" }}
+                />
+                <span
+                  className="leading-[24px]"
+                  style={{ fontFamily: SERIF, color: MISSION_COLORS.gold, fontSize: 16 }}
+                >
+                  {balance}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Tabs */}
@@ -569,6 +639,27 @@ export default function MissionsPage() {
           onClose={() => setTermsOpen(false)}
         />
       )}
+
+      <PromotionOfferModal
+        open={promo?.state === "offer"}
+        onClose={closePromo}
+        onUnlock={handleUnlockReward}
+        promo={promo}
+      />
+
+      <ClearWalletModal
+        open={promo?.state === "blocked"}
+        onClose={closePromo}
+        onClearNow={handleClearNow}
+        promo={promo}
+      />
+
+      <MissionCompletedModal
+        open={!!completedPromo && maintenance === false}
+        onClose={handleAcknowledgeCompleted}
+        rewardAmount={completedPromo?.reward_amount ?? 0}
+        rewardCategory={completedPromo?.reward_category ?? 1}
+      />
 
       {isMaintenance && (
         <div className="fixed inset-x-0 top-[56px] bottom-[100px] z-30 grid place-items-center bg-black/70 px-6 backdrop-blur-md">

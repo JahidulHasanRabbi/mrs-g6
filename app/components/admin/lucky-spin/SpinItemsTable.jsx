@@ -5,6 +5,7 @@ import { getOptionLabel } from "../../../api/apiOptions";
 import { DataTable } from "../members/DataTable";
 
 const COLUMNS = [
+  { key: "id",           label: "ID",          minW: "min-w-[70px]" },
   { key: "reward_name", label: "Reward Name", minW: "min-w-[180px]" },
   { key: "quantity",    label: "Quantity",    minW: "min-w-[110px]" },
   { key: "item_type",   label: "Item Type",   minW: "min-w-[140px]" },
@@ -20,7 +21,7 @@ export default function SpinItemsTable({
   onEditClick,
   onDeleteClick,
 }) {
-  const [sortKey, setSortKey] = useState("reward_name");
+  const [sortKey, setSortKey] = useState("id");
   const [sortDir, setSortDir] = useState("asc");
 
   const handleSort = (key) => {
@@ -36,7 +37,10 @@ export default function SpinItemsTable({
   const sortedItems = [...items].sort((a, b) => {
     let av = a[sortKey];
     let bv = b[sortKey];
-    if (sortKey === "quantity") {
+    if (sortKey === "id") {
+      av = Number(av ?? 0);
+      bv = Number(bv ?? 0);
+    } else if (sortKey === "quantity") {
       av = a.unlimited ? Infinity : Number(a.quantity ?? 0);
       bv = b.unlimited ? Infinity : Number(b.quantity ?? 0);
     } else if (sortKey === "item_type") {

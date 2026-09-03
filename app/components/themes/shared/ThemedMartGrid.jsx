@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   getAvailableRedemptionItems,
@@ -17,6 +17,7 @@ import { MART_ASSETS } from "../../mart/martAssets";
 import { MART_CARD } from "./checkinMartSkin";
 import ThemedDialog from "./ThemedDialog";
 import ThemedActionButton from "./ThemedActionButton";
+import ThemedImagePreview from "./ThemedImagePreview";
 
 /**
  * Themed Mart — a 1:1 functional copy of the default app/mart/page.js.
@@ -25,7 +26,9 @@ import ThemedActionButton from "./ThemedActionButton";
  * fetches (game status, VIP tier -> mart_tier, public redemption tiers, available
  * items), the same category-pill filtering, the same 3-way sort toggle, the same
  * tier-lock rules and copy ("Token", "Upgrade to X to unlock"), and the same
- * closed-for-maintenance overlay. ONLY the artwork is swapped per theme.
+ * closed-for-maintenance overlay. ONLY the artwork is swapped per theme, with
+ * one deliberate exception: the themed card adds a full-size reward preview the
+ * default card has no counterpart for (the default's plinth art blocks it).
  *
  * The comps (Figma "Mart") omit the category pills and sort control, but dropping
  * them would change behaviour — `filteredItems` is empty until a category is
@@ -56,6 +59,7 @@ function resolveUnlockedTierOrder(currentLevel) {
 }
 
 const asAmount = (v) => (typeof v === "number" ? v.toLocaleString() : v);
+const priceOf = (item) => item.discountPrice || item.coins;
 
 /** Themed pill/sort plaque — the theme's button art with a centred label. */
 function PlaquePill({ skin, label, locked, selected, onClick, ariaLabel, ariaPressed, delay }) {
@@ -98,14 +102,34 @@ function PlaquePill({ skin, label, locked, selected, onClick, ariaLabel, ariaPre
   );
 }
 
+/** Zoom-in glyph for the card's preview affordance. */
+function ZoomGlyph() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+      strokeLinecap="round"
+      className="h-[62%] w-[62%]"
+      aria-hidden="true"
+    >
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="M15.4 15.4 21 21M10.5 7.6v5.8M7.6 10.5h5.8" />
+    </svg>
+  );
+}
+
 /**
  * Themed item card. Card art + geometry come from the comps (MART_CARD); the
  * content is exactly what the default <MartItem> renders.
  */
-function ThemedMartItem({ skin, item, index, locked, requiredTierLabel, onRedeem }) {
-  const amount = item.discountPrice || item.coins;
-  const hasStrikethrough =
-    item.originalPrice && item.originalPrice != (item.discountPrice || item.coins);
+function ThemedMartItem({ skin, item, index, locked, requiredTierLabel, onRedeem, onPreview }) {
+  const amount = priceOf(item);
+  const hasStrikethrough = item.originalPrice && item.originalPrice != amount;
+  // Redeem stays live when locked so the dialog can explain the upgrade; preview
+  // does not, because the locked art is deliberately blurred out.
+  const canPreview = !locked && !!item.image;
 
   return (
     <motion.div
@@ -117,40 +141,52 @@ function ThemedMartItem({ skin, item, index, locked, requiredTierLabel, onRedeem
     >
       <img alt="" src={skin.itemFrame} className="pointer-events-none absolute inset-0 h-full w-full object-fill" />
 
-      {/* Gold plinth + product shot */}
       <div
-        className="absolute overflow-hidden"
+        className="absolute"
         style={{
-          left: `${MART_CARD.panel.left}%`,
-          top: `${MART_CARD.panel.top}%`,
-          width: `${MART_CARD.panel.w}%`,
-          height: `${MART_CARD.panel.h}%`,
-          borderRadius: `${MART_CARD.panel.radiusCqi}cqi`,
-          backgroundImage: skin.panelGradient,
+          left: `${MART_CARD.image.left}%`,
+          top: `${MART_CARD.image.top}%`,
+          width: `${MART_CARD.image.w}%`,
+          height: `${MART_CARD.image.h}%`,
         }}
       >
         {item.image && (
-          <div
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-            style={{ width: `${MART_CARD.image.w}%`, height: `${MART_CARD.image.h}%` }}
-          >
-            {/* Backend-hosted product shot — plain <img>, as the default
-                <MartItem> does (next/image remotePatterns don't cover it). */}
-            <img
-              alt={item.title || ""}
-              src={item.image}
-              className="h-full w-full object-contain"
-              style={locked ? { filter: "grayscale(0.85) brightness(0.55) blur(6px)" } : undefined}
-            />
-          </div>
+          // Backend-hosted product shot — plain <img>, as the default
+          // <MartItem> does (next/image remotePatterns don't cover it).
+          <img
+            alt={item.title || ""}
+            src={item.image}
+            className="h-full w-full object-contain"
+            style={locked ? { filter: "grayscale(0.85) brightness(0.55) blur(6px)" } : undefined}
+          />
         )}
         {locked && (
           <img
             alt="Locked"
             src={MART_ASSETS.lockIcon}
             className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
-            style={{ width: "34%", height: "48%", filter: "drop-shadow(0 0 4px rgba(0,0,0,0.8))" }}
+            style={{
+              width: `${MART_CARD.image.lockW}%`,
+              filter: "drop-shadow(0 0 4px rgba(0,0,0,0.8))",
+            }}
           />
+        )}
+        {canPreview && (
+          // One tap target over the whole shot; the badge is only its affordance.
+          <button
+            type="button"
+            onClick={onPreview}
+            className="absolute inset-0 flex items-start justify-end"
+            style={{ color: skin.c.name }}
+            aria-label={`Preview ${item.title}`}
+          >
+            <span
+              className="grid aspect-square place-items-center rounded-full border border-current"
+              style={{ width: `${MART_CARD.zoom.size}%`, backgroundColor: "rgba(0,0,0,0.55)" }}
+            >
+              <ZoomGlyph />
+            </span>
+          </button>
         )}
       </div>
 
@@ -233,6 +269,7 @@ function ThemedMartItem({ skin, item, index, locked, requiredTierLabel, onRedeem
 
 export default function ThemedMartGrid({ skin }) {
   const [selectedItem, setSelectedItem] = useState(null);
+  const [previewItem, setPreviewItem] = useState(null);
   const [sortMode, setSortMode] = useState("default");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [martItems, setMartItems] = useState([]);
@@ -251,6 +288,8 @@ export default function ThemedMartGrid({ skin }) {
     fetchRedemptionStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userData?.currentLevel]);
+
+  const handleClosePreview = useCallback(() => setPreviewItem(null), []);
 
   const fetchRedemptionStatus = async () => {
     try {
@@ -341,8 +380,8 @@ export default function ThemedMartGrid({ skin }) {
     if (sortMode === "default") return filteredItems;
     const itemsCopy = [...filteredItems];
     itemsCopy.sort((a, b) => {
-      const aPrice = parseCoins(a.discountPrice || a.coins);
-      const bPrice = parseCoins(b.discountPrice || b.coins);
+      const aPrice = parseCoins(priceOf(a));
+      const bPrice = parseCoins(priceOf(b));
       if (sortMode === "price-asc") return aPrice - bPrice;
       if (sortMode === "price-desc") return bPrice - aPrice;
       return 0;
@@ -507,6 +546,7 @@ export default function ThemedMartGrid({ skin }) {
                   locked={locked}
                   requiredTierLabel={getRequiredTierName(item)}
                   onRedeem={() => handleRedeem(item)}
+                  onPreview={() => setPreviewItem(item)}
                 />
               );
             })}
@@ -540,6 +580,15 @@ export default function ThemedMartGrid({ skin }) {
           </>
         )}
       </ThemedDialog>
+
+      <ThemedImagePreview
+        open={!!previewItem}
+        src={previewItem?.image}
+        title={previewItem?.title}
+        subtitle={previewItem && `${asAmount(priceOf(previewItem))} Token`}
+        skin={skin}
+        onClose={handleClosePreview}
+      />
 
       {gameStatus === 2 && (
         <div className="fixed inset-x-0 bottom-[120px] top-[64px] z-30 grid place-items-center bg-black/70 px-6 backdrop-blur-md">

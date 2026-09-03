@@ -26,6 +26,9 @@ export default function Contentsquare() {
   const isAdminRoute = pathname === "/admin" || pathname?.startsWith("/admin/");
 
   if (isAdminRoute) return null;
+  // Dev sessions are not member behaviour — same reason admin is excluded.
+  // Vercel previews are production builds, so they still report.
+  if (process.env.NODE_ENV !== "production") return null;
 
   return <Script src={CONTENTSQUARE_SRC} strategy="afterInteractive" />;
 }

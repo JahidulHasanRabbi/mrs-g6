@@ -65,12 +65,14 @@ function Header({
 
 
 
-        {/* Right-side account controls */}
-        <div
-          className="absolute right-4 top-1/2 flex -translate-y-1/2 items-center"
-        >
+        {/* Right-side account controls. The balances and the profile sit side
+            by side — the avatar is the only way into /profile from here, so it
+            shows on balance pages too. It shrinks below 420px, where the wider
+            balance chips would otherwise push it off the bar. */}
+        <div className="absolute right-4 top-1/2 flex -translate-y-1/2 items-center gap-1">
           {balance !== null && (
             <motion.div
+              className="min-w-0"
               initial={showAnimation ? { opacity: 0, scale: 0.8 } : { opacity: 1, scale: 1 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={showAnimation ? { duration: 0.6, delay: 0.2, ease: "easeOut" } : { duration: 0 }}
@@ -78,23 +80,34 @@ function Header({
               <HeaderBalances battlePoints={battlePoints} balance={balance} />
             </motion.div>
           )}
-          {balance === null && (
-            <motion.div
-              className="relative h-[60px] w-[60px]"
-              whileHover={{ scale: 1.05, rotate: 5 }}
-              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+          <motion.div
+            className={
+              balance !== null
+                ? "size-[40px] shrink-0 min-[360px]:size-[44px] min-[420px]:size-[64px]"
+                : "size-[64px] shrink-0"
+            }
+            whileHover={{ scale: 1.05, rotate: 5 }}
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+          >
+            {/* ProfileFrame lays out from a px `size`, so the responsive box
+                above scales the 64px render rather than re-rendering it. Only
+                pages showing balances need the smaller sizes. */}
+            <div
+              className={
+                balance !== null
+                  ? "origin-top-left scale-[0.625] min-[360px]:scale-[0.6875] min-[420px]:scale-100"
+                  : ""
+              }
             >
-              <div className="absolute -top-[2px] right-0">
-                <ProfileFrame
-                  src={profilePhoto || PROFILE_ASSETS.profileAvatar}
-                  frameId={selectedFrameId}
-                  size={64}
-                  alt="Profile"
-                  onClick={() => router.push('/profile')}
-                />
-              </div>
-            </motion.div>
-          )}
+              <ProfileFrame
+                src={profilePhoto || PROFILE_ASSETS.profileAvatar}
+                frameId={selectedFrameId}
+                size={64}
+                alt="Profile"
+                onClick={() => router.push('/profile')}
+              />
+            </div>
+          </motion.div>
         </div>
       </div>
     </motion.header>

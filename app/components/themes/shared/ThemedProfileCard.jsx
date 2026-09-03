@@ -2,6 +2,19 @@
 
 import { motion } from "framer-motion";
 
+// Gold treatments most skins share; a theme overrides only where its own frame
+// interior needs something different.
+const GOLD_DEFAULTS = {
+  pillFrom: "#ffe9a8",
+  pillMid: "#f0b83c",
+  pillTo: "#c98a1b",
+  pillText: "#5a3200",
+  pillGlow: "rgba(240,184,60,0.45)",
+  coinFrom: "#ffe9a8",
+  coinMid: "#e9a825",
+  coinTo: "#a86a10",
+};
+
 function CrownGlyph({ className }) {
   return (
     <svg viewBox="0 0 24 20" className={className} fill="currentColor" aria-hidden="true">
@@ -12,7 +25,10 @@ function CrownGlyph({ className }) {
 
 export default function ThemedProfileCard({
   frame,
-  pad = { x: "14%", top: "16%", bottom: "13%" },
+  // Measured off each frame's artwork (variance profile of the plate edges).
+  // Sides are a straight fraction of the card width; top/bottom also account
+  // for the art stretching to whatever height the content needs.
+  pad = { left: "13%", right: "13%", top: "18%", bottom: "15%" },
   colors,
   coinIcon,
   name,
@@ -22,19 +38,23 @@ export default function ThemedProfileCard({
   progress,
   tokensNeeded,
   currentTierIcon,
-  nextTierIcon,
   profilePicture,
   onVipDetails,
-  avatarSize = 56,
+  avatarSize = 48,
 }) {
+  const c = { ...GOLD_DEFAULTS, ...colors };
   const pct = Math.max(0, Math.min(100, Number(progress) || 0));
   const initial = (name?.[0] ?? "?").toUpperCase();
-  const acme = "var(--font-acme), 'Times New Roman', serif";
-  const rubik = "var(--font-rubik), sans-serif";
+  const display = "var(--font-acme), 'Times New Roman', serif";
+  const body = "var(--font-rubik), sans-serif";
 
   return (
+    // The card is the page's hero, so it bleeds into the page gutter rather
+    // than sitting inside it — the frame art is the point, and it reads small
+    // once the ornate border eats a third of the width.
+    <div className="mx-auto w-full max-w-[376px]">
     <motion.div
-      className="relative mx-auto w-full max-w-[360px]"
+      className="relative -mx-3"
       initial={{ opacity: 0, scale: 0.94 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ type: "spring", stiffness: 180, damping: 20, delay: 0.08 }}
@@ -45,119 +65,129 @@ export default function ThemedProfileCard({
       }}
     >
       <div
-        className="relative flex flex-col"
         style={{
-          paddingLeft: pad.x,
-          paddingRight: pad.x,
+          paddingLeft: pad.left,
+          paddingRight: pad.right,
           paddingTop: pad.top,
           paddingBottom: pad.bottom,
         }}
       >
-        {/* Identity row: avatar + name/VIP/token */}
-        <div className="flex items-start gap-2.5">
+        {/* Identity row: avatar · name + label · VIP pill */}
+        <div className="flex items-center gap-2.5">
           <div
-            className="relative shrink-0 overflow-hidden rounded-full"
+            className="relative flex shrink-0 items-center justify-center overflow-hidden rounded-full"
             style={{
               width: avatarSize,
               height: avatarSize,
-              boxShadow: `0 0 0 2.5px ${colors.avatarRing}, 0 0 0 4px rgba(0,0,0,0.25), 0 0 14px ${colors.avatarRing}55`,
+              background: `radial-gradient(circle at 35% 30%, ${c.avatarFrom}, ${c.avatarTo})`,
+              boxShadow: `0 0 0 2.5px ${c.avatarRing}, 0 0 14px ${c.avatarRing}80`,
             }}
           >
             {profilePicture ? (
               <img src={profilePicture} alt="" className="h-full w-full object-cover" draggable={false} />
             ) : (
-              <div
-                className="flex h-full w-full items-center justify-center text-[20px]"
-                style={{ color: colors.name, fontFamily: acme, background: "rgba(0,0,0,0.22)" }}
-              >
+              <span className="text-[21px]" style={{ color: c.avatarInk, fontFamily: display }}>
                 {initial}
-              </div>
+              </span>
             )}
           </div>
 
           <div className="min-w-0 flex-1">
-            {/* gap-3 matters: the name truncates to fill the row, so without a
-                minimum gap it butts straight up against the VIP pill. */}
-            <div className="flex items-center justify-between gap-3">
-              <p
-                className="min-w-0 truncate text-[17px] font-bold leading-tight"
-                style={{ color: colors.name, fontFamily: acme, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}
-                title={name}
-              >
-                {name || "—"}
-              </p>
-              <button
-                type="button"
-                onClick={onVipDetails}
-                className="shrink-0 inline-flex cursor-pointer items-center gap-1 rounded-full px-2 py-[3px] leading-none transition-transform active:scale-95"
-                style={{
-                  background: `linear-gradient(180deg, ${colors.pillFrom} 0%, ${colors.pillTo} 100%)`,
-                  color: colors.pillText,
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4)",
-                }}
-              >
-                <CrownGlyph className="h-[10px] w-[10px]" />
-                <span className="text-[9px] font-semibold whitespace-nowrap" style={{ fontFamily: rubik }}>
-                  VIP Details
-                </span>
-                <span className="text-[10px] leading-none">›</span>
-              </button>
-            </div>
-
-            <p className="mt-1.5 text-[10px] leading-none" style={{ color: colors.label, fontFamily: rubik }}>
+            <p
+              className="truncate text-[20px] leading-[1.1]"
+              style={{ color: c.name, fontFamily: display }}
+              title={name}
+            >
+              {name || "—"}
+            </p>
+            <p
+              className="mt-[3px] whitespace-nowrap text-[9px] font-bold uppercase leading-none tracking-[1.2px]"
+              style={{ color: c.label, fontFamily: body }}
+            >
               Total Token
             </p>
-            <div className="mt-1 flex items-center gap-1.5">
-              {coinIcon && <img src={coinIcon} alt="" className="h-[16px] w-[16px] shrink-0" draggable={false} />}
-              <span
-                className="truncate text-[18px] font-bold leading-none"
-                style={{ color: colors.tokenValue, fontFamily: acme, textShadow: `0 0 12px ${colors.tokenValue}55` }}
-              >
-                {totalTokens}
-              </span>
-            </div>
           </div>
+
+          <button
+            type="button"
+            onClick={onVipDetails}
+            className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-full px-2.5 py-1.5 leading-none transition-transform active:scale-95"
+            style={{
+              background: `linear-gradient(180deg, ${c.pillFrom}, ${c.pillMid} 55%, ${c.pillTo})`,
+              color: c.pillText,
+              boxShadow: `0 0 12px ${c.pillGlow}, inset 0 1px 0 rgba(255,255,255,0.6)`,
+            }}
+          >
+            <CrownGlyph className="h-[10px] w-[10px]" />
+            <span className="whitespace-nowrap text-[10.5px]" style={{ fontFamily: display }}>
+              VIP Details
+            </span>
+            <span className="text-[10px] leading-none">›</span>
+          </button>
         </div>
 
-        {/* Divider */}
+        {/* Token well */}
         <div
-          className="my-3 h-px w-full"
-          style={{
-            background: `linear-gradient(90deg, transparent 0%, ${colors.divider} 18%, ${colors.divider} 82%, transparent 100%)`,
-          }}
-        />
-
-        {/* Tier + level */}
-        <div className="flex items-center gap-2.5">
-          {currentTierIcon ? (
-            <img src={currentTierIcon} alt="" className="h-[36px] w-[36px] shrink-0 object-contain" draggable={false} />
+          className="mt-3.5 flex items-center gap-2.5 rounded-[13px] px-3.5 py-2.5"
+          style={{ background: c.wellBg, border: `1px solid ${c.wellBorder}` }}
+        >
+          {coinIcon ? (
+            <img src={coinIcon} alt="" className="h-6 w-6 shrink-0 object-contain" draggable={false} />
           ) : (
-            <div className="h-[36px] w-[36px] shrink-0" />
+            <span
+              className="h-6 w-6 shrink-0 rounded-full"
+              style={{
+                background: `radial-gradient(circle at 35% 30%, ${c.coinFrom}, ${c.coinMid} 60%, ${c.coinTo})`,
+                boxShadow: "inset 0 0 0 2px rgba(120,70,0,0.35)",
+              }}
+            />
           )}
-          <div className="min-w-0 flex-1">
-            <p
-              className="text-[17px] font-bold leading-none"
-              style={{ color: colors.level, fontFamily: acme, textShadow: `0 0 14px ${colors.level}80` }}
+          <span
+            className="min-w-0 truncate text-[25px] leading-none"
+            style={{
+              color: c.tokenColor,
+              fontFamily: display,
+              textShadow: c.tokenGlow ? `0 0 12px ${c.tokenGlow}` : undefined,
+            }}
+          >
+            {totalTokens}
+          </span>
+        </div>
+
+        {/* Tier progress. The row wraps rather than truncating: on the narrower
+            plates the "more to go" line drops beneath the tier name. */}
+        <div className="mt-4">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            {currentTierIcon ? (
+              <img src={currentTierIcon} alt="" className="h-[15px] w-[15px] shrink-0 object-contain" draggable={false} />
+            ) : (
+              <span
+                className="h-[15px] w-[15px] shrink-0 rotate-45 rounded-[3px]"
+                style={{
+                  background: `linear-gradient(135deg, ${c.coinFrom}, ${c.coinMid} 60%, ${c.coinTo})`,
+                  boxShadow: "0 1px 3px rgba(120,70,0,0.4)",
+                }}
+              />
+            )}
+            <span
+              className="min-w-[3rem] flex-1 truncate text-[14px]"
+              style={{ color: c.level, fontFamily: display }}
+              title={currentLevel}
             >
               {currentLevel}
-            </p>
-            <p className="mt-1 text-[10px] leading-tight" style={{ color: colors.getText, fontFamily: rubik }}>
-              Get {Number(tokensNeeded).toLocaleString("en-US")} more to go{" "}
-              <span className="font-semibold" style={{ color: colors.getEmph }}>
-                {nextLevel}
-              </span>
-            </p>
+            </span>
+            <span
+              className="ml-auto shrink-0 whitespace-nowrap text-[10.5px] font-semibold"
+              style={{ color: c.getText, fontFamily: body }}
+            >
+              Get <b style={{ color: c.getNum }}>{Number(tokensNeeded).toLocaleString("en-US")}</b> more to go{" "}
+              <b style={{ color: c.getEmph }}>{nextLevel?.toUpperCase()}</b>
+            </span>
           </div>
-        </div>
 
-        {/* Progress bar */}
-        <div className="mt-2 flex items-center gap-1.5">
-          {currentTierIcon && (
-            <img src={currentTierIcon} alt="" className="h-[16px] w-[16px] shrink-0 object-contain" draggable={false} />
-          )}
           <div
-            className="relative h-2 flex-1 overflow-hidden rounded-full border"
-            style={{ borderColor: colors.barBorder, background: colors.barBase }}
+            className="mt-2.5 h-3 overflow-hidden rounded-full"
+            style={{ background: c.barBase, boxShadow: "inset 0 1px 3px rgba(0,0,0,0.5)" }}
             role="progressbar"
             aria-valuemin={0}
             aria-valuemax={100}
@@ -165,19 +195,22 @@ export default function ThemedProfileCard({
           >
             <div
               className="h-full rounded-full"
-              style={{ width: `${pct}%`, background: colors.barFill, boxShadow: `0 0 8px ${colors.barGlow || colors.barBorder}` }}
+              style={{ width: `${pct}%`, background: c.barFill, boxShadow: `0 0 10px ${c.barGlow}` }}
             />
           </div>
-          {nextTierIcon && (
-            <img src={nextTierIcon} alt="" className="h-[16px] w-[16px] shrink-0 object-contain" draggable={false} />
-          )}
-        </div>
 
-        <div className="mt-1 flex items-center justify-between text-[9px]" style={{ color: colors.label, fontFamily: rubik }}>
-          <span>{currentLevel}</span>
-          <span>{nextLevel}</span>
+          <div
+            className="mt-1.5 flex justify-between gap-3 text-[10px] font-bold uppercase tracking-[0.5px]"
+            style={{ color: c.label, fontFamily: body }}
+          >
+            <span className="truncate">{currentLevel}</span>
+            <span className="truncate text-right" style={{ color: c.nextLabel }}>
+              {nextLevel}
+            </span>
+          </div>
         </div>
       </div>
     </motion.div>
+    </div>
   );
 }

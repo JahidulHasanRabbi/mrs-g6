@@ -163,9 +163,9 @@ export function SectionTitle({ children }) {
   );
 }
 
-export function Field({ label, children, hint }) {
+export function Field({ label, children, hint, className = "" }) {
   return (
-    <div>
+    <div className={className}>
       <label className="mb-2 block text-[14px] font-semibold text-white">{label}</label>
       {children}
       {hint && <p className="mt-1 text-[11px] text-white/40">{hint}</p>}
@@ -173,15 +173,25 @@ export function Field({ label, children, hint }) {
   );
 }
 
-export function Select({ value, onChange, options, disabled }) {
+// `placeholder` adds a leading empty option; values stay numbers unless the
+// option keys are non-numeric (uuids), so existing numeric callers are unchanged.
+export function Select({ value, onChange, options, disabled, placeholder }) {
   return (
     <div className="relative">
       <select
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
+        value={value ?? ""}
+        onChange={(e) => {
+          const raw = e.target.value;
+          onChange(raw === "" ? "" : Number.isNaN(Number(raw)) ? raw : Number(raw));
+        }}
         disabled={disabled}
         className={`${INPUT_BASE} appearance-none pr-10`}
       >
+        {placeholder && (
+          <option value="" style={{ background: "#041502", color: "white" }}>
+            {placeholder}
+          </option>
+        )}
         {options.map((o) => (
           <option key={o.value} value={o.value} style={{ background: "#041502", color: "white" }}>
             {o.label}
@@ -246,6 +256,19 @@ export function DateField({ value, onChange, disabled, placeholder = "dd/mm/yyyy
         </svg>
       </div>
     </div>
+  );
+}
+
+export function TimeField({ value, onChange, disabled, placeholder = "--:--" }) {
+  return (
+    <input
+      type="time"
+      value={value || ""}
+      onChange={(e) => onChange(e.target.value)}
+      disabled={disabled}
+      placeholder={placeholder}
+      className={`${INPUT_BASE} [color-scheme:dark]`}
+    />
   );
 }
 

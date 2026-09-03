@@ -6,6 +6,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { RPG_COLORS, RPG_FONTS } from "./constants";
+import { useRpgSkin } from "./rpgSkin";
 import { GoldCta } from "./primitives";
 
 export default function NoticeModal({
@@ -18,6 +19,7 @@ export default function NoticeModal({
   onClose,
   busy = false,
 }) {
+  const skin = useRpgSkin();
   return (
     <AnimatePresence>
       {open && (
@@ -31,9 +33,9 @@ export default function NoticeModal({
           <motion.div
             className="w-full max-w-[340px] rounded-[18px] border p-[22px] text-center"
             style={{
-              background: "rgba(10,14,24,0.96)",
-              borderColor: RPG_COLORS.violetBorder,
-              boxShadow: "0 16px 50px rgba(0,0,0,0.5), 0 0 30px rgba(124,77,255,0.25)",
+              background: skin.modal.bg,
+              borderColor: skin.modal.border,
+              boxShadow: skin.modal.shadow,
             }}
             initial={{ scale: 0.9, y: 14 }}
             animate={{ scale: 1, y: 0 }}
@@ -43,14 +45,14 @@ export default function NoticeModal({
           >
             <p
               className="text-[17px] font-bold tracking-[1px]"
-              style={{ color: RPG_COLORS.text, fontFamily: RPG_FONTS.display }}
+              style={{ color: skin.c.text, fontFamily: RPG_FONTS.display }}
             >
               {title}
             </p>
             {message ? (
               <p
                 className="mt-[10px] text-[13px] leading-5"
-                style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}
+                style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}
               >
                 {message}
               </p>
@@ -66,8 +68,8 @@ export default function NoticeModal({
                   disabled={busy}
                   className="w-full rounded-[14px] border p-[11px] text-[13px] font-semibold tracking-[1px] active:scale-[0.98] transition-transform"
                   style={{
-                    borderColor: RPG_COLORS.violetBorder,
-                    color: RPG_COLORS.textDim,
+                    borderColor: skin.modal.border,
+                    color: skin.c.textDim,
                     background: "rgba(255,255,255,0.04)",
                     fontFamily: RPG_FONTS.display,
                   }}

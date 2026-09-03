@@ -139,7 +139,9 @@ export default function ThemeHeader({
             </span>
           </div>
         )}
-        {!showFigmaBalances && (onInfoClick ? (
+        {/* Shown alongside the balances, not instead of them — it is the only
+            route into /profile (or the game's info) from the bar. */}
+        {onInfoClick ? (
           profileMode ? (
             <ProfileFrame
               src={profilePicture || PROFILE_ASSETS.profileAvatar}
@@ -159,7 +161,7 @@ export default function ThemeHeader({
           )
         ) : (
           <span className="w-9 h-9" />
-        ))}
+        )}
       </div>
     </header>
   );

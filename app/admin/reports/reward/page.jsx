@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback, Suspense } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, Suspense } from "react";
 import { AdminRouteGuard } from "../../../components/guards/AdminRouteGuard";
-import { FilterDropdown, DateFilter, TextSearchInput } from "../../../components/admin/members/FilterControls";
+import { FilterDropdown, TextSearchInput } from "../../../components/admin/members/FilterControls";
 import { Pagination } from "../../../components/admin/members/DataTable";
-import { getRewardReport } from "../../../api/adminApi";
+import ReportRangeBar, { presetRange } from "../../../components/admin/reports/ReportRangeBar";
+import { GRAD_GOLD, GRAD_DARK } from "../../../components/admin/retention/constants";
+import { getRewardReport, getRewardReportKpi } from "../../../api/adminApi";
 import { getCategoryOptions } from "../../../api/queryParams";
 
 const PAGE_SIZE = 8;
@@ -39,6 +41,66 @@ function formatDateTime(isoStr) {
   } catch {
     return isoStr;
   }
+}
+
+function formatMoney(value) {
+  return Number(value || 0).toLocaleString("en-MY", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatCount(value) {
+  return Number(value || 0).toLocaleString("en-MY");
+}
+
+// GET /member/reward-report-kpi/ — totals over every filtered record, not
+// just the current table page. Same filters as the table, so the two numbers
+// can never disagree. Both keys are always present regardless of category.
+async function fetchTotals(params) {
+  const res = await getRewardReportKpi(params);
+  return {
+    credit: Number(res?.total_credit_amount ?? 0),
+    prizes: Number(res?.total_prizes_claimed ?? 0),
+  };
+}
+
+function CreditIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 18V6h6a4 4 0 0 1 0 8H6" />
+      <path d="M14 14l4 4" />
+    </svg>
+  );
+}
+
+function PrizeIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 21h8" />
+      <path d="M12 17v4" />
+      <path d="M7 4h10v5a5 5 0 0 1-10 0V4z" />
+      <path d="M7 5H4a3 3 0 0 0 3 4" />
+      <path d="M17 5h3a3 3 0 0 1-3 4" />
+    </svg>
+  );
+}
+
+// Gold-gradient KPI card — same pattern as Member Alert / PIC Dashboard.
+function KpiCard({ icon, label, value, loading }) {
+  return (
+    <div className="flex items-center gap-4 rounded-[16px] border-[3px] border-[#f2cb7a] p-6" style={{ backgroundImage: GRAD_GOLD }}>
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[8px] text-[#e9af41]" style={{ backgroundImage: GRAD_DARK }}>
+        {icon}
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <p className="text-[16px] font-semibold uppercase leading-[24px] text-[#141828]" style={{ letterSpacing: "-1px" }}>{label}</p>
+        <p
+          className="whitespace-nowrap font-bold text-[#141828]"
+          style={{ fontFamily: "var(--font-dm-sans), 'DM Sans', sans-serif", fontSize: "32px", lineHeight: "40px" }}
+        >
+          {loading ? "—" : value}
+        </p>
+      </div>
+    </div>
+  );
 }
 
 function SortIcon({ active, direction }) {
@@ -77,29 +139,62 @@ function compareRows(a, b, sortConfig) {
 }
 
 function RewardReportContent() {
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  // One shared date+time range drives both the table and the KPI totals —
+  // same Daily/Monthly/Yearly + custom picker as Usage Report. Defaults to
+  // Monthly (day 1 of the current month through today) on first load.
+  const [preset, setPreset] = useState("monthly");
+  const [range, setRange] = useState(() => presetRange("monthly"));
   const [categoryFilter, setCategoryFilter] = useState("");
   const [detailFilter, setDetailFilter] = useState("");
   const [rewardNameFilter, setRewardNameFilter] = useState("");
   const [usernameQuery, setUsernameQuery] = useState("");
   const [phoneQuery, setPhoneQuery] = useState("");
 
+  const activeFilters = [categoryFilter, detailFilter, rewardNameFilter, usernameQuery, phoneQuery];
+  const hasActiveFilters = activeFilters.some(Boolean);
+
+  const clearFilters = () => {
+    setCategoryFilter("");
+    setDetailFilter("");
+    setRewardNameFilter("");
+    setUsernameQuery("");
+    setPhoneQuery("");
+  };
+
+  const handlePreset = useCallback((next) => {
+    setPreset(next);
+    const computed = presetRange(next);
+    if (computed) setRange(computed);
+  }, []);
+
+  const handleCustomRange = useCallback((next) => {
+    setPreset("custom");
+    setRange(next);
+  }, []);
+
   const [sortConfig, setSortConfig] = useState({ key: "created", direction: "desc" });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [totals, setTotals] = useState(null);
+  const [totalsLoading, setTotalsLoading] = useState(false);
+  const totalsRunRef = useRef(0);
+
+  const catValue = useMemo(
+    () => getCategoryOptions("reward").find((o) => o.label === categoryFilter)?.value,
+    [categoryFilter]
+  );
 
   const fetchReport = useCallback(async (page) => {
+    if (!range.from || !range.to) return;
     setLoading(true);
     try {
-      const catValue = getCategoryOptions("reward").find(o => o.label === categoryFilter)?.value;
       const params = {
         page,
         page_size: PAGE_SIZE,
-        start_date: dateFrom || undefined,
-        end_date: dateTo || undefined,
+        start_date: range.from,
+        end_date: range.to,
         category: catValue || undefined,
         reward_details: detailFilter || undefined,
         reward_name: rewardNameFilter || undefined,
@@ -115,18 +210,45 @@ function RewardReportContent() {
     } finally {
       setLoading(false);
     }
-  }, [dateFrom, dateTo, categoryFilter, detailFilter, rewardNameFilter, usernameQuery, phoneQuery]);
+  }, [range, catValue, detailFilter, rewardNameFilter, usernameQuery, phoneQuery]);
 
   useEffect(() => {
-    // Only fetch if both dates are filled or both are empty
-    const isDateRangeValid = (!dateFrom && !dateTo) || (dateFrom && dateTo);
-    if (!isDateRangeValid) {
-      return; // Don't fetch if date range is incomplete
-    }
-
     setCurrentPage(1);
     fetchReport(1);
   }, [fetchReport]);
+
+  useEffect(() => {
+    if (!range.from || !range.to) return;
+
+    const runId = totalsRunRef.current + 1;
+    totalsRunRef.current = runId;
+    const isCurrent = () => totalsRunRef.current === runId;
+
+    // Debounced: the text filters refetch on every keystroke.
+    const timer = setTimeout(async () => {
+      setTotalsLoading(true);
+      try {
+        const result = await fetchTotals({
+          start_date: range.from,
+          end_date: range.to,
+          category: catValue || undefined,
+          reward_details: detailFilter || undefined,
+          reward_name: rewardNameFilter || undefined,
+          username: usernameQuery || undefined,
+          phone_number: phoneQuery || undefined,
+        });
+        if (!isCurrent()) return;
+        setTotals(result);
+      } catch (err) {
+        console.error(err);
+        if (isCurrent()) setTotals(null);
+      } finally {
+        if (isCurrent()) setTotalsLoading(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [range, catValue, detailFilter, rewardNameFilter, usernameQuery, phoneQuery]);
 
   const sortedRows = useMemo(() => {
     return [...rows].sort((a, b) => compareRows(a, b, sortConfig));
@@ -149,40 +271,56 @@ function RewardReportContent() {
   return (
     <main className="min-h-screen xl:admin-content-pl pr-10 pt-8 pb-10">
         <div className="mb-6 flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-4xl font-bold leading-[1.05] text-white">
-              Reward Report
-            </h1>
-            <p className="mt-2 text-[14px] text-white/55">
-              Frontend-only report layout based on the approved Phase 1 enhancement spec.
-            </p>
-          </div>
+          <h1 className="text-4xl font-bold leading-[1.05] text-white">
+            Reward Report
+          </h1>
+        </div>
 
-          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#e0a744] bg-[rgba(233,175,65,0.08)] text-[#e9af41] shadow-[0_0_24px_rgba(233,175,65,0.18)]">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-            </svg>
-          </div>
+        <div className="mb-5">
+          <ReportRangeBar preset={preset} range={range} onPreset={handlePreset} onRangeChange={handleCustomRange} />
+        </div>
+
+        <div className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {categoryFilter !== "Prize" ? (
+            <KpiCard icon={<CreditIcon />} label="Total Credit Amount" value={`RM ${formatMoney(totals?.credit)}`} loading={totalsLoading} />
+          ) : null}
+          {categoryFilter !== "Credit" ? (
+            <KpiCard icon={<PrizeIcon />} label="Total Prizes Claimed" value={formatCount(totals?.prizes)} loading={totalsLoading} />
+          ) : null}
         </div>
 
         <section className="overflow-hidden rounded-[12px] border border-[rgba(255,255,132,0.18)] bg-[linear-gradient(180deg,rgba(28,48,31,0.98)_0%,rgba(24,44,28,0.98)_100%)] shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
           <div className="border-b border-white/5 px-4 pt-4 pb-3">
-            <div className="flex flex-wrap items-center gap-3">
-              <h2 className="mr-auto whitespace-nowrap text-[15px] font-bold text-[#f4efe0] sm:text-[16px] lg:text-[17px]">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 className="text-[15px] font-bold text-[#f4efe0] sm:text-[16px] lg:text-[17px]">
                 The Reward Reports Are Given
               </h2>
 
-              <span className="whitespace-nowrap text-[13px] text-[#d6d6d6]">
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="shrink-0 whitespace-nowrap rounded-[8px] border border-[#f2cb7a]/60 px-3 py-1.5 text-[12px] font-semibold text-[#eaad2c] transition-colors hover:bg-white/5"
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-start gap-3">
+              <span className="mt-2 shrink-0 text-[13px] text-[#d6d6d6]">
                 Filter By:
               </span>
 
-              <DateFilter label="Date/Time" fromDate={dateFrom} toDate={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
-              <FilterDropdown label="Category" options={getCategoryOptions("reward").map(o => o.label)} value={categoryFilter} onChange={setCategoryFilter} />
-              <TextSearchInput placeholder="Reward Details" value={detailFilter} onChange={setDetailFilter} />
-              <TextSearchInput placeholder="Reward Name" value={rewardNameFilter} onChange={setRewardNameFilter} />
-              <TextSearchInput placeholder="Enter Username" value={usernameQuery} onChange={setUsernameQuery} />
-              <TextSearchInput placeholder="Enter Phone" value={phoneQuery} onChange={setPhoneQuery} />
+              {/* All 5 controls in one row at xl — 3 columns left a dangling
+                  half-empty second row (5 items ÷ 3 = 3 + 2). */}
+              <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-5">
+                <FilterDropdown fullWidth label="Category" options={getCategoryOptions("reward").map(o => o.label)} value={categoryFilter} onChange={setCategoryFilter} />
+                <TextSearchInput fullWidth placeholder="Reward Details" value={detailFilter} onChange={setDetailFilter} />
+                <TextSearchInput fullWidth placeholder="Reward Name" value={rewardNameFilter} onChange={setRewardNameFilter} />
+                <TextSearchInput fullWidth placeholder="Enter Username" value={usernameQuery} onChange={setUsernameQuery} />
+                <TextSearchInput fullWidth placeholder="Enter Phone" value={phoneQuery} onChange={setPhoneQuery} />
+              </div>
             </div>
           </div>
 

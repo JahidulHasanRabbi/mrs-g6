@@ -22,7 +22,8 @@ export const STORAGE_KEYS = {
   ADMIN_ROLE: 'mrs_admin_role',
   ADMIN_PERMISSIONS: 'mrs_admin_permissions',
   REDIRECT_O: 'mrs_redirect_o',
-  STATION_URL: 'mrs_station_url'
+  STATION_URL: 'mrs_station_url',
+  MEMBER_THEME: 'mrs_member_theme'
 };
 
 export const tokenStorage = {
@@ -257,6 +258,27 @@ export const tokenStorage = {
   clearStationUrl: () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem(STORAGE_KEYS.STATION_URL);
+    }
+  },
+
+  // Manual theme pick — deliberately survives clearMemberTokens, and is
+  // separate from REDIRECT_O, which stays the station to redirect back to.
+  getMemberTheme: () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(STORAGE_KEYS.MEMBER_THEME);
+    }
+    return null;
+  },
+
+  setMemberTheme: (themeId) => {
+    if (typeof window !== 'undefined' && themeId) {
+      localStorage.setItem(STORAGE_KEYS.MEMBER_THEME, themeId);
+    }
+  },
+
+  clearMemberTheme: () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEYS.MEMBER_THEME);
     }
   }
 };

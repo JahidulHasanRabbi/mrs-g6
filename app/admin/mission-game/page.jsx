@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pagination } from "../../components/admin/members/DataTable";
 import MissionsTable from "../../components/admin/mission-game/MissionsTable";
+import ConfirmDialog from "../../components/admin/ui/ConfirmDialog";
 import { archiveMission, getMissions, getMissionSettings, updateMissionSettings } from "../../api/adminApi";
 import {
   MISSION_ACTION_LABELS,
@@ -56,6 +57,15 @@ function LevelIcon() {
   );
 }
 
+function PopOutIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="13" height="11" rx="2" />
+      <path d="M8 20h13V9" />
+    </svg>
+  );
+}
+
 function MaintenanceToggle({ checked, onChange, saving }) {
   return (
     <div className="flex items-center gap-3 rounded-[8px] border border-white/10 bg-white/[0.03] px-4 py-2">
@@ -88,6 +98,8 @@ export default function MissionGamePage() {
   const [loading, setLoading] = useState(true);
   const [maintenance, setMaintenance] = useState(false);
   const [savingMaintenance, setSavingMaintenance] = useState(false);
+  const [archiveTarget, setArchiveTarget] = useState(null);
+  const [archiving, setArchiving] = useState(false);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -129,11 +141,16 @@ export default function MissionGamePage() {
     }
   };
 
-  const handleArchive = async (mission) => {
-    if (!mission?.uuid) return;
-    if (!window.confirm(`Archive "${mission.name}"?`)) return;
-    await archiveMission(mission.uuid);
-    loadMissions();
+  const confirmArchive = async () => {
+    if (!archiveTarget?.uuid) return;
+    setArchiving(true);
+    try {
+      await archiveMission(archiveTarget.uuid);
+      setArchiveTarget(null);
+      loadMissions();
+    } finally {
+      setArchiving(false);
+    }
   };
 
   return (
@@ -153,6 +170,14 @@ export default function MissionGamePage() {
           />
           <button
             type="button"
+            onClick={() => router.push("/admin/mission-game/pop-out")}
+            className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold tracking-[-0.5px] text-[#fbeed2] transition-colors hover:bg-white/5"
+          >
+            <PopOutIcon />
+            Pop-out Setting
+          </button>
+          <button
+            type="button"
             onClick={() => router.push("/admin/mission-game/add")}
             className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-6 py-2 text-[14px] font-semibold tracking-[-0.5px] text-[#141828] transition-opacity hover:opacity-90"
             style={{ backgroundImage: GOLD_BG }}
@@ -168,7 +193,7 @@ export default function MissionGamePage() {
           missions={missions}
           loading={loading}
           onEdit={(m) => router.push(`/admin/mission-game/add?uuid=${m.uuid}`)}
-          onArchive={handleArchive}
+          onArchive={setArchiveTarget}
         />
       </div>
 
@@ -178,6 +203,17 @@ export default function MissionGamePage() {
         </p>
         <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
       </div>
+
+      <ConfirmDialog
+        open={!!archiveTarget}
+        title="Archive mission?"
+        message={archiveTarget ? `Archive "${archiveTarget.name}"? Members lose any in-progress claim on it.` : ""}
+        confirmLabel="Archive"
+        tone="destructive"
+        loading={archiving}
+        onConfirm={confirmArchive}
+        onCancel={() => setArchiveTarget(null)}
+      />
     </div>
   );
 }

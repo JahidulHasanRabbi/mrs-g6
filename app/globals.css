@@ -39,6 +39,12 @@
   --lb-heading-muted: #BBCBBB;
   --lb-tab-active: #60803C;
   --lb-tabs-fill: rgba(26, 28, 28, 0.6);
+  /* Home game-rail page dots. These sit on the skin artwork, which ranges from
+   * near-black to bright gold, so they ride a dark track and each skin tints
+   * the dot itself. */
+  --rail-dot: #f2cb7a;
+  --rail-dot-idle: rgba(255, 255, 255, 0.4);
+  --rail-dot-track: rgba(0, 0, 0, 0.45);
   /* Base backdrop per skin. Painted before hydration so a themed member never
    * sees black behind a shell that hasn't mounted yet. */
   --skin-bg: #000000;
@@ -57,6 +63,8 @@ body {
   --lb-accent-rgb: 233, 175, 65;
   --lb-on-accent: #241704;
   --lb-rank: #ffe16d;
+  --rail-dot: #ffd071;
+  --rail-dot-idle: rgba(255, 208, 113, 0.45);
 }
 :root[data-theme="ubetclub"] {
   --skin-bg: #1a0505;
@@ -64,6 +72,8 @@ body {
   --lb-accent-rgb: 233, 175, 65;
   --lb-on-accent: #2a0a0a;
   --lb-rank: #ffe16d;
+  --rail-dot: #ffc95c;
+  --rail-dot-idle: rgba(255, 201, 92, 0.45);
 }
 :root[data-theme="ep369"] {
   --skin-bg: #04140a;
@@ -71,6 +81,8 @@ body {
   --lb-accent-rgb: 233, 175, 65;
   --lb-on-accent: #04140a;
   --lb-rank: #ffe16d;
+  --rail-dot: #8ff0a8;
+  --rail-dot-idle: rgba(143, 240, 168, 0.45);
 }
 :root[data-theme="kgame99"] {
   --skin-bg: #0a1a2f;
@@ -87,6 +99,9 @@ body {
   --lb-heading-muted: #1f4368;
   --lb-tab-active: #0a1a2f;
   --lb-tabs-fill: rgba(14, 34, 62, 0.9);
+  --rail-dot: #7fd4ff;
+  --rail-dot-idle: rgba(127, 212, 255, 0.45);
+  --rail-dot-track: rgba(4, 18, 36, 0.6);
 }
 :root[data-theme="lv918"] {
   --skin-bg: #2a0a1f;
@@ -105,6 +120,9 @@ body {
   --lb-tab-inactive: rgba(255, 255, 255, 0.75);
   --lb-tab-active: #2a0a1f;
   --lb-tabs-fill: rgba(74, 15, 48, 0.92);
+  --rail-dot: #ff9ec7;
+  --rail-dot-idle: rgba(255, 158, 199, 0.45);
+  --rail-dot-track: rgba(42, 10, 31, 0.65);
 }
 :root[data-theme="n1gang"] {
   --skin-bg: #0a0a0a;
@@ -112,6 +130,8 @@ body {
   --lb-accent-rgb: 233, 175, 65;
   --lb-on-accent: #241704;
   --lb-rank: #ffe16d;
+  --rail-dot: #ff8a5c;
+  --rail-dot-idle: rgba(255, 138, 92, 0.45);
 }
 /* Amber-gold prize gradients shared by every custom theme (the gold shades are
  * close enough not to warrant per-theme tuning). */

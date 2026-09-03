@@ -42,6 +42,18 @@ export const N1GANG_ASSETS = {
     tileSmashEgg: `${BASE}/home/tile-smash-egg.webp`,
     tilePenaltyKick: `${BASE}/home/tile-penalty-kick.webp`,
   },
+  // Homepage game list badges (Figma 544:* — one nine-badge sheet per skin).
+  modules: {
+    luckySpin: `${BASE}/modules/lucky-spin.webp`,
+    penaltyKick: `${BASE}/modules/penalty-kick.webp`,
+    avatar: `${BASE}/modules/avatar.webp`,
+    smashEgg: `${BASE}/modules/smash-egg.webp`,
+    leaderboard: `${BASE}/modules/leaderboard.webp`,
+    missions: `${BASE}/modules/missions.webp`,
+    vip: `${BASE}/modules/vip.webp`,
+    dailyCheckin: `${BASE}/modules/daily-checkin.webp`,
+    mart: `${BASE}/modules/mart.webp`,
+  },
   spin: {
     bg: `${BASE}/spin/bg-spin.webp`,
     title: `${BASE}/spin/title-lucky-spin.webp`,
@@ -145,6 +157,19 @@ export const N1GANG_ASSETS = {
   // Daily Check-in page (Figma 463:1384). Board geometry, day positions and the
   // reward glyphs are shared across all six skins via
   // app/components/themes/shared/checkinMartSkin.js — only the art differs here.
+  // Avatar mini-game nav crests (Figma a83SqWgqIGNF6dJD1aP13w). Every other RPG
+  // surface is dressed with art already listed above.
+  // No portal-home crest of its own — the comp crops the shared sheet, so the
+  // raised centre reuses nav.home.
+  rpg: {
+    iconBase: `${BASE}/rpg/icon-base.webp`,
+    iconHeroItem: `${BASE}/rpg/icon-hero-item.webp`,
+    iconChallenge: `${BASE}/rpg/icon-challenge.webp`,
+    iconMission: `${BASE}/rpg/icon-mission.webp`,
+    // Downscaled from checkin/board-frame.webp — the chip renders at ~73px,
+    // so the full board bitmap was ~200KB of waste per themed session.
+    tileFrame: `${BASE}/rpg/tile-frame.webp`,
+  },
   checkin: {
     title: `${BASE}/checkin/title-checkin.webp`,
     boardFrame: `${BASE}/checkin/board-frame.webp`,

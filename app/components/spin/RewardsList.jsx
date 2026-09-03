@@ -9,6 +9,14 @@ import { mapLuckySpinItems } from "../../api/responseMappers";
 import LoadingState from "../ui/LoadingState";
 import ErrorDisplay from "../ui/ErrorDisplay";
 
+// scroll-bg.webp is 781x1400. The flat writable page — measured off the art,
+// not the outer silhouette — is rows 172-1176 and cols 165-635; outside that
+// the parchment curls and darkens, so content sitting there reads as spilling
+// over the edge. The frame is locked to the art's ratio so object-contain can
+// never crop it, which keeps these insets true at every width.
+const SCROLL_FRAME = "aspect-[781/1400]";
+const SCROLL_PAPER = "top-[12.3%] bottom-[16%] left-[21%] right-[19%]";
+
 const RewardItem = memo(function RewardItem({ icon, title, index }) {
   // More aggressive font size reduction for mobile to ensure full text shows
   const getFontSizeClass = (text) => {
@@ -21,7 +29,7 @@ const RewardItem = memo(function RewardItem({ icon, title, index }) {
 
   return (
     <motion.div
-      className="relative w-[80%] sm:w-full mx-auto h-[62px] rounded-[6px] border border-white overflow-hidden"
+      className="relative w-full mx-auto h-[62px] rounded-[6px] border border-white overflow-hidden"
       style={{
         background: "linear-gradient(0.57deg, rgba(242, 195, 107, 0) 74.37%, rgb(221, 143, 31) 94%), linear-gradient(90deg, rgba(7, 25, 13, 0.44) 0%, rgba(7, 25, 13, 0.44) 100%)",
         boxShadow: "3px 3px 48px 3px rgba(231, 196, 87, 0.5)"
@@ -35,10 +43,10 @@ const RewardItem = memo(function RewardItem({ icon, title, index }) {
       }}
       whileHover={{ scale: 1.02, y: -2 }}
     >
-      <div className="absolute inset-0 flex items-center justify-between px-2 sm:px-4 gap-2 sm:gap-3">
+      <div className="absolute inset-0 flex items-center justify-between px-1.5 sm:px-3 gap-2 sm:gap-3">
         {icon && (
           <motion.div
-            className="relative w-[45px] h-[45px] sm:w-[50px] sm:h-[51px] shrink-0"
+            className="relative w-[38px] h-[38px] sm:w-[46px] sm:h-[46px] shrink-0"
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{
@@ -69,7 +77,6 @@ const RewardItem = memo(function RewardItem({ icon, title, index }) {
             {title}
           </p>
         </div>
-        {icon && <div className="w-[45px] sm:w-[50px] shrink-0" />}
       </div>
     </motion.div>
   );
@@ -162,7 +169,7 @@ const RewardsList = memo(function RewardsList() {
 
   if (isLoading) {
     return (
-      <div className="relative w-full max-w-[400px] h-[660px] min-[400px]:h-[820px] sm:max-w-[520px] sm:h-[1020px] mx-auto flex items-center justify-center">
+      <div className={`relative w-full max-w-[400px] sm:max-w-[520px] ${SCROLL_FRAME} mx-auto flex items-center justify-center`}>
         <LoadingState />
       </div>
     );
@@ -170,7 +177,7 @@ const RewardsList = memo(function RewardsList() {
 
   if (error) {
     return (
-      <div className="relative w-full max-w-[400px] h-[660px] min-[400px]:h-[820px] sm:max-w-[520px] sm:h-[1020px] mx-auto flex items-center justify-center">
+      <div className={`relative w-full max-w-[400px] sm:max-w-[520px] ${SCROLL_FRAME} mx-auto flex items-center justify-center`}>
         <ErrorDisplay message={error} />
       </div>
     );
@@ -178,7 +185,7 @@ const RewardsList = memo(function RewardsList() {
 
   return (
     <motion.div
-      className="relative w-full max-w-[400px] sm:max-w-[520px] h-[660px] min-[400px]:h-[820px] sm:h-[1020px] mx-auto overflow-hidden"
+      className={`relative w-full max-w-[400px] sm:max-w-[520px] ${SCROLL_FRAME} mx-auto overflow-hidden`}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
@@ -188,12 +195,14 @@ const RewardsList = memo(function RewardsList() {
         alt="Scroll Background"
         src={SPIN_ASSETS.scrollBackground}
         fill
-        className="object-cover"
+        className="object-contain"
       />
 
-      <div className="relative h-full flex flex-col items-center pt-24 px-6 pb-16 min-[400px]:pt-32 min-[400px]:px-10 min-[400px]:pb-20">
+      {/* Absolutely positioned so the insets resolve against the frame's
+          height — percentage padding would resolve against its width. */}
+      <div className={`absolute ${SCROLL_PAPER} flex flex-col items-center`}>
         <motion.h2
-          className="text-[36px] font-bold text-center mb-4 shrink-0"
+          className="text-[clamp(20px,6.4vw,36px)] font-bold text-center mb-3 shrink-0 whitespace-nowrap"
           style={{ color: '#8B6914' }}
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -202,7 +211,7 @@ const RewardsList = memo(function RewardsList() {
           Rewards List
         </motion.h2>
 
-        <div className="flex-1 min-h-0 w-full overflow-y-auto scrollbar-gold flex flex-col items-center gap-3 pr-1">
+        <div className="flex-1 min-h-0 w-full overflow-y-auto scrollbar-gold flex flex-col items-center gap-3">
           <div className="flex flex-col gap-3 w-full max-w-[300px]">
             {itemRewards.map((reward, index) => (
               <RewardItem

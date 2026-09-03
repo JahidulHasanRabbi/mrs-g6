@@ -133,7 +133,6 @@ export default function AdminLoginPage() {
               alt="King Group 44"
               width={130}
               height={48}
-              className="h-auto w-[130px]"
               priority
             />
           </div>

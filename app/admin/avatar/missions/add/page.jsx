@@ -23,6 +23,7 @@ import {
   INPUT_BASE,
   SectionTitle,
   Select,
+  TimeField,
   apiErrorMessage,
 } from "../../../../components/admin/ui/GameUI";
 
@@ -35,12 +36,24 @@ const EMPTY_FORM = {
   rewardBattlePointQuantity: 0,
   rewardTokenQuantity: 0,
   startDate: "",
+  startTime: "",
   endDate: "",
+  endTime: "",
 };
 
 function dateOnly(value) {
   if (!value) return "";
   return String(value).slice(0, 10);
+}
+
+// Accepts the time half of an ISO datetime ("...T08:00:00+08:00"); a bare
+// date (or no value) has no time to read.
+function timeOnly(value) {
+  if (!value) return "";
+  const text = String(value);
+  if (!text.includes("T")) return "";
+  const candidate = text.split("T")[1];
+  return /^\d{2}:\d{2}/.test(candidate) ? candidate.slice(0, 5) : "";
 }
 
 function toForm(api) {
@@ -53,8 +66,17 @@ function toForm(api) {
     rewardBattlePointQuantity: api.reward_battle_point_quantity ?? 0,
     rewardTokenQuantity: api.reward_token_quantity ?? 0,
     startDate: dateOnly(api.start_date),
+    startTime: timeOnly(api.start_date),
     endDate: dateOnly(api.end_date),
+    endTime: timeOnly(api.end_date),
   };
+}
+
+// The backend field carries the whole moment now (date + time), not a bare
+// date. Dates stay optional here — no date means no schedule boundary.
+function combineDateTime(date, time) {
+  if (!date) return null;
+  return `${date}T${time || "00:00"}:00`;
 }
 
 function toPayload(form) {
@@ -66,8 +88,8 @@ function toPayload(form) {
     accumulate_target: Number(form.accumulateTarget),
     reward_battle_point_quantity: Number(form.rewardBattlePointQuantity),
     reward_token_quantity: Number(form.rewardTokenQuantity) || 0,
-    start_date: form.startDate || null,
-    end_date: form.endDate || null,
+    start_date: combineDateTime(form.startDate, form.startTime),
+    end_date: combineDateTime(form.endDate, form.endTime),
   };
 }
 
@@ -102,7 +124,11 @@ function AvatarMissionForm() {
     if (!Number.isInteger(bp) || bp < 0) return "Battle point reward must be a whole number of at least 0";
     const tokens = Number(form.rewardTokenQuantity);
     if (!Number.isInteger(tokens) || tokens < 0) return "Token reward must be a whole number of at least 0";
-    if (form.startDate && form.endDate && form.endDate < form.startDate) return "End date must not be before start date";
+    if (form.startDate && form.endDate) {
+      const start = combineDateTime(form.startDate, form.startTime);
+      const end = combineDateTime(form.endDate, form.endTime);
+      if (end < start) return "End date must not be before start date";
+    }
     return "";
   };
 
@@ -191,8 +217,15 @@ function AvatarMissionForm() {
               <Field label="Start Date" hint="Optional — leave empty to run immediately.">
                 <DateField value={form.startDate} onChange={set("startDate")} />
               </Field>
+              <Field label="Start Time">
+                <TimeField value={form.startTime} onChange={set("startTime")} disabled={!form.startDate} />
+              </Field>
+              <div className="hidden md:block" aria-hidden="true" />
               <Field label="End Date" hint="Optional — must not be before start date.">
                 <DateField value={form.endDate} onChange={set("endDate")} min={form.startDate || undefined} />
+              </Field>
+              <Field label="End Time">
+                <TimeField value={form.endTime} onChange={set("endTime")} disabled={!form.endDate} />
               </Field>
             </div>
           </div>

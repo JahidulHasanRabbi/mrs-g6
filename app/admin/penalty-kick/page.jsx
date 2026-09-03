@@ -9,11 +9,15 @@ import GameStatusModal from "../../components/admin/penalty-kick/GameStatusModal
 import CostSettingModal from "../../components/admin/penalty-kick/CostSettingModal";
 import KickSequenceModal from "../../components/admin/penalty-kick/KickSequenceModal";
 import ConfirmDialog from "../../components/admin/ui/ConfirmDialog";
+import ImportSequenceModal, { ImportIcon } from "../../components/admin/ui/ImportSequenceModal";
+import SequenceHistoryTable from "../../components/admin/ui/SequenceHistoryTable";
 import { useToast } from "../../components/admin/ui/Toast";
 import * as adminApi from "../../api/adminApi";
+import { buildCurrentSequenceExportRows, downloadXlsx } from "../../lib/sequenceImport";
 
 const GOLD_BG = "linear-gradient(101deg, #dc9d16 1%, #f2cb7a 98%)";
 const PAGE_SIZE = 7;
+const HISTORY_PAGE_SIZE = 10;
 
 const DIFFICULTY_TO_KEY = { 1: "easy", 2: "medium", 3: "hard" };
 const KEY_TO_DIFFICULTY = { easy: 1, medium: 2, hard: 3 };
@@ -25,6 +29,7 @@ function normalizeList(response) {
 function mapReward(item) {
   return {
     id: item.uuid || item.id,
+    numericId: item.id ?? null,
     uuid: item.uuid,
     name: item.reward_name || "-",
     quantity: item.quantity ?? 0,
@@ -196,11 +201,17 @@ export default function PenaltyKickPage() {
   const [sequenceTotal, setSequenceTotal] = useState(0);
   const [sequenceLoading, setSequenceLoading] = useState(true);
   const [sequenceDeleteTarget, setSequenceDeleteTarget] = useState(null);
+  const [historyRows, setHistoryRows] = useState([]);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyTotal, setHistoryTotal] = useState(0);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   const [keeperOpen, setKeeperOpen] = useState(false);
   const [costOpen, setCostOpen] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
   const [sequenceOpen, setSequenceOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const [keeperData, setKeeperData] = useState({ easy: 75, medium: 50, hard: 25, selected: "easy" });
   const [costData, setCostData] = useState({ cost: 10 });
@@ -243,16 +254,53 @@ export default function PenaltyKickPage() {
     }
   };
 
+  const loadImportHistory = async (nextPage = historyPage) => {
+    setHistoryLoading(true);
+    try {
+      const data = await adminApi.getPenaltyKickSequenceImports({ page: nextPage, page_size: HISTORY_PAGE_SIZE });
+      setHistoryRows(data?.results || []);
+      setHistoryTotal(Number(data?.count ?? 0));
+      setHistoryPage(nextPage);
+    } catch (error) {
+      toast.error("Failed to load sequence import history", {
+        description: error?.data?.detail || error?.message,
+      });
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const handleExportSequence = async () => {
+    setExporting(true);
+    try {
+      const current = await adminApi.getPenaltyKickSequenceCurrent();
+      downloadXlsx(`kick-sequence-${new Date().toISOString().slice(0, 10)}.xlsx`, buildCurrentSequenceExportRows(current));
+    } catch (error) {
+      toast.error("Failed to export kick sequence", {
+        description: error?.data?.detail || error?.message,
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   useEffect(() => {
     loadData();
     loadSequences(1);
+    loadImportHistory(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const totalPages = Math.max(1, Math.ceil(rewards.length / PAGE_SIZE));
+  // Sorted by reward ID before slicing, so pagination reflects the same
+  // global order the table defaults to, not just the API's response order.
+  const sortedRewards = useMemo(
+    () => [...rewards].sort((a, b) => Number(a.numericId ?? 0) - Number(b.numericId ?? 0)),
+    [rewards],
+  );
   const pageRewards = useMemo(
-    () => rewards.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [rewards, page],
+    () => sortedRewards.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [sortedRewards, page],
   );
 
   useEffect(() => {
@@ -294,6 +342,18 @@ export default function PenaltyKickPage() {
         description: error?.data?.detail || error?.message,
       });
     }
+  };
+
+  const handleSequenceImported = (response) => {
+    if (response?.failed_count) {
+      toast.warning(`Imported with ${response.failed_count} row${response.failed_count === 1 ? "" : "s"} rejected`, {
+        description: `${response.success_count ?? 0} saved. See the result above for details.`,
+      });
+    } else {
+      toast.success(`Imported ${response?.success_count ?? 0} kick sequence position${response?.success_count === 1 ? "" : "s"}`);
+    }
+    loadSequences(1);
+    loadImportHistory(1);
   };
 
   const moveSequence = async (index, delta) => {
@@ -365,9 +425,29 @@ export default function PenaltyKickPage() {
       </div>
 
       <div className="border-t border-white/10 p-6">
-        <h2 className="mb-4 text-[22px] font-bold text-white" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-          Kick Sequences
-        </h2>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-[22px] font-bold text-white" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+            Kick Sequences
+          </h2>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleExportSequence}
+              disabled={exporting}
+              className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-5 py-2 text-[13px] font-semibold tracking-[-0.5px] text-[#fbeed2] transition-colors hover:bg-white/5 disabled:opacity-50"
+            >
+              {exporting ? "Exporting..." : "Export Sequence"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setImportOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-[8px] border-2 border-[#f2cb7a] px-5 py-2 text-[13px] font-semibold tracking-[-0.5px] text-[#fbeed2] transition-colors hover:bg-white/5"
+            >
+              <ImportIcon />
+              Import Sequence
+            </button>
+          </div>
+        </div>
         <SequenceTable
           rows={sequences}
           loading={sequenceLoading}
@@ -384,6 +464,29 @@ export default function PenaltyKickPage() {
             currentPage={sequencePage}
             totalPages={Math.max(1, Math.ceil(sequenceTotal / PAGE_SIZE))}
             onPageChange={loadSequences}
+          />
+        </div>
+      </div>
+
+      <div className="border-t border-white/10 p-6">
+        <h2 className="mb-4 text-[22px] font-bold text-white" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+          Sequence Import History
+        </h2>
+        <SequenceHistoryTable
+          rows={historyRows}
+          loading={historyLoading}
+          onViewDetails={(uuid) => router.push(`/admin/penalty-kick/sequence-history?uuid=${uuid}`)}
+        />
+        <div className="flex items-center justify-between py-3">
+          <p className="text-[10px] text-white/80">
+            {historyTotal === 0
+              ? "Showing 0 to 0 of 0 Results"
+              : `Showing ${(historyPage - 1) * HISTORY_PAGE_SIZE + 1} to ${Math.min(historyPage * HISTORY_PAGE_SIZE, historyTotal)} of ${historyTotal} Results`}
+          </p>
+          <Pagination
+            currentPage={historyPage}
+            totalPages={Math.max(1, Math.ceil(historyTotal / HISTORY_PAGE_SIZE))}
+            onPageChange={loadImportHistory}
           />
         </div>
       </div>
@@ -445,6 +548,17 @@ export default function PenaltyKickPage() {
             toast.error("Failed to save kick sequence", { description: error?.data?.detail || error?.message });
           }
         }}
+      />
+
+      <ImportSequenceModal
+        open={importOpen}
+        title="Import Kick Sequence"
+        rewards={rewards.map((r) => ({ id: r.numericId, uuid: r.uuid, name: r.name }))}
+        existingCount={sequenceTotal}
+        templateFilename="kick-sequence-template.csv"
+        importFn={adminApi.importPenaltyKickSequence}
+        onImported={handleSequenceImported}
+        onClose={() => setImportOpen(false)}
       />
 
       <ConfirmDialog

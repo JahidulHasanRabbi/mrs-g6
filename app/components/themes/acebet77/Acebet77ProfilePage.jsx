@@ -9,23 +9,25 @@ import WelcomeGiftButton from "../shared/WelcomeGiftButton";
 import { ACEBET_ASSETS, ACEBET_COLORS } from "./assets";
 import { useUser } from "../../../contexts/UserContext";
 
-// Royal gold-on-black card palette. Dark interior → cream/gold text, gold
-// progress fill.
+// Royal gold-on-black frame: dark interior, so cream/gold ink.
 const ACEBET_CARD_COLORS = {
   name: "#fff6df",
   label: "rgba(255,246,223,0.7)",
-  tokenValue: "#f2ba33",
   level: "#f2ba33",
   getText: "rgba(255,246,223,0.85)",
+  getNum: "#f2ba33",
   getEmph: "#f2ba33",
+  nextLabel: "#f2cb7a",
+  wellBg: "rgba(255,255,255,0.06)",
+  wellBorder: "rgba(233,175,65,0.35)",
+  tokenColor: "#f2ba33",
+  tokenGlow: "rgba(242,186,51,0.45)",
   barBase: "#2a1a06",
-  barFill: "linear-gradient(90deg, #dc9d16 0%, #f2cb7a 100%)",
+  barFill: "linear-gradient(90deg, #dc9d16, #f2cb7a)",
   barGlow: "rgba(242,203,122,0.7)",
-  barBorder: "#e9af41",
-  divider: "rgba(233,175,65,0.28)",
-  pillFrom: "#f2cb7a",
-  pillTo: "#dc9d16",
-  pillText: "#241603",
+  avatarFrom: "#fff3d6",
+  avatarTo: "#d8b671",
+  avatarInk: "#3a2405",
   avatarRing: "#e9af41",
 };
 
@@ -40,7 +42,6 @@ export default function Acebet77ProfilePage() {
   const progress = Number.isFinite(userData?.progress) ? userData.progress : 0;
   const tokensNeeded = userData?.tokensNeeded ?? 0;
   const currentTierIcon = userData?.currentTierIcon;
-  const nextTierIcon = userData?.nextTierIcon;
 
   const goPersonalData = () => router.push("/personal-data");
   const goVip = () => router.push("/vip");
@@ -60,7 +61,7 @@ export default function Acebet77ProfilePage() {
 
         <ThemedProfileCard
           frame={ACEBET_ASSETS.frames.crown}
-          pad={{ x: "15%", top: "18%", bottom: "14%" }}
+          pad={{ left: "10%", right: "11.5%", top: "17.8%", bottom: "15.6%" }}
           colors={ACEBET_CARD_COLORS}
           coinIcon={ACEBET_ASSETS.ui.iconCoins}
           name={name}
@@ -70,7 +71,6 @@ export default function Acebet77ProfilePage() {
           progress={progress}
           tokensNeeded={tokensNeeded}
           currentTierIcon={currentTierIcon}
-          nextTierIcon={nextTierIcon}
           profilePicture={profilePicture}
           onVipDetails={goVip}
         />

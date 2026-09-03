@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 import RpgTopBar from "./RpgTopBar";
 import HudStrip from "./HudStrip";
 import RpgNav from "./RpgNav";
-import { RPG_IMAGES } from "./rpgAssets";
+import { useRpgSkin } from "./rpgSkin";
 
 export default function ScreenShell({
   view,
@@ -28,27 +28,23 @@ export default function ScreenShell({
   fit = false,
   children,
 }) {
+  const skin = useRpgSkin();
+
   return (
     <div
       className={`relative flex w-full flex-col overflow-hidden ${fit ? "h-[100dvh]" : "min-h-[100dvh]"}`}
-      style={{ background: "#07130d" }}
+      style={{ background: skin.surface }}
     >
-      {/* Backdrop: damask tile + the design's ambient colour glows */}
+      {/* Backdrop: the station's hall (damask tile on the default look) */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
-          backgroundImage: `url(${RPG_IMAGES.bg})`,
+          backgroundImage: `url(${skin.bg})`,
           backgroundSize: "cover",
           backgroundPosition: "top center",
         }}
       />
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(40% 22% at 88% 22%, rgba(167,139,250,0.18) 0%, rgba(167,139,250,0) 70%), radial-gradient(45% 25% at 10% 88%, rgba(47,230,200,0.14) 0%, rgba(47,230,200,0) 70%), radial-gradient(35% 18% at 15% 8%, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 70%)",
-        }}
-      />
+      <div className="pointer-events-none absolute inset-0" style={{ background: skin.overlay }} />
       {backgroundImage && (
         <>
           <div
@@ -62,7 +58,9 @@ export default function ScreenShell({
       <RpgTopBar onInfoClick={onInfoClick} onMenuClick={onMenuClick} />
 
       {/* Content column between the fixed bars */}
-      <div className={`relative z-10 flex w-full flex-1 flex-col pt-[64px] pb-[92px] ${fit ? "min-h-0" : ""}`}>
+      <div
+        className={`relative z-10 flex w-full flex-1 flex-col pt-[64px] ${skin.themed ? "pb-[104px]" : "pb-[92px]"} ${fit ? "min-h-0" : ""}`}
+      >
         {!hideHud && <HudStrip profile={profile} />}
         {/* Keyed remount, enter-only fade. Deliberately NOT AnimatePresence
             mode="wait": waiting on an exit animation stalls the screen swap

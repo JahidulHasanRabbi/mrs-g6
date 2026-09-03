@@ -3,8 +3,14 @@
  * Rank, preview fixtures). Kept in one place so the boards can't drift apart
  * on thousands separators the way three hand-rolled copies did.
  */
-export function formatAmount(amount) {
+export function formatAmount(amount, { decimals } = {}) {
   if (amount == null) return "";
   const num = Number(String(amount).replace(/,/g, ""));
-  return Number.isFinite(num) ? num.toLocaleString("en-US") : String(amount);
+  if (!Number.isFinite(num)) return String(amount);
+  return decimals == null
+    ? num.toLocaleString("en-US")
+    : num.toLocaleString("en-US", {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      });
 }

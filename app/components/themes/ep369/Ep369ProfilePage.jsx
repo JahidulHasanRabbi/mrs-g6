@@ -9,21 +9,25 @@ import WelcomeGiftButton from "../shared/WelcomeGiftButton";
 import { EP369_ASSETS, EP369_COLORS } from "./assets";
 import { useUser } from "../../../contexts/UserContext";
 
+// Jade frame: dark green interior, so cream/gold ink.
 const EP369_CARD_COLORS = {
   name: "#fff6df",
   label: "rgba(255,246,223,0.7)",
-  tokenValue: "#f2c36b",
   level: "#f2c36b",
   getText: "rgba(255,246,223,0.85)",
+  getNum: "#54e07a",
   getEmph: "#f2c36b",
+  nextLabel: "#f2c36b",
+  wellBg: "rgba(255,255,255,0.06)",
+  wellBorder: "rgba(233,175,65,0.35)",
+  tokenColor: "#f2c36b",
+  tokenGlow: "rgba(242,195,107,0.45)",
   barBase: "#0d3d1c",
-  barFill: "linear-gradient(90deg, #1d6b36 0%, #54e07a 100%)",
+  barFill: "linear-gradient(90deg, #1d6b36, #54e07a)",
   barGlow: "rgba(84,224,122,0.7)",
-  barBorder: "#e9af41",
-  divider: "rgba(242,195,107,0.28)",
-  pillFrom: "#f6d488",
-  pillTo: "#dd8f1f",
-  pillText: "#063017",
+  avatarFrom: "#dcf7e3",
+  avatarTo: "#8fc3a0",
+  avatarInk: "#063017",
   avatarRing: "#e9af41",
 };
 
@@ -38,7 +42,6 @@ export default function Ep369ProfilePage() {
   const progress = Number.isFinite(userData?.progress) ? userData.progress : 0;
   const tokensNeeded = userData?.tokensNeeded ?? 0;
   const currentTierIcon = userData?.currentTierIcon;
-  const nextTierIcon = userData?.nextTierIcon;
 
   const goPersonalData = () => router.push("/personal-data");
   const goVip = () => router.push("/vip");
@@ -58,7 +61,7 @@ export default function Ep369ProfilePage() {
 
         <ThemedProfileCard
           frame={EP369_ASSETS.frames.crown}
-          pad={{ x: "15%", top: "20%", bottom: "14%" }}
+          pad={{ left: "13.4%", right: "13.6%", top: "31.2%", bottom: "23.7%" }}
           colors={EP369_CARD_COLORS}
           coinIcon={EP369_ASSETS.ui.iconCoin}
           name={name}
@@ -68,7 +71,6 @@ export default function Ep369ProfilePage() {
           progress={progress}
           tokensNeeded={tokensNeeded}
           currentTierIcon={currentTierIcon}
-          nextTierIcon={nextTierIcon}
           profilePicture={profilePicture}
           onVipDetails={goVip}
         />
