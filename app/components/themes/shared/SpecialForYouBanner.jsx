@@ -108,10 +108,13 @@ export default function SpecialForYouBanner() {
 
       {/* Outer viewport clips the slide as it travels; the border/radius/glow
           live on the card itself (not this wrapper) so the whole framed card
-          moves as one piece, not just the art inside a fixed window. No
-          dragConstraints here — pinning the card to {left:0,right:0} would
-          rubber-band it right back to center on every drag frame, which is
-          what made a swipe look like a squish instead of a slide. */}
+          moves as one piece, not just the art inside a fixed window.
+          dragElastic={1} makes the card follow the finger 1:1 (no rubber-band
+          resistance) while dragConstraints still springs it back to center on
+          release if the swipe didn't clear SWIPE_THRESHOLD. No mode="popLayout"
+          on AnimatePresence — both slides are already absolute+inset-0, and
+          popLayout's own positioning fought that, briefly showing the
+          entering and exiting cards side by side instead of stacked. */}
       <div className="relative aspect-[361/170] w-full overflow-hidden">
         {loading ? (
           <div
@@ -121,7 +124,7 @@ export default function SpecialForYouBanner() {
             Loading banners...
           </div>
         ) : (
-          <AnimatePresence initial={false} custom={direction} mode="popLayout">
+          <AnimatePresence initial={false} custom={direction}>
             <motion.div
               key={current}
               custom={direction}
@@ -132,7 +135,8 @@ export default function SpecialForYouBanner() {
               transition={{ type: 'tween', ease: 'easeInOut', duration: 0.4 }}
               drag={banners.length > 1 ? 'x' : false}
               dragDirectionLock
-              dragElastic={0.2}
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={1}
               dragMomentum={false}
               onDragEnd={(e, info) => {
                 const delta = info.offset.x;
