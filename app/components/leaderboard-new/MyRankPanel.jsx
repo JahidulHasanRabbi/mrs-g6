@@ -1,7 +1,10 @@
 import { formatAmount } from "./format";
 
 function formatMetric(value, kind) {
-  const formatted = formatAmount(value ?? 0);
+  const formatted =
+    kind === "currency"
+      ? formatAmount(value ?? 0, { decimals: 2 })
+      : formatAmount(value ?? 0);
   return kind === "currency" ? `RM${formatted}` : formatted;
 }
 

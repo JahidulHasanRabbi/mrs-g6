@@ -466,8 +466,10 @@ function RetentionPanel({ rows }) {
 
 const MEMBER_PAGE_SIZE = 10;
 
-// Sortable keys double as the endpoint's `sort` values — the API only
-// accepts these five and always sorts high-to-low (no direction to send).
+// Sortable keys double as the endpoint's `sort` values — tokens_used,
+// battle_point_used, sessions, avg_session_duration, total_credit,
+// total_withdrawal. `direction` defaults to High on the backend; there's no
+// direction toggle in this UI yet, so it's always omitted (High).
 const MEMBER_COLUMNS = [
   { key: "no", label: "No.", className: "w-[56px]" },
   { key: "phone_number", label: "Phone Number", className: "w-[130px]" },
@@ -477,7 +479,8 @@ const MEMBER_COLUMNS = [
   { key: "battle_point_used", label: "Battle Point Used", className: "w-[145px]", sortable: true },
   { key: "avg_session_duration", label: "Avg. Session Duration", className: "w-[165px]", sortable: true },
   { key: "most_played_game", label: "Most Played Game", className: "w-[145px]" },
-  { key: "total_rewards", label: "Total Rewards", className: "w-[125px]", sortable: true },
+  { key: "total_credit", label: "Total Credit", className: "w-[125px]", sortable: true },
+  { key: "total_withdrawal", label: "Total Withdrawal", className: "w-[135px]", sortable: true },
 ];
 
 function gameLabel(value) {
@@ -496,7 +499,8 @@ function normalizeMemberRow(row, index) {
     battle_point_used: row.battle_point_used,
     avg_session_duration: row.avg_session_duration,
     most_played_game: row.most_played_game_label ?? row.most_played_game,
-    total_rewards: row.total_rewards,
+    total_credit: row.total_credit,
+    total_withdrawal: row.total_withdrawal,
   };
 }
 
@@ -575,7 +579,7 @@ function MemberUsageHistory({ range, game }) {
       </div>
       {error ? <div className="mx-5 mb-4 rounded-[10px] border border-red-400/40 bg-red-500/10 px-4 py-2 text-[12px] text-red-100">{error}</div> : null}
       <div className="overflow-x-auto scrollbar-admin">
-        <table className="w-full min-w-[1260px] table-fixed border-separate border-spacing-0">
+        <table className="w-full min-w-[1395px] table-fixed border-separate border-spacing-0">
           <thead><tr className="bg-black text-left">
             {MEMBER_COLUMNS.map((column) => (
               <th key={column.key} className={`${column.className} px-4 py-3 text-[12px] font-bold uppercase text-white`}>
@@ -601,7 +605,8 @@ function MemberUsageHistory({ range, game }) {
                 <td className="px-4 py-3 text-[13px] text-[#54d7ff]">{formatNumber(row.battle_point_used)}</td>
                 <td className="px-4 py-3 text-[13px] text-white/85">{formatSessionDuration(row.avg_session_duration)}</td>
                 <td className="truncate px-4 py-3 text-[13px] text-white/85" title={gameLabel(row.most_played_game)}>{gameLabel(row.most_played_game)}</td>
-                <td className="px-4 py-3 text-[13px] text-[#f6dda6]">{row.total_rewards == null ? "N/A" : `RM ${formatMoney(row.total_rewards)}`}</td>
+                <td className="px-4 py-3 text-[13px] text-[#f6dda6]">{row.total_credit == null ? "N/A" : `RM ${formatMoney(row.total_credit)}`}</td>
+                <td className="px-4 py-3 text-[13px] text-[#84ebb4]">{row.total_withdrawal == null ? "N/A" : `RM ${formatMoney(row.total_withdrawal)}`}</td>
               </tr>
             )) : (
               <tr><td colSpan={MEMBER_COLUMNS.length} className="px-5 py-12 text-center text-[13px] text-white/50">{emptyMessage}</td></tr>

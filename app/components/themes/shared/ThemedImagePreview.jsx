@@ -39,21 +39,21 @@ export default function ThemedImagePreview({ open, src, title, subtitle, skin, o
             src={src}
             alt={title || ""}
             decoding="async"
-            className="max-h-[54vh] max-w-[86vw] object-contain"
+            className="max-h-[68vh] max-w-[92vw] object-contain"
             initial={{ scale: 0.85, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
             transition={{ type: "spring", stiffness: 280, damping: 24 }}
           />
           <div
-            className="flex flex-col items-center gap-1 text-center"
+            className="flex flex-col items-center gap-1.5 text-center"
             style={{ fontFamily: skin.font }}
           >
-            <p className="text-[20px]" style={{ color: skin.c.name }}>
+            <p className="text-[26px] font-bold" style={{ color: skin.c.name }}>
               {title}
             </p>
             {subtitle && (
-              <p className="text-[15px]" style={{ color: skin.c.coins }}>
+              <p className="text-[19px] font-bold" style={{ color: skin.c.coins }}>
                 {subtitle}
               </p>
             )}

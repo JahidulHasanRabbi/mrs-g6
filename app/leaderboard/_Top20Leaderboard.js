@@ -154,7 +154,7 @@ function formatPrize(reward) {
     return `${formatAmount(tokens)} Tokens`;
   }
   const credit = reward.credit_amount ?? reward.reward_amount ?? reward.prize_amount;
-  if (credit != null && credit !== "") return `RM ${formatAmount(credit)}`;
+  if (credit != null && credit !== "") return `RM ${formatAmount(credit, { decimals: 2 })}`;
   return reward.reward_name || reward.prize || reward.prize_name || "";
 }
 
@@ -332,7 +332,7 @@ function Top20LeaderboardPageInner() {
         return {
           rank,
           user: e.display_name ?? "",
-          value: formatAmount(e.amount),
+          value: formatAmount(e.amount, { decimals: 2 }),
           prize: getEntryPrize(e, rank, prizeMap),
         };
       });

@@ -197,10 +197,12 @@ export const MART_CARD = {
   // Name is nudged up from the comp's y=109 to make room below it: the comps
   // only ever show ONE price line, but the real card can show two (a
   // strikethrough original plus the promo price), which collided at y=127.
-  name: { top: (102 / 162) * 100, sizeCqi: (8 / 163) * 100 },
+  // Sizes are bumped up from the comp's 8px/6px (too small to read on device)
+  // to 13px/11px equivalents — still anchored the same way so nothing overlaps.
+  name: { top: (99 / 162) * 100, sizeCqi: (13 / 163) * 100 },
   // The price block is anchored just above the redeem plaque and grows upward,
   // so one or two lines both sit correctly without overlapping anything.
-  coins: { bottom: 100 - (130 / 162) * 100, sizeCqi: (6 / 163) * 100 },
+  coins: { bottom: 100 - (130 / 162) * 100, sizeCqi: (11 / 163) * 100 },
   redeem: {
     left: (10 / 163) * 100,
     top: (132 / 162) * 100,
