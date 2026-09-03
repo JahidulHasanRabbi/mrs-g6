@@ -48,7 +48,7 @@ function DrawButton({ draws, tokens, featured, onClick, disabled }) {
     >
       <p className="text-base leading-4" style={{ fontFamily: "var(--font-acme), sans-serif", color: mainColor }}>{draws}</p>
       <p className="text-base leading-4" style={{ fontFamily: "var(--font-acme), sans-serif", color: mainColor }}>Draws</p>
-      <p className="mt-1 whitespace-nowrap text-xs" style={{ fontFamily: "var(--font-rubik), sans-serif", color: tokenColor }}>{tokens} Tokens</p>
+      <p className="mt-1 whitespace-nowrap text-xs" style={{ fontFamily: "var(--font-rubik), sans-serif", color: tokenColor }}>{tokens} KR Coins</p>
     </motion.button>
   );
 }

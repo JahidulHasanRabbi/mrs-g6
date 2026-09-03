@@ -5,6 +5,7 @@
 // so creation lives on its own page (penalty-kick add-reward pattern):
 // /admin/avatar/missions/add, with ?uuid= for edit.
 
+import { formatKrCoins } from "../../../api/apiOptions";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pagination } from "../../../components/admin/members/DataTable";
@@ -51,7 +52,7 @@ function rewardLabel(m) {
   const bp = Number(m.reward_battle_point_quantity ?? 0);
   const tokens = Number(m.reward_token_quantity ?? 0);
   if (bp > 0) parts.push(`${bp.toLocaleString("en-US")} BP`);
-  if (tokens > 0) parts.push(`${tokens.toLocaleString("en-US")} Tokens`);
+  if (tokens > 0) parts.push(formatKrCoins(tokens));
   return parts.length ? parts.join(" + ") : "-";
 }
 

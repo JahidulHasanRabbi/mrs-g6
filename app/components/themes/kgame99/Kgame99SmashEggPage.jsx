@@ -129,8 +129,8 @@ export default function Kgame99SmashEggPage() {
           <img src={KGAME99_ASSETS.egg.rays} alt="" draggable={false} className="absolute inset-0 h-full w-full select-none object-contain" />
         </motion.div>
 
-        {/* Token balance — shared with the default portal (Token Balance +
-            Tokens / round). */}
+        {/* KR Coin balance — shared with the default portal (KR Coin Balance +
+            KR Coins / round). */}
         <div className="relative z-10 mt-2">
           <TokenBalance balance={tokenBalance} tokensPerRound={tokensPerRound} />
         </div>

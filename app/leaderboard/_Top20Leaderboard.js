@@ -1,5 +1,6 @@
 "use client";
 
+import { formatKrCoins } from "../api/apiOptions";
 import { Suspense, useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { AnimatePresence } from "framer-motion";
@@ -169,7 +170,7 @@ function formatPrize(reward) {
   // Token rewards (item_type 3) carry token_amount instead of credit_amount.
   const tokens = reward.token_amount;
   if (tokens != null && tokens !== "" && Number(tokens) > 0) {
-    return `${formatAmount(tokens)} Tokens`;
+    return formatKrCoins(formatAmount(tokens));
   }
   const credit = reward.credit_amount ?? reward.reward_amount ?? reward.prize_amount;
   if (credit != null && credit !== "") return `RM ${formatAmount(credit, { decimals: 2 })}`;

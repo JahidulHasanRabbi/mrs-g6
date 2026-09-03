@@ -8,6 +8,7 @@ import { Pagination } from "../../../components/admin/members/DataTable";
 import { getStationList, getTokenReport } from "../../../api/adminApi";
 import { getCrmMembers, giveTokens, giveBattlePoints } from "../../../api/crmApi";
 import { useToast } from "../../../components/admin/ui/Toast";
+import { formatItemTypeLabel } from "../../../api/apiOptions";
 import ConfirmDialog from "../../../components/admin/ui/ConfirmDialog";
 import {
   buildTokenReportParams,
@@ -19,7 +20,7 @@ import {
 } from "../../../api/tokenReport.mjs";
 
 const REWARD_TYPE_OPTIONS = [
-  { value: "token", label: "Token" },
+  { value: "token", label: "KR Coins" },
   { value: "battle_point", label: "Battle Point" },
 ];
 
@@ -201,7 +202,7 @@ function ManualAddReward() {
         </div>
         <div>
           <h2 className="text-[15px] font-bold text-[#f4efe0]">Manual Add Reward</h2>
-          <p className="text-[12px] text-white/55">Manually grant Token or Battle Point to member.</p>
+          <p className="text-[12px] text-white/55">Manually grant KR Coins or Battle Point to member.</p>
         </div>
       </div>
 
@@ -311,7 +312,7 @@ const TABLE_COLUMNS = [
   { key: "currency",      label: "Currency",      className: "w-[140px]" },
   { key: "created",       label: "Date/Time",     className: "w-[170px]" },
   { key: "category",      label: "Category",      className: "w-[180px]" },
-  { key: "token_details", label: "Token Details", className: "w-[170px]" },
+  { key: "token_details", label: "KR Coin Details", className: "w-[170px]" },
   { key: "amount",        label: "Amount +/-",    className: "w-[150px] text-right" },
 ];
 
@@ -379,7 +380,7 @@ function CurrencyBadge({ value }) {
   const tone = CURRENCY_TONE[String(value).toUpperCase()] || "border-white/15 bg-white/5 text-[#e8e8e8]";
   return (
     <span className={`inline-flex items-center rounded-full border px-2.5 py-[3px] text-[11px] font-semibold uppercase tracking-[0.04em] ${tone}`}>
-      {value}
+      {formatItemTypeLabel(value)}
     </span>
   );
 }
@@ -500,10 +501,10 @@ function TokenReportContent() {
         <div className="mb-6 flex items-center justify-between gap-4">
           <div>
             <h1 className="text-4xl font-bold leading-[1.05] text-white">
-              Token and Battle Point Report
+              KR Coin and Battle Point Report
             </h1>
             <p className="mt-2 text-[14px] text-white/55">
-              Combined token and battle point ledger report.
+              Combined KR Coin and battle point ledger report.
             </p>
           </div>
 
@@ -515,7 +516,7 @@ function TokenReportContent() {
           <div className="border-b border-white/5 px-4 pt-4 pb-3">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h2 className="text-[15px] font-bold text-[#f4efe0] sm:text-[16px] lg:text-[17px]">
-                The Token &amp; Battle Point Reports Are Given
+                The KR Coin &amp; Battle Point Reports Are Given
               </h2>
 
               {hasActiveFilters && (
@@ -534,7 +535,7 @@ function TokenReportContent() {
                 Filter By:
               </span>
 
-              {/* An even grid — the control count varies (Token Details is
+              {/* An even grid — the control count varies (KR Coin Details is
                   conditional), so a plain flex-wrap wrapped unpredictably. */}
               <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 <DateFilter fullWidth label="Date/Time" fromDate={dateFrom} toDate={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
@@ -560,8 +561,8 @@ function TokenReportContent() {
                 {currencyValue !== 2 && (
                   <TextSearchInput
                     fullWidth
-                    placeholder="Token Details"
-                    title="Searches token rows only — battle point rows have no token details."
+                    placeholder="KR Coin Details"
+                    title="Searches KR Coin rows only — battle point rows have no KR Coin details."
                     value={detailFilter}
                     onChange={setDetailFilter}
                   />
@@ -573,7 +574,7 @@ function TokenReportContent() {
 
             {detailFilter && currencyValue !== 1 && (
               <p className="mt-2 text-[12px] text-white/50">
-                Token Details only exists on token rows — filtering by it hides every battle point row.
+                KR Coin Details only exists on KR Coin rows — filtering by it hides every battle point row.
               </p>
             )}
           </div>
@@ -625,7 +626,7 @@ function TokenReportContent() {
                         <td className="px-4 py-[14px] text-[13px] text-[#e8e8e8] truncate" title={row.station || ""}>
                           {row.station || "—"}
                         </td>
-                        <td className="px-4 py-[14px] text-[13px] truncate" title={row.currency || ""}>
+                        <td className="px-4 py-[14px] text-[13px] truncate" title={formatItemTypeLabel(row.currency) || ""}>
                           <CurrencyBadge value={row.currency} />
                         </td>
                         <td className="px-4 py-[14px] text-[13px] text-[#e8e8e8] whitespace-nowrap">
@@ -649,7 +650,7 @@ function TokenReportContent() {
                       colSpan={TABLE_COLUMNS.length}
                       className="px-5 py-12 text-center text-[14px] text-white/60"
                     >
-                      {loading ? "Loading reports..." : "No token report rows match the current filters."}
+                      {loading ? "Loading reports..." : "No KR Coin report rows match the current filters."}
                     </td>
                   </tr>
                 )}

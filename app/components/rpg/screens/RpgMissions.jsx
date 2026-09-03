@@ -27,7 +27,7 @@ function MissionIcon({ mission }) {
 function rewardText(reward) {
   const parts = [];
   if (reward.bp) parts.push(`${Number(reward.bp).toLocaleString("en-GB")} BP`);
-  if (reward.tokens) parts.push(`${reward.tokens} Token${reward.tokens > 1 ? "s" : ""}`);
+  if (reward.tokens) parts.push(`${reward.tokens} KR Coin${reward.tokens > 1 ? "s" : ""}`);
   return parts.join(" · ") || "No reward";
 }
 
@@ -73,7 +73,7 @@ export default function RpgMissions({ onProfileUpdate, onNavigate }) {
         MISSIONS
       </h2>
       <p className="mt-[2px] text-[13px]" style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}>
-        Complete tasks to earn Tokens & Battle Points
+        Complete tasks to earn KR Coins & Battle Points
       </p>
 
       {/* Tabs */}

@@ -11,7 +11,7 @@ import Link from "next/link";
  * subtitle.
  *
  * @param {Object} props
- * @param {string} props.title       - e.g. "Member Tokens"
+ * @param {string} props.title       - e.g. "Member KR Coins"
  * @param {string} props.memberName  - displayed in the subtitle
  * @param {string} props.memberId    - displayed in the subtitle
  * @param {React.ReactNode} props.children - table card content

@@ -12,7 +12,7 @@ import { ASSETS, GRAD_CARD, GRAD_DARK, GRAD_GOLD } from "../retention/constants"
 // a count of free-credit rewards handed out, not a ringgit amount.
 
 export const REDEEM_KPI_META = [
-  { id: "tokens", label: "Total Tokens Given", key: "total_tokens_given", icon: `${ASSETS}/kpi-sales.svg` },
+  { id: "tokens", label: "Total KR Coins Given", key: "total_tokens_given", icon: `${ASSETS}/kpi-sales.svg` },
   { id: "battle-points", label: "Total Battle Points Given", key: "total_battle_points_given", icon: `${ASSETS}/kpi-winlose.svg` },
   { id: "credit", label: "Total Credit Given", key: "total_credit_given", icon: `${ASSETS}/kpi-sales.svg` },
   { id: "redemptions", label: "Total Redemptions", key: "total_redemptions", icon: `${ASSETS}/kpi-members.svg` },

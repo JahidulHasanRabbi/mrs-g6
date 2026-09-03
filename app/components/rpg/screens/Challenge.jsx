@@ -181,7 +181,7 @@ export default function Challenge({ onBattleStart }) {
         {freeLeft > 0
           ? `${freeLeft} free attempt${freeLeft > 1 ? "s" : ""} left today`
           : "No free attempts left today"}{" "}
-        · extra attempt {extraCost} Tokens · reward 1 Mystery Box
+        · extra attempt {extraCost} KR Coins · reward 1 Mystery Box
       </p>
       {data?.unopenedBoxes > 0 ? (
         <p className="pt-[4px] text-center text-[11px] font-bold" style={{ color: skin.c.value, fontFamily: RPG_FONTS.display }}>
@@ -198,8 +198,8 @@ export default function Challenge({ onBattleStart }) {
       <NoticeModal
         open={confirmPaid}
         title="EXTRA ATTEMPT"
-        message={`Your free attempts are used for today. Challenge again for ${extraCost} Tokens? You have ${fmt(data?.tokens ?? 0)}.`}
-        confirmLabel={`PAY ${extraCost} TOKENS`}
+        message={`Your free attempts are used for today. Challenge again for ${extraCost} KR Coins? You have ${fmt(data?.tokens ?? 0)}.`}
+        confirmLabel={`PAY ${extraCost} KR COINS`}
         cancelLabel="NOT NOW"
         busy={busy}
         onConfirm={beginBattle}

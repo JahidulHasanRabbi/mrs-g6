@@ -15,7 +15,7 @@ function formatTokenAmount(value) {
 export default function TokenBalance({ balance, tokensPerRound }) {
   return (
     <div className="flex flex-col items-center gap-4">
-      {/* Token Balance Pill */}
+      {/* KR Coin Balance Pill */}
       <div
         className="flex items-center gap-2 h-[46px] px-6 py-[11px] rounded-full border border-[rgba(255,225,109,0.3)]"
         style={{
@@ -37,12 +37,12 @@ export default function TokenBalance({ balance, tokensPerRound }) {
           className="text-[#eae2cf] text-base whitespace-nowrap"
           style={{ fontFamily: "var(--font-rubik), 'Rubik', sans-serif", fontWeight: 500 }}
         >
-          Token Balance:{" "}
+          KR Coin Balance:{" "}
           <span className="text-[#ffe16d]">{formatTokenAmount(balance)}</span>
         </p>
       </div>
 
-      {/* Tokens Per Round Pill */}
+      {/* KR Coins Per Round Pill */}
       <div
         className="flex items-center h-[46px] px-6 py-[11px] rounded-full border border-[rgba(77,71,50,0.4)] relative overflow-hidden"
       >
@@ -58,7 +58,7 @@ export default function TokenBalance({ balance, tokensPerRound }) {
           className="text-[#d0c6ab] text-base whitespace-nowrap relative z-10"
           style={{ fontFamily: "var(--font-rubik), 'Rubik', sans-serif", fontWeight: 500 }}
         >
-          {formatTokenAmount(tokensPerRound)} Tokens / round
+          {formatTokenAmount(tokensPerRound)} KR Coins / round
         </p>
       </div>
     </div>

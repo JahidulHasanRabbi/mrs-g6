@@ -162,7 +162,7 @@ export const ACEBET_ASSETS = {
   //   the sides. Used for the terms body, the profile VIP-card, and the VIP
   //   benefits list.
   // - frameScroll: scroll-shaped frame with rolled tops/bottoms. Used for the
-  //   Edit Profiles list and the Token History overlay.
+  //   Edit Profiles list and the KR Coin History overlay.
   frames: {
     crown: `${BASE}/ui/frame-crown.webp`,
     scroll: `${BASE}/ui/frame-scroll.webp`,

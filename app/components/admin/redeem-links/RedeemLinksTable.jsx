@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import StatusBadge from "../ui/StatusBadge";
-import { formatRedeemLinkDateTime, getRedeemLinkStatus } from "./redeemLinkUtils.mjs";
+import { formatRedeemLinkDateTime, formatRewardTypeLabel, getRedeemLinkStatus } from "./redeemLinkUtils.mjs";
 
 const GOLD_BG = "linear-gradient(96deg, #dc9d16 1%, #f2cb7a 98%)";
 const DARK_BG = "linear-gradient(178deg, #141828 0%, #333333 99.75%)";
@@ -107,7 +107,7 @@ export default function RedeemLinksTable({ links = [], copiedUuid, onCopy, onHis
                 <tr key={link.uuid} className="group border-b border-white/5 last:border-b-0 hover:bg-white/[0.02]">
                   <td className="max-w-[220px] px-4 py-5 text-[12px] text-white"><span className="block truncate" title={link.name}>{link.name || "-"}</span></td>
                   <td className="px-4 py-5 text-[12px] text-white">{link.station || "-"}</td>
-                  <td className="px-4 py-5 text-[12px] text-white">{link.reward_type || "-"}</td>
+                  <td className="px-4 py-5 text-[12px] text-white">{formatRewardTypeLabel(link.reward_type)}</td>
                   <td className="px-4 py-5 text-[12px] text-white">{number(link.amount)}</td>
                   <td className="px-4 py-5 text-[12px] text-white">{number(link.quantity)}</td>
                   <td className="px-4 py-5 text-[12px] text-white">{number(link.redeemed_count)}</td>

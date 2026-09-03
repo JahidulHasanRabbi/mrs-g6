@@ -5,8 +5,8 @@ import { useEffect, useRef, useState } from "react";
 // Add / Edit reward form for Smash Egg. Pixel spec from Figma 1727:3817 —
 // a full-width card (#05060a, gold drop-shadow), 3-column grid of fields with
 // gold (#f6dda6) labels and #fbeed2-bordered inputs, and a Back / Save footer.
-// Tokens + Prize fields are shown but dimmed/disabled unless the selected Item
-// Type makes them relevant (Free credit → Min/Max withdraw; Token → Tokens;
+// KR Coins + Prize fields are shown but dimmed/disabled unless the selected Item
+// Type makes them relevant (Free credit → Min/Max withdraw; KR Coins → KR Coins;
 // Prize → Prize), matching the design's conditional emphasis.
 
 const GOLD_BG = "linear-gradient(98deg, #dc9d16 1%, #f2cb7a 98%)";
@@ -15,6 +15,10 @@ const FIELD =
   "w-full rounded-[8px] border border-[#fbeed2] bg-transparent px-4 py-3 text-[12px] leading-[18px] text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#e9af41]/40";
 
 const ITEM_TYPES = ["Free credit", "Token", "Prize", "Battle Point"];
+
+// "Token" stays the form value the payload builder switches on; only the
+// option text is renamed.
+const ITEM_TYPE_TEXT = { Token: "KR Coins" };
 
 function ChevronIcon() {
   return (
@@ -177,7 +181,7 @@ export default function RewardForm({ mode = "add", initial = null, onBack, onSav
           <div className="relative w-full">
             <select value={form.itemType} onChange={set("itemType")} className={`${FIELD} appearance-none pr-10`}>
               {ITEM_TYPES.map((t) => (
-                <option key={t} value={t} style={{ background: "#05060a", color: "white" }}>{t}</option>
+                <option key={t} value={t} style={{ background: "#05060a", color: "white" }}>{ITEM_TYPE_TEXT[t] ?? t}</option>
               ))}
             </select>
             <ChevronIcon />
@@ -201,9 +205,9 @@ export default function RewardForm({ mode = "add", initial = null, onBack, onSav
         </Field>
       </div>
 
-      {/* Row 3 — Tokens, Prize, Choose Image */}
+      {/* Row 3 — KR Coins, Prize, Choose Image */}
       <div className="flex w-full items-start gap-10">
-        <Field label="Tokens" dimmed={!isToken}>
+        <Field label="KR Coins" dimmed={!isToken}>
           <input type="text" inputMode="numeric" value={form.tokens} onChange={set("tokens")} disabled={!isToken} placeholder="0" className={FIELD} />
         </Field>
         <Field label="Prize" dimmed={!isPrize}>

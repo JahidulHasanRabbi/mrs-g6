@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SortIcon } from "../members/DataTable";
+import { formatItemTypeLabel } from "../../../api/apiOptions";
 
 const GOLD_BG = "linear-gradient(96deg, #dc9d16 1%, #f2cb7a 98%)";
 
@@ -97,7 +98,7 @@ export default function RewardsTable({ rewards = [], onEdit, onArchive }) {
                   <td className="px-6 py-5 text-[12px] text-white">
                     {r.unlimited ? "Unlimited" : Number(r.quantity ?? 0).toLocaleString("en-US")}
                   </td>
-                  <td className="px-6 py-5 text-[12px] text-white">{r.itemType}</td>
+                  <td className="px-6 py-5 text-[12px] text-white">{formatItemTypeLabel(r.itemType)}</td>
                   <td className="px-6 py-5">
                     <div className="mx-auto flex h-12 w-12 items-center justify-center overflow-hidden rounded-[4px] bg-white/5">
                       {r.image ? (

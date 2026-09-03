@@ -1,5 +1,6 @@
 "use client";
 
+import { formatKrCoins } from "../../../api/apiOptions";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -25,7 +26,7 @@ import ThemedImagePreview from "./ThemedImagePreview";
  * Every piece of behaviour is mirrored from that page deliberately: the same
  * fetches (game status, VIP tier -> mart_tier, public redemption tiers, available
  * items), the same category-pill filtering, the same 3-way sort toggle, the same
- * tier-lock rules and copy ("Token", "Upgrade to X to unlock"), and the same
+ * tier-lock rules and copy ("KR Coins", "Upgrade to X to unlock"), and the same
  * closed-for-maintenance overlay. ONLY the artwork is swapped per theme, with
  * one deliberate exception: the themed card adds a full-size reward preview the
  * default card has no counterpart for (the default's plinth art blocks it).
@@ -226,14 +227,14 @@ function ThemedMartItem({ skin, item, index, locked, requiredTierLabel, onRedeem
                   color: skin.c.lockedText,
                 }}
               >
-                {asAmount(item.originalPrice)} Token
+                {formatKrCoins(item.originalPrice)}
               </p>
             )}
             <p
               className="truncate"
               style={{ fontSize: `${MART_CARD.coins.sizeCqi}cqi`, color: skin.c.coins }}
             >
-              {asAmount(amount)} Token
+              {formatKrCoins(amount)}
             </p>
           </>
         )}
@@ -585,7 +586,7 @@ export default function ThemedMartGrid({ skin }) {
         open={!!previewItem}
         src={previewItem?.image}
         title={previewItem?.title}
-        subtitle={previewItem && `${asAmount(priceOf(previewItem))} Token`}
+        subtitle={previewItem && formatKrCoins(priceOf(previewItem))}
         skin={skin}
         onClose={handleClosePreview}
       />

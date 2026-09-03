@@ -387,7 +387,7 @@ function PopOutForm() {
                 <TextInput
                   value={form.content}
                   onChange={set("content")}
-                  placeholder="Deposit RM200 & Get Extra 50 Tokens"
+                  placeholder="Deposit RM200 & Get Extra 50 KR Coins"
                   disabled={!!bannerPreview}
                 />
                 {bannerPreview && (

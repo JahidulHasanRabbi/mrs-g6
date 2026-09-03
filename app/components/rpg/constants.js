@@ -150,12 +150,12 @@ export const BOSSES = [
 // Mystery Box drop table (3b spec). Weights are percentages summing to 100;
 // zero-weight rows stay listed so the "possible rewards" panel matches spec.
 export const MYSTERY_BOX_TABLE = [
-  { id: "token10", type: "tokens", amount: 10, label: "Token ×10", weight: 18 },
-  { id: "token5", type: "tokens", amount: 5, label: "Token ×5", weight: 15 },
+  { id: "token10", type: "tokens", amount: 10, label: "KR Coin ×10", weight: 18 },
+  { id: "token5", type: "tokens", amount: 5, label: "KR Coin ×5", weight: 15 },
   { id: "bp100", type: "bp", amount: 100, label: "Battle Points 100", weight: 18 },
   { id: "bp1000", type: "bp", amount: 1000, label: "Battle Points 1,000", weight: 8 },
   { id: "credit-big", type: "credit", label: "Free Credit RM3–RM10", weight: 6 },
-  { id: "token30", type: "tokens", amount: 30, label: "Token ×30", weight: 6 },
+  { id: "token30", type: "tokens", amount: 30, label: "KR Coin ×30", weight: 6 },
   { id: "equipment", type: "equipment", label: "Rare Equipment ×1", weight: 6 },
   { id: "credit-small", type: "credit", label: "Free Credit RM0.5–RM3", weight: 16 },
   { id: "gold-bar", type: "gold", label: "Gold Bar (0.5g)", weight: 0 },

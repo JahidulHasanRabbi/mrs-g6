@@ -21,7 +21,7 @@ const luckySpinFieldConfig = {
     },
     {
       field: 'token_amount',
-      showWhen: [3], // Token
+      showWhen: [3], // KR Coins
       required: true
     },
     {
@@ -286,14 +286,14 @@ export default function LuckySpinItemForm({
             {visibleFields.token_amount && (
               <div className="flex items-center gap-[18px]">
                 <label className="text-[18px] text-white w-[136px]">
-                  Token Amount:
+                  KR Coin Amount:
                 </label>
                 <input
                   type="number"
                   value={fieldValues.token_amount || ""}
                   onChange={(e) => handleInputChange("token_amount", e.target.value)}
                   className="bg-white/10 border-[0.5px] border-white/8 h-[36px] rounded-[4px] w-[304px] px-3 text-white placeholder-white/50 focus:outline-none focus:border-[#f2c36b]"
-                  placeholder="Enter token amount"
+                  placeholder="Enter KR Coin amount"
                   min="0"
                   required
                   disabled={isLoading}

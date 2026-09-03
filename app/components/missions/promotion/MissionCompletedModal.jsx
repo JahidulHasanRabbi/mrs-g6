@@ -36,7 +36,7 @@ export default function MissionCompletedModal({
   rewardAmount = 0,
   rewardCategory = 1,
 }) {
-  const unit = POPUP_REWARD_UNIT[rewardCategory] ?? "Tokens";
+  const unit = POPUP_REWARD_UNIT[rewardCategory] ?? "KR Coins";
 
   return (
     <PromoModalShell open={open} onClose={onClose} labelledBy="mission-completed-title">

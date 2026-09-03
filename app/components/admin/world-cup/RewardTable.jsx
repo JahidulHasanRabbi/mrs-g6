@@ -2,6 +2,7 @@
 
 import RowActions from "./RowActions";
 import ImageCell from "./ImageCell";
+import { formatItemTypeLabel } from "../../../api/apiOptions";
 
 const HEADER_BG = "linear-gradient(180deg, #141828 0%, #333333 99.75%)";
 
@@ -18,7 +19,7 @@ export default function RewardTable({ rewards = [], onEdit, onArchive }) {
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Country</th>
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Position</th>
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Achievement</th>
-              <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Token Amount</th>
+              <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">KR Coin Amount</th>
               <th className="px-5 py-4 text-[13px] font-semibold text-[#fbeed2]">Description</th>
               <th className="px-5 py-4 text-center text-[13px] font-semibold text-[#fbeed2]">Image</th>
               <th className="px-5 py-4 text-right text-[13px] font-semibold text-[#fbeed2]">Action</th>
@@ -36,7 +37,7 @@ export default function RewardTable({ rewards = [], onEdit, onArchive }) {
                 <tr key={r.id} className="border-b border-white/5 align-top last:border-b-0 hover:bg-white/[0.02]">
                   <td className="px-5 py-5 text-[12px] text-white">{r.name}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{r.quantity}</td>
-                  <td className="px-5 py-5 text-[12px] text-white">{r.itemType}</td>
+                  <td className="px-5 py-5 text-[12px] text-white">{formatItemTypeLabel(r.itemType)}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{r.country}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{r.position ?? ""}</td>
                   <td className="px-5 py-5 text-[12px] text-white">{r.winCondition ?? ""}</td>

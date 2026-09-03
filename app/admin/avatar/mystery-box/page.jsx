@@ -5,6 +5,7 @@
 // all active item probabilities should sum to exactly 1; items at 0 are shown
 // to members but never drawn.
 
+import { formatKrCoins } from "../../../api/apiOptions";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pagination } from "../../../components/admin/members/DataTable";
@@ -51,7 +52,7 @@ const FILTER_OPTIONS = [{ value: 0, label: "All Types" }, ...MYSTERY_BOX_REWARD_
 function valueLabel(item) {
   switch (item.reward_type) {
     case 1:
-      return `${Number(item.token_amount ?? 0).toLocaleString("en-US")} Tokens`;
+      return formatKrCoins(Number(item.token_amount ?? 0));
     case 2:
       return `${Number(item.battle_point_amount ?? 0).toLocaleString("en-US")} BP`;
     case 3:

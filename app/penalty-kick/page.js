@@ -61,7 +61,7 @@ const NAVS = lazySkins({
 const HISTORY_PAGE_SIZE = 10;
 const ITEM_TYPE_LABELS = {
   1: "FREE CREDIT",
-  2: "TOKEN",
+  2: "KR COINS",
   3: "PRIZE",
   4: "WORLD CUP SCORE",
   5: "BATTLE POINT",

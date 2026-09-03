@@ -30,7 +30,7 @@ const SpinButton = memo(function SpinButton({ spins, tokens, onClick, image, cla
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3, delay: 0.2 }}
       >
-        {tokens && <div className="text-[20px] leading-tight">{tokens} token</div>}
+        {tokens && <div className="text-[20px] leading-tight">{tokens} KR Coins</div>}
         <div className="text-[18px] leading-tight">{spins}</div>
       </motion.div>
     </motion.div>

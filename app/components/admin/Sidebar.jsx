@@ -516,7 +516,7 @@ const SECONDARY_MENU = [
     hasSubmenu: true,
     disabled: false,
     children: [
-      { id: "token-report", label: "Token & BP Report", href: "/admin/reports/token" },
+      { id: "token-report", label: "KR Coin & BP Report", href: "/admin/reports/token" },
       { id: "reward-report", label: "Reward Report", href: "/admin/reports/reward" },
       { id: "member-report", label: "Member Report", href: "/admin/reports/member" },
       { id: "usage-report", label: "Usage Report", href: "/admin/reports/usage" },

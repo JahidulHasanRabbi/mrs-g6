@@ -235,7 +235,7 @@ function RpgPageInner() {
               : undefined
         }
         fit={view === RPG_VIEWS.BATTLE}
-        // Client feedback: the battle screen hides the Level/EXP/Token/BP strip
+        // Client feedback: the battle screen hides the Level/EXP/KR-Coin/BP strip
         // so the boss and hero are the focus (and get its vertical space).
         hideHud={view === RPG_VIEWS.BATTLE}
       >

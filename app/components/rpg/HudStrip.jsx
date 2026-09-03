@@ -79,17 +79,17 @@ export default function HudStrip({ profile }) {
 
       {chips ? (
         <div className="flex shrink-0 items-center gap-[4px]">
-          <FramedChip chips={chips} icon={chips.token} label="Tokens" value={compactNumber(profile.tokens)} />
+          <FramedChip chips={chips} icon={chips.token} label="KR Coins" value={compactNumber(profile.tokens)} />
           <FramedChip chips={chips} icon={chips.battlePoint} iconKind="battlePoint" label="Battle Points" value={compactNumber(profile.bp)} />
         </div>
       ) : (
         <>
-          {/* Tokens */}
+          {/* KR Coins */}
           <div className="flex shrink-0 items-center gap-[6px]">
             <img src={RPG_IMAGES.icons.token} alt="" className="size-[26px] object-contain" />
             <div className="flex flex-col">
               <span className="text-[8px] tracking-[1px]" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
-                TOKEN
+                KR COINS
               </span>
               <span className="text-[13px] font-bold leading-[13px]" style={{ color: RPG_COLORS.text, fontFamily: RPG_FONTS.number }}>
                 {compactNumber(profile.tokens)}

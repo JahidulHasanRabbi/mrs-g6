@@ -30,13 +30,13 @@ const UBET_FRAMED_SKIN = buildFramedSkin(UBET_ASSETS, UBET_COLORS, { x: '13%', t
 // (tile 28 → ~25% visible) to fill the red interior instead of floating in it.
 const UBET_GEOMETRY = { framePad: 11, tile: 28, center: 32 };
 
-// Derives a short "Token / Prize / Free credit" label from the raw item_type
+// Derives a short "KR Coins / Prize / Free credit" label from the raw item_type
 // enum so the rewards panel can show more than just the reward name.
 function ubetItemTypeLabel(value) {
   if (value == null) return 'Free credit';
   const normalized = String(value).replace(/_/g, ' ').trim().toUpperCase();
   if (normalized === 'FREE CREDIT' || normalized === '1') return 'Free credit';
-  if (normalized === 'TOKEN' || normalized === '2') return 'Token';
+  if (normalized === 'TOKEN' || normalized === '2') return 'KR Coins';
   if (normalized === 'PRIZE' || normalized === 'ITEM' || normalized === '3') return 'Prize';
   return String(value);
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { formatKrCoins } from "../../api/apiOptions";
 import { useState } from "react";
 import { OutlinePillCta } from "./GreenCta";
 
@@ -18,7 +19,7 @@ export function formatRedeemedSummary(result) {
   const score = Number(result?.wc_score ?? 0);
 
   if (credit > 0) parts.push(`RM ${credit.toFixed(2)}`);
-  if (tokens > 0) parts.push(`${tokens.toLocaleString("en-US")} Tokens`);
+  if (tokens > 0) parts.push(formatKrCoins(tokens));
   if (battlePoints > 0) parts.push(`${battlePoints.toLocaleString("en-US")} BP`);
   if (score > 0) parts.push(`${score.toLocaleString("en-US")} Score`);
   if (Array.isArray(result?.prizes) && result.prizes.length > 0) {

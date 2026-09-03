@@ -43,7 +43,7 @@ const GROUPS = {
     title: "Equipment",
     fields: [
       ["equipment_slot_count", "Equipment Slot Count", 1, null],
-      ["discard_equipment_cost", "Discard Cost (Tokens)", 0, "Tokens charged per discard"],
+      ["discard_equipment_cost", "Discard Cost (KR Coins)", 0, "KR Coins charged per discard"],
       ["backpack_capacity", "Backpack Capacity", 1, "Max unequipped equipment held"],
     ],
   },
@@ -53,7 +53,7 @@ const GROUPS = {
       ["dice_count", "Dice Count", 1, "Dice rolled per turn"],
       ["dice_sides", "Dice Sides", 2, null],
       ["free_daily_attempts", "Free Daily Attempts", 0, "Shared across all bosses per day"],
-      ["extra_attempt_token_cost", "Extra Attempt Cost (Tokens)", 0, null],
+      ["extra_attempt_token_cost", "Extra Attempt Cost (KR Coins)", 0, null],
     ],
   },
 };
@@ -271,11 +271,11 @@ export default function AvatarSettingsPage() {
               <Stat label="BP / Level Multiplier" value={`×${n("battle_point_per_level_multiplier")}`} />
               <Stat label="Power / Level" value={`+${n("battle_power_per_level")}`} />
               <Stat label="Equipment Slots" value={n("equipment_slot_count")} />
-              <Stat label="Discard Cost" value={`${n("discard_equipment_cost")} Tokens`} />
+              <Stat label="Discard Cost" value={`${n("discard_equipment_cost")} KR Coins`} />
               <Stat label="Backpack Capacity" value={n("backpack_capacity")} />
               <Stat label="Dice" value={`${n("dice_count")} × d${n("dice_sides")}`} />
               <Stat label="Free Daily Attempts" value={n("free_daily_attempts")} />
-              <Stat label="Extra Attempt Cost" value={`${n("extra_attempt_token_cost")} Tokens`} />
+              <Stat label="Extra Attempt Cost" value={`${n("extra_attempt_token_cost")} KR Coins`} />
               <Stat
                 label="Description"
                 value={settings.description ? `${String(settings.description).slice(0, 24)}${settings.description.length > 24 ? "…" : ""}` : "—"}

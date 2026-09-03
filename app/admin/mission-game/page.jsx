@@ -1,5 +1,6 @@
 "use client";
 
+import { formatKrCoins } from "../../api/apiOptions";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Pagination } from "../../components/admin/members/DataTable";
@@ -20,7 +21,7 @@ function normalizeMission(m) {
   const rewardParts = [];
   const tokens = Number(m.reward_token_quantity ?? 0);
   const battlePoints = Number(m.reward_battle_point_quantity ?? 0);
-  if (tokens > 0) rewardParts.push(`${tokens.toLocaleString("en-US")} Tokens`);
+  if (tokens > 0) rewardParts.push(formatKrCoins(tokens));
   if (battlePoints > 0) rewardParts.push(`${battlePoints.toLocaleString("en-US")} BP`);
   return {
     id: m.uuid,

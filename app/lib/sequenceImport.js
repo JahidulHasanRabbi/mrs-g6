@@ -234,7 +234,7 @@ export function buildTemplateCsv(rewards = []) {
   const rows = [TEMPLATE_HEADERS];
 
   if (sample.length === 0) {
-    rows.push([1, "", "Free Credit 10"], [2, "", "Token x5"]);
+    rows.push([1, "", "Free Credit 10"], [2, "", "KR Coin x5"]);
   } else {
     sample.forEach((reward, index) => rows.push([index + 1, reward.id, reward.name]));
   }

@@ -16,7 +16,7 @@ const PAGE_SIZE = 8;
 const TABLE_COLUMNS = [
   { key: "created", label: "Date/Time", minW: "min-w-[180px]" },
   { key: "category", label: "Category", minW: "min-w-[140px]" },
-  { key: "token_details", label: "Token Details", minW: "min-w-[220px]" },
+  { key: "token_details", label: "KR Coin Details", minW: "min-w-[220px]" },
   { key: "amount", label: "Amount", minW: "min-w-[140px]", align: "right" },
 ];
 
@@ -120,16 +120,16 @@ function TokenHistoryContent() {
   };
 
   return (
-    <HistoryPageShell title="Member Tokens" memberName={memberName} memberId={memberId}>
+    <HistoryPageShell title="Member KR Coins" memberName={memberName} memberId={memberId}>
       <div className="rounded-[12px] border border-[rgba(255,255,132,0.2)] bg-[rgba(220,220,220,0.1)] p-3 sm:p-4 flex flex-col gap-3">
         {/* Filters */}
         <div className="flex items-center flex-wrap gap-2 sm:gap-3">
           <p className=" font-bold text-[16px] sm:text-[18px] text-white whitespace-nowrap italic">
-            The Token Are Given
+            The KR Coins Are Given
           </p>
           <DateFilter label="Date/Time" fromDate={dateFrom} toDate={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
           <FilterDropdown label="Category" options={getCategoryOptions("token").map(o => o.label)} value={categoryFilter} onChange={setCategoryFilter} />
-          <TextSearchInput placeholder="Token Details" value={detailsSearch} onChange={setDetailsSearch} />
+          <TextSearchInput placeholder="KR Coin Details" value={detailsSearch} onChange={setDetailsSearch} />
         </div>
 
         {/* Record count */}
@@ -145,7 +145,7 @@ function TokenHistoryContent() {
           sortDir={sortDir}
           onSort={handleSort}
           isLoading={loading}
-          emptyMessage="No token history records found."
+          emptyMessage="No KR Coin history records found."
           renderCell={(row, col) => {
             if (col.key === "created") return formatDateTime(row.created);
             if (col.key === "token_details") return row.token_details || "—";

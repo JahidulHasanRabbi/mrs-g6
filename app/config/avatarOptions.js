@@ -74,7 +74,7 @@ export const AVATAR_MISSION_STATUS_LABELS = {
 };
 
 export const MYSTERY_BOX_REWARD_TYPE_LABELS = {
-  1: "Token",
+  1: "KR Coins",
   2: "Battle Point",
   3: "Free Credit",
   4: "Equipment",

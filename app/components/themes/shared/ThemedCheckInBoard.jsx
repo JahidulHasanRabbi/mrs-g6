@@ -104,7 +104,7 @@ export default function ThemedCheckInBoard({ skin }) {
         const response = await checkIn(memberUuid);
         const tokens = response?.tokens_obtained;
         const earned =
-          tokens != null ? `${tokens} token${tokens !== 1 ? "s" : ""}` : "your reward";
+          tokens != null ? `${tokens} KR Coin${tokens !== 1 ? "s" : ""}` : "your reward";
         setDialogMessage(
           `Congratulations! You've checked in for today and earned ${earned}!`
         );

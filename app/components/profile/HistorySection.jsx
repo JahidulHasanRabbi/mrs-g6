@@ -27,7 +27,7 @@ function formatHistoryDate(isoString) {
 
 const HISTORY_CONFIG = {
   token: {
-    title: "Token History",
+    title: "KR Coin History",
     contentWidth: "288px",
     contentOffset: "30px",
     contentTop: "114px",
@@ -578,7 +578,7 @@ export default function HistorySection() {
     <>
       <div className="mx-auto mt-4 flex w-full max-w-[336px] justify-between px-[8px] min-[465px]:max-w-[370px]">
         <HistoryButton
-          title="Token History"
+          title="KR Coin History"
           onClick={() => setActiveHistory("token")}
           delay={0.1}
           {...buttonSkin}

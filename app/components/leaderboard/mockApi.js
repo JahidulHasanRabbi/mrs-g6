@@ -139,12 +139,12 @@ const PLAYER_PRIZES = [
 
 const PREDICTION_PRIZES = [
   { position: "1st", condition: "10 Consecutive Wins", reward: "SAMSUNG PHONE", type: "phone" },
-  { position: "2nd", condition: "9 Consecutive Wins",  reward: "90 TOKEN SPIN", type: "tokens" },
-  { position: "3rd", condition: "8 Consecutive Wins",  reward: "75 TOKEN SPIN", type: "tokens" },
-  { position: "4th", condition: "7 Consecutive Wins",  reward: "60 TOKEN SPIN", type: "tokens" },
-  { position: "5th", condition: "5 Consecutive Wins",  reward: "50 TOKEN SPIN", type: "tokens" },
-  { position: "6th", condition: "3 Consecutive Wins",  reward: "35 TOKEN SPIN", type: "tokens" },
-  { position: "7th", condition: "1 Consecutive Win",   reward: "20 TOKEN SPIN", type: "tokens" },
+  { position: "2nd", condition: "9 Consecutive Wins",  reward: "90 KR COIN SPIN", type: "tokens" },
+  { position: "3rd", condition: "8 Consecutive Wins",  reward: "75 KR COIN SPIN", type: "tokens" },
+  { position: "4th", condition: "7 Consecutive Wins",  reward: "60 KR COIN SPIN", type: "tokens" },
+  { position: "5th", condition: "5 Consecutive Wins",  reward: "50 KR COIN SPIN", type: "tokens" },
+  { position: "6th", condition: "3 Consecutive Wins",  reward: "35 KR COIN SPIN", type: "tokens" },
+  { position: "7th", condition: "1 Consecutive Win",   reward: "20 KR COIN SPIN", type: "tokens" },
 ];
 
 // Persist the country selection so a customer who has chosen a nation goes

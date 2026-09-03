@@ -19,7 +19,7 @@ export const POPUP_CLAIM_LIMIT_LABELS = {
 };
 
 export const POPUP_REWARD_CATEGORY_LABELS = {
-  1: "Token",
+  1: "KR Coins",
   2: "Battle Point",
 };
 
@@ -45,7 +45,7 @@ export const POPUP_WEEKDAYS = [
   { value: 7, label: "Sunday", short: "Sun" },
 ];
 
-export const POPUP_REWARD_UNIT = { 1: "Tokens", 2: "Battle Points" };
+export const POPUP_REWARD_UNIT = { 1: "KR Coins", 2: "Battle Points" };
 
 // Fixed station enum for a promotion's `eligibility_stations` (doc/usage-report-api-reference.md,
 // "MISSION PROMOTION" → Station). Not a live lookup of Station rows — these six ids are the

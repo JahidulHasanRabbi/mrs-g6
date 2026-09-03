@@ -168,7 +168,7 @@ function MemberReportContent() {
     { key: "new_members",         label: "New Member",     className: "w-[140px]" },
     { key: "total_members",       label: "Total Member",   className: "w-[140px]" },
     { key: "active_members",      label: "Active Members", className: "w-[150px]" },
-    { key: "total_tokens_issued", label: "Token Issued",   className: "w-[170px] text-right" },
+    { key: "total_tokens_issued", label: "KR Coins Issued",   className: "w-[170px] text-right" },
   ];
 
   const fetchReport = useCallback(async () => {

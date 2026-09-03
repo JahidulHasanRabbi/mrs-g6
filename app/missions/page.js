@@ -1,5 +1,6 @@
 "use client";
 
+import { formatKrCoins } from "../api/apiOptions";
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -87,7 +88,7 @@ function mapMission(row) {
   const rewardParts = [];
   const tokens = Number(row.reward_token_quantity ?? 0);
   const battlePoints = Number(row.reward_battle_point_quantity ?? 0);
-  if (tokens > 0) rewardParts.push(`${tokens.toLocaleString("en-US")} Tokens`);
+  if (tokens > 0) rewardParts.push(formatKrCoins(tokens));
   if (battlePoints > 0) rewardParts.push(`${battlePoints.toLocaleString("en-US")} BP`);
   return {
     id: row.uuid,
@@ -450,7 +451,7 @@ export default function MissionsPage() {
               </p>
             </div>
 
-            {/* Token balance pill — themed shells carry their own balance chip. */}
+            {/* KR Coin balance pill — themed shells carry their own balance chip. */}
             {!isThemed && (
               <div
                 className="flex shrink-0 items-center justify-center gap-2 rounded-full px-[9px] py-[5px]"
@@ -610,7 +611,7 @@ export default function MissionsPage() {
                     <span className="shrink-0 text-[14px]" style={{ fontFamily: SERIF, color: MISSION_COLORS.gold }}>
                       {[
                         Number(item.token_amount ?? 0) > 0
-                          ? `${Number(item.token_amount).toLocaleString("en-US")} Tokens`
+                          ? formatKrCoins(Number(item.token_amount))
                           : null,
                         Number(item.battle_point_amount ?? 0) > 0
                           ? `${Number(item.battle_point_amount).toLocaleString("en-US")} BP`

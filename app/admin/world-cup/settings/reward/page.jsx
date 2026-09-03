@@ -163,7 +163,7 @@ function RewardForm() {
       return;
     }
     if (form.itemType === 1 && !isPositiveInteger(tokenAmount)) {
-      setError("Token amount is required for Prediction rewards.");
+      setError("KR Coin amount is required for Prediction rewards.");
       return;
     }
     setSaving(true);
@@ -267,7 +267,7 @@ function RewardForm() {
             </div>
             <div>
               <label className="mb-2 block text-[14px] font-semibold text-white">
-                Token Amount <span className="text-red-400">*</span>
+                KR Coin Amount <span className="text-red-400">*</span>
               </label>
               <input type="number" min="1" step="1" value={form.tokenAmount} onChange={set("tokenAmount")} className={INPUT_BASE} />
             </div>

@@ -24,7 +24,7 @@ import {
 import ConfirmDialog from "../../../components/admin/ui/ConfirmDialog";
 
 const REWARD_TYPE_OPTIONS = [
-  { value: 1, label: "Token" },
+  { value: 1, label: "KR Coins" },
   { value: 2, label: "Battle Point (BP)" },
 ];
 

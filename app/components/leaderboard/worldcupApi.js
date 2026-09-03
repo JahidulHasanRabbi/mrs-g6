@@ -1,6 +1,7 @@
 // Real API adapter for the leaderboard. Exports the same function signatures
 // as mockApi.js so components can swap imports without structural changes.
 
+import { formatKrCoins } from "../../api/apiOptions";
 import {
   getWorldCupCountryList,
   getWorldCupLeaderboardCountries,
@@ -228,7 +229,7 @@ export async function getPredictionPrizes() {
     return {
       position: ordinal(i + 1),
       condition: achievement,
-      reward: r.token_amount ? `${Number(r.token_amount).toLocaleString()} Tokens` : r.reward_name,
+      reward: r.token_amount ? formatKrCoins(Number(r.token_amount)) : r.reward_name,
       type: r.token_amount ? "tokens" : "phone",
       image: r.image,
       uuid: r.uuid,

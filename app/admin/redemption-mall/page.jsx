@@ -16,7 +16,7 @@ const SKELETON_COLUMNS = [
   { label: "End Date",   type: "datetime" },
   { label: "Prize Type", type: "badge" },
   { label: "Mart Tier",  type: "badge" },
-  { label: "Tokens",     type: "number" },
+  { label: "KR Coins",     type: "number" },
   { label: "Promotion",  type: "number" },
   { label: "Image",      type: "image" },
   { label: "Action",     type: "actions", count: 2 },

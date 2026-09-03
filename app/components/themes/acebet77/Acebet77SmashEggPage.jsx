@@ -131,8 +131,8 @@ export default function Acebet77SmashEggPage() {
           <Image src={ACEBET_ASSETS.egg.rays} alt="" fill className="object-contain" sizes="552px" />
         </motion.div>
 
-        {/* Token balance — shared with the default portal (Token Balance +
-            Tokens / round). */}
+        {/* KR Coin balance — shared with the default portal (KR Coin Balance +
+            KR Coins / round). */}
         <div className="relative z-10 mt-2">
           <TokenBalance balance={tokenBalance} tokensPerRound={tokensPerRound} />
         </div>

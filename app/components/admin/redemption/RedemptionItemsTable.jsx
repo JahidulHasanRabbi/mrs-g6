@@ -44,7 +44,7 @@ export default function RedemptionItemsTable({ items = [], onEditClick, onDelete
               Prize Type
             </th>
             <th className="px-4 py-3 text-left text-sm font-medium text-white/60">
-              Tokens
+              KR Coins
             </th>
             <th className="px-4 py-3 text-left text-sm font-medium text-white/60">
               Promotion

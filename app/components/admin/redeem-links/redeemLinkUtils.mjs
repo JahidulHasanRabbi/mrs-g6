@@ -7,8 +7,10 @@ export const STATION_OPTIONS = [
   { value: "6", label: "LV918" },
 ];
 
+// `apiLabel` carries the wire word where it differs from what we render, so
+// hydrating an existing link still resolves the API's "TOKEN".
 export const REWARD_TYPE_OPTIONS = [
-  { value: "1", label: "TOKEN" },
+  { value: "1", label: "KR COINS", apiLabel: "TOKEN" },
   { value: "2", label: "BATTLE POINT" },
   { value: "3", label: "FREE CREDIT" },
 ];
@@ -26,10 +28,26 @@ export const RECURRENCE_OPTIONS = [
 const optionValueByLabel = (options, value, fallback) => {
   const normalized = String(value ?? "").trim().toUpperCase();
   const option = options.find(
-    (item) => item.value === normalized || item.label.toUpperCase() === normalized,
+    (item) =>
+      item.value === normalized ||
+      item.label.toUpperCase() === normalized ||
+      item.apiLabel === normalized,
   );
   return option?.value ?? fallback;
 };
+
+// Rows carry the API's own reward_type ("TOKEN"), which must display as KR COINS.
+export function formatRewardTypeLabel(value) {
+  if (value === null || value === undefined || value === "") return "-";
+  const normalized = String(value).replace(/_/g, " ").trim().toUpperCase();
+  const option = REWARD_TYPE_OPTIONS.find(
+    (item) =>
+      item.value === normalized ||
+      item.label === normalized ||
+      item.apiLabel === normalized,
+  );
+  return option ? option.label : String(value);
+}
 
 // start_date/end_date are full ISO 8601 datetimes (the API returns them with a
 // +08:00 offset). `datetime-local` inputs take "YYYY-MM-DDTHH:mm" with no zone,

@@ -74,7 +74,7 @@ export default function TokenPills({ tokens = 0, perShot = 0 }) {
       >
         <PillIcon iconSrc={PHASE4_ASSETS.token} />
         <PillBody
-          label="Tokens"
+          label="KR Coins"
           value={formatTokenAmount(tokens)}
           valueColor={COLORS.goldText}
           glowColor="rgba(255,221,116,0.4)"
@@ -91,7 +91,7 @@ export default function TokenPills({ tokens = 0, perShot = 0 }) {
         }}
       >
         <PillBody
-          label="Token/shot"
+          label="KR Coin/shot"
           value={formatTokenAmount(perShot)}
           valueColor={colors.primary}
           glowColor={soft(0.4)}

@@ -574,7 +574,7 @@ export default function SmashEggPage() {
       <CostSettingModal
         open={costOpen}
         initial={costData}
-        label="Token cost per Smash"
+        label="KR Coin cost per Smash"
         onClose={() => setCostOpen(false)}
         onSave={async (payload) => {
           try {

@@ -9,7 +9,7 @@ import * as adminApi from "../../api/adminApi";
 
 const SKELETON_COLUMNS = [
   { label: "Day",            type: "text" },
-  { label: "Token Reward",   type: "number" },
+  { label: "KR Coin Reward",   type: "number" },
   { label: "BP Reward",      type: "number" },
   { label: "Display Text",   type: "text" },
   { label: "Actions",        type: "actions", count: 1 },
@@ -134,7 +134,7 @@ function CheckinSettingsContent() {
                 <thead>
                   <tr className="border-b border-white/10">
                     <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Day</th>
-                    <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Token Reward</th>
+                    <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">KR Coin Reward</th>
                     <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">BP Reward</th>
                     <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Display Text</th>
                     <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Actions</th>
@@ -163,7 +163,7 @@ function CheckinSettingsContent() {
                           </div>
                         </td>
                         <td className="px-5 py-3 text-sm text-white">
-                          {dayReward.reward_minimum}–{dayReward.reward_maximum} tokens
+                          {dayReward.reward_minimum}–{dayReward.reward_maximum} KR Coins
                         </td>
                         <td className="px-5 py-3 text-sm text-white">
                           {dayReward.battle_point_minimum ?? 0}–{dayReward.battle_point_maximum ?? 0} BP
@@ -270,7 +270,7 @@ function DayFormModal({ day, onSubmit, onClose, isSaving }) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-1">
-                Minimum Tokens *
+                Minimum KR Coins *
               </label>
               <input
                 type="number"
@@ -286,7 +286,7 @@ function DayFormModal({ day, onSubmit, onClose, isSaving }) {
 
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-1">
-                Maximum Tokens *
+                Maximum KR Coins *
               </label>
               <input
                 type="number"
@@ -360,7 +360,7 @@ function DayFormModal({ day, onSubmit, onClose, isSaving }) {
                   ? `+${formData.reward_minimum}`
                   : `+${formData.reward_minimum}-${formData.reward_maximum}`
               )}{' '}
-              tokens and {formData.battle_point_minimum === formData.battle_point_maximum
+              KR Coins and {formData.battle_point_minimum === formData.battle_point_maximum
                 ? formData.battle_point_minimum
                 : `${formData.battle_point_minimum}-${formData.battle_point_maximum}`} BP for Day {formData.day}
             </p>

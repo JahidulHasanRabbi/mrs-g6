@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import ModalShell from "./ModalShell";
 
-export default function CostSettingModal({ open, onClose, initial, onSave, label = "Token cost per Kick" }) {
+export default function CostSettingModal({ open, onClose, initial, onSave, label = "KR Coin cost per Kick" }) {
   const [cost, setCost] = useState(initial?.cost ?? "10.00");
 
   useEffect(() => {

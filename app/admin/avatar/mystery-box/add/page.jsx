@@ -88,7 +88,7 @@ function validate(form, othersPct) {
   const type = Number(form.rewardType);
   if (type === 1) {
     const v = Number(form.tokenAmount);
-    if (!Number.isInteger(v) || v <= 0) return "Token amount is required for Token rewards";
+    if (!Number.isInteger(v) || v <= 0) return "KR Coin amount is required for KR Coin rewards";
   }
   if (type === 2) {
     const v = Number(form.battlePointAmount);
@@ -308,7 +308,7 @@ function MysteryBoxItemForm() {
             <SectionTitle>Reward Value</SectionTitle>
             <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-3">
               {type === 1 && (
-                <Field label="Token Amount">
+                <Field label="KR Coin Amount">
                   <input
                     type="number"
                     min="1"

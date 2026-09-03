@@ -44,8 +44,8 @@ export default function PrivilegesCard({ level = "Bronze", tierData = null, tier
   const stats = [
     { label: "Lifetime Deposit", value: tierData?.lifetime_deposit_required != null ? `RM ${tierData.lifetime_deposit_required}` : "—" },
     { label: "Monthly Deposit", value: tierData?.monthly_deposit != null ? `RM ${tierData.monthly_deposit}` : "—" },
-    { label: "Check-in Token", value: tierData?.check_in_token != null ? `${tierData.check_in_token}` : "—" },
-    { label: "Upgrade (Free Token)", value: tierData?.upgrade_free_token != null ? `${tierData.upgrade_free_token}` : "—" },
+    { label: "Check-in KR Coin", value: tierData?.check_in_token != null ? `${tierData.check_in_token}` : "—" },
+    { label: "Upgrade (Free KR Coins)", value: tierData?.upgrade_free_token != null ? `${tierData.upgrade_free_token}` : "—" },
   ];
 
   return (

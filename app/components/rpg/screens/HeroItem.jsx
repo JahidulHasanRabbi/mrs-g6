@@ -6,7 +6,7 @@
 //   - drag a backpack item ↑ onto the slot row → equip it
 //   - tap an equipped slot chip  → unequip back into the bag
 //   - drag an equipped slot ↓ onto the backpack → unequip it
-//   - drag an item onto the zone → confirm → discard (−10 Tokens each)
+//   - drag an item onto the zone → confirm → discard (−10 KR Coins each)
 //   - MANAGE                     → multi-select + discard via the same zone
 //     (the accessible fallback for touch scrolling vs drag conflicts)
 
@@ -296,7 +296,7 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
           <img src="/assets/rpg/icons/trash.svg" alt="" className="size-[18px]" />
           <span className="text-[11px] font-semibold tracking-[2px]" style={{ color: "#ff8faf", fontFamily: RPG_FONTS.display }}>
             {manageMode && selected.length
-              ? `DISCARD ${selected.length} SELECTED · −${selected.length * discardCost} TOKENS`
+              ? `DISCARD ${selected.length} SELECTED · −${selected.length * discardCost} KR COINS`
               : "DRAG ITEM HERE TO DISCARD"}
           </span>
         </button>
@@ -305,7 +305,7 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
       <NoticeModal
         open={Boolean(confirmIds)}
         title="DISCARD EQUIPMENT?"
-        message={`Discarding costs ${discardCost} Tokens per item (${(confirmIds?.length || 0) * discardCost} Tokens total). This cannot be undone.`}
+        message={`Discarding costs ${discardCost} KR Coins per item (${(confirmIds?.length || 0) * discardCost} KR Coins total). This cannot be undone.`}
         confirmLabel="DISCARD"
         cancelLabel="KEEP IT"
         busy={busy}

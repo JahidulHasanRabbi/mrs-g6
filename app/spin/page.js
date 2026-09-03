@@ -96,7 +96,7 @@ function DefaultSpinPage() {
       // happened on the server and the result is final, so the UI history
       // must reflect it regardless of how the player ended the animation.
       if (results.length > 0) {
-        // Show the reward *name* (e.g. "RM2.64", "Iphone", "2 Token"). The
+        // Show the reward *name* (e.g. "RM2.64", "Iphone", "2 KR Coins"). The
         // spin API does not return a separate credit_amount — the resolved
         // value already lives in reward_name — so there is no numeric amount
         // to display.

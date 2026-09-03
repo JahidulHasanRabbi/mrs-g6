@@ -214,7 +214,7 @@ function ViewMemberModal({ member, onClose, onNavigate }) {
             {/* Action buttons — 2x2 grid */}
             <div className="grid grid-cols-2 gap-3 mb-5">
               {[
-                { label: "Token History", action: () => onNavigate && onNavigate("token-history", member) },
+                { label: "KR Coin History", action: () => onNavigate && onNavigate("token-history", member) },
                 { label: "Reward History", action: () => onNavigate && onNavigate("reward-history", member) },
                 { label: "Deposit History", action: () => onNavigate && onNavigate("deposit-history", member) },
                 { label: "Station", action: () => onNavigate && onNavigate("station", member) },
@@ -661,7 +661,7 @@ function MembersContent() {
     { key: "full_name", label: "Member Name", minW: "min-w-[120px]" },
     { key: "phone_number", label: "Phone Number", minW: "min-w-[130px]" },
     { key: "vip_tier", label: "MRS VIP Tier", minW: "min-w-[110px]" },
-    { key: "current_tokens", label: "Current Tokens", minW: "min-w-[110px]" },
+    { key: "current_tokens", label: "Current KR Coins", minW: "min-w-[110px]" },
     { key: "current_battle_points", label: "Current Battle Points", minW: "min-w-[150px]" },
     {
       key: "registered_datetime",

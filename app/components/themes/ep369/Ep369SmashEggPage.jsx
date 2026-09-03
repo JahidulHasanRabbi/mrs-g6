@@ -130,8 +130,8 @@ export default function Ep369SmashEggPage() {
           <Image src={EP369_ASSETS.egg.rays} alt="" fill className="object-contain" sizes="540px" />
         </motion.div>
 
-        {/* Token balance — shared with the default portal (Token Balance +
-            Tokens / round). */}
+        {/* KR Coin balance — shared with the default portal (KR Coin Balance +
+            KR Coins / round). */}
         <div className="relative z-10 mt-2">
           <TokenBalance balance={tokenBalance} tokensPerRound={tokensPerRound} />
         </div>

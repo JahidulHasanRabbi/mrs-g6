@@ -12,7 +12,7 @@ const INPUT_BASE =
 
 const ITEM_TYPES = [
   { value: "1", label: "Free Credit" },
-  { value: "2", label: "Token" },
+  { value: "2", label: "KR Coins" },
   { value: "3", label: "Prize" },
   { value: "4", label: "World Cup Score" },
   { value: "5", label: "Battle Point" },
@@ -263,7 +263,7 @@ function RewardForm() {
         )}
         {form.itemType === "2" && (
           <div>
-            <label className="mb-2 block text-[14px] font-semibold text-white">Token Amount</label>
+            <label className="mb-2 block text-[14px] font-semibold text-white">KR Coin Amount</label>
             <input type="number" min="1" value={form.tokenAmount} onChange={handleChange("tokenAmount")} className={INPUT_BASE} />
           </div>
         )}

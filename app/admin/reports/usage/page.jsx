@@ -318,7 +318,7 @@ function SummaryBreakdownPanel({ summary }) {
     { label: "Completions", value: mission.total_completions },
     { label: "Unique Completed", value: mission.unique_members_completed },
     { label: "Claims", value: mission.total_claims },
-    { label: "Tokens Awarded", value: mission.total_tokens_awarded },
+    { label: "KR Coins Awarded", value: mission.total_tokens_awarded },
     { label: "Unique Claimed", value: mission.unique_members_claimed },
   ];
 
@@ -380,7 +380,7 @@ function TrendChart({ rows }) {
         <div className="flex flex-wrap items-center gap-3 text-[11px] text-white/70">
           <span className="inline-flex items-center gap-1"><i className="h-2 w-2 rounded-full bg-[#54d7ff]" />Players</span>
           <span className="inline-flex items-center gap-1"><i className="h-2 w-2 rounded-full bg-[#f2cb7a]" />Sessions</span>
-          <span className="inline-flex items-center gap-1"><i className="h-2 w-2 rounded-full bg-[#a78bfa]" />Tokens</span>
+          <span className="inline-flex items-center gap-1"><i className="h-2 w-2 rounded-full bg-[#a78bfa]" />KR Coins</span>
         </div>
       </div>
       {points.length ? (
@@ -414,7 +414,7 @@ function GamePerformance({ games }) {
       <div className="overflow-x-auto scrollbar-admin">
         <table className="w-full min-w-[860px] table-fixed border-separate border-spacing-0">
           <thead><tr className="bg-black text-left">
-            {["Rank", "Game", "Players", "Sessions", "Avg/Player", "Tokens Spent", "Credit RM", "New", "Existing"].map((h) => <th key={h} className="px-4 py-3 text-[12px] font-bold uppercase text-white">{h}</th>)}
+            {["Rank", "Game", "Players", "Sessions", "Avg/Player", "KR Coins Spent", "Credit RM", "New", "Existing"].map((h) => <th key={h} className="px-4 py-3 text-[12px] font-bold uppercase text-white">{h}</th>)}
           </tr></thead>
           <tbody>
             {sorted.length ? sorted.map((game, index) => (
@@ -475,7 +475,7 @@ const MEMBER_COLUMNS = [
   { key: "phone_number", label: "Phone Number", className: "w-[130px]" },
   { key: "username", label: "Username", className: "w-[130px]" },
   { key: "station", label: "Station", className: "w-[110px]" },
-  { key: "tokens_used", label: "Tokens Used", className: "w-[115px]", sortable: true },
+  { key: "tokens_used", label: "KR Coins Used", className: "w-[115px]", sortable: true },
   { key: "battle_point_used", label: "Battle Point Used", className: "w-[145px]", sortable: true },
   { key: "avg_session_duration", label: "Avg. Session Duration", className: "w-[165px]", sortable: true },
   { key: "most_played_game", label: "Most Played Game", className: "w-[145px]" },

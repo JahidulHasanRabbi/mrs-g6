@@ -22,10 +22,10 @@ const SEED_REWARDS = [
 
 const SEED_HISTORY = [
   { id: "h1", outcome: "goal", amount: 50, claimed: false, label: "Scored a goal", sub: "Tap to claim!" },
-  { id: "h2", outcome: "miss", amount: -50, claimed: false, label: "Missed a goal", sub: "Token deducted" },
+  { id: "h2", outcome: "miss", amount: -50, claimed: false, label: "Missed a goal", sub: "KR Coins deducted" },
   { id: "h3", outcome: "goal", amount: 50, claimed: true, label: "Scored a goal", sub: "Redeemed" },
   { id: "h4", outcome: "goal", amount: 50, claimed: false, label: "Scored a goal", sub: "Tap to claim!" },
-  { id: "h5", outcome: "miss", amount: -50, claimed: false, label: "Missed a goal", sub: "Token deducted" },
+  { id: "h5", outcome: "miss", amount: -50, claimed: false, label: "Missed a goal", sub: "KR Coins deducted" },
 ];
 
 const fakeLatency = (ms = 350) => new Promise((r) => setTimeout(r, ms));
@@ -87,7 +87,7 @@ export async function kickMock(
   return {
     outcome: isSave ? "save" : "goal",
     reward: !isSave
-      ? { uuid: `kick-${Date.now()}`, reward_name: "2 Tokens", credit_amount: 2 }
+      ? { uuid: `kick-${Date.now()}`, reward_name: "2 KR Coins", credit_amount: 2 }
       : null,
     saveDelayMs: 180 + Math.random() * 120,
     keeperDive,

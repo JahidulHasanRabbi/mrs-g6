@@ -12,7 +12,7 @@ import {
 const ITEM_TYPES = [
   { value: 1, label: "Free Credit" },
   { value: 2, label: "Item" },
-  { value: 3, label: "Token" },
+  { value: 3, label: "KR Coins" },
   { value: 4, label: "Other" },
 ];
 
@@ -145,7 +145,7 @@ function RewardForm() {
       if (Number(form.itemType) === 3) {
         const tokenAmount = parseInteger(form.tokenAmount);
         if (tokenAmount === null) {
-          setError("Token amount is required for Token rewards.");
+          setError("KR Coin amount is required for KR Coin rewards.");
           setSaving(false);
           return;
         }
@@ -237,7 +237,7 @@ function RewardForm() {
         )}
         {Number(form.itemType) === 3 && (
           <div>
-            <label className="mb-2 block text-[14px] font-semibold text-white">Token Amount</label>
+            <label className="mb-2 block text-[14px] font-semibold text-white">KR Coin Amount</label>
             <input
               type="number"
               min="0"

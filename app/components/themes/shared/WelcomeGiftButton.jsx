@@ -109,7 +109,7 @@ export default function WelcomeGiftButton() {
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
         title="🎁 Welcome Gift Claimed!"
-        message="Congratulations! Your welcome tokens have been added to your account."
+        message="Congratulations! Your welcome KR Coins have been added to your account."
         backgroundColor="rgba(96, 128, 60, 1)"
       />
     </>

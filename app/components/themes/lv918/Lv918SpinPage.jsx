@@ -320,8 +320,8 @@ export default function Lv918SpinPage() {
         />
 
         {/* Multi-spin buttons */}
-        {/* Two ornate plaques — token cost + spin multiplier, like the base
-            theme (100 token / SPIN X10, 500 token / SPIN X50). */}
+        {/* Two ornate plaques — KR Coin cost + spin multiplier, like the base
+            theme (100 KR Coins / SPIN X10, 500 KR Coins / SPIN X50). */}
         {!itemsLoading && (
           <div className="flex w-full items-center justify-center gap-4">
             {[
@@ -330,7 +330,7 @@ export default function Lv918SpinPage() {
             ].map((btn) => (
               <button
                 key={btn.id}
-                aria-label={`${btn.tokens} token, ${btn.spins}`}
+                aria-label={`${btn.tokens} KR Coins, ${btn.spins}`}
                 onClick={() => handleMultiSpin(btn.fn, btn.type)}
                 disabled={isSpinning}
                 // Taller plaques: the button keeps the art's native 3:1 ratio
@@ -343,7 +343,7 @@ export default function Lv918SpinPage() {
                     overflowed the bevel once the button dropped below 208px. */}
                 <span className="relative z-10 flex flex-col items-center justify-center gap-0.5 leading-[1.1]">
                   <span className="whitespace-nowrap text-[5.5cqi]" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: LV918_COLORS.cream }}>
-                    {btn.tokens} Token
+                    {btn.tokens} KR Coins
                   </span>
                   <span className="whitespace-nowrap text-[7.8cqi] leading-none" style={{ fontFamily: 'var(--font-berkshire-swash), cursive', color: LV918_COLORS.goldBright }}>
                     {btn.spins}

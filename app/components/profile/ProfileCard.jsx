@@ -327,7 +327,7 @@ export default function ProfileCard({
             />
           </motion.div>
 
-          {/* Name and Tokens */}
+          {/* Name and KR Coins */}
           <motion.div
             className="absolute left-[110px] top-[25px]"
             initial={{ opacity: 0, x: -20 }}
@@ -338,12 +338,12 @@ export default function ProfileCard({
               {displayName}
             </p>
             <p className="text-[#e9af41] text-[10px] font-bold font-['Times_New_Roman'] whitespace-nowrap mt-1">
-              Total Token: {totalTokens}
+              Total KR Coins: {totalTokens}
             </p>
           </motion.div>
 
           {/* VIP Details Button — sits in the dark-green band between the
-              Total Token line (~y=55) and the inner gold panel top (~y=96),
+              Total KR Coins line (~y=55) and the inner gold panel top (~y=96),
               right-aligned to clear the corner gem ornament (~30px deep). */}
           <motion.button
             onClick={handleVipDetailsClick}
@@ -456,7 +456,7 @@ export default function ProfileCard({
         isOpen={showSuccessModal}
         onClose={() => setShowSuccessModal(false)}
         title="🎁 Welcome Gift Claimed!"
-        message="Congratulations! Your welcome tokens have been added to your account."
+        message="Congratulations! Your welcome KR Coins have been added to your account."
         backgroundColor="rgba(96, 128, 60, 1)"
       />
     </>

@@ -104,7 +104,7 @@ export default function ThemedProfileCard({
               className="mt-[3px] whitespace-nowrap text-[9px] font-bold uppercase leading-none tracking-[1.2px]"
               style={{ color: c.label, fontFamily: body }}
             >
-              Total Token
+              Total KR Coins
             </p>
           </div>
 
@@ -126,7 +126,7 @@ export default function ThemedProfileCard({
           </button>
         </div>
 
-        {/* Token well */}
+        {/* KR Coin well */}
         <div
           className="mt-3.5 flex items-center gap-2.5 rounded-[13px] px-3.5 py-2.5"
           style={{ background: c.wellBg, border: `1px solid ${c.wellBorder}` }}

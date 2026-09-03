@@ -13,8 +13,8 @@ const PRIZE_PAGE_SIZE = 10;
 
 const ITEM_TYPE_DISPLAY = {
   "1": "Credit",
-  "TOKEN": "Token",
-  "2": "Token",
+  "TOKEN": "KR Coins",
+  "2": "KR Coins",
   "FREE CREDIT": "Credit",
   "3": "Prize",
   "PRIZE": "Prize",

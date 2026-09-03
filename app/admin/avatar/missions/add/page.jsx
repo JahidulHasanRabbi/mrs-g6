@@ -123,7 +123,7 @@ function AvatarMissionForm() {
     const bp = Number(form.rewardBattlePointQuantity);
     if (!Number.isInteger(bp) || bp < 0) return "Battle point reward must be a whole number of at least 0";
     const tokens = Number(form.rewardTokenQuantity);
-    if (!Number.isInteger(tokens) || tokens < 0) return "Token reward must be a whole number of at least 0";
+    if (!Number.isInteger(tokens) || tokens < 0) return "KR Coin reward must be a whole number of at least 0";
     if (form.startDate && form.endDate) {
       const start = combineDateTime(form.startDate, form.startTime);
       const end = combineDateTime(form.endDate, form.endTime);
@@ -243,7 +243,7 @@ function AvatarMissionForm() {
                   className={INPUT_BASE}
                 />
               </Field>
-              <Field label="Token Quantity">
+              <Field label="KR Coin Quantity">
                 <input
                   type="number"
                   min="0"

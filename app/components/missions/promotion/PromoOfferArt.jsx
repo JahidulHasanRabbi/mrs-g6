@@ -136,7 +136,7 @@ export default function PromoOfferArt({
   rewardCategory = 1,
   currency = "RM",
 }) {
-  const unit = `${POPUP_REWARD_UNIT[rewardCategory] ?? "Tokens"}!`.toUpperCase();
+  const unit = `${POPUP_REWARD_UNIT[rewardCategory] ?? "KR Coins"}!`.toUpperCase();
   // The headline splits across two lines the way the client mock does; a
   // single-word title just takes the top line.
   const words = String(title || "Happy Friday!").trim().split(/\s+/);

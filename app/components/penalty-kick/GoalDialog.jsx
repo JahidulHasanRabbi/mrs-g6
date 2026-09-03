@@ -28,7 +28,7 @@ export default function GoalDialog({ reward, onKickAgain, onRedeemAll, onReturn 
     : amount
       ? itemType === "BATTLE POINT"
         ? `${Number(amount).toLocaleString("en-US")} BP`
-        : `${amount} ${itemType === "TOKEN" ? "Token" : "Reward"}${Number(amount) === 1 ? "" : "s"}`
+        : `${amount} ${itemType === "TOKEN" ? "KR Coin" : "Reward"}${Number(amount) === 1 ? "" : "s"}`
       : "a reward";
 
   // Themed skins (acebet77 / ubetclub): crowned ornate frame holds only the

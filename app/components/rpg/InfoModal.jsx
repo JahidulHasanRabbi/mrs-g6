@@ -20,9 +20,9 @@ function rulesFor(profile) {
   return [
     ["LEVEL UP", `Spend Battle Points (BP) to level your avatar — BP cost = current level × ${multiplier}. Each level grants +${fmt(perLevel)} Power (max Lv.${maxLevel}).`],
     ["EQUIP GEAR", `Weapons, helmets, armor and boots each add Power. Spare gear lives in your backpack (${fmt(capacity)} slots).`],
-    ["CHALLENGE BOSSES", `Each planet boss needs a minimum Power. Roll the dice — every pip is an attack. Free daily attempts are shared across bosses; extras cost ${extraCost} Tokens.`],
-    ["MYSTERY BOXES", "Every boss kill drops a Mystery Box with Tokens, BP, free credit, rare gear or instant level-ups."],
-    ["EARN MORE", `Missions pay Battle Points. Discarding gear costs ${discardCost} Tokens per item.`],
+    ["CHALLENGE BOSSES", `Each planet boss needs a minimum Power. Roll the dice — every pip is an attack. Free daily attempts are shared across bosses; extras cost ${extraCost} KR Coins.`],
+    ["MYSTERY BOXES", "Every boss kill drops a Mystery Box with KR Coins, BP, free credit, rare gear or instant level-ups."],
+    ["EARN MORE", `Missions pay Battle Points. Discarding gear costs ${discardCost} KR Coins per item.`],
   ];
 }
 

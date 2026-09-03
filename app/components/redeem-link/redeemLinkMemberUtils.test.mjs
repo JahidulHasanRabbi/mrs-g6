@@ -9,15 +9,15 @@ import {
 } from "./redeemLinkMemberUtils.mjs";
 
 test("describes each reward type in its own units", () => {
-  assert.equal(describeReward({ reward_type: "TOKEN", amount: 30 }), "30 Tokens");
+  assert.equal(describeReward({ reward_type: "TOKEN", amount: 30 }), "30 KR Coins");
   assert.equal(describeReward({ reward_type: "BATTLE POINT", amount: 250 }), "250 Battle Points");
   assert.equal(describeReward({ reward_type: "FREE CREDIT", amount: 25 }), "RM 25 Free Credit");
 });
 
 test("singularises a reward of one and groups thousands", () => {
-  assert.equal(describeReward({ reward_type: "TOKEN", amount: 1 }), "1 Token");
+  assert.equal(describeReward({ reward_type: "TOKEN", amount: 1 }), "1 KR Coin");
   assert.equal(describeReward({ reward_type: "BATTLE POINT", amount: 1 }), "1 Battle Point");
-  assert.equal(describeReward({ reward_type: "TOKEN", amount: 2000 }), "2,000 Tokens");
+  assert.equal(describeReward({ reward_type: "TOKEN", amount: 2000 }), "2,000 KR Coins");
 });
 
 // A reward type added on the backend must still show its amount rather than

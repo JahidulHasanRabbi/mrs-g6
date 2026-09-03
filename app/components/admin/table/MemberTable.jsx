@@ -47,7 +47,7 @@ export default function MemberTable({ members = [] }) {
         <p className="text-sm font-medium text-gray-400">Member Name :</p>
         <p className="text-sm font-medium text-gray-400">Last Login :</p>
         <p className="text-sm font-medium text-gray-400">Phone Number :</p>
-        <p className="text-sm font-medium text-gray-400">Current Tokens :</p>
+        <p className="text-sm font-medium text-gray-400">Current KR Coins :</p>
         <p className="text-sm font-medium text-gray-400">VIP Tier :</p>
         <p className="text-sm font-medium text-gray-400">Last Check-In :</p>
       </div>

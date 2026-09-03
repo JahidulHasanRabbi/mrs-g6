@@ -225,7 +225,7 @@ const RewardsList = memo(function RewardsList() {
               // Format token rewards to look better
               const displayName = reward.reward_name.toLowerCase().includes('token')
                 ? reward.reward_name
-                : `${reward.reward_name} Token${reward.token_amount > 1 ? 's' : ''}`;
+                : `${reward.reward_name} KR Coin${reward.token_amount > 1 ? 's' : ''}`;
 
               return (
                 <RewardItem

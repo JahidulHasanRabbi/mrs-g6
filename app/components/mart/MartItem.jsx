@@ -1,5 +1,6 @@
 "use client";
 
+import { formatKrCoins } from "../../api/apiOptions";
 import { motion } from "framer-motion";
 import { MART_ASSETS } from "./martAssets";
 
@@ -97,14 +98,11 @@ export default function MartItem({
           <>
             {originalPrice && originalPrice != (discountPrice || coins) && (
               <p className="text-[#e94141] text-[10px] font-bold font-['Times_New_Roman'] line-through decoration-1 truncate max-w-full leading-[12px]">
-                {typeof originalPrice === "number" ? originalPrice.toLocaleString() : originalPrice} Token
+                {formatKrCoins(originalPrice)}
               </p>
             )}
             <p className="text-[#e9af41] text-[12px] font-bold font-['Times_New_Roman'] truncate max-w-full leading-[14px]">
-              {typeof (discountPrice || coins) === "number"
-                ? (discountPrice || coins).toLocaleString()
-                : discountPrice || coins}{" "}
-              Token
+              {formatKrCoins(discountPrice || coins)}
             </p>
           </>
         )}

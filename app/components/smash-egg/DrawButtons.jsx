@@ -114,7 +114,7 @@ function DrawButton({ draws, tokens, featured, onClick, disabled }) {
         className="text-xs text-center whitespace-nowrap"
         style={{ fontFamily: "var(--font-rubik), 'Rubik', sans-serif", color: tokenTextColor }}
       >
-        {tokens} Tokens
+        {tokens} KR Coins
       </p>
     </motion.button>
   );

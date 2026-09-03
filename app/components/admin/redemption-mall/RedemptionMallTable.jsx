@@ -9,7 +9,7 @@ const COLUMNS = [
   { id: "end_date",            label: "End Date",   sortable: true,  align: "left",   sortAs: "date" },
   { id: "prize_type",          label: "Prize Type", sortable: true,  align: "left",   sortAs: "string" },
   { id: "mart_tier",           label: "Mart Tier",  sortable: true,  align: "left",   sortAs: "string" },
-  { id: "tokens_needed",       label: "Tokens",     sortable: true,  align: "left",   sortAs: "number" },
+  { id: "tokens_needed",       label: "KR Coins",     sortable: true,  align: "left",   sortAs: "number" },
   { id: "promotion",           label: "Promotion",  sortable: true,  align: "left",   sortAs: "number" },
   { id: "image",               label: "Image",      sortable: false, align: "left" },
   { id: "action",              label: "Action",     sortable: false, align: "center" },

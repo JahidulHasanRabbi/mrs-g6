@@ -83,7 +83,7 @@ export default function HeaderBalances({
         frame={skin.frame}
         icon={skin.token}
         iconKind="token"
-        label="Tokens"
+        label="KR Coins"
         value={formattedBalance}
         textColor={skin.textColor}
       />

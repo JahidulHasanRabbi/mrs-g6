@@ -34,7 +34,7 @@ export const BATTLE_POINT_CATEGORY_LABELS = {
 };
 
 const CURRENCY_VALUES = {
-  Token: 1,
+  "KR Coins": 1,
   "Battle Point": 2,
 };
 

@@ -22,7 +22,7 @@ import {
 
 const PAGE_SIZE = 7;
 
-const ITEM_TYPE_LABELS = { 1: "Free Credit", 2: "Item", 3: "Token", 4: "Other" };
+const ITEM_TYPE_LABELS = { 1: "Free Credit", 2: "Item", 3: "KR Coins", 4: "Other" };
 
 function PaginatedFooter({ total, page, setPage }) {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));

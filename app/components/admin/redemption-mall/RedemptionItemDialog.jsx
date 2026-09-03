@@ -279,10 +279,10 @@ export default function RedemptionItemDialog({ open, mode = "create", initial, m
             </div>
           )}
 
-          {/* Tokens Needed */}
+          {/* KR Coins Needed */}
           <div className="grid grid-cols-[110px_1fr] items-center gap-4">
             <label className=" text-[14px] text-white">
-              Tokens Needed:
+              KR Coins Needed:
             </label>
             <input
               type="number"

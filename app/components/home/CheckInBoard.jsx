@@ -168,7 +168,7 @@ export default function CheckInBoard() {
           return min === max ? `${min} ${suffix}` : `${min}-${max} ${suffix}`;
         };
 
-        const tokenReward = rangeText(daySettings.reward_minimum, daySettings.reward_maximum, "tokens");
+        const tokenReward = rangeText(daySettings.reward_minimum, daySettings.reward_maximum, "KR Coins");
         const bpReward = rangeText(daySettings.battle_point_minimum, daySettings.battle_point_maximum, "BP");
         const customText = daySettings.display_text?.trim() || "";
         const parts = [customText || tokenReward];
@@ -234,7 +234,7 @@ export default function CheckInBoard() {
         response.battle_point_obtained;
       const rewardParts = [];
       if (tokensObtained != null && Number(tokensObtained) > 0) {
-        rewardParts.push(`${tokensObtained} token${Number(tokensObtained) !== 1 ? 's' : ''}`);
+        rewardParts.push(`${tokensObtained} KR Coin${Number(tokensObtained) !== 1 ? 's' : ''}`);
       }
       if (battlePointsObtained != null && Number(battlePointsObtained) > 0) {
         rewardParts.push(`${Number(battlePointsObtained).toLocaleString("en-US")} BP`);
@@ -644,7 +644,7 @@ export default function CheckInBoard() {
                     color: "rgba(96,128,60,0.6)",
                   }}
                 >
-                  ⚠️ Completed checked in for 7 days will get extra “N1 token” 1 to 10 randomly!
+                  ⚠️ Completed checked in for 7 days will get extra “KR Coins” 1 to 10 randomly!
                 </p>
 
                 <div className="mt-4 flex w-full justify-center">
@@ -667,12 +667,12 @@ export default function CheckInBoard() {
                             color: "#60803C",
                           }}
                         >
-                          Claim Your N1 Token
+                          Claim Your KR Coins
                         </span>
                       </button>
                     }
                   >
-                    Claim Your N1 Token
+                    Claim Your KR Coins
                   </ThemedActionButton>
                 </div>
               </div>
@@ -699,7 +699,7 @@ export default function CheckInBoard() {
                       color: "#60803C",
                     }}
                   >
-                    Earn Tokens with Every Deposit!
+                    Earn KR Coins with Every Deposit!
                   </p>
 
                   <button
@@ -725,7 +725,7 @@ export default function CheckInBoard() {
                     color: "#60803C",
                   }}
                 >
-                  Every Deposit RM10 can get 1pc N1 Token !
+                  Every Deposit RM10 can get 1pc KR Coin !
                 </p>
 
                 <p

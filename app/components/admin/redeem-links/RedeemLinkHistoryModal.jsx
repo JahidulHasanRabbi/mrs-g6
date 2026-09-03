@@ -2,7 +2,7 @@
 
 import { Pagination } from "../members/DataTable";
 import ModalShell from "../penalty-kick/ModalShell";
-import { formatRedeemLinkDateTime } from "./redeemLinkUtils.mjs";
+import { formatRedeemLinkDateTime, formatRewardTypeLabel } from "./redeemLinkUtils.mjs";
 
 const PAGE_SIZE = 10;
 
@@ -45,7 +45,7 @@ export default function RedeemLinkHistoryModal({
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             <SummaryItem label="Campaign" value={link.name} />
             <SummaryItem label="Station" value={link.station} />
-            <SummaryItem label="Reward" value={`${link.reward_type || "-"} x ${Number(link.amount ?? 0).toLocaleString("en-US")}`} />
+            <SummaryItem label="Reward" value={`${formatRewardTypeLabel(link.reward_type)} x ${Number(link.amount ?? 0).toLocaleString("en-US")}`} />
             <SummaryItem label="Date Range" value={`${formatRedeemLinkDateTime(link.start_date)} - ${formatRedeemLinkDateTime(link.end_date)}`} />
             <SummaryItem label="Quantity" value={Number(link.quantity ?? 0).toLocaleString("en-US")} />
             <SummaryItem label="Redeemed" value={Number(link.redeemed_count ?? 0).toLocaleString("en-US")} />

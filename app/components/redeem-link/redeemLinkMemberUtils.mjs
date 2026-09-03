@@ -11,7 +11,7 @@ export function describeReward(info) {
 
   if (type === "FREE CREDIT") return `RM ${pretty} Free Credit`;
   if (type === "BATTLE POINT") return `${pretty} Battle Point${amount === 1 ? "" : "s"}`;
-  if (type === "TOKEN") return `${pretty} Token${amount === 1 ? "" : "s"}`;
+  if (type === "TOKEN") return `${pretty} KR Coin${amount === 1 ? "" : "s"}`;
   // Unknown//new reward type: still show the number rather than dropping it.
   return `${pretty}${type ? ` ${type}` : ""}`.trim();
 }

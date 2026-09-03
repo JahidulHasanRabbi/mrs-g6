@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { SMASH_EGG_ASSETS } from "./smashEggAssets";
 import ThemedActionButton from "../themes/shared/ThemedActionButton";
+import { formatItemTypeLabel } from "../../api/apiOptions";
 
 function formatDate(value) {
   if (!value) return "";
@@ -24,6 +25,7 @@ function HistoryRow({ row, index }) {
   const amount = formatAmount(row.amount);
   const itemType = String(row.item_type || "");
   const isBattlePoint = itemType.toUpperCase() === "BATTLE POINT" || itemType === "4";
+  const itemTypeLabel = formatItemTypeLabel(itemType);
 
   return (
     <motion.div
@@ -47,7 +49,7 @@ function HistoryRow({ row, index }) {
           className="mt-0.5 truncate text-[10px] uppercase tracking-[0.4px] text-[#999077]"
           style={{ fontFamily: "var(--font-rubik), 'Rubik', sans-serif" }}
         >
-          {formatDate(row.created)} {itemType ? `- ${itemType}` : ""}
+          {formatDate(row.created)} {itemType ? `- ${itemTypeLabel}` : ""}
         </p>
       </div>
 
@@ -56,7 +58,7 @@ function HistoryRow({ row, index }) {
           className="text-[13px] font-bold text-[#ffe16d]"
           style={{ fontFamily: "var(--font-rubik), 'Rubik', sans-serif" }}
         >
-          {amount ? (isBattlePoint ? `${Number(row.amount).toLocaleString("en-US")} BP` : `RM ${amount}`) : itemType}
+          {amount ? (isBattlePoint ? `${Number(row.amount).toLocaleString("en-US")} BP` : `RM ${amount}`) : itemTypeLabel}
         </p>
       </div>
     </motion.div>

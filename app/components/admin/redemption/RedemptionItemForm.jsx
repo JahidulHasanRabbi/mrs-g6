@@ -267,17 +267,17 @@ export default function RedemptionItemForm({
               </div>
             )}
 
-            {/* Tokens Needed */}
+            {/* KR Coins Needed */}
             <div className="flex items-center gap-[18px]">
               <label className="text-[18px] text-white w-[136px]">
-                Tokens Needed:
+                KR Coins Needed:
               </label>
               <input
                 type="number"
                 value={fieldValues.tokens_needed || ""}
                 onChange={(e) => handleInputChange("tokens_needed", e.target.value)}
                 className="bg-white/10 border-[0.5px] border-white/8 h-[36px] rounded-[4px] w-[304px] px-3 text-white placeholder-white/50 focus:outline-none focus:border-[#f2c36b]"
-                placeholder="Enter tokens needed"
+                placeholder="Enter KR Coins needed"
                 min="0"
                 required
                 disabled={isLoading}

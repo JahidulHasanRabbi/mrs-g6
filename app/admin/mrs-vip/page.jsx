@@ -16,7 +16,7 @@ const SKELETON_COLUMNS = [
   { label: "Tier Name",        type: "text" },
   { label: "Lifetime Deposit", type: "number" },
   { label: "Monthly Deposit",  type: "number" },
-  { label: "Check in Token",   type: "number" },
+  { label: "Check in KR Coin",   type: "number" },
   { label: "Check in BP",      type: "number" },
   { label: "Upgrade Bonus",    type: "number" },
   { label: "Birthday Bonus",   type: "number" },
@@ -44,7 +44,7 @@ const TABLE_COLUMNS = [
   { key: "name",    label: "Tier Name",         minW: "min-w-[150px]" },
   { key: "lifetime_deposit_required", label: "Lifetime Deposit", minW: "min-w-[140px]" },
   { key: "monthly_deposit",           label: "Monthly Deposit",  minW: "min-w-[160px]" },
-  { key: "check_in_token",            label: "Check in Token",   minW: "min-w-[140px]" },
+  { key: "check_in_token",            label: "Check in KR Coin",   minW: "min-w-[140px]" },
   { key: "check_in_battle_point",     label: "Check in BP",      minW: "min-w-[130px]" },
   { key: "upgrade_bonus",             label: "Upgrade Bonus",    minW: "min-w-[160px]", hasFreeToken: true },
   { key: "birthday_bonus",            label: "Birthday Bonus",   minW: "min-w-[160px]", hasFreeToken: true },
@@ -193,10 +193,10 @@ function TierFormModal({ tier, onClose, onSave, martTiers }) {
     { key: "name",                      label: "Tier Name:",                   type: "text" },
     { key: "lifetime_deposit_required", label: "Lifetime Deposit:",            type: "number" },
     { key: "monthly_deposit",           label: "Monthly Deposit:",             type: "number" },
-    { key: "check_in_token",            label: "Check in Token:",              type: "number",  integer: true },
+    { key: "check_in_token",            label: "Check in KR Coin:",              type: "number",  integer: true },
     { key: "check_in_battle_point",     label: "Check in BP:",                 type: "number",  integer: true },
-    { key: "upgrade_bonus",             label: "Upgrade Bonus (Free Token):",  type: "number",  integer: true },
-    { key: "birthday_bonus",            label: "Birthday Bonus (Free Token):", type: "number",  integer: true },
+    { key: "upgrade_bonus",             label: "Upgrade Bonus (Free KR Coins):",  type: "number",  integer: true },
+    { key: "birthday_bonus",            label: "Birthday Bonus (Free KR Coins):", type: "number",  integer: true },
     { key: "level_order",               label: "Level Order:",                 type: "number",  integer: true },
     { key: "mart_tier_uuid",            label: "Mart Tier:",                   type: "select", options: martTiers },
   ];
@@ -231,8 +231,8 @@ function TierFormModal({ tier, onClose, onSave, martTiers }) {
               <label className="w-[160px] shrink-0 text-[16px] text-white">
                 {f.key === "upgrade_bonus" || f.key === "birthday_bonus" ? (
                   <>
-                    {f.label.replace(" (Free Token):", ":")}
-                    <span className="text-[#e9af41]"> (Free Token)</span>
+                    {f.label.replace(" (Free KR Coins):", ":")}
+                    <span className="text-[#e9af41]"> (Free KR Coins)</span>
                   </>
                 ) : (
                   f.label
@@ -454,7 +454,7 @@ function MrsVipContent() {
                         <div className="flex items-center">
                           <span className="font-bold text-[14px] sm:text-[16px] text-white whitespace-nowrap">
                             {col.label}
-                            {col.hasFreeToken && <span className="text-[#e9af41] ml-1">(Free Token)</span>}
+                            {col.hasFreeToken && <span className="text-[#e9af41] ml-1">(Free KR Coins)</span>}
                           </span>
                           {!col.noSort && col.key !== "rowNum" && (
                             <SortIcon active={sortKey === col.key} direction={sortDir} />
@@ -497,7 +497,7 @@ function MrsVipContent() {
                         <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                           {formatRM(row.monthly_deposit)}
                         </td>
-                        {/* Check in Token */}
+                        {/* Check in KR Coin */}
                         <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                           {formatNum(row.check_in_token)}
                         </td>

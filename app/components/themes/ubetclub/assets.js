@@ -105,7 +105,7 @@ export const UBET_ASSETS = {
   // - frameCrown: red crown-topped ornate frame. Used for terms body, VIP
   //   progress card on the profile, and the VIP details benefit card.
   // - frameScroll: red scroll frame with rolled tops/bottoms. Used for the
-  //   Edit Profiles list and the Token History modal.
+  //   Edit Profiles list and the KR Coin History modal.
   frames: {
     crown: `${BASE}/ui/frame-crown.webp`,
     scroll: `${BASE}/ui/frame-scroll.webp`,
