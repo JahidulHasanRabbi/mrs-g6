@@ -14,3 +14,11 @@ export function formatAmount(amount, { decimals } = {}) {
         maximumFractionDigits: decimals,
       });
 }
+
+// Masked display names arrive from the API padded out to the real name's length
+// ("D**********n"). The long star run carries nothing a reader needs and it was
+// squeezing the prize column until "10 KR Coins" clipped, so cap the run.
+export function shortenMaskedName(name, maxStars = 4) {
+  if (!name) return "";
+  return String(name).replace(/\*{5,}/g, "*".repeat(maxStars));
+}

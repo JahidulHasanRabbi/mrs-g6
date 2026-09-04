@@ -2,9 +2,11 @@
 
 import { motion } from "framer-motion";
 
+import { shortenMaskedName } from "./format";
+
 function TableRow({ entry, config, isCurrentUser }) {
   const columns = config.showPrizeColumn
-    ? "38px minmax(0, 1fr) minmax(82px, 104px) minmax(72px, 88px)"
+    ? "38px minmax(56px, 1fr) minmax(72px, 96px) minmax(84px, 116px)"
     : "38px minmax(0, 1fr) minmax(84px, 112px)";
 
   return (
@@ -42,8 +44,9 @@ function TableRow({ entry, config, isCurrentUser }) {
       <div
         className="min-w-0 overflow-hidden truncate text-sm text-[#e5e2e1] sm:text-base"
         style={{ fontFamily: "var(--font-inter)" }}
+        title={entry.user}
       >
-        {isCurrentUser ? "You" : entry.user}
+        {isCurrentUser ? "You" : shortenMaskedName(entry.user)}
       </div>
 
       {/* Value */}
@@ -80,7 +83,7 @@ export default function LeaderboardTable({
   currentUserRank,
 }) {
   const columns = config.showPrizeColumn
-    ? "38px minmax(0, 1fr) minmax(82px, 104px) minmax(72px, 88px)"
+    ? "38px minmax(56px, 1fr) minmax(72px, 96px) minmax(84px, 116px)"
     : "38px minmax(0, 1fr) minmax(84px, 112px)";
 
   return (
