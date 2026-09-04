@@ -15,6 +15,7 @@ import { buildFramedSkin } from '../shared/framedSkin';
 import { UBET_ASSETS, UBET_COLORS } from './assets';
 import { oneSpin, tenSpin, fiftySpin, getAllLuckySpinItems, getPublicTermsAndConditions } from '../../../api/memberApi';
 import { mapSpinResults, mapLuckySpinItems } from '../../../api/responseMappers';
+import { formatKrCoins } from '../../../api/apiOptions';
 import { tokenStorage } from '../../../api/tokenStorage';
 import { useUser } from '../../../contexts/UserContext';
 
@@ -265,7 +266,7 @@ export default function UbetclubSpinPage() {
                 spinItems.map((item, i) => {
                   const typeLabel = ubetItemTypeLabel(item.item_type);
                   const hasTokens = item.token_amount != null && Number(item.token_amount) > 0;
-                  const meta = hasTokens ? `${typeLabel} · ${item.token_amount} token` : typeLabel;
+                  const meta = hasTokens ? `${typeLabel} · ${formatKrCoins(item.token_amount)}` : typeLabel;
                   return (
                     <div
                       key={item.uuid || i}

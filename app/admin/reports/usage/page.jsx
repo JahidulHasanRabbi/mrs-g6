@@ -44,7 +44,7 @@ const GAME_FALLBACK_OPTIONS = [1, 2, 3, 4].map((id) => ({ value: String(id), lab
 const SUMMARY_CARDS = [
   { key: "total_active_users", label: "Active Users", icon: "users", hint: "Distinct members who played in this view" },
   { key: "total_sessions", label: "Total Sessions", icon: "plays", hint: "Total plays in this view" },
-  { key: "total_tokens_consumed", label: "Total Withdrawal", icon: "withdraw", hint: "Tokens consumed in this period" },
+  { key: "total_tokens_consumed", label: "Total Withdrawal", icon: "withdraw", hint: "KR Coins consumed in this period" },
   { key: "total_rewards_given", label: "Rewards Given", prefix: "RM", icon: "rm", hint: "RM paid out where tracked" },
   { key: "average_session_per_user", label: "Avg Sessions/User", decimals: 2, icon: "avg", hint: "Sessions ÷ active users" },
   { key: "avg_session_duration", label: "Avg. Session Duration", format: "duration", icon: "clock", hint: "Total time in-game ÷ days in this view" },
