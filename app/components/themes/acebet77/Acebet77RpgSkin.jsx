@@ -14,12 +14,14 @@ const SKIN = buildRpgSkin(THEME_IDS.ACEBET77, ACEBET_ASSETS, ACEBET_COLORS, {
   // The tile art bakes its CTA pill in at [82, 93] % of height (measured).
   // Boss War frames — insets measured off public/assets/themes/acebet77/war/*.
   war: {
+    timerAspect: 3.62,
+    card: warFrame(ACEBET_ASSETS.war.cardFrame, 14.4, 4.8, 8.8, 5.0, [358, 160], { art: [1000, 749] }),
+    statCard: warFrame(ACEBET_ASSETS.war.statCard, 14.4, 4.8, 8.8, 5.0, [358, 96], { art: [1000, 749] }),
+    table: warFrame(ACEBET_ASSETS.war.tableFrame, 14.4, 4.8, 8.8, 5.0, [358, 440], { art: [1000, 749] }),
+    row: warFrame(ACEBET_ASSETS.war.rowFrame, 14.4, 4.8, 8.8, 5.0, [358, 52], { art: [1000, 749] }),
+    plaque: warFrame(ACEBET_ASSETS.war.plaque, 24.0, 15.9, 15.6, 15.7, [358, 213], { art: [1000, 725] }),
+    titleInset: { top: 30, right: 10, bottom: 7, left: 10 },
     earnTile: { frame: ACEBET_ASSETS.war.earnTile, ctaBand: [82, 93], inset: 13 },
-    card: warFrame(ACEBET_ASSETS.war.cardFrame, 14, 5, 9, 5, [358, 160]),
-    plaque: warFrame(ACEBET_ASSETS.war.plaque, 22, 8, 12, 8, [358, 213]),
-    statCard: warFrame(ACEBET_ASSETS.war.statCard, 14, 5, 9, 5, [358, 96]),
-    row: warFrame(ACEBET_ASSETS.war.rowFrame, 14, 5, 9, 5, [358, 52]),
-    table: warFrame(ACEBET_ASSETS.war.tableFrame, 14, 5, 9, 5, [358, 440]),
   },
 });
 

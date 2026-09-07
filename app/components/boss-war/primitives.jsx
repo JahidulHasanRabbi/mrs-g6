@@ -97,8 +97,12 @@ export function GoldText({ children, className = "", style, as: Tag = "span", so
 export function WarTitle({ children }) {
   const skin = useRpgSkin();
   const plaque = skin.war.titlePlaque;
+  // Where the plaque art's opening actually is, per theme — acebet77 spends
+  // 30% of its height on a crown, ep369 only 16%, so a shared padding put the
+  // title below centre on most skins.
+  const box = skin.war.titleInset;
   return (
-    <div className="relative mx-auto flex h-[105px] w-full max-w-[358px] items-center justify-center px-[10px] pb-[10px] pt-[40px]">
+    <div className="relative mx-auto h-[105px] w-full max-w-[358px]">
       {plaque ? (
         <img src={plaque} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full object-fill" draggable={false} />
       ) : (
@@ -107,9 +111,19 @@ export function WarTitle({ children }) {
           style={{ background: skin.c.inset, borderColor: skin.c.edge, boxShadow: `0 0 24px ${skin.c.edgeSoft}` }}
         />
       )}
-      <GoldText as="h1" className="relative z-10 text-center text-[32px] font-bold leading-[28px] tracking-[0.32px]">
-        {children}
-      </GoldText>
+      <div
+        className="absolute flex items-center justify-center overflow-hidden"
+        style={{
+          top: `${box.top}%`,
+          bottom: `${box.bottom}%`,
+          left: `${box.left}%`,
+          right: `${box.right}%`,
+        }}
+      >
+        <GoldText as="h1" className="w-full truncate text-center text-[30px] font-bold leading-[32px] tracking-[0.32px]">
+          {children}
+        </GoldText>
+      </div>
     </div>
   );
 }
@@ -282,8 +296,13 @@ export function TimerPlaque({ endsAt }) {
   // The themed plaque art already has a clock at its left end, so the label
   // is pushed past it. Without art we draw the clock and keep the pair
   // together rather than throwing the time to the far edge.
+  // The box takes the artwork's own aspect: forcing every theme's plaque into
+  // one 139x50 slot squashed the clock baked into it into an oval.
   return art ? (
-    <div className="relative flex h-[50px] w-[139px] items-center justify-end pb-[10px] pl-[35px] pr-[12px] pt-[15px]">
+    <div
+      className="relative flex h-[42px] items-center justify-end"
+      style={{ aspectRatio: String(skin.war.timerAspect), paddingLeft: "27%", paddingRight: "7%" }}
+    >
       <img src={art} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full object-fill" draggable={false} />
       <span className="relative z-10 whitespace-nowrap text-[12px] font-bold tabular-nums" style={{ color: skin.war.ink.text, fontFamily: skin.war.font }}>
         {label}

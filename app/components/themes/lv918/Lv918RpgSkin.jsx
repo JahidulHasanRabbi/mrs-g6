@@ -24,12 +24,14 @@ const SKIN = buildRpgSkin(THEME_IDS.LV918, LV918_ASSETS, LV918_COLORS, {
   // The tile art bakes its CTA pill in at [78, 91] % of height (measured).
   // Boss War frames — insets measured off public/assets/themes/lv918/war/*.
   war: {
+    timerAspect: 3.52,
+    card: warFrame(LV918_ASSETS.war.cardFrame, 4.8, 3.6, 5.5, 3.9, [358, 160], { art: [1000, 805] }),
+    statCard: warFrame(LV918_ASSETS.war.statCard, 12.8, 7.6, 13.3, 8.1, [358, 96], { art: [1000, 188] }),
+    table: warFrame(LV918_ASSETS.war.tableFrame, 4.8, 3.6, 5.5, 3.9, [358, 440], { art: [1000, 805] }),
+    row: warFrame(LV918_ASSETS.war.rowFrame, 12.8, 7.6, 13.3, 8.1, [358, 52], { art: [1000, 188] }),
+    plaque: warFrame(LV918_ASSETS.war.plaque, 20.0, 10.9, 4.8, 8.2, [358, 213], { art: [622, 479] }),
+    titleInset: { top: 15, right: 3, bottom: 13, left: 5 },
     earnTile: { frame: LV918_ASSETS.war.earnTile, ctaBand: [78, 91], inset: 13 },
-    card: warFrame(LV918_ASSETS.war.cardFrame, 5, 5, 7, 5, [358, 160]),
-    plaque: warFrame(LV918_ASSETS.war.plaque, 20, 12, 7, 11, [358, 213]),
-    statCard: warFrame(LV918_ASSETS.war.statCard, 14, 9, 14, 9, [358, 96]),
-    row: warFrame(LV918_ASSETS.war.rowFrame, 14, 9, 14, 9, [358, 52]),
-    table: warFrame(LV918_ASSETS.war.tableFrame, 5, 5, 7, 5, [358, 440]),
   },
 });
 

@@ -35,19 +35,30 @@ const SERIF_FONT = '"Times New Roman", serif';
  * rendered border is the inset scaled to that box; padding clears it.
  */
 export function warFrame(frame, t, r, b, l, box = [358, 160], opts = {}) {
-  const { extra = 4, cap = 30 } = opts;
+  const { extra = 4, cap = 30, art = [1000, 750] } = opts;
   const [w, h] = box;
-  // The rendered border is capped: a crown or gem crest can be 45% of its
-  // artwork, and reserving that verbatim leaves the card mostly empty.
-  const px = (pct, dim) => Math.min(cap, Math.max(4, Math.round((pct / 100) * dim)));
-  const wt = px(t, h), wr = px(r, w), wb = px(b, h), wl = px(l, w);
+  const [aw, ah] = art;
+  // The slice is a share of the ARTWORK; the border is its size on screen. A
+  // corner keeps its shape only if both are scaled by the same factor, so pick
+  // one `k` for all four sides — setting each border independently squashed
+  // the corner ornaments (a 141px art slice crammed into a 30px border).
+  const sl = (l / 100) * aw, sr = (r / 100) * aw;
+  const st = (t / 100) * ah, sb = (b / 100) * ah;
+  // Start from the box's own horizontal scale, then shrink until the ornament
+  // leaves room to live in — never grow, or a thin rail turns into a slab.
+  let k = w / aw;
+  const maxSide = w * 0.11, maxCap = Math.min(cap, h * 0.3);
+  k = Math.min(k, maxSide / Math.max(sl, sr, 1), maxCap / Math.max(st, sb, 1));
+  const px = (v) => Math.max(4, Math.round(v * k));
   return {
     frame,
     slice: `${t}% ${r}% ${b}% ${l}% fill`,
-    width: `${wt}px ${wr}px ${wb}px ${wl}px`,
+    width: `${px(st)}px ${px(sr)}px ${px(sb)}px ${px(sl)}px`,
     // border-width already holds the content clear of the ornament, so padding
     // is breathing room only — adding the inset again doubled every card.
-    pad: `${extra}px`,
+    // Wider at the sides: copy that ends flush against the rail reads as if it
+    // is spilling out of the frame.
+    pad: `${extra}px ${extra + 7}px`,
   };
 }
 
@@ -170,6 +181,7 @@ const DEFAULT_SKIN = {
     titleGradient: `linear-gradient(180deg, #fff3cf 0%, ${RPG_COLORS.gold} 60%, ${RPG_COLORS.goldDeep} 100%)`,
     bg: null,
     titlePlaque: null,
+    titleInset: { top: 34, right: 6, bottom: 8, left: 6 },
     bossFrame: null,
     card: { frame: null, slice: "18% 10% 16% 10% fill", width: "22px 18px 22px 18px", pad: "14px 16px 14px 16px" },
     statCard: null, // null = same as `card`
@@ -177,6 +189,7 @@ const DEFAULT_SKIN = {
     tab: { on: null, off: null },
     chip: WAR_SHARED.chip,
     timer: null,
+    timerAspect: 2.78,
     attackBtn: null,
     attackLabelBias: 0,
     frameInkSolid: null,
@@ -354,6 +367,8 @@ export function buildRpgSkin(themeId, ASSETS, COLORS, overrides = {}) {
       titleGradient: `linear-gradient(180deg, #fff3cf 0%, ${goldBright} 55%, ${gold} 100%)`,
       bg: W.bg || null,
       titlePlaque: W.titlePlaque || null,
+      // % of the plaque box; each theme overrides from its own art.
+      titleInset: { top: 30, right: 10, bottom: 8, left: 10 },
       bossFrame: W.bossFrame || null,
       // Variable-height containers are 9-sliced; each theme overrides `slice`
       // with values measured off its own art (see <Theme>RpgSkin.jsx).
@@ -363,6 +378,8 @@ export function buildRpgSkin(themeId, ASSETS, COLORS, overrides = {}) {
       tab: { on: W.tabOn || null, off: W.tabOff || null },
       chip: WAR_SHARED.chip,
       timer: W.timerPlaque || null,
+      // Natural aspect of that plaque art (see gen_skins.py).
+      timerAspect: W.timerAspect || 3.6,
       // The comps reuse the header plaque as the ATTACK button and the active
       // tab pill as the wide Rewards / Rankings buttons.
       attackBtn: W.attackBtn || W.titlePlaque || ASSETS.egg?.btnWide || ASSETS.spin?.btnPlay || null,

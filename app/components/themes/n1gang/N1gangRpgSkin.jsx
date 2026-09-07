@@ -13,12 +13,14 @@ const SKIN = buildRpgSkin(THEME_IDS.N1GANG, N1GANG_ASSETS, N1GANG_COLORS, {
   // The tile art bakes its CTA pill in at [82, 93] % of height (measured).
   // Boss War frames — insets measured off public/assets/themes/n1gang/war/*.
   war: {
+    timerAspect: 3.62,
+    card: warFrame(N1GANG_ASSETS.war.cardFrame, 14.4, 4.8, 8.8, 5.1, [358, 160], { art: [1000, 748] }),
+    statCard: warFrame(N1GANG_ASSETS.war.statCard, 16.5, 12.5, 17.6, 12.3, [358, 96], { art: [1000, 729] }),
+    table: warFrame(N1GANG_ASSETS.war.tableFrame, 21.4, 18.2, 24.5, 18.3, [358, 440], { art: [814, 1000] }),
+    row: warFrame(N1GANG_ASSETS.war.rowFrame, 13.9, 5.3, 16.7, 5.6, [358, 52], { art: [1000, 216] }),
+    plaque: warFrame(N1GANG_ASSETS.war.plaque, 16.5, 12.5, 17.6, 12.3, [358, 213], { art: [1000, 729] }),
+    titleInset: { top: 30, right: 10, bottom: 7, left: 10 },
     earnTile: { frame: N1GANG_ASSETS.war.earnTile, ctaBand: [82, 93], inset: 13 },
-    card: warFrame(N1GANG_ASSETS.war.cardFrame, 14, 6, 8, 6, [358, 160]),
-    plaque: warFrame(N1GANG_ASSETS.war.plaque, 12, 12, 12, 14, [358, 213]),
-    statCard: warFrame(N1GANG_ASSETS.war.statCard, 12, 12, 12, 14, [358, 96]),
-    row: warFrame(N1GANG_ASSETS.war.rowFrame, 14, 7, 16, 7, [358, 52]),
-    table: warFrame(N1GANG_ASSETS.war.tableFrame, 18, 19, 21, 19, [358, 440]),
   },
 });
 

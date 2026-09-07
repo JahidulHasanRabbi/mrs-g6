@@ -15,13 +15,15 @@ const SKIN = buildRpgSkin(THEME_IDS.KGAME99, KGAME99_ASSETS, KGAME99_COLORS, {
   // Its frame interiors are bright sky-blue, so the copy on them takes the dark
   // navy this theme already uses for headings (globals.css --lb-heading).
   war: {
+    timerAspect: 3.42,
+    card: warFrame(KGAME99_ASSETS.war.cardFrame, 16.3, 12.0, 13.4, 11.6, [358, 160], { art: [1000, 738] }),
+    statCard: warFrame(KGAME99_ASSETS.war.statCard, 18.7, 8.3, 13.7, 8.1, [358, 96], { art: [762, 262] }),
+    table: warFrame(KGAME99_ASSETS.war.tableFrame, 16.3, 12.0, 13.4, 11.6, [358, 440], { art: [1000, 738] }),
+    row: warFrame(KGAME99_ASSETS.war.rowFrame, 16.1, 5.8, 14.3, 5.5, [358, 52], { art: [1000, 230] }),
+    plaque: warFrame(KGAME99_ASSETS.war.plaque, 18.8, 13.2, 16.6, 13.4, [358, 213], { art: [991, 991] }),
+    titleInset: { top: 18, right: 8, bottom: 16, left: 7 },
     frameInkSolid: "#0b2545",
     inkFrame: { text: "#0b2545", meta: "#1f4368", value: "#0b2545", dmg: "#8a3b00", crit: "#12630f" },
-    card: warFrame(KGAME99_ASSETS.war.cardFrame, 13.5, 5, 9, 5, [358, 160]),
-    plaque: warFrame(KGAME99_ASSETS.war.plaque, 21, 14.5, 19, 14.5, [358, 213]),
-    statCard: warFrame(KGAME99_ASSETS.war.statCard, 19, 18, 13.5, 17, [358, 96]),
-    row: warFrame(KGAME99_ASSETS.war.rowFrame, 13.5, 5.5, 13.5, 5.5, [358, 52]),
-    table: warFrame(KGAME99_ASSETS.war.tableFrame, 13.5, 5, 9, 5, [358, 440]),
   },
 });
 
