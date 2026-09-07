@@ -4,6 +4,7 @@
 // and the four equipment slot chips. Tapping POWER (or the chips) deep-links
 // into the Avatar Level / Hero Item screens.
 
+import Link from "next/link";
 import { RPG_COLORS, RPG_FONTS, RPG_GRADIENTS, RPG_VIEWS, EQUIP_SLOTS } from "../constants";
 import { heroPoseFor } from "../rpgAssets";
 import { SlotChip, HeroShowcase } from "../primitives";
@@ -72,6 +73,22 @@ export default function RpgHome({ profile, equipment, onNavigate }) {
           />
         ))}
       </div>
+
+      {/* Sibling game: Boss War shares this shell and its skin (app/boss-war). */}
+      <Link
+        href="/boss-war"
+        className="mt-[14px] flex items-center gap-[8px] rounded-[7px] border px-[18px] py-[8px] text-[11px] font-bold tracking-[1.5px] transition-transform active:scale-95"
+        style={{
+          background: skin.c.rowActive,
+          borderColor: skin.hud.badgeBorder,
+          color: skin.c.text,
+          fontFamily: RPG_FONTS.display,
+          boxShadow: `0 0 14px ${skin.hud.badgeBorder}47`,
+        }}
+      >
+        <img src="/assets/boss-war/ui/icon-ap.webp" alt="" aria-hidden className="size-[16px] object-contain" />
+        ENTER BOSS WAR →
+      </Link>
     </div>
   );
 }

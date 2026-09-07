@@ -28,6 +28,24 @@ const WAR_SHARED = {
 const SCRIPT_FONT = "var(--font-berkshire-swash), cursive";
 const SERIF_FONT = '"Times New Roman", serif';
 
+
+/**
+ * 9-slice spec for a Boss War frame from ornament insets measured off the art
+ * (percent of the image, T R B L) and the box it usually renders in. The
+ * rendered border is the inset scaled to that box; padding clears it.
+ */
+export function warFrame(frame, t, r, b, l, box = [358, 160], extra = 4) {
+  const [w, h] = box;
+  const px = (pct, dim) => Math.max(4, Math.round((pct / 100) * dim));
+  const wt = px(t, h), wr = px(r, w), wb = px(b, h), wl = px(l, w);
+  return {
+    frame,
+    slice: `${t}% ${r}% ${b}% ${l}% fill`,
+    width: `${wt}px ${wr}px ${wb}px ${wl}px`,
+    pad: `${wt + extra}px ${wr + extra}px ${wb + extra}px ${wl + extra}px`,
+  };
+}
+
 /** The 9-slice style shared by the panel and slot-tile frames. */
 export function nineSlice({ frame, slice, width, pad }) {
   return {
@@ -145,14 +163,18 @@ const DEFAULT_SKIN = {
   war: {
     font: WAR_FONT,
     titleGradient: `linear-gradient(180deg, #fff3cf 0%, ${RPG_COLORS.gold} 60%, ${RPG_COLORS.goldDeep} 100%)`,
+    bg: null,
     titlePlaque: null,
+    bossFrame: null,
     card: { frame: null, slice: "18% 10% 16% 10% fill", width: "22px 18px 22px 18px", pad: "14px 16px 14px 16px" },
+    statCard: null, // null = same as `card`
+    table: null, // null = same as `card`
     tab: { on: null, off: null },
     chip: WAR_SHARED.chip,
     timer: null,
     attackBtn: null,
     pill: null,
-    earnTile: { frame: null, slice: "15% 13% 15% 13% fill", width: "12px 10px 11px 10px", pad: "6px 2px 8px" },
+    earnTile: { frame: null },
     plaque: { frame: null, slice: "24% 10% 16% 10% fill", width: "34px 20px 24px 20px", pad: "36px 18px 22px 18px" },
     row: { frame: null, slice: "40% 8% 40% 8% fill", width: "18px 14px 18px 14px", pad: "4px 10px" },
     hp: { track: "rgba(255,255,255,0.1)", border: RPG_COLORS.violetBorderStrong, fill: RPG_GRADIENTS.exp },
@@ -322,16 +344,25 @@ export function buildRpgSkin(themeId, ASSETS, COLORS, overrides = {}) {
     war: {
       font: WAR_FONT,
       titleGradient: `linear-gradient(180deg, #fff3cf 0%, ${goldBright} 55%, ${gold} 100%)`,
+      bg: W.bg || null,
       titlePlaque: W.titlePlaque || null,
-      card: { frame: W.cardFrame || ASSETS.spin?.panel || null, slice: "18% 10% 16% 10% fill", width: "22px 18px 22px 18px", pad: "14px 16px 14px 16px" },
+      bossFrame: W.bossFrame || null,
+      // Variable-height containers are 9-sliced; each theme overrides `slice`
+      // with values measured off its own art (see <Theme>RpgSkin.jsx).
+      card: { frame: W.cardFrame || ASSETS.spin?.panel || null, slice: "14% 6% 9% 6% fill", width: "20px 14px 16px 14px", pad: "12px 14px 12px 14px" },
+      statCard: W.statCard ? { frame: W.statCard, slice: "14% 6% 9% 6% fill", width: "20px 14px 16px 14px", pad: "12px 14px 12px 14px" } : null,
+      table: W.tableFrame ? { frame: W.tableFrame, slice: "14% 6% 9% 6% fill", width: "20px 14px 16px 14px", pad: "12px 14px 12px 14px" } : null,
       tab: { on: W.tabOn || null, off: W.tabOff || null },
       chip: WAR_SHARED.chip,
       timer: W.timerPlaque || null,
-      attackBtn: W.attackBtn || ASSETS.egg?.btnWide || ASSETS.spin?.btnPlay || null,
-      pill: W.pill || ASSETS.egg?.btnWide || ASSETS.spin?.btnPlay || null,
-      earnTile: { frame: W.earnTile || ASSETS.rpg?.tileFrame || null, slice: "15% 13% 15% 13% fill", width: "12px 10px 11px 10px", pad: "6px 2px 8px" },
-      plaque: { frame: W.plaque || W.cardFrame || ASSETS.spin?.panel || null, slice: "24% 10% 16% 10% fill", width: "34px 20px 24px 20px", pad: "36px 18px 22px 18px" },
-      row: { frame: W.rowFrame || null, slice: "40% 8% 40% 8% fill", width: "18px 14px 18px 14px", pad: "4px 10px" },
+      // The comps reuse the header plaque as the ATTACK button and the active
+      // tab pill as the wide Rewards / Rankings buttons.
+      attackBtn: W.attackBtn || W.titlePlaque || ASSETS.egg?.btnWide || ASSETS.spin?.btnPlay || null,
+      pill: W.pill || W.tabOn || ASSETS.egg?.btnWide || ASSETS.spin?.btnPlay || null,
+      // Fixed-aspect tile art, stretched like the comps (CTA sits in its bottom band).
+      earnTile: { frame: W.earnTile || null },
+      plaque: { frame: W.plaque || W.cardFrame || ASSETS.spin?.panel || null, slice: "22% 8% 12% 8% fill", width: "30px 16px 18px 16px", pad: "30px 16px 18px 16px" },
+      row: { frame: W.rowFrame || null, slice: "13% 8% 13% 8% fill", width: "8px 14px 8px 14px", pad: "4px 10px" },
       hp: { track: "rgba(45,45,45,0.75)", border: "#f2b229", fill: "linear-gradient(90deg, #fff0bf 0%, #f2b229 100%)" },
       ink: {
         name: goldBright,

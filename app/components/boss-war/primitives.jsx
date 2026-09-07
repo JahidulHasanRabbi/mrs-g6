@@ -148,7 +148,9 @@ export function WarTabs({ tabs, active, onChange, className = "" }) {
     <div className={`flex w-full items-center gap-[8px] ${className}`} role="tablist">
       {tabs.map((t) => {
         const isOn = t.id === active;
+        // Themes without inactive-pill art dim the active pill instead.
         const art = isOn ? on : off || on;
+        const dimmed = !isOn && !off && Boolean(on);
         return (
           <button
             key={t.id}
@@ -168,7 +170,16 @@ export function WarTabs({ tabs, active, onChange, className = "" }) {
                   }
             }
           >
-            {art ? <img src={art} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full object-fill" draggable={false} /> : null}
+            {art ? (
+              <img
+                src={art}
+                alt=""
+                aria-hidden
+                className="pointer-events-none absolute inset-0 size-full object-fill"
+                style={dimmed ? { filter: "brightness(0.55) saturate(0.7)" } : undefined}
+                draggable={false}
+              />
+            ) : null}
             <GoldText className="relative z-10 whitespace-nowrap text-[13px] font-bold leading-[12px]" style={isOn ? undefined : { opacity: 0.8 }}>
               {t.label}
             </GoldText>
@@ -293,38 +304,91 @@ export function StatCell({ icon, label, value }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col items-center gap-[4px]">
       {icon ? <img src={icon} alt="" aria-hidden className="size-[28px] object-contain" draggable={false} /> : null}
-      <span className="text-[9px] leading-[10px]" style={{ color: skin.war.ink.meta, fontFamily: skin.war.font }}>
+      {/* Some stat plaques (kgame99) have a light sky interior; the shadow keeps the ink legible on both. */}
+      <span className="text-[9px] leading-[10px]" style={{ color: skin.war.ink.meta, fontFamily: skin.war.font, textShadow: "0 1px 2px rgba(0,0,0,0.75)" }}>
         {label}
       </span>
-      <span className="text-[15px] font-bold leading-[18px]" style={{ color: skin.war.ink.value, fontFamily: skin.war.font }}>
+      <span className="text-[15px] font-bold leading-[18px]" style={{ color: skin.war.ink.value, fontFamily: skin.war.font, textShadow: "0 1px 2px rgba(0,0,0,0.75)" }}>
         {typeof value === "number" ? fmt(value) : value}
       </span>
     </div>
   );
 }
 
-/** The four "How to Earn Attack Points" tiles. */
+/** The four "How to Earn Attack Points" tiles. A station's tile art is a
+ *  portrait frame with a crown on top and a plaque along the bottom; the CTA
+ *  text sits in that plaque, exactly as the comps draw it. */
 export function EarnApTiles({ tiles, onAction, busyId }) {
   const skin = useRpgSkin();
-  const spec = skin.war.earnTile;
+  const art = skin.war.earnTile.frame;
+  const ink = skin.war.ink;
   return (
     <div className="flex w-full items-stretch justify-center gap-[6px]">
-      {tiles.map((t) => (
-        <div
-          key={t.id}
-          className={`flex min-w-0 flex-1 flex-col items-center gap-[4px] ${spec.frame ? "" : "rounded-[12px] border"}`}
-          style={spec.frame ? nineSlice(spec) : { padding: spec.pad, background: skin.c.inset, borderColor: skin.c.edgeSoft }}
-        >
-          <GoldText className="text-[10px] font-bold">{t.label}</GoldText>
-          <img src={t.icon} alt="" aria-hidden className="size-[40px] object-contain" draggable={false} />
-          <span className="text-[8px] leading-[10px]" style={{ color: skin.war.ink.meta, fontFamily: skin.war.font }}>
-            {t.sub}
-          </span>
-          <WarButton size="sm" className="w-full max-w-[64px]" onClick={() => onAction(t)} disabled={busyId === t.id || (!t.href && t.claimable === false)}>
-            {busyId === t.id ? "..." : t.claimable === false && !t.href ? "Claimed" : t.cta}
-          </WarButton>
-        </div>
-      ))}
+      {tiles.map((t) => {
+        const disabled = busyId === t.id || (!t.href && t.claimable === false);
+        const cta = busyId === t.id ? "..." : t.claimable === false && !t.href ? "Claimed" : t.cta;
+        if (art) {
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => onAction(t)}
+              disabled={disabled}
+              className="relative aspect-[3/5] min-w-0 flex-1 disabled:cursor-not-allowed"
+              style={{ opacity: disabled ? 0.7 : 1 }}
+            >
+              <img src={art} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full object-fill" draggable={false} />
+              <div className="absolute inset-x-0 top-[17%] flex justify-center">
+                <GoldText className="text-[9px] font-bold leading-[10px]">{t.label}</GoldText>
+              </div>
+              <img src={t.icon} alt="" aria-hidden className="absolute left-1/2 top-[30%] h-[32%] w-auto -translate-x-1/2 object-contain" draggable={false} />
+              <span className="absolute inset-x-0 top-[65%] text-center text-[7px] leading-[8px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
+                {t.sub}
+              </span>
+              <div className="absolute inset-x-[14%] bottom-[7%] top-[76%] flex items-center justify-center">
+                <GoldText className="text-[9px] font-bold leading-none">{cta}</GoldText>
+              </div>
+            </button>
+          );
+        }
+        return (
+          <div
+            key={t.id}
+            className="flex min-w-0 flex-1 flex-col items-center gap-[4px] rounded-[12px] border px-[2px] pb-[8px] pt-[6px]"
+            style={{ background: skin.c.inset, borderColor: skin.c.edgeSoft }}
+          >
+            <GoldText className="text-[10px] font-bold">{t.label}</GoldText>
+            <img src={t.icon} alt="" aria-hidden className="size-[40px] object-contain" draggable={false} />
+            <span className="text-[8px] leading-[10px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
+              {t.sub}
+            </span>
+            <WarButton size="sm" className="w-full max-w-[64px]" onClick={() => onAction(t)} disabled={disabled}>
+              {cta}
+            </WarButton>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Boss portrait with the station's hollow ornate frame laid over it. */
+export function BossPortrait({ boss, dim = false, className = "", children }) {
+  const skin = useRpgSkin();
+  const frame = skin.war.bossFrame;
+  return (
+    <div className={`relative w-full overflow-hidden ${frame ? "aspect-[354/289]" : "h-[220px] rounded-[12px]"} ${className}`}>
+      <div className={`absolute ${frame ? "inset-[6%] rounded-[6px]" : "inset-0"} overflow-hidden`} style={{ background: "rgba(0,0,0,0.55)" }}>
+        <img
+          src={boss.art}
+          alt={boss.name}
+          className="absolute inset-0 size-full object-contain object-bottom"
+          style={{ filter: dim ? "grayscale(0.85) brightness(0.55)" : "none" }}
+          draggable={false}
+        />
+      </div>
+      {frame ? <img src={frame} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full object-fill" draggable={false} /> : null}
+      {children}
     </div>
   );
 }

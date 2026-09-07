@@ -138,6 +138,20 @@ export const ACEBET_ASSETS = {
     dayCard: `${BASE}/checkin/day-card.webp`,
     chest: `${BASE}/checkin/chest-day7.webp`,
   },
+  // Boss War (Figma a83SqWgqIGNF6dJD1aP13w, section 2656:3435) — read by rpgSkin `war`.
+  war: {
+    bg: `${BASE}/war/bg.webp`,
+    titlePlaque: `${BASE}/war/title-plaque.webp`,
+    cardFrame: `${BASE}/war/card-frame.webp`,
+    statCard: `${BASE}/war/card-frame.webp`,
+    tableFrame: `${BASE}/war/card-frame.webp`,
+    bossFrame: `${BASE}/war/boss-frame.webp`,
+    tabOn: `${BASE}/war/tab-on.webp`,
+    timerPlaque: `${BASE}/war/timer-plaque.webp`,
+    earnTile: `${BASE}/war/earn-tile.webp`,
+    plaque: `${BASE}/war/plaque.webp`,
+    rowFrame: `${BASE}/war/card-frame.webp`,
+  },
   // Avatar mini-game nav crests (Figma a83SqWgqIGNF6dJD1aP13w 2421:4296+). The
   // raised centre HOME reuses nav.home; every other RPG surface is dressed with
   // art already listed above.

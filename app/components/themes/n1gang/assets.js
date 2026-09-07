@@ -154,6 +154,21 @@ export const N1GANG_ASSETS = {
     // Decorative only — never use as a text container.
     ornamentThrone: `${BASE}/ui/ornament-throne.webp`,
   },
+  // Boss War (Figma a83SqWgqIGNF6dJD1aP13w, section 2657:5353) — read by rpgSkin `war`.
+  war: {
+    bg: `${BASE}/war/bg.webp`,
+    titlePlaque: `${BASE}/war/title-plaque.webp`,
+    cardFrame: `${BASE}/war/card-frame.webp`,
+    statCard: `${BASE}/war/stat-card.webp`,
+    tableFrame: `${BASE}/war/table-frame.webp`,
+    bossFrame: `${BASE}/war/boss-frame.webp`,
+    tabOn: `${BASE}/war/tab-on.webp`,
+    tabOff: `${BASE}/war/tab-off.webp`,
+    timerPlaque: `${BASE}/war/timer-plaque.webp`,
+    earnTile: `${BASE}/war/earn-tile.webp`,
+    plaque: `${BASE}/war/stat-card.webp`,
+    rowFrame: `${BASE}/war/row-frame.webp`,
+  },
   // Daily Check-in page (Figma 463:1384). Board geometry, day positions and the
   // reward glyphs are shared across all six skins via
   // app/components/themes/shared/checkinMartSkin.js — only the art differs here.

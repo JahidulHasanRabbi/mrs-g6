@@ -16,6 +16,7 @@ import { WAR_IMAGES } from "../warAssets";
 import { useEarnActions } from "../useEarnActions";
 import BossCard from "../BossCard";
 import {
+  BossPortrait,
   EarnApTiles,
   GoldText,
   HpBar,
@@ -34,67 +35,58 @@ function BossStage({ boss, hit, defeated }) {
   const skin = useRpgSkin();
   const ink = skin.war.ink;
   return (
-    <WarCard className="relative flex flex-col items-center gap-[8px] !px-[24px] !pb-[24px] !pt-[16px]">
+    <div className="relative flex flex-col items-center gap-[8px]">
       <motion.div
         key={hit?.id || "idle"}
-        className="relative h-[220px] w-full overflow-hidden rounded-[12px]"
+        className="w-full"
         animate={hit ? { x: [0, -7, 7, -5, 5, 0] } : { x: 0 }}
         transition={{ duration: 0.45 }}
       >
-        <img
-          src={boss.art}
-          alt={boss.name}
-          className="absolute inset-0 size-full object-cover object-top"
-          style={{ filter: defeated ? "grayscale(0.85) brightness(0.55)" : "none" }}
-          draggable={false}
-        />
-        <AnimatePresence>
-          {hit ? (
-            <motion.div
-              key={hit.id}
-              className="pointer-events-none absolute inset-x-0 top-[24px] flex justify-center"
-              initial={{ opacity: 0, y: 24, scale: 0.7 }}
-              animate={{ opacity: [0, 1, 1, 0], y: [24, 0, -18, -40], scale: [0.7, 1.15, 1, 1] }}
-              transition={{ duration: 1.3, times: [0, 0.2, 0.7, 1] }}
-            >
-              <span
-                className="text-[34px] font-bold"
-                style={{ color: hit.critical ? "#ff5a3c" : ink.dmg, fontFamily: skin.war.font, textShadow: "0 2px 10px rgba(0,0,0,0.9)" }}
+        <BossPortrait boss={boss} dim={defeated}>
+          <AnimatePresence>
+            {hit ? (
+              <motion.div
+                key={hit.id}
+                className="pointer-events-none absolute inset-x-0 top-[24px] flex justify-center"
+                initial={{ opacity: 0, y: 24, scale: 0.7 }}
+                animate={{ opacity: [0, 1, 1, 0], y: [24, 0, -18, -40], scale: [0.7, 1.15, 1, 1] }}
+                transition={{ duration: 1.3, times: [0, 0.2, 0.7, 1] }}
               >
-                -{fmt(hit.damage)}
-              </span>
+                <span
+                  className="text-[34px] font-bold"
+                  style={{ color: hit.critical ? "#ff5a3c" : ink.dmg, fontFamily: skin.war.font, textShadow: "0 2px 10px rgba(0,0,0,0.9)" }}
+                >
+                  -{fmt(hit.damage)}
+                </span>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+          {defeated ? (
+            <motion.div
+              className="pointer-events-none absolute inset-0 flex items-center justify-center"
+              initial={{ scale: 1.6, opacity: 0, rotate: -18 }}
+              animate={{ scale: 1, opacity: 1, rotate: -12 }}
+              transition={{ type: "spring", stiffness: 260, damping: 18 }}
+            >
+              <img src={WAR_IMAGES.ui.defeated} alt="Defeated" className="w-[80%] object-contain" draggable={false} />
             </motion.div>
           ) : null}
-        </AnimatePresence>
-        {defeated ? (
-          <motion.div
-            className="pointer-events-none absolute inset-0 flex items-center justify-center"
-            initial={{ scale: 1.6, opacity: 0, rotate: -18 }}
-            animate={{ scale: 1, opacity: 1, rotate: -12 }}
-            transition={{ type: "spring", stiffness: 260, damping: 18 }}
-          >
-            {WAR_IMAGES.ui.defeated ? (
-              <img src={WAR_IMAGES.ui.defeated} alt="Defeated" className="w-[80%] object-contain" draggable={false} />
-            ) : (
-              <span className="text-[40px] font-bold" style={{ color: "#f2b229", fontFamily: skin.war.font, textShadow: "0 3px 12px rgba(0,0,0,0.9)" }}>
-                DEFEATED!
-              </span>
-            )}
-          </motion.div>
-        ) : null}
+          {/* Name plaque overlapping the frame's lower edge, as in the comps. */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-[8%] flex justify-center">
+            <WarButton variant="attack" size="md" className="w-[189px]">
+              {boss.name.toUpperCase()}
+            </WarButton>
+          </div>
+        </BossPortrait>
       </motion.div>
 
-      <div className="relative -mt-[36px] flex h-[59px] w-[189px] items-center justify-center rounded-[10px] border" style={{ background: skin.c.inset, borderColor: skin.c.edge }}>
-        <GoldText className="text-[16px] font-bold uppercase tracking-[0.16px]">{boss.name}</GoldText>
-      </div>
-
-      <div className="flex w-full flex-col items-center gap-[4px]">
+      <div className="flex w-full flex-col items-center gap-[4px] px-[24px]">
         <HpBar pct={boss.hpPct} className="w-full" />
         <p className="text-[11px]" style={{ fontFamily: skin.war.font, color: ink.text }}>
           <span style={{ color: ink.value }}>{fmt(boss.hp)}</span> / {fmt(boss.hpMax)}
         </p>
       </div>
-    </WarCard>
+    </div>
   );
 }
 
@@ -261,7 +253,7 @@ export default function BossBattle({ bossId, ap, onApUpdate, onNavigate, onNotic
           </>
         ) : (
           <>
-            <WarCard className="flex items-start justify-between !px-[20px] !py-[14px]">
+            <WarCard spec={skin.war.statCard || skin.war.card} className="flex items-start justify-between !px-[20px] !py-[14px]">
               <StatCell icon={WAR_IMAGES.ui.participants} label="Participants" value={boss.participants} />
               <StatCell icon={WAR_IMAGES.ui.damage} label="My Damage" value={boss.myDamage} />
               <StatCell icon={WAR_IMAGES.ui.total} label="Total Damage" value={boss.totalDamage} />

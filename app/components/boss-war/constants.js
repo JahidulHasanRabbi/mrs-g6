@@ -41,7 +41,8 @@ export const BOSS_CATALOG = {
   "fire-dragon": { name: "Fire Dragon", type: BOSS_TYPES.WEEKLY, art: "/assets/boss-war/boss/fire-dragon.webp", gem: "epic" },
   "ice-giant": { name: "Ice Giant", type: BOSS_TYPES.WEEKLY, art: "/assets/boss-war/boss/ice-giant.webp", gem: "rare" },
   "titan-emperor": { name: "Titan Emperor", type: BOSS_TYPES.EVENT, art: "/assets/boss-war/boss/titan-emperor.webp", gem: "legendary" },
-  "shadow-demon": { name: "Shadow Demon", type: BOSS_TYPES.EVENT, art: "/assets/boss-war/boss/shadow-demon.webp", gem: "legendary" },
+  // No Shadow Demon illustration in the comps yet — reuses the Titan art.
+  "shadow-demon": { name: "Shadow Demon", type: BOSS_TYPES.EVENT, art: "/assets/boss-war/boss/titan-emperor.webp", gem: "legendary" },
 };
 export const DEFAULT_BOSS_ART = "/assets/boss-war/boss/goblin-king.webp";
 

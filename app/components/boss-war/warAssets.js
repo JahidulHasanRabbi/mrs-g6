@@ -12,9 +12,11 @@ export const WAR_IMAGES = {
     clock: "/assets/boss-war/ui/icon-clock.webp",
     crown: "/assets/boss-war/ui/icon-crown.webp",
     defeated: "/assets/boss-war/ui/stamp-defeated.webp",
-    participants: "/assets/boss-war/ui/icon-participants.webp",
-    damage: "/assets/boss-war/ui/icon-damage.webp",
-    total: "/assets/boss-war/ui/icon-total.webp",
+    // The stat-card glyphs are not separate layers in the comps; reuse the
+    // crown / sword icons the same screens already ship.
+    participants: "/assets/boss-war/ui/icon-crown.webp",
+    damage: "/assets/boss-war/ui/icon-ap.webp",
+    total: "/assets/boss-war/gems/epic.webp",
   },
   rank: {
     1: "/assets/boss-war/ui/rank-badge-1.webp",
@@ -27,7 +29,8 @@ export const WAR_IMAGES = {
   earn: Object.fromEntries(EARN_TILES.map((t) => [t.id, t.icon])),
 };
 
-export const rankBadgeFor = (rank) => WAR_IMAGES.rank[rank] || WAR_IMAGES.rank.generic;
+// The comps draw every rank row with the same laurel badge + a text number.
+export const rankBadgeFor = () => WAR_IMAGES.rank[1];
 export const gemFor = (gem) => WAR_IMAGES.gems[gem] || WAR_IMAGES.gems.common;
 
 function collectUrls(node, out) {

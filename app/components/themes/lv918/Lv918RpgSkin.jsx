@@ -1,6 +1,6 @@
 "use client";
 
-import { buildRpgSkin, RpgSkinProvider } from "../../rpg/rpgSkin";
+import { buildRpgSkin, RpgSkinProvider, warFrame } from "../../rpg/rpgSkin";
 import { THEME_IDS } from "../../../config/themes";
 import { LV918_ASSETS, LV918_COLORS } from "./assets";
 
@@ -20,6 +20,14 @@ const SKIN = buildRpgSkin(THEME_IDS.LV918, LV918_ASSETS, LV918_COLORS, {
     value: LV918_COLORS.inkGold,
     slotLabel: LV918_COLORS.inkMuted,
     slotEmpty: LV918_COLORS.inkSoft,
+  },
+  // Boss War frames — insets measured off public/assets/themes/lv918/war/*.
+  war: {
+    card: warFrame(LV918_ASSETS.war.cardFrame, 5, 5, 7, 5, [358, 160]),
+    plaque: warFrame(LV918_ASSETS.war.plaque, 20, 12, 7, 11, [358, 213]),
+    statCard: warFrame(LV918_ASSETS.war.statCard, 14, 9, 14, 9, [358, 96]),
+    row: warFrame(LV918_ASSETS.war.rowFrame, 14, 9, 14, 9, [358, 52]),
+    table: warFrame(LV918_ASSETS.war.tableFrame, 5, 5, 7, 5, [358, 440]),
   },
 });
 

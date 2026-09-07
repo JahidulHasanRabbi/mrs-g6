@@ -42,7 +42,7 @@ export default function History({ onNavigate }) {
     <div className="flex w-full flex-1 flex-col px-[16px] pb-[8px]">
       <WarTitle>History</WarTitle>
       <div className="flex flex-col gap-[12px] px-[2px] pt-[8px]">
-        <WarCard className="flex min-h-[420px] flex-col !px-[18px] !py-[18px]">
+        <WarCard spec={skin.war.table || skin.war.card} className="flex min-h-[420px] flex-col !px-[18px] !py-[18px]">
           <div className={`grid ${COLS} gap-[4px] border-b pb-[6px] text-[8px] tracking-[1px]`} style={{ color: ink.meta, borderColor: skin.c.rule, fontFamily: skin.war.font }}>
             <span>TIME</span>
             <span>BOSS</span>

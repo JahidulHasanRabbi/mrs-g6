@@ -53,20 +53,27 @@ function WarSkinShell({ children }) {
 // Views that need a boss in the URL; without one they bounce to the list.
 const BOSS_VIEWS = new Set([WAR_VIEWS.BATTLE, WAR_VIEWS.RESULTS, WAR_VIEWS.LEADERBOARD]);
 
+// The theme resolves after first paint, so the skin provider swaps and this
+// page remounts once per load. Keep the last status/AP per member so the
+// remount re-renders instantly instead of flashing the LOADING gate; the
+// effect below still refetches in the background.
+const bootCache = { memberUuid: null, status: null, ap: null };
+
 function BossWarInner() {
   const skin = useRpgSkin();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { authReady } = useUser();
+  const { authReady, memberUuid } = useUser();
   useGameSessionPing(GAME_SESSION_IDS.BOSS_WAR);
+  const cached = bootCache.memberUuid === memberUuid;
 
   const viewParam = searchParams.get("view") || WAR_VIEWS.LIST;
   const view = VALID_VIEWS.has(viewParam) ? viewParam : WAR_VIEWS.LIST;
   const bossId = searchParams.get("boss");
 
-  const [status, setStatus] = useState(null);
-  const [ap, setAp] = useState(null);
+  const [status, setStatus] = useState(cached ? bootCache.status : null);
+  const [ap, setAp] = useState(cached ? bootCache.ap : null);
   const [loadError, setLoadError] = useState(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [notice, setNotice] = useState(null);
@@ -100,18 +107,21 @@ function BossWarInner() {
     loadedRef.current = true;
     Promise.all([warApi.getGameStatus(), warApi.getAttackPoints()])
       .then(([s, a]) => {
+        Object.assign(bootCache, { memberUuid, status: s, ap: a });
         setStatus(s);
         setAp(a);
       })
       .catch((err) => setLoadError(err?.message || "Could not load Boss War. Please try again."));
-  }, [authReady]);
+  }, [authReady, memberUuid]);
 
   useEffect(() => {
     if (BOSS_VIEWS.has(view) && !bossId) navigate(WAR_VIEWS.LIST, undefined, { replace: true });
   }, [view, bossId, navigate]);
 
   const handleApUpdate = useCallback((next) => {
-    if (next) setAp(next);
+    if (!next) return;
+    bootCache.ap = next;
+    setAp(next);
   }, []);
 
   const showNotice = useCallback((title, message) => setNotice({ title, message }), []);
@@ -141,6 +151,7 @@ function BossWarInner() {
         onInfoClick={openInfo}
         onMenuClick={openMenu}
         hideHud
+        backgroundImage={skin.war.bg || undefined}
         title="Boss War"
         titleFont={skin.war.font}
         titleClassName="text-[24px] font-bold leading-none"
