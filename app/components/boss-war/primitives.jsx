@@ -7,7 +7,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { nineSlice, useRpgSkin } from "../rpg/rpgSkin";
-import { WAR_IMAGES, gemFor, rankBadgeFor } from "./warAssets";
+import { WAR_IMAGES, gemFor } from "./warAssets";
 import { fmt } from "./constants";
 
 // ---------------------------------------------------------------------------
@@ -56,25 +56,13 @@ export function useFrameInk() {
 export function GoldText({ children, className = "", style, as: Tag = "span", solid = false }) {
   const skin = useRpgSkin();
   const ink = solid ? skin.war.frameInkSolid : null;
-  if (ink) {
-    return (
-      <Tag
-        className={className}
-        style={{ color: ink, fontFamily: skin.war.font, textShadow: "0 1px 1px rgba(255,255,255,0.35)", ...style }}
-      >
-        {children}
-      </Tag>
-    );
-  }
-  return (
-    <Tag
-      className={className}
-      style={{
+  const fill = ink
+    ? { color: ink, textShadow: "0 1px 1px rgba(255,255,255,0.35)" }
+    : {
         backgroundImage: skin.war.titleGradient,
         WebkitBackgroundClip: "text",
         backgroundClip: "text",
         color: "transparent",
-        fontFamily: skin.war.font,
         filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.6))",
         // The gradient is clipped to the background box, so a descender that
         // hangs below a tight line-height (the comps set 28px on 32px text)
@@ -82,9 +70,9 @@ export function GoldText({ children, className = "", style, as: Tag = "span", so
         display: "inline-block",
         paddingBottom: "0.18em",
         marginBottom: "-0.18em",
-        ...style,
-      }}
-    >
+      };
+  return (
+    <Tag className={className} style={{ fontFamily: skin.war.font, ...fill, ...style }}>
       {children}
     </Tag>
   );
@@ -271,17 +259,45 @@ export function WarButton({ children, onClick, disabled, variant = "pill", class
   );
 }
 
+// The chip and the timer plaque sit side by side, but their art frames the
+// pill very differently (acebet77 hangs a crown above its plaque, ep369 spends
+// the whole file on the pill). Both boxes are therefore derived from a shared
+// pill height and nudged so the two pills share one centre line.
+const PILL_BODY_H = 30;
+
+function pillMetrics([top, bottom]) {
+  const height = Math.round(PILL_BODY_H / ((bottom - top) / 100));
+  return { height, bias: Math.round((0.5 - (top + bottom) / 200) * height) };
+}
+
 /** "DAILY BOSS" type chip with the crown. */
 export function TypeChip({ children }) {
   const skin = useRpgSkin();
+  const spec = skin.war.chipSpec;
+  const { height, bias } = pillMetrics(spec.body);
+  const [aw, ah] = spec.art;
+  const [t, r, b, l] = spec.slice;
+  // One scale for all four caps, from the art's own height — the crown keeps
+  // its shape only if its border box scales like the slice it comes from.
+  const k = height / ah;
+  const px = (v, span) => `${Math.round((v / 100) * span * k)}px`;
   return (
-    <div className="relative flex h-[38px] w-[125px] items-center justify-center pb-[12px] pl-[29px] pr-[12px] pt-[8px]">
-      {skin.war.chip ? (
-        <img src={skin.war.chip} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full object-fill" draggable={false} />
-      ) : (
-        <div className="pointer-events-none absolute inset-x-0 inset-y-[6px] rounded-full" style={{ background: "linear-gradient(90deg,#7b1fa2,#c2185b)" }} />
-      )}
-      <span className="relative z-10 whitespace-nowrap text-[12px] font-bold text-white" style={{ fontFamily: skin.war.font }}>
+    <div
+      className="relative flex shrink-0 items-center justify-center"
+      style={{
+        height,
+        transform: `translateY(${bias}px)`,
+        ...nineSlice({
+          frame: spec.frame,
+          slice: `${t}% ${r}% ${b}% ${l}% fill`,
+          width: `${px(t, ah)} ${px(r, aw)} ${px(b, ah)} ${px(l, aw)}`,
+          // The caps stop flush against the crown and the gem, so this is the
+          // whole visible gap either side of the label — the box grows to fit.
+          pad: "0 14px",
+        }),
+      }}
+    >
+      <span className="whitespace-nowrap text-[11.5px] font-bold leading-none text-white" style={{ fontFamily: skin.war.font }}>
         {children}
       </span>
     </div>
@@ -293,24 +309,37 @@ export function TimerPlaque({ endsAt }) {
   const skin = useRpgSkin();
   const { label } = useCountdown(endsAt);
   const art = skin.war.timer;
-  // The themed plaque art already has a clock at its left end, so the label
-  // is pushed past it. Without art we draw the clock and keep the pair
-  // together rather than throwing the time to the far edge.
   // The box takes the artwork's own aspect: forcing every theme's plaque into
-  // one 139x50 slot squashed the clock baked into it into an oval.
+  // one 139x50 slot squashed the clock baked into it into an oval. The label
+  // then sits centred in the plaque's measured window, clear of both the
+  // clock at the left end and the gem at the right.
+  const [wl, wr, wt, wb] = skin.war.timerWindow;
+  const { height, bias } = pillMetrics(skin.war.timerBody);
   return art ? (
     <div
-      className="relative flex h-[42px] items-center justify-end"
-      style={{ aspectRatio: String(skin.war.timerAspect), paddingLeft: "27%", paddingRight: "7%" }}
+      className="relative shrink-0"
+      style={{ height, aspectRatio: String(skin.war.timerAspect), transform: `translateY(${bias}px)` }}
     >
       <img src={art} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full object-fill" draggable={false} />
-      <span className="relative z-10 whitespace-nowrap text-[12px] font-bold tabular-nums" style={{ color: skin.war.ink.text, fontFamily: skin.war.font }}>
+      <span
+        className="absolute flex items-center justify-center overflow-hidden whitespace-nowrap text-[12px] font-bold leading-none tabular-nums"
+        style={{
+          left: `${wl}%`,
+          right: `${100 - wr}%`,
+          top: `${wt}%`,
+          bottom: `${100 - wb}%`,
+          color: skin.war.ink.text,
+          fontFamily: skin.war.font,
+        }}
+      >
         {label}
       </span>
     </div>
   ) : (
+    // No plaque art: draw the clock and keep the pair together rather than
+    // throwing the time to the far edge.
     <div
-      className="relative flex h-[34px] items-center gap-[7px] rounded-full border px-[12px]"
+      className="relative flex h-[34px] shrink-0 items-center gap-[7px] rounded-full border px-[12px]"
       style={{ background: skin.c.inset, borderColor: skin.c.edgeSoft }}
     >
       {WAR_IMAGES.ui.clock ? (
@@ -351,7 +380,7 @@ export function RankBadge({ rank, size = 34 }) {
   const skin = useRpgSkin();
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
-      <img src={rankBadgeFor(rank)} alt="" aria-hidden className="absolute inset-0 size-full object-contain" draggable={false} />
+      <img src={WAR_IMAGES.rankBadge} alt="" aria-hidden className="absolute inset-0 size-full object-contain" draggable={false} />
       <span
         className="absolute inset-0 flex items-center justify-center pb-[2px] text-[11px] font-bold text-white"
         style={{ fontFamily: skin.war.font, textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}
@@ -365,7 +394,7 @@ export function RankBadge({ rank, size = 34 }) {
 /** Stat column: icon over label over value (Participants / My Damage / Total Damage). */
 export function StatCell({ icon, label, value }) {
   const skin = useRpgSkin();
-  const fi = skin.war.inkFrame || skin.war.ink;
+  const fi = useFrameInk();
   const onFrame = fi.text;
   const onFrameValue = fi.value;
   const shadow = skin.war.inkFrame ? "0 1px 1px rgba(255,255,255,0.35)" : "0 1px 2px rgba(0,0,0,0.75)";
@@ -413,7 +442,7 @@ export function EarnApTiles({ tiles, onAction, busyId }) {
             >
               <GoldText solid className="text-[10px] font-bold">{t.label}</GoldText>
               <img src={t.icon} alt="" aria-hidden className="size-[40px] object-contain" draggable={false} />
-              <span className="text-[8px] leading-[10px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
+              <span className="text-[9px] leading-[11px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
                 {t.sub}
               </span>
               <WarButton size="sm" className="w-full max-w-[64px]" onClick={() => onAction(t)} disabled={disabled}>
@@ -438,7 +467,7 @@ export function EarnApTiles({ tiles, onAction, busyId }) {
             >
               <GoldText solid className="text-[9px] font-bold leading-[11px]">{t.label}</GoldText>
               <img src={t.icon} alt="" aria-hidden className="min-h-0 w-auto flex-1 object-contain py-[2px]" draggable={false} />
-              <span className="text-[7.5px] leading-[9px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
+              <span className="text-[9px] leading-[11px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
                 {t.sub}
               </span>
             </div>
@@ -471,21 +500,40 @@ export function EarnApTiles({ tiles, onAction, busyId }) {
   );
 }
 
-/** Boss portrait with the station's hollow ornate frame laid over it. */
+/** Boss portrait with the station's hollow ornate frame laid over it.
+ *
+ *  Both the box aspect and the opening come off the artwork (gen_skins.py):
+ *  a shared 354/289 stretched acebet77's 1.08 frame 13% wide and squeezed the
+ *  opening so short that a third of the boss was cut away. `children` are
+ *  positioned against the opening, never the box, so nothing rides the rails. */
 export function BossPortrait({ boss, dim = false, className = "", children }) {
   const skin = useRpgSkin();
-  const frame = skin.war.bossFrame;
+  const { art: frame, aspect, open } = skin.war.bossFrame;
+  const [t, r, b, l] = open;
   return (
-    <div className={`relative w-full overflow-hidden ${frame ? "aspect-[354/289]" : "h-[220px] rounded-[12px]"} ${className}`}>
-      <div className={`absolute ${frame ? "inset-[6%] rounded-[6px]" : "inset-0"} overflow-hidden`} style={{ background: "rgba(0,0,0,0.55)" }}>
-        {/* Sized as the comp does (2634:2382): ~87% of the opening's width,
-            natural height, overflowing the opening top and bottom. */}
+    <div
+      className={`relative w-full overflow-hidden ${frame ? "" : "h-[220px] rounded-[12px]"} ${className}`}
+      style={frame ? { aspectRatio: String(aspect) } : undefined}
+    >
+      <div
+        className={`absolute overflow-hidden ${frame ? "rounded-[6px]" : "inset-0"}`}
+        style={frame ? { top: `${t}%`, right: `${r}%`, bottom: `${b}%`, left: `${l}%`, background: "rgba(0,0,0,0.55)" } : { background: "rgba(0,0,0,0.55)" }}
+      >
+        {/* Top-anchored cover: the art is a tall portrait and every opening is
+            landscape, so something has to go — losing the throne base beats
+            cropping the boss's head. The caption band below sits on that crop. */}
         <img
           src={boss.art}
           alt={boss.name}
-          className="absolute left-1/2 top-[-4%] h-auto w-[87%] max-w-none -translate-x-1/2"
-          style={{ filter: dim ? "grayscale(0.85) brightness(0.55)" : "none" }}
+          className="absolute inset-0 size-full object-cover"
+          style={{ objectPosition: "50% 4%", filter: dim ? "grayscale(0.85) brightness(0.55)" : "none" }}
           draggable={false}
+        />
+        {/* Scrim for the name + HP band: the illustration is busy and mid-tone
+            right where the readout sits. */}
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[46%]"
+          style={{ background: "linear-gradient(180deg, rgba(6,4,2,0) 0%, rgba(6,4,2,0.62) 45%, rgba(6,4,2,0.88) 100%)" }}
         />
       </div>
       {frame ? <img src={frame} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full object-fill" draggable={false} /> : null}
@@ -494,17 +542,58 @@ export function BossPortrait({ boss, dim = false, className = "", children }) {
   );
 }
 
+/** The opening's inset as a style object, so overlays inside a BossPortrait
+ *  can be positioned against the frame's hollow rather than its box. */
+export function useBossOpening(pad = 0) {
+  const [t, r, b, l] = useRpgSkin().war.bossFrame.open;
+  return { top: `${t + pad}%`, right: `${r + pad}%`, bottom: `${b + pad}%`, left: `${l + pad}%` };
+}
+
 /** Boss HP bar + readout, laid over the bottom of the portrait as in the comps. */
 export function BossHp({ boss }) {
   const skin = useRpgSkin();
   // Deliberately `ink`, not the frame ink: this rides the boss art, not a panel.
   const ink = skin.war.ink;
   return (
-    <div className="flex w-full flex-col items-center gap-[3px]">
+    <div className="flex w-full flex-col items-center gap-[4px]">
       <HpBar pct={boss.hpPct} className="w-full" />
-      <p className="text-[11px] leading-none" style={{ fontFamily: skin.war.font, color: ink.text, textShadow: "0 1px 3px rgba(0,0,0,0.9)" }}>
+      <p
+        className="text-[12px] font-bold leading-none tabular-nums"
+        style={{ fontFamily: skin.war.font, color: ink.text, textShadow: "0 1px 4px rgba(0,0,0,0.95)" }}
+      >
         <span style={{ color: ink.value }}>{fmt(boss.hp)}</span> / {fmt(boss.hpMax)}
       </p>
+    </div>
+  );
+}
+
+/** The boss's name on the ATTACK plaque art. A label, not a control — this
+ *  used to be a WarButton, which put a focusable button with no action on the
+ *  portrait. */
+export function NamePlate({ children, className = "" }) {
+  const skin = useRpgSkin();
+  const art = skin.war.attackBtn;
+  return (
+    <div
+      className={`relative flex h-[38px] items-center justify-center ${className}`}
+      style={
+        art
+          ? undefined
+          : {
+              borderRadius: 19,
+              border: `1px solid ${skin.c.accent}`,
+              background: "rgba(6,4,2,0.72)",
+            }
+      }
+    >
+      {art ? <img src={art} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full object-fill" draggable={false} /> : null}
+      <GoldText
+        solid
+        className="relative z-10 truncate px-[10px] text-[13px] font-bold leading-none"
+        style={skin.war.attackLabelBias ? { marginTop: `${skin.war.attackLabelBias * 100}%` } : undefined}
+      >
+        {children}
+      </GoldText>
     </div>
   );
 }
@@ -523,7 +612,10 @@ export function SectionCard({ label, title, children, className = "", action }) 
           {label}
         </span>
       ) : null}
-      <div className="flex items-start justify-between gap-[10px]">
+      {/* items-center, not items-start: the action used to be self-end on a
+          variable-height block, so DEPOSIT NOW / GO / PLAY each landed at a
+          different height down the page. */}
+      <div className="flex items-center justify-between gap-[10px]">
         <div className="flex min-w-0 flex-1 flex-col gap-[4px]">
           {title ? <GoldText solid className="text-[12px] font-bold">{title}</GoldText> : null}
           <div className="text-[10px] leading-[15px]" style={{ color: fi.text, fontFamily: skin.war.font }}>
@@ -534,6 +626,54 @@ export function SectionCard({ label, title, children, className = "", action }) 
       </div>
     </WarCard>
   );
+}
+
+/**
+ * One fetch-once-per-dep-change resource for a screen. Every Boss War screen
+ * repeated the same useState pair plus a cancel-guarded effect; the fallback
+ * message and the guard now live in one place.
+ */
+export function useWarResource(fetcher, deps, fallbackMessage) {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    setError(null);
+    Promise.resolve()
+      .then(fetcher)
+      .then((d) => {
+        if (!cancelled) setData(d);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err?.message || fallbackMessage);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // `fetcher` is re-created every render by design; `deps` is the real key.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+  return { data, error };
+}
+
+/** The screen frame every Boss War view shares: title plaque + content column. */
+export function WarScreen({ title, gap = 12, children, className = "" }) {
+  return (
+    <div className={`flex w-full flex-1 flex-col px-[16px] pb-[8px] ${className}`}>
+      <WarTitle>{title}</WarTitle>
+      <div className="flex flex-col px-[2px] pt-[8px]" style={{ gap: `${gap}px` }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** The loading / error pair each screen renders above its content. */
+export function WarState({ data, error, empty }) {
+  if (error) return <StateLine>{error}</StateLine>;
+  if (!data) return <StateLine>LOADING...</StateLine>;
+  if (empty) return <StateLine>{empty}</StateLine>;
+  return null;
 }
 
 /** Centered loading / empty / error line. */

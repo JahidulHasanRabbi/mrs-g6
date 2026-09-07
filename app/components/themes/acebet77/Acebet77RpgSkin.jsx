@@ -1,7 +1,8 @@
 "use client";
 
-import { buildRpgSkin, RpgSkinProvider, warFrame } from "../../rpg/rpgSkin";
+import { buildRpgSkin, RpgSkinProvider } from "../../rpg/rpgSkin";
 import { THEME_IDS } from "../../../config/themes";
+import { WAR_FRAMES } from "./warFrames.generated";
 import { ACEBET_ASSETS, ACEBET_COLORS } from "./assets";
 
 const SKIN = buildRpgSkin(THEME_IDS.ACEBET77, ACEBET_ASSETS, ACEBET_COLORS, {
@@ -14,13 +15,8 @@ const SKIN = buildRpgSkin(THEME_IDS.ACEBET77, ACEBET_ASSETS, ACEBET_COLORS, {
   // The tile art bakes its CTA pill in at [82, 93] % of height (measured).
   // Boss War frames — insets measured off public/assets/themes/acebet77/war/*.
   war: {
-    timerAspect: 3.62,
-    card: warFrame(ACEBET_ASSETS.war.cardFrame, 14.4, 4.8, 8.8, 5.0, [358, 160], { art: [1000, 749] }),
-    statCard: warFrame(ACEBET_ASSETS.war.statCard, 14.4, 4.8, 8.8, 5.0, [358, 96], { art: [1000, 749] }),
-    table: warFrame(ACEBET_ASSETS.war.tableFrame, 14.4, 4.8, 8.8, 5.0, [358, 440], { art: [1000, 749] }),
-    row: warFrame(ACEBET_ASSETS.war.rowFrame, 14.4, 4.8, 8.8, 5.0, [358, 52], { art: [1000, 749] }),
-    plaque: warFrame(ACEBET_ASSETS.war.plaque, 24.0, 15.9, 15.6, 15.7, [358, 213], { art: [1000, 725] }),
-    titleInset: { top: 30, right: 10, bottom: 7, left: 10 },
+    ...WAR_FRAMES,
+    bossFrame: { aspect: 1.08, open: [8.9, 8.0, 12.6, 8.0] },
     earnTile: { aspect: 0.61, frame: ACEBET_ASSETS.war.earnTile, ctaBand: [82, 93], inset: 13 },
   },
 });

@@ -3,11 +3,11 @@
 // Rewards (Figma 2623:1342): Rank / Boss / Event tiers, View History, and
 // the "How to Earn Rewards" plaque.
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRpgSkin } from "../../rpg/rpgSkin";
 import { HOW_TO_EARN_NOTE, WAR_VIEWS } from "../constants";
 import * as warApi from "../bossWarApi";
-import { useFrameInk, GemIcon, GoldText, InfoPlaque, StateLine, WarButton, WarCard, WarTabs, WarTitle } from "../primitives";
+import { useFrameInk, useWarResource, GemIcon, GoldText, InfoPlaque, WarButton, WarCard, WarScreen, WarState, WarTabs } from "../primitives";
 
 const TABS = [
   { id: "rank", label: "Rank" },
@@ -29,43 +29,27 @@ function TierRow({ tier }) {
       </div>
       <div className="flex h-[44px] w-[40px] shrink-0 flex-col items-center justify-center rounded-[6px] border" style={{ background: skin.c.inset, borderColor: skin.c.edgeSoft }}>
         <GemIcon gem={tier.gem} size={26} />
-        <span className="text-[6px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>Reward</span>
+        <span className="text-[8px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>Reward</span>
       </div>
     </WarCard>
   );
 }
 
 export default function Rewards({ onNavigate }) {
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
   const [tab, setTab] = useState("rank");
-
-  useEffect(() => {
-    let cancelled = false;
-    warApi
-      .getRewards()
-      .then((d) => !cancelled && setData(d))
-      .catch((err) => !cancelled && setError(err?.message || "Could not load rewards."));
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const { data, error } = useWarResource(warApi.getRewards, [], "Could not load rewards.");
 
   const tiers = data?.[tab] || [];
 
   return (
-    <div className="flex w-full flex-1 flex-col px-[16px] pb-[8px]">
-      <WarTitle>Rewards</WarTitle>
-      <div className="flex flex-col gap-[8px] px-[2px] pt-[8px]">
-        <WarTabs tabs={TABS} active={tab} onChange={setTab} className="mb-[4px]" />
-        {error ? <StateLine>{error}</StateLine> : null}
-        {!data && !error ? <StateLine>LOADING...</StateLine> : null}
-        {tiers.map((t) => (
-          <TierRow key={t.id} tier={t} />
-        ))}
-        <WarButton className="mx-auto mt-[10px] w-[190px]" onClick={() => onNavigate(WAR_VIEWS.HISTORY)}>View History</WarButton>
-        <InfoPlaque title="How to Earn Rewards" lines={HOW_TO_EARN_NOTE} className="mt-[14px]" />
-      </div>
-    </div>
+    <WarScreen title="Rewards" gap={8}>
+      <WarTabs tabs={TABS} active={tab} onChange={setTab} className="mb-[4px]" />
+      <WarState data={data} error={error} />
+      {tiers.map((t) => (
+        <TierRow key={t.id} tier={t} />
+      ))}
+      <WarButton className="mx-auto mt-[10px] w-[190px]" onClick={() => onNavigate(WAR_VIEWS.HISTORY)}>View History</WarButton>
+      <InfoPlaque title="How to Earn Rewards" lines={HOW_TO_EARN_NOTE} className="mt-[14px]" />
+    </WarScreen>
   );
 }

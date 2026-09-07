@@ -1,7 +1,8 @@
 "use client";
 
-import { buildRpgSkin, RpgSkinProvider, warFrame } from "../../rpg/rpgSkin";
+import { buildRpgSkin, RpgSkinProvider } from "../../rpg/rpgSkin";
 import { THEME_IDS } from "../../../config/themes";
+import { WAR_FRAMES } from "./warFrames.generated";
 import { LV918_ASSETS, LV918_COLORS } from "./assets";
 
 const SKIN = buildRpgSkin(THEME_IDS.LV918, LV918_ASSETS, LV918_COLORS, {
@@ -24,13 +25,8 @@ const SKIN = buildRpgSkin(THEME_IDS.LV918, LV918_ASSETS, LV918_COLORS, {
   // The tile art bakes its CTA pill in at [78, 91] % of height (measured).
   // Boss War frames — insets measured off public/assets/themes/lv918/war/*.
   war: {
-    timerAspect: 3.52,
-    card: warFrame(LV918_ASSETS.war.cardFrame, 4.8, 3.6, 5.5, 3.9, [358, 160], { art: [1000, 805] }),
-    statCard: warFrame(LV918_ASSETS.war.statCard, 12.8, 7.6, 13.3, 8.1, [358, 96], { art: [1000, 188] }),
-    table: warFrame(LV918_ASSETS.war.tableFrame, 4.8, 3.6, 5.5, 3.9, [358, 440], { art: [1000, 805] }),
-    row: warFrame(LV918_ASSETS.war.rowFrame, 12.8, 7.6, 13.3, 8.1, [358, 52], { art: [1000, 188] }),
-    plaque: warFrame(LV918_ASSETS.war.plaque, 20.0, 10.9, 4.8, 8.2, [358, 213], { art: [622, 479] }),
-    titleInset: { top: 15, right: 3, bottom: 13, left: 5 },
+    ...WAR_FRAMES,
+    bossFrame: { aspect: 1.361, open: [6.1, 4.1, 5.6, 4.3] },
     earnTile: { aspect: 0.6, frame: LV918_ASSETS.war.earnTile, ctaBand: [78, 91], inset: 13 },
   },
 });

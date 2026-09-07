@@ -22,16 +22,12 @@ export const BOSS_TYPES = {
 };
 
 export const BOSS_TYPE_TABS = [
-  { id: BOSS_TYPES.DAILY, label: "Daily Boss", chip: "DAILY BOSS" },
-  { id: BOSS_TYPES.WEEKLY, label: "Weekly Boss", chip: "WEEKLY BOSS" },
-  { id: BOSS_TYPES.EVENT, label: "Event Boss", chip: "EVENT BOSS" },
+  { id: BOSS_TYPES.DAILY, label: "Daily Boss" },
+  { id: BOSS_TYPES.WEEKLY, label: "Weekly Boss" },
+  { id: BOSS_TYPES.EVENT, label: "Event Boss" },
 ];
 
-export const BOSS_TYPE_LABEL = {
-  [BOSS_TYPES.DAILY]: "Daily Boss",
-  [BOSS_TYPES.WEEKLY]: "Weekly Boss",
-  [BOSS_TYPES.EVENT]: "Event Boss",
-};
+export const BOSS_TYPE_LABEL = Object.fromEntries(BOSS_TYPE_TABS.map((t) => [t.id, t.label]));
 
 // The five example bosses from the brief. Art is theme-neutral (the comps
 // share one illustration per boss across all six skins); only `id`/`art`
@@ -51,7 +47,7 @@ export const GEM_ART = {
   legendary: "/assets/boss-war/gems/legendary.webp",
   epic: "/assets/boss-war/gems/epic.webp",
   premium: "/assets/boss-war/gems/premium.webp",
-  rare: "/assets/boss-war/gems/rare.webp",
+  rare: "/assets/boss-war/gems/common.webp",
   common: "/assets/boss-war/gems/common.webp",
 };
 
@@ -100,6 +96,9 @@ export const DEFAULT_FREE_AP = [
 
 // The four "How to Earn Attack Points" tiles. `source` is what claimAp() is
 // called with; tiles with an `href` navigate instead of claiming.
+export const MINI_GAMES_NOTE =
+  "Play eligible MRS mini games to earn Attack Points. Exact reward follows campaign configuration.";
+
 export const EARN_TILES = [
   { id: "deposit", label: "Deposit", sub: "RM30+", cta: "Claim", icon: "/assets/boss-war/earn/deposit.webp" },
   { id: "missions", label: "Missions", sub: "Daily", cta: "Claim", icon: "/assets/boss-war/earn/missions.webp" },

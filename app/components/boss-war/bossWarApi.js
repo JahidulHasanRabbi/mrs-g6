@@ -23,7 +23,7 @@
 import * as mock from "./bossWarMock";
 import * as live from "./bossWarLive";
 
-export const USE_MOCK = process.env.NEXT_PUBLIC_BOSS_WAR_MOCK !== "false";
+const USE_MOCK = process.env.NEXT_PUBLIC_BOSS_WAR_MOCK !== "false";
 const source = USE_MOCK ? mock : live;
 
 function gameError(err, fallback) {
@@ -41,14 +41,14 @@ const wrap = (fn, fallback) => async (...args) => {
   }
 };
 
-export const getGameStatus = wrap((...a) => source.getGameStatus(...a), "Could not load Boss War.");
-export const getAttackPoints = wrap((...a) => source.getAttackPoints(...a), "Could not load your Attack Points.");
-export const getBossList = wrap((...a) => source.getBossList(...a), "Could not load the boss list.");
-export const getBattle = wrap((...a) => source.getBattle(...a), "Could not load this boss.");
-export const attack = wrap((...a) => source.attack(...a), "Attack failed. Please try again.");
-export const getResults = wrap((...a) => source.getResults(...a), "Could not load your results.");
-export const getLeaderboard = wrap((...a) => source.getLeaderboard(...a), "Could not load the leaderboard.");
-export const getRewards = wrap((...a) => source.getRewards(...a), "Could not load rewards.");
-export const getHistory = wrap((...a) => source.getHistory(...a), "Could not load your history.");
-export const getEarnRules = wrap((...a) => source.getEarnRules(...a), "Could not load Attack Point rules.");
-export const claimAp = wrap((...a) => source.claimAp(...a), "Could not claim Attack Points.");
+export const getGameStatus = wrap(source.getGameStatus, "Could not load Boss War.");
+export const getAttackPoints = wrap(source.getAttackPoints, "Could not load your Attack Points.");
+export const getBossList = wrap(source.getBossList, "Could not load the boss list.");
+export const getBattle = wrap(source.getBattle, "Could not load this boss.");
+export const attack = wrap(source.attack, "Attack failed. Please try again.");
+export const getResults = wrap(source.getResults, "Could not load your results.");
+export const getLeaderboard = wrap(source.getLeaderboard, "Could not load the leaderboard.");
+export const getRewards = wrap(source.getRewards, "Could not load rewards.");
+export const getHistory = wrap(source.getHistory, "Could not load your history.");
+export const getEarnRules = wrap(source.getEarnRules, "Could not load Attack Point rules.");
+export const claimAp = wrap(source.claimAp, "Could not claim Attack Points.");

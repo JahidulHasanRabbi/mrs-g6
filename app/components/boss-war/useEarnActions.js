@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import * as warApi from "./bossWarApi";
-import { EARN_TILES } from "./constants";
+import { DEFAULT_DEPOSIT_AP, DEFAULT_FREE_AP, EARN_TILES, MINI_GAMES_NOTE } from "./constants";
 import { tokenStorage } from "../../api/tokenStorage";
 
 export function stationDepositUrl() {
@@ -18,23 +18,31 @@ export function stationDepositUrl() {
   }
 }
 
-export function useEarnActions({ onApUpdate, onNotice }) {
+const FALLBACK_RULES = {
+  tiles: EARN_TILES.map((t) => ({ ...t, claimable: !t.href })),
+  deposit: DEFAULT_DEPOSIT_AP,
+  free: DEFAULT_FREE_AP,
+  miniGames: MINI_GAMES_NOTE,
+};
+
+export function useEarnActions({ onApUpdate, onNotice, enabled = true }) {
   const router = useRouter();
-  const [tiles, setTiles] = useState(EARN_TILES.map((t) => ({ ...t, claimable: !t.href })));
+  const [rules, setRules] = useState(FALLBACK_RULES);
   const [busyId, setBusyId] = useState(null);
 
   useEffect(() => {
+    if (!enabled) return undefined;
     let cancelled = false;
     warApi
       .getEarnRules()
       .then((r) => {
-        if (!cancelled && r?.tiles) setTiles(r.tiles);
+        if (!cancelled && r) setRules(r);
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [enabled]);
 
   const onAction = useCallback(
     async (tile) => {
@@ -53,7 +61,7 @@ export function useEarnActions({ onApUpdate, onNotice }) {
       try {
         const res = await warApi.claimAp(tile.id);
         onApUpdate?.(res.ap);
-        setTiles((prev) => prev.map((t) => (t.id === tile.id ? { ...t, claimable: false } : t)));
+        setRules((prev) => ({ ...prev, tiles: prev.tiles.map((t) => (t.id === tile.id ? { ...t, claimable: false } : t)) }));
         onNotice?.("ATTACK POINTS", `+${res.gained} AP claimed. You now have ${res.ap.current} / ${res.ap.max}.`);
       } catch (err) {
         onNotice?.("CANNOT CLAIM", err?.message || "Try again later.");
@@ -64,5 +72,5 @@ export function useEarnActions({ onApUpdate, onNotice }) {
     [router, onApUpdate, onNotice],
   );
 
-  return { tiles, busyId, onAction };
+  return { ...rules, busyId, onAction };
 }

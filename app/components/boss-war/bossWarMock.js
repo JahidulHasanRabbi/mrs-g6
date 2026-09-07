@@ -14,6 +14,7 @@ import {
   DEFAULT_DEPOSIT_AP,
   DEFAULT_FREE_AP,
   EARN_TILES,
+  MINI_GAMES_NOTE,
   EVENT_REWARD_TIERS,
   RANK_REWARD_TIERS,
 } from "./constants";
@@ -209,7 +210,7 @@ export async function getEarnRules() {
   return {
     deposit: DEFAULT_DEPOSIT_AP,
     free: DEFAULT_FREE_AP,
-    miniGames: "Play eligible MRS mini games to earn Attack Points. Exact reward follows campaign configuration.",
+    miniGames: MINI_GAMES_NOTE,
     tiles: EARN_TILES.map((t) => ({ ...t, claimable: !t.href && !s.claimed[t.id] })),
   };
 }

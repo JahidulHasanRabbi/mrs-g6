@@ -3,10 +3,10 @@
 // assets.js `war` block).
 
 import { BOSS_CATALOG, GEM_ART, EARN_TILES } from "./constants";
+import { makePreloader } from "../rpg/preload";
 
 export const WAR_IMAGES = {
   ui: {
-    chip: "/assets/boss-war/ui/chip-boss-type.webp",
     ap: "/assets/boss-war/ui/icon-ap.webp",
     plus: "/assets/boss-war/ui/icon-plus.webp",
     clock: "/assets/boss-war/ui/icon-clock.webp",
@@ -18,34 +18,22 @@ export const WAR_IMAGES = {
     damage: "/assets/boss-war/ui/icon-ap.webp",
     total: "/assets/boss-war/gems/legendary.webp",
   },
-  rank: {
-    1: "/assets/boss-war/ui/rank-badge-1.webp",
-    2: "/assets/boss-war/ui/rank-badge-2.webp",
-    3: "/assets/boss-war/ui/rank-badge-3.webp",
-    generic: "/assets/boss-war/ui/rank-badge.webp",
-  },
+  // The comps draw every rank with the same laurel badge and a text number,
+  // so the per-rank variants are not shipped.
+  rankBadge: "/assets/boss-war/ui/rank-badge-1.webp",
   gems: GEM_ART,
   boss: Object.fromEntries(Object.entries(BOSS_CATALOG).map(([id, b]) => [id, b.art])),
   earn: Object.fromEntries(EARN_TILES.map((t) => [t.id, t.icon])),
 };
 
-// The comps draw every rank row with the same laurel badge + a text number.
-export const rankBadgeFor = () => WAR_IMAGES.rank[1];
 export const gemFor = (gem) => WAR_IMAGES.gems[gem] || WAR_IMAGES.gems.common;
 
-function collectUrls(node, out) {
-  if (typeof node === "string") out.push(node);
-  else if (node && typeof node === "object") Object.values(node).forEach((v) => collectUrls(v, out));
-  return out;
-}
-
-let preloadStarted = false;
-export function preloadWarAssets() {
-  if (preloadStarted || typeof window === "undefined") return;
-  preloadStarted = true;
-  collectUrls(WAR_IMAGES, []).forEach((src) => {
-    const img = new Image();
-    img.src = src;
-    if (img.decode) img.decode().catch(() => {});
-  });
-}
+// Deliberately NOT the whole catalogue: the boss illustrations are ~240KB
+// each and the earn icons, rank badge and DEFEATED stamp belong to screens
+// the member may never open. Warming them here raced the frame art actually
+// on screen. These few are small, and every screen shows them.
+export const preloadWarAssets = makePreloader(WAR_IMAGES.gems, {
+  ap: WAR_IMAGES.ui.ap,
+  crown: WAR_IMAGES.ui.crown,
+  clock: WAR_IMAGES.ui.clock,
+});

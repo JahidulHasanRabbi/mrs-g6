@@ -1,4 +1,5 @@
 import { PHASE4_ASSETS } from "../../config/phase4";
+import { makePreloader } from "./preload";
 
 // Asset map + best-effort preloader for the RPG mini-game (pattern cloned
 // from app/components/penalty-kick/assets.js). All art lives under
@@ -262,26 +263,5 @@ export function bossFramesFor(bossId, state) {
   );
 }
 
-function collectUrls(node, out) {
-  if (typeof node === "string") {
-    out.push(node);
-    return out;
-  }
-  Object.values(node).forEach((v) => collectUrls(v, out));
-  return out;
-}
-
-let preloadStarted = false;
-
-// Fire-and-forget cache warm so the battle/box screens never fetch art
-// mid-animation. Safe to call multiple times; no-ops on the server.
-export function preloadRpgAssets() {
-  if (preloadStarted || typeof window === "undefined") return;
-  preloadStarted = true;
-  const urls = collectUrls(RPG_IMAGES, []).concat(collectUrls(BOSS_FRAMES, []));
-  urls.forEach((src) => {
-    const img = new Image();
-    img.src = src;
-    if (img.decode) img.decode().catch(() => {});
-  });
-}
+// Cache warm so the battle/box screens never fetch art mid-animation.
+export const preloadRpgAssets = makePreloader(RPG_IMAGES, BOSS_FRAMES);

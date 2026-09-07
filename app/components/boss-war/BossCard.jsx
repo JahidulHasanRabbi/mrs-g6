@@ -46,7 +46,7 @@ export default function BossCard({ boss, onAttack }) {
             style={{ background: skin.c.inset, borderColor: skin.c.edgeSoft }}
           >
             <GemIcon gem={boss.gem} size={24} />
-            <span className="text-[6px] leading-[8px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
+            <span className="text-[8px] leading-[10px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
               Reward
             </span>
           </div>
@@ -62,7 +62,7 @@ export default function BossCard({ boss, onAttack }) {
         <div className="flex items-center gap-[4px]">
           <div className="flex min-w-0 flex-1 items-center justify-end gap-[3px]">
             <span className="size-[4px] shrink-0 rounded-full" style={{ background: available ? ink.crit : ink.meta }} />
-            <span className="whitespace-nowrap text-[7.5px] leading-[10px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
+            <span className="whitespace-nowrap text-[9px] leading-[11px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
               {statusText}
             </span>
           </div>

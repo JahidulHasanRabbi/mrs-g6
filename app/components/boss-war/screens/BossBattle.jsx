@@ -22,6 +22,7 @@ import {
   EarnApTiles,
   GoldText,
   InfoPlaque,
+  NamePlate,
   StatCell,
   StateLine,
   TimerPlaque,
@@ -29,12 +30,14 @@ import {
   WarButton,
   WarCard,
   WarTitle,
+  useBossOpening,
   useCountdown,
 } from "../primitives";
 
 function BossStage({ boss, hit, defeated }) {
   const skin = useRpgSkin();
   const ink = skin.war.ink;
+  const opening = useBossOpening(4);
   return (
     <div className="relative flex flex-col items-center gap-[8px]">
       <motion.div
@@ -72,17 +75,31 @@ function BossStage({ boss, hit, defeated }) {
               <img src={WAR_IMAGES.ui.defeated} alt="Defeated" className="w-[80%] object-contain" draggable={false} />
             </motion.div>
           ) : null}
-          {/* One stacked group pinned to the frame's foot — the name plaque, the
-              HP bar and the readout in flow, so they cannot overlap. */}
-          <div className="pointer-events-none absolute inset-x-[10%] bottom-[11%] flex flex-col items-center gap-[6px]">
-            <WarButton variant="attack" size="md" className="w-[189px] max-w-full">
-              {boss.name.toUpperCase()}
-            </WarButton>
+          {/* Caption band inside the frame's opening (+4% breathing room), so
+              the plaque and the bar sit clear of the rails on every theme
+              rather than flush against them. */}
+          <div
+            className="pointer-events-none absolute flex flex-col items-center justify-end gap-[7px]"
+            style={{ ...opening, top: "auto" }}
+          >
+            <NamePlate className="w-[189px] max-w-full">{boss.name.toUpperCase()}</NamePlate>
             <BossHp boss={boss} />
           </div>
         </BossPortrait>
       </motion.div>
     </div>
+  );
+}
+
+/** Own component so its 1Hz tick re-renders a text node, not the whole screen. */
+function NextBossCountdown({ startsAt }) {
+  const skin = useRpgSkin();
+  const ink = useFrameInk();
+  const { label } = useCountdown(startsAt);
+  return (
+    <p className="text-center text-[11px] font-bold" style={{ color: ink.text, fontFamily: skin.war.font }}>
+      Next Boss Starts in: {label}
+    </p>
   );
 }
 
@@ -123,7 +140,6 @@ export default function BossBattle({ bossId, ap, onApUpdate, onNavigate, onNotic
   const [error, setError] = useState(null);
   const [lastAttack, setLastAttack] = useState(null);
   const [busy, setBusy] = useState(false);
-  const earn = useEarnActions({ onApUpdate, onNotice });
 
   useEffect(() => {
     let cancelled = false;
@@ -145,7 +161,8 @@ export default function BossBattle({ bossId, ap, onApUpdate, onNavigate, onNotic
   const boss = data?.boss;
   const defeated = boss?.status === "defeated";
   const noAp = (ap?.current ?? 0) < (ap?.perAttack ?? 1);
-  const nextCountdown = useCountdown(data?.nextStartsAt);
+  // Only the idle and no-AP states render the tiles, so only they need the rules.
+  const earn = useEarnActions({ onApUpdate, onNotice, enabled: Boolean(boss) && !defeated && !lastAttack });
 
   const handleAttack = useCallback(async () => {
     if (!boss || busy) return;
@@ -153,7 +170,7 @@ export default function BossBattle({ bossId, ap, onApUpdate, onNavigate, onNotic
     try {
       const res = await warApi.attack(boss.id);
       setLastAttack({ ...res, id: Date.now() });
-      setData((d) => (d ? { ...d, boss: res.boss, ap: res.ap } : d));
+      setData((d) => (d ? { ...d, boss: res.boss } : d));
       onApUpdate?.(res.ap);
     } catch (err) {
       onNotice?.("ATTACK FAILED", err?.message || "Try again later.");
@@ -204,9 +221,7 @@ export default function BossBattle({ bossId, ap, onApUpdate, onNavigate, onNotic
               <WarButton className="flex-1" onClick={() => onNavigate(WAR_VIEWS.HISTORY)}>History</WarButton>
             </div>
             {data.nextStartsAt ? (
-              <p className="text-center text-[11px] font-bold" style={{ color: ink.text, fontFamily: skin.war.font }}>
-                Next Boss Starts in: {nextCountdown.label}
-              </p>
+              <NextBossCountdown startsAt={data.nextStartsAt} />
             ) : null}
             {data.next ? <BossCard boss={data.next} onAttack={(b) => onNavigate(WAR_VIEWS.BATTLE, { boss: b.id })} /> : null}
           </>

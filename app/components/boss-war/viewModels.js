@@ -31,7 +31,6 @@ export function bossView(server) {
     myRank: server.my_rank ?? server.myRank ?? null,
     gem: server.reward_gem ?? cat.gem ?? "common",
     art: server.image || cat.art || DEFAULT_BOSS_ART,
-    available: status === "active",
   };
 }
 

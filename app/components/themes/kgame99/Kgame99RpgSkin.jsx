@@ -1,7 +1,8 @@
 "use client";
 
-import { buildRpgSkin, RpgSkinProvider, warFrame } from "../../rpg/rpgSkin";
+import { buildRpgSkin, RpgSkinProvider } from "../../rpg/rpgSkin";
 import { THEME_IDS } from "../../../config/themes";
+import { WAR_FRAMES } from "./warFrames.generated";
 import { KGAME99_ASSETS, KGAME99_COLORS } from "./assets";
 
 const SKIN = buildRpgSkin(THEME_IDS.KGAME99, KGAME99_ASSETS, KGAME99_COLORS, {
@@ -15,14 +16,9 @@ const SKIN = buildRpgSkin(THEME_IDS.KGAME99, KGAME99_ASSETS, KGAME99_COLORS, {
   // Its frame interiors are bright sky-blue, so the copy on them takes the dark
   // navy this theme already uses for headings (globals.css --lb-heading).
   war: {
+    ...WAR_FRAMES,
+    bossFrame: { aspect: 1.325, open: [7.4, 4.8, 8.2, 4.8] },
     earnTile: { frame: KGAME99_ASSETS.war.earnTile, aspect: 0.5 },
-    timerAspect: 3.42,
-    card: warFrame(KGAME99_ASSETS.war.cardFrame, 16.3, 12.0, 13.4, 11.6, [358, 160], { art: [1000, 738] }),
-    statCard: warFrame(KGAME99_ASSETS.war.statCard, 18.7, 8.3, 13.7, 8.1, [358, 96], { art: [762, 262] }),
-    table: warFrame(KGAME99_ASSETS.war.tableFrame, 16.3, 12.0, 13.4, 11.6, [358, 440], { art: [1000, 738] }),
-    row: warFrame(KGAME99_ASSETS.war.rowFrame, 16.1, 5.8, 14.3, 5.5, [358, 52], { art: [1000, 230] }),
-    plaque: warFrame(KGAME99_ASSETS.war.plaque, 18.8, 13.2, 16.6, 13.4, [358, 213], { art: [991, 991] }),
-    titleInset: { top: 18, right: 8, bottom: 16, left: 7 },
     frameInkSolid: "#0b2545",
     inkFrame: { text: "#0b2545", meta: "#1f4368", value: "#0b2545", dmg: "#8a3b00", crit: "#12630f" },
   },

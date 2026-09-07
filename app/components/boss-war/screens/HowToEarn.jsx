@@ -3,26 +3,16 @@
 // How to Earn (Figma 2623:715): Deposit / Missions / Mini Games rule blocks
 // plus the earn tiles.
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { DEFAULT_DEPOSIT_AP, DEFAULT_FREE_AP } from "../constants";
-import * as warApi from "../bossWarApi";
 import { stationDepositUrl, useEarnActions } from "../useEarnActions";
-import { EarnApTiles, InfoPlaque, SectionCard, WarButton, WarTitle, useFrameInk } from "../primitives";
+import { EarnApTiles, InfoPlaque, SectionCard, WarButton, WarScreen, useFrameInk } from "../primitives";
 
 export default function HowToEarn({ onApUpdate, onNotice }) {
   const ink = useFrameInk();
   const router = useRouter();
-  const [rules, setRules] = useState({ deposit: DEFAULT_DEPOSIT_AP, free: DEFAULT_FREE_AP, miniGames: "" });
+  // One fetch for the whole screen — the tiles and these rule blocks are the
+  // same payload.
   const earn = useEarnActions({ onApUpdate, onNotice });
-
-  useEffect(() => {
-    let cancelled = false;
-    warApi.getEarnRules().then((r) => !cancelled && setRules(r)).catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   const deposit = () => {
     const url = stationDepositUrl();
@@ -37,22 +27,19 @@ export default function HowToEarn({ onApUpdate, onNotice }) {
   );
 
   return (
-    <div className="flex w-full flex-1 flex-col px-[16px] pb-[8px]">
-      <WarTitle>How to Earn</WarTitle>
-      <div className="flex flex-col gap-[12px] px-[2px] pt-[8px]">
-        <SectionCard label="DEPOSIT" title="Deposit Rewards" action={<WarButton size="sm" className="w-[92px] shrink-0 self-end" onClick={deposit}>DEPOSIT NOW</WarButton>}>
-          {rules.deposit.map((d) => line(`RM${d.amount} → ${d.ap} AP`))}
+    <WarScreen title="How to Earn">
+        <SectionCard label="DEPOSIT" title="Deposit Rewards" action={<WarButton size="sm" className="w-[92px] shrink-0" onClick={deposit}>DEPOSIT NOW</WarButton>}>
+          {earn.deposit.map((d) => line(`RM${d.amount} → ${d.ap} AP`))}
         </SectionCard>
-        <SectionCard label="MISSIONS" title="Daily Missions" action={<WarButton size="sm" className="w-[92px] shrink-0 self-end" onClick={() => router.push("/missions")}>GO</WarButton>}>
-          {rules.free.map((f) => line(`${f.label} → ${f.ap} AP`))}
+        <SectionCard label="MISSIONS" title="Daily Missions" action={<WarButton size="sm" className="w-[92px] shrink-0" onClick={() => router.push("/missions")}>GO</WarButton>}>
+          {earn.free.map((f) => line(`${f.label} → ${f.ap} AP`))}
         </SectionCard>
-        <SectionCard label="MINI GAMES" title="Mini Games" action={<WarButton size="sm" className="w-[92px] shrink-0 self-end" onClick={() => router.push("/spin")}>PLAY</WarButton>}>
-          {line(rules.miniGames || "Play eligible MRS mini games to earn Attack Points.")}
+        <SectionCard label="MINI GAMES" title="Mini Games" action={<WarButton size="sm" className="w-[92px] shrink-0" onClick={() => router.push("/spin")}>PLAY</WarButton>}>
+          {line(earn.miniGames || "Play eligible MRS mini games to earn Attack Points.")}
         </SectionCard>
-        <InfoPlaque title="How to Earn Attack Points" className="mt-[14px]">
-          <EarnApTiles tiles={earn.tiles} onAction={earn.onAction} busyId={earn.busyId} />
-        </InfoPlaque>
-      </div>
-    </div>
+      <InfoPlaque title="How to Earn Attack Points" className="mt-[14px]">
+        <EarnApTiles tiles={earn.tiles} onAction={earn.onAction} busyId={earn.busyId} />
+      </InfoPlaque>
+    </WarScreen>
   );
 }

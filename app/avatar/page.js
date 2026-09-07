@@ -11,13 +11,16 @@
 // /avatar/* member API (app/api/memberApi.js) into the screens' view-models.
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useUser } from "../contexts/UserContext";
-import { useTheme } from "../contexts/ThemeContext";
-import { THEME_IDS } from "../config/themes";
-import { lazySkins } from "../components/themes/skinRoute";
 import { useGameSessionPing, GAME_SESSION_IDS } from "../hooks/useGameSessionPing";
-import { RPG_DEFAULT_SKIN, RpgSkinProvider, useRpgSkin } from "../components/rpg/rpgSkin";
+import { useRpgSkin } from "../components/rpg/rpgSkin";
+import {
+  GameClosedOverlay,
+  GameLoadingGate,
+  RpgSkinShell,
+  useViewNavigation,
+} from "../components/rpg/gameShell";
 import { HamburgerMenu } from "../components/hamburger";
 import { RPG_VIEWS, RPG_FONTS } from "../components/rpg/constants";
 import * as rpgApi from "../components/rpg/rpgApi";
@@ -35,28 +38,8 @@ import InfoModal from "../components/rpg/InfoModal";
 
 const VALID_VIEWS = new Set(Object.values(RPG_VIEWS));
 
-// One chunk per station skin, warmed at module scope — see lazySkins. A theme
-// with no entry keeps the default MRS look.
-const RPG_SKINS = lazySkins({
-  [THEME_IDS.ACEBET77]: () => import("../components/themes/acebet77/Acebet77RpgSkin"),
-  [THEME_IDS.UBETCLUB]: () => import("../components/themes/ubetclub/UbetclubRpgSkin"),
-  [THEME_IDS.EP369]: () => import("../components/themes/ep369/Ep369RpgSkin"),
-  [THEME_IDS.KGAME99]: () => import("../components/themes/kgame99/Kgame99RpgSkin"),
-  [THEME_IDS.LV918]: () => import("../components/themes/lv918/Lv918RpgSkin"),
-  [THEME_IDS.N1GANG]: () => import("../components/themes/n1gang/N1gangRpgSkin"),
-});
-
-function RpgSkinShell({ children }) {
-  const { themeId } = useTheme();
-  const Skin = RPG_SKINS[themeId];
-  if (!Skin) return <RpgSkinProvider skin={RPG_DEFAULT_SKIN}>{children}</RpgSkinProvider>;
-  return <Skin>{children}</Skin>;
-}
-
 function RpgPageInner() {
   const skin = useRpgSkin();
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
   const { authReady, memberUuid, updateUserData } = useUser();
   useGameSessionPing(GAME_SESSION_IDS.AVATAR);
@@ -87,22 +70,7 @@ function RpgPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.bp]);
 
-  const navigate = useCallback(
-    (nextView, extra, opts) => {
-      const params = new URLSearchParams();
-      if (nextView && nextView !== RPG_VIEWS.HOME) params.set("view", nextView);
-      if (extra) {
-        Object.entries(extra).forEach(([k, v]) => {
-          if (v != null) params.set(k, String(v));
-        });
-      }
-      const qs = params.toString();
-      const url = qs ? `${pathname}?${qs}` : pathname;
-      if (opts?.replace) router.replace(url, { scroll: false });
-      else router.push(url, { scroll: false });
-    },
-    [router, pathname],
-  );
+  const navigate = useViewNavigation(RPG_VIEWS.HOME);
 
   useEffect(() => {
     preloadRpgAssets();
@@ -191,16 +159,7 @@ function RpgPageInner() {
   // ------------------------------------------------------------------
 
   if (!profile) {
-    return (
-      <div className="grid min-h-[100dvh] w-full place-items-center px-[32px]" style={{ background: skin.surface }}>
-        <p
-          className="text-center text-[14px] leading-[22px] tracking-[3px]"
-          style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}
-        >
-          {loadError || "LOADING..."}
-        </p>
-      </div>
-    );
+    return <GameLoadingGate skin={skin} message={loadError} font={RPG_FONTS.display} />;
   }
 
   if (!profile.hasHero) {
@@ -270,22 +229,8 @@ function RpgPageInner() {
         )}
       </ScreenShell>
 
-      {/* game_status 2 — reads still work, every action is refused by the API.
-          Same overlay treatment as the penalty-kick closed state. */}
       {!profile.gameOpen && (
-        <div className="fixed inset-0 z-30 grid place-items-center bg-black/70 px-6 backdrop-blur-md">
-          <div
-            className="w-full max-w-[360px] rounded-[16px] border border-white/15 px-6 py-7 text-center shadow-[0_16px_50px_rgba(0,0,0,0.45)]"
-            style={{ background: `${skin.surface}f2` }}
-          >
-            <p className="text-[20px] font-bold" style={{ color: skin.c.value, fontFamily: RPG_FONTS.display }}>
-              Avatar is currently closed
-            </p>
-            <p className="mt-3 text-[12px] leading-5" style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}>
-              Please check back later.
-            </p>
-          </div>
-        </div>
+        <GameClosedOverlay skin={skin} title="Avatar is currently closed" font={RPG_FONTS.display} />
       )}
 
       <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />

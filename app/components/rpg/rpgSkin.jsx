@@ -20,9 +20,14 @@ import { getHeaderBalanceSkin } from "../header/headerBalanceAssets";
 import { THEME_IDS } from "../../config/themes";
 import { WAR_FONT } from "../boss-war/constants";
 
-// Boss War art shared by every skin (the comps reuse one chip / gem set).
-const WAR_SHARED = {
-  chip: "/assets/boss-war/ui/chip-boss-type.webp",
+// The boss-type chip, 9-sliced so the crown and gem caps keep their size while
+// the body grows with the label. Slices are T R B L % of the art; `body` is
+// where the pill sits in the file, which is what the timer plaque aligns to.
+const CHIP_SPEC = {
+  frame: "/assets/boss-war/ui/chip-boss-type.webp",
+  art: [256, 79],
+  slice: [13.9, 14.1, 19.0, 27.0],
+  body: [2.5, 89.9],
 };
 
 const SCRIPT_FONT = "var(--font-berkshire-swash), cursive";
@@ -182,14 +187,16 @@ const DEFAULT_SKIN = {
     bg: null,
     titlePlaque: null,
     titleInset: { top: 34, right: 6, bottom: 8, left: 6 },
-    bossFrame: null,
+    bossFrame: { art: null, aspect: 1.22, open: [0, 0, 0, 0] },
     card: { frame: null, slice: "18% 10% 16% 10% fill", width: "22px 18px 22px 18px", pad: "14px 16px 14px 16px" },
-    statCard: null, // null = same as `card`
-    table: null, // null = same as `card`
+    statCard: { frame: null, slice: "18% 10% 16% 10% fill", width: "22px 18px 22px 18px", pad: "14px 16px 14px 16px" },
+    table: { frame: null, slice: "18% 10% 16% 10% fill", width: "22px 18px 22px 18px", pad: "14px 16px 14px 16px" },
     tab: { on: null, off: null },
-    chip: WAR_SHARED.chip,
+    chipSpec: CHIP_SPEC,
     timer: null,
     timerAspect: 2.78,
+    timerWindow: [27, 94, 25, 80],
+    timerBody: [0, 100],
     attackBtn: null,
     attackLabelBias: 0,
     frameInkSolid: null,
@@ -200,13 +207,11 @@ const DEFAULT_SKIN = {
     row: { frame: null, slice: "40% 8% 40% 8% fill", width: "18px 14px 18px 14px", pad: "4px 10px" },
     hp: { track: "rgba(255,255,255,0.1)", border: RPG_COLORS.violetBorderStrong, fill: RPG_GRADIENTS.exp },
     ink: {
-      name: RPG_COLORS.gold,
       text: RPG_COLORS.text,
       meta: RPG_COLORS.textDim,
       value: RPG_COLORS.gold,
       dmg: RPG_COLORS.goldDeep,
       crit: "#59d827",
-      onPlaque: RPG_COLORS.text,
     },
   },
 };
@@ -224,6 +229,15 @@ function withPanelInk(skin) {
 }
 
 export const RPG_DEFAULT_SKIN = withPanelInk(DEFAULT_SKIN);
+
+/** The 9-slice the three card-shaped frames share, before a theme's measured
+ *  values replace it (see tools/gen_skins.py). */
+const cardSpec = (frame) => ({
+  frame,
+  slice: "14% 6% 9% 6% fill",
+  width: "20px 14px 16px 14px",
+  pad: "12px 14px 12px 14px",
+});
 
 /**
  * Build a station skin from its assets.js map + palette. Each theme passes the
@@ -369,17 +383,23 @@ export function buildRpgSkin(themeId, ASSETS, COLORS, overrides = {}) {
       titlePlaque: W.titlePlaque || null,
       // % of the plaque box; each theme overrides from its own art.
       titleInset: { top: 30, right: 10, bottom: 8, left: 10 },
-      bossFrame: W.bossFrame || null,
+      // `open` is where the hollow actually starts in the file (T R B L %),
+      // and `aspect` the art's own — each theme measures both (gen_skins.py).
+      bossFrame: { art: W.bossFrame || null, aspect: 1.22, open: [9, 8, 12, 8] },
       // Variable-height containers are 9-sliced; each theme overrides `slice`
       // with values measured off its own art (see <Theme>RpgSkin.jsx).
-      card: { frame: W.cardFrame || ASSETS.spin?.panel || null, slice: "14% 6% 9% 6% fill", width: "20px 14px 16px 14px", pad: "12px 14px 12px 14px" },
-      statCard: W.statCard ? { frame: W.statCard, slice: "14% 6% 9% 6% fill", width: "20px 14px 16px 14px", pad: "12px 14px 12px 14px" } : null,
-      table: W.tableFrame ? { frame: W.tableFrame, slice: "14% 6% 9% 6% fill", width: "20px 14px 16px 14px", pad: "12px 14px 12px 14px" } : null,
+      card: cardSpec(W.cardFrame || ASSETS.spin?.panel || null),
+      statCard: cardSpec(W.statCard || W.cardFrame || ASSETS.spin?.panel || null),
+      table: cardSpec(W.tableFrame || W.cardFrame || ASSETS.spin?.panel || null),
       tab: { on: W.tabOn || null, off: W.tabOff || null },
-      chip: WAR_SHARED.chip,
+      chipSpec: CHIP_SPEC,
       timer: W.timerPlaque || null,
       // Natural aspect of that plaque art (see gen_skins.py).
-      timerAspect: W.timerAspect || 3.6,
+      timerAspect: 3.6,
+      // Where the countdown's window and the pill itself sit in the plaque
+      // file (L R T B / top-bottom, % of the art) — see tools/gen_skins.py.
+      timerWindow: [27, 94, 25, 80],
+      timerBody: [0, 100],
       // The comps reuse the header plaque as the ATTACK button and the active
       // tab pill as the wide Rewards / Rankings buttons.
       attackBtn: W.attackBtn || W.titlePlaque || ASSETS.egg?.btnWide || ASSETS.spin?.btnPlay || null,
@@ -397,18 +417,16 @@ export function buildRpgSkin(themeId, ASSETS, COLORS, overrides = {}) {
       // whose tile has no pill leaves it null and gets a drawn one.
       // `aspect` is the art's own, clamped: a very narrow tile would
       // otherwise render 200px+ tall in a four-across row.
-      earnTile: { frame: W.earnTile || null, ctaBand: W.earnTileCtaBand || null, inset: W.earnTileInset ?? 13, aspect: W.earnTileAspect || 0.6 },
+      earnTile: { frame: W.earnTile || null, ctaBand: null, inset: 13, aspect: 0.6 },
       plaque: { frame: W.plaque || W.cardFrame || ASSETS.spin?.panel || null, slice: "22% 8% 12% 8% fill", width: "30px 16px 18px 16px", pad: "30px 16px 18px 16px" },
       row: { frame: W.rowFrame || null, slice: "13% 8% 13% 8% fill", width: "8px 14px 8px 14px", pad: "4px 10px" },
       hp: { track: "rgba(45,45,45,0.75)", border: "#f2b229", fill: "linear-gradient(90deg, #fff0bf 0%, #f2b229 100%)" },
       ink: {
-        name: goldBright,
         text: "#fff2d4",
         meta: "#bfa1ad",
         value: "#f2b229",
         dmg: "#ffae00",
         crit: "#59d827",
-        onPlaque: cream,
       },
     },
   };

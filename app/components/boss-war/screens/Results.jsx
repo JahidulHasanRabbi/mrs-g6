@@ -3,12 +3,12 @@
 // Player Results (Figma 2623:453): rank + headline reward, Rank / Boss /
 // Participation tabs, and the "How Rewards are Calculated" sections.
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRpgSkin } from "../../rpg/rpgSkin";
 import { fmt, ORDINAL, REWARD_CALC_SECTIONS } from "../constants";
 import * as warApi from "../bossWarApi";
 import { WAR_IMAGES } from "../warAssets";
-import { useFrameInk, GemIcon, GoldText, SectionCard, StateLine, WarCard, WarTabs, WarTitle } from "../primitives";
+import { useFrameInk, useWarResource, GemIcon, GoldText, SectionCard, WarCard, WarScreen, WarState, WarTabs } from "../primitives";
 
 const TABS = [
   { id: "rank", label: "Rank" },
@@ -19,30 +19,15 @@ const TABS = [
 export default function Results({ bossId }) {
   const skin = useRpgSkin();
   const ink = useFrameInk();
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
   const [tab, setTab] = useState("rank");
+  const { data, error } = useWarResource(() => warApi.getResults(bossId), [bossId], "Could not load results.");
 
-  useEffect(() => {
-    let cancelled = false;
-    warApi
-      .getResults(bossId)
-      .then((d) => !cancelled && setData(d))
-      .catch((err) => !cancelled && setError(err?.message || "Could not load results."));
-    return () => {
-      cancelled = true;
-    };
-  }, [bossId]);
-
-  const shown = data ? (tab === "rank" ? data.rewards.rank || data.reward : data.rewards[tab] || data.reward) : null;
+  const shown = data ? data.rewards[tab] || data.reward : null;
 
   return (
-    <div className="flex w-full flex-1 flex-col px-[16px] pb-[8px]">
-      <WarTitle>Results</WarTitle>
-      <div className="flex flex-col gap-[12px] px-[2px] pt-[8px]">
-        {error ? <StateLine>{error}</StateLine> : null}
-        {!data && !error ? <StateLine>LOADING...</StateLine> : null}
-        {data ? (
+    <WarScreen title="Results">
+      <WarState data={data} error={error} />
+      {data ? (
           <>
             <WarCard className="relative flex flex-col items-center gap-[6px] !px-[20px] text-center">
               {WAR_IMAGES.ui.crown ? (
@@ -73,9 +58,8 @@ export default function Results({ bossId }) {
                 {s.body}
               </SectionCard>
             ))}
-          </>
-        ) : null}
-      </div>
-    </div>
+        </>
+      ) : null}
+    </WarScreen>
   );
 }

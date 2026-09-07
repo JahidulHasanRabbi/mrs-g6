@@ -8,13 +8,16 @@
 // every data call goes through app/components/boss-war/bossWarApi.js.
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useUser } from "../contexts/UserContext";
-import { useTheme } from "../contexts/ThemeContext";
-import { THEME_IDS } from "../config/themes";
-import { lazySkins } from "../components/themes/skinRoute";
 import { useGameSessionPing, GAME_SESSION_IDS } from "../hooks/useGameSessionPing";
-import { RPG_DEFAULT_SKIN, RpgSkinProvider, useRpgSkin } from "../components/rpg/rpgSkin";
+import { useRpgSkin } from "../components/rpg/rpgSkin";
+import {
+  GameClosedOverlay,
+  GameLoadingGate,
+  RpgSkinShell,
+  useViewNavigation,
+} from "../components/rpg/gameShell";
 import { HamburgerMenu } from "../components/hamburger";
 import ScreenShell from "../components/rpg/ScreenShell";
 import NoticeModal from "../components/rpg/NoticeModal";
@@ -32,24 +35,6 @@ import BossInfo from "../components/boss-war/screens/BossInfo";
 
 const VALID_VIEWS = new Set(Object.values(WAR_VIEWS));
 
-// Same six skin chunks the Avatar game uses — the Boss War comps are drawn in
-// the same station chrome, and buildRpgSkin carries the `war` token block.
-const WAR_SKINS = lazySkins({
-  [THEME_IDS.ACEBET77]: () => import("../components/themes/acebet77/Acebet77RpgSkin"),
-  [THEME_IDS.UBETCLUB]: () => import("../components/themes/ubetclub/UbetclubRpgSkin"),
-  [THEME_IDS.EP369]: () => import("../components/themes/ep369/Ep369RpgSkin"),
-  [THEME_IDS.KGAME99]: () => import("../components/themes/kgame99/Kgame99RpgSkin"),
-  [THEME_IDS.LV918]: () => import("../components/themes/lv918/Lv918RpgSkin"),
-  [THEME_IDS.N1GANG]: () => import("../components/themes/n1gang/N1gangRpgSkin"),
-});
-
-function WarSkinShell({ children }) {
-  const { themeId } = useTheme();
-  const Skin = WAR_SKINS[themeId];
-  if (!Skin) return <RpgSkinProvider skin={RPG_DEFAULT_SKIN}>{children}</RpgSkinProvider>;
-  return <Skin>{children}</Skin>;
-}
-
 // Views that need a boss in the URL; without one they bounce to the list.
 const BOSS_VIEWS = new Set([WAR_VIEWS.BATTLE, WAR_VIEWS.RESULTS, WAR_VIEWS.LEADERBOARD]);
 
@@ -61,8 +46,6 @@ const bootCache = { memberUuid: null, status: null, ap: null };
 
 function BossWarInner() {
   const skin = useRpgSkin();
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
   const { authReady, memberUuid } = useUser();
   useGameSessionPing(GAME_SESSION_IDS.BOSS_WAR);
@@ -79,37 +62,24 @@ function BossWarInner() {
   const [notice, setNotice] = useState(null);
   const loadedRef = useRef(false);
 
-  const navigate = useCallback(
-    (nextView, extra, opts) => {
-      const params = new URLSearchParams();
-      if (nextView && nextView !== WAR_VIEWS.LIST) params.set("view", nextView);
-      if (extra) {
-        Object.entries(extra).forEach(([k, v]) => {
-          if (v != null) params.set(k, String(v));
-        });
-      }
-      const qs = params.toString();
-      const url = qs ? `${pathname}?${qs}` : pathname;
-      if (opts?.replace) router.replace(url, { scroll: false });
-      else router.push(url, { scroll: false });
-    },
-    [router, pathname],
-  );
+  const navigate = useViewNavigation(WAR_VIEWS.LIST);
 
   useEffect(() => {
     preloadWarAssets();
   }, []);
 
-  // One-shot initial load: game status + the member's Attack Points. Screens
-  // fetch their own data and push AP updates back up so the HUD stays live.
+  // One-shot initial load. Screens fetch their own data and push AP updates
+  // back up, so the balance stays live without a second request here.
   useEffect(() => {
     if (!authReady || loadedRef.current) return;
     loadedRef.current = true;
-    Promise.all([warApi.getGameStatus(), warApi.getAttackPoints()])
-      .then(([s, a]) => {
-        Object.assign(bootCache, { memberUuid, status: s, ap: a });
+    // Status only: the list and battle screens both return the AP balance with
+    // their own payload and push it up through onApUpdate.
+    warApi
+      .getGameStatus()
+      .then((s) => {
+        Object.assign(bootCache, { memberUuid, status: s });
         setStatus(s);
-        setAp(a);
       })
       .catch((err) => setLoadError(err?.message || "Could not load Boss War. Please try again."));
   }, [authReady, memberUuid]);
@@ -129,16 +99,7 @@ function BossWarInner() {
   const openInfo = useCallback(() => navigate(WAR_VIEWS.INFO), [navigate]);
 
   if (!status) {
-    return (
-      <div className="grid min-h-[100dvh] w-full place-items-center px-[32px]" style={{ background: skin.surface }}>
-        <p
-          className="text-center text-[14px] leading-[22px] tracking-[3px]"
-          style={{ color: skin.c.textDim, fontFamily: skin.war.font }}
-        >
-          {loadError || "LOADING..."}
-        </p>
-      </div>
-    );
+    return <GameLoadingGate skin={skin} message={loadError} font={skin.war.font} />;
   }
 
   const shared = { ap, onApUpdate: handleApUpdate, onNavigate: navigate, onNotice: showNotice, bossId };
@@ -168,21 +129,7 @@ function BossWarInner() {
         {view === WAR_VIEWS.INFO && <BossInfo {...shared} />}
       </ScreenShell>
 
-      {!status.open && (
-        <div className="fixed inset-0 z-30 grid place-items-center bg-black/70 px-6 backdrop-blur-md">
-          <div
-            className="w-full max-w-[360px] rounded-[16px] border border-white/15 px-6 py-7 text-center shadow-[0_16px_50px_rgba(0,0,0,0.45)]"
-            style={{ background: `${skin.surface}f2` }}
-          >
-            <p className="text-[20px] font-bold" style={{ color: skin.c.value, fontFamily: skin.war.font }}>
-              Boss War is currently closed
-            </p>
-            <p className="mt-3 text-[12px] leading-5" style={{ color: skin.c.textDim, fontFamily: skin.war.font }}>
-              Please check back later.
-            </p>
-          </div>
-        </div>
-      )}
+      {!status.open && <GameClosedOverlay skin={skin} title="Boss War is currently closed" font={skin.war.font} />}
 
       <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
       <NoticeModal
@@ -196,13 +143,13 @@ function BossWarInner() {
   );
 }
 
-// Skin shell outside the Suspense boundary on purpose — see app/avatar/page.js.
+// Skin shell outside the Suspense boundary on purpose — see gameShell.jsx.
 export default function BossWarPage() {
   return (
-    <WarSkinShell>
+    <RpgSkinShell>
       <Suspense fallback={null}>
         <BossWarInner />
       </Suspense>
-    </WarSkinShell>
+    </RpgSkinShell>
   );
 }

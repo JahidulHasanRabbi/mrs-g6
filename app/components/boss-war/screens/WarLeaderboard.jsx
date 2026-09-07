@@ -3,12 +3,12 @@
 // Damage leaderboard (Figma 2623:919 / :1126): Total Damage lists the top
 // rows; My Ranking windows the rows around the member with "(You)" marked.
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRpgSkin } from "../../rpg/rpgSkin";
 import { fmt } from "../constants";
 import * as warApi from "../bossWarApi";
 import { shortenMaskedName } from "../../leaderboard-new/format";
-import { useFrameInk, GemIcon, GoldText, RankBadge, StateLine, WarCard, WarTabs, WarTitle } from "../primitives";
+import { useFrameInk, useWarResource, GemIcon, GoldText, RankBadge, WarCard, WarScreen, WarState, WarTabs } from "../primitives";
 
 const TABS = [
   { id: "total", label: "Total Damage" },
@@ -41,7 +41,7 @@ function Row({ row }) {
         {TOP_GEM[row.rank] ? <GemIcon gem={TOP_GEM[row.rank]} size={14} /> : null}
       </div>
       <div className="flex flex-col items-end">
-        <span className="text-[7px] leading-[9px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>Total Damage</span>
+        <span className="text-[9px] leading-[11px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>Total Damage</span>
         <span className="text-[12px] font-bold leading-[14px]" style={{ color: ink.value, fontFamily: skin.war.font }}>{fmt(row.damage)}</span>
       </div>
     </WarCard>
@@ -49,20 +49,12 @@ function Row({ row }) {
 }
 
 export default function WarLeaderboard({ bossId }) {
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
   const [tab, setTab] = useState("total");
-
-  useEffect(() => {
-    let cancelled = false;
-    warApi
-      .getLeaderboard(bossId, { limit: 50 })
-      .then((d) => !cancelled && setData(d))
-      .catch((err) => !cancelled && setError(err?.message || "Could not load the leaderboard."));
-    return () => {
-      cancelled = true;
-    };
-  }, [bossId]);
+  const { data, error } = useWarResource(
+    () => warApi.getLeaderboard(bossId, { limit: 50 }),
+    [bossId],
+    "Could not load the leaderboard.",
+  );
 
   // The comp pins the member's own row below the top ten so they can always
   // see where they stand without switching tabs.
@@ -82,18 +74,17 @@ export default function WarLeaderboard({ bossId }) {
   }, [data, tab]);
 
   return (
-    <div className="flex w-full flex-1 flex-col px-[16px] pb-[8px]">
-      <WarTitle>Leaderboard</WarTitle>
-      <div className="flex flex-col gap-[8px] px-[2px] pt-[8px]">
-        <WarTabs tabs={TABS} active={tab} onChange={setTab} className="mb-[4px]" />
-        {error ? <StateLine>{error}</StateLine> : null}
-        {!data && !error ? <StateLine>LOADING...</StateLine> : null}
-        {data && !rows.length ? <StateLine>{tab === "me" ? "Attack the boss to enter the ranking." : "No damage recorded yet."}</StateLine> : null}
-        {rows.map((r) => (
-          <Row key={r.rank} row={r} />
-        ))}
-        {pinned ? <Row key={`me-${pinned.rank}`} row={pinned} /> : null}
-      </div>
-    </div>
+    <WarScreen title="Leaderboard" gap={8}>
+      <WarTabs tabs={TABS} active={tab} onChange={setTab} className="mb-[4px]" />
+      <WarState
+        data={data}
+        error={error}
+        empty={data && !rows.length ? (tab === "me" ? "Attack the boss to enter the ranking." : "No damage recorded yet.") : null}
+      />
+      {rows.map((r) => (
+        <Row key={r.rank} row={r} />
+      ))}
+      {pinned ? <Row key={`me-${pinned.rank}`} row={pinned} /> : null}
+    </WarScreen>
   );
 }

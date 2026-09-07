@@ -2,7 +2,6 @@
 
 // Attack history (Figma 2623:1471): TIME / BOSS / DAMAGE / CRIT / AP table.
 
-import { useEffect, useState } from "react";
 import { useRpgSkin } from "../../rpg/rpgSkin";
 import { fmt, WAR_VIEWS } from "../constants";
 import * as warApi from "../bossWarApi";
@@ -24,26 +23,12 @@ const COLS = "grid-cols-[58px_minmax(0,1fr)_54px_30px_18px]";
 export default function History({ onNavigate }) {
   const skin = useRpgSkin();
   const ink = useFrameInk();
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    warApi
-      .getHistory({ limit: 50 })
-      .then((d) => !cancelled && setData(d))
-      .catch((err) => !cancelled && setError(err?.message || "Could not load history."));
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const { data, error } = useWarResource(() => warApi.getHistory({ limit: 50 }), [], "Could not load history.");
 
   return (
-    <div className="flex w-full flex-1 flex-col px-[16px] pb-[8px]">
-      <WarTitle>History</WarTitle>
-      <div className="flex flex-col gap-[12px] px-[2px] pt-[8px]">
+    <WarScreen title="History">
         <WarCard spec={skin.war.table || skin.war.card} className="flex h-[440px] min-w-0 flex-col !px-[22px]">
-          <div className={`grid ${COLS} gap-[4px] border-b pb-[6px] text-[8px] tracking-[1px]`} style={{ color: ink.text, borderColor: skin.c.rule, fontFamily: skin.war.font }}>
+          <div className={`grid ${COLS} gap-[4px] border-b pb-[6px] pr-[12px] text-[9px] tracking-[0.6px]`} style={{ color: ink.text, borderColor: skin.c.rule, fontFamily: skin.war.font }}>
             <span>TIME</span>
             <span className="min-w-0 truncate">BOSS</span>
             <span className="text-right">DAMAGE</span>
@@ -52,14 +37,12 @@ export default function History({ onNavigate }) {
           </div>
           {/* Fixed height + inner scroll: the frame art was being stretched
               taller and taller as attacks accumulated. */}
-          <div className="scrollbar-theme min-h-0 flex-1 overflow-y-auto">
-          {error ? <StateLine>{error}</StateLine> : null}
-          {!data && !error ? <StateLine>LOADING...</StateLine> : null}
-          {data && !data.rows.length ? <StateLine>No attacks yet.</StateLine> : null}
+          <div className="scrollbar-theme min-h-0 flex-1 overflow-y-auto pr-[12px]">
+          <WarState data={data} error={error} empty={data && !data.rows.length ? "No attacks yet." : null} />
           {(data?.rows || []).map((r) => {
             const t = fmtTime(r.time);
             return (
-              <div key={r.id} className={`grid ${COLS} items-center gap-[4px] border-b py-[8px] text-[9px]`} style={{ borderColor: skin.c.rule, fontFamily: skin.war.font, color: ink.text }}>
+              <div key={r.id} className={`grid ${COLS} items-center gap-[4px] border-b py-[8px] text-[10px]`} style={{ borderColor: skin.c.rule, fontFamily: skin.war.font, color: ink.text }}>
                 <span className="flex flex-col leading-[11px]">
                   <span>{t.time}</span>
                   <span style={{ color: ink.meta }}>{t.date}</span>
@@ -74,7 +57,6 @@ export default function History({ onNavigate }) {
           </div>
         </WarCard>
         <WarButton className="mx-auto w-[190px]" onClick={() => onNavigate(WAR_VIEWS.REWARDS)}>View Rewards</WarButton>
-      </div>
-    </div>
+    </WarScreen>
   );
 }
