@@ -72,13 +72,14 @@ function BossStage({ boss, hit, defeated }) {
               <img src={WAR_IMAGES.ui.defeated} alt="Defeated" className="w-[80%] object-contain" draggable={false} />
             </motion.div>
           ) : null}
-          {/* Name plaque then the HP bar, both inside the frame as in the comps. */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-[27%] flex justify-center">
-            <WarButton variant="attack" size="md" className="w-[189px]">
+          {/* One stacked group pinned to the frame's foot — the name plaque, the
+              HP bar and the readout in flow, so they cannot overlap. */}
+          <div className="pointer-events-none absolute inset-x-[10%] bottom-[11%] flex flex-col items-center gap-[6px]">
+            <WarButton variant="attack" size="md" className="w-[189px] max-w-full">
               {boss.name.toUpperCase()}
             </WarButton>
+            <BossHp boss={boss} />
           </div>
-          <BossHp boss={boss} />
         </BossPortrait>
       </motion.div>
     </div>

@@ -21,8 +21,10 @@ const SKIN = buildRpgSkin(THEME_IDS.LV918, LV918_ASSETS, LV918_COLORS, {
     slotLabel: LV918_COLORS.inkMuted,
     slotEmpty: LV918_COLORS.inkSoft,
   },
+  // The tile art bakes its CTA pill in at [78, 91] % of height (measured).
   // Boss War frames — insets measured off public/assets/themes/lv918/war/*.
   war: {
+    earnTile: { frame: LV918_ASSETS.war.earnTile, ctaBand: [78, 91], inset: 13 },
     card: warFrame(LV918_ASSETS.war.cardFrame, 5, 5, 7, 5, [358, 160]),
     plaque: warFrame(LV918_ASSETS.war.plaque, 20, 12, 7, 11, [358, 213]),
     statCard: warFrame(LV918_ASSETS.war.statCard, 14, 9, 14, 9, [358, 96]),

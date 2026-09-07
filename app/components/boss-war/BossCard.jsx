@@ -13,11 +13,13 @@ export default function BossCard({ boss, onAttack }) {
   const available = boss.status === "active";
   const statusText = boss.status === "defeated" ? "Boss defeated" : boss.status === "upcoming" ? "Coming soon" : available ? "Boss room available!" : "Boss room closed";
 
+  // min-h, not h: the ornate border eats more of the box than the comp's 154px
+  // allows, and a fixed height clipped the ATTACK row.
   return (
-    <WarCard className="flex h-[154px] items-center gap-[4px] !p-0">
+    <WarCard className="flex min-h-[154px] items-stretch gap-[4px] !p-0">
       {/* Proportional, not a fixed 137px: on a 320px phone a fixed thumb
           starved the name column and truncated "Goblin King". */}
-      <div className="relative aspect-[137/139] w-[38%] shrink-0 overflow-hidden rounded-[10px]">
+      <div className="relative w-[38%] shrink-0 overflow-hidden rounded-[10px]">
         <img
           src={boss.art}
           alt={boss.name}
@@ -27,7 +29,8 @@ export default function BossCard({ boss, onAttack }) {
         />
       </div>
 
-      <div className="flex h-full min-w-0 flex-1 flex-col justify-center gap-[10px] pb-[13px] pl-[8px] pr-[16px] pt-[8px]">
+      {/* pt clears the frame's top-centre gem, which hangs below the border. */}
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-[6px] pb-[8px] pl-[8px] pr-[14px] pt-[16px]">
         <div className="flex items-start gap-[4px]">
           <div className="flex min-w-0 flex-1 flex-col gap-[4px]">
             <GoldText solid className="truncate text-[12px] font-bold uppercase leading-[20px] tracking-[0.12px]">{boss.name}</GoldText>

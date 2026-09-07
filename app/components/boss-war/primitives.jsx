@@ -279,17 +279,25 @@ export function TimerPlaque({ endsAt }) {
   const skin = useRpgSkin();
   const { label } = useCountdown(endsAt);
   const art = skin.war.timer;
-  return (
+  // The themed plaque art already has a clock at its left end, so the label
+  // is pushed past it. Without art we draw the clock and keep the pair
+  // together rather than throwing the time to the far edge.
+  return art ? (
     <div className="relative flex h-[50px] w-[139px] items-center justify-end pb-[10px] pl-[35px] pr-[12px] pt-[15px]">
-      {art ? (
-        <img src={art} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full object-fill" draggable={false} />
-      ) : (
-        <div className="pointer-events-none absolute inset-x-0 inset-y-[10px] rounded-full border" style={{ background: skin.c.inset, borderColor: skin.c.edgeSoft }} />
-      )}
-      {!art && WAR_IMAGES.ui.clock ? (
-        <img src={WAR_IMAGES.ui.clock} alt="" aria-hidden className="absolute left-[8px] top-1/2 size-[24px] -translate-y-1/2" />
-      ) : null}
+      <img src={art} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full object-fill" draggable={false} />
       <span className="relative z-10 whitespace-nowrap text-[12px] font-bold tabular-nums" style={{ color: skin.war.ink.text, fontFamily: skin.war.font }}>
+        {label}
+      </span>
+    </div>
+  ) : (
+    <div
+      className="relative flex h-[34px] items-center gap-[7px] rounded-full border px-[12px]"
+      style={{ background: skin.c.inset, borderColor: skin.c.edgeSoft }}
+    >
+      {WAR_IMAGES.ui.clock ? (
+        <img src={WAR_IMAGES.ui.clock} alt="" aria-hidden className="size-[20px] shrink-0 object-contain" draggable={false} />
+      ) : null}
+      <span className="whitespace-nowrap text-[12px] font-bold tabular-nums" style={{ color: skin.war.ink.text, fontFamily: skin.war.font }}>
         {label}
       </span>
     </div>
@@ -356,57 +364,88 @@ export function StatCell({ icon, label, value }) {
   );
 }
 
-/** The four "How to Earn Attack Points" tiles. A station's tile art is a
- *  portrait frame with a crown on top and a plaque along the bottom; the CTA
- *  text sits in that plaque, exactly as the comps draw it. */
+/** The four "How to Earn Attack Points" tiles.
+ *
+ *  A station's tile art is a portrait frame. acebet77, n1gang and lv918 bake a
+ *  CTA pill into the bottom of theirs (`earnTile.ctaBand`, measured off the
+ *  art) — the label rides that band. The rest get a drawn pill. Content sits
+ *  inside `earnTile.inset` so it never rides the frame's ornament. */
 export function EarnApTiles({ tiles, onAction, busyId }) {
   const skin = useRpgSkin();
-  const art = skin.war.earnTile.frame;
+  const spec = skin.war.earnTile;
+  const art = spec.frame;
   const ink = useFrameInk();
+  const band = spec.ctaBand;
+  const inset = spec.inset || 13;
+  // Content stops above the CTA, wherever that ends up.
+  const contentBottom = band ? 100 - band[0] + 2 : 26;
+
   return (
     <div className="flex w-full items-stretch justify-center gap-[6px]">
       {tiles.map((t) => {
         const disabled = busyId === t.id || (!t.href && t.claimable === false);
         const cta = busyId === t.id ? "..." : t.claimable === false && !t.href ? "Claimed" : t.cta;
-        if (art) {
+        if (!art) {
           return (
-            <button
+            <div
               key={t.id}
-              type="button"
-              onClick={() => onAction(t)}
-              disabled={disabled}
-              className="relative aspect-[3/5] min-w-0 flex-1 disabled:cursor-not-allowed"
-              style={{ opacity: disabled ? 0.7 : 1 }}
+              className="flex min-w-0 flex-1 flex-col items-center gap-[4px] rounded-[12px] border px-[2px] pb-[8px] pt-[6px]"
+              style={{ background: skin.c.inset, borderColor: skin.c.edgeSoft }}
             >
-              <img src={art} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full object-fill" draggable={false} />
-              <div className="absolute inset-x-0 top-[17%] flex justify-center">
-                <GoldText solid className="text-[9px] font-bold leading-[10px]">{t.label}</GoldText>
-              </div>
-              <img src={t.icon} alt="" aria-hidden className="absolute left-1/2 top-[30%] h-[32%] w-auto -translate-x-1/2 object-contain" draggable={false} />
-              <span className="absolute inset-x-0 top-[65%] text-center text-[7px] leading-[8px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
+              <GoldText solid className="text-[10px] font-bold">{t.label}</GoldText>
+              <img src={t.icon} alt="" aria-hidden className="size-[40px] object-contain" draggable={false} />
+              <span className="text-[8px] leading-[10px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
                 {t.sub}
               </span>
-              <div className="absolute inset-x-[14%] bottom-[7%] top-[76%] flex items-center justify-center">
-                <GoldText solid className="text-[9px] font-bold leading-none">{cta}</GoldText>
-              </div>
-            </button>
+              <WarButton size="sm" className="w-full max-w-[64px]" onClick={() => onAction(t)} disabled={disabled}>
+                {cta}
+              </WarButton>
+            </div>
           );
         }
         return (
-          <div
+          <button
             key={t.id}
-            className="flex min-w-0 flex-1 flex-col items-center gap-[4px] rounded-[12px] border px-[2px] pb-[8px] pt-[6px]"
-            style={{ background: skin.c.inset, borderColor: skin.c.edgeSoft }}
+            type="button"
+            onClick={() => onAction(t)}
+            disabled={disabled}
+            className="relative aspect-[3/5] min-w-0 flex-1 disabled:cursor-not-allowed"
+            style={{ opacity: disabled ? 0.72 : 1 }}
           >
-            <GoldText solid className="text-[10px] font-bold">{t.label}</GoldText>
-            <img src={t.icon} alt="" aria-hidden className="size-[40px] object-contain" draggable={false} />
-            <span className="text-[8px] leading-[10px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
-              {t.sub}
-            </span>
-            <WarButton size="sm" className="w-full max-w-[64px]" onClick={() => onAction(t)} disabled={disabled}>
-              {cta}
-            </WarButton>
-          </div>
+            <img src={art} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full object-fill" draggable={false} />
+            <div
+              className="absolute flex flex-col items-center justify-between"
+              style={{ left: `${inset}%`, right: `${inset}%`, top: "17%", bottom: `${contentBottom}%` }}
+            >
+              <GoldText solid className="text-[9px] font-bold leading-[11px]">{t.label}</GoldText>
+              <img src={t.icon} alt="" aria-hidden className="min-h-0 w-auto flex-1 object-contain py-[2px]" draggable={false} />
+              <span className="text-[7.5px] leading-[9px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
+                {t.sub}
+              </span>
+            </div>
+            {band ? (
+              <div
+                className="absolute flex items-center justify-center"
+                style={{ left: `${inset + 3}%`, right: `${inset + 3}%`, top: `${band[0]}%`, bottom: `${100 - band[1]}%` }}
+              >
+                <GoldText solid className="text-[9px] font-bold leading-none">{cta}</GoldText>
+              </div>
+            ) : (
+              <div
+                className="absolute flex items-center justify-center rounded-full border"
+                style={{
+                  left: `${inset + 1}%`,
+                  right: `${inset + 1}%`,
+                  bottom: "7%",
+                  height: "13%",
+                  background: skin.c.inset,
+                  borderColor: skin.c.edgeSoft,
+                }}
+              >
+                <GoldText solid className="text-[9px] font-bold leading-none">{cta}</GoldText>
+              </div>
+            )}
+          </button>
         );
       })}
     </div>
@@ -442,7 +481,7 @@ export function BossHp({ boss }) {
   // Deliberately `ink`, not the frame ink: this rides the boss art, not a panel.
   const ink = skin.war.ink;
   return (
-    <div className="pointer-events-none absolute inset-x-[11%] bottom-[13%] flex flex-col items-center gap-[3px]">
+    <div className="flex w-full flex-col items-center gap-[3px]">
       <HpBar pct={boss.hpPct} className="w-full" />
       <p className="text-[11px] leading-none" style={{ fontFamily: skin.war.font, color: ink.text, textShadow: "0 1px 3px rgba(0,0,0,0.9)" }}>
         <span style={{ color: ink.value }}>{fmt(boss.hp)}</span> / {fmt(boss.hpMax)}

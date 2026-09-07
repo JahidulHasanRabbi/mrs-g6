@@ -11,8 +11,10 @@ const SKIN = buildRpgSkin(THEME_IDS.ACEBET77, ACEBET_ASSETS, ACEBET_COLORS, {
   tile: { slice: "15.7% 12.6% 15.0% 12.4% fill" },
   // Comp 2450:1903 — warm brown bar rather than the theme's near-black dark.
   chrome: { bar: "radial-gradient(120% 160% at 50% 60%, #221e10 0%, #3e280a 100%)" },
+  // The tile art bakes its CTA pill in at [82, 93] % of height (measured).
   // Boss War frames — insets measured off public/assets/themes/acebet77/war/*.
   war: {
+    earnTile: { frame: ACEBET_ASSETS.war.earnTile, ctaBand: [82, 93], inset: 13 },
     card: warFrame(ACEBET_ASSETS.war.cardFrame, 14, 5, 9, 5, [358, 160]),
     plaque: warFrame(ACEBET_ASSETS.war.plaque, 22, 8, 12, 8, [358, 213]),
     statCard: warFrame(ACEBET_ASSETS.war.statCard, 14, 5, 9, 5, [358, 96]),
