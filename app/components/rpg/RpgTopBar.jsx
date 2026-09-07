@@ -8,7 +8,8 @@
 import { RPG_FONTS } from "./constants";
 import { useRpgSkin } from "./rpgSkin";
 
-export default function RpgTopBar({ onInfoClick, onMenuClick }) {
+// `title` lets sibling games (Boss War) reuse the bar with their own wordmark.
+export default function RpgTopBar({ onInfoClick, onMenuClick, title = "AVATAR", titleFont, titleClassName }) {
   const skin = useRpgSkin();
   const { chrome } = skin;
 
@@ -28,14 +29,14 @@ export default function RpgTopBar({ onInfoClick, onMenuClick }) {
         <div className="flex items-center gap-[10px]">
           {chrome.logoIcon && <img src={chrome.logoIcon} alt="" className="size-[18px]" />}
           <span
-            className="text-[24px] uppercase leading-none tracking-[-1.2px]"
+            className={titleClassName || "text-[24px] uppercase leading-none tracking-[-1.2px]"}
             style={{
               color: chrome.logoColor,
-              fontFamily: RPG_FONTS.logo,
+              fontFamily: titleFont || RPG_FONTS.logo,
               textShadow: chrome.logoShadow,
             }}
           >
-            AVATAR
+            {title}
           </span>
         </div>
       </div>

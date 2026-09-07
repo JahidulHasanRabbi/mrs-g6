@@ -18,6 +18,12 @@ import { RPG_COLORS, RPG_FONTS, RPG_GRADIENTS } from "./constants";
 import { RPG_IMAGES } from "./rpgAssets";
 import { getHeaderBalanceSkin } from "../header/headerBalanceAssets";
 import { THEME_IDS } from "../../config/themes";
+import { WAR_FONT } from "../boss-war/constants";
+
+// Boss War art shared by every skin (the comps reuse one chip / gem set).
+const WAR_SHARED = {
+  chip: "/assets/boss-war/ui/chip-boss-type.webp",
+};
 
 const SCRIPT_FONT = "var(--font-berkshire-swash), cursive";
 const SERIF_FONT = '"Times New Roman", serif';
@@ -136,6 +142,30 @@ const DEFAULT_SKIN = {
   },
   // Ink for copy sitting on a light panel interior; null = `c` unchanged.
   onPanel: null,
+  war: {
+    font: WAR_FONT,
+    titleGradient: `linear-gradient(180deg, #fff3cf 0%, ${RPG_COLORS.gold} 60%, ${RPG_COLORS.goldDeep} 100%)`,
+    titlePlaque: null,
+    card: { frame: null, slice: "18% 10% 16% 10% fill", width: "22px 18px 22px 18px", pad: "14px 16px 14px 16px" },
+    tab: { on: null, off: null },
+    chip: WAR_SHARED.chip,
+    timer: null,
+    attackBtn: null,
+    pill: null,
+    earnTile: { frame: null, slice: "15% 13% 15% 13% fill", width: "12px 10px 11px 10px", pad: "6px 2px 8px" },
+    plaque: { frame: null, slice: "24% 10% 16% 10% fill", width: "34px 20px 24px 20px", pad: "36px 18px 22px 18px" },
+    row: { frame: null, slice: "40% 8% 40% 8% fill", width: "18px 14px 18px 14px", pad: "4px 10px" },
+    hp: { track: "rgba(255,255,255,0.1)", border: RPG_COLORS.violetBorderStrong, fill: RPG_GRADIENTS.exp },
+    ink: {
+      name: RPG_COLORS.gold,
+      text: RPG_COLORS.text,
+      meta: RPG_COLORS.textDim,
+      value: RPG_COLORS.gold,
+      dmg: RPG_COLORS.goldDeep,
+      crit: "#59d827",
+      onPlaque: RPG_COLORS.text,
+    },
+  },
 };
 
 // `cOnPanel` is the ink a Panel's contents should use, and `panelSkin` is the
@@ -164,6 +194,7 @@ export function buildRpgSkin(themeId, ASSETS, COLORS, overrides = {}) {
   // Gold hairline at a given alpha — the station counterpart to the default
   // look's violet edges.
   const edge = (a) => `rgba(255,215,120,${a})`;
+  const W = ASSETS.war || {};
 
   const skin = {
     id: themeId,
@@ -286,6 +317,32 @@ export function buildRpgSkin(themeId, ASSETS, COLORS, overrides = {}) {
       labelMuted: COLORS.sand || COLORS.creamMuted || cream,
     },
     onPanel: null,
+    // Boss War dressing. A theme ships its own art under ASSETS.war; anything
+    // missing falls back to the panel / CTA art the RPG already uses.
+    war: {
+      font: WAR_FONT,
+      titleGradient: `linear-gradient(180deg, #fff3cf 0%, ${goldBright} 55%, ${gold} 100%)`,
+      titlePlaque: W.titlePlaque || null,
+      card: { frame: W.cardFrame || ASSETS.spin?.panel || null, slice: "18% 10% 16% 10% fill", width: "22px 18px 22px 18px", pad: "14px 16px 14px 16px" },
+      tab: { on: W.tabOn || null, off: W.tabOff || null },
+      chip: WAR_SHARED.chip,
+      timer: W.timerPlaque || null,
+      attackBtn: W.attackBtn || ASSETS.egg?.btnWide || ASSETS.spin?.btnPlay || null,
+      pill: W.pill || ASSETS.egg?.btnWide || ASSETS.spin?.btnPlay || null,
+      earnTile: { frame: W.earnTile || ASSETS.rpg?.tileFrame || null, slice: "15% 13% 15% 13% fill", width: "12px 10px 11px 10px", pad: "6px 2px 8px" },
+      plaque: { frame: W.plaque || W.cardFrame || ASSETS.spin?.panel || null, slice: "24% 10% 16% 10% fill", width: "34px 20px 24px 20px", pad: "36px 18px 22px 18px" },
+      row: { frame: W.rowFrame || null, slice: "40% 8% 40% 8% fill", width: "18px 14px 18px 14px", pad: "4px 10px" },
+      hp: { track: "rgba(45,45,45,0.75)", border: "#f2b229", fill: "linear-gradient(90deg, #fff0bf 0%, #f2b229 100%)" },
+      ink: {
+        name: goldBright,
+        text: "#fff2d4",
+        meta: "#bfa1ad",
+        value: "#f2b229",
+        dmg: "#ffae00",
+        crit: "#59d827",
+        onPlaque: cream,
+      },
+    },
   };
 
   return withPanelInk(deepMerge(skin, overrides));

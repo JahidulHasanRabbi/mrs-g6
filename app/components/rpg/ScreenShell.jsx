@@ -26,6 +26,13 @@ export default function ScreenShell({
   // the content flex to fit. Used by the battle screen so the ATTACK button
   // is always on-screen. Other screens keep min-height + normal scrolling.
   fit = false,
+  // Sibling games: top-bar wordmark, and nav tabs as links back into /avatar
+  // (`navLinkBase`) with an explicit highlighted tab (`navActiveTab`, null = none).
+  title,
+  titleFont,
+  titleClassName,
+  navLinkBase,
+  navActiveTab,
   children,
 }) {
   const skin = useRpgSkin();
@@ -55,7 +62,7 @@ export default function ScreenShell({
         </>
       )}
 
-      <RpgTopBar onInfoClick={onInfoClick} onMenuClick={onMenuClick} />
+      <RpgTopBar onInfoClick={onInfoClick} onMenuClick={onMenuClick} title={title} titleFont={titleFont} titleClassName={titleClassName} />
 
       {/* Content column between the fixed bars */}
       <div
@@ -76,7 +83,7 @@ export default function ScreenShell({
         </motion.div>
       </div>
 
-      <RpgNav view={view} onNavigate={onNavigate} />
+      <RpgNav view={view} onNavigate={onNavigate} linkBase={navLinkBase} activeTab={navActiveTab} />
     </div>
   );
 }

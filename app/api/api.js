@@ -106,6 +106,26 @@ export const ENDPOINTS = {
     MYSTERY_BOX_ITEM_ARCHIVE: (uuid) => `/avatar/mystery-box-items/${uuid}/archive/`,
     MYSTERY_BOX_PROBABILITY_TOTAL: '/avatar/mystery-box-items/probability-total/'
   },
+  // Phase 3 Boss War (spreadsheet "3c - War"). PLACEHOLDER PATHS: the backend
+  // is still in progress — rename here when the API documentation lands; the
+  // screens never see these (app/components/boss-war/bossWarApi.js adapts).
+  BOSS_WAR: {
+    GAME_STATUS: '/boss-war/game-status/',
+    SETTINGS: '/boss-war/settings/',
+    // Member — bosses
+    BOSSES: '/boss-war/member/bosses/',
+    BOSS: (uuid) => `/boss-war/member/bosses/${uuid}/`,
+    ATTACK: (uuid) => `/boss-war/member/bosses/${uuid}/attack/`,
+    RESULTS: (uuid) => `/boss-war/member/bosses/${uuid}/results/`,
+    LEADERBOARD: (uuid) => `/boss-war/member/bosses/${uuid}/leaderboard/`,
+    // Member — attack points
+    ATTACK_POINTS: '/boss-war/member/attack-points/',
+    EARN_RULES: '/boss-war/member/attack-points/earn-rules/',
+    CLAIM_AP: '/boss-war/member/attack-points/claim/',
+    // Member — rewards + history
+    REWARDS: '/boss-war/member/rewards/',
+    HISTORY: '/boss-war/member/attack-history/',
+  },
   ADMIN: {
     // Previous admin login API:
     // LOGIN: '/login/admin-access-token/',
