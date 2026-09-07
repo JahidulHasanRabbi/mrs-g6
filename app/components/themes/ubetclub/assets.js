@@ -119,6 +119,7 @@ export const UBET_ASSETS = {
     tableFrame: `${BASE}/war/card-frame.webp`,
     bossFrame: `${BASE}/war/boss-frame.webp`,
     tabOn: `${BASE}/war/tab-on.webp`,
+    tabOff: `${BASE}/war/tab-off.webp`,
     timerPlaque: `${BASE}/war/timer-plaque.webp`,
     attackBtn: `${BASE}/war/attack-btn.webp`,
     earnTile: `${BASE}/war/earn-tile.webp`,
