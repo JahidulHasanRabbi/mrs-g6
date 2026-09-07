@@ -8,22 +8,33 @@ import { useRpgSkin } from "../../rpg/rpgSkin";
 import { fmt } from "../constants";
 import * as warApi from "../bossWarApi";
 import { shortenMaskedName } from "../../leaderboard-new/format";
-import { GemIcon, GoldText, RankBadge, StateLine, WarCard, WarTabs, WarTitle } from "../primitives";
+import { useFrameInk, GemIcon, GoldText, RankBadge, StateLine, WarCard, WarTabs, WarTitle } from "../primitives";
 
 const TABS = [
   { id: "total", label: "Total Damage" },
   { id: "me", label: "My Ranking" },
 ];
 const TOP_GEM = { 1: "legendary", 2: "epic", 3: "premium" };
+const DEFAULT_AVATAR = "/assets/profile/profile-avatar.webp";
 
 function Row({ row }) {
   const skin = useRpgSkin();
-  const ink = skin.war.ink;
+  const ink = useFrameInk();
   return (
-    <WarCard spec={skin.war.row} className="flex h-[52px] items-center gap-[10px] !py-0">
+    <WarCard spec={skin.war.row} className="flex h-[52px] items-center gap-[8px] !py-0">
       <RankBadge rank={row.rank} />
+      {/* Portrait slot. `avatar` is whatever the API returns; until it does,
+          every row shows the shared placeholder the profile page uses. */}
+      <img
+        src={row.avatar || DEFAULT_AVATAR}
+        alt=""
+        aria-hidden
+        className="size-[34px] shrink-0 rounded-[6px] border object-cover"
+        style={{ borderColor: skin.c.edgeSoft, background: skin.c.inset }}
+        draggable={false}
+      />
       <div className="flex min-w-0 flex-1 items-center gap-[6px]">
-        <GoldText className="truncate text-[12px] font-bold">
+        <GoldText solid className="truncate text-[12px] font-bold">
           {shortenMaskedName(row.name)}
           {row.isMe ? " (You)" : ""}
         </GoldText>
@@ -53,6 +64,14 @@ export default function WarLeaderboard({ bossId }) {
     };
   }, [bossId]);
 
+  // The comp pins the member's own row below the top ten so they can always
+  // see where they stand without switching tabs.
+  const pinned = useMemo(() => {
+    if (!data?.me || tab !== "total") return null;
+    if (data.rows.slice(0, 10).some((r) => r.isMe)) return null;
+    return { ...data.me, isMe: true };
+  }, [data, tab]);
+
   const rows = useMemo(() => {
     if (!data) return [];
     if (tab === "total") return data.rows.slice(0, 10);
@@ -73,6 +92,7 @@ export default function WarLeaderboard({ bossId }) {
         {rows.map((r) => (
           <Row key={r.rank} row={r} />
         ))}
+        {pinned ? <Row key={`me-${pinned.rank}`} row={pinned} /> : null}
       </div>
     </div>
   );

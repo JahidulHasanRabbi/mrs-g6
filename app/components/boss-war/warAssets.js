@@ -16,7 +16,7 @@ export const WAR_IMAGES = {
     // crown / sword icons the same screens already ship.
     participants: "/assets/boss-war/ui/icon-crown.webp",
     damage: "/assets/boss-war/ui/icon-ap.webp",
-    total: "/assets/boss-war/gems/epic.webp",
+    total: "/assets/boss-war/gems/legendary.webp",
   },
   rank: {
     1: "/assets/boss-war/ui/rank-badge-1.webp",

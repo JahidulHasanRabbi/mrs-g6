@@ -33,8 +33,19 @@ function seed(now) {
     { id: "fire-dragon", hpMax: 1500000, hp: 1380000, participants: 842, totalDamage: 120000, myDamage: 0, endsAt: now + 5 * DAY + 3 * HOUR },
     { id: "ice-giant", hpMax: 5000000, hp: 4800000, participants: 311, totalDamage: 200000, myDamage: 0, endsAt: now + 6 * DAY + 11 * HOUR },
     { id: "titan-emperor", hpMax: 10000000, hp: 10000000, participants: 0, totalDamage: 0, myDamage: 0, endsAt: now + 12 * DAY },
+    { id: "shadow-demon", hpMax: 120000, hp: 96000, participants: 640, totalDamage: 812400, myDamage: 0, endsAt: now + 9 * HOUR },
   ].map((b) => ({ ...b, status: "active", startsAt: now - HOUR, defeatedAt: null, myRank: b.myDamage ? MY_RANK_SEED : null }));
-  return { ap: { current: 12, max: 20 }, bosses, history: [], claimed: {}, vipDamageBonus: 1.2, vipCritRate: 0.15 };
+  // Seeded so History and the Daily/Weekly/Event tabs all have something to
+  // show on a fresh session (the real API supplies these).
+  const history = Array.from({ length: 9 }, (_, i) => ({
+    id: `seed-${i}`,
+    at: new Date(now - (i + 1) * 7 * 60000).toISOString(),
+    bossId: "goblin-king",
+    damage: 300 + ((i * 137) % 420),
+    critical: i % 3 === 0,
+    ap: AP_PER_ATTACK,
+  }));
+  return { ap: { current: 12, max: 20 }, bosses, history, claimed: {}, vipDamageBonus: 1.2, vipCritRate: 0.15 };
 }
 
 function applyDebug(state) {

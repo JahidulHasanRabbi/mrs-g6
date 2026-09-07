@@ -16,10 +16,11 @@ import { WAR_IMAGES } from "../warAssets";
 import { useEarnActions } from "../useEarnActions";
 import BossCard from "../BossCard";
 import {
+  useFrameInk,
+  BossHp,
   BossPortrait,
   EarnApTiles,
   GoldText,
-  HpBar,
   InfoPlaque,
   StatCell,
   StateLine,
@@ -71,37 +72,31 @@ function BossStage({ boss, hit, defeated }) {
               <img src={WAR_IMAGES.ui.defeated} alt="Defeated" className="w-[80%] object-contain" draggable={false} />
             </motion.div>
           ) : null}
-          {/* Name plaque overlapping the frame's lower edge, as in the comps. */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-[8%] flex justify-center">
+          {/* Name plaque then the HP bar, both inside the frame as in the comps. */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-[27%] flex justify-center">
             <WarButton variant="attack" size="md" className="w-[189px]">
               {boss.name.toUpperCase()}
             </WarButton>
           </div>
+          <BossHp boss={boss} />
         </BossPortrait>
       </motion.div>
-
-      <div className="flex w-full flex-col items-center gap-[4px] px-[24px]">
-        <HpBar pct={boss.hpPct} className="w-full" />
-        <p className="text-[11px]" style={{ fontFamily: skin.war.font, color: ink.text }}>
-          <span style={{ color: ink.value }}>{fmt(boss.hp)}</span> / {fmt(boss.hpMax)}
-        </p>
-      </div>
     </div>
   );
 }
 
 function ApCard({ ap, onAttack, busy, disabled }) {
   const skin = useRpgSkin();
-  const ink = skin.war.ink;
+  const ink = useFrameInk();
   return (
-    <WarCard className="flex items-center justify-between !px-[26px] !py-[16px]">
+    <WarCard className="flex items-center justify-between !px-[20px]">
       <div className="flex flex-col gap-[4px]">
         <span className="text-[11px] font-bold" style={{ color: ink.meta, fontFamily: skin.war.font }}>
           Your Attack Points
         </span>
         <div className="flex items-end gap-[4px]">
           <img src={WAR_IMAGES.ui.ap} alt="" aria-hidden className="size-[25px] object-contain" draggable={false} />
-          <GoldText className="text-[24px] font-bold leading-[26px] tracking-[0.24px]">{ap?.current ?? 0}</GoldText>
+          <GoldText solid className="text-[24px] font-bold leading-[26px] tracking-[0.24px]">{ap?.current ?? 0}</GoldText>
           <span className="text-[15px] font-bold leading-[24px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
             / {ap?.max ?? 0}
           </span>
@@ -122,7 +117,7 @@ function ApCard({ ap, onAttack, busy, disabled }) {
 
 export default function BossBattle({ bossId, ap, onApUpdate, onNavigate, onNotice }) {
   const skin = useRpgSkin();
-  const ink = skin.war.ink;
+  const ink = useFrameInk();
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [lastAttack, setLastAttack] = useState(null);
@@ -182,11 +177,11 @@ export default function BossBattle({ bossId, ap, onApUpdate, onNavigate, onNotic
 
         {defeated ? (
           <>
-            <WarCard className="flex flex-col items-center gap-[6px] !px-[26px] !py-[14px]">
+            <WarCard className="flex flex-col items-center gap-[6px] !px-[20px]">
               <div className="flex w-full items-start justify-between">
                 <div className="flex flex-col gap-[4px]">
                   <span className="text-[11px] font-bold" style={{ color: ink.meta, fontFamily: skin.war.font }}>Final Rank</span>
-                  <GoldText className="text-[22px] font-bold leading-[24px]">
+                  <GoldText solid className="text-[22px] font-bold leading-[24px]">
                     {boss.myRank ? `#${boss.myRank}` : "—"}
                     {boss.myRank ? <span className="text-[12px]"> {ORDINAL(boss.myRank)}</span> : null}
                   </GoldText>
@@ -195,7 +190,7 @@ export default function BossBattle({ bossId, ap, onApUpdate, onNavigate, onNotic
                   <span className="text-[11px] font-bold" style={{ color: ink.meta, fontFamily: skin.war.font }}>Damage Done</span>
                   <div className="flex items-center gap-[4px]">
                     <img src={WAR_IMAGES.ui.ap} alt="" aria-hidden className="size-[22px] object-contain" />
-                    <GoldText className="text-[22px] font-bold leading-[24px]">{fmt(boss.myDamage)}</GoldText>
+                    <GoldText solid className="text-[22px] font-bold leading-[24px]">{fmt(boss.myDamage)}</GoldText>
                   </div>
                 </div>
               </div>
@@ -216,11 +211,11 @@ export default function BossBattle({ bossId, ap, onApUpdate, onNavigate, onNotic
           </>
         ) : lastAttack ? (
           <>
-            <WarCard className="flex flex-col items-center gap-[8px] !px-[26px] !py-[16px] text-center">
-              <GoldText className="text-[11px] font-bold">{lastAttack.critical ? "Critical Hit!" : "Hit!"}</GoldText>
+            <WarCard className="flex flex-col items-center gap-[6px] !px-[20px]">
+              <GoldText solid className="text-[11px] font-bold">{lastAttack.critical ? "Critical Hit!" : "Hit!"}</GoldText>
               <div className="flex items-end gap-[4px]">
                 <img src={WAR_IMAGES.ui.ap} alt="" aria-hidden className="size-[25px] object-contain" />
-                <GoldText className="text-[24px] font-bold leading-[26px] tracking-[0.24px]">{fmt(lastAttack.damage)}</GoldText>
+                <GoldText solid className="text-[24px] font-bold leading-[26px] tracking-[0.24px]">{fmt(lastAttack.damage)}</GoldText>
                 <span className="text-[14px] leading-[24px]" style={{ color: ink.dmg, fontFamily: skin.war.font }}>DMG</span>
                 <span className="ml-[8px] text-[15px] font-bold leading-[24px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
                   +{lastAttack.apUsed} AP used
@@ -238,8 +233,8 @@ export default function BossBattle({ bossId, ap, onApUpdate, onNavigate, onNotic
           </>
         ) : noAp ? (
           <>
-            <WarCard className="flex flex-col items-center gap-[8px] !px-[26px] !py-[18px] text-center">
-              <GoldText className="text-[14px] font-bold">0 ATTACK POINTS</GoldText>
+            <WarCard className="flex flex-col items-center gap-[8px] !px-[20px] text-center">
+              <GoldText solid className="text-[14px] font-bold">0 ATTACK POINTS</GoldText>
               <span className="text-[10px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
                 Earn Attack Points to continue fighting this boss.
               </span>
@@ -253,7 +248,7 @@ export default function BossBattle({ bossId, ap, onApUpdate, onNavigate, onNotic
           </>
         ) : (
           <>
-            <WarCard spec={skin.war.statCard || skin.war.card} className="flex items-start justify-between !px-[20px] !py-[14px]">
+            <WarCard spec={skin.war.statCard || skin.war.card} className="flex items-start justify-between !px-[14px]">
               <StatCell icon={WAR_IMAGES.ui.participants} label="Participants" value={boss.participants} />
               <StatCell icon={WAR_IMAGES.ui.damage} label="My Damage" value={boss.myDamage} />
               <StatCell icon={WAR_IMAGES.ui.total} label="Total Damage" value={boss.totalDamage} />

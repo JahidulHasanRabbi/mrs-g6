@@ -38,13 +38,34 @@ export function useCountdown(endsAt) {
   return { ...left, label };
 }
 
+/** Ink for copy sitting on a frame interior — the same on every skin except
+ *  those whose frames are light inside (kgame99). */
+export function useFrameInk() {
+  const skin = useRpgSkin();
+  return skin.war.inkFrame || skin.war.ink;
+}
+
 // ---------------------------------------------------------------------------
 // Text
 // ---------------------------------------------------------------------------
 
-/** Gold gradient-filled text (the comps paint titles with an image fill). */
-export function GoldText({ children, className = "", style, as: Tag = "span" }) {
+/** Gold gradient-filled text (the comps paint titles with an image fill).
+ *  `solid` is for copy sitting on a light frame interior — kgame99's sky-blue
+ *  panels make the gold gradient nearly unreadable, so those skins supply a
+ *  dark ink instead (same call the leaderboard's --lb-heading makes). */
+export function GoldText({ children, className = "", style, as: Tag = "span", solid = false }) {
   const skin = useRpgSkin();
+  const ink = solid ? skin.war.frameInkSolid : null;
+  if (ink) {
+    return (
+      <Tag
+        className={className}
+        style={{ color: ink, fontFamily: skin.war.font, textShadow: "0 1px 1px rgba(255,255,255,0.35)", ...style }}
+      >
+        {children}
+      </Tag>
+    );
+  }
   return (
     <Tag
       className={className}
@@ -55,6 +76,12 @@ export function GoldText({ children, className = "", style, as: Tag = "span" }) 
         color: "transparent",
         fontFamily: skin.war.font,
         filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.6))",
+        // The gradient is clipped to the background box, so a descender that
+        // hangs below a tight line-height (the comps set 28px on 32px text)
+        // would simply vanish. Grow the box, cancel it in the layout.
+        display: "inline-block",
+        paddingBottom: "0.18em",
+        marginBottom: "-0.18em",
         ...style,
       }}
     >
@@ -115,17 +142,18 @@ export function WarCard({ children, className = "", style, spec }) {
 /** Crowned wide plaque ("How to Earn Attack Points", "How to Earn Rewards"). */
 export function InfoPlaque({ title, lines = [], children, className = "" }) {
   const skin = useRpgSkin();
+  const fi = useFrameInk();
   const s = skin.war.plaque;
   return (
     <WarCard spec={s} className={`flex flex-col items-center gap-[10px] text-center ${className}`}>
       {!s.frame && WAR_IMAGES.ui.crown ? (
         <img src={WAR_IMAGES.ui.crown} alt="" aria-hidden className="pointer-events-none absolute -top-[18px] left-1/2 h-[34px] w-auto -translate-x-1/2" />
       ) : null}
-      {title ? <GoldText className="text-[14px] font-bold">{title}</GoldText> : null}
+      {title ? <GoldText solid className="text-[14px] font-bold">{title}</GoldText> : null}
       {lines.length ? (
         <div className="flex flex-col gap-[2px]">
           {lines.map((l) => (
-            <p key={l} className="text-[10px] leading-[14px]" style={{ color: skin.war.ink.meta, fontFamily: skin.war.font }}>
+            <p key={l} className="text-[10px] leading-[14px]" style={{ color: fi.meta, fontFamily: skin.war.font }}>
               {l}
             </p>
           ))}
@@ -176,11 +204,14 @@ export function WarTabs({ tabs, active, onChange, className = "" }) {
                 alt=""
                 aria-hidden
                 className="pointer-events-none absolute inset-0 size-full object-fill"
-                style={dimmed ? { filter: "brightness(0.55) saturate(0.7)" } : undefined}
+                style={dimmed ? { filter: "brightness(0.42) saturate(0.55)" } : undefined}
                 draggable={false}
               />
             ) : null}
-            <GoldText className="relative z-10 whitespace-nowrap text-[13px] font-bold leading-[12px]" style={isOn ? undefined : { opacity: 0.8 }}>
+            <GoldText
+              className="relative z-10 whitespace-nowrap text-[13px] font-bold leading-[12px]"
+              style={isOn ? { filter: "drop-shadow(0 0 6px rgba(255,214,120,0.55))" } : { opacity: 0.62 }}
+            >
               {t.label}
             </GoldText>
           </button>
@@ -215,7 +246,13 @@ export function WarButton({ children, onClick, disabled, variant = "pill", class
       }
     >
       {art ? <img src={art} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full object-fill" draggable={false} /> : null}
-      <GoldText className={`relative z-10 whitespace-nowrap font-bold ${text}`}>{children}</GoldText>
+      <GoldText
+        solid
+        className={`relative z-10 whitespace-nowrap font-bold ${text}`}
+        style={variant === "attack" && skin.war.attackLabelBias ? { marginTop: `${skin.war.attackLabelBias * 100}%` } : undefined}
+      >
+        {children}
+      </GoldText>
     </motion.button>
   );
 }
@@ -292,7 +329,7 @@ export function RankBadge({ rank, size = 34 }) {
         className="absolute inset-0 flex items-center justify-center pb-[2px] text-[11px] font-bold text-white"
         style={{ fontFamily: skin.war.font, textShadow: "0 1px 2px rgba(0,0,0,0.8)" }}
       >
-        {rank > 3 ? `#${rank}` : rank}
+        {rank}
       </span>
     </div>
   );
@@ -301,14 +338,18 @@ export function RankBadge({ rank, size = 34 }) {
 /** Stat column: icon over label over value (Participants / My Damage / Total Damage). */
 export function StatCell({ icon, label, value }) {
   const skin = useRpgSkin();
+  const fi = skin.war.inkFrame || skin.war.ink;
+  const onFrame = fi.text;
+  const onFrameValue = fi.value;
+  const shadow = skin.war.inkFrame ? "0 1px 1px rgba(255,255,255,0.35)" : "0 1px 2px rgba(0,0,0,0.75)";
   return (
     <div className="flex min-w-0 flex-1 flex-col items-center gap-[4px]">
       {icon ? <img src={icon} alt="" aria-hidden className="size-[28px] object-contain" draggable={false} /> : null}
       {/* Some stat plaques (kgame99) have a light sky interior; the shadow keeps the ink legible on both. */}
-      <span className="text-[9px] leading-[10px]" style={{ color: skin.war.ink.meta, fontFamily: skin.war.font, textShadow: "0 1px 2px rgba(0,0,0,0.75)" }}>
+      <span className="text-[9px] leading-[10px]" style={{ color: onFrame, fontFamily: skin.war.font, textShadow: shadow }}>
         {label}
       </span>
-      <span className="text-[15px] font-bold leading-[18px]" style={{ color: skin.war.ink.value, fontFamily: skin.war.font, textShadow: "0 1px 2px rgba(0,0,0,0.75)" }}>
+      <span className="text-[15px] font-bold leading-[18px]" style={{ color: onFrameValue, fontFamily: skin.war.font, textShadow: shadow }}>
         {typeof value === "number" ? fmt(value) : value}
       </span>
     </div>
@@ -321,7 +362,7 @@ export function StatCell({ icon, label, value }) {
 export function EarnApTiles({ tiles, onAction, busyId }) {
   const skin = useRpgSkin();
   const art = skin.war.earnTile.frame;
-  const ink = skin.war.ink;
+  const ink = useFrameInk();
   return (
     <div className="flex w-full items-stretch justify-center gap-[6px]">
       {tiles.map((t) => {
@@ -339,14 +380,14 @@ export function EarnApTiles({ tiles, onAction, busyId }) {
             >
               <img src={art} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full object-fill" draggable={false} />
               <div className="absolute inset-x-0 top-[17%] flex justify-center">
-                <GoldText className="text-[9px] font-bold leading-[10px]">{t.label}</GoldText>
+                <GoldText solid className="text-[9px] font-bold leading-[10px]">{t.label}</GoldText>
               </div>
               <img src={t.icon} alt="" aria-hidden className="absolute left-1/2 top-[30%] h-[32%] w-auto -translate-x-1/2 object-contain" draggable={false} />
               <span className="absolute inset-x-0 top-[65%] text-center text-[7px] leading-[8px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
                 {t.sub}
               </span>
               <div className="absolute inset-x-[14%] bottom-[7%] top-[76%] flex items-center justify-center">
-                <GoldText className="text-[9px] font-bold leading-none">{cta}</GoldText>
+                <GoldText solid className="text-[9px] font-bold leading-none">{cta}</GoldText>
               </div>
             </button>
           );
@@ -357,7 +398,7 @@ export function EarnApTiles({ tiles, onAction, busyId }) {
             className="flex min-w-0 flex-1 flex-col items-center gap-[4px] rounded-[12px] border px-[2px] pb-[8px] pt-[6px]"
             style={{ background: skin.c.inset, borderColor: skin.c.edgeSoft }}
           >
-            <GoldText className="text-[10px] font-bold">{t.label}</GoldText>
+            <GoldText solid className="text-[10px] font-bold">{t.label}</GoldText>
             <img src={t.icon} alt="" aria-hidden className="size-[40px] object-contain" draggable={false} />
             <span className="text-[8px] leading-[10px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
               {t.sub}
@@ -379,10 +420,12 @@ export function BossPortrait({ boss, dim = false, className = "", children }) {
   return (
     <div className={`relative w-full overflow-hidden ${frame ? "aspect-[354/289]" : "h-[220px] rounded-[12px]"} ${className}`}>
       <div className={`absolute ${frame ? "inset-[6%] rounded-[6px]" : "inset-0"} overflow-hidden`} style={{ background: "rgba(0,0,0,0.55)" }}>
+        {/* Sized as the comp does (2634:2382): ~87% of the opening's width,
+            natural height, overflowing the opening top and bottom. */}
         <img
           src={boss.art}
           alt={boss.name}
-          className="absolute inset-0 size-full object-contain object-bottom"
+          className="absolute left-1/2 top-[-4%] h-auto w-[87%] max-w-none -translate-x-1/2"
           style={{ filter: dim ? "grayscale(0.85) brightness(0.55)" : "none" }}
           draggable={false}
         />
@@ -393,20 +436,36 @@ export function BossPortrait({ boss, dim = false, className = "", children }) {
   );
 }
 
+/** Boss HP bar + readout, laid over the bottom of the portrait as in the comps. */
+export function BossHp({ boss }) {
+  const skin = useRpgSkin();
+  // Deliberately `ink`, not the frame ink: this rides the boss art, not a panel.
+  const ink = skin.war.ink;
+  return (
+    <div className="pointer-events-none absolute inset-x-[11%] bottom-[13%] flex flex-col items-center gap-[3px]">
+      <HpBar pct={boss.hpPct} className="w-full" />
+      <p className="text-[11px] leading-none" style={{ fontFamily: skin.war.font, color: ink.text, textShadow: "0 1px 3px rgba(0,0,0,0.9)" }}>
+        <span style={{ color: ink.value }}>{fmt(boss.hp)}</span> / {fmt(boss.hpMax)}
+      </p>
+    </div>
+  );
+}
+
 /** Labeled section block (Boss Info / How to Earn). */
 export function SectionCard({ label, title, children, className = "", action }) {
   const skin = useRpgSkin();
+  const fi = useFrameInk();
   return (
     <WarCard className={`flex flex-col gap-[4px] ${className}`}>
       {label ? (
-        <span className="text-[9px] font-bold tracking-[1px]" style={{ color: skin.war.ink.meta, fontFamily: skin.war.font }}>
+        <span className="text-[9px] font-bold tracking-[1px]" style={{ color: fi.meta, fontFamily: skin.war.font }}>
           {label}
         </span>
       ) : null}
       <div className="flex items-start justify-between gap-[10px]">
         <div className="flex min-w-0 flex-1 flex-col gap-[4px]">
-          {title ? <GoldText className="text-[12px] font-bold">{title}</GoldText> : null}
-          <div className="text-[10px] leading-[15px]" style={{ color: skin.war.ink.text, fontFamily: skin.war.font }}>
+          {title ? <GoldText solid className="text-[12px] font-bold">{title}</GoldText> : null}
+          <div className="text-[10px] leading-[15px]" style={{ color: fi.text, fontFamily: skin.war.font }}>
             {children}
           </div>
         </div>

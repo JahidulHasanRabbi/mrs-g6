@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { useRpgSkin } from "../../rpg/rpgSkin";
 import { HOW_TO_EARN_NOTE, WAR_VIEWS } from "../constants";
 import * as warApi from "../bossWarApi";
-import { GemIcon, GoldText, InfoPlaque, StateLine, WarButton, WarCard, WarTabs, WarTitle } from "../primitives";
+import { useFrameInk, GemIcon, GoldText, InfoPlaque, StateLine, WarButton, WarCard, WarTabs, WarTitle } from "../primitives";
 
 const TABS = [
   { id: "rank", label: "Rank" },
@@ -17,14 +17,14 @@ const TABS = [
 
 function TierRow({ tier }) {
   const skin = useRpgSkin();
-  const ink = skin.war.ink;
+  const ink = useFrameInk();
   return (
     <WarCard spec={skin.war.row} className="flex h-[58px] items-center gap-[12px] !py-0">
       <span className="w-[54px] shrink-0 text-center text-[11px] font-bold" style={{ color: ink.text, fontFamily: skin.war.font }}>
         {tier.rank}
       </span>
       <div className="flex min-w-0 flex-1 flex-col">
-        <GoldText className="truncate text-[13px] font-bold">{tier.name}</GoldText>
+        <GoldText solid className="truncate text-[13px] font-bold">{tier.name}</GoldText>
         <span className="truncate text-[9px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>{tier.desc}</span>
       </div>
       <div className="flex h-[44px] w-[40px] shrink-0 flex-col items-center justify-center rounded-[6px] border" style={{ background: skin.c.inset, borderColor: skin.c.edgeSoft }}>

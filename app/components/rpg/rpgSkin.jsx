@@ -34,15 +34,20 @@ const SERIF_FONT = '"Times New Roman", serif';
  * (percent of the image, T R B L) and the box it usually renders in. The
  * rendered border is the inset scaled to that box; padding clears it.
  */
-export function warFrame(frame, t, r, b, l, box = [358, 160], extra = 4) {
+export function warFrame(frame, t, r, b, l, box = [358, 160], opts = {}) {
+  const { extra = 4, cap = 30 } = opts;
   const [w, h] = box;
-  const px = (pct, dim) => Math.max(4, Math.round((pct / 100) * dim));
+  // The rendered border is capped: a crown or gem crest can be 45% of its
+  // artwork, and reserving that verbatim leaves the card mostly empty.
+  const px = (pct, dim) => Math.min(cap, Math.max(4, Math.round((pct / 100) * dim)));
   const wt = px(t, h), wr = px(r, w), wb = px(b, h), wl = px(l, w);
   return {
     frame,
     slice: `${t}% ${r}% ${b}% ${l}% fill`,
     width: `${wt}px ${wr}px ${wb}px ${wl}px`,
-    pad: `${wt + extra}px ${wr + extra}px ${wb + extra}px ${wl + extra}px`,
+    // border-width already holds the content clear of the ornament, so padding
+    // is breathing room only — adding the inset again doubled every card.
+    pad: `${extra}px`,
   };
 }
 
@@ -173,6 +178,9 @@ const DEFAULT_SKIN = {
     chip: WAR_SHARED.chip,
     timer: null,
     attackBtn: null,
+    attackLabelBias: 0,
+    frameInkSolid: null,
+    inkFrame: null,
     pill: null,
     earnTile: { frame: null },
     plaque: { frame: null, slice: "24% 10% 16% 10% fill", width: "34px 20px 24px 20px", pad: "36px 18px 22px 18px" },
@@ -358,6 +366,14 @@ export function buildRpgSkin(themeId, ASSETS, COLORS, overrides = {}) {
       // The comps reuse the header plaque as the ATTACK button and the active
       // tab pill as the wide Rewards / Rankings buttons.
       attackBtn: W.attackBtn || W.titlePlaque || ASSETS.egg?.btnWide || ASSETS.spin?.btnPlay || null,
+      // Falling back to the header plaque means a crown occupies the top
+      // third, so the label drops to sit in the opening (comp 2634:2423).
+      attackLabelBias: W.attackBtn ? 0 : 0.14,
+      // Both set by a skin whose frame interiors are light: `frameInkSolid`
+      // replaces the gold gradient, `inkFrame` the label/value colours.
+      // `ink` stays light — the timer plaque and boss art are still dark.
+      frameInkSolid: null,
+      inkFrame: null,
       pill: W.pill || W.tabOn || ASSETS.egg?.btnWide || ASSETS.spin?.btnPlay || null,
       // Fixed-aspect tile art, stretched like the comps (CTA sits in its bottom band).
       earnTile: { frame: W.earnTile || null },

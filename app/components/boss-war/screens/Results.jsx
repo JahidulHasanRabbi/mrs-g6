@@ -8,7 +8,7 @@ import { useRpgSkin } from "../../rpg/rpgSkin";
 import { fmt, ORDINAL, REWARD_CALC_SECTIONS } from "../constants";
 import * as warApi from "../bossWarApi";
 import { WAR_IMAGES } from "../warAssets";
-import { GemIcon, GoldText, SectionCard, StateLine, WarCard, WarTabs, WarTitle } from "../primitives";
+import { useFrameInk, GemIcon, GoldText, SectionCard, StateLine, WarCard, WarTabs, WarTitle } from "../primitives";
 
 const TABS = [
   { id: "rank", label: "Rank" },
@@ -18,7 +18,7 @@ const TABS = [
 
 export default function Results({ bossId }) {
   const skin = useRpgSkin();
-  const ink = skin.war.ink;
+  const ink = useFrameInk();
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [tab, setTab] = useState("rank");
@@ -44,12 +44,12 @@ export default function Results({ bossId }) {
         {!data && !error ? <StateLine>LOADING...</StateLine> : null}
         {data ? (
           <>
-            <WarCard className="relative flex flex-col items-center gap-[6px] !px-[24px] !pb-[20px] !pt-[26px] text-center">
+            <WarCard className="relative flex flex-col items-center gap-[6px] !px-[20px] text-center">
               {WAR_IMAGES.ui.crown ? (
                 <img src={WAR_IMAGES.ui.crown} alt="" aria-hidden className="pointer-events-none absolute -top-[16px] left-1/2 h-[34px] -translate-x-1/2 object-contain" />
               ) : null}
               <span className="text-[10px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>Your Rank</span>
-              <GoldText className="text-[26px] font-bold leading-[28px]">
+              <GoldText solid className="text-[26px] font-bold leading-[28px]">
                 {data.rank ? `#${data.rank}` : "—"}
                 {data.rank ? <span className="text-[12px]"> {ORDINAL(data.rank)}</span> : null}
               </GoldText>
@@ -59,7 +59,7 @@ export default function Results({ bossId }) {
               <div className="mt-[6px] flex size-[64px] items-center justify-center rounded-[10px] border" style={{ background: skin.c.inset, borderColor: skin.c.edgeSoft }}>
                 <GemIcon gem={shown?.gem || data.reward.gem} size={44} />
               </div>
-              <GoldText className="mt-[4px] text-[16px] font-bold">{shown?.name || data.reward.name}</GoldText>
+              <GoldText solid className="mt-[4px] text-[16px] font-bold">{shown?.name || data.reward.name}</GoldText>
               <span className="text-[10px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
                 {data.calculating ? "Rewards are currently being calculated" : shown?.desc || data.reward.desc}
               </span>

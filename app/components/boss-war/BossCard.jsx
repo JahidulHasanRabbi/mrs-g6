@@ -5,17 +5,19 @@
 
 import { useRpgSkin } from "../rpg/rpgSkin";
 import { fmt } from "./constants";
-import { GemIcon, GoldText, HpBar, WarButton, WarCard } from "./primitives";
+import { useFrameInk, GemIcon, GoldText, HpBar, WarButton, WarCard } from "./primitives";
 
 export default function BossCard({ boss, onAttack }) {
   const skin = useRpgSkin();
-  const ink = skin.war.ink;
+  const ink = useFrameInk();
   const available = boss.status === "active";
   const statusText = boss.status === "defeated" ? "Boss defeated" : boss.status === "upcoming" ? "Coming soon" : available ? "Boss room available!" : "Boss room closed";
 
   return (
     <WarCard className="flex h-[154px] items-center gap-[4px] !p-0">
-      <div className="relative h-[139px] w-[137px] shrink-0 overflow-hidden rounded-[10px]">
+      {/* Proportional, not a fixed 137px: on a 320px phone a fixed thumb
+          starved the name column and truncated "Goblin King". */}
+      <div className="relative aspect-[137/139] w-[38%] shrink-0 overflow-hidden rounded-[10px]">
         <img
           src={boss.art}
           alt={boss.name}
@@ -28,7 +30,7 @@ export default function BossCard({ boss, onAttack }) {
       <div className="flex h-full min-w-0 flex-1 flex-col justify-center gap-[10px] pb-[13px] pl-[8px] pr-[16px] pt-[8px]">
         <div className="flex items-start gap-[4px]">
           <div className="flex min-w-0 flex-1 flex-col gap-[4px]">
-            <GoldText className="truncate text-[12px] font-bold uppercase leading-[20px] tracking-[0.12px]">{boss.name}</GoldText>
+            <GoldText solid className="truncate text-[12px] font-bold uppercase leading-[20px] tracking-[0.12px]">{boss.name}</GoldText>
             <span className="text-[10px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
               {boss.typeLabel}
             </span>
@@ -57,7 +59,7 @@ export default function BossCard({ boss, onAttack }) {
         <div className="flex items-center gap-[4px]">
           <div className="flex min-w-0 flex-1 items-center justify-end gap-[3px]">
             <span className="size-[4px] shrink-0 rounded-full" style={{ background: available ? ink.crit : ink.meta }} />
-            <span className="truncate text-[8px] leading-[10px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
+            <span className="whitespace-nowrap text-[7.5px] leading-[10px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
               {statusText}
             </span>
           </div>

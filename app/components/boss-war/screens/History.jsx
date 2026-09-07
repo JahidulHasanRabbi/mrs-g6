@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useRpgSkin } from "../../rpg/rpgSkin";
 import { fmt, WAR_VIEWS } from "../constants";
 import * as warApi from "../bossWarApi";
-import { StateLine, WarButton, WarCard, WarTitle } from "../primitives";
+import { useFrameInk, StateLine, WarButton, WarCard, WarTitle } from "../primitives";
 
 // Project rule: dd/mm/yyyy HH:MM AM|PM (en-GB). The table is narrow, so the
 // date and time stack on two lines.
@@ -19,11 +19,11 @@ function fmtTime(iso) {
   };
 }
 
-const COLS = "grid-cols-[1.3fr_1.3fr_1fr_0.6fr_0.4fr]";
+const COLS = "grid-cols-[58px_minmax(0,1fr)_54px_30px_18px]";
 
 export default function History({ onNavigate }) {
   const skin = useRpgSkin();
-  const ink = skin.war.ink;
+  const ink = useFrameInk();
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
 
@@ -42,10 +42,10 @@ export default function History({ onNavigate }) {
     <div className="flex w-full flex-1 flex-col px-[16px] pb-[8px]">
       <WarTitle>History</WarTitle>
       <div className="flex flex-col gap-[12px] px-[2px] pt-[8px]">
-        <WarCard spec={skin.war.table || skin.war.card} className="flex min-h-[420px] flex-col !px-[18px] !py-[18px]">
-          <div className={`grid ${COLS} gap-[4px] border-b pb-[6px] text-[8px] tracking-[1px]`} style={{ color: ink.meta, borderColor: skin.c.rule, fontFamily: skin.war.font }}>
+        <WarCard spec={skin.war.table || skin.war.card} className="flex min-h-[420px] min-w-0 flex-col !px-[12px]">
+          <div className={`grid ${COLS} gap-[4px] border-b pb-[6px] text-[8px] tracking-[1px]`} style={{ color: ink.text, borderColor: skin.c.rule, fontFamily: skin.war.font }}>
             <span>TIME</span>
-            <span>BOSS</span>
+            <span className="min-w-0 truncate">BOSS</span>
             <span className="text-right">DAMAGE</span>
             <span className="text-center">CRIT</span>
             <span className="text-right">AP</span>
@@ -61,7 +61,7 @@ export default function History({ onNavigate }) {
                   <span>{t.time}</span>
                   <span style={{ color: ink.meta }}>{t.date}</span>
                 </span>
-                <span className="truncate">{r.bossName}</span>
+                <span className="min-w-0 truncate">{r.bossName}</span>
                 <span className="text-right font-bold" style={{ color: ink.value }}>{fmt(r.damage)}</span>
                 <span className="text-center font-bold" style={{ color: r.critical ? ink.crit : ink.meta }}>{r.critical ? "Yes" : "No"}</span>
                 <span className="text-right">{r.ap}</span>

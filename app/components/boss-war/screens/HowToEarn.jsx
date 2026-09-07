@@ -5,15 +5,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useRpgSkin } from "../../rpg/rpgSkin";
 import { DEFAULT_DEPOSIT_AP, DEFAULT_FREE_AP } from "../constants";
 import * as warApi from "../bossWarApi";
 import { stationDepositUrl, useEarnActions } from "../useEarnActions";
-import { EarnApTiles, InfoPlaque, SectionCard, WarButton, WarTitle } from "../primitives";
+import { EarnApTiles, InfoPlaque, SectionCard, WarButton, WarTitle, useFrameInk } from "../primitives";
 
 export default function HowToEarn({ onApUpdate, onNotice }) {
-  const skin = useRpgSkin();
-  const ink = skin.war.ink;
+  const ink = useFrameInk();
   const router = useRouter();
   const [rules, setRules] = useState({ deposit: DEFAULT_DEPOSIT_AP, free: DEFAULT_FREE_AP, miniGames: "" });
   const earn = useEarnActions({ onApUpdate, onNotice });
