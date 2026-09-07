@@ -339,6 +339,7 @@ export const ENDPOINTS = {
     // Retention Alert System
     PRIORITY_SUMMARY: '/crm-members/priority-summary/',
     REFRESH_MEMBERS: '/crm-members/refresh-members/',
+    GENERATE_DAILY_PRIORITIES: '/crm-members/generate-daily-priorities/',
     // Error Transaction Management
     ERROR_TRANSACTIONS: '/crm-members/error-transactions/',
     ERROR_TRANSACTION_CLEAR: '/crm-members/error-transactions/clear-error/',

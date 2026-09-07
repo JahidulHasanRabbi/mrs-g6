@@ -27,8 +27,8 @@ const COLUMNS = [
   { key: "brand",       label: "Brand",               minW: 100 },
   { key: "phone",       label: "Phone Number",        minW: 140 },
   { key: "vip",         label: "VIP Level",           minW: 100 },
-  { key: "sales",       label: "Daily Sales",         minW: 120 },
-  { key: "winloss",     label: "Daily Win/Loss",      minW: 130 },
+  { key: "sales",       label: "Total Sales",         minW: 120 },
+  { key: "winloss",     label: "Total Win/Loss",      minW: 130 },
   { key: "priority",    label: "Priority",            minW: 100 },
   { key: "pic",         label: "Retention",           minW: 110 },
   { key: "followed_by", label: "Last Followed Up By",   minW: 150 },
@@ -137,11 +137,11 @@ function formatCurrency(value) {
 }
 
 function memberSalesValue(row) {
-  return parseFloat(row?.daily_sales ?? 0) || 0;
+  return parseFloat(row?.total_sales ?? row?.daily_sales ?? 0) || 0;
 }
 
 function memberWinLossValue(row) {
-  return parseFloat(row?.daily_win_loss ?? row?.daily_win_lose ?? 0) || 0;
+  return parseFloat(row?.total_win_lose ?? row?.total_winlose ?? row?.daily_win_loss ?? row?.daily_win_lose ?? 0) || 0;
 }
 
 export default function RetentionMembersPage() {
@@ -527,8 +527,8 @@ function TableRow({ row, displayPhoneNumber }) {
       <DataCell value={row.brand} minW={COLUMNS[1].minW} />
       <DataCell value={displayPhoneNumber(row)} minW={COLUMNS[2].minW} />
       <DataCell value={row.vip_level} minW={COLUMNS[3].minW} />
-      <DataCell value={formatCurrency(row.daily_sales)} minW={COLUMNS[4].minW} />
-      <DataCell value={formatCurrency(row.daily_win_loss)} minW={COLUMNS[5].minW} />
+      <DataCell value={formatCurrency(row.total_sales ?? row.daily_sales)} minW={COLUMNS[4].minW} />
+      <DataCell value={formatCurrency(row.total_win_lose ?? row.total_winlose ?? row.daily_win_loss)} minW={COLUMNS[5].minW} />
       <Cell minW={COLUMNS[6].minW}>
         <PriorityBadge value={row.priority} />
       </Cell>

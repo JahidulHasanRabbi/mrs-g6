@@ -148,6 +148,15 @@ export async function refreshCrmMembers() {
   return await apiRequest(ENDPOINTS.CRM.REFRESH_MEMBERS, { method: 'POST' }, true, 'admin');
 }
 
+// POST /crm-members/generate-daily-priorities/
+// body: { date }
+export async function generateDailyPriorities(data) {
+  return await apiRequest(ENDPOINTS.CRM.GENERATE_DAILY_PRIORITIES, {
+    method: 'POST',
+    body: data
+  }, true, 'admin');
+}
+
 // POST /crm-members/<uuid>/refresh/
 export async function refreshCrmMember(memberUuid) {
   return await apiRequest(ENDPOINTS.CRM.MEMBER_REFRESH(memberUuid), { method: 'POST' }, true, 'admin');

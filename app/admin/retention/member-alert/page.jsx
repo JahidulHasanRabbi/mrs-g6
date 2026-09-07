@@ -7,6 +7,7 @@ import PriorityBadge from "../../../components/admin/retention/PriorityBadge";
 import { GRAD_DARK, GRAD_GOLD } from "../../../components/admin/retention/constants";
 import {
   assignCrmMemberToPic,
+  generateDailyPriorities,
   getRetentionMembers,
   getCrmUsers,
   getCrmRoles,
@@ -134,7 +135,7 @@ export default function MemberAlertPage() {
 
   return (
     <>
-      <OverviewHeader />
+      <OverviewHeader onRegenerated={loadSummary} />
       <div className="relative">
         <KpiRow summary={summary} loading={summaryLoading} />
         {summaryLoading && <LoadingOverlay label="Loading..." />}
@@ -144,7 +145,7 @@ export default function MemberAlertPage() {
   );
 }
 
-function OverviewHeader() {
+function OverviewHeader({ onRegenerated }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-4 px-2">
       <div className="flex flex-col gap-1">
@@ -162,7 +163,143 @@ function OverviewHeader() {
           Overview
         </h1>
       </div>
+      <RegeneratePrioritiesButton onRegenerated={onRegenerated} />
     </div>
+  );
+}
+
+// Extracts a human-readable message from the API's error shape, which for
+// this endpoint is either {error, details: string} (e.g. date-in-the-future)
+// or {error, details: {date: ["This field is required."]}} (DRF field
+// validation) — same fallback convention used elsewhere in the app.
+function regeneratePrioritiesErrorMessage(err) {
+  const details = err?.data?.details;
+  if (typeof details === "string") return details;
+  if (details && typeof details === "object") {
+    const first = Object.values(details)[0];
+    if (Array.isArray(first) && first.length) return first[0];
+  }
+  return err?.data?.error || err?.data?.detail || err?.message || "Regenerate failed.";
+}
+
+// "Regenerate Priorities" — calls POST /crm-members/generate-daily-priorities/
+// with a chosen date to recompute priorities for that day. Opens a small
+// popover with a date field (defaults to yesterday — the backend rejects
+// today's date since today's data isn't final yet) and a confirm action.
+function yesterdayDateInput() {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return yesterday.toISOString().slice(0, 10);
+}
+
+function RegeneratePrioritiesButton({ onRegenerated }) {
+  const [open, setOpen] = useState(false);
+  const [date, setDate] = useState(yesterdayDateInput);
+  const maxRegenerateDate = useMemo(() => yesterdayDateInput(), []);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const inputRef = useRef(null);
+
+  const openDatePicker = () => {
+    const el = inputRef.current;
+    if (!el) return;
+    if (typeof el.showPicker === "function") el.showPicker();
+    else el.focus();
+  };
+
+  const handleRegenerate = async () => {
+    if (saving) return;
+    setSaving(true);
+    setError("");
+    try {
+      await generateDailyPriorities({ date });
+      setOpen(false);
+      onRegenerated?.();
+    } catch (err) {
+      console.error("[member-alert] generate-daily-priorities failed", err);
+      setError(regeneratePrioritiesErrorMessage(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center justify-center gap-2 rounded-[8px] border border-[#f2cb7a] px-4 py-2.5 transition hover:brightness-110"
+        style={{ backgroundImage: GRAD_GOLD }}
+      >
+        <RegenerateIcon />
+        <span className="text-[12px] font-semibold text-[#141828] leading-[18px] whitespace-nowrap">
+          Regenerate Priorities
+        </span>
+      </button>
+      {open ? (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => !saving && setOpen(false)} />
+          <div
+            className="absolute right-0 top-full mt-2 z-20 w-[260px] rounded-[12px] border border-[#f2cb7a] p-4"
+            style={{ backgroundImage: GRAD_DARK }}
+          >
+            <label className="block text-[12px] font-medium text-[#fbeed2]">Date</label>
+            <div
+              className="relative mt-2 flex items-center gap-2 rounded-[8px] border border-[#f2cb7a] px-3 py-2 cursor-pointer"
+              onClick={openDatePicker}
+            >
+              <span className="pointer-events-none whitespace-nowrap text-[12px] font-medium text-[#f6dda6]">
+                {date
+                  ? new Date(`${date}T00:00:00`).toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    })
+                  : "dd/mm/yyyy"}
+              </span>
+              <input
+                ref={inputRef}
+                type="date"
+                value={date}
+                max={maxRegenerateDate}
+                onChange={(e) => setDate(e.target.value)}
+                aria-label="Regenerate priorities for date"
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0 [color-scheme:dark]"
+              />
+            </div>
+            {error ? <p className="mt-2 text-[12px] text-[#fb3748]">{error}</p> : null}
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                disabled={saving}
+                className="rounded-[8px] border border-[#d00416] px-4 py-2 text-[12px] font-medium text-[#d00416] disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleRegenerate}
+                disabled={saving || !date}
+                className="rounded-[8px] border border-[#f2cb7a] px-4 py-2 text-[12px] font-medium text-[#141828] disabled:opacity-50"
+                style={{ backgroundImage: GRAD_GOLD }}
+              >
+                {saving ? "Regenerating..." : "Regenerate"}
+              </button>
+            </div>
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function RegenerateIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#141828" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+      <polyline points="21 3 21 9 15 9" />
+    </svg>
   );
 }
 
