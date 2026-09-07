@@ -58,7 +58,7 @@ export function warFrame(frame, t, r, b, l, box = [358, 160], opts = {}) {
     // is breathing room only — adding the inset again doubled every card.
     // Wider at the sides: copy that ends flush against the rail reads as if it
     // is spilling out of the frame.
-    pad: `${extra}px ${extra + 7}px`,
+    pad: `${extra + 5}px ${extra + 7}px`,
   };
 }
 
@@ -195,7 +195,7 @@ const DEFAULT_SKIN = {
     frameInkSolid: null,
     inkFrame: null,
     pill: null,
-    earnTile: { frame: null, ctaBand: null, inset: 13 },
+    earnTile: { frame: null, ctaBand: null, inset: 13, aspect: 0.6 },
     plaque: { frame: null, slice: "24% 10% 16% 10% fill", width: "34px 20px 24px 20px", pad: "36px 18px 22px 18px" },
     row: { frame: null, slice: "40% 8% 40% 8% fill", width: "18px 14px 18px 14px", pad: "4px 10px" },
     hp: { track: "rgba(255,255,255,0.1)", border: RPG_COLORS.violetBorderStrong, fill: RPG_GRADIENTS.exp },
@@ -395,7 +395,9 @@ export function buildRpgSkin(themeId, ASSETS, COLORS, overrides = {}) {
       // Fixed-aspect tile art, stretched like the comps. `ctaBand` is the
       // baked CTA pill measured off the art, as % of its height; a theme
       // whose tile has no pill leaves it null and gets a drawn one.
-      earnTile: { frame: W.earnTile || null, ctaBand: W.earnTileCtaBand || null, inset: W.earnTileInset ?? 13 },
+      // `aspect` is the art's own, clamped: a very narrow tile would
+      // otherwise render 200px+ tall in a four-across row.
+      earnTile: { frame: W.earnTile || null, ctaBand: W.earnTileCtaBand || null, inset: W.earnTileInset ?? 13, aspect: W.earnTileAspect || 0.6 },
       plaque: { frame: W.plaque || W.cardFrame || ASSETS.spin?.panel || null, slice: "22% 8% 12% 8% fill", width: "30px 16px 18px 16px", pad: "30px 16px 18px 16px" },
       row: { frame: W.rowFrame || null, slice: "13% 8% 13% 8% fill", width: "8px 14px 8px 14px", pad: "4px 10px" },
       hp: { track: "rgba(45,45,45,0.75)", border: "#f2b229", fill: "linear-gradient(90deg, #fff0bf 0%, #f2b229 100%)" },

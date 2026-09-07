@@ -31,7 +31,7 @@ const SKIN = buildRpgSkin(THEME_IDS.LV918, LV918_ASSETS, LV918_COLORS, {
     row: warFrame(LV918_ASSETS.war.rowFrame, 12.8, 7.6, 13.3, 8.1, [358, 52], { art: [1000, 188] }),
     plaque: warFrame(LV918_ASSETS.war.plaque, 20.0, 10.9, 4.8, 8.2, [358, 213], { art: [622, 479] }),
     titleInset: { top: 15, right: 3, bottom: 13, left: 5 },
-    earnTile: { frame: LV918_ASSETS.war.earnTile, ctaBand: [78, 91], inset: 13 },
+    earnTile: { aspect: 0.6, frame: LV918_ASSETS.war.earnTile, ctaBand: [78, 91], inset: 13 },
   },
 });
 

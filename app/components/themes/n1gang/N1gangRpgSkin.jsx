@@ -20,7 +20,7 @@ const SKIN = buildRpgSkin(THEME_IDS.N1GANG, N1GANG_ASSETS, N1GANG_COLORS, {
     row: warFrame(N1GANG_ASSETS.war.rowFrame, 13.9, 5.3, 16.7, 5.6, [358, 52], { art: [1000, 216] }),
     plaque: warFrame(N1GANG_ASSETS.war.plaque, 16.5, 12.5, 17.6, 12.3, [358, 213], { art: [1000, 729] }),
     titleInset: { top: 30, right: 10, bottom: 7, left: 10 },
-    earnTile: { frame: N1GANG_ASSETS.war.earnTile, ctaBand: [82, 93], inset: 13 },
+    earnTile: { aspect: 0.61, frame: N1GANG_ASSETS.war.earnTile, ctaBand: [82, 93], inset: 13 },
   },
 });
 

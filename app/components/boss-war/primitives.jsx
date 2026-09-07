@@ -428,8 +428,8 @@ export function EarnApTiles({ tiles, onAction, busyId }) {
             type="button"
             onClick={() => onAction(t)}
             disabled={disabled}
-            className="relative aspect-[3/5] min-w-0 flex-1 disabled:cursor-not-allowed"
-            style={{ opacity: disabled ? 0.72 : 1 }}
+            className="relative min-w-0 flex-1 disabled:cursor-not-allowed"
+            style={{ opacity: disabled ? 0.72 : 1, aspectRatio: String(spec.aspect || 0.6) }}
           >
             <img src={art} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full object-fill" draggable={false} />
             <div
@@ -513,8 +513,11 @@ export function BossHp({ boss }) {
 export function SectionCard({ label, title, children, className = "", action }) {
   const skin = useRpgSkin();
   const fi = useFrameInk();
+  // `row`, not `card`: the comps dress these blocks with the wide jewelled
+  // frame. ubetclub's card art is square, so stretching it across a short wide
+  // block smeared the interior.
   return (
-    <WarCard className={`flex flex-col gap-[4px] ${className}`}>
+    <WarCard spec={skin.war.row} className={`flex flex-col gap-[4px] ${className}`}>
       {label ? (
         <span className="text-[9px] font-bold tracking-[1px]" style={{ color: fi.meta, fontFamily: skin.war.font }}>
           {label}

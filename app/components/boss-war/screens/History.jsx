@@ -42,7 +42,7 @@ export default function History({ onNavigate }) {
     <div className="flex w-full flex-1 flex-col px-[16px] pb-[8px]">
       <WarTitle>History</WarTitle>
       <div className="flex flex-col gap-[12px] px-[2px] pt-[8px]">
-        <WarCard spec={skin.war.table || skin.war.card} className="flex min-h-[420px] min-w-0 flex-col !px-[12px]">
+        <WarCard spec={skin.war.table || skin.war.card} className="flex h-[440px] min-w-0 flex-col !px-[22px]">
           <div className={`grid ${COLS} gap-[4px] border-b pb-[6px] text-[8px] tracking-[1px]`} style={{ color: ink.text, borderColor: skin.c.rule, fontFamily: skin.war.font }}>
             <span>TIME</span>
             <span className="min-w-0 truncate">BOSS</span>
@@ -50,6 +50,9 @@ export default function History({ onNavigate }) {
             <span className="text-center">CRIT</span>
             <span className="text-right">AP</span>
           </div>
+          {/* Fixed height + inner scroll: the frame art was being stretched
+              taller and taller as attacks accumulated. */}
+          <div className="scrollbar-theme min-h-0 flex-1 overflow-y-auto">
           {error ? <StateLine>{error}</StateLine> : null}
           {!data && !error ? <StateLine>LOADING...</StateLine> : null}
           {data && !data.rows.length ? <StateLine>No attacks yet.</StateLine> : null}
@@ -68,6 +71,7 @@ export default function History({ onNavigate }) {
               </div>
             );
           })}
+          </div>
         </WarCard>
         <WarButton className="mx-auto w-[190px]" onClick={() => onNavigate(WAR_VIEWS.REWARDS)}>View Rewards</WarButton>
       </div>

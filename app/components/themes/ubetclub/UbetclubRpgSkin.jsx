@@ -12,6 +12,7 @@ const SKIN = buildRpgSkin(THEME_IDS.UBETCLUB, UBET_ASSETS, UBET_COLORS, {
   chrome: { bar: "radial-gradient(120% 160% at 50% 60%, #18080a 0%, #300b0c 50%, #480e0f 100%)" },
   // Boss War frames — insets measured off public/assets/themes/ubetclub/war/*.
   war: {
+    earnTile: { frame: UBET_ASSETS.war.earnTile, aspect: 0.74 },
     timerAspect: 3.62,
     card: warFrame(UBET_ASSETS.war.cardFrame, 4.6, 3.7, 4.6, 3.7, [358, 160], { art: [1000, 1000] }),
     statCard: warFrame(UBET_ASSETS.war.statCard, 19.2, 7.6, 17.8, 8.3, [358, 96], { art: [787, 297] }),

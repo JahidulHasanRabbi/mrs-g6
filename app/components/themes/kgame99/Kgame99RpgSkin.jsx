@@ -15,6 +15,7 @@ const SKIN = buildRpgSkin(THEME_IDS.KGAME99, KGAME99_ASSETS, KGAME99_COLORS, {
   // Its frame interiors are bright sky-blue, so the copy on them takes the dark
   // navy this theme already uses for headings (globals.css --lb-heading).
   war: {
+    earnTile: { frame: KGAME99_ASSETS.war.earnTile, aspect: 0.5 },
     timerAspect: 3.42,
     card: warFrame(KGAME99_ASSETS.war.cardFrame, 16.3, 12.0, 13.4, 11.6, [358, 160], { art: [1000, 738] }),
     statCard: warFrame(KGAME99_ASSETS.war.statCard, 18.7, 8.3, 13.7, 8.1, [358, 96], { art: [762, 262] }),

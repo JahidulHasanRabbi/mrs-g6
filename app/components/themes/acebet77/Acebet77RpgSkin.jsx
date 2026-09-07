@@ -21,7 +21,7 @@ const SKIN = buildRpgSkin(THEME_IDS.ACEBET77, ACEBET_ASSETS, ACEBET_COLORS, {
     row: warFrame(ACEBET_ASSETS.war.rowFrame, 14.4, 4.8, 8.8, 5.0, [358, 52], { art: [1000, 749] }),
     plaque: warFrame(ACEBET_ASSETS.war.plaque, 24.0, 15.9, 15.6, 15.7, [358, 213], { art: [1000, 725] }),
     titleInset: { top: 30, right: 10, bottom: 7, left: 10 },
-    earnTile: { frame: ACEBET_ASSETS.war.earnTile, ctaBand: [82, 93], inset: 13 },
+    earnTile: { aspect: 0.61, frame: ACEBET_ASSETS.war.earnTile, ctaBand: [82, 93], inset: 13 },
   },
 });
 
