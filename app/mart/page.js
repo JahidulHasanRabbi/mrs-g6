@@ -195,6 +195,42 @@ function DefaultMartPage() {
     return Number.isFinite(n) ? n : 0;
   };
 
+  // Why an unlocked item can't be redeemed right now, in priority order.
+  // Tier-locked items are handled separately by isItemLocked and never reach
+  // here. Returns null when the item is fully redeemable.
+  const getBlockReason = (item) => {
+    const qty = item.quantity_available;
+    if (qty !== null && qty !== undefined && qty !== "" && Number(qty) <= 0) {
+      return "out_of_stock";
+    }
+
+    const now = new Date();
+    if (item.start_date) {
+      const start = new Date(item.start_date);
+      if (!Number.isNaN(start.getTime()) && now < start) return "not_yet_available";
+    }
+    if (item.end_date) {
+      const end = new Date(item.end_date);
+      if (!Number.isNaN(end.getTime())) {
+        end.setHours(23, 59, 59, 999); // end_date is a whole calendar day
+        if (now > end) return "no_longer_available";
+      }
+    }
+
+    const price = parseCoins(item.discountPrice || item.coins);
+    const balance = parseCoins(userData?.balance);
+    if (price > balance) return "insufficient_balance";
+
+    return null;
+  };
+
+  const BLOCK_REASON_MESSAGES = {
+    out_of_stock: "This item is out of stock.",
+    not_yet_available: "This item is not available yet.",
+    no_longer_available: "This item is no longer available.",
+    insufficient_balance: "You don't have enough KR Coins to redeem this item.",
+  };
+
   const filteredItems = useMemo(() => {
     if (!selectedCategory) return [];
     return martItems.filter((item) => {
@@ -259,6 +295,16 @@ function DefaultMartPage() {
       setRedeemResult({
         success: false,
         message: `Upgrade to ${getRequiredTierName(item)} tier to unlock this item.`,
+      });
+      setIsRedeeming(false);
+      return;
+    }
+
+    const blockReason = getBlockReason(item);
+    if (blockReason) {
+      setRedeemResult({
+        success: false,
+        message: BLOCK_REASON_MESSAGES[blockReason],
       });
       setIsRedeeming(false);
       return;
@@ -346,6 +392,7 @@ function DefaultMartPage() {
             onRedeem={handleRedeem}
             isItemLocked={isItemLocked}
             getRequiredTierName={getRequiredTierName}
+            getBlockReason={getBlockReason}
           />
         )}
       </LoadingState>

@@ -4,6 +4,14 @@ import { formatKrCoins } from "../../api/apiOptions";
 import { motion } from "framer-motion";
 import { MART_ASSETS } from "./martAssets";
 
+// Structural reasons the item itself isn't redeemable right now (as opposed
+// to "insufficient_balance", which the user can still fix).
+const STRUCTURAL_BLOCK_LABELS = {
+  out_of_stock: "Out of Stock",
+  not_yet_available: "Not Available Yet",
+  no_longer_available: "No Longer Available",
+};
+
 export default function MartItem({
   image,
   title,
@@ -14,7 +22,10 @@ export default function MartItem({
   index = 0,
   isLocked = false,
   requiredTierLabel,
+  blockReason = null,
 }) {
+  const isBlocked = !isLocked && !!blockReason;
+  const structuralLabel = STRUCTURAL_BLOCK_LABELS[blockReason];
   return (
     <motion.div
       className="relative w-[223px] h-[270px] mb-4"
@@ -47,7 +58,9 @@ export default function MartItem({
         style={
           isLocked
             ? { filter: "grayscale(0.85) brightness(0.55) blur(6px)" }
-            : undefined
+            : isBlocked
+              ? { filter: "grayscale(0.5) brightness(0.75)" }
+              : undefined
         }
       >
         <img
@@ -94,6 +107,10 @@ export default function MartItem({
           <p className="text-[#e94141] text-[11px] font-bold font-['Times_New_Roman'] text-center leading-[13px] px-1 whitespace-nowrap">
             Upgrade to {requiredTierLabel || "next tier"} to unlock
           </p>
+        ) : structuralLabel ? (
+          <p className="text-[#e94141] text-[11px] font-bold font-['Times_New_Roman'] text-center leading-[13px] px-1 whitespace-nowrap">
+            {structuralLabel}
+          </p>
         ) : (
           <>
             {originalPrice && originalPrice != (discountPrice || coins) && (
@@ -101,9 +118,18 @@ export default function MartItem({
                 {formatKrCoins(originalPrice)}
               </p>
             )}
-            <p className="text-[#e9af41] text-[12px] font-bold font-['Times_New_Roman'] truncate max-w-full leading-[14px]">
+            <p
+              className={`text-[12px] font-bold font-['Times_New_Roman'] truncate max-w-full leading-[14px] ${
+                isBlocked ? "text-[#e9af41]/60" : "text-[#e9af41]"
+              }`}
+            >
               {formatKrCoins(discountPrice || coins)}
             </p>
+            {blockReason === "insufficient_balance" && (
+              <p className="text-[#e94141] text-[11px] font-bold font-['Times_New_Roman'] text-center leading-[13px] px-1 whitespace-nowrap">
+                Not enough tokens
+              </p>
+            )}
           </>
         )}
       </motion.div>
@@ -111,17 +137,28 @@ export default function MartItem({
       {/* Click target */}
       <motion.button
         onClick={onRedeem}
-        className="absolute inset-0 w-full h-full cursor-pointer"
+        disabled={isBlocked}
+        className={`absolute inset-0 w-full h-full ${
+          isBlocked ? "cursor-not-allowed" : "cursor-pointer"
+        }`}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{
           duration: 0.3,
           delay: index * 0.1 + 1.0,
         }}
-        whileHover={!isLocked ? { scale: 1.05, y: -5 } : { scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
+        whileHover={!isLocked && !isBlocked ? { scale: 1.05, y: -5 } : { scale: 1.02 }}
+        whileTap={!isBlocked ? { scale: 0.98 } : undefined}
         style={{ background: "transparent" }}
-        aria-label={isLocked ? `${title} (locked)` : `Redeem ${title}`}
+        aria-label={
+          isLocked
+            ? `${title} (locked)`
+            : structuralLabel
+              ? `${title} (${structuralLabel.toLowerCase()})`
+              : blockReason === "insufficient_balance"
+                ? `${title} (not enough tokens)`
+                : `Redeem ${title}`
+        }
       />
     </motion.div>
   );

@@ -3,7 +3,13 @@
 import { motion } from "framer-motion";
 import MartItem from "./MartItem";
 
-export default function MartGrid({ items, onRedeem, isItemLocked, getRequiredTierName }) {
+export default function MartGrid({
+  items,
+  onRedeem,
+  isItemLocked,
+  getRequiredTierName,
+  getBlockReason,
+}) {
   return (
     <motion.div
       className="flex flex-wrap gap-4 justify-center items-center mt-8"
@@ -14,7 +20,8 @@ export default function MartGrid({ items, onRedeem, isItemLocked, getRequiredTie
       {items.map((item, index) => {
         const locked = isItemLocked ? isItemLocked(item) : false;
         const requiredTier = getRequiredTierName ? getRequiredTierName(item) : '';
-        
+        const blockReason = !locked && getBlockReason ? getBlockReason(item) : null;
+
         return (
           <MartItem
             key={index}
@@ -26,6 +33,7 @@ export default function MartGrid({ items, onRedeem, isItemLocked, getRequiredTie
             coins={item.coins}
             isLocked={locked}
             requiredTierLabel={requiredTier}
+            blockReason={blockReason}
             onRedeem={() => onRedeem(item)}
           />
         );

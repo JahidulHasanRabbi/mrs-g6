@@ -62,6 +62,15 @@ function resolveUnlockedTierOrder(currentLevel) {
 const asAmount = (v) => (typeof v === "number" ? v.toLocaleString() : v);
 const priceOf = (item) => item.discountPrice || item.coins;
 
+// Mirrors STRUCTURAL_BLOCK_LABELS in app/components/mart/MartItem.jsx —
+// reasons the item itself isn't redeemable right now, as opposed to
+// "insufficient_balance" which the user can still fix.
+const STRUCTURAL_BLOCK_LABELS = {
+  out_of_stock: "Out of Stock",
+  not_yet_available: "Not Available Yet",
+  no_longer_available: "No Longer Available",
+};
+
 /** Themed pill/sort plaque — the theme's button art with a centred label. */
 function PlaquePill({ skin, label, locked, selected, onClick, ariaLabel, ariaPressed, delay }) {
   return (
@@ -125,9 +134,20 @@ function ZoomGlyph() {
  * Themed item card. Card art + geometry come from the comps (MART_CARD); the
  * content is exactly what the default <MartItem> renders.
  */
-function ThemedMartItem({ skin, item, index, locked, requiredTierLabel, onRedeem, onPreview }) {
+function ThemedMartItem({
+  skin,
+  item,
+  index,
+  locked,
+  requiredTierLabel,
+  blockReason,
+  onRedeem,
+  onPreview,
+}) {
   const amount = priceOf(item);
   const hasStrikethrough = item.originalPrice && item.originalPrice != amount;
+  const isBlocked = !locked && !!blockReason;
+  const structuralLabel = STRUCTURAL_BLOCK_LABELS[blockReason];
   // Redeem stays live when locked so the dialog can explain the upgrade; preview
   // does not, because the locked art is deliberately blurred out.
   const canPreview = !locked && !!item.image;
@@ -158,7 +178,13 @@ function ThemedMartItem({ skin, item, index, locked, requiredTierLabel, onRedeem
             alt={item.title || ""}
             src={item.image}
             className="h-full w-full object-contain"
-            style={locked ? { filter: "grayscale(0.85) brightness(0.55) blur(6px)" } : undefined}
+            style={
+              locked
+                ? { filter: "grayscale(0.85) brightness(0.55) blur(6px)" }
+                : isBlocked
+                  ? { filter: "grayscale(0.5) brightness(0.75)" }
+                  : undefined
+            }
           />
         )}
         {locked && (
@@ -217,6 +243,13 @@ function ThemedMartItem({ skin, item, index, locked, requiredTierLabel, onRedeem
           >
             Upgrade to {requiredTierLabel || "next tier"} to unlock
           </p>
+        ) : structuralLabel ? (
+          <p
+            className="truncate text-center"
+            style={{ fontSize: `${MART_CARD.coins.sizeCqi}cqi`, color: skin.c.lockedText }}
+          >
+            {structuralLabel}
+          </p>
         ) : (
           <>
             {hasStrikethrough && (
@@ -232,10 +265,22 @@ function ThemedMartItem({ skin, item, index, locked, requiredTierLabel, onRedeem
             )}
             <p
               className="truncate"
-              style={{ fontSize: `${MART_CARD.coins.sizeCqi}cqi`, color: skin.c.coins }}
+              style={{
+                fontSize: `${MART_CARD.coins.sizeCqi}cqi`,
+                color: skin.c.coins,
+                opacity: isBlocked ? 0.6 : 1,
+              }}
             >
               {formatKrCoins(amount)}
             </p>
+            {blockReason === "insufficient_balance" && (
+              <p
+                className="truncate text-center"
+                style={{ fontSize: `${MART_CARD.coins.sizeCqi}cqi`, color: skin.c.lockedText }}
+              >
+                Not enough tokens
+              </p>
+            )}
           </>
         )}
       </div>
@@ -243,14 +288,25 @@ function ThemedMartItem({ skin, item, index, locked, requiredTierLabel, onRedeem
       <button
         type="button"
         onClick={onRedeem}
-        className="absolute transition-transform active:scale-95"
+        disabled={isBlocked}
+        className={`absolute transition-transform active:scale-95 ${
+          isBlocked ? "cursor-not-allowed opacity-60" : ""
+        }`}
         style={{
           left: `${MART_CARD.redeem.left}%`,
           top: `${MART_CARD.redeem.top}%`,
           width: `${MART_CARD.redeem.w}%`,
           height: `${MART_CARD.redeem.h}%`,
         }}
-        aria-label={locked ? `${item.title} (locked)` : `Redeem ${item.title}`}
+        aria-label={
+          locked
+            ? `${item.title} (locked)`
+            : structuralLabel
+              ? `${item.title} (${structuralLabel.toLowerCase()})`
+              : blockReason === "insufficient_balance"
+                ? `${item.title} (not enough tokens)`
+                : `Redeem ${item.title}`
+        }
       >
         <img alt="" src={skin.redeemButton} className="absolute inset-0 h-full w-full object-fill" />
         <span
@@ -370,6 +426,39 @@ export default function ThemedMartGrid({ skin }) {
     return Number.isFinite(n) ? n : 0;
   };
 
+  // Mirrors getBlockReason in app/mart/page.js — only matters once an item is
+  // already within the user's tier reach (see isItemLocked above).
+  const getBlockReason = (item) => {
+    const qty = item.quantity_available;
+    if (qty !== null && qty !== undefined && qty !== "" && Number(qty) <= 0) {
+      return "out_of_stock";
+    }
+
+    const now = new Date();
+    if (item.start_date) {
+      const start = new Date(item.start_date);
+      if (!Number.isNaN(start.getTime()) && now < start) return "not_yet_available";
+    }
+    if (item.end_date) {
+      const end = new Date(item.end_date);
+      if (!Number.isNaN(end.getTime())) {
+        end.setHours(23, 59, 59, 999); // end_date is a whole calendar day
+        if (now > end) return "no_longer_available";
+      }
+    }
+
+    if (parseCoins(priceOf(item)) > parseCoins(userData?.balance)) return "insufficient_balance";
+
+    return null;
+  };
+
+  const BLOCK_REASON_MESSAGES = {
+    out_of_stock: "This item is out of stock.",
+    not_yet_available: "This item is not available yet.",
+    no_longer_available: "This item is no longer available.",
+    insufficient_balance: "You don't have enough KR Coins to redeem this item.",
+  };
+
   const filteredItems = useMemo(() => {
     if (!selectedCategory) return [];
     return martItems.filter(
@@ -426,6 +515,13 @@ export default function ThemedMartGrid({ skin }) {
         success: false,
         message: `Upgrade to ${getRequiredTierName(item)} tier to unlock this item.`,
       });
+      setIsRedeeming(false);
+      return;
+    }
+
+    const blockReason = getBlockReason(item);
+    if (blockReason) {
+      setRedeemResult({ success: false, message: BLOCK_REASON_MESSAGES[blockReason] });
       setIsRedeeming(false);
       return;
     }
@@ -538,6 +634,7 @@ export default function ThemedMartGrid({ skin }) {
           >
             {sortedItems.map((item, i) => {
               const locked = isItemLocked(item);
+              const blockReason = !locked ? getBlockReason(item) : null;
               return (
                 <ThemedMartItem
                   key={item.uuid || i}
@@ -546,6 +643,7 @@ export default function ThemedMartGrid({ skin }) {
                   index={i}
                   locked={locked}
                   requiredTierLabel={getRequiredTierName(item)}
+                  blockReason={blockReason}
                   onRedeem={() => handleRedeem(item)}
                   onPreview={() => setPreviewItem(item)}
                 />
