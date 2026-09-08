@@ -46,7 +46,12 @@ function BossStage({ boss, hit, defeated }) {
         animate={hit ? { x: [0, -7, 7, -5, 5, 0] } : { x: 0 }}
         transition={{ duration: 0.45 }}
       >
-        <BossPortrait boss={boss} dim={defeated}>
+        {/* backdrop="transparent": each theme's boss-frame.webp window is
+            genuinely hollow art, and this stage sits directly on the screen's
+            own backdrop, not a card — the opaque black fallback just papered
+            over both with a flat black plate wherever the boss cutout doesn't
+            reach the window's edges. */}
+        <BossPortrait boss={boss} dim={defeated} backdrop="transparent">
           <AnimatePresence>
             {hit ? (
               <motion.div
@@ -82,7 +87,7 @@ function BossStage({ boss, hit, defeated }) {
             className="pointer-events-none absolute flex flex-col items-center justify-end gap-[7px]"
             style={{ ...opening, top: "auto" }}
           >
-            <NamePlate className="w-[189px] max-w-full">{boss.name.toUpperCase()}</NamePlate>
+            <NamePlate>{boss.name.toUpperCase()}</NamePlate>
             <BossHp boss={boss} />
           </div>
         </BossPortrait>
@@ -185,7 +190,12 @@ export default function BossBattle({ bossId, ap, onApUpdate, onNavigate, onNotic
   return (
     <div className="flex w-full flex-1 flex-col px-[16px] pb-[8px]">
       <WarTitle>Boss Battle</WarTitle>
-      <div className="flex flex-col gap-[12px] px-[2px] pt-[8px]">
+      <motion.div
+        className="flex flex-col gap-[12px] px-[2px] pt-[8px]"
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+      >
         <div className="flex items-center justify-between">
           <TypeChip>{boss.typeLabel.toUpperCase()}</TypeChip>
           <TimerPlaque endsAt={boss.endsAt} />
@@ -276,7 +286,7 @@ export default function BossBattle({ bossId, ap, onApUpdate, onNavigate, onNotic
             </InfoPlaque>
           </>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }

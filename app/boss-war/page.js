@@ -14,7 +14,7 @@ import { useGameSessionPing, GAME_SESSION_IDS } from "../hooks/useGameSessionPin
 import { useRpgSkin } from "../components/rpg/rpgSkin";
 import {
   GameClosedOverlay,
-  GameLoadingGate,
+  GameLoadingContent,
   RpgSkinShell,
   useViewNavigation,
 } from "../components/rpg/gameShell";
@@ -98,10 +98,6 @@ function BossWarInner() {
   const openMenu = useCallback(() => setIsMenuOpen(true), []);
   const openInfo = useCallback(() => navigate(WAR_VIEWS.INFO), [navigate]);
 
-  if (!status) {
-    return <GameLoadingGate skin={skin} message={loadError} font={skin.war.font} />;
-  }
-
   const shared = { ap, onApUpdate: handleApUpdate, onNavigate: navigate, onNotice: showNotice, bossId };
 
   return (
@@ -119,17 +115,23 @@ function BossWarInner() {
         navLinkBase="/avatar"
         navActiveTab={null}
       >
-        {view === WAR_VIEWS.LIST && <BossList {...shared} />}
-        {view === WAR_VIEWS.BATTLE && bossId && <BossBattle {...shared} />}
-        {view === WAR_VIEWS.RESULTS && bossId && <Results {...shared} />}
-        {view === WAR_VIEWS.LEADERBOARD && bossId && <WarLeaderboard {...shared} />}
-        {view === WAR_VIEWS.REWARDS && <Rewards {...shared} />}
-        {view === WAR_VIEWS.HISTORY && <History {...shared} />}
-        {view === WAR_VIEWS.EARN && <HowToEarn {...shared} />}
-        {view === WAR_VIEWS.INFO && <BossInfo {...shared} />}
+        {!status ? (
+          <GameLoadingContent skin={skin} message={loadError} font={skin.war.font} />
+        ) : (
+          <>
+            {view === WAR_VIEWS.LIST && <BossList {...shared} />}
+            {view === WAR_VIEWS.BATTLE && bossId && <BossBattle {...shared} />}
+            {view === WAR_VIEWS.RESULTS && bossId && <Results {...shared} />}
+            {view === WAR_VIEWS.LEADERBOARD && bossId && <WarLeaderboard {...shared} />}
+            {view === WAR_VIEWS.REWARDS && <Rewards {...shared} />}
+            {view === WAR_VIEWS.HISTORY && <History {...shared} />}
+            {view === WAR_VIEWS.EARN && <HowToEarn {...shared} />}
+            {view === WAR_VIEWS.INFO && <BossInfo {...shared} />}
+          </>
+        )}
       </ScreenShell>
 
-      {!status.open && <GameClosedOverlay skin={skin} title="Boss War is currently closed" font={skin.war.font} />}
+      {status && !status.open && <GameClosedOverlay skin={skin} title="Boss War is currently closed" font={skin.war.font} />}
 
       <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
       <NoticeModal

@@ -19,9 +19,9 @@ const DEFAULT_AVATAR = "/assets/profile/profile-avatar.webp";
 
 function Row({ row }) {
   const skin = useRpgSkin();
-  const ink = useFrameInk();
+  const ink = useFrameInk(skin.war.row);
   return (
-    <WarCard spec={skin.war.row} className="flex h-[52px] items-center gap-[8px] !py-0">
+    <WarCard spec={skin.war.row} className="flex items-center gap-[8px] !py-[5px]">
       <RankBadge rank={row.rank} />
       {/* Portrait slot. `avatar` is whatever the API returns; until it does,
           every row shows the shared placeholder the profile page uses. */}

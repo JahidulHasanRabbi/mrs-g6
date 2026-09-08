@@ -17,7 +17,14 @@ const SKIN = buildRpgSkin(THEME_IDS.ACEBET77, ACEBET_ASSETS, ACEBET_COLORS, {
   war: {
     ...WAR_FRAMES,
     bossFrame: { aspect: 1.08, open: [8.9, 8.0, 12.6, 8.0] },
-    earnTile: { aspect: 0.61, frame: ACEBET_ASSETS.war.earnTile, ctaBand: [82, 93], inset: 13 },
+    // No attack-btn art, so the ATTACK plaque falls back to this crown title
+    // plaque. Center the label in its black panel (L R T B %) — the blind 0.14
+    // bias dropped it toward the bottom rail. L/R keep it off the side diamonds.
+    attackWindow: [18, 82, 35, 84],
+    earnTile: { frame: ACEBET_ASSETS.war.earnTile, box: [22, 19, 19, 19], ctaBand: [82, 93] },
+    // card-frame.webp keeps its gem-and-filigree corners inside 10% of the
+    // art, so the table needs little more than the frame's own pad.
+    tablePad: [6, 6],
   },
 });
 

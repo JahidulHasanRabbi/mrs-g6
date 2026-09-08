@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useRpgSkin } from "../../rpg/rpgSkin";
 import { HOW_TO_EARN_NOTE, WAR_VIEWS } from "../constants";
 import * as warApi from "../bossWarApi";
-import { useFrameInk, useWarResource, GemIcon, GoldText, InfoPlaque, WarButton, WarCard, WarScreen, WarState, WarTabs } from "../primitives";
+import { useFrameInk, useWarResource, GoldText, InfoPlaque, RewardBadge, WarButton, WarCard, WarScreen, WarState, WarTabs } from "../primitives";
 
 const TABS = [
   { id: "rank", label: "Rank" },
@@ -17,9 +17,11 @@ const TABS = [
 
 function TierRow({ tier }) {
   const skin = useRpgSkin();
-  const ink = useFrameInk();
+  const ink = useFrameInk(skin.war.row);
+  // No fixed height: the frame's rails eat ~26px, so a 58px row left the 48px
+  // reward plaque sitting on top of them.
   return (
-    <WarCard spec={skin.war.row} className="flex h-[58px] items-center gap-[12px] !py-0">
+    <WarCard spec={skin.war.row} className="flex items-center gap-[12px] !py-[5px]">
       <span className="w-[54px] shrink-0 text-center text-[11px] font-bold" style={{ color: ink.text, fontFamily: skin.war.font }}>
         {tier.rank}
       </span>
@@ -27,10 +29,7 @@ function TierRow({ tier }) {
         <GoldText solid className="truncate text-[13px] font-bold">{tier.name}</GoldText>
         <span className="truncate text-[9px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>{tier.desc}</span>
       </div>
-      <div className="flex h-[44px] w-[40px] shrink-0 flex-col items-center justify-center rounded-[6px] border" style={{ background: skin.c.inset, borderColor: skin.c.edgeSoft }}>
-        <GemIcon gem={tier.gem} size={26} />
-        <span className="text-[8px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>Reward</span>
-      </div>
+      <RewardBadge gem={tier.gem} />
     </WarCard>
   );
 }

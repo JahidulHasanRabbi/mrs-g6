@@ -12,6 +12,9 @@ export const WAR_IMAGES = {
     clock: "/assets/boss-war/ui/icon-clock.webp",
     crown: "/assets/boss-war/ui/icon-crown.webp",
     defeated: "/assets/boss-war/ui/stamp-defeated.webp",
+    // Hollow reward plaque from the comps' shared sheet; the tier's colour is
+    // painted behind it (GEM_TINT), so one file dresses all four rarities.
+    rewardBadge: "/assets/boss-war/ui/reward-badge.webp",
     // The stat-card glyphs are not separate layers in the comps; reuse the
     // crown / sword icons the same screens already ship.
     participants: "/assets/boss-war/ui/icon-crown.webp",
@@ -36,4 +39,5 @@ export const preloadWarAssets = makePreloader(WAR_IMAGES.gems, {
   ap: WAR_IMAGES.ui.ap,
   crown: WAR_IMAGES.ui.crown,
   clock: WAR_IMAGES.ui.clock,
+  rewardBadge: WAR_IMAGES.ui.rewardBadge,
 });

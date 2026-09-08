@@ -27,7 +27,15 @@ const SKIN = buildRpgSkin(THEME_IDS.LV918, LV918_ASSETS, LV918_COLORS, {
   war: {
     ...WAR_FRAMES,
     bossFrame: { aspect: 1.361, open: [6.1, 4.1, 5.6, 4.3] },
-    earnTile: { aspect: 0.6, frame: LV918_ASSETS.war.earnTile, ctaBand: [78, 91], inset: 13 },
+    // No attack-btn art, so the ATTACK plaque falls back to this crown title
+    // plaque. Center the label in its recessed panel (L R T B %) instead of the
+    // blind 0.14 bias, which dropped it onto the bottom bevel.
+    attackWindow: [15, 85, 31, 85],
+    // The only station whose HP bar is not gold (comps 2507:65, 2482:2):
+    // a magenta ramp on a plum track, sampled off the comp.
+    hp: { track: "#4b072a", fill: "linear-gradient(90deg, #d71b77 0%, #900147 100%)" },
+    earnTile: { frame: LV918_ASSETS.war.earnTile, box: [18, 16, 21, 16], ctaBand: [78, 91] },
+    tablePad: [8, 8],
   },
 });
 

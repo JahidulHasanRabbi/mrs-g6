@@ -1,11 +1,11 @@
 "use client";
 
-// Boss list card (Figma 2623:560): illustration, name / type / HP, the reward
-// gem badge, HP bar with remaining %, availability dot and the ATTACK plaque.
+// Boss list card (Figma 2642:3280): framed illustration, name / type / HP, the
+// reward plaque, HP bar with remaining %, availability dot and ATTACK.
 
 import { useRpgSkin } from "../rpg/rpgSkin";
-import { fmt } from "./constants";
-import { useFrameInk, GemIcon, GoldText, HpBar, WarButton, WarCard } from "./primitives";
+import { fmt, BOSS_THUMB_ASPECT } from "./constants";
+import { useFrameInk, BossPortrait, GoldText, HpBar, RewardBadge, WarButton, WarCard } from "./primitives";
 
 export default function BossCard({ boss, onAttack }) {
   const skin = useRpgSkin();
@@ -13,60 +13,58 @@ export default function BossCard({ boss, onAttack }) {
   const available = boss.status === "active";
   const statusText = boss.status === "defeated" ? "Boss defeated" : boss.status === "upcoming" ? "Coming soon" : available ? "Boss room available!" : "Boss room closed";
 
-  // min-h, not h: the ornate border eats more of the box than the comp's 154px
-  // allows, and a fixed height clipped the ATTACK row.
+  // The thumbnail sets the card's height (38% of the interior, the comp's
+  // 137-in-354 share) and the copy column stretches to it. A fixed card height
+  // clipped the ATTACK row on the long names.
   return (
-    <WarCard className="flex min-h-[154px] items-stretch gap-[4px] !p-0">
-      {/* Proportional, not a fixed 137px: on a 320px phone a fixed thumb
-          starved the name column and truncated "Goblin King". */}
-      <div className="relative w-[38%] shrink-0 overflow-hidden rounded-[10px]">
-        <img
-          src={boss.art}
-          alt={boss.name}
-          className="absolute inset-0 size-full object-cover"
-          style={{ filter: available ? "none" : "grayscale(0.7) brightness(0.7)" }}
-          draggable={false}
-        />
-      </div>
+    <WarCard hover className="group flex items-stretch gap-[4px] !p-0">
+      {/* backdrop="transparent": the thumbnail sits inside the card's own
+          frame fill, so the art's transparent margins should show that
+          themed texture, not a flat black plate (BossBattle's full-screen
+          portrait keeps the black stage backdrop — it isn't inside a card). */}
+      <BossPortrait boss={boss} dim={!available} scrim={false} backdrop="transparent" aspect={BOSS_THUMB_ASPECT} zoomOnHover className="w-[38%] shrink-0 self-center" />
 
-      {/* pt clears the frame's top-centre gem, which hangs below the border. */}
-      <div className="flex min-w-0 flex-1 flex-col justify-center gap-[6px] pb-[8px] pl-[8px] pr-[14px] pt-[16px]">
-        <div className="flex items-start gap-[4px]">
-          <div className="flex min-w-0 flex-1 flex-col gap-[4px]">
-            <GoldText solid className="truncate text-[12px] font-bold uppercase leading-[20px] tracking-[0.12px]">{boss.name}</GoldText>
-            <span className="text-[10px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
-              {boss.typeLabel}
-            </span>
-            <span className="text-[11px] font-bold" style={{ color: ink.value, fontFamily: skin.war.font }}>
-              HP {fmt(boss.hpMax)}
+      <div className="flex min-w-0 flex-1 flex-col gap-[10px] py-[4px] pl-[8px] pr-[4px]">
+        <div className="flex min-h-0 flex-1 flex-col justify-end gap-[12px]">
+          <div className="flex items-start gap-[4px]">
+            <div className="flex min-w-0 flex-1 flex-col gap-[4px]">
+              <GoldText solid className="truncate text-[12px] font-bold uppercase leading-[20px] tracking-[0.12px]">{boss.name}</GoldText>
+              {/* Card interiors are textured art, not a flat colour — a bright
+                  patch (ep369's green glow) can wash out ink.meta with no
+                  shadow, so give every line here the same dark halo. */}
+              <span className="text-[10px] leading-[12px]" style={{ color: ink.meta, fontFamily: skin.war.font, textShadow: "0 1px 2px rgba(0,0,0,0.75)" }}>
+                {boss.typeLabel}
+              </span>
+              <span className="text-[11px] font-bold leading-[13px]" style={{ color: ink.value, fontFamily: skin.war.font, textShadow: "0 1px 2px rgba(0,0,0,0.75)" }}>
+                HP {fmt(boss.hpMax)}
+              </span>
+            </div>
+            <RewardBadge gem={boss.gem} />
+          </div>
+
+          <div className="flex items-center gap-[8px]">
+            <HpBar pct={boss.hpPct} className="min-w-0 max-w-[165px] flex-1" />
+            <span className="shrink-0 text-[11px] leading-none tabular-nums" style={{ color: ink.text, fontFamily: skin.war.font, textShadow: "0 1px 2px rgba(0,0,0,0.75)" }}>
+              {boss.hpPct}%
             </span>
           </div>
-          <div
-            className="flex h-[48px] w-[38px] shrink-0 flex-col items-center justify-center gap-[2px] rounded-[6px] border"
-            style={{ background: skin.c.inset, borderColor: skin.c.edgeSoft }}
-          >
-            <GemIcon gem={boss.gem} size={24} />
-            <span className="text-[8px] leading-[10px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
-              Reward
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-[8px]">
-          <HpBar pct={boss.hpPct} className="w-[165px] max-w-full flex-1" />
-          <span className="shrink-0 text-[11px]" style={{ color: ink.text, fontFamily: skin.war.font }}>
-            {boss.hpPct}%
-          </span>
         </div>
 
         <div className="flex items-center gap-[4px]">
-          <div className="flex min-w-0 flex-1 items-center justify-end gap-[3px]">
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-[2px]">
             <span className="size-[4px] shrink-0 rounded-full" style={{ background: available ? ink.crit : ink.meta }} />
-            <span className="whitespace-nowrap text-[9px] leading-[11px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
+            <span className="truncate text-[8px] leading-[10px]" style={{ color: ink.meta, fontFamily: skin.war.font, textShadow: "0 1px 2px rgba(0,0,0,0.75)" }}>
               {statusText}
             </span>
           </div>
-          <WarButton variant="attack" size="sm" className="w-[86px] shrink-0" onClick={() => onAttack(boss)} disabled={!available && boss.status !== "defeated"}>
+          <WarButton
+            variant="attack"
+            size="sm"
+            className="w-[86px] shrink-0"
+            style={{ marginRight: skin.war.attackInset || 0 }}
+            onClick={() => onAttack(boss)}
+            disabled={!available && boss.status !== "defeated"}
+          >
             {boss.status === "defeated" ? "RESULTS" : "ATTACK"}
           </WarButton>
         </div>

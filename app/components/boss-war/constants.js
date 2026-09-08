@@ -33,12 +33,12 @@ export const BOSS_TYPE_LABEL = Object.fromEntries(BOSS_TYPE_TABS.map((t) => [t.i
 // share one illustration per boss across all six skins); only `id`/`art`
 // are local — name, type, HP and timing come from the API.
 export const BOSS_CATALOG = {
-  "goblin-king": { name: "Goblin King", type: BOSS_TYPES.DAILY, art: "/assets/boss-war/boss/goblin-king.webp", gem: "premium" },
-  "fire-dragon": { name: "Fire Dragon", type: BOSS_TYPES.WEEKLY, art: "/assets/boss-war/boss/fire-dragon.webp", gem: "epic" },
-  "ice-giant": { name: "Ice Giant", type: BOSS_TYPES.WEEKLY, art: "/assets/boss-war/boss/ice-giant.webp", gem: "rare" },
+  "goblin-king": { name: "Goblin King", type: BOSS_TYPES.DAILY, art: "/assets/boss-war/boss/goblin-king.webp", gem: "common" },
+  "fire-dragon": { name: "Fire Dragon", type: BOSS_TYPES.WEEKLY, art: "/assets/boss-war/boss/fire-dragon.webp", gem: "premium" },
+  "ice-giant": { name: "Ice Giant", type: BOSS_TYPES.WEEKLY, art: "/assets/boss-war/boss/ice-giant.webp", gem: "epic" },
   "titan-emperor": { name: "Titan Emperor", type: BOSS_TYPES.EVENT, art: "/assets/boss-war/boss/titan-emperor.webp", gem: "legendary" },
   // No Shadow Demon illustration in the comps yet — reuses the Titan art.
-  "shadow-demon": { name: "Shadow Demon", type: BOSS_TYPES.DAILY, art: "/assets/boss-war/boss/titan-emperor.webp", gem: "rare" },
+  "shadow-demon": { name: "Shadow Demon", type: BOSS_TYPES.DAILY, art: "/assets/boss-war/boss/titan-emperor.webp", gem: "common" },
 };
 export const DEFAULT_BOSS_ART = "/assets/boss-war/boss/goblin-king.webp";
 
@@ -50,6 +50,23 @@ export const GEM_ART = {
   rare: "/assets/boss-war/gems/common.webp",
   common: "/assets/boss-war/gems/common.webp",
 };
+
+// The reward badge's interior, per gem tier — sampled off the four badges in
+// comp 2642:3280..3370. The plaque art itself is hollow and shared.
+export const GEM_TINT = {
+  legendary: "radial-gradient(120% 90% at 50% 22%, #d64ba9 0%, #ac2384 100%)",
+  epic: "radial-gradient(120% 90% at 50% 22%, #6d0d14 0%, #4a0404 100%)",
+  premium: "radial-gradient(120% 90% at 50% 22%, #123544 0%, #01191f 100%)",
+  rare: "radial-gradient(120% 90% at 50% 22%, #6a2e50 0%, #45182f 100%)",
+  common: "radial-gradient(120% 90% at 50% 22%, #6a2e50 0%, #45182f 100%)",
+};
+
+// The boss thumbnail's box on a list card (comp: 137x139 in a 354x154 card).
+// Deliberately the comp's shape, not the frame art's own aspect: every
+// station's boss frame is landscape, and at full aspect the thumbnail leaves
+// the name column too narrow for "GOBLIN KING". The hollow is read from each
+// theme's measured `bossFrame.open`, which is in percent and so survives it.
+export const BOSS_THUMB_ASPECT = 137 / 139;
 
 // Ranking reward tiers (spec: Top 1 / 10 / 100 / 1000 / All).
 export const RANK_REWARD_TIERS = [

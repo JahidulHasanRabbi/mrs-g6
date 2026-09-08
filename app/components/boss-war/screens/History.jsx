@@ -5,7 +5,7 @@
 import { useRpgSkin } from "../../rpg/rpgSkin";
 import { fmt, WAR_VIEWS } from "../constants";
 import * as warApi from "../bossWarApi";
-import { useFrameInk, StateLine, WarButton, WarCard, WarTitle } from "../primitives";
+import { useFrameInk, useWarResource, WarButton, WarCard, WarScreen, WarState } from "../primitives";
 
 // Project rule: dd/mm/yyyy HH:MM AM|PM (en-GB). The table is narrow, so the
 // date and time stack on two lines.
@@ -22,12 +22,17 @@ const COLS = "grid-cols-[58px_minmax(0,1fr)_54px_30px_18px]";
 
 export default function History({ onNavigate }) {
   const skin = useRpgSkin();
-  const ink = useFrameInk();
+  const ink = useFrameInk(skin.war.table || skin.war.card);
   const { data, error } = useWarResource(() => warApi.getHistory({ limit: 50 }), [], "Could not load history.");
+  const [padL, padR] = skin.war.tablePad || [6, 6];
 
   return (
     <WarScreen title="History">
-        <WarCard spec={skin.war.table || skin.war.card} className="flex h-[440px] min-w-0 flex-col !px-[22px]">
+        <WarCard
+          spec={skin.war.table || skin.war.card}
+          className="flex h-[440px] min-w-0 flex-col"
+          style={{ paddingLeft: `${padL}%`, paddingRight: `${padR}%` }}
+        >
           <div className={`grid ${COLS} gap-[4px] border-b pb-[6px] pr-[12px] text-[9px] tracking-[0.6px]`} style={{ color: ink.text, borderColor: skin.c.rule, fontFamily: skin.war.font }}>
             <span>TIME</span>
             <span className="min-w-0 truncate">BOSS</span>

@@ -17,7 +17,7 @@ import { useGameSessionPing, GAME_SESSION_IDS } from "../hooks/useGameSessionPin
 import { useRpgSkin } from "../components/rpg/rpgSkin";
 import {
   GameClosedOverlay,
-  GameLoadingGate,
+  GameLoadingContent,
   RpgSkinShell,
   useViewNavigation,
 } from "../components/rpg/gameShell";
@@ -159,7 +159,21 @@ function RpgPageInner() {
   // ------------------------------------------------------------------
 
   if (!profile) {
-    return <GameLoadingGate skin={skin} message={loadError} font={RPG_FONTS.display} />;
+    return (
+      <>
+        <ScreenShell
+          view={view}
+          onNavigate={navigate}
+          onInfoClick={openInfo}
+          onMenuClick={openMenu}
+          hideHud
+        >
+          <GameLoadingContent skin={skin} message={loadError} font={RPG_FONTS.display} />
+        </ScreenShell>
+        <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+        <InfoModal open={infoOpen} onClose={() => setInfoOpen(false)} profile={profile} />
+      </>
+    );
   }
 
   if (!profile.hasHero) {

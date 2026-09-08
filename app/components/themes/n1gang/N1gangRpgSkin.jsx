@@ -16,7 +16,15 @@ const SKIN = buildRpgSkin(THEME_IDS.N1GANG, N1GANG_ASSETS, N1GANG_COLORS, {
   war: {
     ...WAR_FRAMES,
     bossFrame: { aspect: 1.08, open: [8.9, 8.0, 12.6, 8.0] },
-    earnTile: { aspect: 0.61, frame: N1GANG_ASSETS.war.earnTile, ctaBand: [82, 93], inset: 13 },
+    // No attack-btn art, so the ATTACK plaque falls back to this crown title
+    // plaque. Center the label in its black panel (L R T B %) — the blind 0.14
+    // bias dropped it toward the bottom rail. L/R keep it off the side diamonds.
+    attackWindow: [18, 82, 35, 84],
+    earnTile: { frame: N1GANG_ASSETS.war.earnTile, box: [22, 19, 19, 19], ctaBand: [82, 93] },
+    // Asymmetric: table-frame.webp's left rail measures 2% (the bolts fade
+    // into the backdrop) while its right measures 15.8%, so the left side
+    // is the one that needs the clearance in padding rather than border.
+    tablePad: [23, 8],
   },
 });
 

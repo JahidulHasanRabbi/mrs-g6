@@ -15,7 +15,8 @@ const SKIN = buildRpgSkin(THEME_IDS.UBETCLUB, UBET_ASSETS, UBET_COLORS, {
   war: {
     ...WAR_FRAMES,
     bossFrame: { aspect: 1.335, open: [6.0, 4.8, 6.7, 4.8] },
-    earnTile: { frame: UBET_ASSETS.war.earnTile, aspect: 0.74 },
+    earnTile: { frame: UBET_ASSETS.war.earnTile, box: [23, 27, 18, 27] },
+    tablePad: [9, 9],
   },
 });
 

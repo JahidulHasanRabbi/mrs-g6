@@ -18,9 +18,13 @@ const SKIN = buildRpgSkin(THEME_IDS.KGAME99, KGAME99_ASSETS, KGAME99_COLORS, {
   war: {
     ...WAR_FRAMES,
     bossFrame: { aspect: 1.325, open: [7.4, 4.8, 8.2, 4.8] },
-    earnTile: { frame: KGAME99_ASSETS.war.earnTile, aspect: 0.5 },
+    earnTile: { frame: KGAME99_ASSETS.war.earnTile, box: [13, 21, 13, 21] },
+    tablePad: [12, 12],
     frameInkSolid: "#0b2545",
     inkFrame: { text: "#0b2545", meta: "#1f4368", value: "#0b2545", dmg: "#8a3b00", crit: "#12630f" },
+    // …but not every frame: row-frame's interior is rgb(1,63,134), where that
+    // navy measured 1.0:1. Rows keep the light ink.
+    darkFrames: [KGAME99_ASSETS.war.rowFrame],
   },
 });
 

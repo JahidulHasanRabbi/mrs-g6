@@ -4,11 +4,11 @@
 // a station ships frame art (9-sliced so the ornament survives any box), the
 // default look falls back to CSS borders and gradients.
 
-import { useEffect, useState } from "react";
+import { Children, createContext, isValidElement, useContext, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { nineSlice, useRpgSkin } from "../rpg/rpgSkin";
 import { WAR_IMAGES, gemFor } from "./warAssets";
-import { fmt } from "./constants";
+import { fmt, GEM_TINT } from "./constants";
 
 // ---------------------------------------------------------------------------
 // Time
@@ -38,11 +38,30 @@ export function useCountdown(endsAt) {
   return { ...left, label };
 }
 
-/** Ink for copy sitting on a frame interior — the same on every skin except
- *  those whose frames are light inside (kgame99). */
-export function useFrameInk() {
+/** Whether the frame we are inside is light or dark on the interior. WarCard
+ *  publishes it; nothing outside a frame reads it. */
+const OnDarkFrame = createContext(false);
+
+/** Ink for copy sitting on a frame interior. A skin with light frames supplies
+ *  `inkFrame`, but kgame99's are mixed — sky-blue cards, dark navy rows — so a
+ *  frame named in `darkFrames` keeps the light ink (its dark navy measured
+ *  1.0:1 against those rows). */
+export function useFrameInk(spec) {
   const skin = useRpgSkin();
+  const fromContext = useContext(OnDarkFrame);
+  // A component that renders its own WarCard sits ABOVE the provider, so it
+  // has to name the frame it is about to draw into; anything nested reads it
+  // off the context instead.
+  const frame = (spec === undefined ? skin.war.card : spec)?.frame;
+  const onDark = spec === undefined ? fromContext : !frame || (skin.war.darkFrames || []).includes(frame);
+  if (onDark) return skin.war.ink;
   return skin.war.inkFrame || skin.war.ink;
+}
+
+/** The solid colour GoldText falls back to on a light frame interior. */
+function useSolidInk() {
+  const skin = useRpgSkin();
+  return useContext(OnDarkFrame) ? null : skin.war.frameInkSolid;
 }
 
 // ---------------------------------------------------------------------------
@@ -55,7 +74,8 @@ export function useFrameInk() {
  *  dark ink instead (same call the leaderboard's --lb-heading makes). */
 export function GoldText({ children, className = "", style, as: Tag = "span", solid = false }) {
   const skin = useRpgSkin();
-  const ink = solid ? skin.war.frameInkSolid : null;
+  const solidInk = useSolidInk();
+  const ink = solid ? solidInk : null;
   const fill = ink
     ? { color: ink, textShadow: "0 1px 1px rgba(255,255,255,0.35)" }
     : {
@@ -120,25 +140,39 @@ export function WarTitle({ children }) {
 // Framed containers
 // ---------------------------------------------------------------------------
 
-/** Ornate content card (boss card, stat card, attack card). */
-export function WarCard({ children, className = "", style, spec }) {
+/** Ornate content card (boss card, stat card, attack card). Pass `hover` to make
+ *  it lift and cast a gold glow under the pointer (the drop-shadow hugs the
+ *  frame art's own alpha, so a 9-sliced ornament glows by its shape). */
+export function WarCard({ children, className = "", style, spec, hover = false }) {
   const skin = useRpgSkin();
   const s = spec || skin.war.card;
-  if (!s.frame) {
-    return (
-      <div
-        className={`relative w-full rounded-[16px] border ${className}`}
-        style={{ background: skin.panel.fillDark, borderColor: skin.c.edgeSoft, padding: s.pad, ...style }}
-      >
-        {children}
-      </div>
-    );
-  }
-  return (
-    <div className={`relative w-full ${className}`} style={{ ...nineSlice(s), ...style }}>
+  // An unframed card is always dark inside; a framed one is dark only if the
+  // skin lists it that way.
+  const onDark = !s.frame || (skin.war.darkFrames || []).includes(s.frame);
+  const hoverAnim = hover
+    ? {
+        whileHover: { scale: 1.03, y: -4, filter: "drop-shadow(0 8px 22px rgba(242,203,122,0.5))" },
+        transition: { type: "spring", stiffness: 320, damping: 24 },
+      }
+    : null;
+  const body = !s.frame ? (
+    <motion.div
+      className={`relative w-full rounded-[16px] border ${className}`}
+      style={{ background: skin.panel.fillDark, borderColor: skin.c.edgeSoft, padding: s.pad, ...style }}
+      {...hoverAnim}
+    >
       {children}
-    </div>
+    </motion.div>
+  ) : (
+    <motion.div
+      className={`relative w-full ${className}`}
+      style={{ ...nineSlice(s), ...style }}
+      {...hoverAnim}
+    >
+      {children}
+    </motion.div>
   );
+  return <OnDarkFrame.Provider value={onDark}>{body}</OnDarkFrame.Provider>;
 }
 
 /** Crowned wide plaque ("How to Earn Attack Points", "How to Earn Rewards"). */
@@ -167,6 +201,29 @@ export function InfoPlaque({ title, lines = [], children, className = "" }) {
 }
 
 // ---------------------------------------------------------------------------
+// Attention
+// ---------------------------------------------------------------------------
+
+// A warm gold that reads on every station's dark battle backdrop, kept as rgba
+// so it composes without depending on any skin token being a 6-digit hex.
+const GOLD_GLOW = (a) => `rgba(242, 203, 122, ${a})`;
+
+/** Soft pulsing gold aura that sits BEHIND a CTA to pull the eye onto it.
+ *  Render it as the first child of a `relative` box; it spills past the box on
+ *  purpose (the button is never `overflow-hidden`) so the halo is visible. */
+export function AttentionGlow({ radius = 22, className = "" }) {
+  return (
+    <motion.span
+      aria-hidden
+      className={`pointer-events-none absolute -inset-[7px] ${className}`}
+      style={{ borderRadius: radius + 7, background: `radial-gradient(closest-side, ${GOLD_GLOW(0.5)}, ${GOLD_GLOW(0)} 78%)` }}
+      animate={{ opacity: [0.35, 0.85, 0.35], scale: [0.9, 1.07, 0.9] }}
+      transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+    />
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Controls
 // ---------------------------------------------------------------------------
 
@@ -188,7 +245,7 @@ export function WarTabs({ tabs, active, onChange, className = "" }) {
             role="tab"
             aria-selected={isOn}
             onClick={() => onChange(t.id)}
-            className="relative flex h-[36px] min-w-0 flex-1 items-center justify-center transition-transform active:scale-95"
+            className="relative flex h-[36px] min-w-0 flex-1 items-center justify-center transition-transform hover:scale-[1.05] active:scale-95"
             style={
               art
                 ? undefined
@@ -224,34 +281,68 @@ export function WarTabs({ tabs, active, onChange, className = "" }) {
 }
 
 /** Plaque button: the ATTACK button and the wide Rewards / Rankings pills. */
-export function WarButton({ children, onClick, disabled, variant = "pill", className = "", size = "md" }) {
+export function WarButton({ children, onClick, disabled, variant = "pill", className = "", size = "md", style }) {
   const skin = useRpgSkin();
   const art = variant === "attack" ? skin.war.attackBtn : skin.war.pill;
   const dims = size === "sm" ? "h-[30px]" : size === "lg" ? "h-[52px]" : "h-[44px]";
   const text = size === "sm" ? "text-[10.5px]" : size === "lg" ? "text-[15px]" : "text-[14px]";
+  const win = variant === "attack" && art ? skin.war.attackWindow : null;
+  const labelBox = win
+    ? { position: "absolute", left: `${win[0]}%`, right: `${100 - win[1]}%`, top: `${win[2]}%`, bottom: `${100 - win[3]}%` }
+    : variant === "attack" && skin.war.attackLabelBias
+      ? { marginTop: `${skin.war.attackLabelBias * 100}%` }
+      : undefined;
+  // The attack plaque is the whole screen's call to action, so when it's live
+  // it breathes, glows and catches a periodic shine to keep the eye on it.
+  const attention = variant === "attack" && !disabled;
   return (
     <motion.button
       type="button"
       onClick={onClick}
       disabled={disabled}
       whileTap={disabled ? undefined : { scale: 0.96 }}
+      animate={attention ? { scale: [1, 1.045, 1] } : undefined}
+      transition={attention ? { duration: 1.6, repeat: Infinity, ease: "easeInOut" } : undefined}
       className={`relative flex items-center justify-center ${dims} ${className} disabled:cursor-not-allowed`}
-      style={
-        art
+      style={{
+        ...(art
           ? { opacity: disabled ? 0.55 : 1, filter: disabled ? "grayscale(0.6)" : "none" }
           : {
               borderRadius: 22,
               border: `1px solid ${disabled ? skin.c.edgeSoft : skin.c.accent}`,
               background: disabled ? skin.c.muted : skin.c.rowActive,
               boxShadow: disabled ? "none" : `0 0 14px ${skin.c.accent}55`,
-            }
-      }
+            }),
+        ...style,
+      }}
     >
+      {attention ? <AttentionGlow radius={22} /> : null}
       {art ? <img src={art} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full object-fill" draggable={false} /> : null}
+      {/* Shine sweep, masked to the plaque art so the light band never spills
+          past the ornament onto the button's transparent corners. */}
+      {attention && art ? (
+        <motion.span
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            WebkitMaskImage: `url(${art})`,
+            maskImage: `url(${art})`,
+            WebkitMaskSize: "100% 100%",
+            maskSize: "100% 100%",
+            background: "linear-gradient(105deg, transparent 42%, rgba(255,255,255,0.55) 50%, transparent 58%)",
+            backgroundSize: "260% 100%",
+          }}
+          animate={{ backgroundPositionX: ["150%", "-60%"] }}
+          transition={{ duration: 2.4, repeat: Infinity, repeatDelay: 1.3, ease: "easeInOut" }}
+        />
+      ) : null}
+      {/* Every ATTACK plaque hangs an ornament off its top, so the opening's
+          centre sits 55-61% down the art. Centring the label on the box put it
+          visibly high; it takes the measured window instead. */}
       <GoldText
         solid
-        className={`relative z-10 whitespace-nowrap font-bold ${text}`}
-        style={variant === "attack" && skin.war.attackLabelBias ? { marginTop: `${skin.war.attackLabelBias * 100}%` } : undefined}
+        className={`relative z-10 flex items-center justify-center whitespace-nowrap font-bold ${text}`}
+        style={labelBox}
       >
         {children}
       </GoldText>
@@ -412,34 +503,56 @@ export function StatCell({ icon, label, value }) {
   );
 }
 
+// Every comp sizes the four tiles identically whatever the station's frame-art
+// aspect (0.34–0.74); the art stretches to the tile and the %-based `box`/
+// `ctaBand` insets ride along. Rendering at each art's own aspect towered the
+// narrow skins (ep369 0.39, kgame99 0.34) to 218px, over the bottom nav.
+const EARN_TILE_ASPECT = 0.56;
+// Cap the tile so four across never balloon on the wider `max-w-475` column —
+// they stay comp-sized and centre with breathing room inside the plaque.
+const EARN_TILE_MAX_W = 84;
+// Extra inset added to every measured `box` edge so the label/icon/CTA clear
+// the frame's gold rail on all four sides.
+const EARN_BOX_PAD = 3;
+
 /** The four "How to Earn Attack Points" tiles.
  *
  *  A station's tile art is a portrait frame. acebet77, n1gang and lv918 bake a
  *  CTA pill into the bottom of theirs (`earnTile.ctaBand`, measured off the
- *  art) — the label rides that band. The rest get a drawn pill. Content sits
- *  inside `earnTile.inset` so it never rides the frame's ornament. */
+ *  art) — the label rides that band. The rest get a drawn pill inside the
+ *  interior. Everything — label, icon, CTA — lives in `earnTile.box`, the
+ *  interior measured off that station's own art (tools/frame_grid.py). */
 export function EarnApTiles({ tiles, onAction, busyId }) {
   const skin = useRpgSkin();
   const spec = skin.war.earnTile;
   const art = spec.frame;
   const ink = useFrameInk();
   const band = spec.ctaBand;
-  const inset = spec.inset || 13;
-  // Content stops above the CTA, wherever that ends up.
-  const contentBottom = band ? 100 - band[0] + 2 : 26;
+  const [boxT, boxR, artBottom, boxL] = spec.box || [18, 16, 18, 16];
+  // A baked pill ends the interior where it starts.
+  const boxB = band ? Math.max(artBottom, 102 - band[0]) : artBottom;
+  // Space between tiles. Per-theme because a skin whose frame art carries wide
+  // side ornaments reads as too far apart at the shared default.
+  const gap = spec.gap ?? 10;
 
   return (
-    <div className="flex w-full items-stretch justify-center gap-[6px]">
+    <div className="flex w-full items-stretch justify-center" style={{ gap: `${gap}px` }}>
       {tiles.map((t) => {
         const disabled = busyId === t.id || (!t.href && t.claimable === false);
         const cta = busyId === t.id ? "..." : t.claimable === false && !t.href ? "Claimed" : t.cta;
+        // Deposit is the highest-value way to gain AP — give its tile the same
+        // gold pull as the ATTACK plaque so long as it's still claimable.
+        const lure = t.id === "deposit" && !disabled;
         if (!art) {
           return (
-            <div
+            <motion.div
               key={t.id}
-              className="flex min-w-0 flex-1 flex-col items-center gap-[4px] rounded-[12px] border px-[2px] pb-[8px] pt-[6px]"
-              style={{ background: skin.c.inset, borderColor: skin.c.edgeSoft }}
+              className="relative flex min-w-0 flex-1 flex-col items-center gap-[4px] rounded-[12px] border px-[2px] pb-[8px] pt-[6px]"
+              style={{ background: skin.c.inset, borderColor: lure ? GOLD_GLOW(0.9) : skin.c.edgeSoft }}
+              animate={lure ? { scale: [1, 1.035, 1] } : undefined}
+              transition={lure ? { duration: 1.8, repeat: Infinity, ease: "easeInOut" } : undefined}
             >
+              {lure ? <AttentionGlow radius={12} /> : null}
               <GoldText solid className="text-[10px] font-bold">{t.label}</GoldText>
               <img src={t.icon} alt="" aria-hidden className="size-[40px] object-contain" draggable={false} />
               <span className="text-[9px] leading-[11px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
@@ -448,52 +561,62 @@ export function EarnApTiles({ tiles, onAction, busyId }) {
               <WarButton size="sm" className="w-full max-w-[64px]" onClick={() => onAction(t)} disabled={disabled}>
                 {cta}
               </WarButton>
-            </div>
+            </motion.div>
           );
         }
         return (
-          <button
+          <motion.button
             key={t.id}
             type="button"
             onClick={() => onAction(t)}
             disabled={disabled}
             className="relative min-w-0 flex-1 disabled:cursor-not-allowed"
-            style={{ opacity: disabled ? 0.72 : 1, aspectRatio: String(spec.aspect || 0.6) }}
+            style={{ opacity: disabled ? 0.72 : 1, aspectRatio: String(EARN_TILE_ASPECT), maxWidth: EARN_TILE_MAX_W }}
+            animate={lure ? { scale: [1, 1.04, 1] } : undefined}
+            transition={lure ? { duration: 1.8, repeat: Infinity, ease: "easeInOut" } : undefined}
           >
+            {lure ? <AttentionGlow radius={14} /> : null}
             <img src={art} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full object-fill" draggable={false} />
             <div
-              className="absolute flex flex-col items-center justify-between"
-              style={{ left: `${inset}%`, right: `${inset}%`, top: "17%", bottom: `${contentBottom}%` }}
+              className="absolute flex flex-col items-center justify-between gap-[2px] overflow-hidden"
+              style={{ left: `${boxL + EARN_BOX_PAD}%`, right: `${boxR + EARN_BOX_PAD}%`, top: `${boxT + EARN_BOX_PAD}%`, bottom: `${boxB + EARN_BOX_PAD}%` }}
             >
-              <GoldText solid className="text-[9px] font-bold leading-[11px]">{t.label}</GoldText>
-              <img src={t.icon} alt="" aria-hidden className="min-h-0 w-auto flex-1 object-contain py-[2px]" draggable={false} />
-              <span className="text-[9px] leading-[11px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
+              <GoldText solid className="max-w-full text-[9px] font-bold leading-[11px]">{t.label}</GoldText>
+              {/* Capped on BOTH axes so the glyph sits centred with clear margin
+                  inside the opening — off the side rails and never grown by
+                  flex-1 to fill the whole interior height. */}
+              <img src={t.icon} alt="" aria-hidden className="min-h-0 w-[66%] max-h-[46%] flex-1 object-contain" draggable={false} />
+              <span className="max-w-full text-[9px] leading-[11px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
                 {t.sub}
               </span>
+              {band ? null : (
+                <div
+                  className="relative flex h-[15px] w-full shrink-0 items-center justify-center"
+                  style={
+                    // The station's own pill, not a flat dark fill: skin.c.inset
+                    // is a black translucent and read as a hole punched in
+                    // ubetclub's red tile (comp 2642:3435).
+                    skin.war.pill
+                      ? undefined
+                      : { borderRadius: 999, border: `1px solid ${skin.c.edgeSoft}`, background: skin.c.inset }
+                  }
+                >
+                  {skin.war.pill ? (
+                    <img src={skin.war.pill} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full object-fill" draggable={false} />
+                  ) : null}
+                  <GoldText solid className="relative z-10 text-[9px] font-bold leading-none">{cta}</GoldText>
+                </div>
+              )}
             </div>
             {band ? (
               <div
                 className="absolute flex items-center justify-center"
-                style={{ left: `${inset + 3}%`, right: `${inset + 3}%`, top: `${band[0]}%`, bottom: `${100 - band[1]}%` }}
+                style={{ left: `${boxL + 3}%`, right: `${boxR + 3}%`, top: `${band[0]}%`, bottom: `${100 - band[1]}%` }}
               >
                 <GoldText solid className="text-[9px] font-bold leading-none">{cta}</GoldText>
               </div>
-            ) : (
-              <div
-                className="absolute flex items-center justify-center rounded-full border"
-                style={{
-                  left: `${inset + 1}%`,
-                  right: `${inset + 1}%`,
-                  bottom: "7%",
-                  height: "13%",
-                  background: skin.c.inset,
-                  borderColor: skin.c.edgeSoft,
-                }}
-              >
-                <GoldText solid className="text-[9px] font-bold leading-none">{cta}</GoldText>
-              </div>
-            )}
-          </button>
+            ) : null}
+          </motion.button>
         );
       })}
     </div>
@@ -505,19 +628,23 @@ export function EarnApTiles({ tiles, onAction, busyId }) {
  *  Both the box aspect and the opening come off the artwork (gen_skins.py):
  *  a shared 354/289 stretched acebet77's 1.08 frame 13% wide and squeezed the
  *  opening so short that a third of the boss was cut away. `children` are
- *  positioned against the opening, never the box, so nothing rides the rails. */
-export function BossPortrait({ boss, dim = false, className = "", children }) {
+ *  positioned against the opening, never the box, so nothing rides the rails.
+ *  `aspect` overrides the art's own box — the list card's thumbnail is near
+ *  square (BOSS_THUMB_ASPECT); `scrim` is the band the battle screen's readout
+ *  sits on, which a card has nothing to put there. */
+export function BossPortrait({ boss, dim = false, className = "", children, aspect, scrim = true, backdrop = "rgba(0,0,0,0.55)", zoomOnHover = false }) {
   const skin = useRpgSkin();
-  const { art: frame, aspect, open } = skin.war.bossFrame;
+  const { art: frame, aspect: artAspect, open } = skin.war.bossFrame;
   const [t, r, b, l] = open;
+  const box = aspect || (frame ? artAspect : null);
   return (
     <div
-      className={`relative w-full overflow-hidden ${frame ? "" : "h-[220px] rounded-[12px]"} ${className}`}
-      style={frame ? { aspectRatio: String(aspect) } : undefined}
+      className={`relative overflow-hidden ${box ? "" : "h-[220px]"} ${frame ? "" : "rounded-[12px]"} ${className}`}
+      style={box ? { aspectRatio: String(box) } : undefined}
     >
       <div
         className={`absolute overflow-hidden ${frame ? "rounded-[6px]" : "inset-0"}`}
-        style={frame ? { top: `${t}%`, right: `${r}%`, bottom: `${b}%`, left: `${l}%`, background: "rgba(0,0,0,0.55)" } : { background: "rgba(0,0,0,0.55)" }}
+        style={frame ? { top: `${t}%`, right: `${r}%`, bottom: `${b}%`, left: `${l}%`, background: backdrop } : { background: backdrop }}
       >
         {/* Top-anchored cover: the art is a tall portrait and every opening is
             landscape, so something has to go — losing the throne base beats
@@ -525,19 +652,40 @@ export function BossPortrait({ boss, dim = false, className = "", children }) {
         <img
           src={boss.art}
           alt={boss.name}
-          className="absolute inset-0 size-full object-cover"
+          className={`absolute inset-0 size-full object-cover ${zoomOnHover ? "transition-transform duration-[600ms] ease-out group-hover:scale-[1.12]" : ""}`}
           style={{ objectPosition: "50% 4%", filter: dim ? "grayscale(0.85) brightness(0.55)" : "none" }}
           draggable={false}
         />
-        {/* Scrim for the name + HP band: the illustration is busy and mid-tone
-            right where the readout sits. */}
-        <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-[46%]"
-          style={{ background: "linear-gradient(180deg, rgba(6,4,2,0) 0%, rgba(6,4,2,0.62) 45%, rgba(6,4,2,0.88) 100%)" }}
-        />
+        {scrim ? (
+          /* The illustration is busy and mid-tone right where the readout sits. */
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-[46%]"
+            style={{ background: "linear-gradient(180deg, rgba(6,4,2,0) 0%, rgba(6,4,2,0.62) 45%, rgba(6,4,2,0.88) 100%)" }}
+          />
+        ) : null}
       </div>
       {frame ? <img src={frame} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full object-fill" draggable={false} /> : null}
       {children}
+    </div>
+  );
+}
+
+/** The reward plaque on a boss list card (comp 2642:3294): the tier's colour
+ *  under the shared hollow badge frame, the gem, and the "Reward" caption. */
+export function RewardBadge({ gem }) {
+  const skin = useRpgSkin();
+  const art = WAR_IMAGES.ui.rewardBadge;
+  return (
+    <div className="relative flex h-[48px] w-[38px] shrink-0 flex-col items-center gap-[5px] pt-[5px]">
+      <div
+        className="absolute inset-[2px] rounded-[4px]"
+        style={{ background: GEM_TINT[gem] || GEM_TINT.common, border: art ? "none" : `1px solid ${skin.c.edgeSoft}` }}
+      />
+      <GemIcon gem={gem} size={23} className="relative" />
+      <span className="relative text-[6.5px] leading-[8px]" style={{ color: skin.war.ink.value, fontFamily: skin.war.font }}>
+        Reward
+      </span>
+      {art ? <img src={art} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full object-fill" draggable={false} /> : null}
     </div>
   );
 }
@@ -570,27 +718,50 @@ export function BossHp({ boss }) {
 /** The boss's name on the ATTACK plaque art. A label, not a control — this
  *  used to be a WarButton, which put a focusable button with no action on the
  *  portrait. */
+// The plate width comes from the name. `object-fill` stretched the whole
+// plaque, so it needed a fixed width and long names truncated. Here the
+// ornamented end-caps are pinned via a horizontal border-image (their pixel
+// width read off attackWindow at this reference plate width) while the flat
+// middle — where the label sits — stretches to fit the text.
+const NAMEPLATE_REF = 189;
+const NAMEPLATE_H = 38;
+
 export function NamePlate({ children, className = "" }) {
   const skin = useRpgSkin();
   const art = skin.war.attackBtn;
+  if (!art) {
+    return (
+      <div
+        className={`inline-flex h-[38px] max-w-full items-center justify-center rounded-[19px] border px-[18px] ${className}`}
+        style={{ borderColor: skin.c.accent, background: "rgba(6,4,2,0.72)" }}
+      >
+        <GoldText solid className="min-w-0 truncate text-[13px] font-bold leading-none">{children}</GoldText>
+      </div>
+    );
+  }
+  const [l, r, t, b] = skin.war.attackWindow || [12, 88, 30, 84];
+  const capL = Math.round((l / 100) * NAMEPLATE_REF);
+  const capR = Math.round(((100 - r) / 100) * NAMEPLATE_REF);
+  // Nudge the label down onto the panel centre, same window the ATTACK label uses.
+  const vBias = (((t + b) / 2 - 50) / 100) * NAMEPLATE_H;
   return (
     <div
-      className={`relative flex h-[38px] items-center justify-center ${className}`}
-      style={
-        art
-          ? undefined
-          : {
-              borderRadius: 19,
-              border: `1px solid ${skin.c.accent}`,
-              background: "rgba(6,4,2,0.72)",
-            }
-      }
+      className={`relative inline-flex h-[38px] max-w-full items-center justify-center ${className}`}
+      style={{
+        minWidth: NAMEPLATE_REF,
+        borderStyle: "solid",
+        borderColor: "transparent",
+        borderImageSource: `url(${art})`,
+        borderImageSlice: `0 ${(100 - r).toFixed(1)}% 0 ${l.toFixed(1)}% fill`,
+        borderImageWidth: `0 ${capR}px 0 ${capL}px`,
+        borderImageRepeat: "stretch",
+        borderWidth: `0 ${capR}px 0 ${capL}px`,
+      }}
     >
-      {art ? <img src={art} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full object-fill" draggable={false} /> : null}
       <GoldText
         solid
-        className="relative z-10 truncate px-[10px] text-[13px] font-bold leading-none"
-        style={skin.war.attackLabelBias ? { marginTop: `${skin.war.attackLabelBias * 100}%` } : undefined}
+        className="min-w-0 truncate px-[6px] text-[13px] font-bold leading-none"
+        style={{ transform: `translateY(${vBias}px)` }}
       >
         {children}
       </GoldText>
@@ -601,7 +772,7 @@ export function NamePlate({ children, className = "" }) {
 /** Labeled section block (Boss Info / How to Earn). */
 export function SectionCard({ label, title, children, className = "", action }) {
   const skin = useRpgSkin();
-  const fi = useFrameInk();
+  const fi = useFrameInk(skin.war.row);
   // `row`, not `card`: the comps dress these blocks with the wide jewelled
   // frame. ubetclub's card art is square, so stretching it across a short wide
   // block smeared the interior.
@@ -656,14 +827,42 @@ export function useWarResource(fetcher, deps, fallbackMessage) {
   return { data, error };
 }
 
+// Screen entrance: the title plaque drops in, then the column reveals its
+// children one after another. A WarState line is left unwrapped so its null
+// render in the loaded state doesn't leave an empty item (and an extra gap)
+// in the stack.
+const SCREEN_STAGGER = { show: { transition: { staggerChildren: 0.07, delayChildren: 0.12 } } };
+const SCREEN_ITEM = {
+  hidden: { opacity: 0, y: 22 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 240, damping: 22 } },
+};
+
 /** The screen frame every Boss War view shares: title plaque + content column. */
 export function WarScreen({ title, gap = 12, children, className = "" }) {
   return (
     <div className={`flex w-full flex-1 flex-col px-[16px] pb-[8px] ${className}`}>
-      <WarTitle>{title}</WarTitle>
-      <div className="flex flex-col px-[2px] pt-[8px]" style={{ gap: `${gap}px` }}>
-        {children}
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: -14, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <WarTitle>{title}</WarTitle>
+      </motion.div>
+      <motion.div
+        className="flex flex-col px-[2px] pt-[8px]"
+        style={{ gap: `${gap}px` }}
+        variants={SCREEN_STAGGER}
+        initial="hidden"
+        animate="show"
+      >
+        {Children.map(children, (child) =>
+          !isValidElement(child) || child.type === WarState ? (
+            child
+          ) : (
+            <motion.div variants={SCREEN_ITEM}>{child}</motion.div>
+          ),
+        )}
+      </motion.div>
     </div>
   );
 }

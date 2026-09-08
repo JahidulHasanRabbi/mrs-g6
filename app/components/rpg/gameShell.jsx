@@ -63,10 +63,11 @@ export function useViewNavigation(defaultView) {
   );
 }
 
-/** Full-screen gate shown until the game's first payload lands. */
-export function GameLoadingGate({ skin, message, font }) {
+/** Loading/error message sized to fill ScreenShell's content column, so the
+    top bar and nav stay put while the game's first payload lands. */
+export function GameLoadingContent({ skin, message, font }) {
   return (
-    <div className="grid min-h-[100dvh] w-full place-items-center px-[32px]" style={{ background: skin.surface }}>
+    <div className="grid flex-1 place-items-center px-[32px]">
       <p
         className="text-center text-[14px] leading-[22px] tracking-[3px]"
         style={{ color: skin.c.textDim, fontFamily: font }}
