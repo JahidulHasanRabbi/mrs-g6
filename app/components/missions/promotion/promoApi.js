@@ -12,10 +12,14 @@ import {
 
 // Both CTAs fall back to the member's station when the promotion carries no
 // explicit URL — the same construction the hamburger's "Back to Station" uses.
+// Trailing slash stripped so callers can safely append a path (matches the
+// same defensive strip UbetclubBottomNav's "hot" redirect already does on
+// this same getRedirectO() value).
 function stationOrigin() {
   const saved = tokenStorage.getRedirectO?.();
   if (!saved) return "/";
-  return saved.startsWith("http") ? saved : `https://${saved}`;
+  const withProtocol = saved.startsWith("http") ? saved : `https://${saved}`;
+  return withProtocol.replace(/\/$/, "");
 }
 
 // GET /mission/missions/{uuid}/promotion/check/ returns null (nothing to
@@ -72,11 +76,23 @@ export async function acknowledgeMissionPopup(uuid) {
   return acknowledgeMissionPromotion(uuid);
 }
 
-// Where "Unlock Reward" sends the member — the Deposit page on their own station.
+// Where "Unlock Reward" sends the member — the Deposit page on their own
+// station. Every station serves that page at the same "/deposit" path off
+// its own domain (confirmed 2026-09-08, e.g. https://n1gang.net/deposit),
+// so this is a hardcoded suffix rather than a promo-carried URL. promo still
+// wins if the backend ever starts sending deposit_url — no reason to block
+// on that field showing up.
 export async function beginUnlock(promo) {
-  return promo?.deposit_url || stationOrigin();
+  if (promo?.deposit_url) return promo.deposit_url;
+  const saved = tokenStorage.getRedirectO?.();
+  return saved ? `${stationOrigin()}/deposit` : stationOrigin();
 }
 
+// Where "Clear Now" sends the member — the NS Wallet Profile page on their
+// own station, same "/settings" path off its own domain for every station
+// (confirmed 2026-09-08, e.g. https://n1gang.net/settings).
 export function walletUrlFor(promo) {
-  return promo?.wallet_url || stationOrigin();
+  if (promo?.wallet_url) return promo.wallet_url;
+  const saved = tokenStorage.getRedirectO?.();
+  return saved ? `${stationOrigin()}/settings` : stationOrigin();
 }
