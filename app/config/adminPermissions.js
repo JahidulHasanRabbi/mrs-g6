@@ -26,6 +26,7 @@ export const ADMIN_PERMISSIONS = {
   EDIT_LUCKY_SPIN_PRIZES: "edit_lucky_spin_prizes",
   ARCHIVE_LUCKY_SPIN_PRIZES: "archive_lucky_spin_prizes",
   VIEW_PHONE_NUMBERS: "view_phone_numbers",
+  ACCESS_RETENTION: "access_retention",
 };
 
 export const MENU_PERMISSION_BY_ID = {
@@ -40,9 +41,11 @@ export const MENU_PERMISSION_BY_ID = {
   "settings-role-management": [ADMIN_PERMISSIONS.VIEW_ROLES],
   "settings-user-activity-log": [ADMIN_PERMISSIONS.VIEW_ACTIVITY_LOG],
   "settings-login-requests": [ADMIN_PERMISSIONS.VIEW_LOGINS],
+  "retention-member-comparison": [ADMIN_PERMISSIONS.ACCESS_RETENTION],
 };
 
 export const ADMIN_ROUTE_RULES = [
+  { pattern: /^\/admin\/retention\/member-comparison\/?$/, any: [ADMIN_PERMISSIONS.ACCESS_RETENTION] },
   { pattern: /^\/admin\/lucky-spin(?:\/(?:prize-settings|user-logs|daily-limits))?\/?$/, any: [ADMIN_PERMISSIONS.VIEW_LUCKY_SPIN_PRIZES] },
   { pattern: /^\/admin\/vip-tiers\/?$/, any: [ADMIN_PERMISSIONS.VIEW_MRS_TIER] },
   { pattern: /^\/admin\/wallet-site-vip\/?$/, any: [ADMIN_PERMISSIONS.VIEW_WALLET_TIER] },

@@ -67,6 +67,7 @@ function pathnameToActiveItem(pathname) {
   if (pathname.startsWith("/admin/reports/member")) return "member-report";
   if (pathname.startsWith("/admin/reports/usage")) return "usage-report";
   if (pathname.startsWith("/admin/retention/member-alert")) return "retention-member-alert";
+  if (pathname.startsWith("/admin/retention/member-comparison")) return "retention-member-comparison";
   if (pathname.startsWith("/admin/retention/members")) return "retention-member-list";
   if (pathname.startsWith("/admin/retention/error-transactions")) return "retention-error-transactions";
   if (pathname.startsWith("/admin/retention/settings")) return "retention-settings";
@@ -328,6 +329,13 @@ const RETENTION_MENU = [
     label: "Member List",
     iconMask: "/assets/admin/sidebar/icons/retention-member-list.svg",
     href: "/admin/retention/members",
+    disabled: false,
+  },
+  {
+    id: "retention-member-comparison",
+    label: "Member Comparison",
+    iconMask: "/assets/admin/sidebar/icons/retention-member-list.svg",
+    href: "/admin/retention/member-comparison",
     disabled: false,
   },
   {

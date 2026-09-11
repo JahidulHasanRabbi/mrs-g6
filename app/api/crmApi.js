@@ -233,6 +233,14 @@ export async function getAdminMembers(adminUuid, params = {}) {
   return await apiRequest(`${ENDPOINTS.CRM.ADMIN_MEMBERS(adminUuid)}${qs}`, { method: 'GET' }, true, 'admin');
 }
 
+// GET /crm-members/member-comparison/  (paginated)
+// params: { month ("YYYY-MM", required — defaults server-side to this month), brand (iexact), vip_level (iexact), pic (iexact, name not uuid), search (icontains, name/phone), page, page_size }
+// Results come back pre-sorted by last_month_deposit descending (previous month's ranking) with no ordering param needed.
+export async function getMemberComparison(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.CRM.MEMBER_COMPARISON}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
 // ─────────────────────────── Dashboard ───────────────────────────
 
 // GET /crm-admins/dashboard-summary/

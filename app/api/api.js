@@ -349,6 +349,8 @@ export const ENDPOINTS = {
     // Old path returned 404 on staging:
     // RETENTION_MEMBERS: '/crm-members/retention-profile/',
     RETENTION_MEMBERS: '/crm-members/retention-members/',
+    // Member Monthly Comparison
+    MEMBER_COMPARISON: '/crm-members/member-comparison/',
     ADMIN_MEMBERS: (adminUuid) => `/crm-members/${adminUuid}/admin-members/`,
     FOLLOW_UPS: '/crm-members/follow-up/',
     MEMBER_ASSIGN_TO_PIC: (memberUuid) => `/crm-members/members/${memberUuid}/assign-to-pic/`,
