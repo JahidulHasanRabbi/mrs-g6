@@ -27,8 +27,17 @@ export const ADMIN_PERMISSIONS = {
   ARCHIVE_LUCKY_SPIN_PRIZES: "archive_lucky_spin_prizes",
   VIEW_PHONE_NUMBERS: "view_phone_numbers",
   ACCESS_RETENTION: "access_retention",
+  ACCESS_MRS: "access_MRS",
 };
 
+// Module-level flags (ACCESS_MRS / ACCESS_RETENTION) gate entire sidebar
+// sections. Items that already carry a more specific permission (lucky spin,
+// VIP tiers, settings/*) are left on their existing checks rather than also
+// requiring the module flag — MENU_PERMISSION_BY_ID entries are OR'd
+// together (hasAnyAdminPermission), so adding the module flag alongside a
+// specific one would loosen, not tighten, that item's gating. "home" is
+// deliberately never gated: AdminRouteGuard falls back to router.replace
+// ('/admin') when a route is denied, so it must always stay reachable.
 export const MENU_PERMISSION_BY_ID = {
   "lucky-spin": [ADMIN_PERMISSIONS.VIEW_LUCKY_SPIN_PRIZES],
   "prize-settings": [ADMIN_PERMISSIONS.VIEW_LUCKY_SPIN_PRIZES],
@@ -41,11 +50,44 @@ export const MENU_PERMISSION_BY_ID = {
   "settings-role-management": [ADMIN_PERMISSIONS.VIEW_ROLES],
   "settings-user-activity-log": [ADMIN_PERMISSIONS.VIEW_ACTIVITY_LOG],
   "settings-login-requests": [ADMIN_PERMISSIONS.VIEW_LOGINS],
+
+  // Retention System — every item requires the module-level flag.
+  "retention-pic-dashboard": [ADMIN_PERMISSIONS.ACCESS_RETENTION],
+  "retention-member-alert": [ADMIN_PERMISSIONS.ACCESS_RETENTION],
+  "retention-member-list": [ADMIN_PERMISSIONS.ACCESS_RETENTION],
   "retention-member-comparison": [ADMIN_PERMISSIONS.ACCESS_RETENTION],
+  "retention-error-transactions": [ADMIN_PERMISSIONS.ACCESS_RETENTION],
+  "retention-settings": [ADMIN_PERMISSIONS.ACCESS_RETENTION],
+
+  // MRS System — every item without its own specific permission above
+  // requires the module-level flag. Parent items with children (avatar,
+  // reports) only need the flag on the parent: canAccessMenuItem short-
+  // circuits to `false` when the parent's own check fails, before it ever
+  // looks at the children.
+  "member-list": [ADMIN_PERMISSIONS.ACCESS_MRS],
+  "smash-egg": [ADMIN_PERMISSIONS.ACCESS_MRS],
+  "penalty-kick": [ADMIN_PERMISSIONS.ACCESS_MRS],
+  "redeem-links": [ADMIN_PERMISSIONS.ACCESS_MRS],
+  "mission-game": [ADMIN_PERMISSIONS.ACCESS_MRS],
+  "avatar": [ADMIN_PERMISSIONS.ACCESS_MRS],
+  "redemption-mall": [ADMIN_PERMISSIONS.ACCESS_MRS],
+  "mart-tiers": [ADMIN_PERMISSIONS.ACCESS_MRS],
+  "tournament": [ADMIN_PERMISSIONS.ACCESS_MRS],
+  "frame-setting": [ADMIN_PERMISSIONS.ACCESS_MRS],
+  "floating-menu": [ADMIN_PERMISSIONS.ACCESS_MRS],
+  "external-api": [ADMIN_PERMISSIONS.ACCESS_MRS],
+  "checkin-settings": [ADMIN_PERMISSIONS.ACCESS_MRS],
+  "feedback": [ADMIN_PERMISSIONS.ACCESS_MRS],
+  "banners": [ADMIN_PERMISSIONS.ACCESS_MRS],
+  "terms-conditions": [ADMIN_PERMISSIONS.ACCESS_MRS],
+  "reports": [ADMIN_PERMISSIONS.ACCESS_MRS],
 };
 
 export const ADMIN_ROUTE_RULES = [
-  { pattern: /^\/admin\/retention\/member-comparison\/?$/, any: [ADMIN_PERMISSIONS.ACCESS_RETENTION] },
+  // Whole Retention System — one prefix rule covers every sub-route
+  // (dashboard, member alert/list/comparison, error transactions, settings,
+  // member detail/edit) so a direct URL can't bypass the sidebar gate.
+  { pattern: /^\/admin\/retention(\/.*)?$/, any: [ADMIN_PERMISSIONS.ACCESS_RETENTION] },
   { pattern: /^\/admin\/lucky-spin(?:\/(?:prize-settings|user-logs|daily-limits))?\/?$/, any: [ADMIN_PERMISSIONS.VIEW_LUCKY_SPIN_PRIZES] },
   { pattern: /^\/admin\/vip-tiers\/?$/, any: [ADMIN_PERMISSIONS.VIEW_MRS_TIER] },
   { pattern: /^\/admin\/wallet-site-vip\/?$/, any: [ADMIN_PERMISSIONS.VIEW_WALLET_TIER] },
@@ -58,6 +100,13 @@ export const ADMIN_ROUTE_RULES = [
   { pattern: /^\/admin\/settings\/role-management\/?$/, any: [ADMIN_PERMISSIONS.VIEW_ROLES] },
   { pattern: /^\/admin\/settings\/user-activity-log\/?$/, any: [ADMIN_PERMISSIONS.VIEW_ACTIVITY_LOG] },
   { pattern: /^\/admin\/settings\/login-requests\/?$/, any: [ADMIN_PERMISSIONS.VIEW_LOGINS] },
+  // Whole MRS System — every top-level route that has no specific
+  // permission of its own (lucky-spin/vip-tiers/wallet-site-vip/mrs-vip
+  // above already have theirs) requires the module-level flag.
+  {
+    pattern: /^\/admin\/(members|smash-egg|penalty-kick|redeem-links|mission-game|avatar|redemption-mall|mart-tiers|tournament|frame-setting|floating-menu|external-api|checkin-settings|feedback|banners|terms-conditions|reports)(\/.*)?$/,
+    any: [ADMIN_PERMISSIONS.ACCESS_MRS],
+  },
 ];
 
 export function normalizePermissions(permissions) {

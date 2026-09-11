@@ -319,23 +319,11 @@ function groupPermissionAreas(areas) {
         }
       }
     } else if (normalized === "crm") {
-      // Phone visibility is a Retention System permission even though the
-      // backend catalog groups it under CRM > Members.
-      for (const group of area.groups) {
-        const phonePermissions = group.permissions.filter(
-          (permission) => permission.key === ADMIN_PERMISSIONS.VIEW_PHONE_NUMBERS,
-        );
-        const otherPermissions = group.permissions.filter(
-          (permission) => permission.key !== ADMIN_PERMISSIONS.VIEW_PHONE_NUMBERS,
-        );
-
-        if (phonePermissions.length > 0) {
-          retentionGroups.push({ name: "Members", permissions: phonePermissions });
-        }
-        if (otherPermissions.length > 0) {
-          mrsGroups.push({ ...group, permissions: otherPermissions });
-        }
-      }
+      // The backend's "CRM" catalog group holds retention-module
+      // functionality (assignments, dashboard, follow-up, member actions,
+      // notifications, retention summaries) even though its name doesn't
+      // say so — all of it belongs under Retention System Access, not MRS.
+      retentionGroups.push(...area.groups);
     } else {
       mrsGroups.push(...area.groups);
     }
