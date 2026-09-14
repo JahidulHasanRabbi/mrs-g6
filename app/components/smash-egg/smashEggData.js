@@ -16,7 +16,7 @@ export function buildRewardBoard(items = []) {
         item.itemType === "Battle Point" && !/\bBP\b|battle point/i.test(item.name)
           ? `${item.name}${Number(item.battlePoints) > 0 ? ` (${Number(item.battlePoints).toLocaleString("en-US")} BP)` : " BP"}`
           : item.name,
-      image: item.itemType === "Prize" ? item.image : null,
+      image: item.image || null,
       itemType: item.itemType,
     }));
 

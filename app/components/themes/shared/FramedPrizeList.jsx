@@ -17,7 +17,7 @@ export default function FramedPrizeList({ skin, prizes = [], creditRanges = [] }
         <div className="flex flex-col gap-2">
           {prizes.map((p) => {
             const accent = ra[p.rank] || ra[3];
-            const showImg = p.itemType === "Prize" && p.image;
+            const showImg = Boolean(p.image);
             const badge = RANK_BADGES[p.rank];
             return (
               <div key={p.rank} className="flex items-center gap-2.5 rounded-lg border-l-[3px] bg-[rgba(255,255,255,0.06)] px-2.5 py-1.5" style={{ borderColor: accent }}>

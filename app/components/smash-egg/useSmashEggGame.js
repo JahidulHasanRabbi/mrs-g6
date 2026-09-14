@@ -70,7 +70,7 @@ function formatPrizeSummary(results, rewards) {
         uuid: item.uuid,
         name,
         itemType,
-        image: itemType === "Prize" ? resolveApiImagePath(item.image || matched?.image) : null,
+        image: resolveApiImagePath(item.image || matched?.image),
         count: 0,
       };
     }

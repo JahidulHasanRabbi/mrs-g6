@@ -34,7 +34,7 @@ function RankBadge({ rank }) {
 
 function PrizeRow({ rank, name, image, itemType, index }) {
   const colors = RANK_COLORS[rank] || RANK_COLORS[3];
-  const showPrizeImage = itemType === "Prize" && image;
+  const showPrizeImage = Boolean(image);
 
   return (
     <motion.div

@@ -25,7 +25,7 @@ export default function KgamePrizeList({ prizes = [], creditRanges = [] }) {
         <div className="flex flex-col gap-2">
           {prizes.map((prize) => {
             const r = RANK[prize.rank] || RANK[3];
-            const showImg = prize.itemType === 'Prize' && prize.image;
+            const showImg = Boolean(prize.image);
             return (
               <div
                 key={prize.rank}
