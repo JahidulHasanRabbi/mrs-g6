@@ -12,9 +12,12 @@ import { usePhoneVisibility } from "../../../components/admin/retention/phoneVis
 // tracking so far. Same visual language as the sibling Member List / Member
 // Follow Up List pages (gold-on-dark retention shell, same table primitives).
 //
-// The backend (`GET /crm-members/member-comparison/?month=YYYY-MM`) already
-// returns rows sorted by last month's deposit descending — Rank is just the
-// row's position in that order, no separate ranking field needed. Defaulting
+// The backend (`GET /crm-members/member-comparison/?month=YYYY-MM`) sorts
+// rows by last month's deposit descending by default; passing
+// `sort_method=win_loss` re-sorts by last month's win/loss descending
+// instead (any other value, including a differently-cased one, silently
+// falls back to deposit sorting). Rank is just the row's position in
+// whichever order came back — no separate ranking field needed. Defaulting
 // the month filter to the current calendar month means "last month" rolls
 // forward automatically at midnight on the 1st, satisfying the "auto
 // generate previous month's Top Sales" requirement with no scheduling logic.
@@ -22,6 +25,10 @@ import { usePhoneVisibility } from "../../../components/admin/retention/phoneVis
 const PAGE_SIZE = 10;
 const GRAD_DARK = "linear-gradient(178deg, #141828 0%, #333333 99.7%)";
 const BRAND_OPTIONS = ["KG", "LV", "EP", "AB", "UB", "N1"];
+const SORT_OPTIONS = [
+  { value: "deposit", label: "Sort: Total Sales" },
+  { value: "win_loss", label: "Sort: Win/Loss" },
+];
 
 const COLUMNS = [
   { key: "rank",         label: "Rank",                   minW: 80 },
@@ -102,6 +109,7 @@ export default function MemberComparisonPage() {
   const [vip, setVip] = useState("");
   const [pic, setPic] = useState("");
   const [query, setQuery] = useState("");
+  const [sortMethod, setSortMethod] = useState("deposit");
   const [page, setPage] = useState(1);
 
   const [pics, setPics] = useState([]);
@@ -127,7 +135,7 @@ export default function MemberComparisonPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [month, brand, vip, pic, query]);
+  }, [month, brand, vip, pic, query, sortMethod]);
 
   const [debouncedQuery, setDebouncedQuery] = useState(query);
   useEffect(() => {
@@ -146,6 +154,7 @@ export default function MemberComparisonPage() {
           vip_level: vip || undefined,
           pic: pic || undefined,
           search: debouncedQuery || undefined,
+          sort_method: sortMethod,
           page,
           page_size: PAGE_SIZE,
         });
@@ -166,7 +175,7 @@ export default function MemberComparisonPage() {
     return () => {
       cancelled = true;
     };
-  }, [month, brand, vip, pic, debouncedQuery, page]);
+  }, [month, brand, vip, pic, debouncedQuery, sortMethod, page]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, totalPages);
@@ -200,6 +209,7 @@ export default function MemberComparisonPage() {
           <FilterDropdown label="VIP Level" value={vip} onChange={setVip} options={vipTiers} />
           <FilterDropdown label="All PIC" value={pic} onChange={setPic} options={pics.map((u) => u.full_name || u.username).filter(Boolean)} />
           <SearchInput value={query} onChange={setQuery} />
+          <SortDropdown value={sortMethod} onChange={setSortMethod} />
         </div>
       </header>
 
@@ -277,6 +287,50 @@ function FilterDropdown({ label, value, onChange, options }) {
                 className="block w-full text-left px-4 py-2 text-[12px] text-[#f6dda6] hover:bg-white/5 whitespace-nowrap"
               >
                 {opt}
+              </button>
+            ))}
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+// Toggles which column the backend ranks by: last month's deposit (default)
+// or last month's win/loss (`sort_method=win_loss`). Unlike FilterDropdown,
+// there's no "All" — the backend always sorts by one or the other.
+function SortDropdown({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const current = SORT_OPTIONS.find((o) => o.value === value) || SORT_OPTIONS[0];
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center justify-center gap-1 rounded-[8px] border border-[#f2cb7a] px-4 py-2"
+        style={{ backgroundImage: GRAD_DARK }}
+      >
+        <span className="text-[12px] font-medium text-[#f6dda6] leading-[18px] whitespace-nowrap">
+          {current.label}
+        </span>
+        <Chevron up={open} />
+      </button>
+      {open ? (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div
+            className="absolute right-0 top-full mt-1 z-20 min-w-full rounded-[8px] border border-[#f2cb7a] overflow-hidden"
+            style={{ backgroundImage: GRAD_DARK }}
+          >
+            {SORT_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => { onChange(opt.value); setOpen(false); }}
+                className="block w-full text-left px-4 py-2 text-[12px] text-[#f6dda6] hover:bg-white/5 whitespace-nowrap"
+              >
+                {opt.label}
               </button>
             ))}
           </div>
