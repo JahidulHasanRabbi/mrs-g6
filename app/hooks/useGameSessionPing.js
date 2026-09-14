@@ -21,6 +21,13 @@ export const GAME_SESSION_IDS = {
 // best-effort end when the member leaves. The backend falls back to the last
 // heartbeat if the end signal never arrives, so none of this needs to be
 // perfectly reliable — a dropped ping just costs a few seconds of accuracy.
+//
+// Backgrounding the tab (switching apps, opening another tab to watch a
+// video) does not unmount the page or fire "pagehide", so without explicit
+// handling the interval keeps heartbeating an idle session indefinitely.
+// "visibilitychange" ends the session when the tab is hidden and starts a
+// fresh one if the member comes back, so idle-in-background time is not
+// counted as play time.
 export function useGameSessionPing(gameId) {
   const endedRef = useRef(false);
   const sendingRef = useRef(false);
@@ -29,6 +36,7 @@ export function useGameSessionPing(gameId) {
     if (!gameId) return undefined;
     endedRef.current = false;
     sendingRef.current = false;
+    let interval = null;
 
     const heartbeat = async () => {
       // A slow request (each attempt can take up to the 30s API timeout) could
@@ -51,23 +59,49 @@ export function useGameSessionPing(gameId) {
       }
     };
 
+    const stopHeartbeat = () => {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+
+    const startHeartbeat = () => {
+      stopHeartbeat();
+      interval = setInterval(heartbeat, HEARTBEAT_MS);
+    };
+
     const sendEnd = () => {
+      stopHeartbeat();
       if (endedRef.current) return;
       endedRef.current = true;
       // keepalive lets the request finish after the page starts unloading.
       pingGameSession(gameId, PING.END, { keepalive: true }).catch(() => {});
     };
 
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        sendEnd();
+      } else {
+        // Tab is visible again after having ended a session (or on first
+        // load, where endedRef is already false and this is a no-op).
+        endedRef.current = false;
+        pingGameSession(gameId, PING.START).catch(() => {});
+        startHeartbeat();
+      }
+    };
+
     pingGameSession(gameId, PING.START).catch(() => {});
-    const interval = setInterval(heartbeat, HEARTBEAT_MS);
+    startHeartbeat();
 
     // "pagehide" covers tab close / hard refresh / back-forward navigation;
     // it fires reliably where "beforeunload" can be blocked by the browser.
     window.addEventListener("pagehide", sendEnd);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       window.removeEventListener("pagehide", sendEnd);
-      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       sendEnd(); // in-app navigation to another route
     };
   }, [gameId]);
