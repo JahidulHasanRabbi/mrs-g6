@@ -43,7 +43,7 @@ export default function KgamePrizeList({ prizes = [], creditRanges = [] }) {
                   <p className="text-[9px] leading-[13px]" style={{ fontFamily: 'var(--font-acme), sans-serif', color: r.accent }}>
                     RANK {String(prize.rank).padStart(2, '0')}
                   </p>
-                  <p className="truncate text-[13px] leading-[18px]" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: KGAME99_COLORS.dark }}>
+                  <p className="break-words text-[13px] leading-[18px]" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: KGAME99_COLORS.dark }}>
                     {prize.name}
                   </p>
                 </div>
@@ -58,12 +58,16 @@ export default function KgamePrizeList({ prizes = [], creditRanges = [] }) {
 
           {creditRanges.length > 0 && (
             <div className="mt-1 grid grid-cols-2 gap-1.5">
-              {creditRanges.map((label, i) => (
-                <div key={`${label}-${i}`} className="flex items-center gap-1.5 rounded-md bg-[rgba(255,255,255,0.07)] px-2 py-1.5 ring-1 ring-inset ring-[rgba(242,203,122,0.22)]">
-                  <img src={SMASH_EGG_ASSETS.coinsIcon} alt="" className="h-5 w-5 shrink-0 object-contain" />
+              {creditRanges.map((credit, i) => (
+                <div key={`${credit.label}-${i}`} className="flex items-center gap-1.5 rounded-md bg-[rgba(255,255,255,0.07)] px-2 py-1.5 ring-1 ring-inset ring-[rgba(242,203,122,0.22)]">
+                  {credit.image ? (
+                    <img src={credit.image} alt="" className="h-5 w-5 shrink-0 rounded object-cover" />
+                  ) : (
+                    <img src={SMASH_EGG_ASSETS.coinsIcon} alt="" className="h-5 w-5 shrink-0 object-contain" />
+                  )}
                   <div className="min-w-0">
                     <p className="text-[8px] uppercase leading-[11px]" style={{ fontFamily: 'var(--font-acme), sans-serif', color: '#b0781a' }}>Free Credit</p>
-                    <p className="truncate text-[9px] leading-[12px]" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: '#5a6f8c' }}>{label}</p>
+                    <p className="break-words text-[9px] leading-[12px]" style={{ fontFamily: 'var(--font-rubik), sans-serif', color: '#5a6f8c' }}>{credit.label}</p>
                   </div>
                 </div>
               ))}

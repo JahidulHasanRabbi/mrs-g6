@@ -72,7 +72,7 @@ function PrizeRow({ rank, name, image, itemType, index }) {
           RANK {String(rank).padStart(2, "0")}
         </p>
         <p
-          className="text-base leading-6 text-[#fff6df]"
+          className="text-base leading-6 text-[#fff6df] break-words"
           style={{ fontFamily: "var(--font-rubik), 'Rubik', sans-serif" }}
         >
           {name}
@@ -84,7 +84,7 @@ function PrizeRow({ rank, name, image, itemType, index }) {
   );
 }
 
-function FreeCreditCard({ label, index }) {
+function FreeCreditCard({ label, image, index }) {
   return (
     <motion.div
       className="flex items-center gap-2 px-4 py-[9px] rounded-lg bg-[#2e2a1e] border border-[rgba(77,71,50,0.2)]"
@@ -92,16 +92,21 @@ function FreeCreditCard({ label, index }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 + index * 0.05, duration: 0.3 }}
     >
-      <div className="relative w-[26px] h-[26px] shrink-0">
-        <Image
-          src={SMASH_EGG_ASSETS.coinsIcon}
-          alt=""
-          fill
-          sizes="26px"
-          className="object-contain"
-        />
+      <div className="relative w-[26px] h-[26px] shrink-0 rounded overflow-hidden">
+        {image ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={image} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <Image
+            src={SMASH_EGG_ASSETS.coinsIcon}
+            alt=""
+            fill
+            sizes="26px"
+            className="object-contain"
+          />
+        )}
       </div>
-      <div>
+      <div className="min-w-0">
         <p
           className="text-[9px] text-[#ffb77d] uppercase leading-[13.5px]"
           style={{ fontFamily: "var(--font-acme), 'Acme', sans-serif" }}
@@ -109,7 +114,7 @@ function FreeCreditCard({ label, index }) {
           FREE CREDIT
         </p>
         <p
-          className="text-[10px] text-[#d0c6ab] leading-[15px]"
+          className="text-[10px] text-[#d0c6ab] leading-[15px] break-words"
           style={{ fontFamily: "var(--font-rubik), 'Rubik', sans-serif" }}
         >
           {label}
@@ -165,13 +170,13 @@ export default function PrizeList({ prizes = [], creditRanges = [] }) {
 
         {/* Free Credit Grid */}
         <div className="grid grid-cols-2 gap-2">
-          {displayCredits.slice(0, 4).map((label, i) => (
-            <FreeCreditCard key={label} label={label} index={i} />
+          {displayCredits.slice(0, 4).map((credit, i) => (
+            <FreeCreditCard key={credit.label} label={credit.label} image={credit.image} index={i} />
           ))}
           {displayCredits.length > 4 && (
             <div className="col-span-2 flex justify-center">
               <div className="w-full">
-                <FreeCreditCard label={displayCredits[4]} index={4} />
+                <FreeCreditCard label={displayCredits[4].label} image={displayCredits[4].image} index={4} />
               </div>
             </div>
           )}

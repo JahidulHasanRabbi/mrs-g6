@@ -22,7 +22,10 @@ export function buildRewardBoard(items = []) {
 
   const creditRanges = items
     .filter((item) => item.itemType === "Free credit")
-    .map((item) => `RM${item.minWithdraw || 0} ~ RM${item.maxWithdraw || 0}`);
+    .map((item) => ({
+      label: `RM${item.minWithdraw || 0} ~ RM${item.maxWithdraw || 0}`,
+      image: item.image || null,
+    }));
 
   return { prizes: prizeItems, creditRanges };
 }
