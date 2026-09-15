@@ -217,6 +217,30 @@ export const ENDPOINTS = {
     PENALTY_KICK_SEQUENCE_IMPORTS: '/penalty-kick/kick-sequence-imports/',
     PENALTY_KICK_SEQUENCE_IMPORT: (uuid) => `/penalty-kick/kick-sequence-imports/${uuid}/`,
     PENALTY_KICK_SEQUENCE_IMPORT_ARCHIVE: (uuid) => `/penalty-kick/kick-sequence-imports/${uuid}/archive/`,
+    // Boss War. Paths verified against the live staging API — the base is
+    // `/bosswar/` (no hyphen) and the reward-item routes nest under a boss.
+    BOSS_WAR_BOSSES: '/bosswar/',
+    BOSS_WAR_BOSS: (uuid) => `/bosswar/${uuid}/`,
+    BOSS_WAR_BOSS_ARCHIVE: (uuid) => `/bosswar/${uuid}/archive/`,
+    BOSS_WAR_REWARD_ITEMS: (bossUuid) => `/bosswar/${bossUuid}/reward-items/`,
+    BOSS_WAR_REWARD_ITEM: (bossUuid, uuid) => `/bosswar/${bossUuid}/reward-items/${uuid}/`,
+    BOSS_WAR_REWARD_ITEM_ARCHIVE: (bossUuid, uuid) => `/bosswar/${bossUuid}/reward-items/${uuid}/archive/`,
+    BOSS_WAR_VIP_BONUSES: '/bosswar/vip-bonuses/',
+    BOSS_WAR_VIP_BONUS: (uuid) => `/bosswar/vip-bonuses/${uuid}/`,
+    BOSS_WAR_VIP_BONUS_ARCHIVE: (uuid) => `/bosswar/vip-bonuses/${uuid}/archive/`,
+    BOSS_WAR_DEPOSIT_POINTS: '/bosswar/deposit-points/',
+    BOSS_WAR_DEPOSIT_POINT: (uuid) => `/bosswar/deposit-points/${uuid}/`,
+    BOSS_WAR_DEPOSIT_POINT_ARCHIVE: (uuid) => `/bosswar/deposit-points/${uuid}/archive/`,
+    BOSS_WAR_SETTINGS: '/bosswar/settings/',
+    // PATCH /bosswar/settings/ is not routed (405); updates go to this action.
+    BOSS_WAR_SETTINGS_UPDATE: '/bosswar/settings/update_settings/',
+    // Member-facing ranking route, reused by the admin boss detail page — it is
+    // the only per-boss leaderboard the API exposes.
+    BOSS_WAR_RANKING: (bossUuid) => `/bosswar/member/${bossUuid}/ranking/`,
+    BOSS_WAR_ATTACK_REPORT: '/bosswar/attack-report/',
+    BOSS_WAR_POINT_REPORT: '/bosswar/point-report/',
+    BOSS_WAR_REWARD_REPORT: '/bosswar/reward-report/',
+    BOSS_WAR_SETTLE_PAYOUTS: '/bosswar/settle-payouts/',
     AVAILABLE_PROMOTIONS: '/settings/available-promotions/',
     PROMOTIONS: '/settings/promotions/',
     PROMOTIONS_BY_STATION: (stationUuid) => `/settings/promotions/get-by-station/${stationUuid}/`,

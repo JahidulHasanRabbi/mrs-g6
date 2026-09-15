@@ -26,6 +26,7 @@ import ConfirmDialog from "../../../components/admin/ui/ConfirmDialog";
 const REWARD_TYPE_OPTIONS = [
   { value: 1, label: "KR Coins" },
   { value: 2, label: "Battle Point (BP)" },
+  { value: 3, label: "Attack Point (AP)" },
 ];
 
 const EMPTY_FORM = {
@@ -62,7 +63,10 @@ function timeOnly(value) {
 
 function toForm(api) {
   const battlePointQuantity = Number(api.reward_battle_point_quantity ?? 0);
-  const rewardType = battlePointQuantity > 0 ? 2 : 1;
+  const attackPointQuantity = Number(api.reward_attack_point_quantity ?? 0);
+  // A mission carries one reward quantity in the form, so the type is inferred
+  // from whichever field the API came back with.
+  const rewardType = attackPointQuantity > 0 ? 3 : battlePointQuantity > 0 ? 2 : 1;
   return {
     missionName: api.mission_name ?? "",
     category: api.category ?? 1,
@@ -78,9 +82,11 @@ function toForm(api) {
     accumulateTarget: api.accumulate_target ?? 1,
     rewardType,
     rewardQuantity:
-      rewardType === 2
-        ? battlePointQuantity
-        : Number(api.reward_token_quantity ?? 0),
+      rewardType === 3
+        ? attackPointQuantity
+        : rewardType === 2
+          ? battlePointQuantity
+          : Number(api.reward_token_quantity ?? 0),
     limitControl: api.limit_control ?? "",
   };
 }
@@ -95,6 +101,7 @@ function combineDateTime(date, time) {
 function toPayload(form) {
   const rewardQuantity = Math.max(0, Number(form.rewardQuantity) || 0);
   const isBattlePointReward = Number(form.rewardType) === 2;
+  const isAttackPointReward = Number(form.rewardType) === 3;
   const payload = {
     mission_name: form.missionName.trim(),
     category: Number(form.category),
@@ -106,8 +113,9 @@ function toPayload(form) {
     condition_action: Number(form.conditionAction),
     is_time_based: !!form.timeBased,
     accumulate_target: Math.max(1, Number(form.accumulateTarget) || 1),
-    reward_token_quantity: isBattlePointReward ? 0 : rewardQuantity,
+    reward_token_quantity: isBattlePointReward || isAttackPointReward ? 0 : rewardQuantity,
     reward_battle_point_quantity: isBattlePointReward ? rewardQuantity : 0,
+    reward_attack_point_quantity: isAttackPointReward ? rewardQuantity : 0,
     limit_control: form.limitControl === "" ? null : Math.max(1, Number(form.limitControl) || 1),
   };
   if (form.timeBased) {

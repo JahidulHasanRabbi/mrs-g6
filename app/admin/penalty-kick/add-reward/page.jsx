@@ -16,6 +16,7 @@ const ITEM_TYPES = [
   { value: "3", label: "Prize" },
   { value: "4", label: "World Cup Score" },
   { value: "5", label: "Battle Point" },
+  { value: "6", label: "Attack Point" },
 ];
 
 const TYPE_LABEL_TO_VALUE = {
@@ -24,6 +25,7 @@ const TYPE_LABEL_TO_VALUE = {
   PRIZE: "3",
   "WORLD CUP SCORE": "4",
   "BATTLE POINT": "5",
+  "ATTACK POINT": "6",
 };
 
 function parseNumber(value) {
@@ -100,6 +102,7 @@ function RewardForm() {
     tokenAmount: "",
     scoreAmount: "",
     battlePointAmount: "",
+    attackPointAmount: "",
     unlimited: false,
   });
   const [imageFile, setImageFile] = useState(null);
@@ -124,6 +127,7 @@ function RewardForm() {
           tokenAmount: item.token_amount ?? "",
           scoreAmount: item.score_amount ?? "",
           battlePointAmount: item.battle_point_amount ?? "",
+          attackPointAmount: item.attack_point_amount ?? "",
           unlimited: Boolean(item.unlimited),
         });
         setImagePreview(item.image || null);
@@ -166,6 +170,7 @@ function RewardForm() {
     if (form.itemType === "2") payload.token_amount = parseNumber(form.tokenAmount);
     if (form.itemType === "4") payload.score_amount = parseNumber(form.scoreAmount);
     if (form.itemType === "5") payload.battle_point_amount = parseNumber(form.battlePointAmount);
+    if (form.itemType === "6") payload.attack_point_amount = parseNumber(form.attackPointAmount);
     if (imageFile) payload.image = imageFile;
     return payload;
   };
@@ -277,6 +282,12 @@ function RewardForm() {
           <div>
             <label className="mb-2 block text-[14px] font-semibold text-white">BP Amount</label>
             <input type="number" min="1" value={form.battlePointAmount} onChange={handleChange("battlePointAmount")} className={INPUT_BASE} />
+          </div>
+        )}
+        {form.itemType === "6" && (
+          <div>
+            <label className="mb-2 block text-[14px] font-semibold text-white">AP Amount</label>
+            <input type="number" min="1" value={form.attackPointAmount} onChange={handleChange("attackPointAmount")} className={INPUT_BASE} />
           </div>
         )}
         <div>

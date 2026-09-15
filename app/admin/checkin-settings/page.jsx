@@ -11,6 +11,7 @@ const SKELETON_COLUMNS = [
   { label: "Day",            type: "text" },
   { label: "KR Coin Reward",   type: "number" },
   { label: "BP Reward",      type: "number" },
+  { label: "AP Reward",      type: "number" },
   { label: "Display Text",   type: "text" },
   { label: "Actions",        type: "actions", count: 1 },
 ];
@@ -93,6 +94,8 @@ function CheckinSettingsContent() {
       reward_maximum: 100,
       battle_point_minimum: 0,
       battle_point_maximum: 0,
+      attack_point_minimum: 0,
+      attack_point_maximum: 0,
       display_text: ''
     };
   };
@@ -136,6 +139,7 @@ function CheckinSettingsContent() {
                     <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Day</th>
                     <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">KR Coin Reward</th>
                     <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">BP Reward</th>
+                    <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">AP Reward</th>
                     <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Display Text</th>
                     <th className="px-5 py-3 text-left text-sm font-medium text-gray-400">Actions</th>
                   </tr>
@@ -169,6 +173,9 @@ function CheckinSettingsContent() {
                           {dayReward.battle_point_minimum ?? 0}–{dayReward.battle_point_maximum ?? 0} BP
                         </td>
                         <td className="px-5 py-3 text-sm text-white">
+                          {dayReward.attack_point_minimum ?? 0}–{dayReward.attack_point_maximum ?? 0} AP
+                        </td>
+                        <td className="px-5 py-3 text-sm text-white">
                           {dayReward.display_text || <span className="text-gray-500">Auto</span>}
                         </td>
                         <td className="px-5 py-3 text-sm">
@@ -199,6 +206,8 @@ function DayFormModal({ day, onSubmit, onClose, isSaving }) {
     reward_maximum: day.reward_maximum ?? 100,
     battle_point_minimum: day.battle_point_minimum ?? 0,
     battle_point_maximum: day.battle_point_maximum ?? 0,
+    attack_point_minimum: day.attack_point_minimum ?? 0,
+    attack_point_maximum: day.attack_point_maximum ?? 0,
     display_text: day.display_text || ''
   });
   const [error, setError] = useState(null);
@@ -220,7 +229,9 @@ function DayFormModal({ day, onSubmit, onClose, isSaving }) {
       formData.reward_minimum < 0 ||
       formData.reward_maximum < 0 ||
       formData.battle_point_minimum < 0 ||
-      formData.battle_point_maximum < 0
+      formData.battle_point_maximum < 0 ||
+      formData.attack_point_minimum < 0 ||
+      formData.attack_point_maximum < 0
     ) {
       setError({ message: 'Reward values must be positive' });
       return;
@@ -233,6 +244,12 @@ function DayFormModal({ day, onSubmit, onClose, isSaving }) {
 
     if (formData.battle_point_minimum > formData.battle_point_maximum) {
       setError({ message: 'Minimum BP cannot be greater than maximum BP' });
+      return;
+    }
+
+    // The API rejects the row outright when max < min, so catch it here first.
+    if (formData.attack_point_minimum > formData.attack_point_maximum) {
+      setError({ message: 'Minimum AP cannot be greater than maximum AP' });
       return;
     }
 
@@ -328,6 +345,38 @@ function DayFormModal({ day, onSubmit, onClose, isSaving }) {
                 value={formData.battle_point_maximum}
                 onChange={handleChange}
                 required
+                min="0"
+                step="1"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400/30"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-1">
+                Minimum AP
+              </label>
+              <input
+                type="number"
+                name="attack_point_minimum"
+                value={formData.attack_point_minimum}
+                onChange={handleChange}
+                min="0"
+                step="1"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400/30"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-1">
+                Maximum AP
+              </label>
+              <input
+                type="number"
+                name="attack_point_maximum"
+                value={formData.attack_point_maximum}
+                onChange={handleChange}
                 min="0"
                 step="1"
                 className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400/30"

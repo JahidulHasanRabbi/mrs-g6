@@ -59,6 +59,7 @@ function pathnameToActiveItem(pathname) {
   if (pathname.startsWith("/admin/world-cup/settings")) return "wc-settings";
   if (pathname.startsWith("/admin/world-cup")) return "wc-dashboard";
   if (pathname.startsWith("/admin/penalty-kick")) return "penalty-kick";
+  if (pathname.startsWith("/admin/boss-war")) return "boss-war";
   if (pathname.startsWith("/admin/redeem-links")) return "redeem-links";
   if (pathname.startsWith("/admin/mart-tiers")) return "mart-tiers";
   if (pathname.startsWith("/admin/redemption-mall")) return "redemption-mall";
@@ -260,6 +261,13 @@ const MENU_ITEMS = [
     label: "Penalty Kick",
     iconMask: "/assets/admin/sidebar/icons/lucide-lab-soccer-ball.svg",
     href: "/admin/penalty-kick",
+    disabled: false,
+  },
+  {
+    id: "boss-war",
+    label: "Boss War",
+    iconMask: "/assets/rpg/ui/logo-gem.svg",
+    href: "/admin/boss-war",
     disabled: false,
   },
   {
