@@ -29,18 +29,17 @@ export const BOSS_TYPE_TABS = [
 
 export const BOSS_TYPE_LABEL = Object.fromEntries(BOSS_TYPE_TABS.map((t) => [t.id, t.label]));
 
-// The five example bosses from the brief. Art is theme-neutral (the comps
-// share one illustration per boss across all six skins); only `id`/`art`
-// are local — name, type, HP and timing come from the API.
-export const BOSS_CATALOG = {
-  "goblin-king": { name: "Goblin King", type: BOSS_TYPES.DAILY, art: "/assets/boss-war/boss/goblin-king.webp", gem: "common" },
-  "fire-dragon": { name: "Fire Dragon", type: BOSS_TYPES.WEEKLY, art: "/assets/boss-war/boss/fire-dragon.webp", gem: "premium" },
-  "ice-giant": { name: "Ice Giant", type: BOSS_TYPES.WEEKLY, art: "/assets/boss-war/boss/ice-giant.webp", gem: "epic" },
-  "titan-emperor": { name: "Titan Emperor", type: BOSS_TYPES.EVENT, art: "/assets/boss-war/boss/titan-emperor.webp", gem: "legendary" },
-  // No Shadow Demon illustration in the comps yet — reuses the Titan art.
-  "shadow-demon": { name: "Shadow Demon", type: BOSS_TYPES.DAILY, art: "/assets/boss-war/boss/titan-emperor.webp", gem: "common" },
-};
+// Boss illustrations ship with the app; the API's `image` is what picks one,
+// and this is the fallback when a boss has none configured.
 export const DEFAULT_BOSS_ART = "/assets/boss-war/boss/goblin-king.webp";
+
+// The shipped illustrations, preloaded and available to admin-configured art.
+export const BOSS_ART = [
+  "/assets/boss-war/boss/goblin-king.webp",
+  "/assets/boss-war/boss/fire-dragon.webp",
+  "/assets/boss-war/boss/ice-giant.webp",
+  "/assets/boss-war/boss/titan-emperor.webp",
+];
 
 // Reward gem icons (shared across skins).
 export const GEM_ART = {
@@ -95,8 +94,9 @@ export const REWARD_CALC_SECTIONS = [
   { id: "participation", title: "Participation", body: "All qualified participants receive the configured basic reward" },
 ];
 
-// Attack Point economy defaults (spec "Attack Point Economy").
-export const AP_PER_ATTACK = 1;
+// Fallback copy for the How-to-Earn screen, shown only until the live
+// deposit bands load (or if that call fails). The real rates come from
+// GET /bosswar/deposit-points/ and can differ from these.
 export const DEFAULT_DEPOSIT_AP = [
   { amount: 30, ap: 2 },
   { amount: 50, ap: 4 },
@@ -111,8 +111,8 @@ export const DEFAULT_FREE_AP = [
   { id: "missionsAll", label: "Complete All Missions", ap: 3 },
 ];
 
-// The four "How to Earn Attack Points" tiles. `source` is what claimAp() is
-// called with; tiles with an `href` navigate instead of claiming.
+// The four "How to Earn Attack Points" tiles. Every tile navigates to the
+// feature that grants the points — Boss War has no claim endpoint.
 export const MINI_GAMES_NOTE =
   "Play eligible MRS mini games to earn Attack Points. Exact reward follows campaign configuration.";
 

@@ -109,22 +109,28 @@ export const ENDPOINTS = {
   // Phase 3 Boss War (spreadsheet "3c - War"). PLACEHOLDER PATHS: the backend
   // is still in progress — rename here when the API documentation lands; the
   // screens never see these (app/components/boss-war/bossWarApi.js adapts).
+  // Verified against the live API (see postman/bosswar.md). Base is `/bosswar/`
+  // with no hyphen, and every member route carries the member uuid in the path.
+  // There is no results, earn-rules or claim-AP endpoint: bossWarLive.js
+  // composes those views from the calls below.
   BOSS_WAR: {
-    GAME_STATUS: '/boss-war/game-status/',
-    SETTINGS: '/boss-war/settings/',
+    SETTINGS: '/bosswar/settings/',
     // Member — bosses
-    BOSSES: '/boss-war/member/bosses/',
-    BOSS: (uuid) => `/boss-war/member/bosses/${uuid}/`,
-    ATTACK: (uuid) => `/boss-war/member/bosses/${uuid}/attack/`,
-    RESULTS: (uuid) => `/boss-war/member/bosses/${uuid}/results/`,
-    LEADERBOARD: (uuid) => `/boss-war/member/bosses/${uuid}/leaderboard/`,
+    BOSSES: '/bosswar/member/bosses/',
+    BOSS: (bossUuid) => `/bosswar/${bossUuid}/`,
+    ATTACK: (bossUuid, memberUuid) => `/bosswar/member/${bossUuid}/attack/${memberUuid}/`,
+    RANKING: (bossUuid) => `/bosswar/member/${bossUuid}/ranking/`,
+    MEMBER_RANK: (bossUuid, memberUuid) => `/bosswar/member/${bossUuid}/rank/${memberUuid}/`,
     // Member — attack points
-    ATTACK_POINTS: '/boss-war/member/attack-points/',
-    EARN_RULES: '/boss-war/member/attack-points/earn-rules/',
-    CLAIM_AP: '/boss-war/member/attack-points/claim/',
-    // Member — rewards + history
-    REWARDS: '/boss-war/member/rewards/',
-    HISTORY: '/boss-war/member/attack-history/',
+    BALANCE: (memberUuid) => `/bosswar/member/${memberUuid}/balance/`,
+    POINTS: (memberUuid) => `/bosswar/member/${memberUuid}/points/`,
+    DEPOSIT_POINTS: '/bosswar/deposit-points/',
+    // Global combat table: each MRS tier's crit rate and damage multiplier.
+    VIP_BONUSES: '/bosswar/vip-bonuses/',
+    // Member — per-boss attack history and rewards
+    ATTACKS: (bossUuid, memberUuid) => `/bosswar/member/${bossUuid}/${memberUuid}/attacks/`,
+    REWARDS: (bossUuid, memberUuid) => `/bosswar/member/${bossUuid}/${memberUuid}/rewards/`,
+    REWARD_ITEMS: (bossUuid) => `/bosswar/${bossUuid}/reward-items/`,
   },
   ADMIN: {
     // Previous admin login API:

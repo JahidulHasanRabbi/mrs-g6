@@ -38,11 +38,11 @@ function RuleBlock({ label, title, lines, cta, onClick }) {
   );
 }
 
-export default function HowToEarn({ onApUpdate, onNotice }) {
+export default function HowToEarn({ onNotice }) {
   const router = useRouter();
   // One fetch for the whole screen — the tiles and these rule blocks are the
   // same payload.
-  const earn = useEarnActions({ onApUpdate, onNotice });
+  const earn = useEarnActions({ onNotice });
 
   const deposit = () => {
     const url = stationDepositUrl();

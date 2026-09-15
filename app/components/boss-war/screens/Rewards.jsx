@@ -34,9 +34,11 @@ function TierRow({ tier }) {
   );
 }
 
-export default function Rewards({ onNavigate }) {
+export default function Rewards({ onNavigate, bossId }) {
   const [tab, setTab] = useState("rank");
-  const { data, error } = useWarResource(warApi.getRewards, [], "Could not load rewards.");
+  // With a boss in context the tiers are that boss's configured reward items;
+  // without one the adapter falls back to the spec's static tiers.
+  const { data, error } = useWarResource(() => warApi.getRewards(bossId), [bossId], "Could not load rewards.");
 
   const tiers = data?.[tab] || [];
 
@@ -47,7 +49,7 @@ export default function Rewards({ onNavigate }) {
       {tiers.map((t) => (
         <TierRow key={t.id} tier={t} />
       ))}
-      <WarButton className="mx-auto mt-[10px] w-[190px]" onClick={() => onNavigate(WAR_VIEWS.HISTORY)}>View History</WarButton>
+      <WarButton className="mx-auto mt-[10px] w-[190px]" onClick={() => onNavigate(WAR_VIEWS.HISTORY, bossId ? { boss: bossId } : undefined)}>View History</WarButton>
       <InfoPlaque title="How to Earn Rewards" lines={HOW_TO_EARN_NOTE} className="mt-[14px]" />
     </WarScreen>
   );

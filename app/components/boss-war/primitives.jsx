@@ -810,6 +810,10 @@ export function useWarResource(fetcher, deps, fallbackMessage) {
   useEffect(() => {
     let cancelled = false;
     setError(null);
+    // Clear first: without this, switching boss keeps the previous boss's rows
+    // on screen until the new fetch lands, so the rewards/history tables show
+    // another boss's data for a beat rather than the loading line.
+    setData(null);
     Promise.resolve()
       .then(fetcher)
       .then((d) => {

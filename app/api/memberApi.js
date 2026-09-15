@@ -728,14 +728,10 @@ export async function getAvatarBattleHistory(params = {}) {
 
 // ============================================================================
 // BOSS WAR (Phase 3) — MEMBER / USER
-// Backend in progress: ENDPOINTS.BOSS_WAR holds placeholder paths. The
-// view-model mapping lives in app/components/boss-war/bossWarLive.js; these
-// are the raw calls, so only that adapter changes when the real API lands.
+// Raw calls only; the view-model mapping lives in
+// app/components/boss-war/bossWarLive.js. Every member-scoped route needs the
+// member uuid in its path, so callers pass it explicitly.
 // ============================================================================
-
-export async function getBossWarGameStatus() {
-  return await apiRequest(ENDPOINTS.BOSS_WAR.GAME_STATUS, { method: 'GET' }, true, 'member');
-}
 
 export async function getBossWarSettings() {
   return await apiRequest(ENDPOINTS.BOSS_WAR.SETTINGS, { method: 'GET' }, true, 'member');
@@ -750,42 +746,45 @@ export async function getBossWarBoss(bossUuid) {
   return await apiRequest(ENDPOINTS.BOSS_WAR.BOSS(bossUuid), { method: 'GET' }, true, 'member');
 }
 
-export async function attackBossWarBoss(bossUuid) {
-  return await apiRequest(ENDPOINTS.BOSS_WAR.ATTACK(bossUuid), { method: 'POST' }, true, 'member');
+export async function attackBossWarBoss(bossUuid, memberUuid) {
+  return await apiRequest(ENDPOINTS.BOSS_WAR.ATTACK(bossUuid, memberUuid), { method: 'POST' }, true, 'member');
 }
 
-export async function getBossWarResults(bossUuid) {
-  return await apiRequest(ENDPOINTS.BOSS_WAR.RESULTS(bossUuid), { method: 'GET' }, true, 'member');
+export async function getBossWarRanking(bossUuid) {
+  return await apiRequest(ENDPOINTS.BOSS_WAR.RANKING(bossUuid), { method: 'GET' }, true, 'member');
 }
 
-export async function getBossWarLeaderboard(bossUuid, params = {}) {
+export async function getBossWarMemberRank(bossUuid, memberUuid) {
+  return await apiRequest(ENDPOINTS.BOSS_WAR.MEMBER_RANK(bossUuid, memberUuid), { method: 'GET' }, true, 'member');
+}
+
+export async function getBossWarBalance(memberUuid) {
+  return await apiRequest(ENDPOINTS.BOSS_WAR.BALANCE(memberUuid), { method: 'GET' }, true, 'member');
+}
+
+export async function getBossWarPoints(memberUuid, params = {}) {
   const qs = buildQueryParams(params);
-  return await apiRequest(`${ENDPOINTS.BOSS_WAR.LEADERBOARD(bossUuid)}${qs}`, { method: 'GET' }, true, 'member');
+  return await apiRequest(`${ENDPOINTS.BOSS_WAR.POINTS(memberUuid)}${qs}`, { method: 'GET' }, true, 'member');
 }
 
-export async function getBossWarAttackPoints() {
-  return await apiRequest(ENDPOINTS.BOSS_WAR.ATTACK_POINTS, { method: 'GET' }, true, 'member');
+export async function getBossWarDepositPoints() {
+  return await apiRequest(ENDPOINTS.BOSS_WAR.DEPOSIT_POINTS, { method: 'GET' }, true, 'member');
 }
 
-export async function getBossWarEarnRules() {
-  return await apiRequest(ENDPOINTS.BOSS_WAR.EARN_RULES, { method: 'GET' }, true, 'member');
+export async function getBossWarVipBonuses() {
+  return await apiRequest(ENDPOINTS.BOSS_WAR.VIP_BONUSES, { method: 'GET' }, true, 'member');
 }
 
-export async function claimBossWarAttackPoints(source) {
-  return await apiRequest(
-    ENDPOINTS.BOSS_WAR.CLAIM_AP,
-    { method: 'POST', body: JSON.stringify({ source }) },
-    true,
-    'member',
-  );
-}
-
-export async function getBossWarRewards(params = {}) {
+export async function getBossWarAttacks(bossUuid, memberUuid, params = {}) {
   const qs = buildQueryParams(params);
-  return await apiRequest(`${ENDPOINTS.BOSS_WAR.REWARDS}${qs}`, { method: 'GET' }, true, 'member');
+  return await apiRequest(`${ENDPOINTS.BOSS_WAR.ATTACKS(bossUuid, memberUuid)}${qs}`, { method: 'GET' }, true, 'member');
 }
 
-export async function getBossWarHistory(params = {}) {
+export async function getBossWarMemberRewards(bossUuid, memberUuid, params = {}) {
   const qs = buildQueryParams(params);
-  return await apiRequest(`${ENDPOINTS.BOSS_WAR.HISTORY}${qs}`, { method: 'GET' }, true, 'member');
+  return await apiRequest(`${ENDPOINTS.BOSS_WAR.REWARDS(bossUuid, memberUuid)}${qs}`, { method: 'GET' }, true, 'member');
+}
+
+export async function getBossWarRewardItems(bossUuid) {
+  return await apiRequest(ENDPOINTS.BOSS_WAR.REWARD_ITEMS(bossUuid), { method: 'GET' }, true, 'member');
 }

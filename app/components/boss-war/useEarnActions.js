@@ -1,7 +1,7 @@
 "use client";
 
-// One handler for every "How to Earn Attack Points" tile: link tiles route to
-// the feature, claim tiles hit claimAp() and push the new AP balance up.
+// One handler for every "How to Earn Attack Points" tile. Attack Points are
+// granted by the feature that awards them, so every tile navigates there.
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -25,10 +25,10 @@ const FALLBACK_RULES = {
   miniGames: MINI_GAMES_NOTE,
 };
 
-export function useEarnActions({ onApUpdate, onNotice, enabled = true }) {
+export function useEarnActions({ onNotice, enabled = true }) {
   const router = useRouter();
   const [rules, setRules] = useState(FALLBACK_RULES);
-  const [busyId, setBusyId] = useState(null);
+  const [busyId] = useState(null);
 
   useEffect(() => {
     if (!enabled) return undefined;
@@ -44,8 +44,11 @@ export function useEarnActions({ onApUpdate, onNotice, enabled = true }) {
     };
   }, [enabled]);
 
+  // Attack Points are granted by the feature that awards them — check-in,
+  // missions, mini-games, a deposit — so every tile navigates there. Boss War
+  // has no claim endpoint of its own.
   const onAction = useCallback(
-    async (tile) => {
+    (tile) => {
       if (tile.href) {
         router.push(tile.href);
         return;
@@ -56,20 +59,20 @@ export function useEarnActions({ onApUpdate, onNotice, enabled = true }) {
           window.location.assign(url);
           return;
         }
+        onNotice?.("DEPOSIT", "Deposit from your station to earn Attack Points.");
+        return;
       }
-      setBusyId(tile.id);
-      try {
-        const res = await warApi.claimAp(tile.id);
-        onApUpdate?.(res.ap);
-        setRules((prev) => ({ ...prev, tiles: prev.tiles.map((t) => (t.id === tile.id ? { ...t, claimable: false } : t)) }));
-        onNotice?.("ATTACK POINTS", `+${res.gained} AP claimed. You now have ${res.ap.current} / ${res.ap.max}.`);
-      } catch (err) {
-        onNotice?.("CANNOT CLAIM", err?.message || "Try again later.");
-      } finally {
-        setBusyId(null);
+      if (tile.id === "checkin") {
+        router.push("/daily-checkin");
+        return;
       }
+      if (tile.id === "missions") {
+        router.push("/missions");
+        return;
+      }
+      onNotice?.("ATTACK POINTS", "Play the linked feature to earn Attack Points.");
     },
-    [router, onApUpdate, onNotice],
+    [router, onNotice],
   );
 
   return { ...rules, busyId, onAction };

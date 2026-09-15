@@ -2,7 +2,7 @@
 // Per-theme frames live on the RPG skin (`skin.war.*`, fed from each theme's
 // assets.js `war` block).
 
-import { BOSS_CATALOG, GEM_ART, EARN_TILES } from "./constants";
+import { GEM_ART, EARN_TILES } from "./constants";
 import { makePreloader } from "../rpg/preload";
 
 export const WAR_IMAGES = {
@@ -25,7 +25,8 @@ export const WAR_IMAGES = {
   // so the per-rank variants are not shipped.
   rankBadge: "/assets/boss-war/ui/rank-badge-1.webp",
   gems: GEM_ART,
-  boss: Object.fromEntries(Object.entries(BOSS_CATALOG).map(([id, b]) => [id, b.art])),
+  // Boss art comes from the API's `image` per boss (DEFAULT_BOSS_ART when it
+  // has none), so there is no static id→art map to keep here.
   earn: Object.fromEntries(EARN_TILES.map((t) => [t.id, t.icon])),
 };
 

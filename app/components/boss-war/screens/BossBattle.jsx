@@ -7,7 +7,7 @@
 //   defeated  DEFEATED stamp, final rank / damage, Results / History, next boss
 // `lastAttack` is transient React state and never enters the URL.
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRpgSkin } from "../../rpg/rpgSkin";
 import { fmt, ORDINAL, WAR_VIEWS } from "../constants";
@@ -145,11 +145,18 @@ export default function BossBattle({ bossId, ap, onApUpdate, onNavigate, onNotic
   const [error, setError] = useState(null);
   const [lastAttack, setLastAttack] = useState(null);
   const [busy, setBusy] = useState(false);
+  // "18 / 20" means "you arrived with 20, you have 18 left" — the denominator is
+  // the balance this visit started with, not a cap. The API exposes no ceiling,
+  // so we anchor it on entry and let attacks drain it. Re-entering the boss
+  // re-anchors; a reload starts the count over, which is the intent (it reads
+  // as AP left in this session).
+  const startAp = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
     setData(null);
     setLastAttack(null);
+    startAp.current = null;
     warApi
       .getBattle(bossId)
       .then((d) => {
@@ -166,8 +173,15 @@ export default function BossBattle({ bossId, ap, onApUpdate, onNavigate, onNotic
   const boss = data?.boss;
   const defeated = boss?.status === "defeated";
   const noAp = (ap?.current ?? 0) < (ap?.perAttack ?? 1);
+
+  // Anchor on the first balance we see, then hold it. If the player earns more
+  // than they started with, raise the anchor — otherwise the card would read
+  // "30 / 20".
+  const current = ap?.current ?? 0;
+  if (ap && (startAp.current == null || current > startAp.current)) startAp.current = current;
+  const apView = ap ? { ...ap, max: startAp.current ?? current } : ap;
   // Only the idle and no-AP states render the tiles, so only they need the rules.
-  const earn = useEarnActions({ onApUpdate, onNotice, enabled: Boolean(boss) && !defeated && !lastAttack });
+  const earn = useEarnActions({ onNotice, enabled: Boolean(boss) && !defeated && !lastAttack });
 
   const handleAttack = useCallback(async () => {
     if (!boss || busy) return;
@@ -228,7 +242,7 @@ export default function BossBattle({ bossId, ap, onApUpdate, onNavigate, onNotic
             </WarCard>
             <div className="flex items-center gap-[8px]">
               <WarButton className="flex-1" onClick={() => onNavigate(WAR_VIEWS.RESULTS, { boss: boss.id })}>Results</WarButton>
-              <WarButton className="flex-1" onClick={() => onNavigate(WAR_VIEWS.HISTORY)}>History</WarButton>
+              <WarButton className="flex-1" onClick={() => onNavigate(WAR_VIEWS.HISTORY, { boss: boss.id })}>History</WarButton>
             </div>
             {data.nextStartsAt ? (
               <NextBossCountdown startsAt={data.nextStartsAt} />
@@ -251,9 +265,9 @@ export default function BossBattle({ bossId, ap, onApUpdate, onNavigate, onNotic
                 Boss HP, your contribution and ranking update immediately.
               </span>
             </WarCard>
-            <ApCard ap={ap} onAttack={handleAttack} busy={busy} disabled={noAp} />
+            <ApCard ap={apView} onAttack={handleAttack} busy={busy} disabled={noAp} />
             <div className="flex items-center gap-[8px]">
-              <WarButton className="flex-1" onClick={() => onNavigate(WAR_VIEWS.REWARDS)}>Rewards</WarButton>
+              <WarButton className="flex-1" onClick={() => onNavigate(WAR_VIEWS.REWARDS, { boss: boss.id })}>Rewards</WarButton>
               <WarButton className="flex-1" onClick={() => onNavigate(WAR_VIEWS.LEADERBOARD, { boss: boss.id })}>Rankings</WarButton>
             </div>
           </>
@@ -279,7 +293,7 @@ export default function BossBattle({ bossId, ap, onApUpdate, onNavigate, onNotic
               <StatCell icon={WAR_IMAGES.ui.damage} label="My Damage" value={boss.myDamage} />
               <StatCell icon={WAR_IMAGES.ui.total} label="Total Damage" value={boss.totalDamage} />
             </WarCard>
-            <ApCard ap={ap} onAttack={handleAttack} busy={busy} disabled={noAp} />
+            <ApCard ap={apView} onAttack={handleAttack} busy={busy} disabled={noAp} />
             <WarButton className="mx-auto w-[150px]" onClick={() => onNavigate(WAR_VIEWS.INFO)}>Boss Info</WarButton>
             <InfoPlaque title="How to Earn Attack Points" className="mt-[12px]">
               <EarnApTiles tiles={earn.tiles} onAction={earn.onAction} busyId={earn.busyId} />

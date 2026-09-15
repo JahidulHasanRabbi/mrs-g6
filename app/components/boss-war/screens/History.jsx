@@ -20,10 +20,16 @@ function fmtTime(iso) {
 
 const COLS = "grid-cols-[58px_minmax(0,1fr)_54px_30px_18px]";
 
-export default function History({ onNavigate }) {
+export default function History({ onNavigate, bossId }) {
   const skin = useRpgSkin();
   const ink = useFrameInk(skin.war.table || skin.war.card);
-  const { data, error } = useWarResource(() => warApi.getHistory({ limit: 50 }), [], "Could not load history.");
+  // Per-boss rows carry damage and crit; without a boss the adapter falls back
+  // to the attack-point ledger.
+  const { data, error } = useWarResource(
+    () => warApi.getHistory({ limit: 50, bossId }),
+    [bossId],
+    "Could not load history.",
+  );
   const [padL, padR] = skin.war.tablePad || [6, 6];
 
   return (
@@ -61,7 +67,7 @@ export default function History({ onNavigate }) {
           })}
           </div>
         </WarCard>
-        <WarButton className="mx-auto w-[190px]" onClick={() => onNavigate(WAR_VIEWS.REWARDS)}>View Rewards</WarButton>
+        <WarButton className="mx-auto w-[190px]" onClick={() => onNavigate(WAR_VIEWS.REWARDS, bossId ? { boss: bossId } : undefined)}>View Rewards</WarButton>
     </WarScreen>
   );
 }
