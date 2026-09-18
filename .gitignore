@@ -48,3 +48,9 @@ CLAUDE.md
 /graphify-out/
 # playwright mcp debug artifacts (console logs + page snapshots)
 .playwright-mcp/
+
+# project docs / spreadsheets / postman collections (kept locally, not deployed)
+/doc/
+/postman/
+*.xlsx
+*.pptx
