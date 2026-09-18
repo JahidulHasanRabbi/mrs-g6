@@ -7,6 +7,8 @@ import { GRAD_GOLD } from "../../../../components/admin/retention/constants";
 import {
   createPromotion,
   getAvailablePromotions,
+  getBossWarBosses,
+  getBossWarRewardItems,
   getDepositRewardItems,
   getLuckySpinItems,
   getMysteryBoxItems,
@@ -59,6 +61,19 @@ const ITEM_CATALOGS = [
       const reward = [item?.reward_type, item?.amount].filter(Boolean).join(" ");
       return reward ? `${name} — ${reward}` : name;
     },
+  },
+  {
+    key: "boss_war",
+    labels: ["boss war reward", "boss war"],
+    typeValues: ["14"],
+    load: async () => {
+      const bosses = normalizeListResponse(await getBossWarBosses());
+      const rewardLists = await Promise.all(
+        bosses.map((boss) => getBossWarRewardItems(boss.uuid).catch(() => []))
+      );
+      return rewardLists.flatMap(normalizeListResponse);
+    },
+    labelFor: (item) => (item?.boss_name ? `${item.boss_name} — ${item.reward_name}` : item?.reward_name),
   },
 ];
 
@@ -138,6 +153,8 @@ function typeFromGroup(groupType, promotionTypes) {
     "manual code": "Manual Bonus",
     manualcode: "Manual Bonus",
     avatar: "Avatar",
+    "boss war": "Boss War Reward",
+    bosswar: "Boss War Reward",
   };
   return typeByLabel(promotionTypes, aliases[normalizeLabel(groupType)] || "");
 }
