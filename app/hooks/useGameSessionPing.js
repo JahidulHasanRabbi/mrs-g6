@@ -12,6 +12,7 @@ export const GAME_SESSION_IDS = {
   SMASH_EGG: 3,
   PREDICTION: 4,
   AVATAR: 5,
+  BOSS_WAR: 6,
 };
 
 // Session-duration tracking for the 5 mini-games — feeds Usage Report's

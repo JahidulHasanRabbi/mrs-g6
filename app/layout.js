@@ -1,4 +1,4 @@
-import { Inter, Geist, Geist_Mono, Montserrat, DM_Sans, JetBrains_Mono, Sora, Chakra_Petch, Rajdhani, Acme, Rubik, Berkshire_Swash, Lexend, Archivo } from "next/font/google";
+import { Inter, Geist, Geist_Mono, Montserrat, DM_Sans, JetBrains_Mono, Sora, Chakra_Petch, Rajdhani, Acme, Rubik, Berkshire_Swash, Lexend, Archivo, Neuton } from "next/font/google";
 import "./globals.css";
 
 /**
@@ -98,6 +98,13 @@ const lexend = Lexend({
   weight: ["400", "700"],
 });
 
+// Boss War mini-game (Figma a83SqWgqIGNF6dJD1aP13w, sections 2656:3435+).
+const neuton = Neuton({
+  variable: "--font-neuton",
+  subsets: ["latin"],
+  weight: ["300", "400", "700"],
+});
+
 // Homepage game list + Special For You banner (Figma 535:61).
 const archivo = Archivo({
   variable: "--font-archivo",
@@ -125,7 +132,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${montserrat.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${sora.variable} ${chakraPetch.variable} ${rajdhani.variable} ${acme.variable} ${rubik.variable} ${berkshireSwash.variable} ${lexend.variable} ${archivo.variable} antialiased bg-black`}
+        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${montserrat.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${sora.variable} ${chakraPetch.variable} ${rajdhani.variable} ${acme.variable} ${rubik.variable} ${berkshireSwash.variable} ${lexend.variable} ${archivo.variable} ${neuton.variable} antialiased bg-black`}
         style={{ fontFamily: '"Times New Roman", serif' }}
       >
         {/* Stamps <html data-theme> before paint — see buildThemeStampScript. */}

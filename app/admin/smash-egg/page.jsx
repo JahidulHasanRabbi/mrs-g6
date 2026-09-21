@@ -51,6 +51,7 @@ function itemTypeToApi(value) {
   if (normalized === "TOKEN") return 2;
   if (normalized === "PRIZE") return 3;
   if (normalized === "BATTLE POINT") return 4;
+  if (normalized === "ATTACK POINT") return 5;
   return value;
 }
 
@@ -92,6 +93,10 @@ function buildItemPayload(data, includeImage = true) {
 
   if (data.itemType === "Battle Point") {
     payload.battle_point_amount = Number(data.battlePoints) || 0;
+  }
+
+  if (data.itemType === "Attack Point") {
+    payload.attack_point_amount = Number(data.attackPoints) || 0;
   }
 
   if (includeImage && data.image instanceof File) {

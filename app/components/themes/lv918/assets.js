@@ -130,6 +130,21 @@ export const LV918_ASSETS = {
     crown: `${BASE}/ui/frame-crown.webp`,
     scroll: `${BASE}/ui/frame-scroll.webp`,
   },
+  // Boss War (Figma a83SqWgqIGNF6dJD1aP13w, section 2656:3438) — read by rpgSkin `war`.
+  war: {
+    bg: `${BASE}/war/bg.webp`,
+    titlePlaque: `${BASE}/war/title-plaque.webp`,
+    cardFrame: `${BASE}/war/card-frame.webp`,
+    statCard: `${BASE}/war/stat-card.webp`,
+    tableFrame: `${BASE}/war/card-frame.webp`,
+    bossFrame: `${BASE}/war/boss-frame.webp`,
+    tabOn: `${BASE}/war/tab-on.webp`,
+    tabOff: `${BASE}/war/tab-off.webp`,
+    timerPlaque: `${BASE}/war/timer-plaque.webp`,
+    earnTile: `${BASE}/war/earn-tile.webp`,
+    plaque: `${BASE}/war/plaque.webp`,
+    rowFrame: `${BASE}/war/stat-card.webp`,
+  },
   // Daily Check-in page (Figma 463:1130). Board geometry, day positions and the
   // reward glyphs are shared across all six skins via
   // app/components/themes/shared/checkinMartSkin.js — only the art differs here.

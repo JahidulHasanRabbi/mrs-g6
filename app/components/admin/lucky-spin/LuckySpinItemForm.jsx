@@ -28,6 +28,11 @@ const luckySpinFieldConfig = {
       field: 'battle_point_amount',
       showWhen: [5], // Battle Point
       required: true
+    },
+    {
+      field: 'attack_point_amount',
+      showWhen: [6], // Attack Point
+      required: true
     }
   ],
   unlimited: [
@@ -71,7 +76,8 @@ export default function LuckySpinItemForm({
         min_withdraw: initialData.min_withdraw || "",
         max_withdraw: initialData.max_withdraw || "",
         token_amount: initialData.token_amount || "",
-        battle_point_amount: initialData.battle_point_amount || ""
+        battle_point_amount: initialData.battle_point_amount || "",
+        attack_point_amount: initialData.attack_point_amount || ""
       };
       
       setFieldValues(initialValues);
@@ -93,7 +99,8 @@ export default function LuckySpinItemForm({
         min_withdraw: "",
         max_withdraw: "",
         token_amount: "",
-        battle_point_amount: ""
+        battle_point_amount: "",
+        attack_point_amount: ""
       });
       setImagePreview(null);
       setImageFile(null);
@@ -133,6 +140,10 @@ export default function LuckySpinItemForm({
 
     if (visibleFields.battle_point_amount) {
       submitData.battle_point_amount = parseInt(fieldValues.battle_point_amount, 10);
+    }
+
+    if (visibleFields.attack_point_amount) {
+      submitData.attack_point_amount = parseInt(fieldValues.attack_point_amount, 10);
     }
     
     // Include image file if uploaded
@@ -312,6 +323,24 @@ export default function LuckySpinItemForm({
                   onChange={(e) => handleInputChange("battle_point_amount", e.target.value)}
                   className="bg-white/10 border-[0.5px] border-white/8 h-[36px] rounded-[4px] w-[304px] px-3 text-white placeholder-white/50 focus:outline-none focus:border-[#f2c36b]"
                   placeholder="Enter battle points"
+                  min="1"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+            )}
+
+            {visibleFields.attack_point_amount && (
+              <div className="flex items-center gap-[18px]">
+                <label className="text-[18px] text-white w-[136px]">
+                  AP Amount:
+                </label>
+                <input
+                  type="number"
+                  value={fieldValues.attack_point_amount || ""}
+                  onChange={(e) => handleInputChange("attack_point_amount", e.target.value)}
+                  className="bg-white/10 border-[0.5px] border-white/8 h-[36px] rounded-[4px] w-[304px] px-3 text-white placeholder-white/50 focus:outline-none focus:border-[#f2c36b]"
+                  placeholder="Enter attack points"
                   min="1"
                   required
                   disabled={isLoading}

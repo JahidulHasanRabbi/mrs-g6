@@ -1349,6 +1349,117 @@ export async function archiveReferrerDummyPlayer(uuid) {
   return await apiRequest(ENDPOINTS.LEADERBOARD.REFERRAL_FAKE_DATA_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
 }
 
+// ============================================================================
+// BOSS WAR MANAGEMENT
+// ============================================================================
+
+export async function getBossWarBosses(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.BOSS_WAR_BOSSES}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+export async function getBossWarBoss(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.BOSS_WAR_BOSS(uuid), { method: 'GET' }, true, 'admin');
+}
+
+export async function createBossWarBoss(data) {
+  return await apiRequest(ENDPOINTS.ADMIN.BOSS_WAR_BOSSES, { method: 'POST', body: data }, true, 'admin');
+}
+
+export async function updateBossWarBoss(uuid, data) {
+  return await apiRequest(ENDPOINTS.ADMIN.BOSS_WAR_BOSS(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+
+export async function archiveBossWarBoss(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.BOSS_WAR_BOSS_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
+export async function getBossWarRewardItems(bossUuid, params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.BOSS_WAR_REWARD_ITEMS(bossUuid)}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+export async function getBossWarRewardItem(bossUuid, uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.BOSS_WAR_REWARD_ITEM(bossUuid, uuid), { method: 'GET' }, true, 'admin');
+}
+
+export async function createBossWarRewardItem(bossUuid, data) {
+  return await apiRequest(ENDPOINTS.ADMIN.BOSS_WAR_REWARD_ITEMS(bossUuid), { method: 'POST', body: data }, true, 'admin');
+}
+
+export async function updateBossWarRewardItem(bossUuid, uuid, data) {
+  return await apiRequest(ENDPOINTS.ADMIN.BOSS_WAR_REWARD_ITEM(bossUuid, uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+
+export async function archiveBossWarRewardItem(bossUuid, uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.BOSS_WAR_REWARD_ITEM_ARCHIVE(bossUuid, uuid), { method: 'PATCH' }, true, 'admin');
+}
+
+export async function getBossWarVipBonuses(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.BOSS_WAR_VIP_BONUSES}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+export async function createBossWarVipBonus(data) {
+  return await apiRequest(ENDPOINTS.ADMIN.BOSS_WAR_VIP_BONUSES, { method: 'POST', body: data }, true, 'admin');
+}
+
+export async function updateBossWarVipBonus(uuid, data) {
+  return await apiRequest(ENDPOINTS.ADMIN.BOSS_WAR_VIP_BONUS(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+
+export async function archiveBossWarVipBonus(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.BOSS_WAR_VIP_BONUS_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
+export async function getBossWarDepositPoints(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.BOSS_WAR_DEPOSIT_POINTS}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+export async function createBossWarDepositPoint(data) {
+  return await apiRequest(ENDPOINTS.ADMIN.BOSS_WAR_DEPOSIT_POINTS, { method: 'POST', body: data }, true, 'admin');
+}
+
+export async function updateBossWarDepositPoint(uuid, data) {
+  return await apiRequest(ENDPOINTS.ADMIN.BOSS_WAR_DEPOSIT_POINT(uuid), { method: 'PUT', body: data }, true, 'admin');
+}
+
+export async function archiveBossWarDepositPoint(uuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.BOSS_WAR_DEPOSIT_POINT_ARCHIVE(uuid), { method: 'PATCH' }, true, 'admin');
+}
+
+export async function getBossWarSettings() {
+  return await apiRequest(ENDPOINTS.ADMIN.BOSS_WAR_SETTINGS, { method: 'GET' }, true, 'admin');
+}
+
+export async function updateBossWarSettings(data) {
+  return await apiRequest(ENDPOINTS.ADMIN.BOSS_WAR_SETTINGS_UPDATE, { method: 'PATCH', body: data }, true, 'admin');
+}
+
+export async function getBossWarRanking(bossUuid) {
+  return await apiRequest(ENDPOINTS.ADMIN.BOSS_WAR_RANKING(bossUuid), { method: 'GET' }, true, 'admin');
+}
+
+export async function getBossWarAttackReport(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.BOSS_WAR_ATTACK_REPORT}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+export async function getBossWarPointReport(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.BOSS_WAR_POINT_REPORT}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+export async function getBossWarRewardReport(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.ADMIN.BOSS_WAR_REWARD_REPORT}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+export async function settleBossWarPayouts(data = {}) {
+  return await apiRequest(ENDPOINTS.ADMIN.BOSS_WAR_SETTLE_PAYOUTS, { method: 'POST', body: data }, true, 'admin');
+}
+
 // ---------------------------------------------------------------------------
 // Withdrawal Leaderboard (withdraw board, leaderboard_type 2)
 // ---------------------------------------------------------------------------

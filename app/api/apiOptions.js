@@ -30,12 +30,16 @@ export const API_OPTIONS = {
     3: "CREDIT",
     4: "OTHERS"
   },
+  // Lucky spin's scale. Each mini-game numbers item types its own way — smash
+  // egg puts Attack Point at 5, penalty kick at 6 — so those forms carry their
+  // own lists and must not read this one.
   ITEM_TYPE: {
     1: "Free Credit",
     2: "Item",
     3: "Token",
     4: "Other",
-    5: "Battle Point"
+    5: "Battle Point",
+    6: "Attack Point"
   }
 };
 

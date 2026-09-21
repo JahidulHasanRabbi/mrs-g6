@@ -106,6 +106,32 @@ export const ENDPOINTS = {
     MYSTERY_BOX_ITEM_ARCHIVE: (uuid) => `/avatar/mystery-box-items/${uuid}/archive/`,
     MYSTERY_BOX_PROBABILITY_TOTAL: '/avatar/mystery-box-items/probability-total/'
   },
+  // Phase 3 Boss War (spreadsheet "3c - War"). PLACEHOLDER PATHS: the backend
+  // is still in progress — rename here when the API documentation lands; the
+  // screens never see these (app/components/boss-war/bossWarApi.js adapts).
+  // Verified against the live API (see postman/bosswar.md). Base is `/bosswar/`
+  // with no hyphen, and every member route carries the member uuid in the path.
+  // There is no results, earn-rules or claim-AP endpoint: bossWarLive.js
+  // composes those views from the calls below.
+  BOSS_WAR: {
+    SETTINGS: '/bosswar/settings/',
+    // Member — bosses
+    BOSSES: '/bosswar/member/bosses/',
+    BOSS: (bossUuid) => `/bosswar/${bossUuid}/`,
+    ATTACK: (bossUuid, memberUuid) => `/bosswar/member/${bossUuid}/attack/${memberUuid}/`,
+    RANKING: (bossUuid) => `/bosswar/member/${bossUuid}/ranking/`,
+    MEMBER_RANK: (bossUuid, memberUuid) => `/bosswar/member/${bossUuid}/rank/${memberUuid}/`,
+    // Member — attack points
+    BALANCE: (memberUuid) => `/bosswar/member/${memberUuid}/balance/`,
+    POINTS: (memberUuid) => `/bosswar/member/${memberUuid}/points/`,
+    DEPOSIT_POINTS: '/bosswar/deposit-points/',
+    // Global combat table: each MRS tier's crit rate and damage multiplier.
+    VIP_BONUSES: '/bosswar/vip-bonuses/',
+    // Member — per-boss attack history and rewards
+    ATTACKS: (bossUuid, memberUuid) => `/bosswar/member/${bossUuid}/${memberUuid}/attacks/`,
+    REWARDS: (bossUuid, memberUuid) => `/bosswar/member/${bossUuid}/${memberUuid}/rewards/`,
+    REWARD_ITEMS: (bossUuid) => `/bosswar/${bossUuid}/reward-items/`,
+  },
   ADMIN: {
     // Previous admin login API:
     // LOGIN: '/login/admin-access-token/',
@@ -197,6 +223,30 @@ export const ENDPOINTS = {
     PENALTY_KICK_SEQUENCE_IMPORTS: '/penalty-kick/kick-sequence-imports/',
     PENALTY_KICK_SEQUENCE_IMPORT: (uuid) => `/penalty-kick/kick-sequence-imports/${uuid}/`,
     PENALTY_KICK_SEQUENCE_IMPORT_ARCHIVE: (uuid) => `/penalty-kick/kick-sequence-imports/${uuid}/archive/`,
+    // Boss War. Paths verified against the live staging API — the base is
+    // `/bosswar/` (no hyphen) and the reward-item routes nest under a boss.
+    BOSS_WAR_BOSSES: '/bosswar/',
+    BOSS_WAR_BOSS: (uuid) => `/bosswar/${uuid}/`,
+    BOSS_WAR_BOSS_ARCHIVE: (uuid) => `/bosswar/${uuid}/archive/`,
+    BOSS_WAR_REWARD_ITEMS: (bossUuid) => `/bosswar/${bossUuid}/reward-items/`,
+    BOSS_WAR_REWARD_ITEM: (bossUuid, uuid) => `/bosswar/${bossUuid}/reward-items/${uuid}/`,
+    BOSS_WAR_REWARD_ITEM_ARCHIVE: (bossUuid, uuid) => `/bosswar/${bossUuid}/reward-items/${uuid}/archive/`,
+    BOSS_WAR_VIP_BONUSES: '/bosswar/vip-bonuses/',
+    BOSS_WAR_VIP_BONUS: (uuid) => `/bosswar/vip-bonuses/${uuid}/`,
+    BOSS_WAR_VIP_BONUS_ARCHIVE: (uuid) => `/bosswar/vip-bonuses/${uuid}/archive/`,
+    BOSS_WAR_DEPOSIT_POINTS: '/bosswar/deposit-points/',
+    BOSS_WAR_DEPOSIT_POINT: (uuid) => `/bosswar/deposit-points/${uuid}/`,
+    BOSS_WAR_DEPOSIT_POINT_ARCHIVE: (uuid) => `/bosswar/deposit-points/${uuid}/archive/`,
+    BOSS_WAR_SETTINGS: '/bosswar/settings/',
+    // PATCH /bosswar/settings/ is not routed (405); updates go to this action.
+    BOSS_WAR_SETTINGS_UPDATE: '/bosswar/settings/update_settings/',
+    // Member-facing ranking route, reused by the admin boss detail page — it is
+    // the only per-boss leaderboard the API exposes.
+    BOSS_WAR_RANKING: (bossUuid) => `/bosswar/member/${bossUuid}/ranking/`,
+    BOSS_WAR_ATTACK_REPORT: '/bosswar/attack-report/',
+    BOSS_WAR_POINT_REPORT: '/bosswar/point-report/',
+    BOSS_WAR_REWARD_REPORT: '/bosswar/reward-report/',
+    BOSS_WAR_SETTLE_PAYOUTS: '/bosswar/settle-payouts/',
     AVAILABLE_PROMOTIONS: '/settings/available-promotions/',
     PROMOTIONS: '/settings/promotions/',
     PROMOTIONS_BY_STATION: (stationUuid) => `/settings/promotions/get-by-station/${stationUuid}/`,

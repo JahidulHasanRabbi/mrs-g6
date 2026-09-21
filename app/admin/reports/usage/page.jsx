@@ -29,6 +29,7 @@ const GAME_LABELS = {
   3: "Smash Egg",
   4: "Prediction",
   5: "Avatar",
+  6: "Boss War",
 };
 
 // Only used before the first /games/ response lands, or if that call fails.
@@ -48,6 +49,8 @@ const SUMMARY_CARDS = [
   { key: "total_rewards_given", label: "Rewards Given", prefix: "RM", icon: "rm", hint: "RM paid out where tracked" },
   { key: "average_session_per_user", label: "Avg Sessions/User", decimals: 2, icon: "avg", hint: "Sessions ÷ active users" },
   { key: "avg_session_duration", label: "Avg. Session Duration", format: "duration", icon: "clock", hint: "Total time in-game ÷ days in this view" },
+  { key: "total_attack_points_consumed", label: "Total Attack Points Used", icon: "tokens", hint: "Attack Points spent on Boss War in this period" },
+  { key: "average_attack_points_per_user", label: "Avg Attack Points/User", decimals: 2, icon: "avg", hint: "Attack Points spent ÷ Boss War players" },
 ];
 
 function formatNumber(value, decimals = 0) {
@@ -132,6 +135,8 @@ function rowsOf(res) {
 // /games/ returns one per game — no client-side derivation needed for either.
 function gameSummary(overallSummary, gameRows, game) {
   const totalTokensConsumed = overallSummary?.total_tokens_consumed ?? null;
+  const totalAttackPointsConsumed = overallSummary?.total_attack_points_consumed ?? null;
+  const averageAttackPointsPerUser = overallSummary?.average_attack_points_per_user ?? null;
 
   if (game === "all") {
     return { ...overallSummary, total_tokens_consumed: totalTokensConsumed };
@@ -146,6 +151,8 @@ function gameSummary(overallSummary, gameRows, game) {
       average_session_per_user: 0,
       total_tokens_consumed: totalTokensConsumed,
       avg_session_duration: null,
+      total_attack_points_consumed: totalAttackPointsConsumed,
+      average_attack_points_per_user: averageAttackPointsPerUser,
     };
   }
 
@@ -155,6 +162,8 @@ function gameSummary(overallSummary, gameRows, game) {
     total_rewards_given: row.credit_rm,
     average_session_per_user: row.avg_sessions_per_player,
     total_tokens_consumed: totalTokensConsumed,
+    total_attack_points_consumed: totalAttackPointsConsumed,
+    average_attack_points_per_user: averageAttackPointsPerUser,
     avg_session_duration: row.avg_session_duration ?? null,
   };
 }

@@ -43,7 +43,11 @@ export default function AppLayout({ children }) {
   const isLeaderboardPage =
     pathname === "/leaderboard" || pathname?.startsWith("/leaderboard/");
   // The Avatar game draws its own top bar + bottom nav (see app/avatar/page.js).
-  const isRpgPage = pathname === "/avatar" || pathname?.startsWith("/avatar/");
+  const isRpgPage =
+    pathname === "/avatar" ||
+    pathname?.startsWith("/avatar/") ||
+    pathname === "/boss-war" ||
+    pathname?.startsWith("/boss-war/");
 
   // Don't show layout on home page
   if (isHomePage) {

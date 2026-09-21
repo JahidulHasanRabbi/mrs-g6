@@ -98,6 +98,7 @@ function normalizeItemTypeLabel(value) {
   if (normalized === "TOKEN" || normalized === "2") return "Token";
   if (normalized === "PRIZE" || normalized === "ITEM" || normalized === "3") return "Prize";
   if (normalized === "BATTLE POINT" || normalized === "BATTLE_POINT" || normalized === "4") return "Battle Point";
+  if (normalized === "ATTACK POINT" || normalized === "ATTACK_POINT" || normalized === "5") return "Attack Point";
   return String(value);
 }
 
@@ -117,6 +118,8 @@ export function mapSmashEggItems(apiResponse) {
     token_amount: item.token_amount,
     battlePoints: item.battle_point_amount ?? "",
     battle_point_amount: item.battle_point_amount,
+    attackPoints: item.attack_point_amount ?? "",
+    attack_point_amount: item.attack_point_amount,
     unlimited: Boolean(item.unlimited),
     image: item.image || null,
     position: item.position ?? null,

@@ -46,6 +46,7 @@ const TABLE_COLUMNS = [
   { key: "monthly_deposit",           label: "Monthly Deposit",  minW: "min-w-[160px]" },
   { key: "check_in_token",            label: "Check in KR Coin",   minW: "min-w-[140px]" },
   { key: "check_in_battle_point",     label: "Check in BP",      minW: "min-w-[130px]" },
+  { key: "check_in_attack_point",     label: "Check in AP",      minW: "min-w-[130px]" },
   { key: "upgrade_bonus",             label: "Upgrade Bonus",    minW: "min-w-[160px]", hasFreeToken: true },
   { key: "birthday_bonus",            label: "Birthday Bonus",   minW: "min-w-[160px]", hasFreeToken: true },
   { key: "mart_tier",                 label: "Mart Tier",        minW: "min-w-[160px]" },
@@ -109,6 +110,7 @@ function TierFormModal({ tier, onClose, onSave, martTiers }) {
     birthday_bonus: tier?.birthday_bonus ?? "",
     check_in_token: tier?.check_in_token ?? "",
     check_in_battle_point: tier?.check_in_battle_point ?? "",
+    check_in_attack_point: tier?.check_in_attack_point ?? "",
     level_order: tier?.level_order ?? "",
     mart_tier_uuid: "",
   });
@@ -150,6 +152,7 @@ function TierFormModal({ tier, onClose, onSave, martTiers }) {
         birthday_bonus: form.birthday_bonus,
         check_in_token: form.check_in_token,
         check_in_battle_point: form.check_in_battle_point,
+        check_in_attack_point: form.check_in_attack_point,
         level_order: form.level_order,
       };
 
@@ -195,6 +198,7 @@ function TierFormModal({ tier, onClose, onSave, martTiers }) {
     { key: "monthly_deposit",           label: "Monthly Deposit:",             type: "number" },
     { key: "check_in_token",            label: "Check in KR Coin:",              type: "number",  integer: true },
     { key: "check_in_battle_point",     label: "Check in BP:",                 type: "number",  integer: true },
+    { key: "check_in_attack_point",     label: "Check in AP:",                 type: "number",  integer: true },
     { key: "upgrade_bonus",             label: "Upgrade Bonus (Free KR Coins):",  type: "number",  integer: true },
     { key: "birthday_bonus",            label: "Birthday Bonus (Free KR Coins):", type: "number",  integer: true },
     { key: "level_order",               label: "Level Order:",                 type: "number",  integer: true },
@@ -504,6 +508,10 @@ function MrsVipContent() {
                         {/* Check in BP */}
                         <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
                           {formatNum(row.check_in_battle_point)}
+                        </td>
+                        {/* Check in AP */}
+                        <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">
+                          {formatNum(row.check_in_attack_point)}
                         </td>
                         {/* Upgrade Bonus */}
                         <td className="px-3 py-3 text-[14px] text-white/80 whitespace-nowrap">

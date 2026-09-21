@@ -18,9 +18,57 @@ import { RPG_COLORS, RPG_FONTS, RPG_GRADIENTS } from "./constants";
 import { RPG_IMAGES } from "./rpgAssets";
 import { getHeaderBalanceSkin } from "../header/headerBalanceAssets";
 import { THEME_IDS } from "../../config/themes";
+import { WAR_FONT } from "../boss-war/constants";
+
+// The boss-type chip, 9-sliced so the crown and gem caps keep their size while
+// the body grows with the label. Slices are T R B L % of the art; `body` is
+// where the pill sits in the file, which is what the timer plaque aligns to.
+const CHIP_SPEC = {
+  frame: "/assets/boss-war/ui/chip-boss-type.webp",
+  art: [256, 79],
+  slice: [13.9, 14.1, 19.0, 27.0],
+  body: [2.5, 89.9],
+};
 
 const SCRIPT_FONT = "var(--font-berkshire-swash), cursive";
 const SERIF_FONT = '"Times New Roman", serif';
+
+
+/**
+ * 9-slice spec for a Boss War frame from ornament insets measured off the art
+ * (percent of the image, T R B L) and the box it usually renders in. The
+ * rendered border is the inset scaled to that box; padding clears it.
+ */
+export function warFrame(frame, t, r, b, l, box = [358, 160], opts = {}) {
+  const { extra = 4, cap = 30, art = [1000, 750], pinch = 0, padY = extra + 5 } = opts;
+  const [w, h] = box;
+  const [aw, ah] = art;
+  // The slice is a share of the ARTWORK; the border is its size on screen. A
+  // corner keeps its shape only if both are scaled by the same factor, so pick
+  // one `k` for all four sides — setting each border independently squashed
+  // the corner ornaments (a 141px art slice crammed into a 30px border).
+  const sl = (l / 100) * aw, sr = (r / 100) * aw;
+  const st = (t / 100) * ah, sb = (b / 100) * ah;
+  // Start from the box's own horizontal scale, then shrink until the ornament
+  // leaves room to live in — never grow, or a thin rail turns into a slab.
+  let k = w / aw;
+  const maxSide = w * 0.11, maxCap = Math.min(cap, h * 0.3);
+  k = Math.min(k, maxSide / Math.max(sl, sr, 1), maxCap / Math.max(st, sb, 1));
+  const px = (v) => Math.max(4, Math.round(v * k));
+  return {
+    frame,
+    slice: `${t}% ${r}% ${b}% ${l}% fill`,
+    width: `${px(st)}px ${px(sr)}px ${px(sb)}px ${px(sl)}px`,
+    // border-width already holds the content clear of the ornament, so padding
+    // is breathing room only — adding the inset again doubled every card.
+    // Wider at the sides: copy that ends flush against the rail reads as if it
+    // is spilling out of the frame.
+    // These frames are chevrons: the interior narrows toward the top and
+    // bottom, so a rectangular padding box let the first label ride the
+    // diagonal. `pinch` is that narrowing, measured off the art.
+    pad: `${padY}px ${Math.round(extra + 7 + (pinch / 100) * w)}px`,
+  };
+}
 
 /** The 9-slice style shared by the panel and slot-tile frames. */
 export function nineSlice({ frame, slice, width, pad }) {
@@ -136,6 +184,42 @@ const DEFAULT_SKIN = {
   },
   // Ink for copy sitting on a light panel interior; null = `c` unchanged.
   onPanel: null,
+  war: {
+    font: WAR_FONT,
+    titleGradient: `linear-gradient(180deg, #fff3cf 0%, ${RPG_COLORS.gold} 60%, ${RPG_COLORS.goldDeep} 100%)`,
+    bg: null,
+    titlePlaque: null,
+    titleInset: { top: 34, right: 6, bottom: 8, left: 6 },
+    bossFrame: { art: null, aspect: 1.22, open: [0, 0, 0, 0] },
+    card: { frame: null, slice: "18% 10% 16% 10% fill", width: "22px 18px 22px 18px", pad: "14px 16px 14px 16px" },
+    statCard: { frame: null, slice: "18% 10% 16% 10% fill", width: "22px 18px 22px 18px", pad: "14px 16px 14px 16px" },
+    table: { frame: null, slice: "18% 10% 16% 10% fill", width: "22px 18px 22px 18px", pad: "14px 16px 14px 16px" },
+    tab: { on: null, off: null },
+    chipSpec: CHIP_SPEC,
+    timer: null,
+    timerAspect: 2.78,
+    timerWindow: [27, 94, 25, 80],
+    timerBody: [0, 100],
+    attackBtn: null,
+    attackLabelBias: 0,
+    frameInkSolid: null,
+    inkFrame: null,
+    darkFrames: [],
+    attackWindow: null,
+    pill: null,
+    earnTile: { frame: null, box: [18, 16, 18, 16], ctaBand: null, aspect: 0.6 },
+    tablePad: [6, 6],
+    plaque: { frame: null, slice: "24% 10% 16% 10% fill", width: "34px 20px 24px 20px", pad: "36px 18px 22px 18px" },
+    row: { frame: null, slice: "40% 8% 40% 8% fill", width: "18px 14px 18px 14px", pad: "4px 10px" },
+    hp: { track: "rgba(255,255,255,0.1)", border: RPG_COLORS.violetBorderStrong, fill: RPG_GRADIENTS.exp },
+    ink: {
+      text: RPG_COLORS.text,
+      meta: RPG_COLORS.textDim,
+      value: RPG_COLORS.gold,
+      dmg: RPG_COLORS.goldDeep,
+      crit: "#59d827",
+    },
+  },
 };
 
 // `cOnPanel` is the ink a Panel's contents should use, and `panelSkin` is the
@@ -152,6 +236,15 @@ function withPanelInk(skin) {
 
 export const RPG_DEFAULT_SKIN = withPanelInk(DEFAULT_SKIN);
 
+/** The 9-slice the three card-shaped frames share, before a theme's measured
+ *  values replace it (see tools/gen_skins.py). */
+const cardSpec = (frame) => ({
+  frame,
+  slice: "14% 6% 9% 6% fill",
+  width: "20px 14px 16px 14px",
+  pad: "12px 14px 12px 14px",
+});
+
 /**
  * Build a station skin from its assets.js map + palette. Each theme passes the
  * 9-slice values measured off its own frame art via `overrides`.
@@ -164,6 +257,7 @@ export function buildRpgSkin(themeId, ASSETS, COLORS, overrides = {}) {
   // Gold hairline at a given alpha — the station counterpart to the default
   // look's violet edges.
   const edge = (a) => `rgba(255,215,120,${a})`;
+  const W = ASSETS.war || {};
 
   const skin = {
     id: themeId,
@@ -286,6 +380,82 @@ export function buildRpgSkin(themeId, ASSETS, COLORS, overrides = {}) {
       labelMuted: COLORS.sand || COLORS.creamMuted || cream,
     },
     onPanel: null,
+    // Boss War dressing. A theme ships its own art under ASSETS.war; anything
+    // missing falls back to the panel / CTA art the RPG already uses.
+    war: {
+      font: WAR_FONT,
+      titleGradient: `linear-gradient(180deg, #fff3cf 0%, ${goldBright} 55%, ${gold} 100%)`,
+      bg: W.bg || null,
+      titlePlaque: W.titlePlaque || null,
+      // % of the plaque box; each theme overrides from its own art.
+      titleInset: { top: 30, right: 10, bottom: 8, left: 10 },
+      // `open` is where the hollow actually starts in the file (T R B L %),
+      // and `aspect` the art's own — each theme measures both (gen_skins.py).
+      bossFrame: { art: W.bossFrame || null, aspect: 1.22, open: [9, 8, 12, 8] },
+      // Variable-height containers are 9-sliced; each theme overrides `slice`
+      // with values measured off its own art (see <Theme>RpgSkin.jsx).
+      card: cardSpec(W.cardFrame || ASSETS.spin?.panel || null),
+      statCard: cardSpec(W.statCard || W.cardFrame || ASSETS.spin?.panel || null),
+      table: cardSpec(W.tableFrame || W.cardFrame || ASSETS.spin?.panel || null),
+      tab: { on: W.tabOn || null, off: W.tabOff || null },
+      chipSpec: CHIP_SPEC,
+      timer: W.timerPlaque || null,
+      // Natural aspect of that plaque art (see gen_skins.py).
+      timerAspect: 3.6,
+      // Where the countdown's window and the pill itself sit in the plaque
+      // file (L R T B / top-bottom, % of the art) — see tools/gen_skins.py.
+      timerWindow: [27, 94, 25, 80],
+      timerBody: [0, 100],
+      // The comps reuse the header plaque as the ATTACK button and the active
+      // tab pill as the wide Rewards / Rankings buttons.
+      attackBtn: W.attackBtn || W.titlePlaque || ASSETS.egg?.btnWide || ASSETS.spin?.btnPlay || null,
+      // Falling back to the header plaque means a crown occupies the top
+      // third, so the label drops to sit in the opening (comp 2634:2423).
+      attackLabelBias: W.attackBtn ? 0 : 0.14,
+      // Both set by a skin whose frame interiors are light: `frameInkSolid`
+      // replaces the gold gradient, `inkFrame` the label/value colours.
+      // `ink` stays light — the timer plaque and boss art are still dark.
+      frameInkSolid: null,
+      inkFrame: null,
+      // Frames whose interior is dark even on a light-framed skin, so their
+      // contents keep the light ink. Measured per file (gen_skins.py).
+      darkFrames: [],
+      // The label opening in the ATTACK plaque art (L R T B %). A theme with
+      // no attack-btn falls back to the header plaque and its label bias.
+      attackWindow: null,
+      // Extra right-edge clearance (px) for the boss-card ATTACK button, on
+      // top of the card frame's own measured pad. A theme whose card art hangs
+      // ornament further into the interior than the auto-measure can see
+      // (faint against a dark backdrop) overrides this so the button clears it.
+      attackInset: 0,
+      pill: W.pill || W.tabOn || ASSETS.egg?.btnWide || ASSETS.spin?.btnPlay || null,
+      // Fixed-aspect tile art, stretched like the comps. `box` is the
+      // interior the label, icon and CTA all sit in (T R B L %, read off each
+      // file with tools/frame_grid.py); `ctaBand` is a pill baked into the
+      // art, which ends that interior where it starts. `aspect` is the fallback
+      // for a theme whose art was never measured.
+      earnTile: { frame: W.earnTile || null, box: [18, 16, 18, 16], ctaBand: null, aspect: 0.6 },
+      // The History table's own left/right padding, as % of the card width.
+      // Its frame's corner ornament reaches far past the rail the 9-slice
+      // measures, and everything past the slice lands in the stretched centre
+      // fill — which drags the ornament across the header and the last row.
+      // Read off tools/frame_grid.py; overridden per theme.
+      tablePad: [6, 6],
+      plaque: { frame: W.plaque || W.cardFrame || ASSETS.spin?.panel || null, slice: "22% 8% 12% 8% fill", width: "30px 16px 18px 16px", pad: "30px 16px 18px 16px" },
+      row: { frame: W.rowFrame || null, slice: "13% 8% 13% 8% fill", width: "8px 14px 8px 14px", pad: "4px 10px" },
+      // Vertical, not left-to-right: the comps' hp-fill art is one gold bar
+      // with a lit top edge, so a horizontal ramp read as a half-empty bar.
+      hp: { track: "rgba(45,45,45,0.75)", border: "#f2b229", fill: "linear-gradient(180deg, #fdf4df 0%, #f9de9f 30%, #f4c04f 62%, #f2b229 84%)" },
+      ink: {
+        text: "#fff2d4",
+        // A cream tint, not a fixed dusty pink: #bfa1ad measured 1.8:1 on
+        // ep369's green frame interiors and 2.6:1 on ubetclub's red.
+        meta: COLORS.sand || COLORS.creamMuted || cream,
+        value: "#f2b229",
+        dmg: "#ffae00",
+        crit: "#59d827",
+      },
+    },
   };
 
   return withPanelInk(deepMerge(skin, overrides));

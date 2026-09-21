@@ -21,8 +21,10 @@ function normalizeMission(m) {
   const rewardParts = [];
   const tokens = Number(m.reward_token_quantity ?? 0);
   const battlePoints = Number(m.reward_battle_point_quantity ?? 0);
+  const attackPoints = Number(m.reward_attack_point_quantity ?? 0);
   if (tokens > 0) rewardParts.push(formatKrCoins(tokens));
   if (battlePoints > 0) rewardParts.push(`${battlePoints.toLocaleString("en-US")} BP`);
+  if (attackPoints > 0) rewardParts.push(`${attackPoints.toLocaleString("en-US")} AP`);
   return {
     id: m.uuid,
     uuid: m.uuid,

@@ -45,12 +45,15 @@ const THEMED_ORDER = [
   [TABS[3], "mission"],
 ];
 
-function ThemedNav({ skin, activeTab, onNavigate }) {
+// Outside /avatar (Boss War) the game tabs are links into the Avatar route.
+const tabHref = (linkBase, view) => (view === RPG_VIEWS.HOME ? linkBase : `${linkBase}?view=${view}`);
+
+function ThemedNav({ skin, activeTab, onNavigate, linkBase }) {
   const { nav } = skin;
   const centerBox = { width: fluid(nav.centerBox.w), height: fluid(nav.centerBox.h) };
   const items = THEMED_ORDER.map((entry) =>
     entry
-      ? { ...entry[0], icon: nav.icons[entry[1]], box: SIDE_BOX }
+      ? { ...entry[0], icon: nav.icons[entry[1]], box: SIDE_BOX, href: linkBase ? tabHref(linkBase, entry[0].view) : undefined }
       : { key: "portal", label: "HOME", href: "/", icon: nav.icons.portalHome, box: centerBox, center: true }
   );
 
@@ -94,7 +97,7 @@ function ThemedNav({ skin, activeTab, onNavigate }) {
   );
 }
 
-function DefaultNav({ activeTab, onNavigate }) {
+function DefaultNav({ activeTab, onNavigate, linkBase }) {
   return (
     <nav
       className="fixed bottom-0 left-1/2 z-40 flex w-full max-w-[475px] -translate-x-1/2 items-start justify-center border-t"
@@ -102,11 +105,12 @@ function DefaultNav({ activeTab, onNavigate }) {
     >
       {TABS.map((item) => {
         const active = item.view === activeTab;
+        const Tag = linkBase ? Link : "button";
+        const tagProps = linkBase ? { href: tabHref(linkBase, item.view) } : { type: "button", onClick: () => onNavigate(item.view) };
         return (
-          <button
+          <Tag
             key={item.key}
-            type="button"
-            onClick={() => onNavigate(item.view)}
+            {...tagProps}
             className="flex min-w-0 flex-1 flex-col items-center gap-[4px] px-[2px] pb-[22px] pt-[14px] active:scale-95 transition-transform"
           >
             {/* The icons ship with a very dark #036D49 stroke baked in, so the
@@ -139,7 +143,7 @@ function DefaultNav({ activeTab, onNavigate }) {
             >
               {item.label}
             </span>
-          </button>
+          </Tag>
         );
       })}
     </nav>
@@ -148,14 +152,14 @@ function DefaultNav({ activeTab, onNavigate }) {
 
 // Memoised: the nav sits outside ScreenShell's keyed content, so it would
 // otherwise re-render on every page state change (menu toggle, modal, refetch).
-function RpgNav({ view, onNavigate }) {
+function RpgNav({ view, onNavigate, linkBase, activeTab: activeOverride }) {
   const skin = useRpgSkin();
-  const activeTab = TAB_FOR_VIEW[view] || RPG_VIEWS.HOME;
+  const activeTab = activeOverride !== undefined ? activeOverride : TAB_FOR_VIEW[view] || RPG_VIEWS.HOME;
 
   return skin.themed ? (
-    <ThemedNav skin={skin} activeTab={activeTab} onNavigate={onNavigate} />
+    <ThemedNav skin={skin} activeTab={activeTab} onNavigate={onNavigate} linkBase={linkBase} />
   ) : (
-    <DefaultNav activeTab={activeTab} onNavigate={onNavigate} />
+    <DefaultNav activeTab={activeTab} onNavigate={onNavigate} linkBase={linkBase} />
   );
 }
 

@@ -14,7 +14,7 @@ const LABEL = "text-[18px] font-medium leading-[27px] text-[#f6dda6]";
 const FIELD =
   "w-full rounded-[8px] border border-[#fbeed2] bg-transparent px-4 py-3 text-[12px] leading-[18px] text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#e9af41]/40";
 
-const ITEM_TYPES = ["Free credit", "Token", "Prize", "Battle Point"];
+const ITEM_TYPES = ["Free credit", "Token", "Prize", "Battle Point", "Attack Point"];
 
 // "Token" stays the form value the payload builder switches on; only the
 // option text is renamed.
@@ -94,6 +94,7 @@ const EMPTY = {
   maxWithdraw: "",
   tokens: "",
   battlePoints: "",
+  attackPoints: "",
   prize: "",
   position: "",
   unlimited: false,
@@ -116,6 +117,7 @@ export default function RewardForm({ mode = "add", initial = null, onBack, onSav
         maxWithdraw: String(initial.maxWithdraw ?? ""),
         tokens: String(initial.tokens ?? ""),
         battlePoints: String(initial.battlePoints ?? ""),
+        attackPoints: String(initial.attackPoints ?? ""),
         position: initial.position == null ? "" : String(initial.position),
         unlimited: Boolean(initial.unlimited),
       });
@@ -149,6 +151,7 @@ export default function RewardForm({ mode = "add", initial = null, onBack, onSav
       maxWithdraw: form.maxWithdraw,
       tokens: form.tokens,
       battlePoints: form.battlePoints,
+      attackPoints: form.attackPoints,
       position: form.position,
       unlimited: form.unlimited,
       image: imageFile,
@@ -159,6 +162,7 @@ export default function RewardForm({ mode = "add", initial = null, onBack, onSav
   const isToken = form.itemType === "Token";
   const isPrize = form.itemType === "Prize";
   const isBattlePoint = form.itemType === "Battle Point";
+  const isAttackPoint = form.itemType === "Attack Point";
 
   return (
     <div className="flex w-full flex-col items-end gap-6 rounded-[16px] bg-[#05060a] p-10 drop-shadow-[0px_0px_1.5px_#dea220]">
@@ -252,6 +256,17 @@ export default function RewardForm({ mode = "add", initial = null, onBack, onSav
             className={FIELD}
           />
         </Field>
+        <Field label="Attack Points" dimmed={!isAttackPoint}>
+          <input
+            type="text"
+            inputMode="numeric"
+            value={form.attackPoints}
+            onChange={set("attackPoints")}
+            disabled={!isAttackPoint}
+            placeholder="0"
+            className={FIELD}
+          />
+        </Field>
         <Field label="Position">
           <input
             type="text"
@@ -262,7 +277,6 @@ export default function RewardForm({ mode = "add", initial = null, onBack, onSav
             className={FIELD}
           />
         </Field>
-        <div className="flex-1" />
       </div>
 
       {/* Footer — Back / Save */}
