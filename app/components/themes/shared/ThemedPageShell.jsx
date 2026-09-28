@@ -29,6 +29,7 @@ const SHELLS = lazySkins({
   [THEME_IDS.KGAME99]: () => import("./shells/KgameShellEntry"),
   [THEME_IDS.LV918]: () => import("./shells/Lv918ShellEntry"),
   [THEME_IDS.N1GANG]: () => import("./shells/N1gangShellEntry"),
+  [THEME_IDS.KINGREWARDS]: () => import("./shells/KingRewardsShellEntry"),
 });
 
 export default function ThemedPageShell({ children, ...shellProps }) {

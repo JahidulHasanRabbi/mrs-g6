@@ -22,6 +22,7 @@ const DIALOGS = lazySkins({
   [THEME_IDS.KGAME99]: () => import("../kgame99/KgameDialog"),
   [THEME_IDS.LV918]: () => import("../lv918/Lv918Dialog"),
   [THEME_IDS.N1GANG]: () => import("../n1gang/N1gangDialog"),
+  [THEME_IDS.KINGREWARDS]: () => import("../kingrewards/KingRewardsDialog"),
 });
 
 export default function ThemedDialog({ children, fallback = null, ...props }) {

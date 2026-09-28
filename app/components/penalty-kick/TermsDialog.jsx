@@ -3,6 +3,7 @@
 import GlassCard from "./GlassCard";
 import GreenCta from "./GreenCta";
 import { usePkColors } from "./usePkColors";
+import { KrPkTermsDialog } from "../themes/kingrewards/KrPkDialogs";
 
 const TERMS_INTRO =
   "By participating in the Penalty Kick game, users agree to follow all gameplay rules and maintain fair play at all times.";
@@ -14,13 +15,17 @@ const TERMS = [
 ];
 
 export default function TermsDialog({ onClose, termsText }) {
-  const { colors: COLORS, theme } = usePkColors();
+  const { colors: COLORS, theme, isKingRewards } = usePkColors();
   const apiLines = termsText != null
     ? String(termsText).split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
     : [];
   const hasApiValue = termsText !== null && termsText !== undefined;
   const lines = hasApiValue ? apiLines : TERMS;
   const isEmptyApiValue = hasApiValue && lines.length === 0;
+
+  if (isKingRewards) {
+    return <KrPkTermsDialog lines={apiLines.length ? apiLines : [TERMS_INTRO, ...TERMS]} onClose={onClose} />;
+  }
 
   // Themed skins (Figma 61:1128 / 77:2927): heading + terms inside the ornate
   // frame, Close button below it. Falls back to the house terms when the API

@@ -19,7 +19,14 @@ import {
  */
 export default function ThemeSelectionModal({ isOpen, onClose }) {
   const { themeId, setTheme, resetTheme } = useTheme();
-  const { bg: modalBg, muted, checkBg, checkStroke } = getMemberModalStyles(themeId);
+  const {
+    bg: modalBg,
+    muted,
+    checkBg,
+    checkStroke,
+    accent = "#e9af41",
+    font = '"Times New Roman", serif',
+  } = getMemberModalStyles(themeId);
 
   // Closed, this renders nothing, so these storage reads never hit SSR.
   const isPinned = isOpen && !!readPinnedThemeId();
@@ -50,8 +57,8 @@ export default function ThemeSelectionModal({ isOpen, onClose }) {
             role="dialog"
             aria-modal="true"
             aria-label="Choose theme"
-            className="relative w-full max-w-[440px] rounded-2xl border-2 border-[#e9af41] shadow-[0_8px_30px_rgba(0,0,0,0.6)]"
-            style={{ background: modalBg }}
+            className="relative w-full max-w-[440px] rounded-2xl border-2 shadow-[0_8px_30px_rgba(0,0,0,0.6)]"
+            style={{ background: modalBg, borderColor: accent }}
             initial={{ scale: 0.9, y: 20, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.95, y: 10, opacity: 0 }}
@@ -59,20 +66,21 @@ export default function ThemeSelectionModal({ isOpen, onClose }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-5 pt-4">
-              <h2 className="text-[#e9af41] text-[18px] font-bold font-['Times_New_Roman']">
+              <h2 className="text-[18px] font-bold" style={{ color: accent, fontFamily: font }}>
                 Choose Theme
               </h2>
               <button
                 type="button"
                 onClick={onClose}
                 aria-label="Close"
-                className="text-[#e9af41] text-2xl leading-none hover:opacity-80"
+                className="text-2xl leading-none hover:opacity-80"
+                style={{ color: accent }}
               >
                 ×
               </button>
             </div>
 
-            <p className="px-5 pt-1 text-[11px] font-['Times_New_Roman']" style={{ color: muted }}>
+            <p className="px-5 pt-1 text-[11px]" style={{ color: muted, fontFamily: font }}>
               Pick any brand look you like. Your choice is remembered no matter
               which station you enter from.
             </p>
@@ -105,7 +113,7 @@ export default function ThemeSelectionModal({ isOpen, onClose }) {
                         className="object-contain"
                       />
                     </span>
-                    <span className="mt-1 text-[11px] font-bold text-[#e9af41] font-['Times_New_Roman'] text-center leading-tight">
+                    <span className="mt-1 text-[11px] font-bold text-center leading-tight" style={{ color: accent, fontFamily: font }}>
                       {theme.label}
                     </span>
                     {isActive && (
@@ -137,8 +145,8 @@ export default function ThemeSelectionModal({ isOpen, onClose }) {
                     resetTheme();
                     onClose();
                   }}
-                  className="w-full rounded-lg border border-[#e9af41]/40 py-2 text-[11px] font-['Times_New_Roman'] hover:bg-[#e9af41]/10 transition-colors"
-                  style={{ color: muted }}
+                  className="w-full rounded-lg border border-[#e9af41]/40 py-2 text-[11px] hover:bg-[#e9af41]/10 transition-colors"
+                  style={{ color: muted, fontFamily: font }}
                 >
                   Use my station&apos;s theme ({stationLabel})
                 </button>

@@ -12,10 +12,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { RPG_COLORS, RPG_FONTS } from "../constants";
+import { RPG_COLORS } from "../constants";
 import { RPG_IMAGES, heroBattlePoseFor, heroMovesetFor } from "../rpgAssets";
 import { GoldCta } from "../primitives";
-import { useRpgSkin } from "../rpgSkin";
+import { titleInk, useRpgSkin } from "../rpgSkin";
 import BossSprite from "../BossSprite";
 
 const PHASES = {
@@ -293,6 +293,39 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
       ? { animate: { scale: 1.05, y: -8 }, transition: { duration: 0.18, ease: "easeOut" } }
       : { animate: { scale: 1.16, y: -20 }, transition: { duration: 0.12, ease: "easeOut" } };
 
+  const diceBlock = (
+    <>
+      <motion.button
+        type="button"
+        onClick={startRoll}
+        disabled={phase !== PHASES.IDLE}
+        className="-mt-[12px] mb-[8px] self-center"
+        // Real dice are shaken, not spun flat — the 2D jiggle stays on the
+        // button while the cube itself tumbles in 3D inside.
+        style={{ filter: "drop-shadow(0 10px 12px rgba(0,0,0,0.5)) drop-shadow(0 0 16px rgba(124,77,255,0.45))" }}
+        animate={
+          phase === PHASES.ROLLING
+            ? { x: [0, -6, 5, -4, 3, 0], y: [0, -10, 4, -8, 2, 0] }
+            : { x: 0, y: 0 }
+        }
+        transition={phase === PHASES.ROLLING ? { duration: 0.95, ease: "easeInOut" } : { duration: 0.2 }}
+        whileTap={phase === PHASES.IDLE ? { scale: 0.92 } : undefined}
+        aria-label="Roll the dice"
+      >
+        <Die3D value={shownRoll} rolling={phase === PHASES.ROLLING} size={60} />
+      </motion.button>
+      <span className="hidden text-[13px] font-bold tracking-[4px]" style={{ color: skin.c.accentSoft, fontFamily: skin.fonts.display }}>
+        {/* {phase === PHASES.ROLLING ? "ROLLING..." : `ROLL DICE${roundIndex > 0 && phase === PHASES.IDLE ? ` · TOTAL ${rounds[roundIndex - 1]?.cumulative ?? 0}/${threshold}` : ""}`} */}
+      </span>
+      <span
+        className="rounded-full  py-[8px] text-[10px] font-semibold "
+        style={{ color: skin.c.textDim, fontFamily: skin.fonts.display }}
+      >
+        Dice number = number of attacks · beat {threshold} to win
+      </span>
+    </>
+  );
+
   return (
     // The arena backdrop is full-bleed at the ScreenShell level (passed via
     // backgroundImage) so it sits behind the HUD too — here we only lay out
@@ -301,10 +334,17 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
       <div className="relative z-10 flex w-full min-h-0 flex-1 flex-col items-center px-[18px] pb-[6px]">
         {/* Header — fixed height */}
         <div className="flex w-full shrink-0 flex-col items-center">
-          <span className="pt-[12px] text-[11px] font-semibold tracking-[5px]" style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}>
+          <span className="pt-[12px] text-[11px] font-semibold tracking-[5px]" style={{ color: skin.c.textDim, fontFamily: skin.fonts.display }}>
             PLANET BOSS
           </span>
-          <h2 className="text-[24px] font-bold tracking-[2px]" style={{ color: "#fff", fontFamily: RPG_FONTS.display, textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}>
+          <h2
+            className="text-[24px] font-bold tracking-[2px]"
+            style={
+              skin.c.titleGradient
+                ? { ...titleInk(skin), fontFamily: skin.fonts.display }
+                : { color: "#fff", fontFamily: skin.fonts.display, textShadow: "0 2px 12px rgba(0,0,0,0.6)" }
+            }
+          >
             {boss.name.toUpperCase()}
           </h2>
           <div
@@ -320,7 +360,7 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
             />
             <span
               className="absolute inset-0 grid place-items-center text-[10px] font-bold tracking-[1px]"
-              style={{ color: "#fff", fontFamily: RPG_FONTS.display, textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}
+              style={{ color: "#fff", fontFamily: skin.fonts.display, textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}
             >
               {fmt(hpNow)} / {fmt(boss.hp)}
             </span>
@@ -413,7 +453,7 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
                 <motion.span
                   key={hit.id}
                   className="absolute text-[20px] font-bold"
-                  style={{ color: "#ffd76a", fontFamily: RPG_FONTS.number, textShadow: "0 2px 6px rgba(0,0,0,0.8)" }}
+                  style={{ color: "#ffd76a", fontFamily: skin.fonts.number, textShadow: "0 2px 6px rgba(0,0,0,0.8)" }}
                   initial={{ opacity: 0, y: 10, x: (hit.id.charCodeAt(0) % 2 ? -1 : 1) * ((hit.dmg % 50) + 10), scale: 0.7 }}
                   animate={{ opacity: 1, y: -56, scale: 1.15 }}
                   exit={{ opacity: 0, y: -85 }}
@@ -467,7 +507,7 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
                 <motion.span
                   key={`hero-hit-${bossAttackSeq}`}
                   className="pointer-events-none absolute bottom-[42%] text-[18px] font-bold"
-                  style={{ color: "#ff876f", fontFamily: RPG_FONTS.number, textShadow: "0 2px 6px rgba(0,0,0,0.9)" }}
+                  style={{ color: "#ff876f", fontFamily: skin.fonts.number, textShadow: "0 2px 6px rgba(0,0,0,0.9)" }}
                   initial={{ opacity: 0, y: 8, scale: 0.75 }}
                   animate={{ opacity: 1, y: -38, scale: 1.15 }}
                   exit={{ opacity: 0, y: -58 }}
@@ -482,34 +522,13 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
 
         {/* Footer — fixed height, always on screen */}
         <div className="flex w-full shrink-0 flex-col items-center">
-          <motion.button
-            type="button"
-            onClick={startRoll}
-            disabled={phase !== PHASES.IDLE}
-            className="-mt-[12px] mb-[8px] self-center"
-            // Real dice are shaken, not spun flat — the 2D jiggle stays on the
-            // button while the cube itself tumbles in 3D inside.
-            style={{ filter: "drop-shadow(0 10px 12px rgba(0,0,0,0.5)) drop-shadow(0 0 16px rgba(124,77,255,0.45))" }}
-            animate={
-              phase === PHASES.ROLLING
-                ? { x: [0, -6, 5, -4, 3, 0], y: [0, -10, 4, -8, 2, 0] }
-                : { x: 0, y: 0 }
-            }
-            transition={phase === PHASES.ROLLING ? { duration: 0.95, ease: "easeInOut" } : { duration: 0.2 }}
-            whileTap={phase === PHASES.IDLE ? { scale: 0.92 } : undefined}
-            aria-label="Roll the dice"
-          >
-            <Die3D value={shownRoll} rolling={phase === PHASES.ROLLING} size={60} />
-          </motion.button>
-          <span className="hidden text-[13px] font-bold tracking-[4px]" style={{ color: skin.c.accentSoft, fontFamily: RPG_FONTS.display }}>
-            {/* {phase === PHASES.ROLLING ? "ROLLING..." : `ROLL DICE${roundIndex > 0 && phase === PHASES.IDLE ? ` · TOTAL ${rounds[roundIndex - 1]?.cumulative ?? 0}/${threshold}` : ""}`} */}
-          </span>
-          <span
-            className="rounded-full  py-[8px] text-[10px] font-semibold "
-            style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}
-          >
-            Dice number = number of attacks · beat {threshold} to win
-          </span>
+          {skin.dice.panel ? (
+            <div className="flex w-full flex-col items-center" style={skin.dice.panel}>
+              {diceBlock}
+            </div>
+          ) : (
+            diceBlock
+          )}
 
           <div className="mt-[9px] w-full max-w-[340px]">
             {/* `outOfRolls` has to gate this too: startRoll() refuses a spent
@@ -540,7 +559,7 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
           >
             <motion.p
               className="text-[38px] font-bold tracking-[8px]"
-              style={{ color: skin.c.value, fontFamily: RPG_FONTS.display, textShadow: "0 0 40px rgba(255,201,77,0.8)" }}
+              style={{ color: skin.c.value, fontFamily: skin.fonts.display, textShadow: "0 0 40px rgba(255,201,77,0.8)" }}
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", stiffness: 260, damping: 16, delay: 0.15 }}
@@ -555,7 +574,7 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
               animate={{ y: 0, opacity: 1, rotate: 0 }}
               transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.4 }}
             />
-            <p className="text-center text-[13px]" style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}>
+            <p className="text-center text-[13px]" style={{ color: skin.c.textDim, fontFamily: skin.fonts.display }}>
               {boss.name} defeated — you earned a Mystery Box!
             </p>
             <div className="w-full max-w-[300px]">
@@ -578,14 +597,14 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
           >
             <motion.p
               className="text-[34px] font-bold tracking-[6px]"
-              style={{ color: RPG_COLORS.red, fontFamily: RPG_FONTS.display, textShadow: "0 0 40px rgba(255,107,107,0.7)" }}
+              style={{ color: RPG_COLORS.red, fontFamily: skin.fonts.display, textShadow: "0 0 40px rgba(255,107,107,0.7)" }}
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", stiffness: 260, damping: 16, delay: 0.15 }}
             >
               OUT OF ROLLS
             </motion.p>
-            <p className="text-center text-[13px] leading-[1.6]" style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}>
+            <p className="text-center text-[13px] leading-[1.6]" style={{ color: skin.c.textDim, fontFamily: skin.fonts.display }}>
               {boss.name} survived with {fmt(hpNow)} HP left — you needed more than {threshold} to win.
             </p>
             <div className="w-full max-w-[300px]">

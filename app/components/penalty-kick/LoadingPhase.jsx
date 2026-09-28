@@ -6,9 +6,10 @@ import GreenCta from "./GreenCta";
 import HeroDisc from "./HeroDisc";
 import { DURATIONS } from "./constants";
 import { usePkColors } from "./usePkColors";
+import { KrPkHeroDisc, KrPkProgress } from "../themes/kingrewards/KrPkParts";
 
 export default function LoadingPhase({ onComplete }) {
-  const { colors: COLORS, theme } = usePkColors();
+  const { colors: COLORS, theme, isKingRewards } = usePkColors();
   const Button = theme?.Button;
   const [progress, setProgress] = useState(0);
   const onCompleteRef = useRef(onComplete);
@@ -26,6 +27,22 @@ export default function LoadingPhase({ onComplete }) {
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, []); // run once — onCompleteRef always holds the latest callback
+
+  // Figma 707:5914: disc + progress only (no status line, no disabled Start).
+  if (isKingRewards) {
+    return (
+      <div className="flex w-full flex-1 flex-col items-center justify-center gap-[clamp(32px,8vh,70px)] px-9 pb-4 pt-[64px]">
+        <motion.div
+          initial={{ scale: 0.92, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+        >
+          <KrPkHeroDisc spin />
+        </motion.div>
+        <KrPkProgress progress={progress} />
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-full flex-col items-center justify-center px-6 py-10">

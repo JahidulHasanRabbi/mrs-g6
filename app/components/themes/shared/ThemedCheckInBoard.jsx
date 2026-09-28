@@ -1,13 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { checkIn, getCheckinSettings, getMemberInfo } from "../../../api/memberApi";
-import { useUser } from "../../../contexts/UserContext";
-import { CHECKIN_DAYS, fitStyle, layoutTransform } from "./checkinMartSkin";
+import { fitStyle, layoutTransform } from "./checkinMartSkin";
 import ThemedDialog from "./ThemedDialog";
 import ThemedActionButton from "./ThemedActionButton";
+import { useThemedCheckIn } from "./useThemedCheckIn";
 
 /**
  * Skin-driven Daily Check-in board (Figma "Check in", MRS Theme Engine file).
@@ -19,118 +18,10 @@ import ThemedActionButton from "./ThemedActionButton";
  * ./checkinMartSkin.js and is shared by all six skins.
  */
 export default function ThemedCheckInBoard({ skin }) {
-  const [checkedDays, setCheckedDays] = useState([]);
-  const [checkinSettings, setCheckinSettings] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isCheckingIn, setIsCheckingIn] = useState(false);
-  const [dialogMessage, setDialogMessage] = useState(null);
-  const { refreshUserData, authReady, memberUuid } = useUser();
-
-  const applyStreak = useCallback((streakValue) => {
-    if (streakValue === undefined || streakValue === null) return;
-    const streak = streakValue >= 7 ? 7 : streakValue;
-    setCheckedDays(Array.from({ length: streak }, (_, i) => i + 1));
-  }, []);
-
-  useEffect(() => {
-    if (!authReady) return;
-    // Auth settled but no member (e.g. guard disabled in dev): drop the
-    // spinner instead of leaving it running forever.
-    if (!memberUuid) {
-      setIsLoading(false);
-      return;
-    }
-    let cancelled = false;
-
-    (async () => {
-      setIsLoading(true);
-      try {
-        const [info, settings] = await Promise.all([
-          getMemberInfo(memberUuid),
-          getCheckinSettings().catch((err) => {
-            console.error("Failed to fetch check-in settings:", err);
-            return null;
-          }),
-        ]);
-        if (cancelled) return;
-        applyStreak(info?.current_streak);
-        setCheckinSettings(settings);
-      } catch (err) {
-        console.error("Failed to fetch member info:", err);
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [authReady, memberUuid, applyStreak]);
+  const { checkedDays, days, isLoading, isCheckingIn, dialog, closeDialog, onDayClick } =
+    useThemedCheckIn();
 
   const layout = useMemo(() => layoutTransform(skin.panel), [skin.panel]);
-
-  const days = useMemo(() => {
-    const rewardFor = (day) => {
-      const entry = checkinSettings?.rewards?.find((r) => r.day === day);
-      const text = entry?.display_text;
-      return text && text.trim() ? text : "";
-    };
-    return CHECKIN_DAYS.map((d) => ({ ...d, reward: rewardFor(d.day) }));
-  }, [checkinSettings]);
-
-  const onDayClick = useCallback(
-    async (day) => {
-      if (isCheckingIn) return;
-
-      if (checkedDays.includes(day.day)) {
-        setDialogMessage("You have already checked in for this day!");
-        return;
-      }
-
-      // Serial check-in: only the next unclaimed day is actionable.
-      const nextDay = checkedDays.length + 1;
-      if (day.day !== nextDay) {
-        setDialogMessage(`Please check in for Day ${nextDay} first!`);
-        return;
-      }
-
-      if (!memberUuid) {
-        setDialogMessage("Please log in to check in.");
-        return;
-      }
-
-      setIsCheckingIn(true);
-      try {
-        const response = await checkIn(memberUuid);
-        const tokens = response?.tokens_obtained;
-        const earned =
-          tokens != null ? `${tokens} KR Coin${tokens !== 1 ? "s" : ""}` : "your reward";
-        setDialogMessage(
-          `Congratulations! You've checked in for today and earned ${earned}!`
-        );
-
-        const updated = await getMemberInfo(memberUuid);
-        applyStreak(updated?.current_streak);
-        await refreshUserData();
-      } catch (err) {
-        console.error("Check-in failed:", err);
-        const detail =
-          err.data?.details || err.data?.detail || err.data?.message || err.message || "";
-        const lower = detail.toLowerCase();
-
-        if (lower.includes("already checked in")) {
-          setDialogMessage("Already checked in today! Try again tomorrow.");
-        } else if (lower.includes("module") || lower.includes("checkinnotsetuperror")) {
-          setDialogMessage("Check-in is currently unavailable. Please try again later.");
-        } else {
-          setDialogMessage(detail || "Failed to check in. Please try again.");
-        }
-      } finally {
-        setIsCheckingIn(false);
-      }
-    },
-    [checkedDays, isCheckingIn, memberUuid, refreshUserData, applyStreak]
-  );
 
   return (
     <section className="relative w-full px-4">
@@ -292,14 +183,14 @@ export default function ThemedCheckInBoard({ skin }) {
         </div>
       </motion.div>
 
-      <ThemedDialog open={!!dialogMessage} onClose={() => setDialogMessage(null)}>
+      <ThemedDialog open={!!dialog} onClose={closeDialog}>
         <p
           className="text-center text-[16px] font-bold leading-[1.45]"
           style={{ fontFamily: skin.font, color: skin.c.label }}
         >
-          {dialogMessage}
+          {dialog?.message}
         </p>
-        <ThemedActionButton textSize={16} onClick={() => setDialogMessage(null)}>
+        <ThemedActionButton textSize={16} onClick={closeDialog}>
           OK
         </ThemedActionButton>
       </ThemedDialog>

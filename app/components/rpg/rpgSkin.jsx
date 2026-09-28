@@ -84,6 +84,68 @@ export function nineSlice({ frame, slice, width, pad }) {
 }
 
 /**
+ * Keys for a skin drawn as CSS surfaces instead of frame art (King Rewards'
+ * glass). Every default is today's behaviour, so the older skins are unchanged.
+ */
+const SKIN_EXTENSIONS = {
+  fonts: { display: RPG_FONTS.display, number: RPG_FONTS.number },
+  chrome: { showTitle: true, iconSize: 36 },
+  // "glass" = four flat tabs on a CSS bar; `glass` holds { bar, active, labelGradient }.
+  nav: { style: null, glass: null },
+  // Extra style for an unframed Panel (inset shadow, blur, radius).
+  panel: { css: null },
+  // CSS slot tile: box style, equipped overrides, { empty, equipped } pill styles,
+  // equipped label ink, and the backpack cell style.
+  tile: { css: null, cssEquipped: null, pill: null, labelEquipped: null, cell: null },
+  // [regular, compact] plaque height / label size.
+  cta: { height: [58, 46], size: [20, 16], weight: null },
+  c: { titleGradient: null },
+  // Surface behind the battle die and its caption.
+  dice: { panel: null },
+  war: {
+    // Bare gradient title instead of the plaque box.
+    titleBare: false,
+    // Outer section panel around list rows.
+    panel: null,
+    card: { css: null },
+    statCard: { css: null },
+    table: { css: null },
+    row: { css: null },
+    plaque: { css: null },
+    statCell: null,
+    // CSS tabs: { on, off, label } styles, flat label ink.
+    tab: { css: null },
+    // CSS type/timer chip: { css, label, typeIcon, timerIcon }.
+    chip: null,
+    // Solid label ink on the plaque buttons.
+    buttonInk: null,
+    namePlate: null,
+    thumbFrame: null,
+    rewardPlates: null,
+    rankCoin: null,
+    meRow: null,
+    defeatedStamp: null,
+    // Per-skin replacements for WAR_IMAGES.ui (a null entry hides that art).
+    icons: null,
+    earnIcons: null,
+    earnTile: { css: null },
+  },
+};
+
+/** Screen-title ink: the gradient fill when the skin has one, else its colour. */
+export function titleInk(skin) {
+  const g = skin.c.titleGradient;
+  if (!g) return { color: skin.c.title, textShadow: skin.c.titleShadow };
+  return { backgroundImage: g, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", lineHeight: 1.2 };
+}
+
+/** A `WAR_IMAGES.ui` key, unless the skin replaces (or hides) it. */
+export function warIcon(skin, key, fallback) {
+  const icons = skin.war.icons;
+  return icons && key in icons ? icons[key] : fallback;
+}
+
+/**
  * The default MRS look — the cyan/violet game surface that shipped before the
  * station skins. `frame: null` everywhere makes each primitive keep its current
  * CSS treatment, so an unthemed member sees no change.
@@ -234,7 +296,7 @@ function withPanelInk(skin) {
   return skin;
 }
 
-export const RPG_DEFAULT_SKIN = withPanelInk(DEFAULT_SKIN);
+export const RPG_DEFAULT_SKIN = withPanelInk(deepMerge(SKIN_EXTENSIONS, DEFAULT_SKIN));
 
 /** The 9-slice the three card-shaped frames share, before a theme's measured
  *  values replace it (see tools/gen_skins.py). */
@@ -458,7 +520,7 @@ export function buildRpgSkin(themeId, ASSETS, COLORS, overrides = {}) {
     },
   };
 
-  return withPanelInk(deepMerge(skin, overrides));
+  return withPanelInk(deepMerge(deepMerge(SKIN_EXTENSIONS, skin), overrides));
 }
 
 function deepMerge(base, extra) {

@@ -35,6 +35,7 @@ function TierRow({ tier }) {
 }
 
 export default function Rewards({ onNavigate, bossId }) {
+  const skin = useRpgSkin();
   const [tab, setTab] = useState("rank");
   // With a boss in context the tiers are that boss's configured reward items;
   // without one the adapter falls back to the spec's static tiers.
@@ -46,9 +47,15 @@ export default function Rewards({ onNavigate, bossId }) {
     <WarScreen title="Rewards" gap={8}>
       <WarTabs tabs={TABS} active={tab} onChange={setTab} className="mb-[4px]" />
       <WarState data={data} error={error} />
-      {tiers.map((t) => (
-        <TierRow key={t.id} tier={t} />
-      ))}
+      {skin.war.panel && tiers.length ? (
+        <div className="flex flex-col gap-[12px]" style={skin.war.panel}>
+          {tiers.map((t) => (
+            <TierRow key={t.id} tier={t} />
+          ))}
+        </div>
+      ) : (
+        tiers.map((t) => <TierRow key={t.id} tier={t} />)
+      )}
       <WarButton className="mx-auto mt-[10px] w-[190px]" onClick={() => onNavigate(WAR_VIEWS.HISTORY, bossId ? { boss: bossId } : undefined)}>View History</WarButton>
       <InfoPlaque title="How to Earn Rewards" lines={HOW_TO_EARN_NOTE} className="mt-[14px]" />
     </WarScreen>

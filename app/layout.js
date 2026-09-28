@@ -1,4 +1,4 @@
-import { Inter, Geist, Geist_Mono, Montserrat, DM_Sans, JetBrains_Mono, Sora, Chakra_Petch, Rajdhani, Acme, Rubik, Berkshire_Swash, Lexend, Archivo, Neuton } from "next/font/google";
+import { Inter, Geist, Geist_Mono, Montserrat, DM_Sans, JetBrains_Mono, Sora, Chakra_Petch, Rajdhani, Acme, Rubik, Berkshire_Swash, Lexend, Archivo, Neuton, Barlow } from "next/font/google";
 import "./globals.css";
 
 /**
@@ -112,6 +112,14 @@ const archivo = Archivo({
   weight: ["700", "900"],
 });
 
+// King Rewards skin (MRS Theme Engine Figma 617:294).
+const barlow = Barlow({
+  variable: "--font-barlow",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  preload: false,
+});
+
 export const metadata = {
   title: "VIP Access | Claim Your Elite Benefits & Rewards",
   description: "Access your exclusive member dashboard. Log in now to claim your daily benefits, unlock rewards, and compete in our latest mini-games!",
@@ -132,7 +140,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${montserrat.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${sora.variable} ${chakraPetch.variable} ${rajdhani.variable} ${acme.variable} ${rubik.variable} ${berkshireSwash.variable} ${lexend.variable} ${archivo.variable} ${neuton.variable} antialiased bg-black`}
+        className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${montserrat.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${sora.variable} ${chakraPetch.variable} ${rajdhani.variable} ${acme.variable} ${rubik.variable} ${berkshireSwash.variable} ${lexend.variable} ${archivo.variable} ${neuton.variable} ${barlow.variable} antialiased bg-black`}
         style={{ fontFamily: '"Times New Roman", serif' }}
       >
         {/* Stamps <html data-theme> before paint — see buildThemeStampScript. */}

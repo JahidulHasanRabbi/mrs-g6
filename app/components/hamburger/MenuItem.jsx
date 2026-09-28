@@ -6,6 +6,17 @@ import { motion } from "framer-motion";
 import { tokenStorage } from "../../api/tokenStorage";
 import MenuIcon from "./MenuIcon";
 
+/** Sends the member back to the station they entered from (the saved `o`). */
+export function redirectToStation() {
+  const savedO = tokenStorage.getRedirectO();
+  let redirectUrl = "/";
+  if (savedO) {
+    redirectUrl = savedO.startsWith("http") ? savedO : `https://${savedO}`;
+  }
+
+  window.location.href = redirectUrl;
+}
+
 /**
  * MenuItem Component
  * Memoized for performance - prevents unnecessary re-renders
@@ -37,27 +48,9 @@ function MenuItem({
   const padding = "px-2 py-[6px]";
 
   const handleAction = () => {
-    if (action === "logout") {
-      tokenStorage.clearMemberTokens();
-
-      const savedO = tokenStorage.getRedirectO();
-      let redirectUrl = "/";
-      if (savedO) {
-        redirectUrl = savedO.startsWith("http") ? savedO : `https://${savedO}`;
-      }
-
-      window.location.href = redirectUrl;
-      return;
-    }
-
-    if (action === "station") {
-      const savedO = tokenStorage.getRedirectO();
-      let redirectUrl = "/";
-      if (savedO) {
-        redirectUrl = savedO.startsWith("http") ? savedO : `https://${savedO}`;
-      }
-
-      window.location.href = redirectUrl;
+    if (action === "logout" || action === "station") {
+      if (action === "logout") tokenStorage.clearMemberTokens();
+      redirectToStation();
       return;
     }
 

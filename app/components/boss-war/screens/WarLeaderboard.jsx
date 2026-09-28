@@ -21,7 +21,11 @@ function Row({ row }) {
   const skin = useRpgSkin();
   const ink = useFrameInk(skin.war.row);
   return (
-    <WarCard spec={skin.war.row} className="flex items-center gap-[8px] !py-[5px]">
+    <WarCard
+      spec={skin.war.row}
+      className="flex items-center gap-[8px] !py-[5px]"
+      style={row.isMe && skin.war.meRow ? { background: skin.war.meRow } : undefined}
+    >
       <RankBadge rank={row.rank} />
       {/* Portrait slot. `avatar` is whatever the API returns; until it does,
           every row shows the shared placeholder the profile page uses. */}
@@ -49,6 +53,7 @@ function Row({ row }) {
 }
 
 export default function WarLeaderboard({ bossId }) {
+  const skin = useRpgSkin();
   const [tab, setTab] = useState("total");
   const { data, error } = useWarResource(
     () => warApi.getLeaderboard(bossId, { limit: 50 }),
@@ -81,10 +86,19 @@ export default function WarLeaderboard({ bossId }) {
         error={error}
         empty={data && !rows.length ? (tab === "me" ? "Attack the boss to enter the ranking." : "No damage recorded yet.") : null}
       />
-      {rows.map((r) => (
-        <Row key={r.rank} row={r} />
-      ))}
-      {pinned ? <Row key={`me-${pinned.rank}`} row={pinned} /> : null}
+      {skin.war.panel ? (
+        rows.length || pinned ? (
+          <div className="flex flex-col gap-[12px]" style={skin.war.panel}>
+            {rows.map((r) => (
+              <Row key={r.rank} row={r} />
+            ))}
+            {pinned ? <Row key={`me-${pinned.rank}`} row={pinned} /> : null}
+          </div>
+        ) : null
+      ) : (
+        rows.map((r) => <Row key={r.rank} row={r} />)
+      )}
+      {!skin.war.panel && pinned ? <Row key={`me-${pinned.rank}`} row={pinned} /> : null}
     </WarScreen>
   );
 }

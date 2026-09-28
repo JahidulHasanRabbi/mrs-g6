@@ -15,6 +15,8 @@ const ON_LIGHT_BACKDROP = {
   [THEME_IDS.LV918]: { heading: '#6b1436', label: '#5a1230', meta: '#3d0a20' },
 };
 
+const ON_NAVY_BACKDROP = { heading: '#f9d063', label: '#f9d063', meta: 'rgba(165,196,255,0.7)' };
+
 const ON_DARK_BACKDROP = { heading: '#e9af41', label: '#e9af41', meta: '#d0c6ab' };
 
 /**
@@ -29,6 +31,7 @@ const BANNER_CHROME = {
   [THEME_IDS.KGAME99]: { border: '#7fb3e8', glow: 'rgba(90,150,230,0.28)', scrim: '6,21,39' },
   [THEME_IDS.LV918]: { border: '#f34f89', glow: 'rgba(243,79,137,0.28)', scrim: '42,10,31' },
   [THEME_IDS.N1GANG]: { border: '#f2cb7a', glow: 'rgba(242,203,122,0.22)', scrim: '10,10,10' },
+  [THEME_IDS.KINGREWARDS]: { border: '#d4af37', glow: 'rgba(243,173,60,0.20)', scrim: '10,5,3' },
 };
 
 export function useBannerChrome() {
@@ -40,5 +43,6 @@ export function useThemeInk() {
   const { themeId } = useTheme();
   const light = ON_LIGHT_BACKDROP[themeId];
   if (light) return { ...light, halo: '0 1px 0 rgba(255,255,255,0.55)', onLight: true };
+  if (themeId === THEME_IDS.KINGREWARDS) return { ...ON_NAVY_BACKDROP, halo: '0 2px 0 rgba(0,0,0,0.35)', onLight: false };
   return { ...ON_DARK_BACKDROP, halo: '0 3px 0 rgba(0,0,0,0.35)', onLight: false };
 }

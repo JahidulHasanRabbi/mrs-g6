@@ -5,7 +5,7 @@
 // never part of ?view= navigation.
 
 import { AnimatePresence, motion } from "framer-motion";
-import { RPG_COLORS, RPG_FONTS } from "./constants";
+import { RPG_COLORS } from "./constants";
 import { useRpgSkin } from "./rpgSkin";
 import { GoldCta } from "./primitives";
 
@@ -45,14 +45,14 @@ export default function NoticeModal({
           >
             <p
               className="text-[17px] font-bold tracking-[1px]"
-              style={{ color: skin.c.text, fontFamily: RPG_FONTS.display }}
+              style={{ color: skin.c.text, fontFamily: skin.fonts.display }}
             >
               {title}
             </p>
             {message ? (
               <p
                 className="mt-[10px] text-[13px] leading-5"
-                style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}
+                style={{ color: skin.c.textDim, fontFamily: skin.fonts.display }}
               >
                 {message}
               </p>
@@ -71,7 +71,7 @@ export default function NoticeModal({
                     borderColor: skin.modal.border,
                     color: skin.c.textDim,
                     background: "rgba(255,255,255,0.04)",
-                    fontFamily: RPG_FONTS.display,
+                    fontFamily: skin.fonts.display,
                   }}
                 >
                   {cancelLabel}

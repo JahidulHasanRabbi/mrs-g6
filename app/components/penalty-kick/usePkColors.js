@@ -21,6 +21,9 @@ import Lv918OrnateCard from "../themes/lv918/Lv918OrnateCard";
 import Lv918Button from "../themes/lv918/Lv918Button";
 import N1gangOrnateCard from "../themes/n1gang/N1gangOrnateCard";
 import N1gangButton from "../themes/n1gang/N1gangButton";
+import { KR_ASSETS, KR_COLORS } from "../themes/kingrewards/assets";
+import KingRewardsOrnateCard from "../themes/kingrewards/KingRewardsOrnateCard";
+import KingRewardsButton from "../themes/kingrewards/KingRewardsButton";
 
 // Glow strings were hardcoded green rgba() literals across the phase
 // components; they live here now so a theme can recolor them in one place.
@@ -87,6 +90,14 @@ const LV918_PK_COLORS = {
   glow55: "rgba(224,51,138,0.8)",
   glow40: "rgba(224,51,138,0.5)",
   glow35: "rgba(224,51,138,0.35)",
+};
+
+// King Rewards: Figma "glow-gold" #f2ba33 headings; muted copy keeps the
+// design's #bbcbbb, which reads fine on the navy cards.
+const KR_PK_COLORS = {
+  ...GOLD_PK_COLORS,
+  textMuted: "#bbcbbb",
+  trackDark: "#333535",
 };
 
 // One pack per themed skin. Each supplies the gold gameplay palette, the accent
@@ -184,6 +195,21 @@ const THEME_PACKS = {
       missRed: "#ff5a5a",
     },
   },
+  [THEME_IDS.KINGREWARDS]: {
+    pkColors: KR_PK_COLORS,
+    accent: "242,186,51",
+    OrnateCard: KingRewardsOrnateCard,
+    Button: KingRewardsButton,
+    assets: KR_ASSETS,
+    iconBall: KR_ASSETS.pk.iconBall,
+    palette: {
+      cream: "#e2e2e2",
+      sand: "#bbcbbb",
+      accent: KR_COLORS.gold,
+      gold: "#ffdd74",
+      missRed: "#ff3b30",
+    },
+  },
 };
 
 /**
@@ -194,7 +220,7 @@ const THEME_PACKS = {
  * display palette and asset map so each PK component needs a single branch.
  */
 export function usePkColors() {
-  const { themeId, isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang, isThemed } = useTheme();
+  const { themeId, isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang, isKingRewards, isThemed } = useTheme();
   const pack = THEME_PACKS[themeId] || null;
   const base = pack ? pack.accent : "84,233,138";
   return {
@@ -205,6 +231,7 @@ export function usePkColors() {
     isKgame99,
     isLv918,
     isN1gang,
+    isKingRewards,
     isThemed,
     themeId,
     theme: pack

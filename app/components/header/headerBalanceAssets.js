@@ -45,6 +45,14 @@ export const HEADER_BALANCE_SKINS = Object.freeze({
     token: `${BASE}/n1gang/kr.webp`,
     textColor: '#f9d063',
   },
+  // No chip frame art: King Rewards draws both chips inside one glass panel.
+  [THEME_IDS.KINGREWARDS]: {
+    frame: null,
+    glass: true,
+    battlePoint: '/assets/themes/kingrewards/ui/coin-bp.webp',
+    token: '/assets/themes/kingrewards/ui/coin-kr.webp',
+    textColor: '#f9d063',
+  },
 });
 
 export function getHeaderBalanceSkin(themeId) {

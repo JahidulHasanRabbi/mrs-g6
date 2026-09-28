@@ -8,6 +8,7 @@ import { DURATIONS } from "./constants";
 import { buildTrajectory } from "./physics";
 import { useResponsiveScale } from "./useResponsiveScale";
 import { usePkColors } from "./usePkColors";
+import { KR_PK_BANNER } from "../themes/kingrewards/KrPkParts";
 
 // Ball is 100 px at the 475-px design width; scale it down on narrow phones
 // so it keeps the same on-screen proportion (and matches the resting ball in
@@ -51,7 +52,7 @@ function measureViewportVh() {
 //   outcome — { outcome: 'goal'|'save', saveDelayMs, keeperAim }
 //   onLanded — fired once the ball reaches the goal line
 export default function KickingPhase({ swipe, outcome, onLanded }) {
-  const { colors: COLORS } = usePkColors();
+  const { colors: COLORS, isKingRewards } = usePkColors();
   const [t, setT] = useState(0);
   const surfaceRef = useRef(null);
   // dims gets overwritten in useLayoutEffect (before first paint) with
@@ -144,6 +145,7 @@ export default function KickingPhase({ swipe, outcome, onLanded }) {
           WebkitTextStroke: "2px rgba(0,0,0,0.9)",
           paintOrder: "stroke fill",
           textShadow: `0 2px 4px rgba(0,0,0,0.85), 0 0 14px ${COLORS.glow55}, 0 0 28px ${COLORS.glow35}`,
+          ...(isKingRewards && KR_PK_BANNER),
         }}
       >
         {outcome.outcome === "goal"

@@ -29,7 +29,7 @@ const SLIDE_VARIANTS = {
  * placeholder art. The chrome (rule, 24px radius, glow) is shared by every
  * skin — only the accent colours change per theme.
  */
-export default function SpecialForYouBanner() {
+export default function SpecialForYouBanner({ heading = 'Special For You' }) {
   const chrome = useBannerChrome();
   const ink = useThemeInk();
   const [banners, setBanners] = useState([]);
@@ -99,12 +99,14 @@ export default function SpecialForYouBanner() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3, type: 'spring', stiffness: 160, damping: 22 }}
     >
-      <p
-        className="mb-2 font-black"
-        style={{ fontFamily: ARCHIVO, fontSize: 'clamp(16px, 5.5vw, 22px)', color: ink.heading }}
-      >
-        Special For You
-      </p>
+      {heading && (
+        <p
+          className="mb-2 font-black"
+          style={{ fontFamily: ARCHIVO, fontSize: 'clamp(16px, 5.5vw, 22px)', color: ink.heading }}
+        >
+          {heading}
+        </p>
+      )}
 
       {/* Outer viewport clips the slide as it travels; the border/radius/glow
           live on the card itself (not this wrapper) so the whole framed card

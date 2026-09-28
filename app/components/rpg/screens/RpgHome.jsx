@@ -5,7 +5,7 @@
 // into the Avatar Level / Hero Item screens.
 
 import Link from "next/link";
-import { RPG_COLORS, RPG_FONTS, RPG_GRADIENTS, RPG_VIEWS, EQUIP_SLOTS } from "../constants";
+import { RPG_COLORS, RPG_GRADIENTS, RPG_VIEWS, EQUIP_SLOTS } from "../constants";
 import { heroPoseFor } from "../rpgAssets";
 import { SlotChip, HeroShowcase } from "../primitives";
 import { useRpgSkin } from "../rpgSkin";
@@ -23,7 +23,7 @@ export default function RpgHome({ profile, equipment, onNavigate }) {
       <div className="mt-[30px] flex w-full flex-col items-center">
         <span
           className="text-[18px] font-bold tracking-[6px]"
-          style={{ color: skin.c.caption, fontFamily: RPG_FONTS.display }}
+          style={{ color: skin.c.caption, fontFamily: skin.fonts.display }}
         >
           — POWER —
         </span>
@@ -31,7 +31,7 @@ export default function RpgHome({ profile, equipment, onNavigate }) {
           className="text-[56px] font-bold leading-[62px]"
           style={{
             color: skin.c.value,
-            fontFamily: RPG_FONTS.number,
+            fontFamily: skin.fonts.number,
             textShadow: "0 0 30px rgba(255,201,77,0.45)",
           }}
         >
@@ -45,7 +45,7 @@ export default function RpgHome({ profile, equipment, onNavigate }) {
             background: profile?.canLevelUp ? RPG_GRADIENTS.cta : skin.c.muted,
             borderColor: profile?.canLevelUp ? RPG_COLORS.gold : skin.hud.badgeBorder,
             color: profile?.canLevelUp ? RPG_COLORS.darkText : skin.c.text,
-            fontFamily: RPG_FONTS.display,
+            fontFamily: skin.fonts.display,
             boxShadow: profile?.canLevelUp
               ? "0 0 18px rgba(255,201,77,0.45)"
               : `0 0 14px ${skin.hud.badgeBorder}47`,
@@ -82,7 +82,7 @@ export default function RpgHome({ profile, equipment, onNavigate }) {
           background: skin.c.rowActive,
           borderColor: skin.hud.badgeBorder,
           color: skin.c.text,
-          fontFamily: RPG_FONTS.display,
+          fontFamily: skin.fonts.display,
           boxShadow: `0 0 14px ${skin.hud.badgeBorder}47`,
         }}
       >

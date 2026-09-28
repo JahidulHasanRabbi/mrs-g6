@@ -22,7 +22,7 @@ import {
   useViewNavigation,
 } from "../components/rpg/gameShell";
 import { HamburgerMenu } from "../components/hamburger";
-import { RPG_VIEWS, RPG_FONTS } from "../components/rpg/constants";
+import { RPG_VIEWS } from "../components/rpg/constants";
 import * as rpgApi from "../components/rpg/rpgApi";
 import { preloadRpgAssets, arenaFor, RPG_IMAGES } from "../components/rpg/rpgAssets";
 import ScreenShell from "../components/rpg/ScreenShell";
@@ -168,7 +168,7 @@ function RpgPageInner() {
           onMenuClick={openMenu}
           hideHud
         >
-          <GameLoadingContent skin={skin} message={loadError} font={RPG_FONTS.display} />
+          <GameLoadingContent skin={skin} message={loadError} font={skin.fonts.display} />
         </ScreenShell>
         <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
         <InfoModal open={infoOpen} onClose={() => setInfoOpen(false)} profile={profile} />
@@ -244,7 +244,7 @@ function RpgPageInner() {
       </ScreenShell>
 
       {!profile.gameOpen && (
-        <GameClosedOverlay skin={skin} title="Avatar is currently closed" font={RPG_FONTS.display} />
+        <GameClosedOverlay skin={skin} title="Avatar is currently closed" font={skin.fonts.display} />
       )}
 
       <HamburgerMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />

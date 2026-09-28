@@ -4,7 +4,7 @@
 // from the live game settings carried on `profile` (/avatar/settings/), so the
 // rules always match what the back office has configured.
 
-import { RPG_COLORS, RPG_FONTS, EXTRA_ATTEMPT_COST, DISCARD_COST, POWER_PER_LEVEL, EQUIP_POWER, MAX_LEVEL } from "./constants";
+import { RPG_COLORS, EXTRA_ATTEMPT_COST, DISCARD_COST, POWER_PER_LEVEL, EQUIP_POWER, MAX_LEVEL } from "./constants";
 import { useRpgSkin } from "./rpgSkin";
 import { GoldCta } from "./primitives";
 
@@ -43,16 +43,16 @@ export default function InfoModal({ open, onClose, profile }) {
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="text-center text-[18px] font-bold tracking-[3px]" style={{ color: skin.c.text, fontFamily: RPG_FONTS.display }}>
+        <p className="text-center text-[18px] font-bold tracking-[3px]" style={{ color: skin.c.text, fontFamily: skin.fonts.display }}>
           HOW TO PLAY
         </p>
         <div className="mt-[14px] flex flex-col gap-[12px]">
           {RULES.map(([title, body]) => (
             <div key={title}>
-              <p className="text-[11px] font-bold tracking-[2px]" style={{ color: skin.c.accent, fontFamily: RPG_FONTS.display }}>
+              <p className="text-[11px] font-bold tracking-[2px]" style={{ color: skin.c.accent, fontFamily: skin.fonts.display }}>
                 {title}
               </p>
-              <p className="mt-[3px] text-[12px] leading-[17px]" style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}>
+              <p className="mt-[3px] text-[12px] leading-[17px]" style={{ color: skin.c.textDim, fontFamily: skin.fonts.display }}>
                 {body}
               </p>
             </div>

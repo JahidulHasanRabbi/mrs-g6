@@ -12,11 +12,11 @@
 
 import { useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { RPG_COLORS, RPG_FONTS, EQUIP_SLOTS, DISCARD_COST } from "../constants";
+import { RPG_COLORS, EQUIP_SLOTS, DISCARD_COST } from "../constants";
 import { RPG_IMAGES } from "../rpgAssets";
 import * as rpgApi from "../rpgApi";
 import { SlotChip } from "../primitives";
-import { useRpgSkin } from "../rpgSkin";
+import { titleInk, useRpgSkin } from "../rpgSkin";
 import NoticeModal from "../NoticeModal";
 
 export default function HeroItem({ equipment, onEquipmentUpdate }) {
@@ -128,7 +128,7 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
     <div className="flex w-full flex-1 flex-col px-[18px]">
       <h2
         className="pt-[22px] pb-[4px] text-center text-[22px] font-bold tracking-[5px]"
-        style={{ color: skin.c.title, fontFamily: RPG_FONTS.display, textShadow: skin.c.titleShadow }}
+        style={{ ...titleInk(skin), fontFamily: skin.fonts.display }}
       >
         HERO ITEM
       </h2>
@@ -173,11 +173,11 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
 
       {/* Backpack header */}
       <div className="flex items-center justify-between pb-[10px] pt-[24px]">
-        <span className="text-[18px] font-bold tracking-[4px]" style={{ color: skin.c.title, fontFamily: RPG_FONTS.display }}>
+        <span className="text-[18px] font-bold tracking-[4px]" style={{ color: skin.c.title, fontFamily: skin.fonts.display }}>
           BACKPACK
         </span>
         <div className="flex items-center gap-[10px]">
-          <span className="text-[12px] font-semibold" style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.number }}>
+          <span className="text-[12px] font-semibold" style={{ color: skin.c.textDim, fontFamily: skin.fonts.number }}>
             {backpack.length} / {capacity}
           </span>
           <button
@@ -190,7 +190,7 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
             style={{
               borderColor: manageMode ? RPG_COLORS.gold : skin.hud.badgeBorder,
               color: manageMode ? RPG_COLORS.gold : skin.c.accent,
-              fontFamily: RPG_FONTS.display,
+              fontFamily: skin.fonts.display,
               background: manageMode ? "rgba(255,201,77,0.08)" : "transparent",
             }}
           >
@@ -215,7 +215,7 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
               <div
                 key={`empty-${i}`}
                 className="aspect-square rounded-[12px] border border-dashed"
-                style={{ borderColor: "rgba(255,255,255,0.3)" }}
+                style={skin.tile.cell || { borderColor: "rgba(255,255,255,0.3)" }}
               />
             );
           }
@@ -256,14 +256,15 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
               }}
               className="relative flex aspect-square touch-none flex-col items-center justify-center gap-[4px] rounded-[12px] border"
               style={{
-                background: isSelected ? "rgba(255,92,138,0.12)" : "rgba(255,255,255,0.04)",
-                borderColor: isSelected ? "rgba(255,92,138,0.7)" : skin.c.edge,
+                ...skin.tile.cell,
+                background: isSelected ? "rgba(255,92,138,0.12)" : skin.tile.cell?.background || "rgba(255,255,255,0.04)",
+                borderColor: isSelected ? "rgba(255,92,138,0.7)" : skin.tile.cell?.borderColor || skin.c.edge,
               }}
             >
               <img src={RPG_IMAGES.equipmentArt[item.slot]} alt="" className="size-[34px] object-contain" />
               <span
                 className="max-w-full truncate px-[4px] text-[8px] tracking-[0.5px]"
-                style={{ color: skin.c.slotLabel, fontFamily: RPG_FONTS.display }}
+                style={{ color: skin.c.slotLabel, fontFamily: skin.fonts.display }}
               >
                 {item.name}
               </span>
@@ -294,7 +295,7 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
           }}
         >
           <img src="/assets/rpg/icons/trash.svg" alt="" className="size-[18px]" />
-          <span className="text-[11px] font-semibold tracking-[2px]" style={{ color: "#ff8faf", fontFamily: RPG_FONTS.display }}>
+          <span className="text-[11px] font-semibold tracking-[2px]" style={{ color: "#ff8faf", fontFamily: skin.fonts.display }}>
             {manageMode && selected.length
               ? `DISCARD ${selected.length} SELECTED · −${selected.length * discardCost} KR COINS`
               : "DRAG ITEM HERE TO DISCARD"}

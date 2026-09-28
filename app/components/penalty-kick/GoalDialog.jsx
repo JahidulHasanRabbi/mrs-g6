@@ -6,9 +6,10 @@ import GreenCta, { OutlinePillCta } from "./GreenCta";
 import RedeemAllButton, { ThemedRedeemAllButton } from "./RedeemAllButton";
 import { ICONS } from "./constants";
 import { usePkColors } from "./usePkColors";
+import { KrPkGoalDialog, KrOutlineButton } from "../themes/kingrewards/KrPkDialogs";
 
 export default function GoalDialog({ reward, onKickAgain, onRedeemAll, onReturn }) {
-  const { colors: COLORS, soft, theme } = usePkColors();
+  const { colors: COLORS, soft, theme, isKingRewards } = usePkColors();
   // Once Redeem All succeeds, swap the single-kick reward text for the
   // cumulative RM/Tokens/BP/Score/prize breakdown — shown inside the card's
   // existing scrollable text area, never inside the button itself.
@@ -28,8 +29,24 @@ export default function GoalDialog({ reward, onKickAgain, onRedeemAll, onReturn 
     : amount
       ? itemType === "BATTLE POINT"
         ? `${Number(amount).toLocaleString("en-US")} BP`
-        : `${amount} ${itemType === "TOKEN" ? "KR Coin" : "Reward"}${Number(amount) === 1 ? "" : "s"}`
+        : `${amount} ${itemType === "TOKEN" || itemType === "KR COINS" ? "KR Coin" : "Reward"}${Number(amount) === 1 ? "" : "s"}`
       : "a reward";
+
+  if (isKingRewards) {
+    return (
+      <KrPkGoalDialog
+        rewardText={rewardText}
+        redeemedSummary={redeemedSummary}
+        redeemButton={
+          onRedeemAll && (
+            <ThemedRedeemAllButton onRedeemAll={onRedeemAll} onSummary={setRedeemedSummary} Button={KrOutlineButton} />
+          )
+        }
+        onKickAgain={onKickAgain}
+        onReturn={onReturn}
+      />
+    );
+  }
 
   // Themed skins (acebet77 / ubetclub): crowned ornate frame holds only the
   // heading + reward; the action buttons sit BELOW the frame (Figma 4:634 /

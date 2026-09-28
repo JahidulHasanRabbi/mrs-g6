@@ -5,6 +5,7 @@ import GlassCard from "./GlassCard";
 import GreenCta, { OutlinePillCta } from "./GreenCta";
 import RedeemAllButton, { ThemedRedeemAllButton } from "./RedeemAllButton";
 import { usePkColors } from "./usePkColors";
+import { KrPkFailDialog, KrOutlineButton } from "../themes/kingrewards/KrPkDialogs";
 
 // reason: "save" (keeper saved it), "miss" (ball went wide), or "error".
 export default function FailDialog({
@@ -15,8 +16,9 @@ export default function FailDialog({
   title,
   message,
   kickAgainLabel = "Kick Again?",
+  balance = null,
 }) {
-  const { colors: COLORS, soft, theme } = usePkColors();
+  const { colors: COLORS, soft, theme, isKingRewards } = usePkColors();
   const isMiss = reason === "miss";
   const isError = reason === "error";
   const heading = title || (isMiss ? "Off-target!" : isError ? "Kick failed" : "Game over");
@@ -24,6 +26,26 @@ export default function FailDialog({
   // See GoalDialog — cumulative Redeem All breakdown, shown once available,
   // never inside the button itself.
   const [redeemedSummary, setRedeemedSummary] = useState("");
+
+  if (isKingRewards) {
+    return (
+      <KrPkFailDialog
+        isError={isError}
+        heading={heading}
+        body={body}
+        balance={balance}
+        redeemedSummary={redeemedSummary}
+        redeemButton={
+          onRedeemAll && !isError && (
+            <ThemedRedeemAllButton onRedeemAll={onRedeemAll} onSummary={setRedeemedSummary} Button={KrOutlineButton} />
+          )
+        }
+        kickAgainLabel={kickAgainLabel}
+        onKickAgain={onKickAgain}
+        onReturn={onReturn}
+      />
+    );
+  }
 
   // Themed skins: ornate frame holds the heading + message; buttons render
   // below the frame so they never overflow the fixed art (matches Goal dialog).

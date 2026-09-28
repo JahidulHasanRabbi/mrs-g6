@@ -56,6 +56,7 @@ const NAVS = lazySkins({
   [THEME_IDS.KGAME99]: () => import("../components/themes/kgame99/KgameBottomNav"),
   [THEME_IDS.LV918]: () => import("../components/themes/lv918/Lv918BottomNav"),
   [THEME_IDS.N1GANG]: () => import("../components/themes/n1gang/N1gangBottomNav"),
+  [THEME_IDS.KINGREWARDS]: () => import("../components/themes/kingrewards/KingRewardsBottomNav"),
 });
 
 const HISTORY_PAGE_SIZE = 10;
@@ -160,7 +161,7 @@ function mapHistoryRow(row) {
 export default function PenaltyKickPage() {
   const router = useRouter();
   const { userData, refreshUserData } = useUser();
-  const { colors: themeColors, themeId } = usePkColors();
+  const { colors: themeColors, themeId, isKingRewards } = usePkColors();
   const ThemedNav = NAVS[themeId];
   // muted/toggleMuted destructured but unused — the Figma header dropped the
   // mute toggle. Audio still works (and respects the persisted-mute flag the
@@ -462,6 +463,7 @@ export default function PenaltyKickPage() {
             loadHistoryPage(1);
             setDialog(DIALOGS.HISTORY);
           }}
+          hud={pitchVariant === "close" ? { tokens: config.tokensBalance, perShot: config.tokenPerShot } : null}
         />
       </div>
 
@@ -477,7 +479,7 @@ export default function PenaltyKickPage() {
         className="relative z-10 flex flex-1 flex-col"
         style={{
           paddingBottom:
-            phase === PHASES.LOADING || phase === PHASES.LAUNCH ? 196 : 0,
+            phase === PHASES.LOADING || phase === PHASES.LAUNCH ? (isKingRewards ? 112 : 196) : 0,
         }}
       >
         <AnimatePresence mode="wait">
@@ -545,12 +547,14 @@ export default function PenaltyKickPage() {
           top they overlapped both. The whole overlay is pointer-events-none
           (the pills have nothing to tap) so it never intercepts the swipe
           gesture that drives the kick. */}
-      <div
-        className="pointer-events-none absolute left-0 right-0 z-20"
-        style={{ bottom: 130 }}
-      >
-        <TokenPills tokens={config.tokensBalance} perShot={config.tokenPerShot} />
-      </div>
+      {!isKingRewards && (
+        <div
+          className="pointer-events-none absolute left-0 right-0 z-20"
+          style={{ bottom: 130 }}
+        >
+          <TokenPills tokens={config.tokensBalance} perShot={config.tokenPerShot} />
+        </div>
+      )}
 
       {/* Same FooterNav the rest of the member pages use. It pins itself
           fixed bottom: 0 at max-w-475, so it overlays the bottom of the
@@ -560,16 +564,18 @@ export default function PenaltyKickPage() {
 
       {!config.enabled && (
         <div className="absolute inset-x-0 top-[68px] bottom-[100px] z-30 grid place-items-center bg-black/70 px-6 backdrop-blur-md">
-          <div className="w-full max-w-[360px] rounded-[16px] border border-white/15 bg-[#071906]/95 px-6 py-7 text-center shadow-[0_16px_50px_rgba(0,0,0,0.45)]">
+          <div
+            className={`w-full max-w-[360px] rounded-[16px] px-6 py-7 text-center shadow-[0_16px_50px_rgba(0,0,0,0.45)] ${isKingRewards ? "bg-[#003d89]" : "border border-white/15 bg-[#071906]/95"}`}
+          >
             <p
               className="text-[20px] font-bold"
-              style={{ color: themeColors.primary, fontFamily: "'Lexend', sans-serif" }}
+              style={{ color: themeColors.primary, fontFamily: isKingRewards ? "var(--font-barlow), sans-serif" : "'Lexend', sans-serif" }}
             >
               {unavailableMessage}
             </p>
             <p
               className="mt-3 text-[12px] leading-5"
-              style={{ color: themeColors.textMuted, fontFamily: "'Lexend', sans-serif" }}
+              style={{ color: themeColors.textMuted, fontFamily: isKingRewards ? "var(--font-barlow), sans-serif" : "'Lexend', sans-serif" }}
             >
               Please check back later.
             </p>
@@ -597,7 +603,7 @@ export default function PenaltyKickPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 grid place-items-center px-4"
-            style={{ backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)" }}
+            style={{ backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: isKingRewards ? "none" : "blur(6px)" }}
             // Backdrop click dismisses INFO/TERMS/HISTORY (which lack
             // dedicated close buttons in the Figma). GOAL and FAIL are
             // gameplay outcomes — they must be acknowledged via Kick
@@ -631,6 +637,7 @@ export default function PenaltyKickPage() {
                 title={kickErrorNeedsCountry ? "Country required" : kickError ? "Kick failed" : undefined}
                 message={kickError || undefined}
                 kickAgainLabel={kickErrorNeedsCountry ? "Choose Country" : "Kick Again?"}
+                balance={config.tokensBalance}
                 onKickAgain={() => {
                   play("tap");
                   if (kickErrorNeedsCountry) {

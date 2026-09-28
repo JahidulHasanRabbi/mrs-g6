@@ -6,7 +6,7 @@
 
 import { Children, createContext, isValidElement, useContext, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { nineSlice, useRpgSkin } from "../rpg/rpgSkin";
+import { nineSlice, useRpgSkin, warIcon } from "../rpg/rpgSkin";
 import { WAR_IMAGES, gemFor } from "./warAssets";
 import { fmt, GEM_TINT } from "./constants";
 
@@ -109,6 +109,13 @@ export function WarTitle({ children }) {
   // 30% of its height on a crown, ep369 only 16%, so a shared padding put the
   // title below centre on most skins.
   const box = skin.war.titleInset;
+  if (skin.war.titleBare) {
+    return (
+      <GoldText as="h1" className="w-full pt-[8px] text-center font-bold uppercase" style={{ fontSize: "clamp(30px, 9.7vw, 40px)", lineHeight: 1.2 }}>
+        {children}
+      </GoldText>
+    );
+  }
   return (
     <div className="relative mx-auto h-[105px] w-full max-w-[358px]">
       {plaque ? (
@@ -155,7 +162,11 @@ export function WarCard({ children, className = "", style, spec, hover = false }
         transition: { type: "spring", stiffness: 320, damping: 24 },
       }
     : null;
-  const body = !s.frame ? (
+  const body = !s.frame && s.css ? (
+    <motion.div className={`relative w-full ${className}`} style={{ padding: s.pad, ...s.css, ...style }} {...hoverAnim}>
+      {children}
+    </motion.div>
+  ) : !s.frame ? (
     <motion.div
       className={`relative w-full rounded-[16px] border ${className}`}
       style={{ background: skin.panel.fillDark, borderColor: skin.c.edgeSoft, padding: s.pad, ...style }}
@@ -180,10 +191,11 @@ export function InfoPlaque({ title, lines = [], children, className = "" }) {
   const skin = useRpgSkin();
   const fi = useFrameInk();
   const s = skin.war.plaque;
+  const crown = warIcon(skin, "crown", WAR_IMAGES.ui.crown);
   return (
     <WarCard spec={s} className={`flex flex-col items-center gap-[10px] text-center ${className}`}>
-      {!s.frame && WAR_IMAGES.ui.crown ? (
-        <img src={WAR_IMAGES.ui.crown} alt="" aria-hidden className="pointer-events-none absolute -top-[18px] left-1/2 h-[34px] w-auto -translate-x-1/2" />
+      {!s.frame && crown ? (
+        <img src={crown} alt="" aria-hidden className="pointer-events-none absolute -top-[18px] left-1/2 h-[34px] w-auto -translate-x-1/2" />
       ) : null}
       {title ? <GoldText solid className="text-[14px] font-bold">{title}</GoldText> : null}
       {lines.length ? (
@@ -230,7 +242,31 @@ export function AttentionGlow({ radius = 22, className = "" }) {
 /** Pill tab strip (Daily / Weekly / Event, Total Damage / My Ranking, …). */
 export function WarTabs({ tabs, active, onChange, className = "" }) {
   const skin = useRpgSkin();
-  const { on, off } = skin.war.tab;
+  const { on, off, css } = skin.war.tab;
+  if (css) {
+    return (
+      <div className={`flex w-full items-center gap-[4px] ${className}`} role="tablist">
+        {tabs.map((t) => {
+          const isOn = t.id === active;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={isOn}
+              onClick={() => onChange(t.id)}
+              className="relative flex min-w-0 flex-1 items-center justify-center overflow-hidden transition-transform active:scale-95"
+              style={isOn ? css.on : css.off}
+            >
+              <span className="truncate whitespace-nowrap" style={{ fontFamily: skin.war.font, ...css.label }}>
+                {t.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
   return (
     <div className={`flex w-full items-center gap-[8px] ${className}`} role="tablist">
       {tabs.map((t) => {
@@ -339,13 +375,22 @@ export function WarButton({ children, onClick, disabled, variant = "pill", class
       {/* Every ATTACK plaque hangs an ornament off its top, so the opening's
           centre sits 55-61% down the art. Centring the label on the box put it
           visibly high; it takes the measured window instead. */}
-      <GoldText
-        solid
-        className={`relative z-10 flex items-center justify-center whitespace-nowrap font-bold ${text}`}
-        style={labelBox}
-      >
-        {children}
-      </GoldText>
+      {skin.war.buttonInk ? (
+        <span
+          className={`relative z-10 flex items-center justify-center whitespace-nowrap font-bold ${text}`}
+          style={{ ...labelBox, color: skin.war.buttonInk, fontFamily: skin.war.font }}
+        >
+          {children}
+        </span>
+      ) : (
+        <GoldText
+          solid
+          className={`relative z-10 flex items-center justify-center whitespace-nowrap font-bold ${text}`}
+          style={labelBox}
+        >
+          {children}
+        </GoldText>
+      )}
     </motion.button>
   );
 }
@@ -361,9 +406,24 @@ function pillMetrics([top, bottom]) {
   return { height, bias: Math.round((0.5 - (top + bottom) / 200) * height) };
 }
 
+/** CSS chip (glass skins): icon + flat label, one width for type and timer. */
+function GlassChip({ icon, children }) {
+  const skin = useRpgSkin();
+  const chip = skin.war.chip;
+  return (
+    <div className="flex min-w-0 shrink-0 items-center justify-center gap-[8px]" style={chip.css}>
+      {icon ? <img src={icon} alt="" aria-hidden className="size-[16px] shrink-0" draggable={false} /> : null}
+      <span className="truncate whitespace-nowrap tabular-nums" style={{ fontFamily: skin.war.font, ...chip.label }}>
+        {children}
+      </span>
+    </div>
+  );
+}
+
 /** "DAILY BOSS" type chip with the crown. */
 export function TypeChip({ children }) {
   const skin = useRpgSkin();
+  if (skin.war.chip) return <GlassChip icon={skin.war.chip.typeIcon}>{children}</GlassChip>;
   const spec = skin.war.chipSpec;
   const { height, bias } = pillMetrics(spec.body);
   const [aw, ah] = spec.art;
@@ -399,6 +459,7 @@ export function TypeChip({ children }) {
 export function TimerPlaque({ endsAt }) {
   const skin = useRpgSkin();
   const { label } = useCountdown(endsAt);
+  if (skin.war.chip) return <GlassChip icon={skin.war.chip.timerIcon}>{label}</GlassChip>;
   const art = skin.war.timer;
   // The box takes the artwork's own aspect: forcing every theme's plaque into
   // one 139x50 slot squashed the clock baked into it into an oval. The label
@@ -469,6 +530,14 @@ export function GemIcon({ gem, size = 26, className = "" }) {
 
 export function RankBadge({ rank, size = 34 }) {
   const skin = useRpgSkin();
+  const coin = skin.war.rankCoin;
+  if (coin) {
+    return (
+      <div className="grid shrink-0 place-items-center rounded-full text-[10px] font-bold leading-none" style={{ fontFamily: skin.war.font, ...coin }}>
+        {rank}
+      </div>
+    );
+  }
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       <img src={WAR_IMAGES.rankBadge} alt="" aria-hidden className="absolute inset-0 size-full object-contain" draggable={false} />
@@ -490,7 +559,7 @@ export function StatCell({ icon, label, value }) {
   const onFrameValue = fi.value;
   const shadow = skin.war.inkFrame ? "0 1px 1px rgba(255,255,255,0.35)" : "0 1px 2px rgba(0,0,0,0.75)";
   return (
-    <div className="flex min-w-0 flex-1 flex-col items-center gap-[4px]">
+    <div className="flex min-w-0 flex-1 flex-col items-center gap-[4px]" style={skin.war.statCell || undefined}>
       {icon ? <img src={icon} alt="" aria-hidden className="size-[28px] object-contain" draggable={false} /> : null}
       {/* Some stat plaques (kgame99) have a light sky interior; the shadow keeps the ink legible on both. */}
       <span className="text-[9px] leading-[10px]" style={{ color: onFrame, fontFamily: skin.war.font, textShadow: shadow }}>
@@ -543,18 +612,19 @@ export function EarnApTiles({ tiles, onAction, busyId }) {
         // Deposit is the highest-value way to gain AP — give its tile the same
         // gold pull as the ATTACK plaque so long as it's still claimable.
         const lure = t.id === "deposit" && !disabled;
+        const icon = skin.war.earnIcons?.[t.id] || t.icon;
         if (!art) {
           return (
             <motion.div
               key={t.id}
               className="relative flex min-w-0 flex-1 flex-col items-center gap-[4px] rounded-[12px] border px-[2px] pb-[8px] pt-[6px]"
-              style={{ background: skin.c.inset, borderColor: lure ? GOLD_GLOW(0.9) : skin.c.edgeSoft }}
+              style={{ background: skin.c.inset, borderColor: lure ? GOLD_GLOW(0.9) : skin.c.edgeSoft, ...spec.css }}
               animate={lure ? { scale: [1, 1.035, 1] } : undefined}
               transition={lure ? { duration: 1.8, repeat: Infinity, ease: "easeInOut" } : undefined}
             >
               {lure ? <AttentionGlow radius={12} /> : null}
               <GoldText solid className="text-[10px] font-bold">{t.label}</GoldText>
-              <img src={t.icon} alt="" aria-hidden className="size-[40px] object-contain" draggable={false} />
+              <img src={icon} alt="" aria-hidden className="size-[40px] object-contain" draggable={false} />
               <span className="text-[9px] leading-[11px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
                 {t.sub}
               </span>
@@ -585,7 +655,7 @@ export function EarnApTiles({ tiles, onAction, busyId }) {
               {/* Capped on BOTH axes so the glyph sits centred with clear margin
                   inside the opening — off the side rails and never grown by
                   flex-1 to fill the whole interior height. */}
-              <img src={t.icon} alt="" aria-hidden className="min-h-0 w-[66%] max-h-[46%] flex-1 object-contain" draggable={false} />
+              <img src={icon} alt="" aria-hidden className="min-h-0 w-[66%] max-h-[46%] flex-1 object-contain" draggable={false} />
               <span className="max-w-full text-[9px] leading-[11px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
                 {t.sub}
               </span>
@@ -632,9 +702,9 @@ export function EarnApTiles({ tiles, onAction, busyId }) {
  *  `aspect` overrides the art's own box — the list card's thumbnail is near
  *  square (BOSS_THUMB_ASPECT); `scrim` is the band the battle screen's readout
  *  sits on, which a card has nothing to put there. */
-export function BossPortrait({ boss, dim = false, className = "", children, aspect, scrim = true, backdrop = "rgba(0,0,0,0.55)", zoomOnHover = false }) {
+export function BossPortrait({ boss, dim = false, className = "", children, aspect, scrim = true, backdrop = "rgba(0,0,0,0.55)", zoomOnHover = false, frameSpec }) {
   const skin = useRpgSkin();
-  const { art: frame, aspect: artAspect, open } = skin.war.bossFrame;
+  const { art: frame, aspect: artAspect, open } = frameSpec || skin.war.bossFrame;
   const [t, r, b, l] = open;
   const box = aspect || (frame ? artAspect : null);
   return (
@@ -675,6 +745,16 @@ export function BossPortrait({ boss, dim = false, className = "", children, aspe
 export function RewardBadge({ gem }) {
   const skin = useRpgSkin();
   const art = WAR_IMAGES.ui.rewardBadge;
+  const plates = skin.war.rewardPlates;
+  if (plates) {
+    return (
+      <div className="relative flex h-[48px] w-[38px] shrink-0 flex-col items-center justify-center gap-[2px] p-[4px]">
+        <img src={plates[gem] || plates.common} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full object-fill" draggable={false} />
+        <GemIcon gem={gem} size={24} className="relative" />
+        <GoldText className="relative text-[6.5px] font-light leading-[10px]">Reward</GoldText>
+      </div>
+    );
+  }
   return (
     <div className="relative flex h-[48px] w-[38px] shrink-0 flex-col items-center gap-[5px] pt-[5px]">
       <div
@@ -729,6 +809,26 @@ const NAMEPLATE_H = 38;
 export function NamePlate({ children, className = "" }) {
   const skin = useRpgSkin();
   const art = skin.war.attackBtn;
+  const plate = skin.war.namePlate;
+  if (plate) {
+    return (
+      <div
+        className={`inline-flex max-w-full items-center justify-center rounded-[8px] px-[12px] py-[4px] ${className}`}
+        style={{
+          background: plate.fill,
+          backgroundClip: "padding-box",
+          borderStyle: "solid",
+          borderWidth: 7,
+          borderImageSource: `url(${plate.art})`,
+          borderImageSlice: "18% 6%",
+          borderImageWidth: "7px",
+          borderImageRepeat: "stretch",
+        }}
+      >
+        <GoldText className="min-w-0 truncate text-[16px] font-bold leading-[20px] tracking-[0.16px]">{children}</GoldText>
+      </div>
+    );
+  }
   if (!art) {
     return (
       <div

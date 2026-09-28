@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getPublicTermsAndConditions } from "../../api/memberApi";
 import { useTheme } from "../../contexts/ThemeContext";
 import { getMemberThemeStyles } from "../../config/memberThemeStyles";
+
+const KrTermsRules = lazy(() => import("../themes/kingrewards/KrTermsRules"));
 
 // Parse "title: X\ndescription: Y" format into sections array
 function parseTextToSections(text) {
@@ -119,10 +121,10 @@ const CollapsibleTermItem = ({ number, title, description, index, appearance }) 
   );
 };
 
-export default function FancyTermsConditions() {
+export default function FancyTermsConditions({ onBack }) {
   const [terms, setTerms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { themeId, isAcebet77, isUbetclub, isEp369, isKgame99, isN1gang } = useTheme();
+  const { themeId, isAcebet77, isUbetclub, isEp369, isKgame99, isN1gang, isKingRewards } = useTheme();
   const appearance = getMemberThemeStyles(themeId).terms;
   // Themes that wrap this component inside their own ornate crown frame don't
   // want the extra corner brackets + ambient glow drawing a second container
@@ -147,6 +149,14 @@ export default function FancyTermsConditions() {
     }
     fetchTerms();
   }, []);
+
+  if (isKingRewards) {
+    return (
+      <Suspense fallback={null}>
+        <KrTermsRules terms={terms} loading={isLoading} onBack={onBack} />
+      </Suspense>
+    );
+  }
 
   return (
     <motion.div

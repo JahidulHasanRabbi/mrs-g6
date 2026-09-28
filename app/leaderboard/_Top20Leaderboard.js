@@ -18,6 +18,8 @@ import {
 } from "../components/leaderboard-new/constants";
 import { formatAmount } from "../components/leaderboard-new/format";
 import { PHASE4_EVENT } from "../config/phase4";
+import { THEME_IDS } from "../config/themes";
+import { lazySkins } from "../components/themes/skinRoute";
 import {
   getPublicDepositRanking,
   getPublicWithdrawRanking,
@@ -33,6 +35,10 @@ import {
   getPublicLeaderboardStatus,
   getMemberRankAllBoards,
 } from "../api/memberApi";
+
+const KrLeaderboardView = lazySkins({
+  [THEME_IDS.KINGREWARDS]: () => import("../components/themes/kingrewards/KrLeaderboardView"),
+})[THEME_IDS.KINGREWARDS];
 
 // Row 5: only turnover inside the event window counts, so the countdown card
 // always points at the boundary that hasn't passed yet — the opening before
@@ -264,7 +270,7 @@ function Top20LeaderboardPageInner() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { authReady, memberUuid, userData } = useUser();
-  const { isThemed } = useTheme();
+  const { isThemed, isKingRewards } = useTheme();
   const tabParam = searchParams.get("tab");
   const activeTab =
     tabParam && ENABLED_LEADERBOARD_TYPES.includes(tabParam)
@@ -404,6 +410,33 @@ function Top20LeaderboardPageInner() {
   // close after it.
   const turnoverCountdown = isTurnoverTab ? getTurnoverCountdown() : null;
   const countdownEndDate = isTurnoverTab ? turnoverCountdown.endDate : data.endDate;
+
+  if (isKingRewards) {
+    return (
+      <ThemedPageShell onInfoClick={() => setIsInfoOpen(true)} balance={userData?.balance}>
+        <KrLeaderboardView
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          config={config}
+          top3={data.top3}
+          tableEntries={data.table}
+          currentUserRank={myRank?.rank > 0 ? myRank.rank : null}
+          campaignEndDate={countdownEndDate}
+          countdownLabel={isTurnoverTab ? turnoverCountdown.label : undefined}
+          periodLabel={config.eventPeriod || data.periodLabel || ""}
+          updateNotes={data.notes}
+          terms={data.terms}
+          loading={loading}
+          myRank={myRank}
+          memberName={userData.name}
+          infoOpen={isInfoOpen}
+          infoTerms={data.infoTerms}
+          onInfoClose={() => setIsInfoOpen(false)}
+          isMaintenance={isMaintenance}
+        />
+      </ThemedPageShell>
+    );
+  }
 
   const page = (
     <div

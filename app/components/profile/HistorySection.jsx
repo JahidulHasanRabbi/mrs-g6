@@ -2,28 +2,15 @@
 
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useMemo, useState, useCallback } from "react";
-import { getMemberTokenHistory, getMemberRewardHistory } from "../../api/memberApi";
-import { tokenStorage } from "../../api/tokenStorage";
+import { useEffect, useState } from "react";
 import { useTheme } from "../../contexts/ThemeContext";
+import { formatHistoryDate, getHistoryPageNumbers, useHistoryPage } from "./historyData";
 import { ACEBET_ASSETS, ACEBET_COLORS } from "../themes/acebet77/assets";
 import { UBET_ASSETS, UBET_COLORS } from "../themes/ubetclub/assets";
 import { EP369_ASSETS, EP369_COLORS } from "../themes/ep369/assets";
 import { KGAME99_ASSETS, KGAME99_COLORS } from "../themes/kgame99/assets";
 import { LV918_ASSETS, LV918_COLORS } from "../themes/lv918/assets";
 import { N1GANG_ASSETS, N1GANG_COLORS } from "../themes/n1gang/assets";
-
-const PAGE_SIZE = 6;
-
-function formatHistoryDate(isoString) {
-  if (!isoString) return "—";
-  const d = new Date(isoString);
-  if (isNaN(d.getTime())) return isoString;
-  const dd = String(d.getDate()).padStart(2, "0");
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const yyyy = d.getFullYear();
-  return `${dd}/${mm}/${yyyy}`;
-}
 
 const HISTORY_CONFIG = {
   token: {
@@ -118,33 +105,7 @@ function HistoryButton({ title, onClick, delay = 0, bannerSrc, textColor, object
 }
 
 function HistoryPagination({ currentPage, totalPages, onPageChange, color, activeColor }) {
-  const getPageNumbers = () => {
-    const pages = [];
-    if (totalPages <= 7) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-    } else {
-      if (currentPage <= 4) {
-        for (let i = 1; i <= 5; i++) pages.push(i);
-        pages.push("ellipsis-1");
-        pages.push(totalPages);
-      } else if (currentPage >= totalPages - 3) {
-        pages.push(1);
-        pages.push("ellipsis-1");
-        for (let i = totalPages - 4; i <= totalPages; i++) pages.push(i);
-      } else {
-        pages.push(1);
-        pages.push("ellipsis-1");
-        pages.push(currentPage - 1);
-        pages.push(currentPage);
-        pages.push(currentPage + 1);
-        pages.push("ellipsis-2");
-        pages.push(totalPages);
-      }
-    }
-    return pages;
-  };
-
-  const pageItems = getPageNumbers();
+  const pageItems = getHistoryPageNumbers(currentPage, totalPages);
 
   return (
     <div
@@ -203,11 +164,8 @@ function HistoryPagination({ currentPage, totalPages, onPageChange, color, activ
 function HistoryModal({ type, onClose }) {
   const config = HISTORY_CONFIG[type];
   const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang } = useTheme();
-  const [currentPage, setCurrentPage] = useState(1);
   const [modalScale, setModalScale] = useState(1);
-  const [rows, setRows] = useState([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const { rows, loading, currentPage, totalPages, goToPage: handlePageChange } = useHistoryPage(type);
 
   const themed = isAcebet77 || isUbetclub || isEp369 || isKgame99 || isLv918 || isN1gang;
   const frameSrc = isAcebet77
@@ -307,41 +265,6 @@ function HistoryModal({ type, onClose }) {
           contentTop: config.contentTop,
           rowsMaxHeight: "195px",
         };
-
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-
-  const fetchHistory = useCallback(async (page) => {
-    const uuid = tokenStorage.getMemberUuid();
-    if (!uuid) return;
-
-    setLoading(true);
-    try {
-      const params = { page, page_size: PAGE_SIZE };
-      let res;
-      if (type === "token") {
-        res = await getMemberTokenHistory(uuid, params);
-      } else {
-        res = await getMemberRewardHistory(uuid, params);
-      }
-      setRows(res.results || []);
-      setTotalCount(res.count || 0);
-    } catch (err) {
-      console.error("Failed to load history:", err);
-      setRows([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [type]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-    fetchHistory(1);
-  }, [type, fetchHistory]);
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-    fetchHistory(page);
-  };
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;

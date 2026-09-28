@@ -9,7 +9,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useRpgSkin } from "../../rpg/rpgSkin";
+import { useRpgSkin, warIcon } from "../../rpg/rpgSkin";
 import { fmt, ORDINAL, WAR_VIEWS } from "../constants";
 import * as warApi from "../bossWarApi";
 import { WAR_IMAGES } from "../warAssets";
@@ -74,10 +74,19 @@ function BossStage({ boss, hit, defeated }) {
             <motion.div
               className="pointer-events-none absolute inset-0 flex items-center justify-center"
               initial={{ scale: 1.6, opacity: 0, rotate: -18 }}
-              animate={{ scale: 1, opacity: 1, rotate: -12 }}
+              animate={{ scale: 1, opacity: 1, rotate: skin.war.defeatedStamp ? -14 : -12 }}
               transition={{ type: "spring", stiffness: 260, damping: 18 }}
             >
-              <img src={WAR_IMAGES.ui.defeated} alt="Defeated" className="w-[80%] object-contain" draggable={false} />
+              {skin.war.defeatedStamp ? (
+                <div className="flex items-center gap-[12px] p-[10px]" role="img" aria-label="Defeated">
+                  <img src={skin.war.defeatedStamp.icon} alt="" aria-hidden className="size-[40px] shrink-0" draggable={false} />
+                  <GoldText className="font-bold" style={{ fontSize: "clamp(28px, 9.7vw, 40px)", lineHeight: 1.2 }}>
+                    DEFEATED!
+                  </GoldText>
+                </div>
+              ) : (
+                <img src={WAR_IMAGES.ui.defeated} alt="Defeated" className="w-[80%] object-contain" draggable={false} />
+              )}
             </motion.div>
           ) : null}
           {/* Caption band inside the frame's opening (+4% breathing room), so
@@ -118,14 +127,14 @@ function ApCard({ ap, onAttack, busy, disabled }) {
           Your Attack Points
         </span>
         <div className="flex items-end gap-[4px]">
-          <img src={WAR_IMAGES.ui.ap} alt="" aria-hidden className="size-[25px] object-contain" draggable={false} />
+          <img src={warIcon(skin, "ap", WAR_IMAGES.ui.ap)} alt="" aria-hidden className="size-[25px] object-contain" draggable={false} />
           <GoldText solid className="text-[24px] font-bold leading-[26px] tracking-[0.24px]">{ap?.current ?? 0}</GoldText>
           <span className="text-[15px] font-bold leading-[24px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
             / {ap?.max ?? 0}
           </span>
         </div>
       </div>
-      <img src={WAR_IMAGES.ui.plus} alt="" aria-hidden className="h-[23px] w-[22px] object-contain" draggable={false} />
+      <img src={warIcon(skin, "plus", WAR_IMAGES.ui.plus)} alt="" aria-hidden className="h-[23px] w-[22px] object-contain" draggable={false} />
       <div className="flex flex-col items-center gap-[2px]">
         <WarButton variant="attack" size="lg" className="w-[149px]" onClick={onAttack} disabled={disabled || busy}>
           {busy ? "..." : "ATTACK"}
@@ -231,7 +240,7 @@ export default function BossBattle({ bossId, ap, onApUpdate, onNavigate, onNotic
                 <div className="flex flex-col items-end gap-[4px]">
                   <span className="text-[11px] font-bold" style={{ color: ink.meta, fontFamily: skin.war.font }}>Damage Done</span>
                   <div className="flex items-center gap-[4px]">
-                    <img src={WAR_IMAGES.ui.ap} alt="" aria-hidden className="size-[22px] object-contain" />
+                    <img src={warIcon(skin, "ap", WAR_IMAGES.ui.ap)} alt="" aria-hidden className="size-[22px] object-contain" />
                     <GoldText solid className="text-[22px] font-bold leading-[24px]">{fmt(boss.myDamage)}</GoldText>
                   </div>
                 </div>
@@ -254,7 +263,7 @@ export default function BossBattle({ bossId, ap, onApUpdate, onNavigate, onNotic
             <WarCard className="flex flex-col items-center gap-[6px] !px-[20px]">
               <GoldText solid className="text-[11px] font-bold">{lastAttack.critical ? "Critical Hit!" : "Hit!"}</GoldText>
               <div className="flex items-end gap-[4px]">
-                <img src={WAR_IMAGES.ui.ap} alt="" aria-hidden className="size-[25px] object-contain" />
+                <img src={warIcon(skin, "ap", WAR_IMAGES.ui.ap)} alt="" aria-hidden className="size-[25px] object-contain" />
                 <GoldText solid className="text-[24px] font-bold leading-[26px] tracking-[0.24px]">{fmt(lastAttack.damage)}</GoldText>
                 <span className="text-[14px] leading-[24px]" style={{ color: ink.dmg, fontFamily: skin.war.font }}>DMG</span>
                 <span className="ml-[8px] text-[15px] font-bold leading-[24px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>
@@ -289,9 +298,9 @@ export default function BossBattle({ bossId, ap, onApUpdate, onNavigate, onNotic
         ) : (
           <>
             <WarCard spec={skin.war.statCard || skin.war.card} className="flex items-start justify-between !px-[14px]">
-              <StatCell icon={WAR_IMAGES.ui.participants} label="Participants" value={boss.participants} />
-              <StatCell icon={WAR_IMAGES.ui.damage} label="My Damage" value={boss.myDamage} />
-              <StatCell icon={WAR_IMAGES.ui.total} label="Total Damage" value={boss.totalDamage} />
+              <StatCell icon={warIcon(skin, "participants", WAR_IMAGES.ui.participants)} label="Participants" value={boss.participants} />
+              <StatCell icon={warIcon(skin, "damage", WAR_IMAGES.ui.damage)} label="My Damage" value={boss.myDamage} />
+              <StatCell icon={warIcon(skin, "total", WAR_IMAGES.ui.total)} label="Total Damage" value={boss.totalDamage} />
             </WarCard>
             <ApCard ap={apView} onAttack={handleAttack} busy={busy} disabled={noAp} />
             <WarButton className="mx-auto w-[150px]" onClick={() => onNavigate(WAR_VIEWS.INFO)}>Boss Info</WarButton>

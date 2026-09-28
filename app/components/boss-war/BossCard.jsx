@@ -22,7 +22,7 @@ export default function BossCard({ boss, onAttack }) {
           frame fill, so the art's transparent margins should show that
           themed texture, not a flat black plate (BossBattle's full-screen
           portrait keeps the black stage backdrop — it isn't inside a card). */}
-      <BossPortrait boss={boss} dim={!available} scrim={false} backdrop="transparent" aspect={BOSS_THUMB_ASPECT} zoomOnHover className="w-[38%] shrink-0 self-center" />
+      <BossPortrait boss={boss} dim={!available} scrim={false} backdrop="transparent" aspect={BOSS_THUMB_ASPECT} frameSpec={skin.war.thumbFrame || undefined} zoomOnHover className="w-[38%] shrink-0 self-center" />
 
       <div className="flex min-w-0 flex-1 flex-col gap-[10px] py-[4px] pl-[8px] pr-[4px]">
         <div className="flex min-h-0 flex-1 flex-col justify-end gap-[12px]">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { lazy, Suspense, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import ProgressBar from "./StepIndicator";
@@ -20,6 +20,8 @@ import ThemedActionButton from "../themes/shared/ThemedActionButton";
 import { useThemeInk } from "../themes/shared/themeInk";
 import { useUser } from "@/app/contexts/UserContext";
 import { useTheme } from "@/app/contexts/ThemeContext";
+
+const KingRewardsPersonalDataView = lazy(() => import("./KingRewardsPersonalDataView"));
 
 // Default-portal look for the Change Frame / Change Theme pair — one component
 // so the two buttons cannot drift apart.
@@ -52,8 +54,8 @@ const THEME_ICON = (
 
 export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
   const router = useRouter();
-  const { updateProfilePicture, selectedFrameId, updateSelectedFrame } = useUser();
-  const { themeId } = useTheme();
+  const { updateProfilePicture, selectedFrameId, updateSelectedFrame, userData } = useUser();
+  const { themeId, isKingRewards } = useTheme();
   // Loading text sits directly on the page backdrop, so it follows the same
   // light/dark split as every other label on this page.
   const ink = useThemeInk();
@@ -283,6 +285,61 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
     );
   }
 
+  const modals = (
+    <>
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={handleCloseModal}
+        title="🎁  100% Done — Reward Unlocked"
+        message="Thanks for completing your profile. 10 Free Coins added."
+        backgroundColor="rgba(96, 128, 60, 1)"
+      />
+
+      {/* Frame picker — only shows frames for the user's current VIP tier */}
+      <FrameSelectionModal
+        isOpen={isFrameModalOpen}
+        onClose={() => setIsFrameModalOpen(false)}
+        currentFrameId={selectedFrameId}
+        onSelect={updateSelectedFrame}
+        profilePicture={profileImage || "/android-chrome-512x512.png"}
+      />
+
+      {/* Theme picker — any of the 6 brand looks, remembered across stations */}
+      <ThemeSelectionModal
+        isOpen={isThemeModalOpen}
+        onClose={() => setIsThemeModalOpen(false)}
+      />
+
+    </>
+  );
+
+  if (isKingRewards) {
+    return (
+      <>
+        <Suspense fallback={null}>
+          <KingRewardsPersonalDataView
+            name={userData?.name}
+            formData={formData}
+            onChange={handleInputChange}
+            profileImage={profileImage}
+            onProfileEdit={handleProfileEdit}
+            progress={progress}
+            frameName={currentFrame?.name}
+            themeName={getThemeLabel(themeId)}
+            onOpenFrame={() => setIsFrameModalOpen(true)}
+            onOpenTheme={() => setIsThemeModalOpen(true)}
+            error={error}
+            isSubmitting={isSubmitting}
+            onSubmit={handleSubmit}
+            onBack={() => router.push("/profile")}
+          />
+        </Suspense>
+        {modals}
+      </>
+    );
+  }
+
   return (
     <motion.div
       className="flex flex-col items-center gap-5 w-full max-w-[400px] mx-auto px-4"
@@ -363,30 +420,7 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
         disabled={isSubmitting}
       />
 
-      {/* Success Modal */}
-      <SuccessModal
-        isOpen={showSuccessModal}
-        onClose={handleCloseModal}
-        title="🎁  100% Done — Reward Unlocked"
-        message="Thanks for completing your profile. 10 Free Coins added."
-        backgroundColor="rgba(96, 128, 60, 1)"
-      />
-
-      {/* Frame picker — only shows frames for the user's current VIP tier */}
-      <FrameSelectionModal
-        isOpen={isFrameModalOpen}
-        onClose={() => setIsFrameModalOpen(false)}
-        currentFrameId={selectedFrameId}
-        onSelect={updateSelectedFrame}
-        profilePicture={profileImage || "/android-chrome-512x512.png"}
-      />
-
-      {/* Theme picker — any of the 6 brand looks, remembered across stations */}
-      <ThemeSelectionModal
-        isOpen={isThemeModalOpen}
-        onClose={() => setIsThemeModalOpen(false)}
-      />
-
+      {modals}
     </motion.div>
   );
 }

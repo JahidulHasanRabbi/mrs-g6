@@ -3,6 +3,7 @@
 import GlassCard from "./GlassCard";
 import GreenCta from "./GreenCta";
 import { usePkColors } from "./usePkColors";
+import { KrPkInfoDialog } from "../themes/kingrewards/KrPkDialogs";
 
 function SectionBadge({ children, align = "center" }) {
   const { colors: COLORS } = usePkColors();
@@ -50,7 +51,8 @@ function SwipeIllustration({ compact = false }) {
 }
 
 export default function InfoDialog({ onClose, onOpenTerms }) {
-  const { colors: COLORS, soft, theme } = usePkColors();
+  const { colors: COLORS, soft, theme, isKingRewards } = usePkColors();
+  if (isKingRewards) return <KrPkInfoDialog onClose={onClose} onOpenTerms={onOpenTerms} />;
   // (kgame99 + lv918 use the growing 3-slice/single-frame ornate card; the
   // shared `theme` branch below handles them the same way.)
 

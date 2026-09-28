@@ -8,10 +8,10 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { FooterNav } from "../../footer";
 import RpgTopBar from "../RpgTopBar";
-import { RPG_COLORS, RPG_FONTS, RPG_GRADIENTS, POWER_PER_LEVEL, MAX_LEVEL, EQUIP_SLOTS } from "../constants";
+import { RPG_COLORS, RPG_GRADIENTS, POWER_PER_LEVEL, MAX_LEVEL, EQUIP_SLOTS } from "../constants";
 import { RPG_IMAGES } from "../rpgAssets";
 import { Panel, StatRow, GoldCta } from "../primitives";
-import { useRpgSkin } from "../rpgSkin";
+import { titleInk, useRpgSkin } from "../rpgSkin";
 
 const GENDERS = ["male", "female"];
 
@@ -47,15 +47,11 @@ export default function CharacterSelect({ onCreate, onInfoClick, onMenuClick, er
       <div className="relative z-10 flex w-full flex-1 flex-col items-center px-[24px] pb-[140px] pt-[80px]">
         <h1
           className="text-center text-[26px] font-bold tracking-[4px]"
-          style={{
-            color: skin.c.title,
-            fontFamily: RPG_FONTS.display,
-            textShadow: skin.c.titleShadow,
-          }}
+          style={{ ...titleInk(skin), fontFamily: skin.fonts.display }}
         >
           CHOOSE YOUR HERO
         </h1>
-        <p className="mt-[6px] text-center text-[13px]" style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}>
+        <p className="mt-[6px] text-center text-[13px]" style={{ color: skin.c.textDim, fontFamily: skin.fonts.display }}>
           Your journey across the planets begins
         </p>
 
@@ -75,7 +71,7 @@ export default function CharacterSelect({ onCreate, onInfoClick, onMenuClick, er
                         background: skin.hud.badgeBg,
                         borderColor: skin.hud.badgeBorder,
                         color: skin.c.accentSoft,
-                        fontFamily: RPG_FONTS.display,
+                        fontFamily: skin.fonts.display,
                         fontWeight: 700,
                         boxShadow: `0 0 14px ${skin.hud.badgeBorder}44`,
                       }
@@ -83,7 +79,7 @@ export default function CharacterSelect({ onCreate, onInfoClick, onMenuClick, er
                         background: "rgba(255,255,255,0.04)",
                         borderColor: skin.c.edgeSoft,
                         color: skin.c.textDim,
-                        fontFamily: RPG_FONTS.display,
+                        fontFamily: skin.fonts.display,
                         fontWeight: 600,
                       }
                 }
@@ -123,7 +119,7 @@ export default function CharacterSelect({ onCreate, onInfoClick, onMenuClick, er
         </Panel>
 
         {error ? (
-          <p className="mt-[10px] text-center text-[12px]" style={{ color: RPG_COLORS.red, fontFamily: RPG_FONTS.display }}>
+          <p className="mt-[10px] text-center text-[12px]" style={{ color: RPG_COLORS.red, fontFamily: skin.fonts.display }}>
             {error}
           </p>
         ) : null}

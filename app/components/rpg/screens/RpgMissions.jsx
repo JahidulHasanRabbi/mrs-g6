@@ -7,11 +7,11 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { RPG_COLORS, RPG_FONTS, RPG_GRADIENTS, MISSION_TABS } from "../constants";
+import { RPG_COLORS, RPG_GRADIENTS, MISSION_TABS } from "../constants";
 import { RPG_IMAGES } from "../rpgAssets";
 import * as rpgApi from "../rpgApi";
 import { GoldCta, Panel, ProgressBar } from "../primitives";
-import { useRpgSkin } from "../rpgSkin";
+import { titleInk, useRpgSkin } from "../rpgSkin";
 import NoticeModal from "../NoticeModal";
 
 // The API's four categories (1 Daily, 2 Weekly, 3 Monthly, 4 Achievement).
@@ -69,17 +69,17 @@ export default function RpgMissions({ onProfileUpdate, onNavigate }) {
 
   return (
     <div className="flex w-full flex-1 flex-col px-[18px]">
-      <h2 className="pt-[22px] text-[26px] font-bold tracking-[6px]" style={{ color: skin.c.title, fontFamily: RPG_FONTS.display, textShadow: skin.c.titleShadow }}>
+      <h2 className="pt-[22px] text-[26px] font-bold tracking-[6px]" style={{ ...titleInk(skin), fontFamily: skin.fonts.display }}>
         MISSIONS
       </h2>
-      <p className="mt-[2px] text-[13px]" style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}>
+      <p className="mt-[2px] text-[13px]" style={{ color: skin.c.textDim, fontFamily: skin.fonts.display }}>
         Complete tasks to earn KR Coins & Battle Points
       </p>
 
       {/* Tabs */}
       <div
         className="mt-[16px] flex w-full items-stretch rounded-[14px] border p-[4px]"
-        style={{ background: skin.c.inset, borderColor: skin.c.edgeSoft }}
+        style={{ background: skin.c.inset, borderColor: skin.c.edgeSoft, ...skin.panel.css }}
       >
         {MISSION_TABS.map((t) => {
           const active = t === tab;
@@ -90,8 +90,8 @@ export default function RpgMissions({ onProfileUpdate, onNavigate }) {
               onClick={() => setTab(t)}
               // 4 categories share the strip, so the label is tighter than
               // the 3-tab design to keep every tab on one line.
-              className="relative min-w-0 flex-1 rounded-[10px] px-[2px] py-[10px] text-[11px] font-bold tracking-[1px]"
-              style={{ color: active ? skin.c.accentSoft : skin.c.labelMuted, fontFamily: RPG_FONTS.display }}
+              className="relative min-w-0 flex-1 rounded-[10px] px-[2px] py-[10px] text-[clamp(9px,2.9vw,11px)] font-bold tracking-[0.2px] min-[380px]:tracking-[1px]"
+              style={{ color: active ? skin.c.accentSoft : skin.c.labelMuted, fontFamily: skin.fonts.display }}
             >
               {active && (
                 <motion.span
@@ -112,7 +112,7 @@ export default function RpgMissions({ onProfileUpdate, onNavigate }) {
         {!loading && visible.length === 0 ? (
           <p
             className="py-[28px] text-center text-[12px]"
-            style={{ color: skin.c.slotEmpty, fontFamily: RPG_FONTS.display }}
+            style={{ color: skin.c.slotEmpty, fontFamily: skin.fonts.display }}
           >
             No {TAB_LABELS[tab].toLowerCase()} missions running right now.
           </p>
@@ -135,24 +135,24 @@ export default function RpgMissions({ onProfileUpdate, onNavigate }) {
                   <MissionIcon mission={m} />
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="text-[15px] font-bold" style={{ color: pc.text, fontFamily: RPG_FONTS.display }}>
+                  <span className="text-[15px] font-bold" style={{ color: pc.text, fontFamily: skin.fonts.display }}>
                     {m.title}
                   </span>
-                  <span className="text-[11px]" style={{ color: pc.value, fontFamily: RPG_FONTS.display }}>
+                  <span className="text-[11px]" style={{ color: pc.value, fontFamily: skin.fonts.display }}>
                     Reward: {rewardText(m.reward)}
                   </span>
                 </div>
                 <span
                   className="rounded-full border px-[10px] py-[3px] text-[9px] font-bold tracking-[1px]"
-                  style={{ borderColor: pc.edge, color: pc.accent, fontFamily: RPG_FONTS.display }}
+                  style={{ borderColor: pc.edge, color: pc.accent, fontFamily: skin.fonts.display }}
                 >
                   {TAB_LABELS[m.tab]}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between text-[11px]" style={{ color: pc.textDim, fontFamily: RPG_FONTS.display }}>
+              <div className="flex items-center justify-between text-[11px]" style={{ color: pc.textDim, fontFamily: skin.fonts.display }}>
                 <span>Progress</span>
-                <span style={{ fontFamily: RPG_FONTS.number }}>
+                <span style={{ fontFamily: skin.fonts.number }}>
                   {m.progress} / {m.target}
                 </span>
               </div>
@@ -161,7 +161,7 @@ export default function RpgMissions({ onProfileUpdate, onNavigate }) {
               {m.claimed ? (
                 <div
                   className="w-full rounded-[12px] border py-[12px] text-center text-[13px] font-bold tracking-[3px]"
-                  style={{ borderColor: pc.edge, color: pc.accentSoft, fontFamily: RPG_FONTS.display }}
+                  style={{ borderColor: pc.edge, color: pc.accentSoft, fontFamily: skin.fonts.display }}
                 >
                   CLAIMED
                 </div>

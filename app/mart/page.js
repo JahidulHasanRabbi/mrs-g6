@@ -29,6 +29,7 @@ const SKINS = lazySkins({
   [THEME_IDS.KGAME99]: () => import("../components/themes/kgame99/Kgame99MartPage"),
   [THEME_IDS.LV918]: () => import("../components/themes/lv918/Lv918MartPage"),
   [THEME_IDS.N1GANG]: () => import("../components/themes/n1gang/N1gangMartPage"),
+  [THEME_IDS.KINGREWARDS]: () => import("../components/themes/kingrewards/KingRewardsMartPage"),
 });
 
 const TIER_NAME_TO_ORDER = {

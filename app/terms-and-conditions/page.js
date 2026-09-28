@@ -13,6 +13,7 @@ import { EP369_ASSETS } from "../components/themes/ep369/assets";
 import { KGAME99_ASSETS } from "../components/themes/kgame99/assets";
 import { LV918_ASSETS } from "../components/themes/lv918/assets";
 import { N1GANG_ASSETS } from "../components/themes/n1gang/assets";
+import { lazySkins, skinFor } from "../components/themes/skinRoute";
 
 // Every skin draws the same body — heading text swapped for the theme's
 // "Terms & Condition" plaque — so only the plaque differs per theme.
@@ -25,9 +26,16 @@ const TITLE_PLAQUE = {
   [THEME_IDS.N1GANG]: N1GANG_ASSETS.terms.title,
 };
 
+const SKINS = lazySkins({
+  [THEME_IDS.KINGREWARDS]: () => import("../components/themes/kingrewards/KingRewardsTermsPage"),
+});
+
 export default function TermsAndConditionsPage() {
   const { themeId } = useTheme();
   const plaque = TITLE_PLAQUE[themeId];
+
+  const skin = skinFor(SKINS, themeId);
+  if (skin) return skin;
 
   if (plaque) {
     return (

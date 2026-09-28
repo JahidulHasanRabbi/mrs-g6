@@ -20,15 +20,7 @@ function formatMetric(value, kind) {
  * system record order) is a backend ranking rule; this panel only renders the
  * rank it is handed.
  */
-export default function MyRankPanel({
-  data,
-  color,
-  metricLabel,
-  metricKind = "currency",
-  gapUnit = "",
-  emptyHint = "",
-  memberName = "Member",
-}) {
+export function deriveMyRank(data, { metricKind = "currency", gapUnit = "", emptyHint = "", memberName = "Member" } = {}) {
   // No data yet (still loading, or the rank API failed/hasn't answered) —
   // show the same "Unranked" default as a member with no activity, rather
   // than making the whole section disappear.
@@ -58,6 +50,31 @@ export default function MyRankPanel({
       : "—";
   const displayName = String(memberName || "Member").trim() || "Member";
 
+  return {
+    safeData,
+    isUnranked,
+    isTopRank,
+    progress,
+    statusCopy,
+    rankLabel,
+    nextRankLabel,
+    displayName,
+    metricValue: formatMetric(isUnranked ? 0 : safeData.value, metricKind),
+  };
+}
+
+export default function MyRankPanel({
+  data,
+  color,
+  metricLabel,
+  metricKind = "currency",
+  gapUnit = "",
+  emptyHint = "",
+  memberName = "Member",
+}) {
+  const { isUnranked, progress, statusCopy, rankLabel, nextRankLabel, displayName, metricValue } =
+    deriveMyRank(data, { metricKind, gapUnit, emptyHint, memberName });
+
   return (
     <section
       className="relative w-full rounded-[10px] border px-6 pb-5 pt-5"
@@ -81,7 +98,7 @@ export default function MyRankPanel({
         <p className="mt-0.5 flex max-w-full items-center justify-center gap-1 text-[10px] font-semibold" style={{ color }}>
           <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
           <span className="truncate">
-            {metricLabel}: {formatMetric(isUnranked ? 0 : safeData.value, metricKind)}
+            {metricLabel}: {metricValue}
           </span>
         </p>
       </div>

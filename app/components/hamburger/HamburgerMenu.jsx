@@ -8,12 +8,16 @@ import MenuSection from "./MenuSection";
 import MenuItem from "./MenuItem";
 import { getPublicBanners } from "@/app/api/memberApi";
 import { useTheme } from "@/app/contexts/ThemeContext";
+import { THEME_IDS, readActiveThemeId } from "@/app/config/themes";
 import { getMemberThemeStyles } from "@/app/config/memberThemeStyles";
 import { NationalDayMenuOverlay } from "../phase4/NationalDayChrome";
 
 // The feedback modal carries every skin's asset map, and nothing shows it until
 // the member taps Feedback — so keep all of it out of the initial bundle.
 const FeedbackModal = lazy(() => import("../ui/FeedbackModal"));
+const loadKrDrawer = () => import("./KingRewardsMenuDrawer");
+if (typeof window !== "undefined" && readActiveThemeId() === THEME_IDS.KINGREWARDS) loadKrDrawer();
+const KingRewardsMenuDrawer = lazy(loadKrDrawer);
 
 /**
  * HamburgerMenu Component
@@ -38,7 +42,7 @@ function HamburgerMenu({ isOpen, onClose, side = "left" }) {
   // Latched on first open so the lazy modal stays mounted afterwards and its
   // exit animation still plays on close.
   const [feedbackMounted, setFeedbackMounted] = useState(false);
-  const { themeId } = useTheme();
+  const { themeId, isKingRewards } = useTheme();
   const menuStyle = getMemberThemeStyles(themeId).menu;
 
   const handleMenuAction = useCallback(async (actionType) => {
@@ -103,7 +107,12 @@ function HamburgerMenu({ isOpen, onClose, side = "left" }) {
   return (
     <>
     <AnimatePresence mode="wait">
-      {isOpen && (
+      {isOpen && isKingRewards && (
+        <Suspense key="kr-drawer" fallback={null}>
+          <KingRewardsMenuDrawer onClose={onClose} onAction={handleMenuAction} />
+        </Suspense>
+      )}
+      {isOpen && !isKingRewards && (
         <>
           {/* Overlay */}
           <motion.div

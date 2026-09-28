@@ -13,7 +13,7 @@ export default function PersonalDataPage() {
   const { profilePicture } = useUser();
   // On a theme, AppLayout wraps this page in the themed shell (its own header +
   // bottom nav), so the default chrome below would stack on top — skip it.
-  const { isThemed } = useTheme();
+  const { isThemed, isKingRewards } = useTheme();
 
   const handleMenuOpen = useCallback(() => setIsMenuOpen(true), []);
   const handleMenuClose = useCallback(() => setIsMenuOpen(false), []);
@@ -27,17 +27,26 @@ export default function PersonalDataPage() {
         </>
       )}
 
-      <AnimatedSection
-        title="Personal Data" 
-        imageSrc="" 
-        imageAlt="Personal Data"
-        titleSize={36}
-        imageHeight={0}
-      />
-      
-      <div className="flex flex-col items-center px-4 mt-8">
-        <PersonalDataForm />
-      </div>
+      {isKingRewards ? (
+        // KR puts the "Edit Profile" title inside the card (Figma 664:2088).
+        <div className="flex flex-col items-center px-4 pb-4 pt-8">
+          <PersonalDataForm />
+        </div>
+      ) : (
+        <>
+          <AnimatedSection
+            title="Personal Data" 
+            imageSrc="" 
+            imageAlt="Personal Data"
+            titleSize={36}
+            imageHeight={0}
+          />
+          
+          <div className="flex flex-col items-center px-4 mt-8">
+            <PersonalDataForm />
+          </div>
+        </>
+      )}
 
       {!isThemed && <FooterNav />}
     </>

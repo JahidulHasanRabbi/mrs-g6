@@ -19,6 +19,7 @@ const LOADERS = {
   [THEME_IDS.KGAME99]: () => import("../themes/kgame99/Kgame99RpgSkin"),
   [THEME_IDS.LV918]: () => import("../themes/lv918/Lv918RpgSkin"),
   [THEME_IDS.N1GANG]: () => import("../themes/n1gang/N1gangRpgSkin"),
+  [THEME_IDS.KINGREWARDS]: () => import("../themes/kingrewards/KingRewardsRpgSkin"),
 };
 
 const warm = typeof window !== "undefined" && LOADERS[readActiveThemeId()];

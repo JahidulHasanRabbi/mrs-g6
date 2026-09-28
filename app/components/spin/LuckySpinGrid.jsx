@@ -273,6 +273,7 @@ export default memo(function LuckySpinGrid({
   // renders exactly as before; themed skins pass their own image map + geometry.
   assets = SPIN_ASSETS,
   themed = null,
+  cssGrid = null,
 }) {
   const [activeGridIndex, setActiveGridIndex] = useState(null);
   // Separate from `activeGridIndex` so the dramatic winner highlight kicks
@@ -330,7 +331,9 @@ export default memo(function LuckySpinGrid({
     filtered.slice(0, 8).forEach((item, index) => {
       positions[index] = {
         image: item.image || item.reward_name || item.text || item.content,
-        uuid: item.uuid
+        uuid: item.uuid,
+        label: item.reward_name || "",
+        hasImage: Boolean(item.image),
       };
     });
 
@@ -347,6 +350,12 @@ export default memo(function LuckySpinGrid({
     { background: assets.itemEmptyGreen, prize: itemRewards[6]?.image, uuid: itemRewards[6]?.uuid },
     { background: assets.itemEmptyGold, prize: itemRewards[7]?.image, uuid: itemRewards[7]?.uuid },
   ], [itemRewards, assets]);
+
+  // Labels/real-image flags only feed the CSS-tile skins (cssGrid).
+  const cssTiles = useMemo(
+    () => gridItems.map((item, i) => ({ ...item, label: itemRewards[i]?.label || "", hasImage: Boolean(itemRewards[i]?.hasImage) })),
+    [gridItems, itemRewards]
+  );
 
   const stopSpin = useCallback(
     (finalGridIndex, { wasManualStop = false, spinId } = {}) => {
@@ -587,6 +596,44 @@ export default memo(function LuckySpinGrid({
       </motion.div>
     </motion.div>
   );
+
+  // CSS-tile skins (King Rewards): a real 3x3 grid; the skin draws each tile
+  // via cssGrid.renderTile and the engine only adds the chase/winner motion.
+  if (cssGrid) {
+    return (
+      <motion.div
+        className={`relative mx-auto grid w-full grid-cols-3 grid-rows-3 ${cssGrid.className || ""}`}
+        style={{ aspectRatio: "1 / 1", ...cssGrid.style }}
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+      >
+        {cssTiles.map((item, index) => {
+          const isWinner = winnerGridIndex === index;
+          const isActive = activeGridIndex === index;
+          return (
+            <motion.div
+              key={index}
+              className={`relative min-h-0 min-w-0 ${GRID_AREA[index]} ${isWinner ? "z-20" : isActive ? "z-10" : ""}`}
+              style={{ borderRadius: cssGrid.tileRadius }}
+              initial={{ opacity: 0, scale: 0 }}
+              animate={
+                isWinner
+                  ? { opacity: 1, scale: 1.08, boxShadow: isLowEnd ? WINNER_BOXSHADOW_LOW : WINNER_BOXSHADOW_HIGH }
+                  : isActive
+                    ? { opacity: 1, ...(isLowEnd ? ACTIVE_ANIMATE_LOW : ACTIVE_ANIMATE_HIGH), scale: 1.05 }
+                    : { opacity: 1, ...IDLE_ANIMATE }
+              }
+              transition={isWinner ? TRANS_WINNER : { duration: 0.3, ease: "easeOut", opacity: { delay: index * 0.06 } }}
+            >
+              {cssGrid.renderTile({ ...item, index, isActive, isWinner })}
+            </motion.div>
+          );
+        })}
+        {centerButton({ sizeStyle: cssGrid.centerStyle, imgFit: "object-contain" })}
+      </motion.div>
+    );
+  }
 
   // Themed skins: same engine, tiles positioned by absolute % over the frame.
   if (themed) {

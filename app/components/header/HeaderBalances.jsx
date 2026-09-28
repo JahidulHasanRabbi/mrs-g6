@@ -59,6 +59,33 @@ function BalanceItem({ frame, icon, iconKind, label, value, textColor }) {
   );
 }
 
+// King Rewards (Figma 664:1379): two translucent pills in one navy panel.
+export function GlassBalances({ skin, battlePoints, balance, className = '', font = 'var(--font-barlow), sans-serif', growOnWide = true }) {
+  const pill = (icon, value, label) => (
+    <div
+      className="flex items-center gap-1 overflow-hidden rounded-[8px] bg-[rgba(255,255,255,0.3)] p-1"
+      aria-label={`${value} ${label}`}
+    >
+      <img src={icon} alt="" aria-hidden="true" className="size-[19px] shrink-0 object-contain" draggable={false} />
+      <span
+        className={`whitespace-nowrap text-[10px] font-semibold ${growOnWide ? 'min-[420px]:text-[11px]' : ''}`}
+        style={{ fontFamily: font, color: skin.textColor }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+  return (
+    <div
+      className={`flex items-center gap-1 rounded-[12px] bg-[#003d89] p-1 ${className}`}
+      style={{ boxShadow: 'inset 0 4px 16px rgba(255,255,255,0.15)' }}
+    >
+      {pill(skin.battlePoint, battlePoints, 'Battle Points')}
+      {pill(skin.token, balance, 'KR Coins')}
+    </div>
+  );
+}
+
 export default function HeaderBalances({
   themeId = THEME_IDS.DEFAULT,
   battlePoints,
@@ -68,6 +95,17 @@ export default function HeaderBalances({
   const skin = getHeaderBalanceSkin(themeId);
   const formattedBattlePoints = formatValue(battlePoints, 0);
   const formattedBalance = formatValue(balance, 2);
+
+  if (skin.glass) {
+    return (
+      <GlassBalances
+        skin={skin}
+        battlePoints={formattedBattlePoints}
+        balance={formattedBalance}
+        className={className}
+      />
+    );
+  }
 
   return (
     <div className={`flex items-center gap-1 ${className}`}>

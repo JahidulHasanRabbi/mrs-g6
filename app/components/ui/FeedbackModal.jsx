@@ -10,6 +10,7 @@ import { EP369_ASSETS } from "../themes/ep369/assets";
 import { KGAME99_ASSETS } from "../themes/kgame99/assets";
 import { LV918_ASSETS } from "../themes/lv918/assets";
 import { N1GANG_ASSETS } from "../themes/n1gang/assets";
+import { KR_ASSETS, KR_FONT } from "../themes/kingrewards/assets";
 
 export default function FeedbackModal({ isOpen, onClose }) {
   const [rating, setRating] = useState(0);
@@ -18,7 +19,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState(null);
-  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang, isKingRewards } = useTheme();
 
   let skin;
   if (isAcebet77) {
@@ -75,6 +76,18 @@ export default function FeedbackModal({ isOpen, onClose }) {
       submitImage: N1GANG_ASSETS.spin.btnPlay,
       submitText: "#f2cb7a",
     };
+  } else if (isKingRewards) {
+    skin = {
+      modalBg: "#003d89",
+      borderColor: "#fff066",
+      starOff: "rgba(255,255,255,0.22)",
+      starOn: "#f9d063",
+      submitImage: KR_ASSETS.ui.btnGold,
+      submitText: "#001e4a",
+      font: KR_FONT,
+      titleColor: "#f9d063",
+      insetGlow: "inset 0 4px 16px 4px rgba(255,255,255,0.15)",
+    };
   } else {
     skin = {
       modalBg: "linear-gradient(180deg, #1a3a22 0%, #07190d 100%)",
@@ -85,6 +98,8 @@ export default function FeedbackModal({ isOpen, onClose }) {
       submitText: "#ffffff",
     };
   }
+
+  const font = skin.font || '"Times New Roman", serif';
 
   const reset = useCallback(() => {
     setRating(0);
@@ -173,14 +188,14 @@ export default function FeedbackModal({ isOpen, onClose }) {
             style={{
               background: skin.modalBg,
               border: `2px solid ${skin.borderColor}`,
-              boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
+              boxShadow: skin.insetGlow ? `0 10px 40px rgba(0,0,0,0.5), ${skin.insetGlow}` : "0 10px 40px rgba(0,0,0,0.5)",
             }}
           >
             <div className="flex items-center justify-between px-5 pt-5 pb-3">
               <h2
                 id="feedback-modal-title"
-                className="text-[#fde685] text-[18px] font-bold"
-                style={{ fontFamily: '"Times New Roman", serif' }}
+                className="text-[18px] font-bold"
+                style={{ fontFamily: font, color: skin.titleColor || "#fde685" }}
               >
                 Send Us Feedback
               </h2>
@@ -198,7 +213,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
                 <div>
                   <p
                     className="mb-2 text-[12px] text-white/80"
-                    style={{ fontFamily: '"Times New Roman", serif' }}
+                    style={{ fontFamily: font }}
                   >
                     How would you rate your experience?
                   </p>
@@ -223,7 +238,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
                   <label
                     htmlFor="feedback-message"
                     className="mb-1 block text-[12px] text-white/80"
-                    style={{ fontFamily: '"Times New Roman", serif' }}
+                    style={{ fontFamily: font }}
                   >
                     Your message
                   </label>
@@ -236,7 +251,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
                     placeholder="Tell us what's on your mind..."
                     className="w-full resize-none rounded-lg bg-black/30 px-3 py-2 text-[13px] text-white placeholder-white/30 focus:outline-none"
                     style={{
-                      fontFamily: '"Times New Roman", serif',
+                      fontFamily: font,
                       borderWidth: 1,
                       borderStyle: "solid",
                       borderColor: `${skin.borderColor}66`,
@@ -260,7 +275,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
                     disabled={isSubmitting}
                     className="flex-1 rounded-full px-3 py-2 text-[12px] font-bold hover:bg-white/5 disabled:opacity-40"
                     style={{
-                      fontFamily: '"Times New Roman", serif',
+                      fontFamily: font,
                       color: skin.starOn,
                       borderWidth: 1,
                       borderStyle: "solid",
@@ -274,7 +289,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
                       type="submit"
                       disabled={isSubmitting}
                       className="relative flex-1 h-[38px] overflow-hidden text-[12px] font-bold disabled:opacity-50"
-                      style={{ fontFamily: '"Times New Roman", serif' }}
+                      style={{ fontFamily: font }}
                     >
                       <img
                         src={skin.submitImage}
@@ -294,7 +309,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
                       style={{
                         background: skin.submitBg,
                         color: skin.submitText,
-                        fontFamily: '"Times New Roman", serif',
+                        fontFamily: font,
                         textShadow: (isAcebet77 || isEp369 || isN1gang) ? "none" : "0 1px 2px rgba(0,0,0,0.35)",
                       }}
                     >
@@ -307,14 +322,14 @@ export default function FeedbackModal({ isOpen, onClose }) {
               <div className="space-y-3 px-5 pb-6 pt-2 text-center">
                 <div className="text-5xl">🎉</div>
                 <p
-                  className="text-[16px] font-bold text-[#fde685]"
-                  style={{ fontFamily: '"Times New Roman", serif' }}
+                  className="text-[16px] font-bold"
+                  style={{ fontFamily: font, color: skin.titleColor || "#fde685" }}
                 >
                   Thank you for your feedback!
                 </p>
                 <p
                   className="text-[12px] text-white/70"
-                  style={{ fontFamily: '"Times New Roman", serif' }}
+                  style={{ fontFamily: font }}
                 >
                   We appreciate your input and will use it to improve the experience.
                 </p>
@@ -322,7 +337,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
                   <button
                     onClick={handleClose}
                     className="relative mt-2 h-[38px] w-[140px] overflow-hidden text-[12px] font-bold"
-                    style={{ fontFamily: '"Times New Roman", serif' }}
+                    style={{ fontFamily: font }}
                   >
                     <img
                       src={skin.submitImage}
@@ -341,7 +356,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
                     style={{
                       background: skin.submitBg,
                       color: skin.submitText,
-                      fontFamily: '"Times New Roman", serif',
+                      fontFamily: font,
                       textShadow: (isAcebet77 || isN1gang) ? "none" : "0 1px 2px rgba(0,0,0,0.35)",
                     }}
                   >

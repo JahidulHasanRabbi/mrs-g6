@@ -97,6 +97,50 @@ function ThemedNav({ skin, activeTab, onNavigate, linkBase }) {
   );
 }
 
+// Four flat tabs on a CSS bar with an active highlight, wearing the skin's icons.
+function GlassNav({ skin, activeTab, onNavigate, linkBase }) {
+  const { nav } = skin;
+  const g = nav.glass;
+  return (
+    <nav
+      className="fixed bottom-0 left-1/2 z-40 flex w-full max-w-[475px] -translate-x-1/2 items-stretch rounded-t-[16px] py-[8px]"
+      style={{ gap: "clamp(4px, 2vw, 10px)", paddingInline: "clamp(8px, 3.4vw, 16px)", ...g.bar }}
+      aria-label="Avatar navigation"
+    >
+      {TABS.map((item) => {
+        const active = item.view === activeTab;
+        const Tag = linkBase ? Link : "button";
+        const tagProps = linkBase ? { href: tabHref(linkBase, item.view) } : { type: "button", onClick: () => onNavigate(item.view) };
+        return (
+          <Tag
+            key={item.key}
+            {...tagProps}
+            aria-label={item.label}
+            className="flex min-w-0 flex-1 flex-col items-center justify-center gap-[4px] rounded-[16px] py-[10px] transition-transform active:scale-95"
+            style={active ? g.active : undefined}
+          >
+            <img src={nav.icons[item.key]} alt="" className="size-[24px] object-contain" draggable={false} />
+            <span
+              className="whitespace-nowrap font-semibold"
+              style={{
+                fontFamily: nav.labelFont,
+                fontSize: "clamp(8px, 2.4vw, 10px)",
+                letterSpacing: "clamp(0px, 0.24vw, 1px)",
+                lineHeight: 1.2,
+                ...(active && g.labelGradient
+                  ? { backgroundImage: g.labelGradient, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }
+                  : { color: active ? nav.labelActive : nav.label }),
+              }}
+            >
+              {item.label}
+            </span>
+          </Tag>
+        );
+      })}
+    </nav>
+  );
+}
+
 function DefaultNav({ activeTab, onNavigate, linkBase }) {
   return (
     <nav
@@ -156,6 +200,9 @@ function RpgNav({ view, onNavigate, linkBase, activeTab: activeOverride }) {
   const skin = useRpgSkin();
   const activeTab = activeOverride !== undefined ? activeOverride : TAB_FOR_VIEW[view] || RPG_VIEWS.HOME;
 
+  if (skin.nav.style === "glass") {
+    return <GlassNav skin={skin} activeTab={activeTab} onNavigate={onNavigate} linkBase={linkBase} />;
+  }
   return skin.themed ? (
     <ThemedNav skin={skin} activeTab={activeTab} onNavigate={onNavigate} linkBase={linkBase} />
   ) : (

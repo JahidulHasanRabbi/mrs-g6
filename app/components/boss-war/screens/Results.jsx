@@ -4,7 +4,7 @@
 // Participation tabs, and the "How Rewards are Calculated" sections.
 
 import { useState } from "react";
-import { useRpgSkin } from "../../rpg/rpgSkin";
+import { useRpgSkin, warIcon } from "../../rpg/rpgSkin";
 import { fmt, ORDINAL, REWARD_CALC_SECTIONS } from "../constants";
 import * as warApi from "../bossWarApi";
 import { WAR_IMAGES } from "../warAssets";
@@ -23,6 +23,7 @@ export default function Results({ bossId }) {
   const { data, error } = useWarResource(() => warApi.getResults(bossId), [bossId], "Could not load results.");
 
   const shown = data ? data.rewards[tab] || data.reward : null;
+  const crown = warIcon(skin, "crown", WAR_IMAGES.ui.crown);
 
   return (
     <WarScreen title="Results">
@@ -30,8 +31,8 @@ export default function Results({ bossId }) {
       {data ? (
           <>
             <WarCard className="relative flex flex-col items-center gap-[6px] !px-[20px] text-center">
-              {WAR_IMAGES.ui.crown ? (
-                <img src={WAR_IMAGES.ui.crown} alt="" aria-hidden className="pointer-events-none absolute -top-[16px] left-1/2 h-[34px] -translate-x-1/2 object-contain" />
+              {crown ? (
+                <img src={crown} alt="" aria-hidden className="pointer-events-none absolute -top-[16px] left-1/2 h-[34px] -translate-x-1/2 object-contain" />
               ) : null}
               <span className="text-[10px]" style={{ color: ink.meta, fontFamily: skin.war.font }}>Your Rank</span>
               <GoldText solid className="text-[26px] font-bold leading-[28px]">

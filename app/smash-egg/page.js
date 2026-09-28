@@ -28,6 +28,7 @@ const SKINS = lazySkins({
   [THEME_IDS.KGAME99]: () => import("../components/themes/kgame99/Kgame99SmashEggPage"),
   [THEME_IDS.LV918]: () => import("../components/themes/lv918/Lv918SmashEggPage"),
   [THEME_IDS.N1GANG]: () => import("../components/themes/n1gang/N1gangSmashEggPage"),
+  [THEME_IDS.KINGREWARDS]: () => import("../components/themes/kingrewards/KingRewardsSmashEggPage"),
 });
 import { useSmashEggGame, HISTORY_PAGE_SIZE } from "../components/smash-egg/useSmashEggGame";
 

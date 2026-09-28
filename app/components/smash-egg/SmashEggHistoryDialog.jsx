@@ -4,6 +4,22 @@ import { motion } from "framer-motion";
 import { SMASH_EGG_ASSETS } from "./smashEggAssets";
 import ThemedActionButton from "../themes/shared/ThemedActionButton";
 import { formatItemTypeLabel } from "../../api/apiOptions";
+import { useTheme } from "../../contexts/ThemeContext";
+
+const DEFAULT_SURFACE = {
+  backgroundColor: "rgba(35,31,20,0.92)",
+  backdropFilter: "blur(10px)",
+  WebkitBackdropFilter: "blur(10px)",
+  boxShadow: "0 20px 60px rgba(0,0,0,0.45), inset 0 0 15px rgba(233,196,0,0.06)",
+};
+// King Rewards navy dialog card (Figma 843:7526).
+const KR_SURFACE = {
+  backgroundColor: "#003d89",
+  backdropFilter: "blur(4px)",
+  WebkitBackdropFilter: "blur(4px)",
+  boxShadow: "inset 0 4px 16px 4px rgba(255,255,255,0.15)",
+  borderColor: "#fff066",
+};
 
 function formatDate(value) {
   if (!value) return "";
@@ -88,15 +104,11 @@ export default function SmashEggHistoryDialog({
   onPageChange,
   onClose,
 }) {
+  const { isKingRewards } = useTheme();
   return (
     <div
       className="relative w-[390px] max-w-[calc(100vw-32px)] rounded-xl border border-[rgba(255,246,223,0.18)] p-5 overflow-hidden"
-      style={{
-        backgroundColor: "rgba(35,31,20,0.92)",
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
-        boxShadow: "0 20px 60px rgba(0,0,0,0.45), inset 0 0 15px rgba(233,196,0,0.06)",
-      }}
+      style={isKingRewards ? KR_SURFACE : DEFAULT_SURFACE}
     >
       <div className="mb-4 flex items-center justify-between rounded-lg border border-[rgba(255,225,109,0.14)] bg-white/[0.04] px-4 py-3">
         <h3

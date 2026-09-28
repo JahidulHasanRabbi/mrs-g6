@@ -2,6 +2,7 @@
 
 import { COLORS, ICONS } from "./constants";
 import { usePkColors } from "./usePkColors";
+import { KrPkTopHud } from "../themes/kingrewards/KrPkParts";
 
 // Header bar from Figma node 1134:3893. The title is rendered in the Anybody
 // Bold variable face at 32px with the signature green tint + 2px black drop
@@ -30,8 +31,13 @@ function IconButton({ src, onClick, label, imgStyle }) {
   );
 }
 
-export default function TopHud({ onInfoClick, onMenuClick, onNavMenuClick }) {
-  const { theme } = usePkColors();
+export default function TopHud({ onInfoClick, onMenuClick, onNavMenuClick, hud = null }) {
+  const { theme, isKingRewards } = usePkColors();
+
+  // King Rewards (Figma 707:6281) carries the coin HUD up here, under the title.
+  if (isKingRewards) {
+    return <KrPkTopHud onNavMenuClick={onNavMenuClick} onInfoClick={onInfoClick} onMenuClick={onMenuClick} hud={hud} />;
+  }
 
   // Themed header: ornate hamburger + the "PENALTY KICK" title (parity with the
   // default portal's header), info badge + history flag on the right. The title

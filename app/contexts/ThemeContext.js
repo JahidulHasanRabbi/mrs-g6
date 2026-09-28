@@ -25,6 +25,7 @@ const ThemeContext = createContext({
   isKgame99: false,
   isLv918: false,
   isN1gang: false,
+  isKingRewards: false,
   isThemed: false,
   setTheme: () => {},
   resetTheme: () => {},
@@ -77,6 +78,7 @@ export function ThemeProvider({ children }) {
         isKgame99: themeId === THEME_IDS.KGAME99,
         isLv918: themeId === THEME_IDS.LV918,
         isN1gang: themeId === THEME_IDS.N1GANG,
+        isKingRewards: themeId === THEME_IDS.KINGREWARDS,
         // True for any non-default skin — lets shared chrome (AppLayout,
         // penalty-kick components) branch once instead of per-theme.
         isThemed: themeId !== THEME_IDS.DEFAULT,

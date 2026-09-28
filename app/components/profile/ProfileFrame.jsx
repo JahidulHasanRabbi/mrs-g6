@@ -225,6 +225,8 @@ export default function ProfileFrame({
           src={frame.src}
           className={styles.frameArt}
           draggable="false"
+          // Admin-uploaded frames can carry a dead URL; show the photo alone.
+          onError={(e) => { e.currentTarget.style.visibility = "hidden"; }}
         />
 
         {/* Member photo (z=4) — sits on top of the frame's dark inner circle */}
@@ -237,7 +239,13 @@ export default function ProfileFrame({
             top: photoTopPx,
           }}
         >
-          <img alt={alt} src={photoSrc} />
+          <img
+            alt={alt}
+            src={photoSrc}
+            onError={(e) => {
+              if (!e.currentTarget.src.endsWith(PROFILE_ASSETS.profileAvatar)) e.currentTarget.src = PROFILE_ASSETS.profileAvatar;
+            }}
+          />
         </div>
 
         {/* Per-tier foreground effects (comet, embers, planet orbits, gold dust) */}

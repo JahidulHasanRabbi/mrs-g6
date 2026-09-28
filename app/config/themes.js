@@ -26,6 +26,7 @@ export const THEME_IDS = {
   KGAME99: 'kgame99',
   LV918: 'lv918',
   N1GANG: 'n1gang',
+  KINGREWARDS: 'kingrewards',
 };
 
 /**
@@ -40,6 +41,7 @@ export const SELECTABLE_THEMES = [
   { id: THEME_IDS.KGAME99, label: 'KGAME99', crest: '/assets/themes/kgame99/home/crest-kgame99.webp' },
   { id: THEME_IDS.LV918, label: 'LV918', crest: '/assets/themes/lv918/home/crest-lv918.webp' },
   { id: THEME_IDS.N1GANG, label: 'N1GANG', crest: '/assets/themes/n1gang/home/crest-n1gang.webp' },
+  { id: THEME_IDS.KINGREWARDS, label: 'KING REWARDS', crest: '/assets/themes/kingrewards/home/logo.webp' },
   { id: THEME_IDS.DEFAULT, label: 'MRS DEFAULT', crest: '/android-chrome-512x512.png' },
 ];
 

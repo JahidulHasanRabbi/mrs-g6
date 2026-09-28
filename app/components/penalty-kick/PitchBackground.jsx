@@ -7,15 +7,18 @@
 import { COLORS } from "./constants";
 import { IMAGES } from "./assets";
 import { usePkColors } from "./usePkColors";
+import { KrPkPitch } from "../themes/kingrewards/KrPkParts";
 
 export default function PitchBackground({ variant = "close", children }) {
-  const { isAcebet77, isKgame99, isLv918, isN1gang, isThemed, theme } = usePkColors();
+  const { isAcebet77, isKgame99, isLv918, isN1gang, isKingRewards, isThemed, theme } = usePkColors();
   // close variant uses a CSS background to render a zoomed-in crop of the
   // photo (≈ 200 % of container width), bottom-anchored so the grass-heavy
   // lower half of the photo fills the visible area. The native photo only
   // has grass in its bottom 20 % — without this zoom the field looks like
   // a thin strip, and the keeper+ball end up squashed against each other.
   const isClose = variant === "close";
+
+  if (isKingRewards) return <KrPkPitch variant={variant}>{children}</KrPkPitch>;
 
   if (isThemed) {
     const stadium = theme.assets.pk.bgStadium;

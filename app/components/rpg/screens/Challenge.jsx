@@ -9,11 +9,11 @@
 // /avatar/member-challenge/status/ — the art is the only local part.
 
 import { useEffect, useState } from "react";
-import { RPG_COLORS, RPG_FONTS } from "../constants";
+import { RPG_COLORS } from "../constants";
 import { RPG_IMAGES, bossArtFor } from "../rpgAssets";
 import * as rpgApi from "../rpgApi";
 import { GoldCta } from "../primitives";
-import { useRpgSkin } from "../rpgSkin";
+import { titleInk, useRpgSkin } from "../rpgSkin";
 import NoticeModal from "../NoticeModal";
 
 const fmt = (n) => Number(n).toLocaleString("en-GB");
@@ -55,6 +55,14 @@ function Planet({ boss, locked }) {
       />
     </div>
   );
+}
+
+// A CSS-panel skin's rows wear its panel surface under the state styles.
+function rowStyle(skin, state) {
+  const glass = skin.panel.css;
+  if (!glass) return state;
+  const shadows = [glass.boxShadow, state.boxShadow].filter((v) => v && v !== "none");
+  return { ...glass, ...state, boxShadow: shadows.join(", ") || "none" };
 }
 
 export default function Challenge({ onBattleStart }) {
@@ -113,11 +121,11 @@ export default function Challenge({ onBattleStart }) {
     <div className="flex w-full flex-1 flex-col px-[18px]">
       <h2
         className="pt-[20px] text-center text-[24px] font-bold tracking-[6px]"
-        style={{ color: skin.c.title, fontFamily: RPG_FONTS.display, textShadow: skin.c.titleShadow }}
+        style={{ ...titleInk(skin), fontFamily: skin.fonts.display }}
       >
         UNIVERSE
       </h2>
-      <p className="mt-[4px] pb-[2px] text-center text-[12px]" style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}>
+      <p className="mt-[4px] pb-[2px] text-center text-[12px]" style={{ color: skin.c.textDim, fontFamily: skin.fonts.display }}>
         Choose a planet boss to challenge
       </p>
 
@@ -131,32 +139,33 @@ export default function Challenge({ onBattleStart }) {
               disabled={boss.locked}
               onClick={() => setSelectedId(boss.id)}
               className="flex w-full items-center gap-[12px] rounded-[16px] border p-[13px] text-left transition-transform active:scale-[0.99]"
-              style={
+              style={rowStyle(
+                skin,
                 boss.locked
                   ? {
                       background: skin.c.rowLocked,
                       borderColor: skin.c.edgeSoft,
-                      opacity: 0.62,
+                      opacity: skin.panel.css ? 0.5 : 0.62,
                     }
                   : {
                       background: isSelected ? skin.c.rowActive : skin.c.rowIdle,
                       borderColor: isSelected ? skin.hud.badgeBorder : skin.c.edgeSoft,
                       boxShadow: isSelected ? `0 0 14px ${skin.hud.badgeBorder}59` : "none",
-                    }
-              }
+                    },
+              )}
             >
               <Planet boss={boss} locked={boss.locked} />
               <div className="flex min-w-0 flex-1 flex-col">
-                <span className="flex items-center gap-[6px] text-[15px] font-bold" style={{ color: skin.c.text, fontFamily: RPG_FONTS.display }}>
+                <span className="flex items-center gap-[6px] text-[15px] font-bold" style={{ color: skin.c.text, fontFamily: skin.fonts.display }}>
                   {boss.name}
                   {boss.locked ? <span className="text-[12px]">🔒</span> : null}
                 </span>
-                <span className="pt-[2px] text-[9px] font-semibold tracking-[1px]" style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}>
+                <span className="pt-[2px] text-[9px] font-semibold tracking-[1px]" style={{ color: skin.c.textDim, fontFamily: skin.fonts.display }}>
                   POWER REQUIRED
                 </span>
                 <span
                   className="text-[14px] font-bold"
-                  style={{ color: boss.locked ? "#ff8faf" : skin.c.accent, fontFamily: RPG_FONTS.number }}
+                  style={{ color: boss.locked ? "#ff8faf" : skin.c.accent, fontFamily: skin.fonts.number }}
                 >
                   {boss.locked ? `${fmt(boss.requiredPower)} — need ${fmt(boss.deficit)} more` : fmt(boss.requiredPower)}
                 </span>
@@ -168,7 +177,7 @@ export default function Challenge({ onBattleStart }) {
                 }
               >
                 <img src={RPG_IMAGES.equipment[boss.rewardSlot]} alt="" className="size-[20px]" />
-                <span className="text-[9px] font-bold uppercase tracking-[1px]" style={{ color: skin.c.slotLabel, fontFamily: RPG_FONTS.display }}>
+                <span className="text-[9px] font-bold uppercase tracking-[1px]" style={{ color: skin.c.slotLabel, fontFamily: skin.fonts.display }}>
                   {boss.rewardSlot}
                 </span>
               </div>
@@ -177,14 +186,14 @@ export default function Challenge({ onBattleStart }) {
         })}
       </div>
 
-      <p className="pt-[14px] text-center text-[11px]" style={{ color: skin.c.slotEmpty, fontFamily: RPG_FONTS.display }}>
+      <p className="pt-[14px] text-center text-[11px]" style={{ color: skin.c.slotEmpty, fontFamily: skin.fonts.display }}>
         {freeLeft > 0
           ? `${freeLeft} free attempt${freeLeft > 1 ? "s" : ""} left today`
           : "No free attempts left today"}{" "}
         · extra attempt {extraCost} KR Coins · reward 1 Mystery Box
       </p>
       {data?.unopenedBoxes > 0 ? (
-        <p className="pt-[4px] text-center text-[11px] font-bold" style={{ color: skin.c.value, fontFamily: RPG_FONTS.display }}>
+        <p className="pt-[4px] text-center text-[11px] font-bold" style={{ color: skin.c.value, fontFamily: skin.fonts.display }}>
           You have {data.unopenedBoxes} unopened Mystery Box{data.unopenedBoxes > 1 ? "es" : ""}
         </p>
       ) : null}

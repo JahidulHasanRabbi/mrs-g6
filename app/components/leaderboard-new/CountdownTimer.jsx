@@ -12,13 +12,20 @@ function parseTimeLeft(endDate) {
   };
 }
 
-export default function CountdownTimer({ endDate, color = "#ff8c00", label = "CAMPAIGN ENDS IN" }) {
+/** Ticks every second; returns zero-padded days/hours/mins/secs until `endDate`. */
+export function useCountdown(endDate) {
   const [time, setTime] = useState(() => parseTimeLeft(endDate));
 
   useEffect(() => {
     const id = setInterval(() => setTime(parseTimeLeft(endDate)), 1000);
     return () => clearInterval(id);
   }, [endDate]);
+
+  return time;
+}
+
+export default function CountdownTimer({ endDate, color = "#ff8c00", label = "CAMPAIGN ENDS IN" }) {
+  const time = useCountdown(endDate);
 
   const units = [
     { value: time.days, label: "DAYS" },

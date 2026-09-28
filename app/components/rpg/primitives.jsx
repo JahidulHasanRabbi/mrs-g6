@@ -4,9 +4,9 @@
 // stat rows, equipment slot chips and the gradient CTA.
 
 import { motion } from "framer-motion";
-import { RPG_COLORS, RPG_FONTS, RPG_GRADIENTS } from "./constants";
+import { RPG_COLORS, RPG_GRADIENTS } from "./constants";
 import { RPG_IMAGES } from "./rpgAssets";
-import { nineSlice, RpgSkinProvider, useRpgSkin } from "./rpgSkin";
+import { nineSlice, RpgSkinProvider, titleInk, useRpgSkin } from "./rpgSkin";
 
 // Content card. Default look is a violet-bordered translucent box; a station
 // skin wears the theme's ornate frame as a 9-slice so the corners keep their
@@ -28,6 +28,7 @@ export function Panel({ children, className = "", style, tone = "default" }) {
         style={{
           background: tone === "dark" ? skin.panel.fillDark : skin.panel.fill,
           borderColor: tone === "dark" ? skin.panel.borderDark : skin.panel.border,
+          ...skin.panel.css,
           ...style,
         }}
       >
@@ -50,13 +51,13 @@ export function StatRow({ label, value, valueColor }) {
     <div className="flex w-full items-center justify-between">
       <span
         className="text-[13px] font-semibold"
-        style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}
+        style={{ color: skin.c.textDim, fontFamily: skin.fonts.display }}
       >
         {label}
       </span>
       <span
         className="text-[13px] font-semibold"
-        style={{ color: valueColor || skin.c.text, fontFamily: RPG_FONTS.display }}
+        style={{ color: valueColor || skin.c.text, fontFamily: skin.fonts.display }}
       >
         {value}
       </span>
@@ -119,7 +120,9 @@ export function SlotChip({
         ...nineSlice(skin.tile),
         boxShadow: equipped ? `0 0 14px ${skin.hud.badgeBorder}55` : "none",
       }
-    : {
+    : skin.tile.css
+      ? { ...skin.tile.css, ...(equipped ? skin.tile.cssEquipped : null) }
+      : {
         background: equipped ? "rgba(47,230,200,0.06)" : "rgba(255,255,255,0.03)",
         borderColor: equipped ? RPG_COLORS.cyan : RPG_COLORS.violetBorderStrong,
         borderStyle: equipped ? "solid" : "dashed",
@@ -152,7 +155,7 @@ export function SlotChip({
       />
       <span
         className="text-[9px] font-semibold uppercase tracking-[1px]"
-        style={{ color: tc.slotLabel, fontFamily: RPG_FONTS.display }}
+        style={{ color: (equipped && skin.tile.labelEquipped) || tc.slotLabel, fontFamily: skin.fonts.display }}
       >
         {slot}
       </span>
@@ -163,11 +166,13 @@ export function SlotChip({
             ? {
                 background: lightTile ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)",
                 color: equipped ? tc.value : tc.slotEmpty,
-                fontFamily: RPG_FONTS.display,
+                fontFamily: skin.fonts.display,
               }
-            : equipped
-              ? { background: "rgba(47,230,200,0.18)", color: RPG_COLORS.cyanSoft, fontFamily: RPG_FONTS.display }
-              : { background: "rgba(139,92,246,0.2)", color: RPG_COLORS.slotEmpty, fontFamily: RPG_FONTS.display }
+            : skin.tile.pill
+              ? { ...(equipped ? skin.tile.pill.equipped : skin.tile.pill.empty), fontFamily: skin.fonts.display }
+              : equipped
+              ? { background: "rgba(47,230,200,0.18)", color: RPG_COLORS.cyanSoft, fontFamily: skin.fonts.display }
+              : { background: "rgba(139,92,246,0.2)", color: RPG_COLORS.slotEmpty, fontFamily: skin.fonts.display }
         }
       >
         {equipped ? tag : "EMPTY"}
@@ -374,7 +379,7 @@ export function GoldCta({ children, onClick, disabled, className = "", glow = tr
         style={{
           background: disabled ? "rgba(255,255,255,0.08)" : RPG_GRADIENTS.cta,
           color: disabled ? RPG_COLORS.slotEmpty : RPG_COLORS.darkText,
-          fontFamily: RPG_FONTS.display,
+          fontFamily: skin.fonts.display,
           filter: glow && !disabled ? "drop-shadow(0 0 14px rgba(47,230,200,0.35))" : "none",
         }}
       >
@@ -389,12 +394,12 @@ export function GoldCta({ children, onClick, disabled, className = "", glow = tr
       onClick={onClick}
       disabled={disabled}
       className={`relative flex w-full items-center justify-center transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 ${className}`}
-      style={{ height: compact ? 46 : 58 }}
+      style={{ height: skin.cta.height[compact ? 1 : 0] }}
     >
       <img src={plaque} alt="" aria-hidden className="pointer-events-none absolute inset-0 size-full" draggable={false} />
       <span
         className="relative z-10 leading-none"
-        style={{ fontSize: compact ? 16 : 20, fontFamily: skin.cta.font, color: skin.cta.color }}
+        style={{ fontSize: skin.cta.size[compact ? 1 : 0], fontWeight: skin.cta.weight ?? undefined, fontFamily: skin.cta.font, color: skin.cta.color }}
       >
         {children}
       </span>
@@ -409,12 +414,12 @@ export function ScreenTitle({ children, sub }) {
     <div className="flex w-full flex-col items-center gap-[6px]">
       <h2
         className="text-center text-[26px] font-bold tracking-[4px]"
-        style={{ color: skin.c.title, fontFamily: RPG_FONTS.display, textShadow: skin.c.titleShadow }}
+        style={{ ...titleInk(skin), fontFamily: skin.fonts.display }}
       >
         {children}
       </h2>
       {sub ? (
-        <p className="text-center text-[13px]" style={{ color: skin.c.textDim, fontFamily: RPG_FONTS.display }}>
+        <p className="text-center text-[13px]" style={{ color: skin.c.textDim, fontFamily: skin.fonts.display }}>
           {sub}
         </p>
       ) : null}

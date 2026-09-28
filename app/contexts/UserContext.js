@@ -192,6 +192,7 @@ export function UserProvider({ children }) {
           name: memberInfo.username || prev.name,
           balance: formattedBalance,
           currentLevel: memberInfo.tier || prev.currentLevel,
+          currentStreak: Number(memberInfo.current_streak) || 0,
           ...tierProgress,
         }));
 
@@ -285,6 +286,7 @@ export function UserProvider({ children }) {
         name: memberInfo.username || prev.name,
         balance: formattedBalance,
         currentLevel: memberInfo.tier || prev.currentLevel,
+        currentStreak: Number(memberInfo.current_streak) || 0,
         ...tierProgress,
       }));
 

@@ -24,9 +24,9 @@ export default function RpgTopBar({ onInfoClick, onMenuClick, title = "AVATAR", 
     >
       <div className="flex items-center gap-[12px]">
         <button type="button" onClick={onMenuClick} aria-label="Open menu" className="active:scale-90 transition-transform">
-          <img src={chrome.menuIcon} alt="" className="size-[36px] object-cover" />
+          <img src={chrome.menuIcon} alt="" className="object-cover" style={{ width: chrome.iconSize, height: chrome.iconSize }} />
         </button>
-        <div className="flex items-center gap-[10px]">
+        {chrome.showTitle && <div className="flex items-center gap-[10px]">
           {chrome.logoIcon && <img src={chrome.logoIcon} alt="" className="size-[18px]" />}
           <span
             className={titleClassName || "text-[24px] uppercase leading-none tracking-[-1.2px]"}
@@ -38,10 +38,10 @@ export default function RpgTopBar({ onInfoClick, onMenuClick, title = "AVATAR", 
           >
             {title}
           </span>
-        </div>
+        </div>}
       </div>
       <button type="button" onClick={onInfoClick} aria-label="Game info" className="active:scale-90 transition-transform">
-        <img src={chrome.infoIcon} alt="" className="size-[36px] rounded-full object-cover" />
+        <img src={chrome.infoIcon} alt="" className="rounded-full object-cover" style={{ width: chrome.iconSize, height: chrome.iconSize }} />
       </button>
     </header>
   );

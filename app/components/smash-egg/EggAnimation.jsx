@@ -25,7 +25,16 @@ const shakeKeyframes = {
   y: [0, 4, -4, 3, -3, 1, -1, 0],
 };
 
-export default function EggAnimation({ isCracked, onTap }) {
+// Skins may swap the art (nestSrc={null} drops the nest). burstOnCrack plays the
+// smash effects when a draw cracks the egg without a tap.
+export default function EggAnimation({
+  isCracked,
+  onTap,
+  eggSrc = SMASH_EGG_ASSETS.eggWhole,
+  crackedSrc = SMASH_EGG_ASSETS.eggCracked,
+  nestSrc = SMASH_EGG_ASSETS.nest,
+  burstOnCrack = false,
+}) {
   const [showEffects, setShowEffects] = useState(false);
   const [slamPhase, setSlamPhase] = useState(false);
 
@@ -42,8 +51,10 @@ export default function EggAnimation({ isCracked, onTap }) {
     if (!isCracked) {
       setShowEffects(false);
       setSlamPhase(false);
+    } else if (burstOnCrack) {
+      setShowEffects(true);
     }
-  }, [isCracked]);
+  }, [isCracked, burstOnCrack]);
 
   return (
     <motion.div
@@ -57,13 +68,15 @@ export default function EggAnimation({ isCracked, onTap }) {
       }
     >
       {/* Nest */}
-      <div className="absolute bottom-0 left-0 w-[362px] h-[272px] z-0">
-        <img
-          src={SMASH_EGG_ASSETS.nest}
-          alt=""
-          className="w-full h-full object-cover"
-        />
-      </div>
+      {nestSrc && (
+        <div className="absolute bottom-0 left-0 w-[362px] h-[272px] z-0">
+          <img
+            src={nestSrc}
+            alt=""
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
 
       {/* Shockwave ring */}
       <AnimatePresence>
@@ -203,7 +216,7 @@ export default function EggAnimation({ isCracked, onTap }) {
           className="relative w-full h-full"
         >
           <img
-            src={isCracked ? SMASH_EGG_ASSETS.eggCracked : SMASH_EGG_ASSETS.eggWhole}
+            src={isCracked ? crackedSrc : eggSrc}
             alt={isCracked ? "Cracked egg" : "Egg"}
             className="w-full h-full object-contain"
             draggable={false}

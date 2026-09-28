@@ -28,6 +28,7 @@ const THEME_BUTTONS = lazySkins({
   [THEME_IDS.KGAME99]: () => import("../kgame99/KgameButton"),
   [THEME_IDS.LV918]: () => import("../lv918/Lv918Button"),
   [THEME_IDS.N1GANG]: () => import("../n1gang/N1gangButton"),
+  [THEME_IDS.KINGREWARDS]: () => import("../kingrewards/KingRewardsButton"),
 });
 
 export default function ThemedActionButton({

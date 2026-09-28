@@ -27,6 +27,7 @@ const SKINS = lazySkins({
   [THEME_IDS.KGAME99]: () => import("../components/themes/kgame99/Kgame99SpinPage"),
   [THEME_IDS.LV918]: () => import("../components/themes/lv918/Lv918SpinPage"),
   [THEME_IDS.N1GANG]: () => import("../components/themes/n1gang/N1gangSpinPage"),
+  [THEME_IDS.KINGREWARDS]: () => import("../components/themes/kingrewards/KingRewardsSpinPage"),
 });
 
 function formatSpinReward(result) {

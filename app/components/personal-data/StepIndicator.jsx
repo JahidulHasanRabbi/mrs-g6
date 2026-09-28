@@ -9,15 +9,19 @@ import { EP369_COLORS } from "../themes/ep369/assets";
 import { KGAME99_COLORS } from "../themes/kgame99/assets";
 import { LV918_COLORS } from "../themes/lv918/assets";
 import { N1GANG_COLORS } from "../themes/n1gang/assets";
+import { KR_COLORS, KR_FONT, KR_GRADIENTS } from "../themes/kingrewards/assets";
 import { useThemeInk } from "../themes/shared/themeInk";
 
 export default function ProgressBar({ progress = 0 }) {
   const progressPercentage = Math.min(100, Math.max(0, progress));
-  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang } = useTheme();
+  const { isAcebet77, isUbetclub, isEp369, isKgame99, isLv918, isN1gang, isKingRewards } = useTheme();
   const ink = useThemeInk();
 
   let trackClass = "relative h-3 bg-gray-200 rounded-full overflow-hidden";
   let textColor = FORM_COLORS.textButton;
+  let fill = { backgroundColor: FORM_COLORS.primary };
+  let rootClass = "relative w-full mb-6";
+  let font;
   if (isAcebet77) {
     trackClass = "relative h-3 rounded-full overflow-hidden border border-[#5c3f0f] bg-[#1a1105]";
     textColor = ACEBET_COLORS.gold;
@@ -36,16 +40,22 @@ export default function ProgressBar({ progress = 0 }) {
   } else if (isN1gang) {
     trackClass = "relative h-3 rounded-full overflow-hidden border border-[#5c3f0f] bg-[#1a1105]";
     textColor = N1GANG_COLORS.gold;
+  } else if (isKingRewards) {
+    trackClass = "relative h-3 rounded-[7px] overflow-hidden border border-[#f59f0c] bg-[rgba(45,45,45,0.75)]";
+    textColor = KR_COLORS.gold;
+    fill = { background: KR_GRADIENTS.goldBar };
+    rootClass = "relative w-full";
+    font = KR_FONT;
   }
   // kgame99 and lv918 sit on light backdrops, where every gold above is unreadable.
   if (ink.onLight) textColor = ink.label;
 
   return (
-    <div className="relative w-full mb-6">
+    <div className={rootClass} style={font ? { fontFamily: font } : undefined}>
       <div className={trackClass}>
         <motion.div
           className="absolute top-0 left-0 h-full rounded-full"
-          style={{ backgroundColor: FORM_COLORS.primary }}
+          style={fill}
           initial={{ width: 0 }}
           animate={{ width: `${progressPercentage}%` }}
           transition={{ duration: 0.5, ease: "easeOut" }}

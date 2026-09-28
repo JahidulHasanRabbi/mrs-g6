@@ -6,6 +6,7 @@ import GreenCta from "./GreenCta";
 import { ThemedRedeemAllButton, formatRedeemedSummary } from "./RedeemAllButton";
 import { ICONS } from "./constants";
 import { usePkColors } from "./usePkColors";
+import { KrPkHistoryDialog } from "../themes/kingrewards/KrPkDialogs";
 import { getMemberRewardHistory } from "../../api/memberApi";
 import { tokenStorage } from "../../api/tokenStorage";
 
@@ -134,7 +135,7 @@ export default function HistoryDialog({
   onClose,
   onRedeemAll,
 }) {
-  const { colors: COLORS, soft, theme } = usePkColors();
+  const { colors: COLORS, soft, theme, isKingRewards } = usePkColors();
   const [activeTab, setActiveTab] = useState("game");
   const [prizeRows, setPrizeRows] = useState([]);
   const [prizePage, setPrizePage] = useState(1);
@@ -188,6 +189,24 @@ export default function HistoryDialog({
   const activeCurrentPage = activeTab === "game" ? currentPage : prizePage;
   const activeTotalPages = activeTab === "game" ? totalPages : prizeTotalPages;
   const handlePageChange = activeTab === "game" ? onPageChange : loadPrizePage;
+
+  if (isKingRewards) {
+    const { Button } = theme;
+    return (
+      <KrPkHistoryDialog
+        rows={rows}
+        redeemedSummary={redeemedSummary}
+        redeemButton={
+          hasRedeemableRows ? (
+            <ThemedRedeemAllButton onRedeemAll={onRedeemAll} onSummary={setRedeemedSummary} Button={Button} />
+          ) : (
+            <Button variant="gold" disabled>Redeem All</Button>
+          )
+        }
+        onClose={onClose}
+      />
+    );
+  }
 
   // Themed skins (Figma 61:1300 / 77:2977): a single "GAME HISTORY" list inside
   // the ornate frame with the Redeem All button below it — no tabs/pagination.

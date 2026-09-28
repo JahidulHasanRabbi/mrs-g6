@@ -16,6 +16,8 @@ import {
 import { useUser } from "../contexts/UserContext";
 import { useTheme } from "../contexts/ThemeContext";
 import { PHASE4_ASSETS } from "../config/phase4";
+import { THEME_IDS } from "../config/themes";
+import { lazySkins } from "../components/themes/skinRoute";
 import ThemedPageShell from "../components/themes/shared/ThemedPageShell";
 import ThemedActionButton from "../components/themes/shared/ThemedActionButton";
 import { HOME_ASSETS } from "../components/home/homeAssets";
@@ -41,6 +43,10 @@ import {
   getPendingMissionPopup,
   walletUrlFor,
 } from "../components/missions/promotion/promoApi";
+
+const KrMissionsView = lazySkins({
+  [THEME_IDS.KINGREWARDS]: () => import("../components/themes/kingrewards/KrMissionsView"),
+})[THEME_IDS.KINGREWARDS];
 
 const TOKEN_ICON = PHASE4_ASSETS.token;
 const HISTORY_ICON = "/assets/penalty-kick/missions/icon-history.svg";
@@ -218,7 +224,7 @@ export default function MissionsPage() {
   // On a theme, the whole page is wrapped in the themed shell (themed header +
   // lucky-spin background + themed bottom nav), so its own header/bg/footer are
   // suppressed below.
-  const { isThemed } = useTheme();
+  const { isThemed, isKingRewards } = useTheme();
   const [activeTab, setActiveTab] = useState("daily");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   // Sign of the last tab move (+1 → moved right, -1 → moved left) so the
@@ -238,6 +244,8 @@ export default function MissionsPage() {
   // `completedPromo` the on-entry confirmation (requirement rows 2-5 and 8).
   const [promo, setPromo] = useState(null);
   const [completedPromo, setCompletedPromo] = useState(null);
+  // KR only: the mission just claimed, for its "CLAIMED!" dialog (Figma 857:4703).
+  const [krClaimed, setKrClaimed] = useState(null);
   const isMaintenance = maintenance === true;
 
   const changeTab = (id) => {
@@ -331,6 +339,7 @@ export default function MissionsPage() {
     setError("");
     try {
       const claimed = await claimMissionReward(id);
+      if (isKingRewards) setKrClaimed(missions.find((m) => m.id === id) ?? null);
       loadMissions();
       refreshUserData?.().catch(() => {});
       // The promotion is a bonus on top of a claim that already succeeded, so
@@ -397,6 +406,59 @@ export default function MissionsPage() {
       setTermsLoading(false);
     }
   };
+
+  // Held back while the KR "CLAIMED!" dialog is up so the two never stack.
+  const promoModals = (
+    <>
+      <PromotionOfferModal
+        open={promo?.state === "offer" && !krClaimed}
+        onClose={closePromo}
+        onUnlock={handleUnlockReward}
+        promo={promo}
+      />
+
+      <ClearWalletModal
+        open={promo?.state === "blocked" && !krClaimed}
+        onClose={closePromo}
+        onClearNow={handleClearNow}
+        promo={promo}
+      />
+
+      <MissionCompletedModal
+        open={!!completedPromo && maintenance === false}
+        onClose={handleAcknowledgeCompleted}
+        rewardAmount={completedPromo?.reward_amount ?? 0}
+        rewardCategory={completedPromo?.reward_category ?? 1}
+      />
+    </>
+  );
+
+  if (isKingRewards) {
+    return (
+      <ThemedPageShell onInfoClick={openTerms} balance={userData?.balance}>
+        <KrMissionsView
+          tabs={MISSION_TABS}
+          activeTab={activeTab}
+          onTabChange={changeTab}
+          direction={direction}
+          loading={loading}
+          error={error}
+          missions={visibleMissions}
+          actionId={actionId}
+          onJoin={handleJoin}
+          onClaim={handleClaim}
+          onHistory={loadHistory}
+          history={history}
+          claimed={krClaimed}
+          onClaimedClose={() => setKrClaimed(null)}
+          terms={{ open: termsOpen, loading: termsLoading, termsText, error: termsError }}
+          onTermsClose={() => setTermsOpen(false)}
+          isMaintenance={isMaintenance}
+        />
+        {promoModals}
+      </ThemedPageShell>
+    );
+  }
 
   const page = (
     <div
@@ -641,26 +703,7 @@ export default function MissionsPage() {
         />
       )}
 
-      <PromotionOfferModal
-        open={promo?.state === "offer"}
-        onClose={closePromo}
-        onUnlock={handleUnlockReward}
-        promo={promo}
-      />
-
-      <ClearWalletModal
-        open={promo?.state === "blocked"}
-        onClose={closePromo}
-        onClearNow={handleClearNow}
-        promo={promo}
-      />
-
-      <MissionCompletedModal
-        open={!!completedPromo && maintenance === false}
-        onClose={handleAcknowledgeCompleted}
-        rewardAmount={completedPromo?.reward_amount ?? 0}
-        rewardCategory={completedPromo?.reward_category ?? 1}
-      />
+      {promoModals}
 
       {isMaintenance && (
         <div className="fixed inset-x-0 top-[56px] bottom-[100px] z-30 grid place-items-center bg-black/70 px-6 backdrop-blur-md">

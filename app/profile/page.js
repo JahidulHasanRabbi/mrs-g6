@@ -17,6 +17,7 @@ const SKINS = lazySkins({
   [THEME_IDS.KGAME99]: () => import("../components/themes/kgame99/Kgame99ProfilePage"),
   [THEME_IDS.LV918]: () => import("../components/themes/lv918/Lv918ProfilePage"),
   [THEME_IDS.N1GANG]: () => import("../components/themes/n1gang/N1gangProfilePage"),
+  [THEME_IDS.KINGREWARDS]: () => import("../components/themes/kingrewards/KingRewardsProfilePage"),
 });
 
 const hasValue = (v) => v != null && String(v).trim() !== "";

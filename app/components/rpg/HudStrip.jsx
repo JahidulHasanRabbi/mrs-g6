@@ -5,9 +5,10 @@
 // On a station skin the two counters become the theme's framed value chips
 // (the same art the portal header uses).
 
-import { RPG_COLORS, RPG_FONTS } from "./constants";
+import { RPG_COLORS } from "./constants";
 import { RPG_IMAGES } from "./rpgAssets";
 import { ProgressBar } from "./primitives";
+import { GlassBalances } from "../header/HeaderBalances";
 import { useRpgSkin } from "./rpgSkin";
 
 // 1,234,567 → "1.2M", 12,340 → "12.3K" (matches the design's compact HUD).
@@ -61,23 +62,25 @@ export default function HudStrip({ profile }) {
         className="flex size-[49px] shrink-0 flex-col items-center justify-center rounded-full border"
         style={{ background: skin.hud.badgeBg, borderColor: skin.hud.badgeBorder }}
       >
-        <span className="text-[9px] leading-[9px]" style={{ color: skin.hud.badgeLabel, fontFamily: RPG_FONTS.display }}>
+        <span className="text-[9px] leading-[9px]" style={{ color: skin.hud.badgeLabel, fontFamily: skin.fonts.display }}>
           Lv.
         </span>
-        <span className="text-[16px] font-bold leading-[18px]" style={{ color: skin.c.text, fontFamily: RPG_FONTS.number }}>
+        <span className="text-[16px] font-bold leading-[18px]" style={{ color: skin.c.text, fontFamily: skin.fonts.number }}>
           {profile.level}
         </span>
       </div>
 
       {/* EXP bar */}
       <div className="flex min-w-0 flex-1 flex-col gap-[3px]">
-        <span className="text-[9px] tracking-[1.5px]" style={{ color: skin.hud.expLabel, fontFamily: RPG_FONTS.display }}>
+        <span className="text-[9px] tracking-[1.5px]" style={{ color: skin.hud.expLabel, fontFamily: skin.fonts.display }}>
           EXP
         </span>
         <ProgressBar pct={profile.expPct} gradient={skin.hud.expGradient} />
       </div>
 
-      {chips ? (
+      {chips?.glass ? (
+        <GlassBalances skin={chips} battlePoints={compactNumber(profile.bp)} balance={compactNumber(profile.tokens)} font={skin.fonts.display} growOnWide={false} className="shrink-0" />
+      ) : chips ? (
         <div className="flex shrink-0 items-center gap-[4px]">
           <FramedChip chips={chips} icon={chips.token} label="KR Coins" value={compactNumber(profile.tokens)} />
           <FramedChip chips={chips} icon={chips.battlePoint} iconKind="battlePoint" label="Battle Points" value={compactNumber(profile.bp)} />
@@ -88,10 +91,10 @@ export default function HudStrip({ profile }) {
           <div className="flex shrink-0 items-center gap-[6px]">
             <img src={RPG_IMAGES.icons.token} alt="" className="size-[26px] object-contain" />
             <div className="flex flex-col">
-              <span className="text-[8px] tracking-[1px]" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
+              <span className="text-[8px] tracking-[1px]" style={{ color: RPG_COLORS.textDim, fontFamily: skin.fonts.display }}>
                 KR COINS
               </span>
-              <span className="text-[13px] font-bold leading-[13px]" style={{ color: RPG_COLORS.text, fontFamily: RPG_FONTS.number }}>
+              <span className="text-[13px] font-bold leading-[13px]" style={{ color: RPG_COLORS.text, fontFamily: skin.fonts.number }}>
                 {compactNumber(profile.tokens)}
               </span>
             </div>
@@ -101,10 +104,10 @@ export default function HudStrip({ profile }) {
           <div className="flex shrink-0 items-center gap-[6px]">
             <img src={RPG_IMAGES.icons.bpGem} alt="" className="size-[24px]" />
             <div className="flex flex-col">
-              <span className="text-[8px] tracking-[1px]" style={{ color: RPG_COLORS.textDim, fontFamily: RPG_FONTS.display }}>
+              <span className="text-[8px] tracking-[1px]" style={{ color: RPG_COLORS.textDim, fontFamily: skin.fonts.display }}>
                 BP
               </span>
-              <span className="text-[13px] font-bold leading-[13px]" style={{ color: RPG_COLORS.text, fontFamily: RPG_FONTS.number }}>
+              <span className="text-[13px] font-bold leading-[13px]" style={{ color: RPG_COLORS.text, fontFamily: skin.fonts.number }}>
                 {compactNumber(profile.bp)}
               </span>
             </div>
