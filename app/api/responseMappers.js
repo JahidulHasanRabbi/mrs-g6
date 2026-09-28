@@ -36,12 +36,12 @@ export function mapProfileDataToForm(apiResponse) {
     full_name: apiResponse.full_name || '',
     email: apiResponse.email || '',
     date_of_birth: apiResponse.date_of_birth || '',
-    gender: typeof apiResponse.gender === 'number' 
-      ? apiResponse.gender 
+    gender: typeof apiResponse.gender === 'number'
+      ? apiResponse.gender
       : findOptionKey('GENDER', apiResponse.gender),
-    hobby: typeof apiResponse.hobby === 'number'
-      ? apiResponse.hobby
-      : findOptionKey('HOBBY', apiResponse.hobby),
+    // The API stores/returns hobby as free text (label string), unlike
+    // gender's numeric choice field — pass it through as-is.
+    hobby: apiResponse.hobby || '',
     free_token_flag: apiResponse.free_token_flag
   };
 }
@@ -53,9 +53,9 @@ export function mapFormDataToProfileUpdate(formData) {
   if (formData.email) payload.email = formData.email;
   if (formData.date_of_birth) payload.date_of_birth = formData.date_of_birth;
   
-  // Convert gender and hobby to integer enums
+  // Gender is a numeric choice field; hobby is stored as free text.
   if (formData.gender) payload.gender = parseInt(formData.gender, 10);
-  if (formData.hobby) payload.hobby = parseInt(formData.hobby, 10);
+  if (formData.hobby) payload.hobby = formData.hobby;
   
   return payload;
 }

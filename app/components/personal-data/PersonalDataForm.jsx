@@ -175,7 +175,8 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
         updatePayload.gender = parseInt(formData.gender, 10);
       }
       if (!originalData.hobby && formData.hobby) {
-        updatePayload.hobby = parseInt(formData.hobby, 10);
+        // The API stores hobby as free text, unlike gender's numeric choice field.
+        updatePayload.hobby = formData.hobby;
       }
       
       // Add profile picture if a new one was selected
