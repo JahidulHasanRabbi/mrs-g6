@@ -1,12 +1,4 @@
-import { getOptionsArray, API_OPTIONS } from '@/app/api/apiOptions';
-
-// The member update-profile API stores hobby as free text (no choice
-// validation on that field, unlike gender), so the dropdown sends the label
-// itself as the value instead of the numeric code.
-const HOBBY_TEXT_OPTIONS = Object.values(API_OPTIONS.HOBBY).map((label) => ({
-  value: label,
-  label,
-}));
+import { getOptionsArray } from '@/app/api/apiOptions';
 
 export const FORM_COLORS = {
   primary: "#e9af41",
@@ -50,13 +42,8 @@ export const FORM_FIELDS = [
   {
     id: "hobby",
     label: "Hobby",
-    type: "select",
-    placeholder: "Select Hobby",
-    icon: "arrow",
-    options: [
-      { value: "", label: "Select Hobby" },
-      ...HOBBY_TEXT_OPTIONS
-    ],
+    type: "text",
+    placeholder: "Enter your hobby",
   },
 ];
 
