@@ -92,8 +92,8 @@ function CheckinSettingsContent() {
       day,
       reward_minimum: 100,
       reward_maximum: 100,
-      battle_point_minimum: 0,
-      battle_point_maximum: 0,
+      battle_point_minimum: 100,
+      battle_point_maximum: 100,
       attack_point_minimum: 0,
       attack_point_maximum: 0,
       display_text: ''
@@ -242,6 +242,12 @@ function DayFormModal({ day, onSubmit, onClose, isSaving }) {
       return;
     }
 
+    // The API rejects BP below 100 outright, so catch it here first.
+    if (formData.battle_point_minimum < 100 || formData.battle_point_maximum < 100) {
+      setError({ message: 'BP must be at least 100 (minimum and maximum)' });
+      return;
+    }
+
     if (formData.battle_point_minimum > formData.battle_point_maximum) {
       setError({ message: 'Minimum BP cannot be greater than maximum BP' });
       return;
@@ -329,7 +335,7 @@ function DayFormModal({ day, onSubmit, onClose, isSaving }) {
                 value={formData.battle_point_minimum}
                 onChange={handleChange}
                 required
-                min="0"
+                min="100"
                 step="1"
                 className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400/30"
               />
@@ -345,12 +351,15 @@ function DayFormModal({ day, onSubmit, onClose, isSaving }) {
                 value={formData.battle_point_maximum}
                 onChange={handleChange}
                 required
-                min="0"
+                min="100"
                 step="1"
                 className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400/30"
               />
             </div>
           </div>
+          <p className="-mt-2 text-xs text-gray-500">
+            BP must be at least 100 (minimum and maximum)
+          </p>
 
           <div className="grid grid-cols-2 gap-4">
             <div>

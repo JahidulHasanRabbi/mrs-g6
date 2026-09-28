@@ -4,7 +4,14 @@ export default function ErrorDisplay({ error }) {
   if (!error) return null;
 
   const getErrorMessage = (error) => {
-    // Network error (no status code)
+    // A client-side validation error (e.g. thrown by form validation before
+    // any request is made) has a message but no status and no API response
+    // data — show it as-is instead of mislabeling it as a network error.
+    if (error.status === undefined && !error.data && error.message) {
+      return error.message;
+    }
+
+    // True network error: the request never got an HTTP response.
     if (!error.status || error.status === 0) {
       return 'Network error. Please check your connection.';
     }
