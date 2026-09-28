@@ -232,12 +232,19 @@ export default function CheckInBoard() {
         response.battle_point_amount ??
         response.battle_points_obtained ??
         response.battle_point_obtained;
+      const attackPointsObtained =
+        response.attack_points_obtained ??
+        response.attack_point_amount ??
+        response.attack_point_obtained;
       const rewardParts = [];
       if (tokensObtained != null && Number(tokensObtained) > 0) {
         rewardParts.push(`${tokensObtained} KR Coin${Number(tokensObtained) !== 1 ? 's' : ''}`);
       }
       if (battlePointsObtained != null && Number(battlePointsObtained) > 0) {
         rewardParts.push(`${Number(battlePointsObtained).toLocaleString("en-US")} BP`);
+      }
+      if (attackPointsObtained != null && Number(attackPointsObtained) > 0) {
+        rewardParts.push(`${Number(attackPointsObtained).toLocaleString("en-US")} AP`);
       }
       const displayReward = rewardParts.join(" + ") || "your reward";
       setCheckedRewards((prev) => ({ ...prev, [day.day]: displayReward }));
