@@ -199,6 +199,54 @@ function CheckinSettingsContent() {
   );
 }
 
+// Pure function so both the live inline errors and the submit-time guard
+// use exactly one source of truth for what's valid. Only battle_point_minimum
+// and battle_point_maximum get an inline message under the field (per
+// product ask); the rest still block Save via the top error banner.
+function getFieldErrors(formData) {
+  const errors = {};
+
+  if (formData.reward_minimum === '' || formData.reward_minimum < 0) {
+    errors.reward_minimum = true;
+  }
+  if (formData.reward_maximum === '' || formData.reward_maximum < 0) {
+    errors.reward_maximum = true;
+  }
+  if (formData.reward_minimum > formData.reward_maximum) {
+    errors.reward_maximum = true;
+  }
+
+  // BP is either 0 (no reward) or at least 100 — values 1-99 aren't valid.
+  if (formData.battle_point_minimum === '' || formData.battle_point_minimum < 0) {
+    errors.battle_point_minimum = true;
+  } else if (formData.battle_point_minimum > 0 && formData.battle_point_minimum < 100) {
+    errors.battle_point_minimum = 'Must be 0 or more than 100';
+  }
+  if (formData.battle_point_maximum === '' || formData.battle_point_maximum < 0) {
+    errors.battle_point_maximum = true;
+  } else if (formData.battle_point_maximum > 0 && formData.battle_point_maximum < 100) {
+    errors.battle_point_maximum = 'Must be 0 or more than 100';
+  }
+  if (
+    !errors.battle_point_minimum && !errors.battle_point_maximum &&
+    formData.battle_point_minimum > formData.battle_point_maximum
+  ) {
+    errors.battle_point_maximum = true;
+  }
+
+  if (formData.attack_point_minimum === '' || formData.attack_point_minimum < 0) {
+    errors.attack_point_minimum = true;
+  }
+  if (formData.attack_point_maximum === '' || formData.attack_point_maximum < 0) {
+    errors.attack_point_maximum = true;
+  }
+  if (formData.attack_point_minimum > formData.attack_point_maximum) {
+    errors.attack_point_maximum = true;
+  }
+
+  return errors;
+}
+
 function DayFormModal({ day, onSubmit, onClose, isSaving }) {
   const [formData, setFormData] = useState({
     day: day.day,
@@ -212,6 +260,8 @@ function DayFormModal({ day, onSubmit, onClose, isSaving }) {
   });
   const [error, setError] = useState(null);
 
+  const fieldErrors = getFieldErrors(formData);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -224,15 +274,12 @@ function DayFormModal({ day, onSubmit, onClose, isSaving }) {
     e.preventDefault();
     setError(null);
 
-    // Validation
-    if (
-      formData.reward_minimum < 0 ||
-      formData.reward_maximum < 0 ||
-      formData.battle_point_minimum < 0 ||
-      formData.battle_point_maximum < 0 ||
-      formData.attack_point_minimum < 0 ||
-      formData.attack_point_maximum < 0
-    ) {
+    if (formData.reward_minimum === '' || formData.reward_minimum < 0 ||
+        formData.battle_point_minimum === '' || formData.battle_point_minimum < 0 ||
+        formData.attack_point_minimum === '' || formData.attack_point_minimum < 0 ||
+        formData.reward_maximum === '' || formData.reward_maximum < 0 ||
+        formData.battle_point_maximum === '' || formData.battle_point_maximum < 0 ||
+        formData.attack_point_maximum === '' || formData.attack_point_maximum < 0) {
       setError({ message: 'Reward values must be positive' });
       return;
     }
@@ -242,20 +289,17 @@ function DayFormModal({ day, onSubmit, onClose, isSaving }) {
       return;
     }
 
-    // The API rejects BP below 100 outright, so catch it here first.
-    if (formData.battle_point_minimum < 100 || formData.battle_point_maximum < 100) {
-      setError({ message: 'BP must be at least 100 (minimum and maximum)' });
-      return;
-    }
-
     if (formData.battle_point_minimum > formData.battle_point_maximum) {
       setError({ message: 'Minimum BP cannot be greater than maximum BP' });
       return;
     }
 
-    // The API rejects the row outright when max < min, so catch it here first.
     if (formData.attack_point_minimum > formData.attack_point_maximum) {
       setError({ message: 'Minimum AP cannot be greater than maximum AP' });
+      return;
+    }
+
+    if (Object.keys(fieldErrors).length > 0) {
       return;
     }
 
@@ -335,10 +379,13 @@ function DayFormModal({ day, onSubmit, onClose, isSaving }) {
                 value={formData.battle_point_minimum}
                 onChange={handleChange}
                 required
-                min="100"
+                min="0"
                 step="1"
                 className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400/30"
               />
+              {typeof fieldErrors.battle_point_minimum === 'string' && (
+                <p className="mt-1 text-xs text-red-400">{fieldErrors.battle_point_minimum}</p>
+              )}
             </div>
 
             <div>
@@ -351,15 +398,15 @@ function DayFormModal({ day, onSubmit, onClose, isSaving }) {
                 value={formData.battle_point_maximum}
                 onChange={handleChange}
                 required
-                min="100"
+                min="0"
                 step="1"
                 className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-yellow-400/30"
               />
+              {typeof fieldErrors.battle_point_maximum === 'string' && (
+                <p className="mt-1 text-xs text-red-400">{fieldErrors.battle_point_maximum}</p>
+              )}
             </div>
           </div>
-          <p className="-mt-2 text-xs text-gray-500">
-            BP must be at least 100 (minimum and maximum)
-          </p>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -436,6 +483,7 @@ function DayFormModal({ day, onSubmit, onClose, isSaving }) {
             <LoadingButton
               type="submit"
               isLoading={isSaving}
+              disabled={Object.keys(fieldErrors).length > 0}
               className="rounded-[4px] px-[15px] py-[9px]"
               style={{
                 backgroundImage: "linear-gradient(1.0746108354373831deg, rgba(242, 195, 107, 0) 74.374%, rgb(221, 143, 31) 94.001%), linear-gradient(90deg, rgb(255, 255, 132) 0%, rgb(255, 255, 132) 100%)"
