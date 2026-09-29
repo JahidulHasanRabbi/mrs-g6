@@ -1,9 +1,11 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import KingRewardsButton from "./KingRewardsButton";
 import { formatKrCoins } from "../../../api/apiOptions";
 import { KR_ASSETS, KR_FONT, KR_GRADIENTS } from "./assets";
-import { GoldText, KrImage, formatKrAmount } from "./KrUi";
+import { GoldText, KrImage, KrTabs, formatKrAmount } from "./KrUi";
+import KrPagination from "./KrPagination";
 import { KR_PK_INK, KrPkCard, KrPkCoin, KrPkDialogTitle } from "./KrPkParts";
 
 // Presentation-only King Rewards bodies for the penalty-kick dialogs. The shared
@@ -22,7 +24,7 @@ function GoldButton(props) {
 
 // Raw API copy can still say "token"; the UI name is KR Coins.
 function toDisplayCopy(text) {
-  return String(text ?? "").replace(/tokens?/gi, "KR Coins");
+  return String(text ?? "").replace(/\btokens?\b/gi, "KR Coins");
 }
 
 function coins(value) {
@@ -98,7 +100,7 @@ export function KrPkGoalDialog({ rewardText, rewardImage, isBattlePoint, redeeme
       <Actions>
         <GoldButton onClick={onKickAgain}>Kick Again?</GoldButton>
         {redeemButton}
-        <KrOutlineButton onClick={onReturn}>Back</KrOutlineButton>
+        <KrOutlineButton onClick={onReturn}>Return to Website</KrOutlineButton>
       </Actions>
     </KrPkCard>
   );
@@ -117,6 +119,8 @@ export function KrPkFailDialog({
   onKickAgain,
   onReturn,
 }) {
+  const router = useRouter();
+  // Same pair as the KR Spin / Egg low-balance dialog: top up, or Back to the pitch.
   if (isInsufficient) {
     return (
       <KrPkCard>
@@ -130,8 +134,8 @@ export function KrPkFailDialog({
           </div>
         </div>
         <Actions>
-          <GoldButton onClick={onKickAgain}>Close</GoldButton>
-          <KrOutlineButton onClick={onReturn}>Back</KrOutlineButton>
+          <GoldButton onClick={() => router.push("/missions")}>Get KR Coins?</GoldButton>
+          <KrOutlineButton onClick={onKickAgain}>Back</KrOutlineButton>
         </Actions>
       </KrPkCard>
     );
@@ -149,7 +153,7 @@ export function KrPkFailDialog({
       <Actions>
         <GoldButton onClick={onKickAgain}>{kickAgainLabel}</GoldButton>
         {redeemButton}
-        <KrOutlineButton onClick={onReturn}>Back</KrOutlineButton>
+        <KrOutlineButton onClick={onReturn}>Return to Website</KrOutlineButton>
       </Actions>
     </KrPkCard>
   );
@@ -221,6 +225,7 @@ function HistoryRow({ row }) {
   const amt = Number(row.amount ?? 0);
   const hasAmt = Number.isFinite(amt) && amt > 0;
   const isMiss = /miss/i.test(row.label || "");
+  const amountText = isMiss ? `-${hasAmt ? amt.toFixed(2) : ""}` : toDisplayCopy(row.amountText);
   return (
     <div className="flex w-full items-center gap-2" style={{ opacity: row.claimed ? 0.35 : 1 }}>
       <div className="grid h-8 w-8 shrink-0 place-items-center rounded-[8px]" style={{ background: "rgba(228,233,84,0.2)" }}>
@@ -238,27 +243,58 @@ function HistoryRow({ row }) {
         className="shrink-0 self-start text-[16px] leading-[24px]"
         style={{ fontFamily: KR_FONT, color: isMiss ? KR_PK_INK.negative : "#ffffff" }}
       >
-        {isMiss ? "-" : hasAmt ? "+" : ""}
-        {hasAmt ? amt.toFixed(2) : ""}
+        {amountText}
       </p>
     </div>
   );
 }
 
-export function KrPkHistoryDialog({ rows, redeemedSummary, redeemButton, onClose }) {
+const HISTORY_TABS = [
+  { id: "game", label: "Game History" },
+  { id: "prize", label: "Prize History" },
+];
+
+export function KrPkHistoryDialog({
+  activeTab = "game",
+  onTab,
+  rows,
+  loading = false,
+  countLabel,
+  page = 1,
+  totalPages = 1,
+  onPage,
+  redeemedSummary,
+  redeemButton,
+  onClose,
+}) {
+  const isGame = activeTab === "game";
+  const note = loading ? "Loading…" : rows.length === 0 ? (isGame ? "No rewards waiting to redeem." : "No prize history yet.") : null;
   return (
     <KrPkCard className="p-4">
-      <div className="flex w-full flex-col items-center gap-6">
-        <KrPkDialogTitle>Game History</KrPkDialogTitle>
-        <div className="flex max-h-[44vh] w-full flex-col gap-4 overflow-y-auto pr-1 [scrollbar-width:thin]">
-          {rows.length === 0 ? (
-            <p className="py-6 text-center text-[12px]" style={{ fontFamily: KR_FONT, color: KR_PK_INK.muted }}>
-              No game history yet.
+      <div className="flex w-full flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-1">
+          <KrPkDialogTitle>{isGame ? "Game History" : "Prize History"}</KrPkDialogTitle>
+          {countLabel && (
+            <p className="text-[12px] leading-[18px]" style={{ fontFamily: KR_FONT, color: KR_PK_INK.muted }}>
+              {countLabel}
             </p>
-          ) : (
-            rows.map((r) => <HistoryRow key={r.id} row={r} />)
           )}
         </div>
+        {onTab && <KrTabs tabs={HISTORY_TABS} active={activeTab} onChange={onTab} size={12} />}
+        <div className="flex max-h-[40vh] w-full flex-col gap-4 overflow-y-auto pr-1 [scrollbar-width:thin]">
+          {note ? (
+            <p className="py-6 text-center text-[12px]" style={{ fontFamily: KR_FONT, color: KR_PK_INK.muted }}>
+              {note}
+            </p>
+          ) : (
+            rows.map((r, i) => <HistoryRow key={r.id ?? i} row={r} />)
+          )}
+        </div>
+        {totalPages > 1 && onPage && (
+          <div className="w-full">
+            <KrPagination page={page} totalPages={totalPages} onPage={onPage} />
+          </div>
+        )}
       </div>
       <RedeemedNote summary={redeemedSummary} />
       <Actions>

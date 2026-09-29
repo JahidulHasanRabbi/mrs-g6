@@ -2,6 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import dynamic from "next/dynamic";
 import { useUser } from "../contexts/UserContext";
 import { useTheme } from "../contexts/ThemeContext";
 import ThemedPageShell from "../components/themes/shared/ThemedPageShell";
@@ -34,6 +35,8 @@ import {
 import PredictionsList from "../components/leaderboard/PredictionsList";
 import InfoModal from "../components/leaderboard/InfoModal";
 import NoticeModal from "../components/leaderboard/NoticeModal";
+
+const KrWorldCupHeading = dynamic(() => import("./KrWorldCupHeading"), { ssr: false });
 import {
   PrizeTabs,
   CountryPrizesPanel,
@@ -100,12 +103,12 @@ function LeaderboardPageInner() {
   // On a theme, the page is wrapped in the themed shell (themed header +
   // lucky-spin background + themed bottom nav), so the leaderboard's own header,
   // background and footer are suppressed below. The themed header has no sound
-  // control, so mute the crowd ambience too.
-  const { isThemed } = useTheme();
+  // control, so mute the crowd ambience too (KR draws its own toggle).
+  const { isThemed, isKingRewards } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [maintenance, setMaintenance] = useState(null);
   const isMaintenance = maintenance === true;
-  const { muted, toggleMuted } = useCrowdAmbience({ disabled: isThemed || maintenance !== false });
+  const { muted, toggleMuted } = useCrowdAmbience({ disabled: (isThemed && !isKingRewards) || maintenance !== false });
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [joinBlocked, setJoinBlocked] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -285,6 +288,8 @@ function LeaderboardPageInner() {
           soundMuted={muted}
         />
       )}
+
+      {isKingRewards && <KrWorldCupHeading muted={muted} onSoundToggle={toggleMuted} />}
 
       <div className="flex-1 pb-[140px]">
         {needsOnboarding && (

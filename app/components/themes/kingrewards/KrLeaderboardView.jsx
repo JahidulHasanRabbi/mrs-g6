@@ -456,6 +456,15 @@ export default function KrLeaderboardView({
             transition={{ duration: 0.25 }}
             className="flex w-full flex-col gap-[10px]"
           >
+            {config.eventBadge && (
+              <span
+                className="self-center rounded-full px-3 py-1 text-[10px] font-extrabold uppercase leading-[1.2] tracking-[1.4px]"
+                style={{ background: KR_GRADIENTS.gold, color: KR_COLORS.onGold, fontFamily: KR_FONT }}
+              >
+                {config.eventBadge}
+              </span>
+            )}
+
             {!loading && config.previewNotice && (
               <div className="rounded-[12px] px-4 py-3 text-center text-[12px] font-semibold" style={{ ...INNER_BORDERED, color: "#ffb965" }} role="status">
                 {config.previewNotice}

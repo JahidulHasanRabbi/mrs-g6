@@ -105,7 +105,7 @@ export default function AvatarLevel({ profile, onProfileUpdate }) {
           />
         </div>
         {skin.level.formulas ? (
-          <p className="text-[10px]" style={{ color: pc.slotEmpty, fontFamily: skin.fonts.display }}>
+          <p className="text-[10px]" style={{ color: skin.level.note || pc.slotEmpty, fontFamily: skin.fonts.display }}>
             BP required = current level × {profile.bpPerLevelMultiplier ?? 100} · each level grants +{fmt(perLevel)} Power
           </p>
         ) : atMax ? null : (
@@ -145,7 +145,7 @@ export default function AvatarLevel({ profile, onProfileUpdate }) {
             {fmt(profile.power)}
           </span>
         </div>
-        {skin.level.formulas && <p className="text-[10px]" style={{ color: pc.slotEmpty, fontFamily: skin.fonts.display }}>
+        {skin.level.formulas && <p className="text-[10px]" style={{ color: skin.level.note || pc.slotEmpty, fontFamily: skin.fonts.display }}>
           Max: Lv.{maxLevel} ({fmt(maxLevel * perLevel)}) + {slotCount} items ({fmt(slotCount * EQUIP_POWER)}) = {fmt(maxPower)} Power
         </p>}
       </Panel>

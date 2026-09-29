@@ -37,6 +37,17 @@ const CHIP_STYLE = {
   fontFamily: KR_FONT,
 };
 
+// Smash Egg history numbers Battle Point as 4 (SmashEggHistoryDialog reads it the same way).
+function recordAmount(row) {
+  const name = row.reward_name || 'Reward';
+  const type = String(row.item_type || '').toUpperCase();
+  const bp = Number(row.amount ?? 0);
+  if ((type === 'BATTLE POINT' || type === '4') && bp > 0 && !/\bBP\b|battle point/i.test(name)) {
+    return `${name} (${bp.toLocaleString('en-US')} BP)`;
+  }
+  return name;
+}
+
 const WINNER_TABS = [
   { id: 'list', label: 'Winner List' },
   { id: 'record', label: 'Win Record' },
@@ -186,7 +197,7 @@ export default function KingRewardsSmashEggPage() {
 
   const recordRows = useMemo(() => {
     const me = maskName(userData?.name || '') || 'You';
-    return historyRows.map((r) => ({ date: formatKrDate(r.created), user: me, amount: r.reward_name || 'Reward' }));
+    return historyRows.map((r) => ({ date: formatKrDate(r.created), user: me, amount: recordAmount(r) }));
   }, [historyRows, userData?.name]);
 
   const resultProps = (() => {

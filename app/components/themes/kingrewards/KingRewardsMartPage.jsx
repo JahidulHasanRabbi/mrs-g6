@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { formatKrCoins } from "../../../api/apiOptions";
 import { useUser } from "../../../contexts/UserContext";
 import { LoadingState } from "../../ui/LoadingState";
+import { MART_CATEGORIES } from "../../mart/MartCategoryPills";
 import ThemedImagePreview from "../shared/ThemedImagePreview";
 import { priceOf, useThemedMart } from "../shared/useThemedMart";
 import KrMartCard, { StruckPrice } from "./KrMartCard";
@@ -103,6 +104,11 @@ export default function KingRewardsMartPage() {
     setConfirmItem(item);
   };
 
+  // No tiers from the API: fall back to the fixed tiers, which still match items by `mart_tier` name.
+  const tierTabs = dynamicCategories.length > 0 ? dynamicCategories : MART_CATEGORIES;
+  const selectedTierLabel =
+    tierTabs.find((c) => c.key === selectedCategory)?.fullLabel || selectedCategoryFullLabel;
+
   const hasUnaffordable = sortedItems.some(
     (item) => !isItemLocked(item) && getBlockReason(item) === "insufficient_balance"
   );
@@ -134,7 +140,7 @@ export default function KingRewardsMartPage() {
         transition={{ duration: 0.45, delay: 0.1, ease: "easeOut" }}
       >
         <div className="grid grid-cols-2 gap-x-1 gap-y-2">
-          {dynamicCategories.map((cat) => (
+          {tierTabs.map((cat) => (
             <TierTab
               key={cat.key}
               label={cat.label}
@@ -175,7 +181,7 @@ export default function KingRewardsMartPage() {
           ) : sortedItems.length === 0 ? (
             <div className="flex flex-col items-center gap-2 px-4 py-12 text-center">
               <GoldText as="p" className="block text-[20px] font-bold">
-                No {selectedCategoryFullLabel} Available
+                No {selectedTierLabel} Available
               </GoldText>
               <p className="text-[14px] text-[#bbcbbb]">There are currently no items in this category.</p>
             </div>

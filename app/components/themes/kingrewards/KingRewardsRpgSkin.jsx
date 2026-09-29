@@ -66,7 +66,7 @@ const SKIN = buildRpgSkin(THEME_IDS.KINGREWARDS, ASSETS, COLORS, {
     choiceOff: { minWidth: 124, paddingInline: 20, background: "rgba(0,61,137,0.55)", borderColor: "rgba(255,240,102,0.45)", color: "#efeaff", boxShadow: INSET_B },
     alignFeet: true,
   },
-  level: { formulas: false },
+  level: { note: "#f9d063" },
   battle: { nameSize: 30, hp: { height: 20, track: "rgba(0,0,0,0.6)", border: EDGE, fill: KR_GRADIENTS.goldBar } },
   // The game menu sits on a solid navy bar under a gold rail, so it never reads
   // as the portal's glass footer (LEADERBOARDS / HOT / HOME / PROFILE / CHAT).
@@ -82,7 +82,6 @@ const SKIN = buildRpgSkin(THEME_IDS.KINGREWARDS, ASSETS, COLORS, {
     },
   },
   hud: {
-    homeOnly: true,
     border: "rgba(255,240,102,0.25)",
     badgeBg: "rgba(0,77,201,0.3)",
     badgeBorder: EDGE,
@@ -173,7 +172,6 @@ const SKIN = buildRpgSkin(THEME_IDS.KINGREWARDS, ASSETS, COLORS, {
     defeatedStamp: { icon: `${WAR}/icon-skull.svg` },
     emptyState: { icon: `${WAR}/icon-damage.webp` },
     cardTimer: true,
-    scheduleTitle: "Boss Schedule",
     infoBack: true,
     icons: {
       ap: `${WAR}/icon-damage.webp`,

@@ -1,8 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import ProfileFrame from "../../profile/ProfileFrame";
+import { DEFAULT_FRAME_ID } from "../../profile/profileFrames";
+import { useUser } from "../../../contexts/UserContext";
 import { KR_ASSETS, KR_COLORS, KR_FONT, KR_GRADIENTS, KR_SURFACES } from "./assets";
 import { GoldText } from "./KrUi";
+
+// UserContext's key: it holds only frames the member picked themselves.
+const FRAME_STORAGE_KEY = "mrs_member_profile_frame";
+
+/**
+ * The frame the member picked, or null. UserContext auto-selects the tier's first
+ * frame when nothing is picked; that one gets the KR ring instead.
+ */
+export function useKrPickedFrameId() {
+  const { selectedFrameId, availableFrames, isLoadingFrames } = useUser();
+  const [pinned, setPinned] = useState(null);
+  useEffect(() => {
+    try {
+      setPinned(window.localStorage.getItem(FRAME_STORAGE_KEY));
+    } catch {
+      setPinned(null);
+    }
+  }, [selectedFrameId]);
+
+  if (isLoadingFrames || !pinned || pinned !== selectedFrameId || selectedFrameId === DEFAULT_FRAME_ID) return null;
+  const valid = (availableFrames || []).some((f) => f.id === selectedFrameId || f.uuid === selectedFrameId);
+  return valid ? selectedFrameId : null;
+}
+
+/** The signed-in member's avatar: their picked frame, else the KR ring. */
+export function KrMemberAvatar({ src, name, size = 79 }) {
+  const frameId = useKrPickedFrameId();
+  if (!frameId) return <KrAvatar src={src} name={name} size={size} />;
+  return <ProfileFrame src={src} frameId={frameId} size={size} alt={name || "Profile"} />;
+}
 
 /** Member photo inside the gold/blue avatar ring (Figma 664:802). */
 export function KrAvatar({ src, name, size = 79 }) {
@@ -77,7 +110,7 @@ export function KrPlaqueButton({ children, onClick, className = "", style, type 
 }
 
 /** VIP tier card with the deposit progress bar (Figma 664:813). */
-export function KrTierCard({ currentLevel, nextLevel, progress, tokensNeeded, loading = false }) {
+export function KrTierCard({ currentLevel, nextLevel, progress, tokensNeeded, loading = false, onRetry, retrying = false }) {
   const pct = Math.max(0, Math.min(100, Number(progress) || 0));
   const isTop = !nextLevel || nextLevel === currentLevel;
 
@@ -105,7 +138,20 @@ export function KrTierCard({ currentLevel, nextLevel, progress, tokensNeeded, lo
             {loading ? (
               "Loading your level…"
             ) : !currentLevel ? (
-              "Level details unavailable"
+              <>
+                Level details unavailable
+                {onRetry && (
+                  <button
+                    type="button"
+                    onClick={onRetry}
+                    disabled={retrying}
+                    className="ml-2 cursor-pointer font-semibold underline underline-offset-2 disabled:cursor-default disabled:opacity-60"
+                    style={{ color: KR_COLORS.gold }}
+                  >
+                    {retrying ? "Retrying…" : "Retry"}
+                  </button>
+                )}
+              </>
             ) : isTop ? (
               "Top tier reached"
             ) : (

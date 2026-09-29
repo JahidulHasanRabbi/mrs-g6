@@ -31,16 +31,22 @@ function formatAmount(value) {
   return amount.toFixed(2);
 }
 
-function HistoryRow({ row }) {
-  const { colors: COLORS, soft } = usePkColors();
+function describeAmount(row) {
   const amount = Number(row.amount ?? 0);
   const hasAmount = Number.isFinite(amount) && amount > 0;
-  const typeLabel = ITEM_TYPE_DISPLAY[String(row.sub || "").toUpperCase()] || row.sub || "—";
+  const mappedLabel = ITEM_TYPE_DISPLAY[String(row.sub || "").toUpperCase()];
+  const typeLabel = mappedLabel || row.sub || "—";
   const amountText = hasAmount
     ? typeLabel === "BP"
       ? `+${amount.toLocaleString("en-US")} BP`
       : `+${formatAmount(amount)}`
     : typeLabel;
+  return { hasAmount, mappedLabel, amountText };
+}
+
+function HistoryRow({ row }) {
+  const { colors: COLORS, soft } = usePkColors();
+  const { hasAmount, amountText } = describeAmount(row);
 
   return (
     <div
@@ -192,12 +198,28 @@ export default function HistoryDialog({
 
   if (isKingRewards) {
     const { Button } = theme;
+    const isGame = activeTab === "game";
+    const krRows = activeRows.map((r) => {
+      const { hasAmount, mappedLabel, amountText } = describeAmount(r);
+      return {
+        ...r,
+        sub: /^\d+$/.test(String(r.sub ?? "")) && mappedLabel ? mappedLabel : r.sub,
+        amountText: hasAmount ? amountText : mappedLabel || "",
+      };
+    });
     return (
       <KrPkHistoryDialog
-        rows={rows}
-        redeemedSummary={redeemedSummary}
+        activeTab={activeTab}
+        onTab={setActiveTab}
+        rows={krRows}
+        loading={prizeLoading && !isGame}
+        countLabel={isGame ? `${total} reward${total === 1 ? "" : "s"}` : `${prizeTotal} total`}
+        page={activeCurrentPage}
+        totalPages={activeTotalPages}
+        onPage={handlePageChange}
+        redeemedSummary={isGame ? redeemedSummary : ""}
         redeemButton={
-          hasRedeemableRows ? (
+          !isGame ? null : hasRedeemableRows ? (
             <ThemedRedeemAllButton onRedeemAll={onRedeemAll} onSummary={setRedeemedSummary} Button={Button} />
           ) : (
             <Button variant="gold" disabled>Redeem All</Button>

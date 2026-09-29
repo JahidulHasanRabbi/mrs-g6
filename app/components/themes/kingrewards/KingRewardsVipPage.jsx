@@ -3,8 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import LoadingState from "../../ui/LoadingState";
-import ErrorDisplay from "../../ui/ErrorDisplay";
 import { GlassCard, GoldText, KrArrowPill, PageTitle, formatKrAmount } from "./KrUi";
 import { KrOutlineButton } from "./KingRewardsProfileParts";
 import { KR_ASSETS, KR_COLORS, KR_FONT, KR_GRADIENTS, KR_SURFACES } from "./assets";
@@ -188,6 +186,15 @@ export default function KingRewardsVipPage() {
   }, [currentLevel, vipTiers]);
 
   const tier = useMemo(() => vipTiers.find((t) => t.name === selectedLevel) || null, [vipTiers, selectedLevel]);
+  const tierIndex = vipTiers.findIndex((t) => t.name === selectedLevel);
+
+  // Swipe the privileges to step tiers, like the default carousel.
+  const onSwipe = (_, info) => {
+    const { offset, velocity } = info;
+    if (Math.abs(offset.x) < Math.abs(offset.y) || (Math.abs(offset.x) < 50 && Math.abs(velocity.x) < 400)) return;
+    const next = vipTiers[tierIndex + (offset.x < 0 ? 1 : -1)];
+    if (next) setSelectedLevel(next.name);
+  };
 
   const stats = [
     {
@@ -226,9 +233,16 @@ export default function KingRewardsVipPage() {
       >
         <GlassCard className="flex w-full flex-col gap-6 px-2 py-4">
           {isLoading ? (
-            <LoadingState />
+            <p className="py-6 text-center text-[12px]" style={{ fontFamily: KR_FONT, color: KR_COLORS.sand }}>
+              Loading VIP levels…
+            </p>
           ) : error ? (
-            <ErrorDisplay message={error} onRetry={loadTiers} />
+            <div className="flex flex-col items-center gap-3 py-4 text-center" style={{ fontFamily: KR_FONT }}>
+              <p role="alert" className="text-[12px] leading-[1.3] text-white">{error}</p>
+              <KrOutlineButton style={{ paddingInline: 32 }} onClick={loadTiers}>
+                Retry
+              </KrOutlineButton>
+            </div>
           ) : vipTiers.length === 0 ? (
             <p className="py-6 text-center text-[12px]" style={{ fontFamily: KR_FONT, color: KR_COLORS.sand }}>
               No VIP levels are available right now.
@@ -237,9 +251,11 @@ export default function KingRewardsVipPage() {
             <div className="flex flex-col gap-3 overflow-hidden">
               <TierRail tiers={vipTiers} selected={selectedLevel} currentLevel={currentLevel} onSelect={setSelectedLevel} />
               <ViewingLine viewed={tier?.name} currentLevel={currentLevel} />
-              {stats.map((s) => (
-                <StatCard key={s.label} {...s} />
-              ))}
+              <motion.div className="flex flex-col gap-3" style={{ touchAction: "pan-y" }} onPanEnd={onSwipe}>
+                {stats.map((s) => (
+                  <StatCard key={s.label} {...s} />
+                ))}
+              </motion.div>
             </div>
           )}
 

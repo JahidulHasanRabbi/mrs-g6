@@ -98,8 +98,9 @@ const SKIN_EXTENSIONS = {
   // Hero creation: `footer` replaces the MRS FooterNav, `choiceOn`/`choiceOff`
   // restyle the gender buttons, `alignFeet` grounds both hero arts on one line.
   heroSelect: { footer: null, choiceOn: null, choiceOff: null, alignFeet: false },
-  // Avatar Level: false drops the two formula footnotes for a "BP to next level" line.
-  level: { formulas: true },
+  // Avatar Level: false drops the two formula footnotes for a "BP to next level" line;
+  // `note` is the footnote ink (null = c.slotEmpty).
+  level: { formulas: true, note: null },
   // Battle header: { nameSize, hp: { height, track, border, fill } }.
   battle: null,
   // "glass" = four flat tabs on a CSS bar; `glass` holds { bar, active, labelGradient }.

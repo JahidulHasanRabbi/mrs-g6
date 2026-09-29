@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import ProgressBar from "./StepIndicator";
 import { FORM_FIELDS } from "./constants";
 import { GlassCard, GoldText, PageTitle } from "../themes/kingrewards/KrUi";
-import { KrAvatar, KrOutlineButton, KrPlaqueButton } from "../themes/kingrewards/KingRewardsProfileParts";
+import { KrMemberAvatar, KrOutlineButton, KrPlaqueButton, useKrPickedFrameId } from "../themes/kingrewards/KingRewardsProfileParts";
 import KingRewardsDialog from "../themes/kingrewards/KingRewardsDialog";
 import KingRewardsButton from "../themes/kingrewards/KingRewardsButton";
 import { KR_ASSETS, KR_COLORS, KR_FONT, KR_SURFACES } from "../themes/kingrewards/assets";
@@ -161,6 +161,8 @@ export default function KingRewardsPersonalDataView({
 }) {
   const formRef = useRef(null);
   useKeepFocusedFieldVisible(formRef);
+  // Until a frame is picked the avatar wears the KR ring, so the cell says Default.
+  const pickedFrameId = useKrPickedFrameId();
 
   const onFieldFocus = (e) => {
     // Only typing fields raise the keyboard; select/date open native pickers.
@@ -183,7 +185,7 @@ export default function KingRewardsPersonalDataView({
       >
         <GlassCard className="flex w-full flex-col gap-6 px-2 py-4">
           <div className="flex items-center gap-2">
-            <KrAvatar src={profileImage} name={name} size={74} />
+            <KrMemberAvatar src={profileImage} name={name} size={74} />
             <div className="flex min-w-0 flex-1 flex-col items-start gap-3">
               <p className="max-w-full truncate text-[16px] font-medium leading-[1.2]" style={{ fontFamily: KR_FONT, color: KR_COLORS.goldText }}>
                 {name || "—"}
@@ -198,7 +200,7 @@ export default function KingRewardsPersonalDataView({
           <ProgressBar progress={progress} />
 
           <div className="flex gap-2">
-            <PickerCell icon={KR_ASSETS.profile.iconFrame} label="Frame" value={frameName} onClick={onOpenFrame} />
+            <PickerCell icon={KR_ASSETS.profile.iconFrame} label="Frame" value={pickedFrameId ? frameName : ""} onClick={onOpenFrame} />
             <PickerCell icon={KR_ASSETS.profile.iconTheme} label="Theme" value={themeName} onClick={onOpenTheme} />
           </div>
 

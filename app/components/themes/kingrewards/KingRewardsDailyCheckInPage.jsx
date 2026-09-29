@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { formatKrCoins } from "../../../api/apiOptions";
 import { useThemedCheckIn } from "../shared/useThemedCheckIn";
@@ -9,6 +9,9 @@ import KrCheckinMartDialog, { KrDialogLine, KrDialogPrize } from "./KrCheckinMar
 import KingRewardsButton from "./KingRewardsButton";
 import { GoldText, PageTitle } from "./KrUi";
 import { KR_ASSETS, KR_COLORS, KR_FONT } from "./assets";
+
+// Boss War's attack-point glyph (KingRewardsRpgSkin `war.icons.ap`).
+const ICON_AP = "/assets/themes/kingrewards/war/icon-damage.webp";
 
 const CARD_BASE = {
   background:
@@ -36,14 +39,24 @@ const num = (v) => {
 const range = (min, max) => (num(min) === num(max) ? `+${num(max).toLocaleString("en-US")}` : `+${num(min)}-${num(max)}`);
 
 /** Which currencies a day pays, from the admin check-in settings (KR Coins and/or BP). */
-function rewardOf(day) {
+function rewardOf(day, earned) {
+  if (earned) {
+    const parts = [];
+    if (earned.tokens > 0) parts.push(`+${earned.tokens.toLocaleString("en-US")}`);
+    if (earned.battlePoints > 0) parts.push(`+${earned.battlePoints.toLocaleString("en-US")} BP`);
+    if (earned.attackPoints > 0) parts.push(`+${earned.attackPoints.toLocaleString("en-US")} AP`);
+    if (parts.length) return { kr: earned.tokens > 0, bp: earned.battlePoints > 0, caption: parts.join(" · ") };
+  }
   const e = day.rewardEntry;
   const kr = !e || num(e.reward_maximum) > 0;
   const bp = !!e && num(e.battle_point_maximum) > 0;
+  const custom = day.reward;
   const parts = [];
-  if (e && kr) parts.push(range(e.reward_minimum, e.reward_maximum));
-  if (bp) parts.push(`${range(e.battle_point_minimum, e.battle_point_maximum)} BP`);
-  return { kr, bp, caption: day.reward || parts.join(" · ") };
+  if (custom) parts.push(custom);
+  else if (e && kr) parts.push(range(e.reward_minimum, e.reward_maximum));
+  // Custom admin text still gets the BP range unless it already names BP (as the legacy board did).
+  if (bp && !/\bBP\b|battle point/i.test(custom)) parts.push(`${range(e.battle_point_minimum, e.battle_point_maximum)} BP`);
+  return { kr, bp, caption: parts.join(" · ") };
 }
 
 /** "2026-09-29" (date-only, read as the local day) or a full timestamp, against today's local date. */
@@ -70,9 +83,9 @@ function RewardIcons({ kr, bp, wide }) {
   );
 }
 
-function DayCard({ day, state, index, onCheckIn, disabled }) {
+function DayCard({ day, state, index, onCheckIn, disabled, earned }) {
   const wide = day.isSpecial;
-  const { kr, bp, caption } = rewardOf(day);
+  const { kr, bp, caption } = rewardOf(day, earned);
   const isTodayCard = state === "today";
   const Tag = isTodayCard ? motion.button : motion.div;
   return (
@@ -135,9 +148,27 @@ export default function KingRewardsDailyCheckInPage() {
   const todayDay = checkedToday || isLoading ? null : claimedCount + 1;
 
   const stateOf = (d) => (d <= claimedCount ? "claimed" : d === todayDay ? "today" : "locked");
+
+  // The tile just claimed shows what the server actually credited, not the configured range.
+  const pendingDay = useRef(null);
+  const [earned, setEarned] = useState(null);
+  useEffect(() => {
+    if (dialog?.kind !== "success" || pendingDay.current == null) return;
+    setEarned({
+      day: pendingDay.current,
+      tokens: num(dialog.tokens),
+      battlePoints: num(dialog.battlePoints),
+      attackPoints: num(dialog.attackPoints),
+    });
+    pendingDay.current = null;
+  }, [dialog]);
+  const doCheckIn = () => {
+    pendingDay.current = todayDay;
+    checkInToday();
+  };
   const retry = () => {
     closeDialog();
-    checkInToday();
+    doCheckIn();
   };
 
   return (
@@ -171,8 +202,9 @@ export default function KingRewardsDailyCheckInPage() {
               day={d}
               state={stateOf(d.day)}
               index={i}
-              onCheckIn={checkInToday}
+              onCheckIn={doCheckIn}
               disabled={isCheckingIn}
+              earned={earned?.day === d.day && stateOf(d.day) === "claimed" ? earned : null}
             />
           ))}
         </div>
@@ -196,7 +228,7 @@ export default function KingRewardsDailyCheckInPage() {
             <p className="text-center text-[12px] text-[rgba(165,196,255,0.8)]">Come back tomorrow for your next reward.</p>
           </>
         ) : (
-          <KingRewardsButton variant="gold" onClick={checkInToday} disabled={isLoading || isCheckingIn || !todayDay}>
+          <KingRewardsButton variant="gold" onClick={doCheckIn} disabled={isLoading || isCheckingIn || !todayDay}>
             {isCheckingIn ? "Checking In…" : "Check In"}
           </KingRewardsButton>
         )}
@@ -226,6 +258,9 @@ export default function KingRewardsDailyCheckInPage() {
         )}
         {dialog?.kind === "success" && num(dialog.battlePoints) > 0 && (
           <KrDialogPrize image={KR_ASSETS.ui.iconBp}>{num(dialog.battlePoints).toLocaleString("en-US")} BP</KrDialogPrize>
+        )}
+        {dialog?.kind === "success" && num(dialog.attackPoints) > 0 && (
+          <KrDialogPrize image={ICON_AP}>{num(dialog.attackPoints).toLocaleString("en-US")} AP</KrDialogPrize>
         )}
       </KrCheckinMartDialog>
     </div>

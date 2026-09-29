@@ -6,6 +6,7 @@ import KingRewardsButton from "./KingRewardsButton";
 import { CardTitle, GlassCard, GoldText, KrImage, formatKrAmount } from "./KrUi";
 import { KR_ASSETS, KR_COLORS, KR_FONT, KR_GRADIENTS } from "./assets";
 import { formatKrCoins } from "../../../api/apiOptions";
+import KrPagination from "./KrPagination";
 
 // Sections shared by the King Rewards Lucky Spin and Smash Egg pages
 // (Figma 706:1061 / 707:4251): reward list, winners table, terms, result dialog.
@@ -95,14 +96,14 @@ function RankMedal({ rank }) {
 }
 
 /** "REWARD LIST" panel. rows: [{ key, rankLabel?, rank?, name, image }] */
-export function KrRewardList({ rows = [], loading = false, rowShadow = false, compact = false }) {
+export function KrRewardList({ rows = [], loading = false, error = null, rowShadow = false, compact = false }) {
   return (
     <GlassCard className="flex w-full flex-col items-center gap-6 px-2 py-4">
       <CardTitle className="w-full pb-2">Reward List</CardTitle>
       <div className="flex w-full flex-col gap-3">
         {rows.length === 0 ? (
           <p className="py-2 text-center text-[14px]" style={{ fontFamily: KR_FONT, color: KR_COLORS.cream }}>
-            {loading ? "Loading rewards…" : "No rewards available."}
+            {loading ? "Loading rewards…" : error ? "Couldn't load rewards. Please try again later." : "No rewards available."}
           </p>
         ) : (
           rows.map((row, i) => (
@@ -146,59 +147,8 @@ export function KrRewardList({ rows = [], loading = false, rowShadow = false, co
   );
 }
 
-function pageWindow(page, totalPages) {
-  const start = Math.max(1, Math.min(page - 1, totalPages - 3));
-  const end = Math.min(totalPages, start + 3);
-  return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-}
-
-function Pagination({ page, totalPages, onPage }) {
-  const pages = pageWindow(page, totalPages);
-  const numStyle = { fontFamily: KR_FONT, letterSpacing: 1 };
-  const arrow = (dir) => (
-    <button
-      type="button"
-      aria-label={dir < 0 ? "Previous page" : "Next page"}
-      disabled={dir < 0 ? page <= 1 : page >= totalPages}
-      onClick={() => onPage(page + dir)}
-      className="grid h-6 w-6 cursor-pointer place-items-center disabled:cursor-not-allowed disabled:opacity-40"
-    >
-      <img src={KR_ASSETS.ui.iconArrowLeft} alt="" className={`h-4 w-4 ${dir > 0 ? "-scale-x-100" : ""}`} />
-    </button>
-  );
-  return (
-    <div className="flex items-center justify-between px-1 pb-1">
-      {arrow(-1)}
-      <div className="flex items-center gap-4">
-        {pages.map((p) => (
-          <button
-            key={p}
-            type="button"
-            onClick={() => onPage(p)}
-            className={`cursor-pointer text-[10px] font-medium leading-[15px] ${p === page ? "underline underline-offset-2" : ""}`}
-            style={{ ...numStyle, color: p === page ? KR_COLORS.gold : "#ffffff" }}
-          >
-            {p}
-          </button>
-        ))}
-        {pages[pages.length - 1] < totalPages && (
-          <button
-            type="button"
-            onClick={() => onPage(totalPages)}
-            className="cursor-pointer text-[10px] font-medium leading-[15px] text-white"
-            style={numStyle}
-          >
-            ...{totalPages}
-          </button>
-        )}
-      </div>
-      {arrow(1)}
-    </div>
-  );
-}
-
 /**
- * Winner List / Win Record panel. rows: [{ date, user, amount }].
+ * Winner List / Win Record panel. rows: [{ date, user, amount, icon? }].
  * Pages client-side unless the caller drives it (page/total/onPage).
  */
 export function KrWinnersPanel({
@@ -278,8 +228,9 @@ export function KrWinnersPanel({
               <div key={`${row.date}-${row.user}-${row.amount}-${i}`} className={`${cols} text-[10px] leading-[1.3] text-white`}>
                 <span className="whitespace-nowrap">{row.date}</span>
                 <span className="truncate">{row.user}</span>
-                <span className="truncate text-right" title={row.amount}>
-                  {row.amount}
+                <span className="flex min-w-0 items-center justify-end gap-1" title={row.amount}>
+                  {row.icon && <img src={row.icon} alt="" className="h-3 w-3 shrink-0 object-contain" />}
+                  <span className="truncate">{row.amount}</span>
                 </span>
               </div>
             ))
@@ -287,7 +238,7 @@ export function KrWinnersPanel({
         </div>
       </div>
 
-      {totalPages > 1 && <Pagination page={page} totalPages={totalPages} onPage={controlled ? onPage : setLocalPage} />}
+      {totalPages > 1 && <KrPagination page={page} totalPages={totalPages} onPage={controlled ? onPage : setLocalPage} />}
       {footer}
     </GlassCard>
   );

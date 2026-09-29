@@ -114,9 +114,72 @@ const WINNER_TABS = [
 
 const INSUFFICIENT = /enough|insufficient|balance|credit|token/i;
 
+const BP_NAME = /\bBP\b|battle point/i;
+const ITEM_TYPE_BY_KEY = { 1: 'FREE CREDIT', 2: 'ITEM', 3: 'TOKEN', 5: 'BATTLE POINT' };
+
+function spinItemType(value) {
+  const raw = String(value ?? '').trim().toUpperCase();
+  return ITEM_TYPE_BY_KEY[raw] || raw;
+}
+
+// Same rule as the default spin page: "Bonus" becomes "Bonus (500 BP)".
+function formatSpinReward(result) {
+  const name = result?.reward_name || 'Reward';
+  const amount = Number(result?.battle_point_amount ?? 0);
+  if (spinItemType(result?.item_type) === 'BATTLE POINT' && amount > 0 && !BP_NAME.test(name)) {
+    return `${name} (${amount.toLocaleString('en-US')} BP)`;
+  }
+  return name;
+}
+
+// The spin result may omit item_type / BP amount; fill only the gaps so a resolved name like "RM2.64" survives.
+function withConfiguredItem(result, spinItems) {
+  const configured = spinItems.find((item) => item.uuid === result.uuid);
+  if (!configured) return result;
+  const merged = { ...result };
+  Object.entries(configured).forEach(([key, value]) => {
+    if (merged[key] == null || merged[key] === '') merged[key] = value;
+  });
+  return merged;
+}
+
+function rewardIcon(isBattlePoint) {
+  return isBattlePoint ? KR_ASSETS.ui.iconBp : KR_ASSETS.ui.iconCoins;
+}
+
+// Default RewardsList order: items, KR Coins, BP, then free-credit ranges.
+function buildRewardRows(items) {
+  const groups = { ITEM: [], TOKEN: [], 'BATTLE POINT': [], OTHER: [], 'FREE CREDIT': [] };
+  items.forEach((item, i) => {
+    const type = spinItemType(item.item_type);
+    const name = item.reward_name || 'Reward';
+    const key = item.uuid || i;
+    if (type === 'TOKEN') {
+      const amount = Number(item.token_amount ?? name);
+      const label = /token|kr coin/i.test(name) ? name : `${name} KR Coin${amount === 1 ? '' : 's'}`;
+      groups.TOKEN.push({ key, name: label, image: item.image });
+    } else if (type === 'BATTLE POINT') {
+      const amount = Number(item.battle_point_amount ?? 0);
+      const label = BP_NAME.test(name) ? name : `${name}${amount > 0 ? ` (${amount.toLocaleString('en-US')} BP)` : ' BP'}`;
+      groups['BATTLE POINT'].push({ key, name: label, image: item.image || KR_ASSETS.ui.iconBp });
+    } else if (type === 'FREE CREDIT') {
+      groups['FREE CREDIT'].push({
+        key,
+        rankLabel: 'Free Credit',
+        name: `RM${item.min_withdraw ?? 0} ~ RM${item.max_withdraw ?? 0}`,
+        image: item.image,
+      });
+    } else {
+      (groups[type] || groups.OTHER).push({ key, name, image: item.image });
+    }
+  });
+  return Object.values(groups).flat();
+}
+
 export default function KingRewardsSpinPage() {
   const [spinItems, setSpinItems] = useState([]);
   const [itemsLoading, setItemsLoading] = useState(true);
+  const [itemsError, setItemsError] = useState(null);
   const [isSpinning, setIsSpinning] = useState(false);
   const [dialog, setDialog] = useState(null);
   const [userWinnings, setUserWinnings] = useState([]);
@@ -147,6 +210,7 @@ export default function KingRewardsSpinPage() {
         setSpinItems(mapLuckySpinItems(response));
       } catch (error) {
         console.error('Error fetching spin items:', error);
+        setItemsError(error?.message || 'Failed to load rewards');
       } finally {
         setItemsLoading(false);
       }
@@ -177,7 +241,15 @@ export default function KingRewardsSpinPage() {
         const data = await getWinningList();
         if (cancelled || !Array.isArray(data)) return;
         setWinners(
-          data.map((it) => ({ date: formatKrDate(it.datetime_obtained), user: maskName(it.display_name), amount: it.prize_name }))
+          data.map((it) => {
+            const isBattlePoint = spinItemType(it.item_type) === 'BATTLE POINT';
+            return {
+              date: formatKrDate(it.datetime_obtained),
+              user: maskName(it.display_name),
+              amount: formatSpinReward({ ...it, reward_name: it.prize_name }),
+              icon: rewardIcon(isBattlePoint),
+            };
+          })
         );
       } catch (error) {
         console.error('Failed to fetch winning list:', error);
@@ -207,14 +279,14 @@ export default function KingRewardsSpinPage() {
     if (results.length > 0) {
       const newWinnings = results.map((r) => ({
         date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-        reward: r.reward_name,
+        reward: formatSpinReward(r),
       }));
       setUserWinnings((prev) => [...newWinnings, ...prev]);
 
       const grouped = {};
       results.forEach((r) => {
-        const key = r.reward_name;
-        if (!grouped[key]) grouped[key] = { name: r.reward_name, image: r.image, count: 0 };
+        const key = formatSpinReward(r);
+        if (!grouped[key]) grouped[key] = { name: key, image: r.image, count: 0 };
         grouped[key].count += 1;
       });
       const items = Object.values(grouped).map((g) => ({
@@ -247,7 +319,7 @@ export default function KingRewardsSpinPage() {
         spinResultsRef.current = null;
         spinErrorRef.current = null;
         const response = await spinFunction(memberUuid);
-        spinResultsRef.current = mapSpinResults(response);
+        spinResultsRef.current = mapSpinResults(response).map((r) => withConfiguredItem(r, spinItems));
         setIsSpinning(true);
         await refreshUserData();
         isProcessingRef.current = false;
@@ -267,7 +339,7 @@ export default function KingRewardsSpinPage() {
         return false;
       }
     },
-    [isSpinning, canAfford, refreshUserData]
+    [isSpinning, canAfford, refreshUserData, spinItems]
   );
 
   const handleCenterSpin = useCallback(async () => {
@@ -301,11 +373,7 @@ export default function KingRewardsSpinPage() {
     window.location.href = `${base.replace(/\/$/, '')}/promotion`;
   }, []);
 
-  const rewardRows = useMemo(
-    () =>
-      spinItems.map((item, i) => ({ key: item.uuid || i, name: item.reward_name, image: item.image })),
-    [spinItems]
-  );
+  const rewardRows = useMemo(() => buildRewardRows(spinItems), [spinItems]);
 
   const cssGrid = useMemo(
     () => ({
@@ -321,7 +389,7 @@ export default function KingRewardsSpinPage() {
 
   const recordRows = useMemo(() => {
     const me = maskName(userData?.name || '') || 'You';
-    return userWinnings.map((w) => ({ date: w.date, user: me, amount: w.reward }));
+    return userWinnings.map((w) => ({ date: w.date, user: me, amount: w.reward, icon: rewardIcon(BP_NAME.test(w.reward)) }));
   }, [userWinnings, userData?.name]);
 
   const dialogProps = (() => {
@@ -409,7 +477,7 @@ export default function KingRewardsSpinPage() {
           </div>
         )}
 
-        <KrRewardList rows={rewardRows} loading={itemsLoading} rowShadow compact />
+        <KrRewardList rows={rewardRows} loading={itemsLoading} error={itemsError} rowShadow compact />
 
         <KrWinnersPanel
           tabs={WINNER_TABS}
