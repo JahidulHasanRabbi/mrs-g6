@@ -58,14 +58,12 @@ export function getThemeLabel(themeId) {
 
 // Substring rules matched against the hostname of the stored origin URL.
 // First match wins.
-const ORIGIN_THEME_RULES = [
-  { match: 'acebet77', themeId: THEME_IDS.ACEBET77 },
-  { match: 'ubetclub', themeId: THEME_IDS.UBETCLUB },
-  { match: 'ep369', themeId: THEME_IDS.EP369 },
-  { match: 'kgame99', themeId: THEME_IDS.KGAME99 },
-  { match: 'lv918', themeId: THEME_IDS.LV918 },
-  { match: 'n1gang', themeId: THEME_IDS.N1GANG },
-];
+//
+// Empty on purpose: every station now gets King Rewards (BASE_THEME_ID), so the
+// `o` origin no longer switches the skin. Members can still pick another skin by
+// hand in Personal Data → Change Theme. To bring per-station skins back, restore
+// rules like { match: 'acebet77', themeId: THEME_IDS.ACEBET77 }.
+const ORIGIN_THEME_RULES = [];
 
 /**
  * Read the `o` origin out of a query string ("?id=1&o=https%3A%2F%2Facebet77.me%2F").
