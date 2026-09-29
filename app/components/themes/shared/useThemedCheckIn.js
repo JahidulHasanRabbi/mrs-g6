@@ -85,12 +85,24 @@ export function useThemedCheckIn() {
       const tokens = response?.tokens_obtained;
       const battlePoints =
         response?.battle_point_amount ?? response?.battle_points_obtained ?? response?.battle_point_obtained;
-      const earned =
-        tokens != null ? `${tokens} KR Coin${tokens !== 1 ? "s" : ""}` : "your reward";
+      const attackPoints =
+        response?.attack_points_obtained ?? response?.attack_point_amount ?? response?.attack_point_obtained;
+      const rewardParts = [];
+      if (tokens != null && Number(tokens) > 0) {
+        rewardParts.push(`${tokens} KR Coin${Number(tokens) !== 1 ? "s" : ""}`);
+      }
+      if (battlePoints != null && Number(battlePoints) > 0) {
+        rewardParts.push(`${Number(battlePoints).toLocaleString("en-US")} BP`);
+      }
+      if (attackPoints != null && Number(attackPoints) > 0) {
+        rewardParts.push(`${Number(attackPoints).toLocaleString("en-US")} AP`);
+      }
+      const earned = rewardParts.join(" + ") || "your reward";
       setDialog({
         kind: "success",
         tokens,
         battlePoints: battlePoints != null ? Number(battlePoints) : null,
+        attackPoints: attackPoints != null ? Number(attackPoints) : null,
         message: `Congratulations! You've checked in for today and earned ${earned}!`,
       });
 
