@@ -104,13 +104,13 @@ function HistoryButton({ title, onClick, delay = 0, bannerSrc, textColor, object
   );
 }
 
-function HistoryPagination({ currentPage, totalPages, onPageChange, color, activeColor }) {
+function HistoryPagination({ currentPage, totalPages, onPageChange, color, activeColor, gap = 20 }) {
   const pageItems = getHistoryPageNumbers(currentPage, totalPages);
 
   return (
     <div
-      className="relative flex items-center justify-center gap-5 font-['Times_New_Roman'] text-[16px]"
-      style={{ color }}
+      className="relative flex items-center justify-center font-['Times_New_Roman'] text-[16px]"
+      style={{ gap, color }}
     >
       <button
         type="button"
@@ -214,25 +214,25 @@ function HistoryModal({ type, onClose }) {
   // Swap in the deep-rose ink tones the rest of the lv918 panels already use.
   const textSkin = isLv918
     ? {
-        title: LV918_COLORS.inkTitle,
-        titleShadow: "drop-shadow-[0_1px_1px_rgba(255,255,255,0.6)]",
-        header: LV918_COLORS.inkLabel,
-        headerRule: "rgba(107, 10, 50, 0.35)",
-        row: LV918_COLORS.inkStrong,
-        muted: LV918_COLORS.inkMuted,
-        page: LV918_COLORS.inkLabel,
-        pageActive: LV918_COLORS.inkTitle,
-      }
+      title: LV918_COLORS.inkTitle,
+      titleShadow: "drop-shadow-[0_1px_1px_rgba(255,255,255,0.6)]",
+      header: LV918_COLORS.inkLabel,
+      headerRule: "rgba(107, 10, 50, 0.35)",
+      row: LV918_COLORS.inkStrong,
+      muted: LV918_COLORS.inkMuted,
+      page: LV918_COLORS.inkLabel,
+      pageActive: LV918_COLORS.inkTitle,
+    }
     : {
-        title: "#f1cf75",
-        titleShadow: "drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]",
-        header: "#efc868",
-        headerRule: "rgba(239, 200, 104, 0.25)",
-        row: "#f8f0db",
-        muted: "rgba(248, 240, 219, 0.5)",
-        page: "#efc868",
-        pageActive: "#efc868",
-      };
+      title: "#f1cf75",
+      titleShadow: "drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]",
+      header: "#efc868",
+      headerRule: "rgba(239, 200, 104, 0.25)",
+      row: "#f8f0db",
+      muted: "rgba(248, 240, 219, 0.5)",
+      page: "#efc868",
+      pageActive: "#efc868",
+    };
 
   // Lv918's scroll frame is a square (1254²) stretched into the 376×498 modal,
   // which drops its crown-and-bow ornaments much further into the box than the
@@ -253,18 +253,23 @@ function HistoryModal({ type, onClose }) {
     // columns and the gap, and drop the header a point, to fit the plate.
     : isN1gang
       ? {
-          titleTop: "126px", left: "82px", width: "211px", contentTop: "160px", rowsMaxHeight: "150px",
-          gridTemplateColumns: config.title === "Reward History" ? "50px 34px 1fr 1fr" : "50px 1fr 1fr 44px",
-          gapX: "6px",
-          headerFontSize: "9px",
-        }
+        titleTop: "126px", left: "82px", width: "211px", contentTop: "160px", rowsMaxHeight: "150px",
+        gridTemplateColumns: config.title === "Reward History" ? "50px 34px 1fr 1fr" : "50px 1fr 1fr 44px",
+        gapX: "6px",
+        headerFontSize: "9px",
+      }
       : {
-          titleTop: themed ? "78px" : "42px",
-          left: isUbetclub ? "62px" : (isAcebet77 || isEp369 || isKgame99) ? "58px" : config.contentOffset,
-          width: isUbetclub ? "236px" : (isAcebet77 || isEp369 || isKgame99) ? "246px" : config.contentWidth,
-          contentTop: config.contentTop,
-          rowsMaxHeight: "195px",
-        };
+        titleTop: themed ? "78px" : "42px",
+        left: isUbetclub ? "62px" : (isAcebet77 || isEp369 || isKgame99) ? "58px" : config.contentOffset,
+        width: isUbetclub ? "236px" : (isAcebet77 || isEp369 || isKgame99) ? "246px" : config.contentWidth,
+        contentTop: config.contentTop,
+        rowsMaxHeight: "195px",
+        // Top ornament ends at 88 / 98 / 99px on these frames (measured at
+        // 376×498); 78px put the title on the scrollwork. Rows end above the pager.
+        ...(isUbetclub && { titleTop: "94px", contentTop: "128px", rowsMaxHeight: "184px" }),
+        ...(isEp369 && { titleTop: "104px", contentTop: "138px", rowsMaxHeight: "174px" }),
+        ...(isKgame99 && { titleTop: "105px", contentTop: "139px", rowsMaxHeight: "173px" }),
+      };
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -322,7 +327,7 @@ function HistoryModal({ type, onClose }) {
         transition={{ duration: 0.22, ease: "easeOut" }}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="relative h-full w-full overflow-hidden">
+        <div className="relative h-full w-full overflow-hidden ">
           <Image
             src={frameSrc}
             alt=""
@@ -331,6 +336,7 @@ function HistoryModal({ type, onClose }) {
             priority
             className="pointer-events-none select-none object-fill"
           />
+
 
           <h3
             id="history-modal-title"
@@ -446,6 +452,8 @@ function HistoryModal({ type, onClose }) {
               onPageChange={handlePageChange}
               color={textSkin.page}
               activeColor={textSkin.pageActive}
+              // The station frames' rails leave ~240px; 20px gaps made the row ~262px.
+              gap={themed ? 13 : 20}
             />
           </div>
 
