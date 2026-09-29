@@ -180,7 +180,11 @@ export function KrWinnersPanel({
   }, [controlled, localPage, totalPages]);
 
   const hairline = bordered ? `1px solid ${KR_COLORS.goldBright}` : undefined;
-  const cols = "grid grid-cols-[minmax(0,1fr)_75px_minmax(0,1fr)] items-center gap-2";
+  // Date is a fixed-width "dd/mm/yyyy" and the masked user is short, so both get a
+  // narrow fixed column — the prize name gets the rest and wraps instead of the
+  // old equal-thirds split, which clipped long prize names with no way to read
+  // the rest on a touch device (no hover for the `title` fallback).
+  const cols = "grid grid-cols-[62px_56px_minmax(0,1fr)] items-start gap-2";
 
   return (
     <GlassCard radius={12} className="flex w-full flex-col gap-2 p-1">
@@ -228,9 +232,9 @@ export function KrWinnersPanel({
               <div key={`${row.date}-${row.user}-${row.amount}-${i}`} className={`${cols} text-[10px] leading-[1.3] text-white`}>
                 <span className="whitespace-nowrap">{row.date}</span>
                 <span className="truncate">{row.user}</span>
-                <span className="flex min-w-0 items-center justify-end gap-1" title={row.amount}>
-                  {row.icon && <img src={row.icon} alt="" className="h-3 w-3 shrink-0 object-contain" />}
-                  <span className="truncate">{row.amount}</span>
+                <span className="flex min-w-0 items-start justify-end gap-1 text-right" title={row.amount}>
+                  {row.icon && <img src={row.icon} alt="" className="h-3 w-3 shrink-0 object-contain mt-[1px]" />}
+                  <span className="break-words">{row.amount}</span>
                 </span>
               </div>
             ))

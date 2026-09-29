@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { redirectToStation } from "./MenuItem";
 import { ANIMATION_CONFIG, MENU_CONFIG } from "./menuConfig";
 import { NationalDayMenuOverlay } from "../phase4/NationalDayChrome";
@@ -55,21 +55,10 @@ const KR_MENU_GROUPS = [
 
 const DIVIDER = "linear-gradient(90deg, rgba(96,96,96,0.35), rgba(255,255,255,0.35), rgba(96,96,96,0.35))";
 
-const panelVariants = {
-  hidden: { opacity: 0, scale: 0.92, y: -8 },
-  show: {
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: { type: "spring", stiffness: 320, damping: 28, staggerChildren: 0.05, delayChildren: 0.05 },
-  },
-  exit: { opacity: 0, scale: 0.95, y: -8, transition: { duration: 0.15 } },
-};
-
-const cardVariants = {
-  hidden: { opacity: 0, y: -10 },
-  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
-};
+// Slide transform for the 220px edge-anchored panel — same shape and spring as
+// the shared HamburgerMenu sidebar (menuConfig.js ANIMATION_CONFIG.sidebar),
+// so King Rewards' drawer opens/closes like every other skin's.
+const SIDEBAR_TRANSITION = { type: "spring", stiffness: 300, damping: 30 };
 
 // Fetched once per session, like the default drawer; a failed fetch retries on the next open.
 let sidePanelBannerRequest = null;
@@ -107,7 +96,7 @@ function SidePanelBanner() {
     window.open(url, "_blank", "noopener,noreferrer");
   };
   return (
-    <motion.div variants={cardVariants} className="flex justify-center rounded-[8px] bg-[rgba(255,255,255,0.1)] p-2">
+    <div className="flex justify-center rounded-[8px] bg-[rgba(255,255,255,0.1)] p-2">
       <button
         type="button"
         onClick={open}
@@ -117,7 +106,7 @@ function SidePanelBanner() {
       >
         <img src={banner.image} alt={banner.name || "Banner"} draggable={false} className="h-full w-full object-cover" />
       </button>
-    </motion.div>
+    </div>
   );
 }
 
@@ -191,7 +180,62 @@ function Row({ item, compact, onClose, onAction, pathname }) {
   );
 }
 
-/** King Rewards side menu: a glass drop-down panel of grouped cards under the header. */
+/** Chevron that flips 180deg when open — same glyph as the shared menu's MenuSection. */
+function Chevron({ open }) {
+  return (
+    <motion.svg
+      viewBox="0 0 16 16"
+      className="size-[15px] shrink-0"
+      fill="none"
+      aria-hidden="true"
+      animate={{ rotate: open ? 180 : 0 }}
+      transition={{ duration: 0.25 }}
+    >
+      <path d="m3 6 5 5 5-5" stroke={KR_COLORS.goldText} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </motion.svg>
+  );
+}
+
+/**
+ * A row whose children collapse behind it — same accordion behaviour as the
+ * shared menu's MenuSection (defaultOpen false, tap the row to toggle),
+ * instead of the old always-expanded shortcut list.
+ */
+function ExpandableRow({ item, compact, onClose }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-label={item.label}
+        className={`flex w-full cursor-pointer items-center gap-2 rounded-[6px] transition-colors hover:bg-white/10 active:scale-[0.99] ${compact ? "py-1" : "py-2"}`}
+      >
+        <img src={item.icon} alt="" draggable={false} className="size-6 shrink-0 select-none object-contain" />
+        <GoldText className="flex-1 truncate text-left text-[14px] font-bold uppercase">{item.label}</GoldText>
+        <Chevron open={open} />
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden"
+          >
+            {item.children.map((child) => (
+              <SubRow key={child.label} item={child} onClose={onClose} />
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/** King Rewards side menu: same 220px full-height edge-anchored panel every other skin uses. */
 export default function KingRewardsMenuDrawer({ onClose, onAction }) {
   const pathname = usePathname();
   return (
@@ -209,12 +253,12 @@ export default function KingRewardsMenuDrawer({ onClose, onAction }) {
           role="dialog"
           aria-modal="true"
           aria-label="Navigation menu"
-          className="scrollbar-hide pointer-events-auto absolute left-4 right-4 top-[56px] mx-auto flex max-h-[calc(100dvh-72px)] max-w-[380px] origin-top-left flex-col gap-2 overflow-y-auto overscroll-contain rounded-[16px] px-2 py-4 min-[412px]:right-auto min-[412px]:w-[380px]"
-          style={{ ...KR_SURFACES.glass, fontFamily: KR_FONT }}
-          variants={panelVariants}
-          initial="hidden"
-          animate="show"
-          exit="exit"
+          className="pointer-events-auto absolute left-0 top-0 flex h-dvh w-[220px] flex-col gap-2 overflow-y-auto overscroll-contain px-2 py-4"
+          style={{ ...KR_SURFACES.glass, fontFamily: KR_FONT, scrollbarGutter: "stable" }}
+          initial={{ x: "-100%" }}
+          animate={{ x: 0 }}
+          exit={{ x: "-100%" }}
+          transition={SIDEBAR_TRANSITION}
         >
           <NationalDayMenuOverlay />
           <SidePanelBanner />
@@ -222,9 +266,8 @@ export default function KingRewardsMenuDrawer({ onClose, onAction }) {
             {KR_MENU_GROUPS.map((group, gi) => {
               const last = gi === KR_MENU_GROUPS.length - 1;
               return (
-                <motion.div
+                <div
                   key={group.title || "station"}
-                  variants={cardVariants}
                   className={`flex flex-col gap-2 rounded-[8px] bg-[rgba(255,255,255,0.1)] px-2 ${last ? "py-2" : "pt-2"}`}
                 >
                   {group.title && (
@@ -234,14 +277,15 @@ export default function KingRewardsMenuDrawer({ onClose, onAction }) {
                     {group.items.map((item, i) => (
                       <Fragment key={item.label}>
                         {i > 0 && <span aria-hidden="true" className="h-px w-full" style={{ background: DIVIDER }} />}
-                        <Row item={item} compact={last} onClose={onClose} onAction={onAction} pathname={pathname} />
-                        {item.children?.map((child) => (
-                          <SubRow key={child.label} item={child} onClose={onClose} />
-                        ))}
+                        {item.children ? (
+                          <ExpandableRow item={item} compact={last} onClose={onClose} />
+                        ) : (
+                          <Row item={item} compact={last} onClose={onClose} onAction={onAction} pathname={pathname} />
+                        )}
                       </Fragment>
                     ))}
                   </div>
-                </motion.div>
+                </div>
               );
             })}
           </nav>
