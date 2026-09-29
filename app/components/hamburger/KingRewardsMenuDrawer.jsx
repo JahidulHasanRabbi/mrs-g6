@@ -6,6 +6,7 @@ import { Fragment, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { redirectToStation } from "./MenuItem";
 import { ANIMATION_CONFIG, MENU_CONFIG } from "./menuConfig";
+import { NationalDayMenuOverlay } from "../phase4/NationalDayChrome";
 import { getPublicBanners } from "@/app/api/memberApi";
 import { GoldText } from "../themes/kingrewards/KrUi";
 import { KR_ASSETS, KR_COLORS, KR_FONT, KR_GRADIENTS, KR_SURFACES } from "../themes/kingrewards/assets";
@@ -215,7 +216,7 @@ export default function KingRewardsMenuDrawer({ onClose, onAction }) {
           animate="show"
           exit="exit"
         >
-          <SidePanelBanner />
+          <NationalDayMenuOverlay />
           <SidePanelBanner />
           <nav role="menu" className="flex flex-col gap-2">
             {KR_MENU_GROUPS.map((group, gi) => {

@@ -289,6 +289,7 @@ function historyReward(item) {
     [
       Number(item.token_amount ?? 0) > 0 ? formatKrCoins(Number(item.token_amount)) : null,
       Number(item.battle_point_amount ?? 0) > 0 ? `${Number(item.battle_point_amount).toLocaleString("en-US")} BP` : null,
+      Number(item.attack_point_amount ?? 0) > 0 ? `${Number(item.attack_point_amount).toLocaleString("en-US")} AP` : null,
     ]
       .filter(Boolean)
       .join(" + ") || "No reward"

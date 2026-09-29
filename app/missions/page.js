@@ -94,8 +94,10 @@ function mapMission(row) {
   const rewardParts = [];
   const tokens = Number(row.reward_token_quantity ?? 0);
   const battlePoints = Number(row.reward_battle_point_quantity ?? 0);
+  const attackPoints = Number(row.reward_attack_point_quantity ?? 0);
   if (tokens > 0) rewardParts.push(formatKrCoins(tokens));
   if (battlePoints > 0) rewardParts.push(`${battlePoints.toLocaleString("en-US")} BP`);
+  if (attackPoints > 0) rewardParts.push(`${attackPoints.toLocaleString("en-US")} AP`);
   return {
     id: row.uuid,
     tab: MISSION_TAB_BY_CATEGORY[row.category] ?? "daily",
@@ -685,6 +687,9 @@ export default function MissionsPage() {
                           : null,
                         Number(item.battle_point_amount ?? 0) > 0
                           ? `${Number(item.battle_point_amount).toLocaleString("en-US")} BP`
+                          : null,
+                        Number(item.attack_point_amount ?? 0) > 0
+                          ? `${Number(item.attack_point_amount).toLocaleString("en-US")} AP`
                           : null,
                       ].filter(Boolean).join(" + ") || "No reward"}
                     </span>
