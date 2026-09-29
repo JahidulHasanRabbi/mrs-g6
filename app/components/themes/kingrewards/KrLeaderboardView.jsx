@@ -54,6 +54,19 @@ const RANK_TILES = {
 
 const TABS = ENABLED_LEADERBOARD_TYPES.map((type) => ({ id: type, label: LEADERBOARD_CONFIG[type].label }));
 
+const titleCase = (text) => String(text || "").toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+
+/** dd/mm/yyyy, plus HH:MM AM|PM when `withTime` (project format). */
+function formatWhen(ms, withTime = false) {
+  const d = ms ? new Date(ms) : null;
+  if (!d || Number.isNaN(d.getTime())) return "";
+  const date = d.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
+  if (!withTime) return date;
+  return `${date} ${d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })}`;
+}
+
+const metricText = (config, value) => (config.myRankMetricKind === "currency" ? `RM ${value}` : value);
+
 function Shimmer({ className = "" }) {
   return <div className={`animate-pulse rounded bg-white/15 ${className}`} />;
 }
@@ -62,13 +75,13 @@ function RankTile({ rank }) {
   const tile = RANK_TILES[Math.min(Math.max(Number(rank) || 3, 1), 3)];
   return (
     <div
-      className="flex aspect-square w-[clamp(60px,20vw,84px)] shrink-0 items-center justify-center rounded-[12px]"
+      className="flex aspect-square w-[clamp(48px,14vw,60px)] shrink-0 items-center justify-center rounded-[12px]"
       style={tile}
     >
       {Number(rank) === 1 ? (
-        <img src={KR_ASSETS.leaderboard.iconStar} alt="1st" className="h-7 w-[30px]" draggable={false} />
+        <img src={KR_ASSETS.leaderboard.iconStar} alt="1st" className="h-6 w-[26px]" draggable={false} />
       ) : (
-        <span className="text-[24px] font-extrabold leading-9" style={{ fontFamily: MONO, color: tile.color }}>
+        <span className="text-[22px] font-extrabold leading-8" style={{ fontFamily: MONO, color: tile.color }}>
           {rank}
         </span>
       )}
@@ -76,39 +89,40 @@ function RankTile({ rank }) {
   );
 }
 
+function YouChip() {
+  return (
+    <span className="shrink-0 rounded-[4px] px-[6px] text-[10px] font-bold uppercase leading-4" style={{ background: KR_COLORS.goldBright, color: KR_COLORS.onGold }}>
+      You
+    </span>
+  );
+}
+
 function PodiumRow({ entry, rank, config, isCurrentUser }) {
-  const ink = isCurrentUser ? TABLE.onGold : TABLE.text;
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: rank * 0.08 }}
-      className="flex w-full items-center gap-[clamp(12px,5vw,24px)] rounded-[12px] p-[clamp(12px,4vw,17px)]"
-      style={isCurrentUser ? { ...INNER_BORDERED, background: KR_GRADIENTS.gold } : INNER_BORDERED}
+      transition={{ delay: rank * 0.06 }}
+      className="flex w-full items-center gap-[clamp(10px,4vw,16px)] rounded-[12px] p-[clamp(10px,3.5vw,14px)]"
+      style={{
+        ...INNER,
+        border: isCurrentUser ? `2px solid ${KR_COLORS.goldBright}` : `1px solid rgba(255,240,102,${rank === 1 ? 0.9 : 0.5})`,
+      }}
     >
       <RankTile rank={rank} />
-      <div className="flex min-w-0 flex-1 items-center justify-between gap-2" style={{ fontFamily: KR_FONT }}>
-        <div className="flex min-w-0 flex-col gap-1" style={{ color: ink }}>
-          <p className="truncate pb-1 text-[14px] leading-[14px]">User: {isCurrentUser ? "You" : shortenMaskedName(entry.user)}</p>
-          <p className="font-semibold leading-[28px]">
-            <span className="block text-[clamp(16px,5vw,20px)]">{config.valueLabel}</span>
-            <span className="block truncate text-[16px]">{entry.value}</span>
-          </p>
-        </div>
+      <div className="flex min-w-0 flex-1 flex-col gap-1 border-l pl-[clamp(10px,4vw,16px)]" style={{ fontFamily: KR_FONT, borderColor: "rgba(255,240,102,0.35)" }}>
+        <p className="flex min-w-0 items-center gap-2 text-[12px] leading-4" style={{ color: KR_COLORS.creamMuted }}>
+          <span className="truncate">User: {isCurrentUser ? "You" : shortenMaskedName(entry.user)}</span>
+          {isCurrentUser && <YouChip />}
+        </p>
+        <p className="truncate text-[clamp(15px,4.6vw,18px)] font-bold leading-6 text-white">
+          {config.valueLabel}: {metricText(config, entry.value)}
+        </p>
         {entry.prize && (
-          <div className="shrink-0 text-right font-bold tracking-[1.2px]">
-            {isCurrentUser ? (
-              <p className="text-[14px] leading-5" style={{ color: TABLE.onGold }}>PRIZE</p>
-            ) : (
-              <GoldText as="p" className="block text-[14px]" style={{ lineHeight: "20px" }}>PRIZE</GoldText>
-            )}
-            <p
-              className="max-w-[40vw] text-[clamp(14px,4.8vw,20px)] leading-5 [overflow-wrap:anywhere]"
-              style={{ color: isCurrentUser ? TABLE.onGold : KR_COLORS.gold }}
-            >
-              {entry.prize}
-            </p>
-          </div>
+          <p className="flex min-w-0 items-baseline gap-1 text-[12px] font-bold uppercase leading-4 tracking-[0.8px]">
+            <span style={{ color: KR_COLORS.creamMuted }}>Prize:</span>
+            <span className="truncate normal-case tracking-normal" style={{ color: KR_COLORS.goldText }}>{entry.prize}</span>
+          </p>
         )}
       </div>
     </motion.div>
@@ -219,7 +233,55 @@ function TermsFooter({ terms }) {
   );
 }
 
-function MyRankCard({ data, config, memberName }) {
+/** Category, ranking metric, period and last update: only what the API or config actually provides. */
+function BoardInfo({ config, periodLabel, periodStart, periodEnd, updatedAt, notes }) {
+  const period =
+    periodStart && periodEnd
+      ? `${formatWhen(periodStart)} - ${formatWhen(periodEnd)}`
+      : periodEnd
+        ? `Ends ${formatWhen(periodEnd, true)}`
+        : periodLabel;
+  const rows = [
+    ["Category", config.label],
+    ["Ranked by", titleCase(config.tableValueHeader)],
+    period && ["Period", period],
+    updatedAt && ["Last updated", formatWhen(updatedAt, true)],
+  ].filter(Boolean);
+
+  return (
+    <div className="flex w-full items-start gap-3 rounded-[12px] p-4" style={{ ...INNER_BORDERED, fontFamily: KR_FONT }}>
+      <img src={KR_ASSETS.ui.info} alt="" aria-hidden="true" className="mt-[2px] size-6 shrink-0" />
+      <div className="flex min-w-0 flex-1 flex-col gap-2 border-l pl-3" style={{ borderColor: "rgba(255,240,102,0.35)" }}>
+        <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-[12px] leading-[1.35]">
+          {rows.map(([label, value]) => (
+            <div key={label} className="contents">
+              <dt style={{ color: KR_COLORS.creamMuted }}>{label}</dt>
+              <dd className="font-semibold text-white [overflow-wrap:anywhere]">{value}</dd>
+            </div>
+          ))}
+        </dl>
+        {notes.length > 0 && (
+          <div className="flex flex-col gap-1 text-[12px] leading-[1.45]" style={{ color: "#e2e2e2" }}>
+            {notes.map((note, i) => (
+              <p key={i}>{note}</p>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function BoardMessage({ title, children }) {
+  return (
+    <div className="flex w-full flex-col items-center gap-2 rounded-[12px] px-4 py-8 text-center" style={{ ...INNER_BORDERED, fontFamily: KR_FONT }} role="status">
+      <GoldText as="p" className="block text-[18px] font-bold uppercase">{title}</GoldText>
+      <p className="text-[13px] leading-5" style={{ color: KR_COLORS.creamMuted }}>{children}</p>
+    </div>
+  );
+}
+
+function MyRankCard({ data, config, memberName, unavailable, inTop }) {
   const { isUnranked, progress, statusCopy, rankLabel, nextRankLabel, displayName, metricValue } = deriveMyRank(data, {
     metricKind: config.myRankMetricKind,
     gapUnit: config.myRankGapUnit,
@@ -237,7 +299,12 @@ function MyRankCard({ data, config, memberName }) {
         </p>
       </div>
 
-      {isUnranked ? (
+      {unavailable && !data ? (
+        <div className="rounded-[8px] border border-dashed px-4 py-3 text-center" style={{ borderColor: "rgba(255,240,102,0.5)" }}>
+          <p className="text-[14px] font-semibold text-white">Your rank isn&apos;t available right now</p>
+          <p className="mt-1 text-[12px]" style={{ color: KR_COLORS.creamMuted }}>Please check back later.</p>
+        </div>
+      ) : isUnranked ? (
         <div className="rounded-[8px] border border-dashed px-4 py-3 text-center" style={{ borderColor: "rgba(255,240,102,0.5)" }}>
           <p className="text-[14px] font-semibold text-white">Not ranked yet</p>
           <p className="mt-1 text-[12px]" style={{ color: KR_COLORS.creamMuted }}>
@@ -249,6 +316,11 @@ function MyRankCard({ data, config, memberName }) {
           <p className="text-center text-[14px]" style={{ color: KR_COLORS.creamMuted }}>
             Current Rank: <strong className="font-bold text-white">{rankLabel}</strong>
           </p>
+          {inTop && (
+            <p className="text-center text-[12px] font-semibold" style={{ color: KR_COLORS.goldText }}>
+              Your row is highlighted on the board below.
+            </p>
+          )}
           <div>
             <div className="flex items-end justify-between gap-2 text-[11px] font-semibold" style={{ color: KR_COLORS.creamMuted }}>
               <span className="shrink-0">{rankLabel}</span>
@@ -302,6 +374,9 @@ function Countdown({ endDate, label = "CAMPAIGN ENDS IN" }) {
 function BoardSkeleton() {
   return (
     <>
+      <p className="text-center text-[12px] font-semibold" style={{ color: KR_COLORS.creamMuted }} role="status">
+        Updating ranking…
+      </p>
       <div className="flex w-full flex-col gap-1">
         {[1, 2, 3].map((rank) => (
           <div key={rank} className="flex items-center gap-6 rounded-[12px] p-[17px]" style={INNER_BORDERED}>
@@ -341,10 +416,15 @@ export default function KrLeaderboardView({
   campaignEndDate,
   countdownLabel,
   periodLabel = "",
+  periodStart = null,
+  periodEnd = null,
+  updatedAt = null,
+  rankingFailed = false,
   updateNotes = [],
   terms = [],
   loading = false,
   myRank = null,
+  myRankUnavailable = false,
   memberName,
   infoOpen = false,
   infoTerms = [],
@@ -352,6 +432,8 @@ export default function KrLeaderboardView({
   isMaintenance = false,
 }) {
   const infoRows = Array.isArray(infoTerms) ? infoTerms.filter(Boolean) : [];
+  const isEmpty = top3.length === 0 && tableEntries.length === 0;
+  const inTop = currentUserRank != null && [...top3, ...tableEntries].some((e) => Number(e.rank) === Number(currentUserRank));
 
   return (
     <div className="flex w-full flex-col items-center gap-4 px-4 pt-8" style={{ fontFamily: KR_FONT }}>
@@ -374,25 +456,24 @@ export default function KrLeaderboardView({
             transition={{ duration: 0.25 }}
             className="flex w-full flex-col gap-[10px]"
           >
-            {periodLabel && (
-              <p className="text-center text-[14px] font-semibold" style={{ color: KR_COLORS.goldText }}>{periodLabel}</p>
-            )}
-
             {!loading && config.previewNotice && (
               <div className="rounded-[12px] px-4 py-3 text-center text-[12px] font-semibold" style={{ ...INNER_BORDERED, color: "#ffb965" }} role="status">
                 {config.previewNotice}
               </div>
             )}
 
-            {!loading && updateNotes.length > 0 && (
-              <div className="flex flex-col gap-2 rounded-[12px] p-4" style={INNER}>
-                {updateNotes.map((note, i) => (
-                  <p key={i} className="text-center text-[12px] leading-5" style={{ color: "#ffb965" }}>{note}</p>
-                ))}
-              </div>
-            )}
+            <BoardInfo
+              config={config}
+              periodLabel={periodLabel}
+              periodStart={periodStart}
+              periodEnd={periodEnd}
+              updatedAt={loading ? null : updatedAt}
+              notes={loading ? [] : updateNotes}
+            />
 
-            {!loading && <MyRankCard data={myRank} config={config} memberName={memberName} />}
+            {!loading && (
+              <MyRankCard data={myRank} config={config} memberName={memberName} unavailable={myRankUnavailable} inTop={inTop} />
+            )}
 
             {!loading && config.showCountdown && campaignEndDate && (
               <Countdown endDate={campaignEndDate} label={countdownLabel} />
@@ -404,6 +485,14 @@ export default function KrLeaderboardView({
               </div>
               {loading ? (
                 <BoardSkeleton />
+              ) : rankingFailed ? (
+                <BoardMessage title="Ranking unavailable">
+                  We couldn&apos;t load this ranking. Please try again later.
+                </BoardMessage>
+              ) : isEmpty ? (
+                <BoardMessage title="No rankings yet">
+                  Rankings appear here once the first results for this period are published.
+                </BoardMessage>
               ) : (
                 <>
                   {top3.length > 0 && (

@@ -277,6 +277,7 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
   const outOfRolls = roundIndex >= rounds.length;
   const defeated = !victorious && phase === PHASES.IDLE && outOfRolls;
   const hpNow = Math.round(boss.hp * hpFraction);
+  const bt = skin.battle;
   // The battle hero is BACK-facing (looking at the boss). Between hits it shows
   // the equipped back pose; on a hit it plays its moveset's frames (full-armor
   // sword swing / bare-handed punch) or, with only partial gear and so no attack
@@ -339,21 +340,22 @@ export default function Battle({ script, profile, equipment, onClaimBox, onExit 
           </span>
           <h2
             className="text-[24px] font-bold tracking-[2px]"
-            style={
-              skin.c.titleGradient
+            style={{
+              ...(skin.c.titleGradient
                 ? { ...titleInk(skin), fontFamily: skin.fonts.display }
-                : { color: "#fff", fontFamily: skin.fonts.display, textShadow: "0 2px 12px rgba(0,0,0,0.6)" }
-            }
+                : { color: "#fff", fontFamily: skin.fonts.display, textShadow: "0 2px 12px rgba(0,0,0,0.6)" }),
+              ...(bt && { fontSize: `min(${bt.nameSize}px, ${((bt.nameSize / 412) * 100).toFixed(2)}vw)`, letterSpacing: 0, whiteSpace: "nowrap" }),
+            }}
           >
             {boss.name.toUpperCase()}
           </h2>
           <div
             className="relative mt-[6px] h-[18px] w-full max-w-[330px] overflow-hidden rounded-full border"
-            style={{ background: "rgba(20,8,20,0.7)", borderColor: "rgba(255,60,100,0.5)" }}
+            style={bt ? { height: bt.hp.height, background: bt.hp.track, borderColor: bt.hp.border } : { background: "rgba(20,8,20,0.7)", borderColor: "rgba(255,60,100,0.5)" }}
           >
             <motion.div
               className="h-full rounded-full"
-              style={{ background: "linear-gradient(90deg, #ff5c8a 0%, #e33) " }}
+              style={{ background: bt ? bt.hp.fill : "linear-gradient(90deg, #ff5c8a 0%, #e33) " }}
               initial={false}
               animate={{ width: `${hpFraction * 100}%` }}
               transition={{ type: "spring", stiffness: 110, damping: 20 }}

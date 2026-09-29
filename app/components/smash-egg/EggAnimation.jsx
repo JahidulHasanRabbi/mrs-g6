@@ -26,7 +26,8 @@ const shakeKeyframes = {
 };
 
 // Skins may swap the art (nestSrc={null} drops the nest). burstOnCrack plays the
-// smash effects when a draw cracks the egg without a tap.
+// smash effects when a draw cracks the egg without a tap. beforeTap returning
+// false cancels the tap before the slam starts (e.g. the balance can't pay).
 export default function EggAnimation({
   isCracked,
   onTap,
@@ -34,18 +35,20 @@ export default function EggAnimation({
   crackedSrc = SMASH_EGG_ASSETS.eggCracked,
   nestSrc = SMASH_EGG_ASSETS.nest,
   burstOnCrack = false,
+  beforeTap = null,
 }) {
   const [showEffects, setShowEffects] = useState(false);
   const [slamPhase, setSlamPhase] = useState(false);
 
   const handleTap = useCallback(() => {
     if (slamPhase) return;
+    if (beforeTap && beforeTap() === false) return;
     setSlamPhase(true);
     setTimeout(() => {
       setShowEffects(true);
       onTap();
     }, 250);
-  }, [onTap, slamPhase]);
+  }, [onTap, slamPhase, beforeTap]);
 
   useEffect(() => {
     if (!isCracked) {

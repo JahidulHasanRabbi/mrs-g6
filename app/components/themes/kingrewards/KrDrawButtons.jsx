@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { GoldText, formatKrAmount } from "./KrUi";
+import { GoldText } from "./KrUi";
+import { krCoins } from "./KrSpinPanels";
 import { KR_COLORS, KR_FONT, KR_SURFACES } from "./assets";
 
 const DRAW_OPTIONS = [
@@ -11,12 +12,13 @@ const DRAW_OPTIONS = [
 ];
 
 // Figma 707:4251: navy tile, gold hairline, gradient label; the featured one is scaled 110%.
-function DrawButton({ draws, cost, featured, onClick, disabled }) {
+// Unaffordable tiles are dimmed but stay tappable so the page can explain the low balance.
+function DrawButton({ draws, cost, featured, onClick, disabled, affordable }) {
   return (
     <motion.button
-      onClick={() => onClick?.(draws)}
+      onClick={() => onClick?.(draws, cost)}
       disabled={disabled}
-      className={`flex min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-[16px] px-[9px] py-[17px] disabled:cursor-not-allowed disabled:opacity-50 ${featured ? "" : "self-start"}`}
+      className={`flex min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-[16px] px-[9px] py-[17px] disabled:cursor-not-allowed disabled:opacity-50 ${featured ? "" : "self-start"} ${affordable ? "" : "opacity-50 grayscale-[0.5]"}`}
       style={{
         background: KR_COLORS.navy,
         border: `1px solid ${KR_COLORS.goldBright}`,
@@ -33,24 +35,28 @@ function DrawButton({ draws, cost, featured, onClick, disabled }) {
         <br />
         Draws
       </GoldText>
-      <span className="text-center text-[12px] leading-[18px] text-white/80">{cost} KR Coins</span>
+      <span className="text-center text-[12px] leading-[18px] text-white/80">{krCoins(cost)}</span>
     </motion.button>
   );
 }
 
-export default function KrDrawButtons({ onDraw, disabled, tokensPerRound = 10 }) {
+export default function KrDrawButtons({ onDraw, disabled, tokensPerRound = 10, canAfford = () => true }) {
   return (
     <div className="grid w-full grid-cols-3 gap-4">
-      {DRAW_OPTIONS.map((opt) => (
-        <DrawButton
-          key={opt.draws}
-          draws={opt.draws}
-          cost={formatKrAmount(Number(tokensPerRound) * opt.draws)}
-          featured={opt.featured}
-          onClick={onDraw}
-          disabled={disabled}
-        />
-      ))}
+      {DRAW_OPTIONS.map((opt) => {
+        const cost = Number(tokensPerRound) * opt.draws;
+        return (
+          <DrawButton
+            key={opt.draws}
+            draws={opt.draws}
+            cost={cost}
+            featured={opt.featured}
+            onClick={onDraw}
+            disabled={disabled}
+            affordable={canAfford(cost)}
+          />
+        );
+      })}
     </div>
   );
 }

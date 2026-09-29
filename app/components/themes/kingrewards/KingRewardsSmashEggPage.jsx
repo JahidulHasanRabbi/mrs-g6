@@ -1,18 +1,31 @@
 "use client";
 
 import Image from 'next/image';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import KingRewardsShell from './KingRewardsShell';
-import { GlassCard, GoldText, PageTitle } from './KrUi';
-import { KrResultDialog, KrRewardList, KrTermsPanel, KrWinnersPanel, formatKrAmount, formatKrDate } from './KrSpinPanels';
+import { GlassCard, GoldText, OutlinePill, PageTitle } from './KrUi';
+import {
+  KrLowBalanceNote,
+  KrResultDialog,
+  KrRewardList,
+  KrRulesDialog,
+  KrTermsPanel,
+  KrWinnersPanel,
+  formatKrAmount,
+  formatKrDate,
+  insufficientDialogProps,
+  krCoins,
+  parseKrAmount,
+} from './KrSpinPanels';
 import KrDrawButtons from './KrDrawButtons';
 import EggAnimation from '../../smash-egg/EggAnimation';
 import SmashEggHistoryDialog from '../../smash-egg/SmashEggHistoryDialog';
 import { useSmashEggGame, HISTORY_PAGE_SIZE } from '../../smash-egg/useSmashEggGame';
 import { maskName } from '../../smash-egg/smashEggData';
 import { useUser } from '../../../contexts/UserContext';
+import { tokenStorage } from '../../../api/tokenStorage';
 import { KR_ASSETS, KR_COLORS, KR_FONT } from './assets';
 
 const WELCOME_SEEN_KEY = 'mrs_kingrewards_egg_welcome_seen';
@@ -56,8 +69,52 @@ export default function KingRewardsSmashEggPage() {
     closeModal,
     handleReturnToWebsite,
   } = useSmashEggGame();
-  const { userData } = useUser();
+  const { userData, isLoadingProfile } = useUser();
   const router = useRouter();
+
+  const [rulesOpen, setRulesOpen] = useState(false);
+  // Kept after close so the text doesn't change during the exit animation.
+  const [lowBalanceDialog, setLowBalanceDialog] = useState({ open: false, cost: 0 });
+  // Covers the render gap before the hook's isProcessing lands, so a double tap can't pay twice.
+  const inFlightRef = useRef(false);
+
+  const balanceNum = parseKrAmount(tokenBalance);
+  // Before the profile loads the balance reads 0; let the server decide then.
+  const balanceKnown = !isLoadingProfile && Boolean(tokenStorage.getMemberUuid());
+  const canAfford = useCallback((cost) => !balanceKnown || balanceNum >= cost, [balanceKnown, balanceNum]);
+  const roundCost = Number(tokensPerRound) || 0;
+  const lowBalance = gameEnabled && !canAfford(roundCost);
+
+  const runGuarded = useCallback(async (cost, run) => {
+    if (inFlightRef.current || isProcessing) return false;
+    if (gameEnabled && !canAfford(cost)) {
+      setLowBalanceDialog({ open: true, cost });
+      return false;
+    }
+    inFlightRef.current = true;
+    try {
+      await run();
+    } finally {
+      inFlightRef.current = false;
+    }
+    return true;
+  }, [canAfford, gameEnabled, isProcessing]);
+
+  const handleGuardedDraw = useCallback((draws, cost) => runGuarded(cost, () => handleDraw(draws)), [runGuarded, handleDraw]);
+
+  // Checked before the egg slams, so a blocked tap never plays the smash.
+  const beforeEggTap = useCallback(() => {
+    if (inFlightRef.current || isProcessing) return false;
+    if (gameEnabled && !canAfford(roundCost)) {
+      setLowBalanceDialog({ open: true, cost: roundCost });
+      return false;
+    }
+    return true;
+  }, [canAfford, gameEnabled, isProcessing, roundCost]);
+
+  const closeLowBalance = useCallback(() => setLowBalanceDialog((d) => ({ ...d, open: false })), []);
+
+  const handleGuardedEggTap = useCallback(() => runGuarded(roundCost, handleEggTap), [runGuarded, roundCost, handleEggTap]);
 
   const [booting, setBooting] = useState(true);
   const [bootProgress, setBootProgress] = useState(0);
@@ -152,14 +209,11 @@ export default function KingRewardsSmashEggPage() {
       };
     }
     if (INSUFFICIENT.test(wonPrize.label || '')) {
-      return {
-        tone: 'warning',
-        title: 'Warning!',
-        subtitle: 'Not enough KR Coins',
-        items: [{ key: 'left', text: `${formatKrAmount(tokenBalance)} KR Coins Left` }],
-        primary: { label: 'Get KR Coins?', onClick: () => router.push('/missions') },
-        secondary: { label: 'Back', onClick: handleCloseResult },
-      };
+      return insufficientDialogProps({
+        balance: tokenBalance,
+        onGetCoins: () => router.push('/missions'),
+        onBack: handleCloseResult,
+      });
     }
     return { tone: 'warning', title: 'Warning!', subtitle: wonPrize.label, secondary: { label: 'Back', onClick: handleCloseResult } };
   })();
@@ -171,7 +225,7 @@ export default function KingRewardsSmashEggPage() {
           <Image src={KR_ASSETS.egg.bg} alt="" fill priority className="object-cover" sizes="475px" />
         </div>
         <div className="relative z-10 flex flex-col items-center gap-6 px-6 pt-[160px]">
-          <PageTitle>Egg Smash</PageTitle>
+          <PageTitle>Smash Egg</PageTitle>
           <motion.img
             src={KR_ASSETS.egg.eggIntact}
             alt=""
@@ -192,29 +246,31 @@ export default function KingRewardsSmashEggPage() {
   }
 
   return (
-    <KingRewardsShell bg={KR_ASSETS.egg.bg} onInfoClick={openHistory} showBattlePoints={false}>
+    // Only "!" up top: the balance lives in the central chip (feedback 23 Sep).
+    <KingRewardsShell bg={KR_ASSETS.egg.bg} onInfoClick={() => setRulesOpen(true)} showBattlePoints={false}>
       <div className="mx-auto flex w-full max-w-[412px] flex-col items-center gap-4 px-4 pt-4">
-        <PageTitle>Egg Smash</PageTitle>
+        <div className="w-full pt-3">
+          <PageTitle>Smash Egg</PageTitle>
+        </div>
 
-        <div className="flex flex-col items-center gap-4">
-          <div className="flex h-[46px] items-center gap-1 rounded-[12px] px-[9px]" style={CHIP_STYLE}>
+        <div className="flex flex-col items-center gap-2">
+          <div className="flex h-[46px] items-center gap-1 rounded-[12px] px-[12px]" style={CHIP_STYLE}>
             <img src={KR_ASSETS.ui.iconCoins} alt="" className="h-[19px] w-[19px] shrink-0" />
             <p className="whitespace-nowrap text-[16px] font-medium leading-6" style={{ color: '#eae2cf' }}>
-              KR Coin Balance: <span style={{ color: '#ffe16d' }}>{formatKrAmount(tokenBalance)}</span>
+              KR Coins: <span style={{ color: '#ffe16d' }}>{formatKrAmount(tokenBalance)}</span>
             </p>
           </div>
-          <div className="flex h-[46px] items-center rounded-[12px] px-[9px]" style={CHIP_STYLE}>
-            <p className="whitespace-nowrap text-[16px] font-medium leading-6" style={{ color: '#d0c6ab' }}>
-              {formatKrAmount(tokensPerRound)} KR Coins / round
-            </p>
-          </div>
+          <p className="whitespace-nowrap text-[14px] font-medium leading-6" style={{ fontFamily: KR_FONT, color: '#d0c6ab' }}>
+            {krCoins(roundCost)} / round
+          </p>
         </div>
 
         <div className="relative z-[5] -mb-[85px] w-full">
           <EggAnimation
             key={eggKey}
             isCracked={isCracked}
-            onTap={handleEggTap}
+            onTap={handleGuardedEggTap}
+            beforeTap={beforeEggTap}
             eggSrc={KR_ASSETS.egg.eggIntact}
             crackedSrc={KR_ASSETS.egg.eggIntact}
             nestSrc={null}
@@ -222,8 +278,21 @@ export default function KingRewardsSmashEggPage() {
           />
         </div>
 
-        <div className="relative z-10 w-full pb-8">
-          <KrDrawButtons onDraw={handleDraw} disabled={isProcessing || !gameEnabled} tokensPerRound={tokensPerRound} />
+        <div className="relative z-10 flex w-full flex-col items-center gap-4 pb-8">
+          <p className="text-center text-[13px] font-medium leading-[1.3]" style={{ fontFamily: KR_FONT, color: KR_COLORS.cream }}>
+            {isProcessing ? 'Smashing…' : `Tap the egg to smash · ${krCoins(roundCost)}`}
+          </p>
+          <KrDrawButtons
+            onDraw={handleGuardedDraw}
+            disabled={isProcessing || !gameEnabled}
+            tokensPerRound={roundCost}
+            canAfford={canAfford}
+          />
+          {lowBalance && (
+            <KrLowBalanceNote>
+              Not enough KR Coins to smash. One round costs {krCoins(roundCost)}.
+            </KrLowBalanceNote>
+          )}
         </div>
 
         <KrRewardList rows={rewardRows} loading={isLoading} />
@@ -239,11 +308,16 @@ export default function KingRewardsSmashEggPage() {
             : {
                 rows: recordRows,
                 loading: historyLoading,
-                emptyText: 'No smash history yet.',
+                emptyText: 'No records yet',
                 page: historyPage,
                 total: historyTotal,
                 pageSize: HISTORY_PAGE_SIZE,
                 onPage: loadHistoryPage,
+                footer: historyTotal > 0 && (
+                  <OutlinePill onClick={openHistory} className="mx-auto mb-1 !px-5">
+                    View Full History
+                  </OutlinePill>
+                ),
               })}
         />
 
@@ -268,11 +342,24 @@ export default function KingRewardsSmashEggPage() {
         onClose={dismissWelcome}
         title="Welcome!"
         subtitle="You have received"
-        items={[{ key: 'welcome', text: `${formatKrAmount(tokenBalance)} Free KR Coins` }]}
+        items={[{ key: 'welcome', text: `${formatKrAmount(tokenBalance)} Free KR Coin${balanceNum === 1 ? '' : 's'}` }]}
         primary={{ label: 'Start Playing', onClick: dismissWelcome }}
       />
 
       <KrResultDialog open={isModalOpen} onClose={handleCloseResult} {...resultProps} />
+
+      <KrResultDialog
+        open={lowBalanceDialog.open}
+        onClose={closeLowBalance}
+        {...insufficientDialogProps({
+          balance: tokenBalance,
+          cost: lowBalanceDialog.cost,
+          onGetCoins: () => router.push('/missions'),
+          onBack: closeLowBalance,
+        })}
+      />
+
+      <KrRulesDialog open={rulesOpen} onClose={() => setRulesOpen(false)} title="Smash Egg Rules" termsText={termsText} />
 
       <AnimatePresence>
         {historyOpen && (

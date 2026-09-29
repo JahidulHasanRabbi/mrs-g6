@@ -89,7 +89,19 @@ export function nineSlice({ frame, slice, width, pad }) {
  */
 const SKIN_EXTENSIONS = {
   fonts: { display: RPG_FONTS.display, number: RPG_FONTS.number },
-  chrome: { showTitle: true, iconSize: 36 },
+  // `balances`: the top bar carries BP → KR on screens without the HUD strip.
+  chrome: { showTitle: true, iconSize: 36, balances: false },
+  // HUD strip (Level / EXP / balances) on the Avatar HOME view only.
+  hud: { homeOnly: false },
+  // One-line fitted screen titles: { size, vw, fitChars } (KrUi PageTitle's rule).
+  title: null,
+  // Hero creation: `footer` replaces the MRS FooterNav, `choiceOn`/`choiceOff`
+  // restyle the gender buttons, `alignFeet` grounds both hero arts on one line.
+  heroSelect: { footer: null, choiceOn: null, choiceOff: null, alignFeet: false },
+  // Avatar Level: false drops the two formula footnotes for a "BP to next level" line.
+  level: { formulas: true },
+  // Battle header: { nameSize, hp: { height, track, border, fill } }.
+  battle: null,
   // "glass" = four flat tabs on a CSS bar; `glass` holds { bar, active, labelGradient }.
   nav: { style: null, glass: null },
   // Extra style for an unframed Panel (inset shadow, blur, radius).
@@ -129,6 +141,14 @@ const SKIN_EXTENSIONS = {
     icons: null,
     earnIcons: null,
     earnTile: { css: null },
+    // Boss list: `emptyState` { icon } draws a card instead of the bare line;
+    // `cardTimer` adds the end/start time to each boss card.
+    emptyState: null,
+    cardTimer: false,
+    // Title of the list's schedule plaque; null keeps "How to Earn Attack Points".
+    scheduleTitle: null,
+    // A Back button under Boss Info (where the top bar "!" lands).
+    infoBack: false,
   },
 };
 
@@ -137,6 +157,21 @@ export function titleInk(skin) {
   const g = skin.c.titleGradient;
   if (!g) return { color: skin.c.title, textShadow: skin.c.titleShadow };
   return { backgroundImage: g, WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", lineHeight: 1.2 };
+}
+
+/** Screen-title sizing: one line, scaled by length, when the skin opts in. */
+export function titleFit(skin, text) {
+  const t = skin.title;
+  if (!t) return null;
+  const fit = Math.min(1, t.fitChars / Math.max(String(text).length, 1));
+  return {
+    fontSize: `min(${t.size * fit}px, ${(t.vw * fit).toFixed(2)}vw)`,
+    letterSpacing: 0,
+    whiteSpace: "nowrap",
+    textTransform: "uppercase",
+    width: "100%",
+    textAlign: "center",
+  };
 }
 
 /** A `WAR_IMAGES.ui` key, unless the skin replaces (or hides) it. */

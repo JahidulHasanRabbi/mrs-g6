@@ -4,8 +4,23 @@
 // reward plaque, HP bar with remaining %, availability dot and ATTACK.
 
 import { useRpgSkin } from "../rpg/rpgSkin";
-import { fmt, BOSS_THUMB_ASPECT } from "./constants";
-import { useFrameInk, BossPortrait, GoldText, HpBar, RewardBadge, WarButton, WarCard } from "./primitives";
+import { fmt, fmtWhen, BOSS_THUMB_ASPECT } from "./constants";
+import { useCountdown, useFrameInk, BossPortrait, GoldText, HpBar, RewardBadge, WarButton, WarCard } from "./primitives";
+
+// Opt-in (skin.war.cardTimer): when the boss room closes, or when it opens.
+function CardTiming({ boss, ink, font }) {
+  const { label, done } = useCountdown(boss.status === "active" ? boss.endsAt : null);
+  const text =
+    boss.status === "active" && boss.endsAt ? (done ? "Ending now" : `Ends in ${label}`)
+      : boss.status === "upcoming" && boss.startsAt ? `Starts ${fmtWhen(boss.startsAt)}`
+        : null;
+  if (!text) return null;
+  return (
+    <span className="text-[10px] font-semibold leading-[12px] tabular-nums" style={{ color: ink.text, fontFamily: font, textShadow: "0 1px 2px rgba(0,0,0,0.75)" }}>
+      {text}
+    </span>
+  );
+}
 
 export default function BossCard({ boss, onAttack }) {
   const skin = useRpgSkin();
@@ -38,6 +53,7 @@ export default function BossCard({ boss, onAttack }) {
               <span className="text-[11px] font-bold leading-[13px]" style={{ color: ink.value, fontFamily: skin.war.font, textShadow: "0 1px 2px rgba(0,0,0,0.75)" }}>
                 HP {fmt(boss.hpMax)}
               </span>
+              {skin.war.cardTimer && <CardTiming boss={boss} ink={ink} font={skin.war.font} />}
             </div>
             <RewardBadge gem={boss.gem} />
           </div>

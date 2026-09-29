@@ -204,6 +204,14 @@ function collectInfoNotes(rows) {
 function collectInfoTerms(rows) {
   return asList(rows).flatMap((row) => splitLines(row?.terms_and_conditions));
 }
+// Batch timestamp of the latest generated ranking, if the API sends one; never invented.
+function rankingUpdatedAt(ranking) {
+  const src = Array.isArray(ranking) ? ranking[0] : ranking;
+  const value = src?.generated_at ?? src?.updated_at ?? src?.created_at ?? null;
+  const t = value ? new Date(value).getTime() : NaN;
+  return Number.isFinite(t) ? t : null;
+}
+
 function pickLatestNonEmpty(rows, field) {
   const list = asList(rows);
   for (let i = list.length - 1; i >= 0; i -= 1) {
@@ -336,7 +344,7 @@ function Top20LeaderboardPageInner() {
     // Turnover now has a confirmed info type (4) but no confirmed campaign
     // type, so only the campaign call is skipped for it (see BOARD_META).
     Promise.all([
-      meta.getRanking().catch(() => []),
+      meta.getRanking().catch(() => null),
       meta.infoType ? getPublicLeaderboardInfo(meta.infoType).catch(() => null) : Promise.resolve(null),
       meta.campaignType ? getPublicLeaderboardCampaign(meta.campaignType).catch(() => null) : Promise.resolve(null),
       meta.termsCategory
@@ -362,11 +370,15 @@ function Top20LeaderboardPageInner() {
         top3: entries.slice(0, 3),
         table: entries.slice(3),
         endDate: campRec?.end_date ? new Date(campRec.end_date).getTime() : null,
+        startDate: campRec?.start_date ? new Date(campRec.start_date).getTime() : null,
+        updatedAt: rankingUpdatedAt(ranking),
+        rankingFailed: ranking === null,
         notes,
         infoTerms,
         terms: splitLines(mainTerms?.terms_and_conditions),
       };
-      boardCache.current[activeTab] = board;
+      // A failed ranking fetch is retried on the next visit to the tab instead of cached.
+      if (!board.rankingFailed) boardCache.current[activeTab] = board;
       setData(board);
       setLoading(false);
     });
@@ -381,6 +393,7 @@ function Top20LeaderboardPageInner() {
   // response instead of refetching.
   //
   const [memberRanks, setMemberRanks] = useState(null);
+  const [memberRankFailed, setMemberRankFailed] = useState(false);
 
   useEffect(() => {
     if (!authReady || maintenance !== false || !memberUuid) {
@@ -388,12 +401,16 @@ function Top20LeaderboardPageInner() {
       return undefined;
     }
     let cancelled = false;
+    setMemberRankFailed(false);
     getMemberRankAllBoards(memberUuid)
       .then((res) => {
         if (!cancelled) setMemberRanks(res || null);
       })
       .catch(() => {
-        if (!cancelled) setMemberRanks(null);
+        if (!cancelled) {
+          setMemberRanks(null);
+          setMemberRankFailed(true);
+        }
       });
     return () => {
       cancelled = true;
@@ -424,10 +441,15 @@ function Top20LeaderboardPageInner() {
           campaignEndDate={countdownEndDate}
           countdownLabel={isTurnoverTab ? turnoverCountdown.label : undefined}
           periodLabel={config.eventPeriod || data.periodLabel || ""}
+          periodStart={isTurnoverTab ? PHASE4_EVENT.startsAt : data.startDate}
+          periodEnd={isTurnoverTab ? PHASE4_EVENT.endsAt : data.endDate}
+          updatedAt={data.updatedAt}
+          rankingFailed={!!data.rankingFailed}
           updateNotes={data.notes}
           terms={data.terms}
           loading={loading}
           myRank={myRank}
+          myRankUnavailable={memberRankFailed || (authReady && !memberUuid)}
           memberName={userData.name}
           infoOpen={isInfoOpen}
           infoTerms={data.infoTerms}

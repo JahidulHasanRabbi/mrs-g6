@@ -16,7 +16,7 @@ import { RPG_COLORS, EQUIP_SLOTS, DISCARD_COST } from "../constants";
 import { RPG_IMAGES } from "../rpgAssets";
 import * as rpgApi from "../rpgApi";
 import { SlotChip } from "../primitives";
-import { titleInk, useRpgSkin } from "../rpgSkin";
+import { titleFit, titleInk, useRpgSkin } from "../rpgSkin";
 import NoticeModal from "../NoticeModal";
 
 export default function HeroItem({ equipment, onEquipmentUpdate }) {
@@ -128,7 +128,7 @@ export default function HeroItem({ equipment, onEquipmentUpdate }) {
     <div className="flex w-full flex-1 flex-col px-[18px]">
       <h2
         className="pt-[22px] pb-[4px] text-center text-[22px] font-bold tracking-[5px]"
-        style={{ ...titleInk(skin), fontFamily: skin.fonts.display }}
+        style={{ ...titleInk(skin), ...titleFit(skin, "HERO ITEM"), fontFamily: skin.fonts.display }}
       >
         HERO ITEM
       </h2>

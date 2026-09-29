@@ -11,7 +11,7 @@ import { RPG_COLORS, RPG_VIEWS } from "../constants";
 import { RPG_IMAGES } from "../rpgAssets";
 import * as rpgApi from "../rpgApi";
 import { GoldCta, Panel } from "../primitives";
-import { titleInk, useRpgSkin } from "../rpgSkin";
+import { titleFit, titleInk, useRpgSkin } from "../rpgSkin";
 import NoticeModal from "../NoticeModal";
 
 const STAGES = { CLOSED: "CLOSED", OPENING: "OPENING", REVEALED: "REVEALED" };
@@ -115,7 +115,7 @@ export default function MysteryBox({ boxId, onProfileUpdate, onNavigate }) {
     <div className="flex w-full flex-1 flex-col items-center px-[18px]">
       <h2
         className="pt-[22px] text-center text-[24px] font-bold tracking-[6px]"
-        style={{ ...titleInk(skin), fontFamily: skin.fonts.display }}
+        style={{ ...titleInk(skin), ...titleFit(skin, "MYSTERY BOX"), fontFamily: skin.fonts.display }}
       >
         MYSTERY BOX
       </h2>

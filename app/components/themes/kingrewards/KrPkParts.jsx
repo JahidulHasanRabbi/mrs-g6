@@ -2,14 +2,14 @@
 
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { KR_ASSETS, KR_FONT, KR_GRADIENTS } from "./assets";
-import { PageTitle, formatKrAmount } from "./KrUi";
+import { formatKrCoins } from "../../../api/apiOptions";
+import { KR_ASSETS, KR_COLORS, KR_FONT } from "./assets";
+import { GoldText, PageTitle, formatKrAmount } from "./KrUi";
 
 // bg-stadium with its painted goal and ball removed (keeps the stands, the
 // pitch lines, and none of the watermark / black band), so the only goal,
 // keeper and ball on screen are the game's own.
 const PITCH_CLEAN = "/assets/themes/kingrewards/pk/pitch-clean.webp";
-const HISTORY_ICON = "/assets/penalty-kick/icons/material-symbols-flag.svg";
 
 // The plate's goal line sits 0.7351 × its width above its bottom edge. Widen it
 // past the column when needed so the grass always reaches the 48vh goal anchor.
@@ -40,6 +40,21 @@ export const KR_PK_BANNER = {
   WebkitTextStroke: 0,
   bottom: "min(calc(48vh + min(400px, 84vw) * 0.494 + 16px), calc(100% - 116px - 1.2em))",
 };
+
+/**
+ * "SWIPE TO KICK" rides just above the resting ball (ReadyPhase's
+ * `bottom: max(24vh, 200px)` anchor), in the grass gap below the keeper's feet.
+ */
+export function krPkSwipeCue(ballSize) {
+  return {
+    ...KR_GLOW_GOLD,
+    fontSize: "clamp(14px, min(6.4vw, 3.2vh), 26px)",
+    lineHeight: 1,
+    WebkitTextStroke: 0,
+    bottom: `calc(max(24vh, 200px) + ${ballSize}px + 4px)`,
+    zIndex: 5,
+  };
+}
 
 export function KrPkGlowText({ as: Tag = "p", size = 40, className = "", style, children }) {
   return (
@@ -95,49 +110,21 @@ export function KrPkPitch({ variant = "close", children }) {
   );
 }
 
-function CrestButton({ src, onClick, label }) {
+function HeaderIconButton({ src, onClick, label, round = false }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label={label}
-      className="grid h-10 w-10 cursor-pointer place-items-center transition-transform active:scale-95"
+      className={`relative h-9 w-9 cursor-pointer overflow-hidden transition-transform active:scale-95 ${round ? "rounded-full" : ""}`}
     >
-      <img src={src} alt="" aria-hidden="true" draggable={false} className="block h-10 w-10 select-none object-contain" />
-    </button>
-  );
-}
-
-// KR ships no history art, so the flag glyph sits in a CSS copy of the crest ring.
-function HistoryButton({ onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label="History"
-      className="h-10 w-10 cursor-pointer rounded-full p-[3px] transition-transform active:scale-95"
-      style={{ background: KR_GRADIENTS.gold, boxShadow: "0 2px 4px rgba(0,0,0,0.4)" }}
-    >
-      <span
-        className="grid h-full w-full place-items-center rounded-full"
-        style={{ background: "radial-gradient(circle at 50% 35%, #1d5bb5 0%, #0a3170 60%, #062355 100%)" }}
-      >
-        <span
-          aria-hidden="true"
-          className="block h-[20px] w-[20px]"
-          style={{
-            background: KR_GRADIENTS.gold,
-            WebkitMaskImage: `url(${HISTORY_ICON})`,
-            WebkitMaskRepeat: "no-repeat",
-            WebkitMaskPosition: "center",
-            WebkitMaskSize: "contain",
-            maskImage: `url(${HISTORY_ICON})`,
-            maskRepeat: "no-repeat",
-            maskPosition: "center",
-            maskSize: "contain",
-          }}
-        />
-      </span>
+      <img
+        src={src}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+        className={`block h-9 w-9 select-none object-contain ${round ? "scale-110" : ""}`}
+      />
     </button>
   );
 }
@@ -155,66 +142,66 @@ export function KrPkCoin({ size = 19.2, className = "" }) {
   );
 }
 
-function HudChip({ label, value, mirrored = false }) {
-  const disc = (
-    <span
-      className="grid h-8 w-8 shrink-0 place-items-center rounded-full"
-      style={{
-        background: KR_GRADIENTS.gold,
-        boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)",
-      }}
-    >
-      <KrPkCoin />
-    </span>
-  );
+const HUD_VALUE = {
+  fontFamily: KR_FONT,
+  color: KR_PK_INK.hudValue,
+  textShadow: "0 0 10px rgba(255,221,116,0.45)",
+};
+
+/** "N KR Coin(s) / Kick" split so the number can carry the value style. */
+function kickCostParts(cost) {
+  const label = formatKrCoins(formatKrAmount(cost));
+  const cut = label.indexOf(" ");
+  return { value: label.slice(0, cut), unit: `${label.slice(cut + 1)} / Kick` };
+}
+
+// Balance and cost stay unknown ("–") until the member and game settings load.
+function KrPkBalanceRow({ balance, perShot }) {
+  const cost = perShot == null ? null : kickCostParts(perShot);
+  const short = balance != null && perShot != null && Number(balance) < Number(perShot);
   return (
-    <div
-      className="flex min-w-0 items-center gap-2 rounded-[8px] p-[9px]"
-      style={{ minWidth: mirrored ? undefined : 124, border: "1px solid #fff066", background: "rgba(255,255,255,0.3)" }}
-    >
-      {!mirrored && disc}
-      <div className={`flex min-w-0 flex-col ${mirrored ? "items-end text-right" : "items-start text-left"}`}>
-        <span className="whitespace-nowrap text-[10px] uppercase leading-[10px]" style={{ fontFamily: KR_FONT, color: KR_PK_INK.muted }}>
-          {label}
-        </span>
-        <span
-          className="max-w-full truncate text-[18px] font-bold leading-[22.5px]"
-          style={{
-            fontFamily: KR_FONT,
-            color: KR_PK_INK.hudValue,
-            textShadow: "0 0 20px rgba(255,221,116,0.4), 0 0 10px rgba(255,221,116,0.8)",
-          }}
-        >
-          {value}
-        </span>
+    <div className="flex justify-center">
+      <div
+        className="flex h-[44px] w-full max-w-[342px] items-center rounded-[12px] px-3"
+        style={{ border: `1px solid ${KR_COLORS.goldBright}`, background: "rgba(0,30,74,0.55)", boxShadow: "inset 0 2px 8px rgba(255,255,255,0.12)" }}
+      >
+        <div className="flex min-w-0 flex-1 items-center justify-center gap-1.5" aria-label="KR Coin balance">
+          <KrPkCoin size={24} />
+          <span className="min-w-0 truncate text-[18px] font-bold leading-[1.2]" style={short ? { ...HUD_VALUE, color: "#ff8a8a" } : HUD_VALUE}>
+            {balance == null ? "–" : formatKrAmount(balance)}
+          </span>
+        </div>
+        <span aria-hidden="true" className="mx-2 h-6 w-px shrink-0" style={{ background: "rgba(255,240,102,0.45)" }} />
+        <div className="flex min-w-0 flex-1 items-center justify-center gap-1.5" aria-label="Cost per kick">
+          <KrPkCoin size={24} />
+          <span className="flex min-w-0 items-baseline gap-1 whitespace-nowrap">
+            <span className="text-[18px] font-bold leading-[1.2]" style={HUD_VALUE}>
+              {cost ? cost.value : "–"}
+            </span>
+            <span className="min-w-0 truncate text-[11px] font-medium leading-[1.2]" style={{ fontFamily: KR_FONT, color: KR_COLORS.cream }}>
+              {cost ? cost.unit : "KR Coins / Kick"}
+            </span>
+          </span>
+        </div>
       </div>
-      {mirrored && disc}
     </div>
   );
 }
 
 /**
- * Header crest buttons, then the title and (in gameplay) the coin HUD as a
- * non-interactive overlay, so only the 56px row takes layout height from the pitch.
+ * Menu left, only the rules "!" right (feedback 23 Sep); the title and, in
+ * gameplay, the balance | cost row overlay the pitch so only the 64px bar takes layout height.
  */
-export function KrPkTopHud({ onNavMenuClick, onInfoClick, onMenuClick, hud }) {
+export function KrPkTopHud({ onNavMenuClick, onInfoClick, hud }) {
   return (
     <div className="relative w-full">
-      <div className="flex w-full items-center justify-between px-4 py-2">
-        <CrestButton src={KR_ASSETS.ui.hamburger} onClick={onNavMenuClick} label="Navigation menu" />
-        <div className="flex items-center gap-3">
-          <HistoryButton onClick={onMenuClick} />
-          <CrestButton src={KR_ASSETS.ui.info} onClick={onInfoClick} label="Info" />
-        </div>
+      <div className="flex h-[64px] w-full items-center justify-between px-4">
+        <HeaderIconButton src={KR_ASSETS.ui.hamburger} onClick={onNavMenuClick} label="Open menu" />
+        <HeaderIconButton src={KR_ASSETS.ui.alert} onClick={onInfoClick} label="Penalty Kick rules" round />
       </div>
       <div className="pointer-events-none absolute inset-x-0 top-full flex flex-col gap-2 px-4">
         <PageTitle>Penalty Kick</PageTitle>
-        {hud && (
-          <div className="flex w-full items-center justify-between gap-2">
-            <HudChip label="KR Coins" value={formatKrAmount(hud.tokens)} />
-            <HudChip label="KR Coins/Shot" value={formatKrAmount(hud.perShot)} mirrored />
-          </div>
-        )}
+        {hud && <KrPkBalanceRow balance={hud.tokens} perShot={hud.perShot} />}
       </div>
     </div>
   );
@@ -293,13 +280,11 @@ export function KrPkCard({ children, className = "px-2 py-4" }) {
   );
 }
 
-export function KrPkDialogTitle({ children }) {
+/** Dialog heading: the shared KR gold-gradient title. */
+export function KrPkDialogTitle({ children, size = 20 }) {
   return (
-    <p
-      className="px-4 py-2 text-center text-[14px] font-bold uppercase leading-[15px] tracking-[0.5px]"
-      style={{ fontFamily: KR_FONT, color: KR_PK_INK.title }}
-    >
+    <GoldText as="h2" className="block px-4 text-center font-bold uppercase" style={{ fontSize: size, letterSpacing: 1.4 }}>
       {children}
-    </p>
+    </GoldText>
   );
 }

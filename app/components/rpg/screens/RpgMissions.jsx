@@ -11,7 +11,7 @@ import { RPG_COLORS, RPG_GRADIENTS, MISSION_TABS } from "../constants";
 import { RPG_IMAGES } from "../rpgAssets";
 import * as rpgApi from "../rpgApi";
 import { GoldCta, Panel, ProgressBar } from "../primitives";
-import { titleInk, useRpgSkin } from "../rpgSkin";
+import { titleFit, titleInk, useRpgSkin } from "../rpgSkin";
 import NoticeModal from "../NoticeModal";
 
 // The API's four categories (1 Daily, 2 Weekly, 3 Monthly, 4 Achievement).
@@ -69,7 +69,7 @@ export default function RpgMissions({ onProfileUpdate, onNavigate }) {
 
   return (
     <div className="flex w-full flex-1 flex-col px-[18px]">
-      <h2 className="pt-[22px] text-[26px] font-bold tracking-[6px]" style={{ ...titleInk(skin), fontFamily: skin.fonts.display }}>
+      <h2 className="pt-[22px] text-[26px] font-bold tracking-[6px]" style={{ ...titleInk(skin), ...titleFit(skin, "MISSIONS"), fontFamily: skin.fonts.display }}>
         MISSIONS
       </h2>
       <p className="mt-[2px] text-[13px]" style={{ color: skin.c.textDim, fontFamily: skin.fonts.display }}>

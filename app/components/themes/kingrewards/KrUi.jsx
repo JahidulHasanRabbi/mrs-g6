@@ -80,8 +80,15 @@ export function CardTitle({ children, align = "left", size = 20, className = "" 
 
 /** The page heading: Barlow Bold 40, uppercase, gold gradient, centred. */
 export function PageTitle({ children }) {
+  // One line always: long titles ("TERMS & CONDITIONS") shrink with their length.
+  const len = typeof children === "string" ? children.length : 10;
+  const fit = Math.min(1, 13 / Math.max(len, 1));
   return (
-    <GoldText as="h1" className="block w-full text-center font-bold uppercase" style={{ fontSize: "clamp(28px, 9.7vw, 40px)" }}>
+    <GoldText
+      as="h1"
+      className="block w-full whitespace-nowrap text-center font-bold uppercase"
+      style={{ fontSize: `min(${40 * fit}px, ${(9.7 * fit).toFixed(2)}vw)` }}
+    >
       {children}
     </GoldText>
   );

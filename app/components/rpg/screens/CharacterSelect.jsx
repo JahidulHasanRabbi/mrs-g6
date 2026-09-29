@@ -11,9 +11,11 @@ import RpgTopBar from "../RpgTopBar";
 import { RPG_COLORS, RPG_GRADIENTS, POWER_PER_LEVEL, MAX_LEVEL, EQUIP_SLOTS } from "../constants";
 import { RPG_IMAGES } from "../rpgAssets";
 import { Panel, StatRow, GoldCta } from "../primitives";
-import { titleInk, useRpgSkin } from "../rpgSkin";
+import { titleFit, titleInk, useRpgSkin } from "../rpgSkin";
 
 const GENDERS = ["male", "female"];
+// Px at the 260px render: the female art stands 30/768 lower in its canvas.
+const FEET_NUDGE = { male: 0, female: -10 };
 
 export default function CharacterSelect({ onCreate, onInfoClick, onMenuClick, error, profile }) {
   const skin = useRpgSkin();
@@ -23,6 +25,8 @@ export default function CharacterSelect({ onCreate, onInfoClick, onMenuClick, er
   const maxLevel = profile?.maxLevel ?? MAX_LEVEL;
   const [gender, setGender] = useState("male");
   const [busy, setBusy] = useState(false);
+  const hs = skin.heroSelect;
+  const Footer = hs.footer || FooterNav;
 
   const handleStart = async () => {
     if (busy) return;
@@ -42,12 +46,12 @@ export default function CharacterSelect({ onCreate, onInfoClick, onMenuClick, er
       />
       <div className="pointer-events-none absolute inset-0" style={{ background: skin.overlay }} />
 
-      <RpgTopBar onInfoClick={onInfoClick} onMenuClick={onMenuClick} />
+      <RpgTopBar onInfoClick={onInfoClick} onMenuClick={onMenuClick} balances={profile} />
 
       <div className="relative z-10 flex w-full flex-1 flex-col items-center px-[24px] pb-[140px] pt-[80px]">
         <h1
           className="text-center text-[26px] font-bold tracking-[4px]"
-          style={{ ...titleInk(skin), fontFamily: skin.fonts.display }}
+          style={{ ...titleInk(skin), ...titleFit(skin, "CHOOSE YOUR HERO"), fontFamily: skin.fonts.display }}
         >
           CHOOSE YOUR HERO
         </h1>
@@ -74,6 +78,7 @@ export default function CharacterSelect({ onCreate, onInfoClick, onMenuClick, er
                         fontFamily: skin.fonts.display,
                         fontWeight: 700,
                         boxShadow: `0 0 14px ${skin.hud.badgeBorder}44`,
+                        ...hs.choiceOn,
                       }
                     : {
                         background: "rgba(255,255,255,0.04)",
@@ -81,6 +86,7 @@ export default function CharacterSelect({ onCreate, onInfoClick, onMenuClick, er
                         color: skin.c.textDim,
                         fontFamily: skin.fonts.display,
                         fontWeight: 600,
+                        ...hs.choiceOff,
                       }
                 }
               >
@@ -98,6 +104,7 @@ export default function CharacterSelect({ onCreate, onInfoClick, onMenuClick, er
               src={RPG_IMAGES.hero[gender].front}
               alt={`${gender} hero`}
               className="h-[260px] w-auto"
+              style={hs.alignFeet ? { position: "relative", top: FEET_NUDGE[gender] } : undefined}
               initial={{ opacity: 0, x: gender === "male" ? -24 : 24 }}
               animate={{ opacity: 1, x: 0, y: [0, -6, 0] }}
               exit={{ opacity: 0, x: gender === "male" ? 24 : -24 }}
@@ -131,7 +138,7 @@ export default function CharacterSelect({ onCreate, onInfoClick, onMenuClick, er
         </div>
       </div>
 
-      <FooterNav />
+      <Footer />
     </div>
   );
 }

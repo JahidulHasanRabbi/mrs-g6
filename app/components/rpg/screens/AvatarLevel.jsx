@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 import { RPG_COLORS, RPG_GRADIENTS, MAX_LEVEL, POWER_PER_LEVEL, EQUIP_POWER, EQUIP_SLOTS } from "../constants";
 import * as rpgApi from "../rpgApi";
 import { GoldCta, Panel } from "../primitives";
-import { titleInk, useRpgSkin } from "../rpgSkin";
+import { titleFit, titleInk, useRpgSkin } from "../rpgSkin";
 import NoticeModal from "../NoticeModal";
 
 const fmt = (n) => Number(n).toLocaleString("en-GB");
@@ -32,6 +32,7 @@ export default function AvatarLevel({ profile, onProfileUpdate }) {
   const levelPower = profile.levelPower ?? profile.level * perLevel;
   const equipPower = profile.equipPower ?? 0;
   const maxPower = maxLevel * perLevel + slotCount * EQUIP_POWER;
+  const bpShort = Math.max(0, (profile.bpToNext ?? 0) - (profile.bp ?? 0));
 
   const handleLevelUp = async () => {
     if (busy || atMax) return;
@@ -56,7 +57,7 @@ export default function AvatarLevel({ profile, onProfileUpdate }) {
     <div className="flex w-full flex-1 flex-col items-center px-[24px]">
       <h2
         className="pt-[24px] text-center text-[22px] font-bold tracking-[5px]"
-        style={{ ...titleInk(skin), fontFamily: skin.fonts.display }}
+        style={{ ...titleInk(skin), ...titleFit(skin, "AVATAR LEVEL"), fontFamily: skin.fonts.display }}
       >
         AVATAR LEVEL
       </h2>
@@ -103,9 +104,15 @@ export default function AvatarLevel({ profile, onProfileUpdate }) {
             transition={{ type: "spring", stiffness: 90, damping: 20 }}
           />
         </div>
-        <p className="text-[10px]" style={{ color: pc.slotEmpty, fontFamily: skin.fonts.display }}>
-          BP required = current level × {profile.bpPerLevelMultiplier ?? 100} · each level grants +{fmt(perLevel)} Power
-        </p>
+        {skin.level.formulas ? (
+          <p className="text-[10px]" style={{ color: pc.slotEmpty, fontFamily: skin.fonts.display }}>
+            BP required = current level × {profile.bpPerLevelMultiplier ?? 100} · each level grants +{fmt(perLevel)} Power
+          </p>
+        ) : atMax ? null : (
+          <p className="text-[13px] font-semibold" style={{ color: pc.text, fontFamily: skin.fonts.display }}>
+            {bpShort > 0 ? `Gain ${fmt(bpShort)} BP to reach Lv.${profile.level + 1}` : `Ready to level up to Lv.${profile.level + 1}`}
+          </p>
+        )}
       </Panel>
 
       {/* Power breakdown */}
@@ -138,9 +145,9 @@ export default function AvatarLevel({ profile, onProfileUpdate }) {
             {fmt(profile.power)}
           </span>
         </div>
-        <p className="text-[10px]" style={{ color: pc.slotEmpty, fontFamily: skin.fonts.display }}>
+        {skin.level.formulas && <p className="text-[10px]" style={{ color: pc.slotEmpty, fontFamily: skin.fonts.display }}>
           Max: Lv.{maxLevel} ({fmt(maxLevel * perLevel)}) + {slotCount} items ({fmt(slotCount * EQUIP_POWER)}) = {fmt(maxPower)} Power
-        </p>
+        </p>}
       </Panel>
 
       <div className="mt-auto w-full pb-[6px] pt-[22px]">

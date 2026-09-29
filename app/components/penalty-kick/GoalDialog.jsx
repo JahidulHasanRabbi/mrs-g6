@@ -36,6 +36,8 @@ export default function GoalDialog({ reward, onKickAgain, onRedeemAll, onReturn 
     return (
       <KrPkGoalDialog
         rewardText={rewardText}
+        rewardImage={reward?.image}
+        isBattlePoint={itemType === "BATTLE POINT"}
         redeemedSummary={redeemedSummary}
         redeemButton={
           onRedeemAll && (

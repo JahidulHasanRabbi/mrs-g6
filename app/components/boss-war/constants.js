@@ -148,3 +148,12 @@ export const ORDINAL = (n) => {
 };
 
 export const fmt = (n) => Number(n ?? 0).toLocaleString("en-GB");
+
+// Project date rule: dd/mm/yyyy HH:MM AM|PM (en-GB).
+export const fmtWhen = (iso) => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const date = d.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const time = d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: true }).toUpperCase();
+  return `${date} ${time}`;
+};

@@ -77,7 +77,7 @@ export function KrPlaqueButton({ children, onClick, className = "", style, type 
 }
 
 /** VIP tier card with the deposit progress bar (Figma 664:813). */
-export function KrTierCard({ currentLevel, nextLevel, progress, tokensNeeded }) {
+export function KrTierCard({ currentLevel, nextLevel, progress, tokensNeeded, loading = false }) {
   const pct = Math.max(0, Math.min(100, Number(progress) || 0));
   const isTop = !nextLevel || nextLevel === currentLevel;
 
@@ -102,7 +102,11 @@ export function KrTierCard({ currentLevel, nextLevel, progress, tokensNeeded }) 
 
         <div className="flex items-baseline justify-between gap-2 text-[11px] leading-[1.3]" style={{ fontFamily: KR_FONT }}>
           <span className="min-w-0 text-white">
-            {isTop ? (
+            {loading ? (
+              "Loading your level…"
+            ) : !currentLevel ? (
+              "Level details unavailable"
+            ) : isTop ? (
               "Top tier reached"
             ) : (
               <>

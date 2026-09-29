@@ -8,9 +8,11 @@
 // values. Without a boss — or if either call fails — it falls back to the
 // static copy, which is what the standalone Info entry shows.
 
+import { useRouter } from "next/navigation";
 import * as warApi from "../bossWarApi";
-import { BOSS_INFO_SECTIONS, HOW_TO_EARN_NOTE } from "../constants";
-import { InfoPlaque, SectionCard, WarScreen, useWarResource } from "../primitives";
+import { BOSS_INFO_SECTIONS, HOW_TO_EARN_NOTE, WAR_VIEWS } from "../constants";
+import { useRpgSkin } from "../../rpg/rpgSkin";
+import { InfoPlaque, SectionCard, WarButton, WarScreen, useWarResource } from "../primitives";
 
 const pct = (v) => `${Number(v)}%`;
 const mult = (v) => `${Number(v)}×`;
@@ -65,7 +67,9 @@ function liveSections(boss, vip) {
   return sections.filter(Boolean);
 }
 
-export default function BossInfo({ bossId }) {
+export default function BossInfo({ bossId, onNavigate }) {
+  const skin = useRpgSkin();
+  const router = useRouter();
   const { data } = useWarResource(() => warApi.getBossInfo(bossId), [bossId], "Could not load boss info.");
 
   // Static copy until the live payload lands, so the screen never blanks.
@@ -80,6 +84,8 @@ export default function BossInfo({ bossId }) {
         </SectionCard>
       ))}
       <InfoPlaque title="How to Earn Rewards" lines={HOW_TO_EARN_NOTE} className="mt-[14px]" />
+      {/* The top bar "!" lands here from any screen; Back returns to it. */}
+      {skin.war.infoBack ? <WarButton className="mx-auto w-[150px]" onClick={() => (window.history.length > 1 ? router.back() : onNavigate(WAR_VIEWS.LIST))}>Back</WarButton> : null}
     </WarScreen>
   );
 }

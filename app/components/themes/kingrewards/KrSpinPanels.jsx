@@ -5,6 +5,7 @@ import KingRewardsDialog from "./KingRewardsDialog";
 import KingRewardsButton from "./KingRewardsButton";
 import { CardTitle, GlassCard, GoldText, KrImage, formatKrAmount } from "./KrUi";
 import { KR_ASSETS, KR_COLORS, KR_FONT, KR_GRADIENTS } from "./assets";
+import { formatKrCoins } from "../../../api/apiOptions";
 
 // Sections shared by the King Rewards Lucky Spin and Smash Egg pages
 // (Figma 706:1061 / 707:4251): reward list, winners table, terms, result dialog.
@@ -25,6 +26,58 @@ export function formatKrDate(value) {
 
 export { formatKrAmount };
 
+/** UserContext keeps the balance as a formatted string ("1,234.00"). */
+export function parseKrAmount(value) {
+  const amount = Number(String(value ?? 0).replace(/,/g, ""));
+  return Number.isFinite(amount) ? amount : 0;
+}
+
+/** "1 KR Coin" / "N KR Coins" for any raw or formatted amount. */
+export function krCoins(value) {
+  return formatKrCoins(parseKrAmount(value));
+}
+
+/** Warning-dialog props for a draw the member can't pay for; no cost = only the server knew. */
+export function insufficientDialogProps({ balance, cost, onGetCoins, onBack }) {
+  const text = cost ? `You have ${krCoins(balance)}. This costs ${krCoins(cost)}.` : `${krCoins(balance)} left`;
+  return {
+    tone: "warning",
+    title: "Warning!",
+    subtitle: "Not enough KR Coins",
+    items: [{ key: "left", text }],
+    primary: { label: "Get KR Coins?", onClick: onGetCoins },
+    secondary: { label: "Back", onClick: onBack },
+  };
+}
+
+/** Inline low-balance note shown under the draw buttons. */
+export function KrLowBalanceNote({ children }) {
+  return (
+    <p
+      role="status"
+      className="flex w-full items-center justify-center gap-1.5 rounded-[8px] px-3 py-2 text-center text-[13px] font-medium leading-[1.3]"
+      style={{
+        fontFamily: KR_FONT,
+        color: "#ffd6de",
+        background: "rgba(217,6,20,0.18)",
+        border: "1px solid rgba(255,102,138,0.45)",
+      }}
+    >
+      <img src={KR_ASSETS.ui.iconWarning} alt="" className="h-4 w-4 shrink-0" />
+      <span>{children}</span>
+    </p>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function RankMedal({ rank }) {
   return (
     <div className="relative h-6 w-6 shrink-0" aria-hidden>
@@ -41,8 +94,8 @@ function RankMedal({ rank }) {
   );
 }
 
-/** "REWARD LIST" panel. rows: [{ key, rankLabel, rank?, name, image }] */
-export function KrRewardList({ rows = [], loading = false, rowShadow = false }) {
+/** "REWARD LIST" panel. rows: [{ key, rankLabel?, rank?, name, image }] */
+export function KrRewardList({ rows = [], loading = false, rowShadow = false, compact = false }) {
   return (
     <GlassCard className="flex w-full flex-col items-center gap-6 px-2 py-4">
       <CardTitle className="w-full pb-2">Reward List</CardTitle>
@@ -55,14 +108,16 @@ export function KrRewardList({ rows = [], loading = false, rowShadow = false }) 
           rows.map((row, i) => (
             <div
               key={row.key ?? i}
-              className="flex items-center gap-3 rounded-[8px] py-3 pl-4 pr-3"
+              className={`flex items-center gap-3 rounded-[8px] pl-4 pr-3 ${compact ? "py-2" : "py-3"}`}
               style={{
                 background: "rgba(255,255,255,0.1)",
                 borderLeft: `4px solid ${KR_COLORS.goldBright}`,
                 boxShadow: rowShadow ? INNER_SHADOW : undefined,
               }}
             >
-              <div className="h-12 w-12 shrink-0 overflow-hidden rounded-[6px] border border-[rgba(77,71,50,0.4)] bg-[#231f14] p-px">
+              <div
+                className={`${compact ? "h-10 w-10" : "h-12 w-12"} shrink-0 overflow-hidden rounded-[6px] border border-[rgba(77,71,50,0.4)] bg-[#231f14] p-px`}
+              >
                 {row.image ? (
                   <KrImage src={row.image} className="h-full w-full rounded-[5px] object-cover" />
                 ) : (
@@ -70,11 +125,13 @@ export function KrRewardList({ rows = [], loading = false, rowShadow = false }) 
                 )}
               </div>
               <div className="flex min-w-0 flex-1 flex-col">
-                <GoldText className="text-[10px] uppercase" style={{ fontFamily: ACME, lineHeight: "15px" }}>
-                  {row.rankLabel}
-                </GoldText>
+                {row.rankLabel && (
+                  <GoldText className="text-[10px] uppercase" style={{ fontFamily: ACME, lineHeight: "15px" }}>
+                    {row.rankLabel}
+                  </GoldText>
+                )}
                 <p
-                  className="break-words text-[16px] leading-6"
+                  className={`break-words leading-6 ${compact ? "text-[14px]" : "text-[16px]"}`}
                   style={{ fontFamily: RUBIK, color: i === 0 ? KR_COLORS.cream : "#eae2cf" }}
                 >
                   {row.name}
@@ -151,8 +208,9 @@ export function KrWinnersPanel({
   heading,
   rows = [],
   loading = false,
-  emptyText = "No winners yet.",
+  emptyText = "No records yet",
   bordered = true,
+  footer = null,
   pageSize = 10,
   page: controlledPage,
   total,
@@ -209,9 +267,12 @@ export function KrWinnersPanel({
             <span className="text-right">Amount</span>
           </div>
           {loading ? (
-            <p className="text-[12px] text-white/80">Loading…</p>
+            <p className="py-4 text-center text-[12px] text-white/80">Loading…</p>
           ) : visible.length === 0 ? (
-            <p className="text-[12px] text-white/80">{emptyText}</p>
+            <div className="flex flex-col items-center gap-1.5 py-4 text-white/80">
+              <ClockIcon />
+              <p className="text-center text-[12px]">{emptyText}</p>
+            </div>
           ) : (
             visible.map((row, i) => (
               <div key={`${row.date}-${row.user}-${row.amount}-${i}`} className={`${cols} text-[10px] leading-[1.3] text-white`}>
@@ -227,16 +288,68 @@ export function KrWinnersPanel({
       </div>
 
       {totalPages > 1 && <Pagination page={page} totalPages={totalPages} onPage={controlled ? onPage : setLocalPage} />}
+      {footer}
     </GlassCard>
+  );
+}
+
+function useTermLines(termsText) {
+  return useMemo(
+    () => String(termsText || "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean),
+    [termsText]
+  );
+}
+
+function TermsList({ terms, bordered }) {
+  if (terms.length === 0) {
+    return (
+      <p className="p-3 text-[14px]" style={{ fontFamily: RUBIK, color: KR_COLORS.cream }}>
+        No terms and conditions available.
+      </p>
+    );
+  }
+  return (
+    <div className="flex flex-col">
+      {terms.map((term, i) => (
+        <div
+          key={i}
+          className="flex flex-col gap-1 rounded-r-[8px] p-3"
+          style={i > 0 ? { borderTop: `1px solid ${bordered ? KR_COLORS.gold : KR_COLORS.goldBright}` } : undefined}
+        >
+          <GoldText className="text-[10px]" style={{ fontFamily: ACME, lineHeight: "15px" }}>
+            {String(i + 1).padStart(2, "0")}
+          </GoldText>
+          <p className="break-words text-[16px] leading-6" style={{ fontFamily: RUBIK, color: KR_COLORS.cream }}>
+            {term}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** The game's own rules, opened from the header "!"; Back returns to the game. */
+export function KrRulesDialog({ open, onClose, title, termsText = "" }) {
+  const terms = useTermLines(termsText);
+  return (
+    <KingRewardsDialog open={open} onClose={onClose}>
+      <GoldText as="h2" className="block px-2 text-center text-[24px] font-bold uppercase" style={{ letterSpacing: 1 }}>
+        {title}
+      </GoldText>
+      <div
+        className="max-h-[55vh] w-full overflow-y-auto rounded-[12px] p-2"
+        style={{ background: "rgba(255,255,255,0.1)", border: `1px solid ${KR_COLORS.goldBright}`, boxShadow: INNER_SHADOW }}
+      >
+        <TermsList terms={terms} bordered />
+      </div>
+      <KingRewardsButton onClick={onClose}>Back</KingRewardsButton>
+    </KingRewardsDialog>
   );
 }
 
 /** "TERM & CONDITION" panel; one numbered item per non-empty line of termsText. */
 export function KrTermsPanel({ termsText = "", bordered = true }) {
-  const terms = useMemo(
-    () => String(termsText || "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean),
-    [termsText]
-  );
+  const terms = useTermLines(termsText);
   return (
     <GlassCard className="flex w-full flex-col gap-6 px-2 py-4">
       <CardTitle className="w-full pb-2">Term &amp; Condition</CardTitle>
@@ -248,28 +361,7 @@ export function KrTermsPanel({ termsText = "", bordered = true }) {
           boxShadow: bordered ? INNER_SHADOW : undefined,
         }}
       >
-        {terms.length === 0 ? (
-          <p className="p-3 text-[14px]" style={{ fontFamily: RUBIK, color: KR_COLORS.cream }}>
-            No terms and conditions available.
-          </p>
-        ) : (
-          <div className="flex flex-col">
-            {terms.map((term, i) => (
-              <div
-                key={i}
-                className="flex flex-col gap-1 rounded-r-[8px] p-3"
-                style={i > 0 ? { borderTop: `1px solid ${bordered ? KR_COLORS.gold : KR_COLORS.goldBright}` } : undefined}
-              >
-                <GoldText className="text-[10px]" style={{ fontFamily: ACME, lineHeight: "15px" }}>
-                  {String(i + 1).padStart(2, "0")}
-                </GoldText>
-                <p className="break-words text-[16px] leading-6" style={{ fontFamily: RUBIK, color: KR_COLORS.cream }}>
-                  {term}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
+        <TermsList terms={terms} bordered={bordered} />
       </div>
     </GlassCard>
   );

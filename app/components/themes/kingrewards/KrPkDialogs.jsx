@@ -1,14 +1,16 @@
 "use client";
 
 import KingRewardsButton from "./KingRewardsButton";
+import { formatKrCoins } from "../../../api/apiOptions";
 import { KR_ASSETS, KR_FONT, KR_GRADIENTS } from "./assets";
-import { formatKrAmount } from "./KrUi";
-import { KR_PK_INK, KrPkCard, KrPkCoin, KrPkDialogTitle, KrPkGlowText } from "./KrPkParts";
-
-const ERROR_ICON = "/assets/themes/kingrewards/pk/icon-error.svg";
+import { GoldText, KrImage, formatKrAmount } from "./KrUi";
+import { KR_PK_INK, KrPkCard, KrPkCoin, KrPkDialogTitle } from "./KrPkParts";
 
 // Presentation-only King Rewards bodies for the penalty-kick dialogs. The shared
 // dialogs keep all state (reward text, redeem flow, terms fallback) and pass it in.
+// Result popups mirror the shared KR result dialog (KrResultDialog in KrSpinPanels).
+
+const HEADING_SHADOW = "drop-shadow(0 4px 1.5px rgba(0,0,0,0.1)) drop-shadow(0 10px 4px rgba(0,0,0,0.04))";
 
 export function KrOutlineButton(props) {
   return <KingRewardsButton {...props} variant="dark" />;
@@ -20,15 +22,34 @@ function GoldButton(props) {
 
 // Raw API copy can still say "token"; the UI name is KR Coins.
 function toDisplayCopy(text) {
-  return String(text ?? "").replace(/\btokens?\b/gi, "KR Coins");
+  return String(text ?? "").replace(/tokens?/gi, "KR Coins");
 }
 
-function CoinLine({ children }) {
+function coins(value) {
+  return formatKrCoins(formatKrAmount(value));
+}
+
+function ResultHeading({ warning = false, children }) {
   return (
-    <div className="flex items-center justify-center gap-4">
-      <KrPkCoin size={64} />
+    <div className="flex min-h-9 items-center justify-center gap-1 px-2 text-center" style={{ filter: HEADING_SHADOW }}>
+      {warning && <img src={KR_ASSETS.ui.iconWarning} alt="" aria-hidden="true" className="h-8 w-8 shrink-0" />}
+      <GoldText
+        as="h3"
+        className="text-[32px] font-bold uppercase"
+        style={{ letterSpacing: 1.4, ...(warning ? { backgroundImage: KR_GRADIENTS.red } : null) }}
+      >
+        {children}
+      </GoldText>
+    </div>
+  );
+}
+
+function ResultLine({ image, fallback, children }) {
+  return (
+    <div className="flex max-w-full items-center justify-center gap-4 px-2">
+      <KrImage src={image} fallback={fallback} className="h-16 w-16 shrink-0 object-contain" />
       <p
-        className="max-h-[96px] min-w-0 max-w-[220px] overflow-y-auto text-left text-[16px] font-medium leading-[24px] [scrollbar-width:thin]"
+        className="max-h-[96px] min-w-0 overflow-y-auto break-words text-left text-[16px] font-medium leading-6 [scrollbar-width:thin]"
         style={{ fontFamily: KR_FONT, color: KR_PK_INK.glow }}
       >
         {children}
@@ -61,14 +82,16 @@ function Actions({ children }) {
   return <div className="flex w-full flex-col items-center gap-4">{children}</div>;
 }
 
-export function KrPkGoalDialog({ rewardText, redeemedSummary, redeemButton, onKickAgain, onReturn }) {
+export function KrPkGoalDialog({ rewardText, rewardImage, isBattlePoint, redeemedSummary, redeemButton, onKickAgain, onReturn }) {
   return (
     <KrPkCard>
-      <div className="flex flex-col items-center gap-8">
-        <KrPkGlowText as="h3">Goal!</KrPkGlowText>
-        <div className="flex flex-col items-center gap-4">
+      <div className="flex w-full flex-col items-center gap-8">
+        <ResultHeading>Goal!</ResultHeading>
+        <div className="flex w-full flex-col items-center gap-4">
           <Lead>Congratulations!</Lead>
-          <CoinLine>{rewardText === "a reward" ? "Reward Won" : `${toDisplayCopy(rewardText)} Won`}</CoinLine>
+          <ResultLine image={rewardImage} fallback={isBattlePoint ? KR_ASSETS.ui.iconBp : KR_ASSETS.ui.iconCoins}>
+            You won {toDisplayCopy(rewardText)}
+          </ResultLine>
           <RedeemedNote summary={redeemedSummary} />
         </div>
       </div>
@@ -81,32 +104,45 @@ export function KrPkGoalDialog({ rewardText, redeemedSummary, redeemButton, onKi
   );
 }
 
-export function KrPkFailDialog({ isError, heading, body, balance, redeemedSummary, redeemButton, kickAgainLabel, onKickAgain, onReturn }) {
+export function KrPkFailDialog({
+  isError,
+  isInsufficient,
+  heading,
+  body,
+  balance,
+  perShot,
+  redeemedSummary,
+  redeemButton,
+  kickAgainLabel,
+  onKickAgain,
+  onReturn,
+}) {
+  if (isInsufficient) {
+    return (
+      <KrPkCard>
+        <div className="flex w-full flex-col items-center gap-8">
+          <ResultHeading warning>Not Enough</ResultHeading>
+          <div className="flex w-full flex-col items-center gap-4">
+            <Lead>
+              {perShot != null ? `You need ${coins(perShot)} to kick.` : "You don't have enough KR Coins to kick."}
+            </Lead>
+            {balance != null && <ResultLine fallback={KR_ASSETS.ui.iconCoins}>{coins(balance)} Left</ResultLine>}
+          </div>
+        </div>
+        <Actions>
+          <GoldButton onClick={onKickAgain}>Close</GoldButton>
+          <KrOutlineButton onClick={onReturn}>Back</KrOutlineButton>
+        </Actions>
+      </KrPkCard>
+    );
+  }
   return (
     <KrPkCard>
-      <div className="flex flex-col items-center gap-8">
-        {isError ? (
-          <div className="flex h-9 items-center justify-center gap-1">
-            <img src={ERROR_ICON} alt="" aria-hidden="true" className="h-8 w-8" />
-            <h3
-              className="text-[32px] font-bold uppercase leading-[1.2] tracking-[1.4px]"
-              style={{
-                fontFamily: KR_FONT,
-                backgroundImage: KR_GRADIENTS.red,
-                WebkitBackgroundClip: "text",
-                backgroundClip: "text",
-                color: "transparent",
-              }}
-            >
-              Error!
-            </h3>
-          </div>
-        ) : (
-          <KrPkGlowText as="h3">{heading}</KrPkGlowText>
-        )}
-        <div className="flex flex-col items-center gap-4">
-          <Lead>{toDisplayCopy(isError ? body || heading : body)}</Lead>
-          {balance != null && <CoinLine>{formatKrAmount(balance)} KR Coins Left</CoinLine>}
+      <div className="flex w-full flex-col items-center gap-8">
+        <ResultHeading warning={isError}>{heading}</ResultHeading>
+        <div className="flex w-full flex-col items-center gap-4">
+          <Lead>{toDisplayCopy(body)}</Lead>
+          {!isError && balance != null && <ResultLine fallback={KR_ASSETS.ui.iconCoins}>{coins(balance)} Left</ResultLine>}
           <RedeemedNote summary={redeemedSummary} />
         </div>
       </div>
@@ -119,7 +155,7 @@ export function KrPkFailDialog({ isError, heading, body, balance, redeemedSummar
   );
 }
 
-export function KrPkInfoDialog({ onClose, onOpenTerms }) {
+export function KrPkInfoDialog({ onClose, onOpenTerms, onOpenHistory }) {
   return (
     <KrPkCard>
       <div className="flex w-full flex-col items-center gap-8">
@@ -139,11 +175,14 @@ export function KrPkInfoDialog({ onClose, onOpenTerms }) {
           Swipe to Kick
         </h3>
       </div>
-      <GoldButton onClick={onClose}>Close</GoldButton>
+      <Actions>
+        <GoldButton onClick={onClose}>Close</GoldButton>
+        {onOpenHistory && <KrOutlineButton onClick={onOpenHistory}>Game History</KrOutlineButton>}
+      </Actions>
       <button
         type="button"
         onClick={onOpenTerms}
-        className="cursor-pointer text-[12px] leading-[24px] underline"
+        className="cursor-pointer text-[14px] leading-[24px] underline"
         style={{ fontFamily: KR_FONT, color: KR_PK_INK.muted }}
       >
         Terms &amp; Conditions
@@ -156,16 +195,16 @@ export function KrPkTermsDialog({ lines, onClose }) {
   return (
     <KrPkCard className="p-4">
       <div className="flex w-full flex-col items-center gap-4">
-        <KrPkDialogTitle>Terms &amp; Condition</KrPkDialogTitle>
+        <KrPkDialogTitle>Terms &amp; Conditions</KrPkDialogTitle>
         <div
-          className="max-h-[52vh] w-full overflow-y-auto pr-1 text-left text-[10px] leading-[24px] [scrollbar-width:thin]"
-          style={{ fontFamily: KR_FONT, color: KR_PK_INK.muted }}
+          className="max-h-[52vh] w-full overflow-y-auto rounded-[12px] p-3 text-left text-[14px] leading-[22px] [scrollbar-width:thin]"
+          style={{ fontFamily: KR_FONT, color: "#ffffff", background: "rgba(255,255,255,0.08)" }}
         >
           <p>{lines[0]}</p>
           {lines.length > 1 && (
-            <ol className="list-decimal">
+            <ol className="mt-2 flex list-decimal flex-col gap-2">
               {lines.slice(1).map((line, i) => (
-                <li key={i} style={{ marginInlineStart: 15 }}>
+                <li key={i} style={{ marginInlineStart: 18 }}>
                   {line}
                 </li>
               ))}

@@ -61,10 +61,10 @@ export function KrDialogPrize({ image, imageClassName = "size-16", children }) {
 }
 
 /**
- * The Mart / Check-in result modal (Figma 829:7824, 829:8037, 857:3577…):
- * a gold success title or a red WARNING!, the body, then "Back".
+ * The Mart / Check-in modal (Figma 829:7824, 829:8037, 857:3577…): a gold title
+ * or a red WARNING!, the body, then `actions` (default: one "Back").
  */
-export default function KrCheckinMartDialog({ open, onClose, tone = "success", title, children }) {
+export default function KrCheckinMartDialog({ open, onClose, tone = "success", title, actions, children }) {
   return (
     <KingRewardsDialog open={open} onClose={onClose}>
       <div className="flex w-full flex-col gap-8">
@@ -72,9 +72,11 @@ export default function KrCheckinMartDialog({ open, onClose, tone = "success", t
         <div className="flex flex-col items-center gap-4 px-2">{children}</div>
       </div>
       <div className="flex w-full flex-col items-center gap-4">
-        <KingRewardsButton variant="dark" onClick={onClose}>
-          Back
-        </KingRewardsButton>
+        {actions ?? (
+          <KingRewardsButton variant="dark" onClick={onClose}>
+            Back
+          </KingRewardsButton>
+        )}
       </div>
     </KingRewardsDialog>
   );

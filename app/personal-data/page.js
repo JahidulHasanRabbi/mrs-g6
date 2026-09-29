@@ -28,7 +28,7 @@ export default function PersonalDataPage() {
       )}
 
       {isKingRewards ? (
-        // KR puts the "Edit Profile" title inside the card (Figma 664:2088).
+        // The KR view draws its own "Edit Profile" page title.
         <div className="flex flex-col items-center px-4 pb-4 pt-8">
           <PersonalDataForm />
         </div>

@@ -13,13 +13,21 @@ const IMAGE_BOX = {
   border: `2px solid ${KR_COLORS.goldBright}`,
 };
 
-const NOTICE = "text-center text-[10px] font-semibold leading-[1.2] text-[#bbcbbb]";
+// Non-actionable Claim: calm navy, so only redeemable items carry the gold plaque.
+const MUTED_BUTTON = {
+  color: "rgba(255,246,223,0.7)",
+  background: "rgba(74,120,196,0.45)",
+  border: "1px solid rgba(165,196,255,0.45)",
+  borderRadius: 6,
+};
+
+const NOTICE = "text-center text-[11px] font-semibold leading-[1.25] text-[#bbcbbb]";
 
 /** "6,999,000 KR Coins" struck through, number red and unit white (Figma 822:2560). */
-function StruckPrice({ value }) {
+export function StruckPrice({ value, className = "text-[10px]" }) {
   const [amount, ...unit] = formatKrCoins(value).split(" ");
   return (
-    <p className="max-w-full truncate text-[7px] font-semibold leading-[1.2] text-white line-through">
+    <p className={`max-w-full truncate font-semibold leading-[1.2] text-white line-through ${className}`}>
       <span className="text-[#ff7979]">{amount}</span> {unit.join(" ")}
     </p>
   );
@@ -40,22 +48,23 @@ function ZoomGlyph() {
  */
 export default function KrMartCard({ item, index, locked, requiredTierLabel, blockReason, onRedeem, onPreview }) {
   const amount = priceOf(item);
-  const hasStrikethrough = item.originalPrice && item.originalPrice != amount;
+  const onSale = item.originalPrice && item.originalPrice != amount;
   const isBlocked = !locked && !!blockReason;
+  const canRedeem = !locked && !blockReason;
   const structuralLabel = STRUCTURAL_BLOCK_LABELS[blockReason];
   // Redeem stays live when locked so the dialog can explain the upgrade.
   const canPreview = !locked && !!item.image;
 
   return (
     <motion.div
-      className="flex h-full min-w-0 flex-col items-center gap-4 rounded-[8px] p-2"
+      className="flex h-full min-w-0 flex-col items-center gap-3 rounded-[8px] p-2"
       style={{ ...KR_SURFACES.inner, fontFamily: KR_FONT }}
-      initial={{ opacity: 0, scale: 0.6, y: -40 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 260, damping: 20, delay: index * 0.08 + 0.2 }}
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: "easeOut", delay: Math.min(index, 6) * 0.05 + 0.1 }}
     >
       <div
-        className="relative flex aspect-[3/2] w-full items-center justify-center overflow-hidden rounded-[27px] p-[10px]"
+        className="relative flex aspect-[3/2] w-full shrink-0 items-center justify-center overflow-hidden rounded-[27px] p-[10px]"
         style={IMAGE_BOX}
       >
         {item.image && (
@@ -63,6 +72,7 @@ export default function KrMartCard({ item, index, locked, requiredTierLabel, blo
           <KrImage
             alt={item.title || ""}
             src={item.image}
+            loading={index > 3 ? "lazy" : undefined}
             className="h-[80%] max-w-full object-contain"
             style={
               locked
@@ -96,20 +106,21 @@ export default function KrMartCard({ item, index, locked, requiredTierLabel, blo
         )}
       </div>
 
-      <GoldText as="p" className="block w-full truncate text-center text-[14px] font-bold uppercase">
-        {item.title}
+      <GoldText as="p" className="block w-full truncate text-center text-[14px] font-bold uppercase" style={{ lineHeight: "18px" }}>
+        <span title={item.title}>{item.title}</span>
       </GoldText>
 
-      <div className="flex w-full flex-1 flex-col items-center justify-end gap-1">
+      {/* Fixed-height price block keeps every Claim button on the same line. */}
+      <div className="flex min-h-[46px] w-full flex-1 flex-col items-center justify-center gap-[3px]">
         {locked ? (
           <p className={NOTICE}>Upgrade to {requiredTierLabel || "next tier"} to unlock</p>
         ) : structuralLabel ? (
           <p className={NOTICE}>{structuralLabel}</p>
         ) : (
           <>
-            {hasStrikethrough && <StruckPrice value={item.originalPrice} />}
+            {onSale && <StruckPrice value={item.originalPrice} />}
             <p
-              className="max-w-full truncate text-[10px] font-semibold leading-[1.2]"
+              className="max-w-full truncate text-[12px] font-bold leading-[1.2]"
               style={{ color: KR_COLORS.goldText, opacity: isBlocked ? 0.6 : 1 }}
             >
               {formatKrCoins(amount)}
@@ -125,12 +136,12 @@ export default function KrMartCard({ item, index, locked, requiredTierLabel, blo
         type="button"
         onClick={onRedeem}
         disabled={isBlocked}
-        className="flex w-full items-center justify-center px-4 py-3 text-[12px] font-semibold leading-[1.2] transition-transform active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
-        style={{
-          color: KR_COLORS.onGold,
-          backgroundImage: `url(${KR_ASSETS.ui.btnGold})`,
-          backgroundSize: "100% 100%",
-        }}
+        className="flex w-full shrink-0 items-center justify-center px-4 py-3 text-[12px] font-semibold leading-[1.2] transition-transform active:scale-95 disabled:cursor-not-allowed"
+        style={
+          canRedeem
+            ? { color: KR_COLORS.onGold, backgroundImage: `url(${KR_ASSETS.ui.btnGold})`, backgroundSize: "100% 100%" }
+            : MUTED_BUTTON
+        }
         aria-label={
           locked
             ? `${item.title} (locked)`
@@ -141,7 +152,7 @@ export default function KrMartCard({ item, index, locked, requiredTierLabel, blo
                 : `Claim ${item.title}`
         }
       >
-        Claim
+        {structuralLabel || "Claim"}
       </button>
     </motion.div>
   );

@@ -56,6 +56,7 @@ export function useThemedMart() {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [martItems, setMartItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [redeemResult, setRedeemResult] = useState(null);
   const [gameStatus, setGameStatus] = useState(null);
@@ -123,9 +124,11 @@ export function useThemedMart() {
     try {
       const response = await getAvailableRedemptionItems();
       setMartItems(mapRedemptionItems(response));
+      setLoadError(false);
     } catch (err) {
       console.error("Error fetching redemption items:", err);
       setMartItems([]);
+      setLoadError(true);
     } finally {
       setIsLoading(false);
     }
@@ -296,6 +299,8 @@ export function useThemedMart() {
     setPreviewItem,
     handleClosePreview,
     isLoading,
+    loadError,
+    reloadItems: fetchRedemptionItems,
     isRedeeming,
     redeemResult,
     gameStatus,

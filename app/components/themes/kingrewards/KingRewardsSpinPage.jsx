@@ -5,7 +5,18 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import KingRewardsShell from './KingRewardsShell';
 import { GlassCard, GoldPlaque, KrImage, PageTitle } from './KrUi';
-import { KrResultDialog, KrRewardList, KrTermsPanel, KrWinnersPanel, formatKrAmount, formatKrDate } from './KrSpinPanels';
+import {
+  KrLowBalanceNote,
+  KrResultDialog,
+  KrRewardList,
+  KrRulesDialog,
+  KrTermsPanel,
+  KrWinnersPanel,
+  formatKrDate,
+  insufficientDialogProps,
+  krCoins,
+  parseKrAmount,
+} from './KrSpinPanels';
 import LuckySpinGrid from '../../spin/LuckySpinGrid';
 import { maskName } from '../../smash-egg/smashEggData';
 import { KR_ASSETS, KR_COLORS, KR_FONT } from './assets';
@@ -56,15 +67,45 @@ function renderTile({ prize, hasImage, label, index, isActive, isWinner }) {
   );
 }
 
+// No spin-settings endpoint exists; every skin prices one spin at 10 (x10 = 100, x50 = 500).
+const SPIN_COST = 10;
+
+const MULTI_SPINS = [
+  { count: 10, fn: tenSpin, type: 'ten spins' },
+  { count: 50, fn: fiftySpin, type: 'fifty spins' },
+];
+
 // Centre diamond is 139x140 on the 364px grid box, nudged 7px up.
-const KR_CSS_GRID = {
+const KR_CSS_GRID_BASE = {
   className: 'gap-2 rounded-[8px] p-2',
   // minHeight 0: otherwise tall prize images override the square aspect-ratio.
   style: { background: 'rgba(0,0,0,0.05)', border: `1px solid ${KR_COLORS.goldBright}`, minHeight: 0 },
   tileRadius: TILE_RADIUS,
-  centerStyle: { width: '38.2%', aspectRatio: '139 / 140', top: '48.1%' },
+  centerStyle: {
+    width: '38.2%',
+    aspectRatio: '139 / 140',
+    top: '48.1%',
+    filter: 'drop-shadow(0 0 10px rgba(255,214,90,0.75)) drop-shadow(0 4px 6px rgba(0,0,0,0.35))',
+  },
   renderTile,
 };
+
+function CenterCostRibbon({ label }) {
+  return (
+    <span
+      className="pointer-events-none absolute bottom-[11%] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2 py-[2px] text-[10px] font-bold leading-[1.2] min-[400px]:text-[11px]"
+      style={{
+        fontFamily: KR_FONT,
+        color: KR_COLORS.goldBright,
+        background: KR_COLORS.navyDeep,
+        border: `1px solid ${KR_COLORS.goldBright}`,
+        boxShadow: '0 2px 4px rgba(0,0,0,0.4)',
+      }}
+    >
+      {label}
+    </span>
+  );
+}
 
 const WINNER_TABS = [
   { id: 'list', label: 'Winner List' },
@@ -82,10 +123,17 @@ export default function KingRewardsSpinPage() {
   const [winners, setWinners] = useState([]);
   const [activeTab, setActiveTab] = useState('list');
   const [termsText, setTermsText] = useState('');
-  const { userData, refreshUserData } = useUser();
+  const [rulesOpen, setRulesOpen] = useState(false);
+  // Mirrors isProcessingRef so the buttons can show the in-flight request.
+  const [pending, setPending] = useState(false);
+  const { userData, isLoadingProfile, refreshUserData } = useUser();
   const router = useRouter();
 
   const tokenBalance = userData?.balance ?? 0;
+  const balanceNum = parseKrAmount(tokenBalance);
+  // Before the profile loads the balance reads 0; let the server decide then.
+  const balanceKnown = !isLoadingProfile && Boolean(tokenStorage.getMemberUuid());
+  const canAfford = useCallback((cost) => !balanceKnown || balanceNum >= cost, [balanceKnown, balanceNum]);
 
   const spinResultsRef = useRef(null);
   const spinErrorRef = useRef(null);
@@ -181,14 +229,19 @@ export default function KingRewardsSpinPage() {
   }, []);
 
   const handleSpinAction = useCallback(
-    async (spinFunction, spinType) => {
+    async (spinFunction, spinType, cost) => {
       const memberUuid = tokenStorage.getMemberUuid();
       if (!memberUuid) {
         setDialog({ type: 'error', title: 'Error', message: 'Please log in to spin.' });
         return false;
       }
       if (isSpinning || isProcessingRef.current) return false;
+      if (!canAfford(cost)) {
+        setDialog({ type: 'insufficient', cost });
+        return false;
+      }
       isProcessingRef.current = true;
+      setPending(true);
 
       try {
         spinResultsRef.current = null;
@@ -198,11 +251,13 @@ export default function KingRewardsSpinPage() {
         setIsSpinning(true);
         await refreshUserData();
         isProcessingRef.current = false;
+        setPending(false);
         return true;
       } catch (error) {
         console.error(`Error during ${spinType}:`, error);
         setIsSpinning(false);
         isProcessingRef.current = false;
+        setPending(false);
         const errorDetails = error.data?.details || error.data?.detail || error.message || '';
         setDialog(
           INSUFFICIENT.test(errorDetails)
@@ -212,11 +267,11 @@ export default function KingRewardsSpinPage() {
         return false;
       }
     },
-    [isSpinning, refreshUserData]
+    [isSpinning, canAfford, refreshUserData]
   );
 
   const handleCenterSpin = useCallback(async () => {
-    const ok = await handleSpinAction(oneSpin, 'one spin');
+    const ok = await handleSpinAction(oneSpin, 'one spin', SPIN_COST);
     if (ok && spinResultsRef.current?.length > 0) {
       return { uuid: spinResultsRef.current[0].uuid };
     }
@@ -224,8 +279,8 @@ export default function KingRewardsSpinPage() {
   }, [handleSpinAction]);
 
   const handleMultiSpin = useCallback(
-    async (spinFunction, spinType) => {
-      const ok = await handleSpinAction(spinFunction, spinType);
+    async (spinFunction, spinType, cost) => {
+      const ok = await handleSpinAction(spinFunction, spinType, cost);
       const trigger = gridSpinTriggerRef.current;
       if (ok && trigger && spinResultsRef.current?.length > 0) {
         trigger(spinResultsRef.current[0].uuid);
@@ -248,15 +303,21 @@ export default function KingRewardsSpinPage() {
 
   const rewardRows = useMemo(
     () =>
-      spinItems.map((item, i) => ({
-        key: item.uuid || i,
-        rank: i + 1,
-        rankLabel: `Rank ${String(i + 1).padStart(2, '0')}`,
-        name: item.reward_name,
-        image: item.image,
-      })),
+      spinItems.map((item, i) => ({ key: item.uuid || i, name: item.reward_name, image: item.image })),
     [spinItems]
   );
+
+  const cssGrid = useMemo(
+    () => ({
+      ...KR_CSS_GRID_BASE,
+      renderCenterOverlay: ({ spinning }) =>
+        spinning ? null : <CenterCostRibbon label={pending ? 'Processing…' : `${krCoins(SPIN_COST)} / Spin`} />,
+    }),
+    [pending]
+  );
+
+  const busy = isSpinning || pending;
+  const lowBalance = !canAfford(SPIN_COST);
 
   const recordRows = useMemo(() => {
     const me = maskName(userData?.name || '') || 'You';
@@ -276,14 +337,12 @@ export default function KingRewardsSpinPage() {
       };
     }
     if (dialog.type === 'insufficient') {
-      return {
-        tone: 'warning',
-        title: 'Warning!',
-        subtitle: 'Not enough KR Coins',
-        items: [{ key: 'left', text: `${formatKrAmount(tokenBalance)} KR Coins Left` }],
-        primary: { label: 'Get KR Coins?', onClick: () => router.push('/missions') },
-        secondary: { label: 'Back', onClick: closeDialog },
-      };
+      return insufficientDialogProps({
+        balance: tokenBalance,
+        cost: dialog.cost,
+        onGetCoins: () => router.push('/missions'),
+        onBack: closeDialog,
+      });
     }
     return {
       tone: 'warning',
@@ -294,10 +353,10 @@ export default function KingRewardsSpinPage() {
   })();
 
   return (
-    <KingRewardsShell bg={KR_ASSETS.spin.bg} balance={tokenBalance}>
+    <KingRewardsShell bg={KR_ASSETS.spin.bg} balance={tokenBalance} onInfoClick={() => setRulesOpen(true)}>
       <div className="mx-auto flex w-full max-w-[412px] flex-col items-center gap-4 px-4 pt-4">
         <motion.div
-          className="w-full"
+          className="w-full pb-1 pt-3"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: 'spring', stiffness: 200, damping: 18 }}
@@ -308,7 +367,7 @@ export default function KingRewardsSpinPage() {
         <GlassCard className="flex w-full flex-col items-center px-2 py-4">
           <LuckySpinGrid
             assets={SPIN_GRID_ASSETS}
-            cssGrid={KR_CSS_GRID}
+            cssGrid={cssGrid}
             items={spinItems}
             isSpinning={isSpinning}
             onSpinClick={handleCenterSpin}
@@ -318,30 +377,39 @@ export default function KingRewardsSpinPage() {
         </GlassCard>
 
         {!itemsLoading && (
-          <div className="flex w-full items-stretch gap-3 pb-12 min-[380px]:gap-6">
-            {[
-              { label: 'SPIN X10', cost: 100, fn: tenSpin, type: 'ten spins' },
-              { label: 'SPIN X50', cost: 500, fn: fiftySpin, type: 'fifty spins' },
-            ].map((btn) => (
-              <GoldPlaque
-                key={btn.label}
-                onClick={() => handleMultiSpin(btn.fn, btn.type)}
-                disabled={isSpinning}
-                className="min-h-[54px] min-w-0 flex-1 !px-4"
-              >
-                <span className="flex flex-col items-center gap-1 leading-[1.2]">
-                  <span className="flex items-center gap-0.5 whitespace-nowrap text-[12px] font-semibold">
-                    <img src={KR_ASSETS.ui.iconCoins} alt="" className="h-[19px] w-[19px] shrink-0" />
-                    {btn.cost} KR Coins
-                  </span>
-                  <span className="text-[12px] font-bold">{btn.label}</span>
-                </span>
-              </GoldPlaque>
-            ))}
+          <div className="flex w-full flex-col items-center gap-3 pb-6">
+            <div className="flex w-full items-stretch gap-3 min-[380px]:gap-6">
+              {MULTI_SPINS.map((btn) => {
+                const cost = SPIN_COST * btn.count;
+                const affordable = canAfford(cost);
+                return (
+                  <GoldPlaque
+                    key={btn.count}
+                    onClick={() => handleMultiSpin(btn.fn, btn.type, cost)}
+                    disabled={busy}
+                    // Unaffordable stays tappable so the warning dialog can explain why.
+                    className={`min-h-[54px] min-w-0 flex-1 !px-4 ${affordable ? '' : 'opacity-60 grayscale-[0.4]'}`}
+                  >
+                    <span className="flex flex-col items-center gap-1 leading-[1.2]">
+                      <span className="flex items-center gap-0.5 whitespace-nowrap text-[12px] font-semibold">
+                        <img src={KR_ASSETS.ui.iconCoins} alt="" className="h-[19px] w-[19px] shrink-0" />
+                        {krCoins(cost)}
+                      </span>
+                      <span className="text-[12px] font-bold">{pending ? 'Processing…' : `SPIN ×${btn.count}`}</span>
+                    </span>
+                  </GoldPlaque>
+                );
+              })}
+            </div>
+            {lowBalance && (
+              <KrLowBalanceNote>
+                Not enough KR Coins to spin. One spin costs {krCoins(SPIN_COST)}.
+              </KrLowBalanceNote>
+            )}
           </div>
         )}
 
-        <KrRewardList rows={rewardRows} loading={itemsLoading} rowShadow />
+        <KrRewardList rows={rewardRows} loading={itemsLoading} rowShadow compact />
 
         <KrWinnersPanel
           tabs={WINNER_TABS}
@@ -349,13 +417,14 @@ export default function KingRewardsSpinPage() {
           onTab={setActiveTab}
           heading={activeTab === 'list' ? 'Winner List' : 'Win Record'}
           rows={activeTab === 'list' ? winners : recordRows}
-          emptyText={activeTab === 'list' ? 'No winners yet.' : "You haven't won anything yet — spin to play!"}
+          emptyText={activeTab === 'list' ? 'No winners yet' : 'No records yet'}
         />
 
         <KrTermsPanel termsText={termsText} />
       </div>
 
       <KrResultDialog open={!!dialog} onClose={closeDialog} {...dialogProps} />
+      <KrRulesDialog open={rulesOpen} onClose={() => setRulesOpen(false)} title="Lucky Spin Rules" termsText={termsText} />
     </KingRewardsShell>
   );
 }

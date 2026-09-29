@@ -6,9 +6,9 @@ import Keeper from "./Keeper";
 import Ball from "./Ball";
 import { useResponsiveScale } from "./useResponsiveScale";
 import { usePkColors } from "./usePkColors";
-import { KR_PK_BANNER } from "../themes/kingrewards/KrPkParts";
+import { krPkSwipeCue } from "../themes/kingrewards/KrPkParts";
 
-export default function ReadyPhase({ surfaceHandlers, setSurface }) {
+export default function ReadyPhase({ surfaceHandlers, setSurface, krCue = null }) {
   const { colors: COLORS, isKingRewards } = usePkColors();
   // 100 px at the 475 design width; scales down on narrow phones and matches
   // the kicking ball so there's no size pop when the swipe fires.
@@ -45,10 +45,10 @@ export default function ReadyPhase({ surfaceHandlers, setSurface }) {
           WebkitTextStroke: "2px rgba(0,0,0,0.9)",
           paintOrder: "stroke fill",
           textShadow: `0 2px 4px rgba(0,0,0,0.85), 0 0 14px ${COLORS.glow55}, 0 0 28px ${COLORS.glow35}`,
-          ...(isKingRewards && KR_PK_BANNER),
+          ...(isKingRewards && krPkSwipeCue(ballSize)),
         }}
       >
-        Swipe To Kick
+        {(isKingRewards && krCue) || "Swipe To Kick"}
       </motion.h2>
 
       <GoalFrame />

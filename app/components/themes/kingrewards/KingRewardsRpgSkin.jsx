@@ -7,6 +7,7 @@ import { buildRpgSkin, RpgSkinProvider } from "../../rpg/rpgSkin";
 import { THEME_IDS } from "../../../config/themes";
 import { KR_ASSETS, KR_FONT, KR_GRADIENTS } from "./assets";
 import { WAR_FRAMES } from "./warFrames.generated";
+import KingRewardsBottomNav from "./KingRewardsBottomNav";
 
 const RPG = "/assets/themes/kingrewards/rpg";
 const WAR = "/assets/themes/kingrewards/war";
@@ -30,7 +31,7 @@ const TAB_LABEL = { fontSize: 14, fontWeight: 600, lineHeight: 1.2, color: "#f9d
 const ASSETS = {
   egg: { bg: `${RPG}/bg.webp`, btnWide: KR_ASSETS.ui.btnGold },
   spin: { panel: null },
-  ui: { hamburger: KR_ASSETS.ui.hamburger, info: KR_ASSETS.ui.info },
+  ui: { hamburger: KR_ASSETS.ui.hamburger, info: KR_ASSETS.ui.alert },
   nav: { bar: null, home: null },
   rpg: {
     iconBase: `${RPG}/icon-base.webp`,
@@ -56,19 +57,32 @@ const COLORS = {
 const SKIN = buildRpgSkin(THEME_IDS.KINGREWARDS, ASSETS, COLORS, {
   overlay: "none",
   fonts: { display: KR_FONT, number: KR_FONT },
-  chrome: { bar: "transparent", barBorder: "transparent", barShadow: "none", showTitle: false, iconSize: 40 },
+  chrome: { bar: "transparent", barBorder: "transparent", barShadow: "none", showTitle: false, iconSize: 40, balances: true },
+  title: { size: 40, vw: 9.7, fitChars: 13 },
+  heroSelect: {
+    footer: KingRewardsBottomNav,
+    choiceOn: { minWidth: 124, paddingInline: 20, background: "rgba(0,77,201,0.45)", borderColor: EDGE, color: "#f9d063", boxShadow: `${INSET_A}, 0 0 14px rgba(255,240,102,0.35)` },
+    // Unselected still reads as a live button: same glass, cream label, softer rim.
+    choiceOff: { minWidth: 124, paddingInline: 20, background: "rgba(0,61,137,0.55)", borderColor: "rgba(255,240,102,0.45)", color: "#efeaff", boxShadow: INSET_B },
+    alignFeet: true,
+  },
+  level: { formulas: false },
+  battle: { nameSize: 30, hp: { height: 20, track: "rgba(0,0,0,0.6)", border: EDGE, fill: KR_GRADIENTS.goldBar } },
+  // The game menu sits on a solid navy bar under a gold rail, so it never reads
+  // as the portal's glass footer (LEADERBOARDS / HOT / HOME / PROFILE / CHAT).
   nav: {
     style: "glass",
     labelFont: KR_FONT,
     label: "#f9d063",
     labelActive: EDGE,
     glass: {
-      bar: { background: "rgba(0,71,162,0.65)", ...BLUR, boxShadow: INSET_B },
-      active: { background: "rgba(255,255,255,0.2)", boxShadow: INSET_A },
+      bar: { background: "linear-gradient(180deg, #06306e 0%, #021a3f 100%)", borderTop: "2px solid #f2b229", boxShadow: "0 -6px 18px rgba(242,178,41,0.18)" },
+      active: { background: "rgba(0,77,201,0.45)", boxShadow: `inset 0 0 0 1px ${EDGE}, ${INSET_A}` },
       labelGradient: KR_GRADIENTS.gold,
     },
   },
   hud: {
+    homeOnly: true,
     border: "rgba(255,240,102,0.25)",
     badgeBg: "rgba(0,77,201,0.3)",
     badgeBorder: EDGE,
@@ -88,10 +102,12 @@ const SKIN = buildRpgSkin(THEME_IDS.KINGREWARDS, ASSETS, COLORS, {
   },
   panel: { fill: NAVY, border: EDGE, fillDark: NAVY, borderDark: EDGE, css: { boxShadow: INSET_A, ...BLUR } },
   tile: {
-    css: { background: "rgba(0,77,201,0.3)", borderColor: EDGE, borderStyle: "solid", borderRadius: 8, boxShadow: "none" },
+    // Empty slots: dashed rim + bright EMPTY tag; equipped ones go solid.
+    css: { background: "rgba(0,40,100,0.35)", borderColor: "rgba(255,240,102,0.55)", borderStyle: "dashed", borderRadius: 8, boxShadow: "none" },
+    cssEquipped: { background: "rgba(0,77,201,0.3)", borderColor: EDGE, borderStyle: "solid" },
     pill: {
-      empty: { background: "rgba(246,228,92,0.2)", color: "#c4b882" },
-      equipped: { background: "rgba(255,189,78,0.2)", color: "#ffa000" },
+      empty: { background: "rgba(255,255,255,0.12)", color: "#efeaff", border: "1px solid rgba(255,240,102,0.45)" },
+      equipped: { background: "rgba(255,189,78,0.2)", color: "#ffa000", border: "1px solid rgba(255,189,78,0.4)" },
     },
     labelEquipped: "#ffbd4e",
     cell: { background: "rgba(255,255,255,0.3)", borderColor: EDGE, borderStyle: "solid", borderRadius: 8 },
@@ -106,7 +122,7 @@ const SKIN = buildRpgSkin(THEME_IDS.KINGREWARDS, ASSETS, COLORS, {
     titleShadow: "none",
     titleGradient: KR_GRADIENTS.gold,
     value: "#ffc94d",
-    slotLabel: "#a89f5f",
+    slotLabel: "#d8cfa0",
     slotEmpty: "#c4b882",
     accent: "#f9d063",
     accentSoft: "#f2b229",
@@ -155,6 +171,10 @@ const SKIN = buildRpgSkin(THEME_IDS.KINGREWARDS, ASSETS, COLORS, {
     rankCoin: { width: 24, height: 24, background: KR_GRADIENTS.gold, border: "1px solid #f2b229", boxShadow: "0 0 20px rgba(255,140,0,0.5)", color: "#001e4a" },
     meRow: "rgba(242,178,41,0.30)",
     defeatedStamp: { icon: `${WAR}/icon-skull.svg` },
+    emptyState: { icon: `${WAR}/icon-damage.webp` },
+    cardTimer: true,
+    scheduleTitle: "Boss Schedule",
+    infoBack: true,
     icons: {
       ap: `${WAR}/icon-damage.webp`,
       plus: `${WAR}/icon-plus.webp`,

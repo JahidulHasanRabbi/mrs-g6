@@ -7,11 +7,18 @@
 
 import { RPG_FONTS } from "./constants";
 import { useRpgSkin } from "./rpgSkin";
+import { HudBalances } from "./HudStrip";
 
 // `title` lets sibling games (Boss War) reuse the bar with their own wordmark.
-export default function RpgTopBar({ onInfoClick, onMenuClick, title = "AVATAR", titleFont, titleClassName }) {
+// `balances` (a profile) is drawn before the info button on skins that opt in.
+export default function RpgTopBar({ onInfoClick, onMenuClick, title = "AVATAR", titleFont, titleClassName, balances }) {
   const skin = useRpgSkin();
   const { chrome } = skin;
+  const infoButton = (
+    <button type="button" onClick={onInfoClick} aria-label="Game info" className="active:scale-90 transition-transform">
+      <img src={chrome.infoIcon} alt="" className="rounded-full object-cover" style={{ width: chrome.iconSize, height: chrome.iconSize }} />
+    </button>
+  );
 
   return (
     <header
@@ -40,9 +47,14 @@ export default function RpgTopBar({ onInfoClick, onMenuClick, title = "AVATAR", 
           </span>
         </div>}
       </div>
-      <button type="button" onClick={onInfoClick} aria-label="Game info" className="active:scale-90 transition-transform">
-        <img src={chrome.infoIcon} alt="" className="rounded-full object-cover" style={{ width: chrome.iconSize, height: chrome.iconSize }} />
-      </button>
+      {chrome.balances && balances ? (
+        <div className="flex min-w-0 items-center gap-[8px]">
+          <HudBalances profile={balances} />
+          {infoButton}
+        </div>
+      ) : (
+        infoButton
+      )}
     </header>
   );
 }

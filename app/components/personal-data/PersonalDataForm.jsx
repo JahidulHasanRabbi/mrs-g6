@@ -72,6 +72,10 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [freeTokenFlag, setFreeTokenFlag] = useState(false);
   const [isFrameModalOpen, setIsFrameModalOpen] = useState(false);
+  // KR only: a failed load (not a failed save) swaps the form for the retry screen,
+  // and a successful save shows a confirmation before leaving.
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [krSaved, setKrSaved] = useState(null);
   const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
   const currentFrame = getFrameById(selectedFrameId);
 
@@ -110,6 +114,7 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
         setFreeTokenFlag(mappedData.free_token_flag);
       } catch (err) {
         console.error("Error fetching profile data:", err);
+        setLoadFailed(true);
         setError(err.message || "Failed to load profile data");
       } finally {
         setIsLoading(false);
@@ -221,7 +226,9 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
       }
       
       // Show success modal only if tokens were earned
-      if (earnedTokens) {
+      if (isKingRewards) {
+        setKrSaved({ earned: earnedTokens });
+      } else if (earnedTokens) {
         setShowSuccessModal(true);
       } else {
         // Just navigate back if no tokens earned
@@ -256,7 +263,7 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
   }
 
   // Error state
-  if (error && !formData.full_name && !formData.email) {
+  if (error && (isKingRewards ? loadFailed : !formData.full_name && !formData.email)) {
     return (
       <motion.div
         className="flex flex-col items-center justify-center gap-5 w-full max-w-[400px] mx-auto px-4 min-h-[400px]"
@@ -333,6 +340,8 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
             isSubmitting={isSubmitting}
             onSubmit={handleSubmit}
             onBack={() => router.push("/profile")}
+            saved={krSaved}
+            onSavedClose={() => router.push("/profile")}
           />
         </Suspense>
         {modals}

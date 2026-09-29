@@ -10,6 +10,7 @@ import RpgTopBar from "./RpgTopBar";
 import HudStrip from "./HudStrip";
 import RpgNav from "./RpgNav";
 import { useRpgSkin } from "./rpgSkin";
+import { RPG_VIEWS } from "./constants";
 
 export default function ScreenShell({
   view,
@@ -36,6 +37,9 @@ export default function ScreenShell({
   children,
 }) {
   const skin = useRpgSkin();
+  const showHud = !hideHud && (!skin.hud.homeOnly || view === RPG_VIEWS.HOME);
+  // Balances appear once per screen: in the HUD strip, else in the top bar.
+  const barBalances = !hideHud && !showHud ? profile : null;
 
   return (
     <div
@@ -62,13 +66,13 @@ export default function ScreenShell({
         </>
       )}
 
-      <RpgTopBar onInfoClick={onInfoClick} onMenuClick={onMenuClick} title={title} titleFont={titleFont} titleClassName={titleClassName} />
+      <RpgTopBar onInfoClick={onInfoClick} onMenuClick={onMenuClick} title={title} titleFont={titleFont} titleClassName={titleClassName} balances={barBalances} />
 
       {/* Content column between the fixed bars */}
       <div
         className={`relative z-10 flex w-full flex-1 flex-col pt-[64px] ${skin.themed ? "pb-[104px]" : "pb-[92px]"} ${fit ? "min-h-0" : ""}`}
       >
-        {!hideHud && <HudStrip profile={profile} />}
+        {showHud && <HudStrip profile={profile} />}
         {/* Keyed remount, enter-only fade. Deliberately NOT AnimatePresence
             mode="wait": waiting on an exit animation stalls the screen swap
             entirely in rAF-throttled (backgrounded) tabs. */}

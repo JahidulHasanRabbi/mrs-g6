@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { checkIn, getCheckinSettings, getMemberInfo } from "../../../api/memberApi";
 import { useUser } from "../../../contexts/UserContext";
 import { CHECKIN_DAYS } from "./checkinMartSkin";
@@ -13,6 +13,8 @@ export function useThemedCheckIn() {
   const [isLoading, setIsLoading] = useState(true);
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [dialog, setDialog] = useState(null);
+  const [lastCheckInDate, setLastCheckInDate] = useState(null);
+  const inFlight = useRef(false);
   const { refreshUserData, authReady, memberUuid } = useUser();
 
   const applyStreak = useCallback((streakValue) => {
@@ -42,6 +44,7 @@ export function useThemedCheckIn() {
         ]);
         if (cancelled) return;
         applyStreak(info?.current_streak);
+        setLastCheckInDate(info?.last_check_in_date ?? null);
         setCheckinSettings(settings);
       } catch (err) {
         console.error("Failed to fetch member info:", err);
@@ -61,8 +64,63 @@ export function useThemedCheckIn() {
       const text = entry?.display_text;
       return text && text.trim() ? text : "";
     };
-    return CHECKIN_DAYS.map((d) => ({ ...d, reward: rewardFor(d.day) }));
+    return CHECKIN_DAYS.map((d) => ({
+      ...d,
+      reward: rewardFor(d.day),
+      rewardEntry: checkinSettings?.rewards?.find((r) => r.day === d.day) ?? null,
+    }));
   }, [checkinSettings]);
+
+  const submitCheckIn = useCallback(async () => {
+    if (!memberUuid) {
+      setDialog({ kind: "login", message: "Please log in to check in." });
+      return;
+    }
+    if (inFlight.current) return;
+    inFlight.current = true;
+
+    setIsCheckingIn(true);
+    try {
+      const response = await checkIn(memberUuid);
+      const tokens = response?.tokens_obtained;
+      const battlePoints =
+        response?.battle_point_amount ?? response?.battle_points_obtained ?? response?.battle_point_obtained;
+      const earned =
+        tokens != null ? `${tokens} KR Coin${tokens !== 1 ? "s" : ""}` : "your reward";
+      setDialog({
+        kind: "success",
+        tokens,
+        battlePoints: battlePoints != null ? Number(battlePoints) : null,
+        message: `Congratulations! You've checked in for today and earned ${earned}!`,
+      });
+
+      // The claim already landed: a failed refresh must not read as a retryable check-in error.
+      const updated = await getMemberInfo(memberUuid).catch(() => null);
+      if (updated) applyStreak(updated.current_streak);
+      else setStreak((s) => s + 1);
+      setLastCheckInDate(updated?.last_check_in_date ?? new Date().toISOString());
+      await refreshUserData().catch((refreshErr) => console.error("Post check-in refresh failed:", refreshErr));
+    } catch (err) {
+      console.error("Check-in failed:", err);
+      const detail =
+        err.data?.details || err.data?.detail || err.data?.message || err.message || "";
+      const lower = detail.toLowerCase();
+
+      if (lower.includes("already checked in")) {
+        setDialog({ kind: "error", message: "Already checked in today! Try again tomorrow." });
+      } else if (lower.includes("module") || lower.includes("checkinnotsetuperror")) {
+        setDialog({
+          kind: "error",
+          message: "Check-in is currently unavailable. Please try again later.",
+        });
+      } else {
+        setDialog({ kind: "error", retryable: true, message: detail || "Failed to check in. Please try again." });
+      }
+    } finally {
+      inFlight.current = false;
+      setIsCheckingIn(false);
+    }
+  }, [memberUuid, refreshUserData, applyStreak]);
 
   const onDayClick = useCallback(
     async (day) => {
@@ -80,50 +138,24 @@ export function useThemedCheckIn() {
         return;
       }
 
-      if (!memberUuid) {
-        setDialog({ kind: "login", message: "Please log in to check in." });
-        return;
-      }
-
-      setIsCheckingIn(true);
-      try {
-        const response = await checkIn(memberUuid);
-        const tokens = response?.tokens_obtained;
-        const earned =
-          tokens != null ? `${tokens} KR Coin${tokens !== 1 ? "s" : ""}` : "your reward";
-        setDialog({
-          kind: "success",
-          tokens,
-          message: `Congratulations! You've checked in for today and earned ${earned}!`,
-        });
-
-        const updated = await getMemberInfo(memberUuid);
-        applyStreak(updated?.current_streak);
-        await refreshUserData();
-      } catch (err) {
-        console.error("Check-in failed:", err);
-        const detail =
-          err.data?.details || err.data?.detail || err.data?.message || err.message || "";
-        const lower = detail.toLowerCase();
-
-        if (lower.includes("already checked in")) {
-          setDialog({ kind: "error", message: "Already checked in today! Try again tomorrow." });
-        } else if (lower.includes("module") || lower.includes("checkinnotsetuperror")) {
-          setDialog({
-            kind: "error",
-            message: "Check-in is currently unavailable. Please try again later.",
-          });
-        } else {
-          setDialog({ kind: "error", message: detail || "Failed to check in. Please try again." });
-        }
-      } finally {
-        setIsCheckingIn(false);
-      }
+      await submitCheckIn();
     },
-    [checkedDays, isCheckingIn, memberUuid, refreshUserData, applyStreak]
+    [checkedDays, isCheckingIn, submitCheckIn]
   );
 
   const closeDialog = useCallback(() => setDialog(null), []);
 
-  return { checkedDays, streak, days, isLoading, isCheckingIn, dialog, closeDialog, onDayClick };
+  return {
+    checkedDays,
+    streak,
+    lastCheckInDate,
+    days,
+    isLoading,
+    isCheckingIn,
+    dialog,
+    closeDialog,
+    onDayClick,
+    // KR's single "Check In" button: the server decides which day today is.
+    checkInToday: submitCheckIn,
+  };
 }

@@ -1,14 +1,16 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { formatKrCoins } from "../../../api/apiOptions";
 import { useUser } from "../../../contexts/UserContext";
 import { LoadingState } from "../../ui/LoadingState";
 import ThemedImagePreview from "../shared/ThemedImagePreview";
 import { priceOf, useThemedMart } from "../shared/useThemedMart";
-import KrMartCard from "./KrMartCard";
+import KrMartCard, { StruckPrice } from "./KrMartCard";
 import KrCheckinMartDialog, { KrDialogLine, KrDialogPrize } from "./KrCheckinMartDialog";
-import { GoldText, PageTitle } from "./KrUi";
+import KingRewardsButton from "./KingRewardsButton";
+import { GoldText, KrImage, PageTitle } from "./KrUi";
 import { KR_ASSETS, KR_COLORS, KR_FONT, KR_SURFACES } from "./assets";
 
 const PREVIEW_SKIN = { font: KR_FONT, c: { name: KR_COLORS.goldText, coins: KR_COLORS.goldBright } };
@@ -46,6 +48,8 @@ export default function KingRewardsMartPage() {
     setPreviewItem,
     handleClosePreview,
     isLoading,
+    loadError,
+    reloadItems,
     isRedeeming,
     redeemResult,
     gameStatus,
@@ -64,6 +68,10 @@ export default function KingRewardsMartPage() {
     handleSort,
   } = useThemedMart();
 
+  // The item awaiting the member's go-ahead; the redeem call only runs from the confirm dialog.
+  const [confirmItem, setConfirmItem] = useState(null);
+  const [confirmedRedeem, setConfirmedRedeem] = useState(false);
+
   // A failed redeem of an in-reach item left its block reason unchanged, so it can be re-derived here.
   const failedForBalance =
     redeemResult?.success === false &&
@@ -71,6 +79,42 @@ export default function KingRewardsMartPage() {
     selectedItem &&
     !isItemLocked(selectedItem) &&
     getBlockReason(selectedItem) === "insufficient_balance";
+  const canRetry = redeemResult?.success === false && confirmedRedeem && !failedForBalance;
+
+  const requestRedeem = (item) => {
+    if (gameStatus === 2 || isItemLocked(item) || getBlockReason(item)) {
+      setConfirmedRedeem(false);
+      handleRedeem(item);
+    } else {
+      setConfirmItem(item);
+    }
+  };
+
+  const confirmRedeem = () => {
+    const item = confirmItem;
+    setConfirmItem(null);
+    setConfirmedRedeem(true);
+    handleRedeem(item);
+  };
+
+  const retryRedeem = () => {
+    const item = selectedItem;
+    handleCloseModal();
+    setConfirmItem(item);
+  };
+
+  const hasUnaffordable = sortedItems.some(
+    (item) => !isItemLocked(item) && getBlockReason(item) === "insufficient_balance"
+  );
+
+  const resultTitle =
+    isRedeeming || !redeemResult
+      ? null
+      : redeemResult.success
+        ? "Item Claimed!"
+        : confirmedRedeem && !failedForBalance
+          ? "Redeem Failed"
+          : "Warning!";
 
   return (
     <div className="relative flex w-full flex-col gap-4 px-4 pt-4" style={{ fontFamily: KR_FONT }}>
@@ -118,7 +162,17 @@ export default function KingRewardsMartPage() {
         </div>
 
         <LoadingState isLoading={isLoading}>
-          {sortedItems.length === 0 ? (
+          {loadError ? (
+            <div className="flex flex-col items-center gap-3 px-4 py-12 text-center">
+              <GoldText as="p" className="block text-[20px] font-bold">
+                Couldn&apos;t load the Mart
+              </GoldText>
+              <p className="text-[14px] text-[#bbcbbb]">Check your connection and try again.</p>
+              <KingRewardsButton variant="dark" className="max-w-[200px]" textSize={14} onClick={reloadItems}>
+                Try Again
+              </KingRewardsButton>
+            </div>
+          ) : sortedItems.length === 0 ? (
             <div className="flex flex-col items-center gap-2 px-4 py-12 text-center">
               <GoldText as="p" className="block text-[20px] font-bold">
                 No {selectedCategoryFullLabel} Available
@@ -137,7 +191,7 @@ export default function KingRewardsMartPage() {
                     locked={locked}
                     requiredTierLabel={getRequiredTierName(item)}
                     blockReason={!locked ? getBlockReason(item) : null}
-                    onRedeem={() => handleRedeem(item)}
+                    onRedeem={() => requestRedeem(item)}
                     onPreview={() => setPreviewItem(item)}
                   />
                 );
@@ -145,13 +199,68 @@ export default function KingRewardsMartPage() {
             </div>
           )}
         </LoadingState>
+
+        {!isLoading && !loadError && hasUnaffordable && (
+          <p className="flex items-center justify-center gap-2 px-2 pb-2 pt-1 text-center text-[12px] font-medium leading-[1.3] text-[#e2e2e2]">
+            <img src={KR_ASSETS.ui.alert} alt="" className="size-4 shrink-0" />
+            Not enough KR Coins for the dimmed items.
+          </p>
+        )}
       </motion.section>
+
+      <KrCheckinMartDialog
+        open={!!confirmItem}
+        onClose={() => setConfirmItem(null)}
+        title="Confirm Redeem"
+        actions={
+          <>
+            <KingRewardsButton variant="gold" onClick={confirmRedeem} disabled={isRedeeming}>
+              Confirm
+            </KingRewardsButton>
+            <KingRewardsButton variant="dark" onClick={() => setConfirmItem(null)}>
+              Cancel
+            </KingRewardsButton>
+          </>
+        }
+      >
+        {confirmItem && (
+          <>
+            <KrImage src={confirmItem.image} alt="" className="h-20 max-w-[60%] object-contain" />
+            <GoldText as="p" className="block text-center text-[20px] font-bold uppercase [overflow-wrap:anywhere]">
+              {confirmItem.title}
+            </GoldText>
+            <div className="flex flex-col items-center gap-1">
+              {confirmItem.originalPrice && confirmItem.originalPrice != priceOf(confirmItem) && (
+                <StruckPrice value={confirmItem.originalPrice} className="text-[13px]" />
+              )}
+              <p className="text-center text-[18px] font-semibold leading-6" style={{ color: KR_COLORS.goldText }}>
+                {formatKrCoins(priceOf(confirmItem))}
+              </p>
+            </div>
+            <p className="text-center text-[14px] leading-5 text-[#e2e2e2]">
+              This amount will be deducted from your KR Coins.
+            </p>
+          </>
+        )}
+      </KrCheckinMartDialog>
 
       <KrCheckinMartDialog
         open={!!selectedItem}
         onClose={handleCloseModal}
         tone={redeemResult?.success === false ? "warning" : "success"}
-        title={isRedeeming || !redeemResult ? null : redeemResult.success ? "Item Claimed!" : "Warning!"}
+        title={resultTitle}
+        actions={
+          canRetry ? (
+            <>
+              <KingRewardsButton variant="gold" onClick={retryRedeem}>
+                Try Again
+              </KingRewardsButton>
+              <KingRewardsButton variant="dark" onClick={handleCloseModal}>
+                Back
+              </KingRewardsButton>
+            </>
+          ) : undefined
+        }
       >
         {isRedeeming ? (
           <GoldText as="p" className="block text-center text-[18px] font-bold">

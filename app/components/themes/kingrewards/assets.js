@@ -7,6 +7,7 @@ export const KR_ASSETS = {
     bg: `${BASE}/ui/bg.webp`,
     hamburger: `${BASE}/ui/icon-hamburger.webp`,
     info: `${BASE}/ui/icon-info.webp`,
+    alert: `${BASE}/ui/icon-alert.svg`,
     btnGold: `${BASE}/ui/btn-gold.webp`,
     iconCoins: `${BASE}/ui/coin-kr.webp`,
     iconBp: `${BASE}/ui/coin-bp.webp`,

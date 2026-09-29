@@ -192,6 +192,10 @@ export default function PenaltyKickPage() {
   const [countryConfirmError, setCountryConfirmError] = useState(null);
   const needsCountryRef = useRef(false);
   const pendingKickRef = useRef(false);
+  // Mirrors pendingKickRef for render: the KR cue reads "Kicking…" until the server answers.
+  const [kickPending, setKickPending] = useState(false);
+  // KR shows "–" instead of the placeholder config until real values arrive.
+  const [hudKnown, setHudKnown] = useState({ balance: false, cost: false });
 
   // Reset the kick gate on unmount so re-mounting the page after
   // navigating away mid-animation never leaves it permanently locked.
@@ -246,6 +250,7 @@ export default function PenaltyKickPage() {
               tokenPerShot: Number(settings?.cost_per_kick ?? prev.tokenPerShot),
               difficulty: String(settings?.goalkeeper_difficulty_display || prev.difficulty).toLowerCase(),
             }));
+            if (settings?.cost_per_kick != null) setHudKnown((prev) => ({ ...prev, cost: true }));
           }
         } catch (err) {
           console.warn("penalty kick settings unavailable for token display", err);
@@ -295,6 +300,7 @@ export default function PenaltyKickPage() {
     const parsedBalance = parseTokenBalance(userData?.balance);
     if (parsedBalance !== null) {
       setConfig((prev) => ({ ...prev, tokensBalance: parsedBalance }));
+      setHudKnown((prev) => (prev.balance ? prev : { ...prev, balance: true }));
     }
   }, [userData?.balance]);
 
@@ -304,6 +310,7 @@ export default function PenaltyKickPage() {
       const resolved = resolveSwipe(path);
       if (!resolved.valid) return;
       pendingKickRef.current = true;
+      setKickPending(true);
 
       // Resolve the outcome BEFORE switching to the kicking scene. The ball's
       // flight path depends on whether the shot is off-target (a server
@@ -322,6 +329,12 @@ export default function PenaltyKickPage() {
         res = mapKickResponse(response, resolved);
         if (typeof response?.my_tokens === "number") {
           setConfig((prev) => ({ ...prev, tokensBalance: response.my_tokens }));
+          setHudKnown((prev) => ({ ...prev, balance: true }));
+        }
+        const confirmedCost = parseTokenBalance(response?.cost);
+        if (isKingRewards && response?.cost != null && confirmedCost !== null) {
+          setConfig((prev) => ({ ...prev, tokenPerShot: confirmedCost }));
+          setHudKnown((prev) => ({ ...prev, cost: true }));
         }
       } catch (err) {
         console.error("kick failed", err);
@@ -331,12 +344,14 @@ export default function PenaltyKickPage() {
           setConfig((prev) => ({ ...prev, enabled: false, maintenanceMode: detail.includes("maintenance") }));
         }
         pendingKickRef.current = false;
+        setKickPending(false);
         setKickError(String(rawDetail));
         setKickErrorNeedsCountry(detail.includes("country"));
         setDialog(DIALOGS.FAIL);
         return;
       }
 
+      setKickPending(false);
       setKickError(null);
       setSwipeData(resolved);
       setOutcome(res);
@@ -344,7 +359,7 @@ export default function PenaltyKickPage() {
       setPhase(PHASES.KICKING);
       play("kick");
     },
-    [play],
+    [play, isKingRewards],
   );
 
   const handleKickLanded = useCallback(() => {
@@ -436,6 +451,8 @@ export default function PenaltyKickPage() {
     }
   }, [loadHistoryPage, play, refreshUserData]);
 
+  const krCanAfford = !(hudKnown.balance && hudKnown.cost && config.tokensBalance < config.tokenPerShot);
+  const krCue = kickPending ? "Kicking…" : krCanAfford ? null : "Not enough KR Coins";
   const pitchVariant = phase === PHASES.LOADING || phase === PHASES.LAUNCH ? "wide" : "close";
   const unavailableMessage = config.maintenanceMode
     ? "Penalty Kick is under maintenance"
@@ -463,7 +480,14 @@ export default function PenaltyKickPage() {
             loadHistoryPage(1);
             setDialog(DIALOGS.HISTORY);
           }}
-          hud={pitchVariant === "close" ? { tokens: config.tokensBalance, perShot: config.tokenPerShot } : null}
+          hud={
+            pitchVariant === "close"
+              ? {
+                  tokens: hudKnown.balance ? config.tokensBalance : null,
+                  perShot: hudKnown.cost ? config.tokenPerShot : null,
+                }
+              : null
+          }
         />
       </div>
 
@@ -519,7 +543,7 @@ export default function PenaltyKickPage() {
               exit={{ opacity: 1, transition: { duration: 0 } }}
               className="flex flex-1 flex-col"
             >
-              <ReadyPhase setSurface={setSurface} surfaceHandlers={surfaceHandlers} />
+              <ReadyPhase setSurface={setSurface} surfaceHandlers={surfaceHandlers} krCue={krCue} />
             </motion.div>
           )}
           {phase === PHASES.KICKING && swipeData && outcome && (
@@ -638,6 +662,7 @@ export default function PenaltyKickPage() {
                 message={kickError || undefined}
                 kickAgainLabel={kickErrorNeedsCountry ? "Choose Country" : "Kick Again?"}
                 balance={config.tokensBalance}
+                perShot={hudKnown.cost ? config.tokenPerShot : null}
                 onKickAgain={() => {
                   play("tap");
                   if (kickErrorNeedsCountry) {
@@ -664,6 +689,11 @@ export default function PenaltyKickPage() {
                 onOpenTerms={() => {
                   play("tap");
                   setDialog(DIALOGS.TERMS);
+                }}
+                onOpenHistory={() => {
+                  play("tap");
+                  loadHistoryPage(1);
+                  setDialog(DIALOGS.HISTORY);
                 }}
               />
             )}

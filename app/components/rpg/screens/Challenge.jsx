@@ -13,7 +13,7 @@ import { RPG_COLORS } from "../constants";
 import { RPG_IMAGES, bossArtFor } from "../rpgAssets";
 import * as rpgApi from "../rpgApi";
 import { GoldCta } from "../primitives";
-import { titleInk, useRpgSkin } from "../rpgSkin";
+import { titleFit, titleInk, useRpgSkin } from "../rpgSkin";
 import NoticeModal from "../NoticeModal";
 
 const fmt = (n) => Number(n).toLocaleString("en-GB");
@@ -121,7 +121,7 @@ export default function Challenge({ onBattleStart }) {
     <div className="flex w-full flex-1 flex-col px-[18px]">
       <h2
         className="pt-[20px] text-center text-[24px] font-bold tracking-[6px]"
-        style={{ ...titleInk(skin), fontFamily: skin.fonts.display }}
+        style={{ ...titleInk(skin), ...titleFit(skin, "UNIVERSE"), fontFamily: skin.fonts.display }}
       >
         UNIVERSE
       </h2>

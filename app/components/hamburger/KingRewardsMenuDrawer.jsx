@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Fragment } from "react";
 import { motion } from "framer-motion";
 import { redirectToStation } from "./MenuItem";
@@ -38,7 +39,7 @@ const KR_MENU_GROUPS = [
     items: [
       { icon: M.feedback, label: "Feedback", action: "feedback" },
       { icon: KR_ASSETS.nav.livechatMenu, label: "Live Chat", action: "livechat" },
-      { icon: M.terms, label: "Terms & Condition", link: "/terms-and-conditions" },
+      { icon: M.terms, label: "Terms & Conditions", link: "/terms-and-conditions", withFrom: true },
     ],
   },
   {
@@ -65,7 +66,7 @@ const cardVariants = {
   show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
 };
 
-function Row({ item, compact, onClose, onAction }) {
+function Row({ item, compact, onClose, onAction, pathname }) {
   const body = (
     <span className={`flex w-full items-center gap-2 ${compact ? "py-1" : "py-2"}`}>
       <img src={item.icon} alt="" draggable={false} className="size-6 shrink-0 select-none object-contain" />
@@ -75,8 +76,10 @@ function Row({ item, compact, onClose, onAction }) {
   const className = "block w-full cursor-pointer rounded-[6px] transition-colors hover:bg-white/10 active:scale-[0.99]";
 
   if (item.link) {
+    // T&C's Back returns to the page the menu was opened from.
+    const href = item.withFrom && pathname && pathname !== item.link ? `${item.link}?from=${encodeURIComponent(pathname)}` : item.link;
     return (
-      <Link href={item.link} onClick={onClose} className={className} aria-label={item.label} role="menuitem">
+      <Link href={href} onClick={onClose} className={className} aria-label={item.label} role="menuitem">
         {body}
       </Link>
     );
@@ -100,6 +103,7 @@ function Row({ item, compact, onClose, onAction }) {
 
 /** King Rewards side menu: a glass drop-down panel of grouped cards under the header. */
 export default function KingRewardsMenuDrawer({ onClose, onAction }) {
+  const pathname = usePathname();
   return (
     <>
       <motion.div
@@ -138,7 +142,7 @@ export default function KingRewardsMenuDrawer({ onClose, onAction }) {
                     {group.items.map((item, i) => (
                       <Fragment key={item.label}>
                         {i > 0 && <span aria-hidden="true" className="h-px w-full" style={{ background: DIVIDER }} />}
-                        <Row item={item} compact={last} onClose={onClose} onAction={onAction} />
+                        <Row item={item} compact={last} onClose={onClose} onAction={onAction} pathname={pathname} />
                       </Fragment>
                     ))}
                   </div>

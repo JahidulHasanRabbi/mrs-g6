@@ -539,7 +539,7 @@ export default memo(function LuckySpinGrid({
 
   // Shared centre button — identical rotation/tap/manual-stop behaviour in both
   // the default and themed layouts; only the artwork, size and fit differ.
-  const centerButton = ({ sizeClass = "", sizeStyle, imgFit = "object-cover" }) => (
+  const centerButton = ({ sizeClass = "", sizeStyle, imgFit = "object-cover", overlay = null }) => (
     <motion.div
       className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-30 cursor-pointer ${sizeClass}`}
       style={sizeStyle}
@@ -594,6 +594,7 @@ export default memo(function LuckySpinGrid({
           />
         )}
       </motion.div>
+      {overlay}
     </motion.div>
   );
 
@@ -630,7 +631,12 @@ export default memo(function LuckySpinGrid({
             </motion.div>
           );
         })}
-        {centerButton({ sizeStyle: cssGrid.centerStyle, imgFit: "object-contain" })}
+        {/* renderCenterOverlay sits outside the rotating art, so its text stays upright. */}
+        {centerButton({
+          sizeStyle: cssGrid.centerStyle,
+          imgFit: "object-contain",
+          overlay: cssGrid.renderCenterOverlay?.({ spinning }) ?? null,
+        })}
       </motion.div>
     );
   }

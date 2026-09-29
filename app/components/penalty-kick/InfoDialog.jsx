@@ -50,9 +50,9 @@ function SwipeIllustration({ compact = false }) {
   );
 }
 
-export default function InfoDialog({ onClose, onOpenTerms }) {
+export default function InfoDialog({ onClose, onOpenTerms, onOpenHistory }) {
   const { colors: COLORS, soft, theme, isKingRewards } = usePkColors();
-  if (isKingRewards) return <KrPkInfoDialog onClose={onClose} onOpenTerms={onOpenTerms} />;
+  if (isKingRewards) return <KrPkInfoDialog onClose={onClose} onOpenTerms={onOpenTerms} onOpenHistory={onOpenHistory} />;
   // (kgame99 + lv918 use the growing 3-slice/single-frame ornate card; the
   // shared `theme` branch below handles them the same way.)
 

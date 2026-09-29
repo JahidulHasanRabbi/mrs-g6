@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { GoldText, KrArrowPill } from './KrUi';
+import { GoldText } from './KrUi';
 import { KR_ASSETS } from './assets';
 
 // Figma 807:2946 order, which differs from the other skins' HOME_MODULES.
@@ -19,10 +19,33 @@ const KR_MODULES = [
   { id: 'mart', key: 'mart', label: 'MART', href: '/mart' },
 ];
 
+// Movement (px) after which a press is a swipe, never a tap on a game.
+const DRAG_SLOP = 8;
 
-/** Home game rail (Figma 807:2946): three labelled badges per view, arrow pills either side. */
+function RailArrow({ dir, label, disabled, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-[rgba(255,255,255,0.12)] transition-opacity active:scale-95 disabled:cursor-default disabled:opacity-35"
+    >
+      <img
+        src={KR_ASSETS.ui.iconArrowCircle}
+        alt=""
+        draggable={false}
+        className="size-6 select-none"
+        style={{ transform: dir < 0 ? 'rotate(-90deg) scaleY(-1)' : 'rotate(90deg) scaleY(-1)' }}
+      />
+    </button>
+  );
+}
+
+/** Home game rail (Figma 807:2946): three labelled badges per view, arrows either side. */
 export default function KingRewardsModuleRail() {
   const railRef = useRef(null);
+  const press = useRef(null);
   const [edge, setEdge] = useState({ start: true, end: false });
 
   const measure = useCallback(() => {
@@ -44,13 +67,49 @@ export default function KingRewardsModuleRail() {
 
   const page = (dir) => railRef.current?.scrollBy({ left: dir * railRef.current.clientWidth, behavior: 'smooth' });
 
+  // Touch swipes scroll natively; a mouse has no native drag-scroll, so drag it here.
+  const onPointerDown = (e) => {
+    press.current = { x: e.clientX, left: railRef.current.scrollLeft, moved: false, mouse: e.pointerType === 'mouse' };
+  };
+  const onPointerMove = (e) => {
+    const p = press.current;
+    if (!p) return;
+    const dx = e.clientX - p.x;
+    if (!p.moved && Math.abs(dx) > DRAG_SLOP) {
+      p.moved = true;
+      if (p.mouse) railRef.current.style.scrollSnapType = 'none';
+    }
+    if (p.moved && p.mouse) railRef.current.scrollLeft = p.left - dx;
+  };
+  const endPress = () => {
+    if (press.current?.mouse && press.current.moved) railRef.current.style.scrollSnapType = '';
+    // Kept until the click that follows pointerup has been checked.
+    const p = press.current;
+    setTimeout(() => {
+      if (press.current === p) press.current = null;
+    }, 0);
+  };
+  const onClickCapture = (e) => {
+    if (press.current?.moved) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    press.current = null;
+  };
+
   return (
     <div className="flex w-full items-center gap-1">
-      <KrArrowPill dir={-1} label="Previous games" disabled={edge.start} onClick={() => page(-1)} />
+      <RailArrow dir={-1} label="Previous games" disabled={edge.start} onClick={() => page(-1)} />
       <div
         ref={railRef}
         onScroll={measure}
-        className="scrollbar-hide flex min-w-0 flex-1 snap-x snap-mandatory gap-1 overflow-x-auto overscroll-x-contain"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endPress}
+        onPointerCancel={endPress}
+        onPointerLeave={endPress}
+        onClickCapture={onClickCapture}
+        className="scrollbar-hide flex min-w-0 flex-1 select-none snap-x snap-mandatory gap-1 overflow-x-auto overscroll-x-contain"
       >
         {KR_MODULES.map((m, i) => (
           <motion.div
@@ -61,7 +120,13 @@ export default function KingRewardsModuleRail() {
             transition={{ delay: 0.1 + i * 0.06, type: 'spring', stiffness: 260, damping: 22 }}
             whileTap={{ scale: 0.95 }}
           >
-            <Link href={m.href} aria-label={m.label} draggable={false} className="flex select-none flex-col items-center gap-2">
+            <Link
+              href={m.href}
+              aria-label={m.label}
+              draggable={false}
+              onDragStart={(e) => e.preventDefault()}
+              className="flex select-none flex-col items-center gap-2"
+            >
               <img
                 src={KR_ASSETS.modules[m.key]}
                 alt=""
@@ -69,14 +134,14 @@ export default function KingRewardsModuleRail() {
                 loading={i < 3 ? 'eager' : 'lazy'}
                 className="aspect-square w-full select-none object-contain"
               />
-              <GoldText className="whitespace-nowrap text-center font-bold" style={{ fontSize: 'clamp(12px, 3.9vw, 16px)' }}>
+              <GoldText className="whitespace-nowrap text-center font-bold" style={{ fontSize: 'clamp(11px, 3.4vw, 16px)' }}>
                 {m.label}
               </GoldText>
             </Link>
           </motion.div>
         ))}
       </div>
-      <KrArrowPill dir={1} label="Next games" disabled={edge.end} onClick={() => page(1)} />
+      <RailArrow dir={1} label="Next games" disabled={edge.end} onClick={() => page(1)} />
     </div>
   );
 }

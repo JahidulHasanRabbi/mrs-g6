@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { HamburgerMenu } from '../../hamburger';
 import KingRewardsBottomNav from './KingRewardsBottomNav';
 import ThemeHeader from '../shared/ThemeHeader';
@@ -24,6 +25,12 @@ export default function KingRewardsShell({
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { userData } = useUser();
+  const router = useRouter();
+  const pathname = usePathname();
+  // Header rule (feedback 23 Sep): BP → KR → "!". A page may pass its own rules
+  // handler, or `null` to hide it; T&C itself never shows one.
+  const openRules = () => router.push(`/terms-and-conditions?from=${encodeURIComponent(pathname)}`);
+  const infoHandler = onInfoClick === undefined ? (pathname === '/terms-and-conditions' ? null : openRules) : onInfoClick;
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[#021a3f]">
@@ -35,12 +42,21 @@ export default function KingRewardsShell({
       )}
 
       {showHeader && (
+        // Content scrolls under the transparent header; this fade keeps the chips readable.
+        <div
+          aria-hidden
+          className="pointer-events-none fixed left-1/2 top-0 z-30 h-[76px] w-full max-w-[475px] -translate-x-1/2"
+          style={{ background: 'linear-gradient(180deg, #021a3f 0%, rgba(2,26,63,0.92) 62%, rgba(2,26,63,0) 100%)' }}
+        />
+      )}
+
+      {showHeader && (
         <ThemeHeader
           hamburgerIcon={KR_ASSETS.ui.hamburger}
-          infoIcon={KR_ASSETS.ui.info}
+          infoIcon={KR_ASSETS.ui.alert}
           coinIcon={KR_ASSETS.ui.iconCoins}
           onMenuClick={() => setIsMenuOpen(true)}
-          onInfoClick={onInfoClick}
+          onInfoClick={infoHandler || undefined}
           // Pages that pass no balance would otherwise get ThemeHeader's brown BP
           // pill; pages that hide the chips (Smash Egg) keep a bare bar.
           balance={balance ?? (showBattlePoints === false ? null : userData?.balance ?? 0)}

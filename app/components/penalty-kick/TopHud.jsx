@@ -34,9 +34,9 @@ function IconButton({ src, onClick, label, imgStyle }) {
 export default function TopHud({ onInfoClick, onMenuClick, onNavMenuClick, hud = null }) {
   const { theme, isKingRewards } = usePkColors();
 
-  // King Rewards (Figma 707:6281) carries the coin HUD up here, under the title.
+  // King Rewards carries the balance | cost row up here; history lives in its info dialog.
   if (isKingRewards) {
-    return <KrPkTopHud onNavMenuClick={onNavMenuClick} onInfoClick={onInfoClick} onMenuClick={onMenuClick} hud={hud} />;
+    return <KrPkTopHud onNavMenuClick={onNavMenuClick} onInfoClick={onInfoClick} hud={hud} />;
   }
 
   // Themed header: ornate hamburger + the "PENALTY KICK" title (parity with the

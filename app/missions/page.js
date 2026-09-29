@@ -1,7 +1,7 @@
 "use client";
 
 import { formatKrCoins } from "../api/apiOptions";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { FooterNav } from "../components/footer";
@@ -256,20 +256,27 @@ export default function MissionsPage() {
 
   const balance = formatTokens(userData?.balance);
 
+  // A slow answer for a tab the member already left must not overwrite the current tab.
+  const missionsRequest = useRef(0);
   const loadMissions = () => {
     if (maintenance !== false) return;
+    const req = ++missionsRequest.current;
     setLoading(true);
     setError("");
     getMyMissions({ category: MISSION_CATEGORY_BY_TAB[activeTab], page_size: 100 })
       .then((data) => {
+        if (req !== missionsRequest.current) return;
         const rows = data.results ?? data ?? [];
         setMissions(rows.map(mapMission));
       })
       .catch((err) => {
+        if (req !== missionsRequest.current) return;
         setError(err?.data?.detail || err?.message || "Failed to load missions.");
         setMissions([]);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (req === missionsRequest.current) setLoading(false);
+      });
   };
 
   useEffect(() => {
@@ -447,6 +454,7 @@ export default function MissionsPage() {
           actionId={actionId}
           onJoin={handleJoin}
           onClaim={handleClaim}
+          onRetry={loadMissions}
           onHistory={loadHistory}
           history={history}
           claimed={krClaimed}

@@ -7,6 +7,8 @@ import RedeemAllButton, { ThemedRedeemAllButton } from "./RedeemAllButton";
 import { usePkColors } from "./usePkColors";
 import { KrPkFailDialog, KrOutlineButton } from "../themes/kingrewards/KrPkDialogs";
 
+const INSUFFICIENT = /enough|insufficient|balance/i;
+
 // reason: "save" (keeper saved it), "miss" (ball went wide), or "error".
 export default function FailDialog({
   onKickAgain,
@@ -17,6 +19,7 @@ export default function FailDialog({
   message,
   kickAgainLabel = "Kick Again?",
   balance = null,
+  perShot = null,
 }) {
   const { colors: COLORS, soft, theme, isKingRewards } = usePkColors();
   const isMiss = reason === "miss";
@@ -31,9 +34,11 @@ export default function FailDialog({
     return (
       <KrPkFailDialog
         isError={isError}
+        isInsufficient={isError && INSUFFICIENT.test(message || "")}
         heading={heading}
         body={body}
         balance={balance}
+        perShot={perShot}
         redeemedSummary={redeemedSummary}
         redeemButton={
           onRedeemAll && !isError && (

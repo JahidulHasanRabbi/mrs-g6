@@ -1,15 +1,21 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import ProgressBar from "./StepIndicator";
 import { FORM_FIELDS } from "./constants";
-import { GlassCard, CardTitle } from "../themes/kingrewards/KrUi";
+import { GlassCard, GoldText, PageTitle } from "../themes/kingrewards/KrUi";
 import { KrAvatar, KrOutlineButton, KrPlaqueButton } from "../themes/kingrewards/KingRewardsProfileParts";
+import KingRewardsDialog from "../themes/kingrewards/KingRewardsDialog";
+import KingRewardsButton from "../themes/kingrewards/KingRewardsButton";
 import { KR_ASSETS, KR_COLORS, KR_FONT, KR_SURFACES } from "../themes/kingrewards/assets";
 
+// 16px keeps iOS Safari from zooming the page when a field takes focus.
 const INPUT_CLASS =
-  "w-full min-h-[31px] rounded-[6px] bg-[#091f46] py-2 pl-2 text-[12px] leading-[1.2] text-[#dbdbdb] outline-none placeholder:text-[#dbdbdb]/50 focus:shadow-[0_0_0_2px_rgba(255,240,102,0.35)]";
+  "w-full min-h-[36px] rounded-[6px] bg-[#091f46] py-2 pl-2 text-[16px] leading-[1.2] text-[#f2f2f2] outline-none placeholder:text-[#dbdbdb]/50 focus:shadow-[0_0_0_2px_rgba(255,240,102,0.35)]";
 const INPUT_STYLE = { fontFamily: KR_FONT, border: `1.5px solid ${KR_COLORS.goldBright}`, colorScheme: "dark" };
+// Clears the fixed 64px header and ~80px bottom nav when a field is scrolled to.
+const FIELD_SCROLL_MARGIN = { scrollMarginTop: 80, scrollMarginBottom: 120 };
 
 function TrailingIcon({ src, onClick }) {
   return (
@@ -17,7 +23,7 @@ function TrailingIcon({ src, onClick }) {
       src={src}
       alt=""
       onClick={onClick}
-      className={`absolute right-2 top-1/2 size-3 -translate-y-1/2 ${onClick ? "cursor-pointer" : "pointer-events-none"}`}
+      className={`absolute right-2 top-1/2 size-4 -translate-y-1/2 ${onClick ? "cursor-pointer" : "pointer-events-none"}`}
     />
   );
 }
@@ -75,7 +81,7 @@ function KrField({ id, label, type, value, onChange, placeholder, options = [] }
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-[8px] p-2" style={KR_SURFACES.inner}>
+    <div data-kr-field className="flex flex-col gap-2 rounded-[8px] p-2" style={{ ...KR_SURFACES.inner, ...FIELD_SCROLL_MARGIN }}>
       <label htmlFor={id} className="text-[12px] font-semibold leading-[1.2]" style={{ fontFamily: KR_FONT, color: KR_COLORS.gold }}>
         {label}
       </label>
@@ -108,6 +114,32 @@ function PickerCell({ icon, label, value, onClick }) {
   );
 }
 
+/**
+ * Keeps the focused field (and the Save row under it) in view while the
+ * mobile keyboard opens, instead of leaving it under the keyboard or the nav.
+ */
+function useKeepFocusedFieldVisible(formRef) {
+  useEffect(() => {
+    const vv = typeof window !== "undefined" ? window.visualViewport : null;
+    if (!vv) return undefined;
+    let lastHeight = vv.height;
+    const onResize = () => {
+      // Only a keyboard opening (a big shrink), not the URL bar sliding away.
+      const opened = vv.height < lastHeight - 120;
+      lastHeight = vv.height;
+      const el = document.activeElement;
+      if (opened && el && formRef.current?.contains(el)) revealField(el);
+    };
+    vv.addEventListener("resize", onResize);
+    return () => vv.removeEventListener("resize", onResize);
+  }, [formRef]);
+}
+
+function revealField(el) {
+  const target = el.closest("[data-kr-field]") || el;
+  target.scrollIntoView({ block: "center", behavior: "smooth" });
+}
+
 /** King Rewards Edit Profile card (Figma 664:2088). State and handlers stay in PersonalDataForm. */
 export default function KingRewardsPersonalDataView({
   name,
@@ -124,57 +156,104 @@ export default function KingRewardsPersonalDataView({
   isSubmitting,
   onSubmit,
   onBack,
+  saved,
+  onSavedClose,
 }) {
+  const formRef = useRef(null);
+  useKeepFocusedFieldVisible(formRef);
+
+  const onFieldFocus = (e) => {
+    // Only typing fields raise the keyboard; select/date open native pickers.
+    const typing = e.target.tagName === "TEXTAREA" || (e.target.tagName === "INPUT" && e.target.type !== "date");
+    if (!typing) return;
+    const el = e.target;
+    // The keyboard takes ~300ms to open; reveal once the viewport has shrunk.
+    setTimeout(() => revealField(el), 320);
+  };
+
   return (
-    <motion.div
-      className="w-full max-w-[380px]"
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 200, damping: 20 }}
-    >
-      <GlassCard className="flex w-full flex-col gap-6 px-2 py-4">
-        <div className="flex flex-col gap-2">
-          <div className="pb-2">
-            <CardTitle>Edit Profile</CardTitle>
-          </div>
+    <div className="flex w-full flex-col items-center gap-4">
+      <PageTitle>Edit Profile</PageTitle>
+
+      <motion.div
+        className="w-full max-w-[380px]"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 200, damping: 20 }}
+      >
+        <GlassCard className="flex w-full flex-col gap-6 px-2 py-4">
           <div className="flex items-center gap-2">
             <KrAvatar src={profileImage} name={name} size={74} />
             <div className="flex min-w-0 flex-1 flex-col items-start gap-3">
               <p className="max-w-full truncate text-[16px] font-medium leading-[1.2]" style={{ fontFamily: KR_FONT, color: KR_COLORS.goldText }}>
                 {name || "—"}
               </p>
-              <KrOutlineButton style={{ padding: "12px 16px" }} onClick={onProfileEdit}>
+              <KrOutlineButton style={{ padding: "10px 16px" }} onClick={onProfileEdit}>
                 <img src={KR_ASSETS.profile.iconEdit} alt="" className="size-4" />
                 Profile Image
               </KrOutlineButton>
             </div>
           </div>
-        </div>
 
-        <ProgressBar progress={progress} />
+          <ProgressBar progress={progress} />
 
-        <div className="flex gap-2">
-          <PickerCell icon={KR_ASSETS.profile.iconFrame} label="Frame" value={frameName} onClick={onOpenFrame} />
-          <PickerCell icon={KR_ASSETS.profile.iconTheme} label="Theme" value={themeName} onClick={onOpenTheme} />
-        </div>
-
-        <div className="flex flex-col gap-4">
-          {FORM_FIELDS.map((field) => (
-            <KrField key={field.id} {...field} value={formData[field.id]} onChange={onChange} />
-          ))}
-
-          {error && <p className="text-center text-[12px] text-red-400">{error}</p>}
-
-          <div className="flex items-stretch justify-between">
-            <KrOutlineButton style={{ paddingInline: 32 }} onClick={onBack}>
-              Back
-            </KrOutlineButton>
-            <KrPlaqueButton style={{ padding: "8px 32px" }} onClick={onSubmit} disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Save"}
-            </KrPlaqueButton>
+          <div className="flex gap-2">
+            <PickerCell icon={KR_ASSETS.profile.iconFrame} label="Frame" value={frameName} onClick={onOpenFrame} />
+            <PickerCell icon={KR_ASSETS.profile.iconTheme} label="Theme" value={themeName} onClick={onOpenTheme} />
           </div>
+
+          <form
+            ref={formRef}
+            noValidate
+            onFocus={onFieldFocus}
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!isSubmitting) onSubmit();
+            }}
+            className="flex flex-col gap-4"
+          >
+            {FORM_FIELDS.map((field) => (
+              <KrField key={field.id} {...field} value={formData[field.id]} onChange={onChange} />
+            ))}
+
+            {error && (
+              <p
+                role="alert"
+                className="rounded-[8px] px-3 py-2 text-center text-[12px] leading-[1.3] text-white"
+                style={{ fontFamily: KR_FONT, background: "rgba(217,6,20,0.25)", border: "1px solid rgba(255,120,120,0.6)" }}
+              >
+                {error}
+                <span className="mt-1 block text-[11px] opacity-80">Your entries are kept. Please try saving again.</span>
+              </p>
+            )}
+
+            <div className="flex items-stretch justify-between gap-3" style={FIELD_SCROLL_MARGIN}>
+              <KrOutlineButton style={{ paddingInline: 28 }} onClick={onBack} disabled={isSubmitting}>
+                Back
+              </KrOutlineButton>
+              <KrPlaqueButton type="submit" className="min-w-[132px]" style={{ padding: "10px 32px", fontSize: 14 }} disabled={isSubmitting}>
+                {isSubmitting ? "Saving…" : "Save"}
+              </KrPlaqueButton>
+            </div>
+          </form>
+        </GlassCard>
+      </motion.div>
+
+      <KingRewardsDialog open={!!saved} onClose={onSavedClose}>
+        <div className="flex w-full flex-col items-center gap-3 px-4 text-center" style={{ fontFamily: KR_FONT }}>
+          <GoldText as="h2" className="block text-[22px] font-bold uppercase">
+            Profile Saved
+          </GoldText>
+          <p className="text-[14px] leading-[1.4] text-white">
+            {saved?.earned
+              ? "Thanks for completing your profile. 10 free KR Coins have been added."
+              : "Your profile changes have been saved."}
+          </p>
         </div>
-      </GlassCard>
-    </motion.div>
+        <KingRewardsButton variant="gold" className="mx-4 w-[calc(100%-32px)]" onClick={onSavedClose}>
+          OK
+        </KingRewardsButton>
+      </KingRewardsDialog>
+    </div>
   );
 }

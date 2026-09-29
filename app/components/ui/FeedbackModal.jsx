@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useCallback } from "react";
+import { lazy, Suspense, useState, useCallback } from "react";
 import { submitFeedback as submitFeedbackApi } from "@/app/api/memberApi";
 import { tokenStorage } from "@/app/api/tokenStorage";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -10,7 +10,9 @@ import { EP369_ASSETS } from "../themes/ep369/assets";
 import { KGAME99_ASSETS } from "../themes/kgame99/assets";
 import { LV918_ASSETS } from "../themes/lv918/assets";
 import { N1GANG_ASSETS } from "../themes/n1gang/assets";
-import { KR_ASSETS, KR_FONT } from "../themes/kingrewards/assets";
+
+const KingRewardsFeedbackView = lazy(() => import("./KingRewardsFeedbackView"));
+const MESSAGE_MAX_LENGTH = 500;
 
 export default function FeedbackModal({ isOpen, onClose }) {
   const [rating, setRating] = useState(0);
@@ -75,18 +77,6 @@ export default function FeedbackModal({ isOpen, onClose }) {
       starOn: "#f2ba33",
       submitImage: N1GANG_ASSETS.spin.btnPlay,
       submitText: "#f2cb7a",
-    };
-  } else if (isKingRewards) {
-    skin = {
-      modalBg: "#003d89",
-      borderColor: "#fff066",
-      starOff: "rgba(255,255,255,0.22)",
-      starOn: "#f9d063",
-      submitImage: KR_ASSETS.ui.btnGold,
-      submitText: "#001e4a",
-      font: KR_FONT,
-      titleColor: "#f9d063",
-      insetGlow: "inset 0 4px 16px 4px rgba(255,255,255,0.15)",
     };
   } else {
     skin = {
@@ -163,6 +153,28 @@ export default function FeedbackModal({ isOpen, onClose }) {
       setIsSubmitting(false);
     }
   };
+
+  if (isKingRewards) {
+    return (
+      <Suspense fallback={null}>
+        <KingRewardsFeedbackView
+          isOpen={isOpen}
+          onClose={handleClose}
+          rating={rating}
+          hoverRating={hoverRating}
+          onRate={setRating}
+          onHover={setHoverRating}
+          message={message}
+          onMessage={setMessage}
+          maxLength={MESSAGE_MAX_LENGTH}
+          isSubmitting={isSubmitting}
+          submitted={submitted}
+          error={error}
+          onSubmit={handleSubmit}
+        />
+      </Suspense>
+    );
+  }
 
   return (
     <AnimatePresence>
@@ -247,7 +259,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
                     value={message}
                     onChange={(event) => setMessage(event.target.value)}
                     rows={4}
-                    maxLength={500}
+                    maxLength={MESSAGE_MAX_LENGTH}
                     placeholder="Tell us what's on your mind..."
                     className="w-full resize-none rounded-lg bg-black/30 px-3 py-2 text-[13px] text-white placeholder-white/30 focus:outline-none"
                     style={{
@@ -259,7 +271,7 @@ export default function FeedbackModal({ isOpen, onClose }) {
                     onFocus={(e) => (e.target.style.borderColor = skin.starOn)}
                     onBlur={(e) => (e.target.style.borderColor = `${skin.borderColor}66`)}
                   />
-                  <div className="mt-1 text-right text-[10px] text-white/40">{message.length}/500</div>
+                  <div className="mt-1 text-right text-[10px] text-white/40">{message.length}/{MESSAGE_MAX_LENGTH}</div>
                 </div>
 
                 {error && (

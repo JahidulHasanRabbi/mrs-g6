@@ -47,10 +47,55 @@ function FramedChip({ chips, icon, iconKind, label, value }) {
   );
 }
 
+/** BP / KR chips in the skin's style — the HUD strip's, or the top bar's when it carries them. */
+export function HudBalances({ profile }) {
+  const skin = useRpgSkin();
+  const chips = skin.hud.chipFrame;
+  if (chips?.glass) {
+    return <GlassBalances skin={chips} battlePoints={compactNumber(profile.bp)} balance={compactNumber(profile.tokens)} font={skin.fonts.display} growOnWide={false} className="shrink-0" />;
+  }
+  if (chips) {
+    return (
+      <div className="flex shrink-0 items-center gap-[4px]">
+        <FramedChip chips={chips} icon={chips.token} label="KR Coins" value={compactNumber(profile.tokens)} />
+        <FramedChip chips={chips} icon={chips.battlePoint} iconKind="battlePoint" label="Battle Points" value={compactNumber(profile.bp)} />
+      </div>
+    );
+  }
+  return (
+    <>
+      {/* KR Coins */}
+      <div className="flex shrink-0 items-center gap-[6px]">
+        <img src={RPG_IMAGES.icons.token} alt="" className="size-[26px] object-contain" />
+        <div className="flex flex-col">
+          <span className="text-[8px] tracking-[1px]" style={{ color: RPG_COLORS.textDim, fontFamily: skin.fonts.display }}>
+            KR COINS
+          </span>
+          <span className="text-[13px] font-bold leading-[13px]" style={{ color: RPG_COLORS.text, fontFamily: skin.fonts.number }}>
+            {compactNumber(profile.tokens)}
+          </span>
+        </div>
+      </div>
+
+      {/* Battle Points */}
+      <div className="flex shrink-0 items-center gap-[6px]">
+        <img src={RPG_IMAGES.icons.bpGem} alt="" className="size-[24px]" />
+        <div className="flex flex-col">
+          <span className="text-[8px] tracking-[1px]" style={{ color: RPG_COLORS.textDim, fontFamily: skin.fonts.display }}>
+            BP
+          </span>
+          <span className="text-[13px] font-bold leading-[13px]" style={{ color: RPG_COLORS.text, fontFamily: skin.fonts.number }}>
+            {compactNumber(profile.bp)}
+          </span>
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function HudStrip({ profile }) {
   const skin = useRpgSkin();
   if (!profile) return null;
-  const chips = skin.hud.chipFrame;
 
   return (
     <div
@@ -78,42 +123,7 @@ export default function HudStrip({ profile }) {
         <ProgressBar pct={profile.expPct} gradient={skin.hud.expGradient} />
       </div>
 
-      {chips?.glass ? (
-        <GlassBalances skin={chips} battlePoints={compactNumber(profile.bp)} balance={compactNumber(profile.tokens)} font={skin.fonts.display} growOnWide={false} className="shrink-0" />
-      ) : chips ? (
-        <div className="flex shrink-0 items-center gap-[4px]">
-          <FramedChip chips={chips} icon={chips.token} label="KR Coins" value={compactNumber(profile.tokens)} />
-          <FramedChip chips={chips} icon={chips.battlePoint} iconKind="battlePoint" label="Battle Points" value={compactNumber(profile.bp)} />
-        </div>
-      ) : (
-        <>
-          {/* KR Coins */}
-          <div className="flex shrink-0 items-center gap-[6px]">
-            <img src={RPG_IMAGES.icons.token} alt="" className="size-[26px] object-contain" />
-            <div className="flex flex-col">
-              <span className="text-[8px] tracking-[1px]" style={{ color: RPG_COLORS.textDim, fontFamily: skin.fonts.display }}>
-                KR COINS
-              </span>
-              <span className="text-[13px] font-bold leading-[13px]" style={{ color: RPG_COLORS.text, fontFamily: skin.fonts.number }}>
-                {compactNumber(profile.tokens)}
-              </span>
-            </div>
-          </div>
-
-          {/* Battle Points */}
-          <div className="flex shrink-0 items-center gap-[6px]">
-            <img src={RPG_IMAGES.icons.bpGem} alt="" className="size-[24px]" />
-            <div className="flex flex-col">
-              <span className="text-[8px] tracking-[1px]" style={{ color: RPG_COLORS.textDim, fontFamily: skin.fonts.display }}>
-                BP
-              </span>
-              <span className="text-[13px] font-bold leading-[13px]" style={{ color: RPG_COLORS.text, fontFamily: skin.fonts.number }}>
-                {compactNumber(profile.bp)}
-              </span>
-            </div>
-          </div>
-        </>
-      )}
+      <HudBalances profile={profile} />
     </div>
   );
 }

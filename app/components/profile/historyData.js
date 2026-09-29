@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getMemberTokenHistory, getMemberRewardHistory } from "../../api/memberApi";
 import { tokenStorage } from "../../api/tokenStorage";
 
@@ -39,24 +39,36 @@ export function useHistoryPage(type, pageSize = HISTORY_PAGE_SIZE) {
   const [rows, setRows] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [hasLoaded, setHasLoaded] = useState(false);
+  // Only the latest request may write state; a slow earlier tab/page must not win.
+  const requestId = useRef(0);
 
   const fetchHistory = useCallback(async (page) => {
     const uuid = tokenStorage.getMemberUuid();
     if (!uuid) return;
 
+    const id = ++requestId.current;
     setLoading(true);
+    setError(null);
     try {
       const params = { page, page_size: pageSize };
       const res = type === "token"
         ? await getMemberTokenHistory(uuid, params)
         : await getMemberRewardHistory(uuid, params);
+      if (id !== requestId.current) return;
       setRows(res.results || []);
       setTotalCount(res.count || 0);
     } catch (err) {
+      if (id !== requestId.current) return;
       console.error("Failed to load history:", err);
       setRows([]);
+      setError(err?.message || "Failed to load history");
     } finally {
-      setLoading(false);
+      if (id === requestId.current) {
+        setLoading(false);
+        setHasLoaded(true);
+      }
     }
   }, [type, pageSize]);
 
@@ -73,6 +85,9 @@ export function useHistoryPage(type, pageSize = HISTORY_PAGE_SIZE) {
   return {
     rows,
     loading,
+    hasLoaded,
+    error,
+    retry: () => fetchHistory(currentPage),
     currentPage,
     totalPages: Math.max(1, Math.ceil(totalCount / pageSize)),
     goToPage,
