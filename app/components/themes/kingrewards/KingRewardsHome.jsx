@@ -15,7 +15,7 @@ export default function KingRewardsHome() {
 
   return (
     <KingRewardsShell balance={userData?.balance ?? 0} showBattlePoints>
-      <div className="flex w-full flex-col items-center gap-4 px-4 pb-4 pt-4">
+      <div className="flex min-h-[calc(100dvh-168px)] w-full flex-col items-center justify-center gap-4 px-4 py-4">
         <motion.img
           src={KR_ASSETS.home.logo}
           alt="King Rewards"
