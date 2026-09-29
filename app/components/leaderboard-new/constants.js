@@ -134,5 +134,8 @@ export const LEADERBOARD_CONFIG = {
   },
 };
 
-// Boards the member can actually reach. All four are live.
-export const ENABLED_LEADERBOARD_TYPES = Object.keys(LEADERBOARD_CONFIG);
+// Boards the member can actually reach. Turnover's event has ended, so it is
+// hidden (config kept so it can be re-enabled by dropping it from this list).
+export const ENABLED_LEADERBOARD_TYPES = Object.keys(LEADERBOARD_CONFIG).filter(
+  (type) => type !== LEADERBOARD_TYPES.TURNOVER,
+);
