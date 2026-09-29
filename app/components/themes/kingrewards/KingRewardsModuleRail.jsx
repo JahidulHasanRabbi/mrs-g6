@@ -65,7 +65,20 @@ export default function KingRewardsModuleRail() {
     return () => observer.disconnect();
   }, [measure]);
 
-  const page = (dir) => railRef.current?.scrollBy({ left: dir * railRef.current.clientWidth, behavior: 'smooth' });
+  // One tile plus its gap; scrolling in whole steps keeps every tile uncut.
+  const tileStep = () => {
+    const tile = railRef.current?.firstElementChild;
+    return tile ? tile.offsetWidth + parseFloat(getComputedStyle(railRef.current).columnGap || 0) : 0;
+  };
+  const scrollToTile = (index) => {
+    const rail = railRef.current;
+    const step = tileStep();
+    if (!rail || !step) return;
+    const max = rail.scrollWidth - rail.clientWidth;
+    rail.scrollTo({ left: Math.max(0, Math.min(max, index * step)), behavior: 'smooth' });
+  };
+  const currentTile = () => Math.round(railRef.current.scrollLeft / (tileStep() || 1));
+  const page = (dir) => railRef.current && scrollToTile(currentTile() + dir * 3);
 
   // Touch swipes scroll natively; a mouse has no native drag-scroll, so drag it here.
   const onPointerDown = (e) => {
@@ -82,7 +95,11 @@ export default function KingRewardsModuleRail() {
     if (p.moved && p.mouse) railRef.current.scrollLeft = p.left - dx;
   };
   const endPress = () => {
-    if (press.current?.mouse && press.current.moved) railRef.current.style.scrollSnapType = '';
+    if (press.current?.mouse && press.current.moved) {
+      railRef.current.style.scrollSnapType = '';
+      // Re-enabling snap doesn't re-snap, so settle on the nearest tile ourselves.
+      scrollToTile(currentTile());
+    }
     // Kept until the click that follows pointerup has been checked.
     const p = press.current;
     setTimeout(() => {
@@ -125,7 +142,7 @@ export default function KingRewardsModuleRail() {
               aria-label={m.label}
               draggable={false}
               onDragStart={(e) => e.preventDefault()}
-              className="flex select-none flex-col items-center gap-2"
+              className="flex select-none flex-col items-center gap-2 rounded-[12px] outline-none focus-visible:ring-2 focus-visible:ring-[#fff066]/70"
             >
               <img
                 src={KR_ASSETS.modules[m.key]}
