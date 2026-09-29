@@ -42,15 +42,18 @@ export const SELECTABLE_THEMES = [
   { id: THEME_IDS.LV918, label: 'LV918', crest: '/assets/themes/lv918/home/crest-lv918.webp' },
   { id: THEME_IDS.N1GANG, label: 'N1GANG', crest: '/assets/themes/n1gang/home/crest-n1gang.webp' },
   { id: THEME_IDS.KINGREWARDS, label: 'KING REWARDS', crest: '/assets/themes/kingrewards/home/logo.webp' },
-  { id: THEME_IDS.DEFAULT, label: 'MRS DEFAULT', crest: '/android-chrome-512x512.png' },
 ];
+
+// King Rewards replaced the legacy MRS look as the base theme: it is what every
+// origin without its own skin gets.
+export const BASE_THEME_ID = THEME_IDS.KINGREWARDS;
 
 export function isValidThemeId(themeId) {
   return Object.values(THEME_IDS).includes(themeId);
 }
 
 export function getThemeLabel(themeId) {
-  return SELECTABLE_THEMES.find((t) => t.id === themeId)?.label || 'MRS DEFAULT';
+  return SELECTABLE_THEMES.find((t) => t.id === themeId)?.label || 'KING REWARDS';
 }
 
 // Substring rules matched against the hostname of the stored origin URL.
@@ -84,7 +87,7 @@ export function originFromSearch(search) {
  * or null/undefined (returns the default theme).
  */
 export function resolveThemeIdFromOrigin(originUrl) {
-  if (!originUrl) return THEME_IDS.DEFAULT;
+  if (!originUrl) return BASE_THEME_ID;
 
   let hostname = originUrl;
   try {
@@ -95,7 +98,7 @@ export function resolveThemeIdFromOrigin(originUrl) {
   hostname = hostname.toLowerCase();
 
   const rule = ORIGIN_THEME_RULES.find((r) => hostname.includes(r.match));
-  return rule ? rule.themeId : THEME_IDS.DEFAULT;
+  return rule ? rule.themeId : BASE_THEME_ID;
 }
 
 /** The skin the member's station asks for, ignoring any manual pick. */
@@ -109,11 +112,12 @@ export function readStationThemeId() {
 /** The member's manual pick, or null when they've never chosen one. */
 export function readPinnedThemeId() {
   const picked = tokenStorage.getMemberTheme();
-  return isValidThemeId(picked) ? picked : null;
+  // A saved "MRS DEFAULT" pick predates King Rewards replacing it.
+  return isValidThemeId(picked) && picked !== THEME_IDS.DEFAULT ? picked : null;
 }
 
 export function pinThemeId(themeId) {
-  if (isValidThemeId(themeId)) tokenStorage.setMemberTheme(themeId);
+  if (isValidThemeId(themeId) && themeId !== THEME_IDS.DEFAULT) tokenStorage.setMemberTheme(themeId);
 }
 
 export function unpinTheme() {
@@ -135,14 +139,14 @@ export function readActiveThemeId() {
  * one place. Runs before React, so it can't import — the data is inlined.
  */
 export function buildThemeStampScript() {
-  const ids = JSON.stringify(Object.values(THEME_IDS));
+  const ids = JSON.stringify(Object.values(THEME_IDS).filter((id) => id !== THEME_IDS.DEFAULT));
   const rules = JSON.stringify(ORIGIN_THEME_RULES);
   return (
     `try{var p=localStorage.getItem('${STORAGE_KEYS.MEMBER_THEME}')||'';` +
     `var t=${ids}.indexOf(p)>-1?p:'';` +
     `if(!t){var q='';try{q=new URLSearchParams(location.search).get('o')||''}catch(e){}` +
     `var o=(localStorage.getItem('${STORAGE_KEYS.REDIRECT_O}')||q||'').toLowerCase();` +
-    `var R=${rules};t='${THEME_IDS.DEFAULT}';` +
+    `var R=${rules};t='${BASE_THEME_ID}';` +
     `for(var i=0;i<R.length;i++)if(o.indexOf(R[i].match)>-1){t=R[i].themeId;break}}` +
     `document.documentElement.setAttribute('data-theme',t);}catch(e){}`
   );

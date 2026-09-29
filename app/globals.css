@@ -138,6 +138,16 @@ body {
   --rail-dot: #ff8a5c;
   --rail-dot-idle: rgba(255, 138, 92, 0.45);
 }
+:root[data-theme="kingrewards"] {
+  --skin-bg: #021a3f;
+  --lb-accent: #f9d063;
+  --lb-accent-rgb: 249, 208, 99;
+  --lb-on-accent: #001e4a;
+  --lb-rank: #fff066;
+  --rail-dot: #f9d063;
+  --rail-dot-idle: rgba(255, 255, 255, 0.5);
+  --rail-dot-track: rgba(255, 255, 255, 0.2);
+}
 /* Amber-gold prize gradients shared by every custom theme (the gold shades are
  * close enough not to warrant per-theme tuning). */
 :root[data-theme="acebet77"],
@@ -145,7 +155,8 @@ body {
 :root[data-theme="ep369"],
 :root[data-theme="kgame99"],
 :root[data-theme="lv918"],
-:root[data-theme="n1gang"] {
+:root[data-theme="n1gang"],
+:root[data-theme="kingrewards"] {
   --lb-prize-grad: linear-gradient(135deg, #3a2a0f 0%, #5b3a1a 45%, #8a6320 75%, #b8862f 100%);
   --lb-prize-grad-btn: linear-gradient(135deg, #3a2a0f 0%, #5b3a1a 100%);
   --lb-card-border: rgba(var(--lb-accent-rgb), 0.4);
