@@ -162,7 +162,7 @@ function KrPkBalanceRow({ balance, perShot }) {
   return (
     <div className="flex justify-center">
       <div
-        className="flex h-[44px] w-full max-w-[342px] items-center rounded-[12px] px-3"
+        className="flex h-[44px] w-full max-w-[342px] items-center rounded-[12px] px-3 [@media(max-height:760px)]:h-[36px]"
         style={{ border: `1px solid ${KR_COLORS.goldBright}`, background: "rgba(0,30,74,0.55)", boxShadow: "inset 0 2px 8px rgba(255,255,255,0.12)" }}
       >
         <div className="flex min-w-0 flex-1 items-center justify-center gap-1.5" aria-label="KR Coin balance">
@@ -195,12 +195,19 @@ function KrPkBalanceRow({ balance, perShot }) {
 export function KrPkTopHud({ onNavMenuClick, onInfoClick, hud }) {
   return (
     <div className="relative w-full">
-      <div className="flex h-[64px] w-full items-center justify-between px-4">
+      <div className="flex h-[64px] w-full items-center justify-between gap-2 px-4">
         <HeaderIconButton src={KR_ASSETS.ui.hamburger} onClick={onNavMenuClick} label="Open menu" />
+        {/* Short screens: the goal is anchored from the bottom and rises into the HUD,
+            so the title moves into the bar to free the space. */}
+        <GoldText as="h1" className="hidden min-w-0 truncate text-[26px] font-bold uppercase [@media(max-height:760px)]:block">
+          Penalty Kick
+        </GoldText>
         <HeaderIconButton src={KR_ASSETS.ui.alert} onClick={onInfoClick} label="Penalty Kick rules" round />
       </div>
-      <div className="pointer-events-none absolute inset-x-0 top-full flex flex-col gap-2 px-4">
-        <PageTitle>Penalty Kick</PageTitle>
+      <div className="pointer-events-none absolute inset-x-0 top-full z-30 flex flex-col gap-2 px-4">
+        <div className="[@media(max-height:760px)]:hidden">
+          <PageTitle>Penalty Kick</PageTitle>
+        </div>
         {hud && <KrPkBalanceRow balance={hud.tokens} perShot={hud.perShot} />}
       </div>
     </div>
