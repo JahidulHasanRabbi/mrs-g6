@@ -37,15 +37,8 @@ const CHIP_STYLE = {
   fontFamily: KR_FONT,
 };
 
-// Smash Egg history numbers Battle Point as 4 (SmashEggHistoryDialog reads it the same way).
 function recordAmount(row) {
-  const name = row.reward_name || 'Reward';
-  const type = String(row.item_type || '').toUpperCase();
-  const bp = Number(row.amount ?? 0);
-  if ((type === 'BATTLE POINT' || type === '4') && bp > 0 && !/\bBP\b|battle point/i.test(name)) {
-    return `${name} (${bp.toLocaleString('en-US')} BP)`;
-  }
-  return name;
+  return row.reward_name || 'Reward';
 }
 
 const WINNER_TABS = [

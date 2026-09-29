@@ -122,24 +122,26 @@ function spinItemType(value) {
   return ITEM_TYPE_BY_KEY[raw] || raw;
 }
 
-// Same rule as the default spin page: "Bonus" becomes "Bonus (500 BP)".
+// The admin-set reward name is shown verbatim everywhere; never derive text from amounts.
 function formatSpinReward(result) {
-  const name = result?.reward_name || 'Reward';
-  const amount = Number(result?.battle_point_amount ?? 0);
-  if (spinItemType(result?.item_type) === 'BATTLE POINT' && amount > 0 && !BP_NAME.test(name)) {
-    return `${name} (${amount.toLocaleString('en-US')} BP)`;
-  }
-  return name;
+  return result?.reward_name || 'Reward';
 }
 
 // The spin result may omit item_type / BP amount; fill only the gaps so a resolved name like "RM2.64" survives.
+// The image always comes from the configured item (what admin uploaded), never from the result.
 function withConfiguredItem(result, spinItems) {
-  const configured = spinItems.find((item) => item.uuid === result.uuid);
+  const configured =
+    spinItems.find((item) => item.uuid === result.uuid) ||
+    // A resolved free-credit result ("RM1.66") matches no configured name; its tiers share one icon.
+    (spinItemType(result.item_type) === 'FREE CREDIT'
+      ? spinItems.find((item) => spinItemType(item.item_type) === 'FREE CREDIT' && item.image)
+      : null);
   if (!configured) return result;
   const merged = { ...result };
   Object.entries(configured).forEach(([key, value]) => {
     if (merged[key] == null || merged[key] === '') merged[key] = value;
   });
+  if (configured.image) merged.image = configured.image;
   return merged;
 }
 
@@ -147,7 +149,7 @@ function rewardIcon(isBattlePoint) {
   return isBattlePoint ? KR_ASSETS.ui.iconBp : KR_ASSETS.ui.iconCoins;
 }
 
-// Default RewardsList order: items, KR Coins, BP, then free-credit ranges.
+// Default RewardsList order: items, KR Coins, BP, then free credit; names are the admin reward names.
 function buildRewardRows(items) {
   const groups = { ITEM: [], TOKEN: [], 'BATTLE POINT': [], OTHER: [], 'FREE CREDIT': [] };
   items.forEach((item, i) => {
@@ -155,20 +157,11 @@ function buildRewardRows(items) {
     const name = item.reward_name || 'Reward';
     const key = item.uuid || i;
     if (type === 'TOKEN') {
-      const amount = Number(item.token_amount ?? name);
-      const label = /token|kr coin/i.test(name) ? name : `${name} KR Coin${amount === 1 ? '' : 's'}`;
-      groups.TOKEN.push({ key, name: label, image: item.image });
+      groups.TOKEN.push({ key, name, image: item.image });
     } else if (type === 'BATTLE POINT') {
-      const amount = Number(item.battle_point_amount ?? 0);
-      const label = BP_NAME.test(name) ? name : `${name}${amount > 0 ? ` (${amount.toLocaleString('en-US')} BP)` : ' BP'}`;
-      groups['BATTLE POINT'].push({ key, name: label, image: item.image || KR_ASSETS.ui.iconBp });
+      groups['BATTLE POINT'].push({ key, name, image: item.image || KR_ASSETS.ui.iconBp });
     } else if (type === 'FREE CREDIT') {
-      groups['FREE CREDIT'].push({
-        key,
-        rankLabel: 'Free Credit',
-        name: `RM${item.min_withdraw ?? 0} ~ RM${item.max_withdraw ?? 0}`,
-        image: item.image,
-      });
+      groups['FREE CREDIT'].push({ key, rankLabel: 'Free Credit', name, image: item.image });
     } else {
       (groups[type] || groups.OTHER).push({ key, name, image: item.image });
     }

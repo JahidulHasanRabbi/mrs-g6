@@ -58,12 +58,7 @@ function formatPrizeSummary(results, rewards) {
   const grouped = results.reduce((acc, item) => {
     const itemType = inferResultType(item, rewardLookup);
     const matched = rewardLookup.get(item.uuid);
-    const bpAmount = Number(item.battle_point_amount ?? matched?.battlePoints ?? 0);
-    const rawName = item.reward_name || "Reward";
-    const name =
-      itemType === "Battle Point" && Number.isFinite(bpAmount) && bpAmount > 0 && !/\bBP\b|battle point/i.test(rawName)
-        ? `${rawName} (${bpAmount.toLocaleString("en-US")} BP)`
-        : rawName;
+    const name = item.reward_name || "Reward";
     const key = `${item.uuid || name}-${name}`;
     if (!acc[key]) {
       acc[key] = {

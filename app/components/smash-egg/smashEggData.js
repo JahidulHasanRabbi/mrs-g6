@@ -12,10 +12,7 @@ export function buildRewardBoard(items = []) {
     .filter((item) => item.itemType !== "Free credit")
     .map((item, index) => ({
       rank: index + 1,
-      name:
-        item.itemType === "Battle Point" && !/\bBP\b|battle point/i.test(item.name)
-          ? `${item.name}${Number(item.battlePoints) > 0 ? ` (${Number(item.battlePoints).toLocaleString("en-US")} BP)` : " BP"}`
-          : item.name,
+      name: item.name,
       image: item.image || null,
       itemType: item.itemType,
     }));
@@ -23,7 +20,7 @@ export function buildRewardBoard(items = []) {
   const creditRanges = items
     .filter((item) => item.itemType === "Free credit")
     .map((item) => ({
-      label: `RM${item.minWithdraw || 0} ~ RM${item.maxWithdraw || 0}`,
+      label: item.name,
       image: item.image || null,
     }));
 
@@ -55,17 +52,10 @@ export function mapWinningHistory(items) {
       ? new Date(item.datetime_obtained).toISOString().slice(0, 10)
       : "";
 
-    const isBattlePoint = String(item.item_type || "").toUpperCase() === "BATTLE POINT" || String(item.item_type) === "4";
-    const battlePoints = Number(item.battle_point_amount ?? 0);
-    const prizeName =
-      isBattlePoint && battlePoints > 0 && !/\bBP\b|battle point/i.test(item.prize_name || "")
-        ? `${item.prize_name || "Reward"} (${battlePoints.toLocaleString("en-US")} BP)`
-        : item.prize_name;
-
     return {
       date,
       name: maskName(item.display_name),
-      prize: prizeName,
+      prize: item.prize_name,
     };
   });
 }
