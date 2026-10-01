@@ -368,6 +368,8 @@ export const ENDPOINTS = {
     TURNOVER_PAYOUT_SCHEDULE: '/leaderboard/turnover/payout-schedule/',
     TURNOVER_SETTLE_PAYOUTS: '/leaderboard/turnover/settle-payouts/',
     TURNOVER_PAYOUT_LOGS: '/leaderboard/turnover-payout-logs/',
+    MONTHLY_RANKING: '/leaderboard/monthly-ranking/',
+    PAYOUT_HISTORY: '/leaderboard/payout-history/',
   },
   CRM: {
     // User Access Panel

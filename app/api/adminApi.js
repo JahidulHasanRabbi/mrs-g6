@@ -1579,6 +1579,18 @@ export async function getTurnoverPayoutLogs(params = {}) {
   return await apiRequest(`${ENDPOINTS.LEADERBOARD.TURNOVER_PAYOUT_LOGS}${qs}`, { method: 'GET' }, true, 'admin');
 }
 
+// GET /leaderboard/monthly-ranking/ — stored ranking batches, filter by type / date range
+export async function getLeaderboardMonthlyRanking(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.MONTHLY_RANKING}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
+// GET /leaderboard/payout-history/ — reward payout audit trail, filter by type / date range
+export async function getLeaderboardPayoutHistory(params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.PAYOUT_HISTORY}${qs}`, { method: 'GET' }, true, 'admin');
+}
+
 // GET/PUT /leaderboard/status/ — is_turnover_open only (is_open is the other
 // three boards' field on this same response; never overwrite it here).
 export async function getTurnoverStatus() {

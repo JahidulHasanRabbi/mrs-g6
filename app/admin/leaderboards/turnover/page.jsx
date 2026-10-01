@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import LeaderboardHistorySections from "../../../components/admin/leaderboards/LeaderboardHistorySections";
 import { Pagination } from "../../../components/admin/members/DataTable";
 import SettingsSection from "../../../components/admin/world-cup/SettingsSection";
 import ConfirmArchive from "../../../components/admin/world-cup/ConfirmArchive";
@@ -229,6 +230,8 @@ export default function TurnoverSettingsPage() {
         <PayoutLogTable rows={payoutLogs} />
         <PaginatedFooter total={payoutLogCount} page={payoutLogPage} setPage={setPayoutLogPage} />
       </SettingsSection>
+
+      <LeaderboardHistorySections type={4} />
 
       <ConfirmArchive
         open={!!archiveTarget}

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import LeaderboardHistorySections from "../../../components/admin/leaderboards/LeaderboardHistorySections";
 import { Pagination } from "../../../components/admin/members/DataTable";
 import SettingsSection from "../../../components/admin/world-cup/SettingsSection";
 import InformationTable from "../../../components/admin/leaderboards/deposit/InformationTable";
@@ -178,6 +179,8 @@ export default function WithdrawalSettingsPage() {
       </SettingsSection>
 
       <LeaderboardRankingManager rows={rankings} type="withdrawal" />
+
+      <LeaderboardHistorySections type={2} />
 
       <ConfirmArchive
         open={!!archiveTarget}

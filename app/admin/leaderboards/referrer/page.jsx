@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import LeaderboardHistorySections from "../../../components/admin/leaderboards/LeaderboardHistorySections";
 import { Pagination } from "../../../components/admin/members/DataTable";
 import SettingsSection from "../../../components/admin/world-cup/SettingsSection";
 // Information + reward tables are generic (no deposit-specific logic) so they
@@ -181,6 +182,8 @@ export default function ReferrerSettingsPage() {
       </SettingsSection>
 
       <LeaderboardRankingManager rows={rankings} type="referral" />
+
+      <LeaderboardHistorySections type={3} />
 
       <ConfirmArchive
         open={!!archiveTarget}
