@@ -218,7 +218,7 @@ export function KrWinnersPanel({
           <div className={`${cols} text-[12px] font-light leading-[1.3]`} style={{ color: "#f5c154" }}>
             <span>Date/time</span>
             <span>User</span>
-            <span className="text-right">Amount</span>
+            <span className="text-right">Price</span>
           </div>
           {loading ? (
             <p className="py-4 text-center text-[12px] text-white/80">Loading…</p>
