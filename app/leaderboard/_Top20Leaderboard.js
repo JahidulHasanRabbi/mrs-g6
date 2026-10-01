@@ -451,6 +451,7 @@ function Top20LeaderboardPageInner() {
           myRank={myRank}
           myRankUnavailable={memberRankFailed || (authReady && !memberUuid)}
           memberName={userData.name}
+          memberUuid={memberUuid}
           infoOpen={isInfoOpen}
           infoTerms={data.infoTerms}
           onInfoClose={() => setIsInfoOpen(false)}
@@ -543,6 +544,8 @@ function Top20LeaderboardPageInner() {
               myRank={myRank}
               memberName={userData.name}
               countdownLabel={isTurnoverTab ? turnoverCountdown.label : undefined}
+              memberUuid={memberUuid}
+              boardType={activeTab}
             />
           </AnimatePresence>
         </div>

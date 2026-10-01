@@ -358,6 +358,8 @@ export const ENDPOINTS = {
     // Combined My Rank for all four boards in one call (deposit/withdraw are
     // from the latest generated snapshot; turnover is computed live).
     MEMBER_RANK_ALL: (uuid) => `/leaderboard/member-rank/${uuid}/`,
+    // Paid leaderboard rewards the member received (?type=1..4, page, page_size).
+    MEMBER_HISTORY: (uuid) => `/leaderboard/member/${uuid}/history/`,
     TURNOVER_REWARD_ITEMS: '/leaderboard/turnover-reward-items/',
     TURNOVER_REWARD_ITEM: (uuid) => `/leaderboard/turnover-reward-items/${uuid}/`,
     TURNOVER_REWARD_ITEM_ARCHIVE: (uuid) => `/leaderboard/turnover-reward-items/${uuid}/archive/`,

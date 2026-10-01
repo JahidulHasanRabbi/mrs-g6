@@ -9,6 +9,11 @@ import { ENABLED_LEADERBOARD_TYPES, LEADERBOARD_CONFIG } from "../../leaderboard
 import { shortenMaskedName } from "../../leaderboard-new/format";
 import { deriveMyRank } from "../../leaderboard-new/MyRankPanel";
 import { useCountdown } from "../../leaderboard-new/CountdownTimer";
+import useMemberLeaderboardHistory, {
+  HISTORY_PAGE_SIZE,
+  formatHistoryDate,
+} from "../../leaderboard-new/useMemberLeaderboardHistory";
+import KrPagination from "./KrPagination";
 
 const MONO = "var(--font-jetbrains-mono), monospace";
 
@@ -207,6 +212,43 @@ function RankingTable({ entries, config, currentUserRank }) {
         );
       })}
     </motion.div>
+  );
+}
+
+/** Member's paid rewards for this board (GET /leaderboard/member/<uuid>/history/). */
+function RewardHistory({ memberUuid, board }) {
+  const { rows, total, loading, failed, page, setPage } = useMemberLeaderboardHistory(memberUuid, board);
+  const totalPages = Math.max(1, Math.ceil(total / HISTORY_PAGE_SIZE));
+  const cols = "grid grid-cols-[80px_minmax(0,1fr)] items-start gap-2";
+  const message = loading
+    ? "Loading…"
+    : failed
+      ? "Couldn't load your reward history. Please try again later."
+      : rows.length === 0
+        ? "No rewards yet."
+        : null;
+
+  return (
+    <div className="flex w-full flex-col gap-3 rounded-[12px] p-[17px]" style={{ ...INNER_BORDERED, fontFamily: KR_FONT }}>
+      <h3 className="text-[16px] font-bold leading-6" style={{ color: KR_COLORS.cream }}>
+        Reward History
+      </h3>
+      <div className={`${cols} text-[12px] font-light leading-[1.3]`} style={{ color: "#f5c154" }}>
+        <span>Date</span>
+        <span className="text-right">Price</span>
+      </div>
+      {message ? (
+        <p className="py-3 text-center text-[12px] text-white/80">{message}</p>
+      ) : (
+        rows.map((row) => (
+          <div key={row.uuid} className={`${cols} text-[10px] leading-[1.3] text-white`}>
+            <span className="whitespace-nowrap">{formatHistoryDate(row.datetime_obtained)}</span>
+            <span className="break-words text-right">{row.reward_details}</span>
+          </div>
+        ))
+      )}
+      {totalPages > 1 && <KrPagination page={page} totalPages={totalPages} onPage={setPage} />}
+    </div>
   );
 }
 
@@ -426,6 +468,7 @@ export default function KrLeaderboardView({
   myRank = null,
   myRankUnavailable = false,
   memberName,
+  memberUuid = null,
   infoOpen = false,
   infoTerms = [],
   onInfoClose,
@@ -519,6 +562,7 @@ export default function KrLeaderboardView({
                   )}
                 </>
               )}
+              {memberUuid && <RewardHistory memberUuid={memberUuid} board={activeTab} />}
               <TermsFooter terms={terms} />
             </GlassCard>
           </motion.div>

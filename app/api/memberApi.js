@@ -598,6 +598,14 @@ export async function getMemberRankAllBoards(uuid) {
   return await apiRequest(ENDPOINTS.LEADERBOARD.MEMBER_RANK_ALL(uuid), { method: 'GET' }, true, 'member');
 }
 
+// GET /leaderboard/member/<uuid>/history/ — paid leaderboard rewards, newest first.
+// params: { type: 1 Deposit | 2 Withdraw | 3 Referral | 4 Turnover, start_date, end_date, page, page_size }
+// -> { count, next, previous, results: [{ uuid, datetime_obtained, leaderboard_type, board, reward_name, reward_details }] }
+export async function getMemberLeaderboardHistory(uuid, params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.LEADERBOARD.MEMBER_HISTORY(uuid)}${qs}`, { method: 'GET' }, true, 'member');
+}
+
 // ============================================================================
 // AVATAR RPG (Phase 3) — MEMBER / USER
 // docs/MRS - G6 Avatar API Documentation.md — all endpoints under /avatar/.

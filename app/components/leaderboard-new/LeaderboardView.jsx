@@ -10,6 +10,7 @@ import { useTheme } from "../../contexts/ThemeContext";
 import { KGAME99_COLORS } from "../themes/kgame99/assets";
 import { LV918_COLORS } from "../themes/lv918/assets";
 import MyRankPanel from "./MyRankPanel";
+import MemberRewardHistory from "./MemberRewardHistory";
 
 export default function LeaderboardView({
   config,
@@ -24,6 +25,8 @@ export default function LeaderboardView({
   myRank = null,
   memberName = "Member",
   countdownLabel = undefined,
+  memberUuid = null,
+  boardType,
 }) {
   const { isKgame99, isLv918 } = useTheme();
 
@@ -147,6 +150,9 @@ export default function LeaderboardView({
           />
         </>
       )}
+
+      {/* Member's paid rewards for this board */}
+      {memberUuid && <MemberRewardHistory memberUuid={memberUuid} board={boardType} color={config.color} />}
 
       {/* Terms & Conditions */}
       <TermsConditions terms={terms} color={config.color} />
