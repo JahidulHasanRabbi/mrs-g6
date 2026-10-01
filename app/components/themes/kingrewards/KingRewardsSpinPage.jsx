@@ -239,7 +239,7 @@ export default function KingRewardsSpinPage() {
             return {
               date: formatKrDate(it.datetime_obtained),
               user: maskName(it.display_name),
-              amount: formatSpinReward({ ...it, reward_name: it.prize_name }),
+              amount: formatSpinReward({ ...it, reward_name: it.reward_name }),
               icon: rewardIcon(isBattlePoint),
             };
           })

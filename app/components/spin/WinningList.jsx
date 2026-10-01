@@ -72,7 +72,7 @@ const WinningList = memo(function WinningList() {
             const dateStr = dt.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
             const isBattlePoint = String(item.item_type || "").toUpperCase() === "BATTLE POINT" || String(item.item_type) === "5";
             const battlePoints = Number(item.battle_point_amount ?? 0);
-            const rewardName = item.reward_name || item.prize_name;
+            const rewardName = item.reward_name;
             const prizeName =
               isBattlePoint && battlePoints > 0 && !/\bBP\b|battle point/i.test(rewardName || "")
                 ? `${rewardName || "Reward"} (${battlePoints.toLocaleString("en-US")} BP)`

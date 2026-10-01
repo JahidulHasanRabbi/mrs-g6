@@ -73,7 +73,7 @@ export default function SpinWinningPanel({ variant = "record", rows = [], title 
           data.map((item) => ({
             date: formatDate(item.datetime_obtained),
             name: maskUsername(item.display_name),
-            reward: item.prize_name,
+            reward: item.reward_name,
           }))
         );
       } catch (error) {

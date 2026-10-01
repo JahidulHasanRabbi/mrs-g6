@@ -104,7 +104,7 @@ export default function Lv918SpinPage() {
           data.map((item) => ({
             date: formatWinDate(item.datetime_obtained),
             name: maskUsername(item.display_name),
-            reward: item.prize_name,
+            reward: item.reward_name,
           }))
         );
       } catch (error) {

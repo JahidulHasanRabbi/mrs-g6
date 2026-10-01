@@ -31,7 +31,7 @@ export default function FramedWinningPanel({ skin, variant = "record", rows = []
       try {
         const data = await getWinningList();
         if (cancelled || !Array.isArray(data)) return;
-        setRecords(data.map((it) => ({ date: formatDate(it.datetime_obtained), name: maskUsername(it.display_name), reward: it.prize_name })));
+        setRecords(data.map((it) => ({ date: formatDate(it.datetime_obtained), name: maskUsername(it.display_name), reward: it.reward_name })));
       } catch (error) {
         console.error("Failed to fetch winning list:", error);
       }
