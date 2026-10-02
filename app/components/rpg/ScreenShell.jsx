@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import RpgTopBar from "./RpgTopBar";
 import HudStrip from "./HudStrip";
 import RpgNav from "./RpgNav";
+import MainBottomNav from "./MainBottomNav";
 import { useRpgSkin } from "./rpgSkin";
 import { RPG_VIEWS } from "./constants";
 
@@ -34,6 +35,8 @@ export default function ScreenShell({
   titleClassName,
   navLinkBase,
   navActiveTab,
+  // Swap the Avatar hub bar for the portal's main navigation (Boss War).
+  mainNav = false,
   children,
 }) {
   const skin = useRpgSkin();
@@ -87,7 +90,7 @@ export default function ScreenShell({
         </motion.div>
       </div>
 
-      <RpgNav view={view} onNavigate={onNavigate} linkBase={navLinkBase} activeTab={navActiveTab} />
+      {mainNav ? <MainBottomNav /> : <RpgNav view={view} onNavigate={onNavigate} linkBase={navLinkBase} activeTab={navActiveTab} />}
     </div>
   );
 }

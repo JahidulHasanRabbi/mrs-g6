@@ -112,8 +112,7 @@ function BossWarInner() {
         title="Boss War"
         titleFont={skin.war.font}
         titleClassName="text-[24px] font-bold leading-none"
-        navLinkBase="/avatar"
-        navActiveTab={null}
+        mainNav
       >
         {!status ? (
           <GameLoadingContent skin={skin} message={loadError} font={skin.war.font} />
