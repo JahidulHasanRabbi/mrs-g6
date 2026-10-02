@@ -352,7 +352,7 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
             onSubmit={handleSubmit}
             onBack={() => router.push("/profile")}
             saved={krSaved}
-            onSavedClose={() => router.push("/profile")}
+            onSavedClose={() => setKrSaved(null)}
           />
         </Suspense>
         {modals}
