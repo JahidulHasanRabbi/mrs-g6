@@ -29,7 +29,8 @@ function TrailingIcon({ src, onClick }) {
   );
 }
 
-function KrField({ id, label, type, value, onChange, placeholder, options = [] }) {
+function KrField({ id, label, type, value, onChange, placeholder, options = [], disabled = false }) {
+  const lockedClass = disabled ? " cursor-not-allowed opacity-60" : "";
   let control;
   if (type === "select") {
     control = (
@@ -38,7 +39,8 @@ function KrField({ id, label, type, value, onChange, placeholder, options = [] }
           id={id}
           value={value}
           onChange={(e) => onChange(id, e.target.value)}
-          className={`${INPUT_CLASS} cursor-pointer appearance-none pr-7`}
+          disabled={disabled}
+          className={`${INPUT_CLASS} cursor-pointer appearance-none pr-7${lockedClass}`}
           style={INPUT_STYLE}
         >
           {options.map((o) => (
@@ -58,7 +60,8 @@ function KrField({ id, label, type, value, onChange, placeholder, options = [] }
           id={id}
           value={value}
           onChange={(v) => onChange(id, v)}
-          className={`${INPUT_CLASS} cursor-pointer pr-7`}
+          disabled={disabled}
+          className={`${INPUT_CLASS} cursor-pointer pr-7${lockedClass}`}
           style={INPUT_STYLE}
         />
         <TrailingIcon src={KR_ASSETS.profile.iconCalendar} />
@@ -72,7 +75,8 @@ function KrField({ id, label, type, value, onChange, placeholder, options = [] }
         value={value}
         onChange={(e) => onChange(id, e.target.value)}
         placeholder={placeholder}
-        className={`${INPUT_CLASS} pr-2`}
+        disabled={disabled}
+        className={`${INPUT_CLASS} pr-2${lockedClass}`}
         style={INPUT_STYLE}
       />
     );
@@ -143,6 +147,7 @@ export default function KingRewardsPersonalDataView({
   name,
   formData,
   onChange,
+  isLocked,
   profileImage,
   onProfileEdit,
   progress,
@@ -213,7 +218,7 @@ export default function KingRewardsPersonalDataView({
             className="flex flex-col gap-4"
           >
             {FORM_FIELDS.map((field) => (
-              <KrField key={field.id} {...field} value={formData[field.id]} onChange={onChange} />
+              <KrField key={field.id} {...field} value={formData[field.id]} onChange={onChange} disabled={isLocked(field.id)} />
             ))}
 
             {error && (

@@ -52,6 +52,9 @@ const THEME_ICON = (
   </svg>
 );
 
+// Write-once on the backend: it rejects (or silently skips) a change once these have a value.
+const LOCKED_FIELDS = ["full_name", "email", "date_of_birth", "gender", "hobby"];
+
 // DRF 400s carry the reason in data.details / data.error; "HTTP error: 400" alone tells the member nothing.
 function apiErrorMessage(err, fallback) {
   const details = err?.data?.details;
@@ -144,6 +147,9 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
 
   const progress = calculateProgress();
 
+  // A field in LOCKED_FIELDS is read-only once it has a saved value.
+  const isLocked = (id) => LOCKED_FIELDS.includes(id) && !!originalData[id];
+
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -191,8 +197,8 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
       if (!originalData.gender && formData.gender) {
         updatePayload.gender = parseInt(formData.gender, 10);
       }
-      if (formData.hobby && formData.hobby !== originalData.hobby) {
-        // Free text, unlike gender's numeric choice field, and editable after the first save.
+      if (!originalData.hobby && formData.hobby) {
+        // Free text, unlike gender's numeric choice field. Write-once like the rest.
         updatePayload.hobby = formData.hobby;
       }
       
@@ -340,6 +346,7 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
             name={userData?.name}
             formData={formData}
             onChange={handleInputChange}
+            isLocked={isLocked}
             profileImage={profileImage}
             onProfileEdit={handleProfileEdit}
             progress={progress}
@@ -423,6 +430,7 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
             {...field}
             value={formData[field.id]}
             onChange={handleInputChange}
+            disabled={isLocked(field.id)}
           />
         ))}
       </div>
