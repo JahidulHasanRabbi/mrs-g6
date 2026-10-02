@@ -52,6 +52,16 @@ const THEME_ICON = (
   </svg>
 );
 
+// DRF 400s carry the reason in data.details / data.error; "HTTP error: 400" alone tells the member nothing.
+function apiErrorMessage(err, fallback) {
+  const details = err?.data?.details;
+  if (details && typeof details === "object") {
+    const first = Object.values(details).flat()[0];
+    if (first) return String(first);
+  }
+  return err?.data?.error || err?.data?.detail || err?.message || fallback;
+}
+
 export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
   const router = useRouter();
   const { updateProfilePicture, selectedFrameId, updateSelectedFrame, userData } = useUser();
@@ -181,8 +191,8 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
       if (!originalData.gender && formData.gender) {
         updatePayload.gender = parseInt(formData.gender, 10);
       }
-      if (!originalData.hobby && formData.hobby) {
-        // The API stores hobby as free text, unlike gender's numeric choice field.
+      if (formData.hobby && formData.hobby !== originalData.hobby) {
+        // Free text, unlike gender's numeric choice field, and editable after the first save.
         updatePayload.hobby = formData.hobby;
       }
       
@@ -211,6 +221,7 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
       // Set profile image if available
       if (updatedProfile.profile_picture) {
         setProfileImage(updatedProfile.profile_picture);
+        setProfileImageFile(null);
       }
       
       // Check if user just earned free tokens (was false, now true)
@@ -236,7 +247,7 @@ export default function PersonalDataForm({ currentStep = 1, onSubmit }) {
       }
     } catch (err) {
       console.error("Form submission error:", err);
-      setError(err.message || "Failed to update profile");
+      setError(apiErrorMessage(err, "Failed to update profile"));
     } finally {
       setIsSubmitting(false);
     }

@@ -1,5 +1,5 @@
 import { apiRequest } from './apiClient';
-import { ENDPOINTS } from './api';
+import { ENDPOINTS, BASE_URL } from './api';
 import { tokenStorage } from './tokenStorage';
 import { buildQueryParams } from './queryParams';
 
@@ -84,11 +84,21 @@ export async function acknowledgeMissionPromotion(participationUuid) {
   return await apiRequest(ENDPOINTS.MISSION.PROMOTION_ACK(participationUuid), { method: 'PATCH' }, true, 'member');
 }
 
+// The profile endpoint returns media as a bare path ("/media/member/x.png"); as an <img src> that
+// resolves against the frontend's own origin and 404s, so anchor it to the API host.
+function toAbsoluteMediaUrl(path) {
+  if (!path || /^(https?:|data:|blob:)/i.test(path)) return path;
+  return `${BASE_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+}
+
 // GET /member/{uuid}/profile/
 export async function getProfile(memberUuid) {
-  return await apiRequest(ENDPOINTS.MEMBER.PROFILE(memberUuid), {
+  const profile = await apiRequest(ENDPOINTS.MEMBER.PROFILE(memberUuid), {
     method: 'GET'
   }, true, 'member');
+  return profile?.profile_picture
+    ? { ...profile, profile_picture: toAbsoluteMediaUrl(profile.profile_picture) }
+    : profile;
 }
 
 // PATCH /member/{uuid}/update-profile/

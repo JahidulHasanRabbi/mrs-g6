@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import ProgressBar from "./StepIndicator";
 import { FORM_FIELDS } from "./constants";
+import DateInputDMY from "./DateInputDMY";
 import { GlassCard, GoldText, PageTitle } from "../themes/kingrewards/KrUi";
 import { KrMemberAvatar, KrOutlineButton, KrPlaqueButton, useKrPickedFrameId } from "../themes/kingrewards/KingRewardsProfileParts";
 import KingRewardsDialog from "../themes/kingrewards/KingRewardsDialog";
@@ -50,20 +51,17 @@ function KrField({ id, label, type, value, onChange, placeholder, options = [] }
       </div>
     );
   } else if (type === "date") {
-    // en-GB makes Chromium render the native value as dd/mm/yyyy.
+    // The browser's own date box follows its locale, so DateInputDMY shows dd/mm/yyyy itself.
     control = (
       <div className="relative">
-        <input
+        <DateInputDMY
           id={id}
-          type="date"
-          lang="en-GB"
           value={value}
-          onChange={(e) => onChange(id, e.target.value)}
-          onClick={(e) => e.currentTarget.showPicker?.()}
-          className={`${INPUT_CLASS} cursor-pointer pr-7 [&::-webkit-calendar-picker-indicator]:opacity-0`}
+          onChange={(v) => onChange(id, v)}
+          className={`${INPUT_CLASS} cursor-pointer pr-7`}
           style={INPUT_STYLE}
         />
-        <TrailingIcon src={KR_ASSETS.profile.iconCalendar} onClick={() => document.getElementById(id)?.showPicker?.()} />
+        <TrailingIcon src={KR_ASSETS.profile.iconCalendar} />
       </div>
     );
   } else {

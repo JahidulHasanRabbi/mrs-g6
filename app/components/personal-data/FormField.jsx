@@ -4,6 +4,7 @@ import Image from "next/image";
 import { FORM_COLORS } from "./constants";
 import { useThemeInk } from "../themes/shared/themeInk";
 import { CalendarIcon, ArrowIcon } from "./FormIcons";
+import DateInputDMY from "./DateInputDMY";
 
 export default function FormField({
   id,
@@ -58,20 +59,17 @@ export default function FormField({
       case "date":
         return (
           <>
-            <input
+            <DateInputDMY
               id={id}
-              type="date"
               value={value}
-              onChange={(e) => onChange(id, e.target.value)}
+              onChange={(v) => onChange(id, v)}
               disabled={disabled}
               className={`${commonClasses} pr-12 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
               style={commonStyles}
-              onClick={(e) => !disabled && e.currentTarget.showPicker?.()}
             />
             {icon === "calendar" && (
               <div 
-                className={`absolute right-[23px] top-1/2 -translate-y-1/2 w-6 h-6 ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                onClick={() => !disabled && document.getElementById(id)?.showPicker?.()}
+                className={`absolute right-[23px] top-1/2 -translate-y-1/2 w-6 h-6 pointer-events-none ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <CalendarIcon />
               </div>
