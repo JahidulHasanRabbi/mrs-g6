@@ -687,6 +687,12 @@ export async function getAvatarBattlePointHistory(params = {}) {
   return await apiRequest(`${ENDPOINTS.AVATAR.BATTLE_POINT_HISTORY}${qs}`, { method: 'GET' }, true, 'member');
 }
 
+// GET /bosswar/member/{uuid}/points/ (paginated) — Attack Point earn/redeem history
+export async function getBossWarPointHistory(memberUuid, params = {}) {
+  const qs = buildQueryParams(params);
+  return await apiRequest(`${ENDPOINTS.BOSS_WAR.POINTS(memberUuid)}${qs}`, { method: 'GET' }, true, 'member');
+}
+
 // GET /avatar/avatar-missions/my-missions/  (?category=1..4)
 export async function getMyAvatarMissions(params = {}) {
   const qs = buildQueryParams(params);

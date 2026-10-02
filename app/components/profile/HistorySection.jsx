@@ -60,17 +60,17 @@ const HISTORY_CONFIG = {
       {
         key: "category",
         label: "Type",
-        cellClassName: "overflow-hidden truncate",
+        cellClassName: "break-words",
       },
       {
         key: "reward_details",
         label: "Details",
-        cellClassName: "overflow-hidden truncate",
+        cellClassName: "break-words",
       },
       {
         key: "reward_name",
         label: "Reward",
-        cellClassName: "overflow-hidden truncate",
+        cellClassName: "break-words",
       },
     ],
   },

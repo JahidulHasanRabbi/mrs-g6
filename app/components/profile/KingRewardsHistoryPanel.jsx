@@ -1,22 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { GlassCard, GoldText, KrTabs, formatKrAmount } from "../themes/kingrewards/KrUi";
 import { KR_ASSETS, KR_COLORS, KR_FONT } from "../themes/kingrewards/assets";
-import { formatHistoryDate, getHistoryPageNumbers, useHistoryPage } from "./historyData";
+import { createCoinsPointsHistory, formatHistoryDate, getHistoryPageNumbers, useHistoryPage } from "./historyData";
 
 const TABS = [
-  { id: "token", label: "KR Coin History" },
+  { id: "token", label: "KR Coins & Points History" },
   { id: "reward", label: "Reward History" },
 ];
 
 const COLUMNS = {
   token: {
-    grid: "64px 52px minmax(0,1fr) 64px",
+    grid: "64px minmax(0,1fr) minmax(0,1fr) 56px",
     cells: [
       { key: "created", label: "Date" },
-      { key: "category", label: "Category", align: "center" },
-      { key: "token_details", label: "Details" },
+      { key: "activity", label: "Activity" },
+      { key: "pointType", label: "Point Type" },
       { key: "amount", label: "Amount", align: "right" },
     ],
   },
@@ -73,7 +73,8 @@ function PageArrow({ dir, disabled, onClick }) {
 /** King Rewards profile history panel (Figma 664:1736): tabs, table card, pagination. */
 export default function KingRewardsHistoryPanel() {
   const [type, setType] = useState("token");
-  const { rows, loading, hasLoaded, error, retry, currentPage, totalPages, goToPage } = useHistoryPage(type, 10);
+  const fetchCoinsPoints = useMemo(() => createCoinsPointsHistory(), []);
+  const { rows, loading, hasLoaded, error, retry, currentPage, totalPages, goToPage } = useHistoryPage(type, 10, fetchCoinsPoints);
   const config = COLUMNS[type];
   const title = TABS.find((t) => t.id === type).label;
   const showRows = hasLoaded && !loading && !error && rows.length > 0;
@@ -109,9 +110,8 @@ export default function KingRewardsHistoryPanel() {
           return (
             <span
               key={c.key}
-              className={`truncate tabular-nums ${c.key === "created" ? "whitespace-nowrap" : ""} ${c.key === "amount" ? "font-semibold" : ""} ${ALIGN[c.align] || ""}`}
+              className={`break-words tabular-nums ${c.key === "created" ? "whitespace-nowrap" : ""} ${c.key === "amount" ? "font-semibold" : ""} ${ALIGN[c.align] || ""}`}
               style={c.key === "amount" && negative ? { color: "#ffb0a0" } : undefined}
-              title={text}
             >
               {text}
             </span>
@@ -139,7 +139,7 @@ export default function KingRewardsHistoryPanel() {
             style={{ gridTemplateColumns: config.grid, color: "#f5c154" }}
           >
             {config.cells.map((c) => (
-              <span key={c.key} className={`whitespace-nowrap ${ALIGN[c.align] || ""}`}>
+              <span key={c.key} className={`${ALIGN[c.align] || ""}`}>
                 {c.label}
               </span>
             ))}
